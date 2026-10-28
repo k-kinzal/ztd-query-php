@@ -32,12 +32,60 @@ final class GrantPrivilegesTest extends TestCase
         self::assertInstanceOf(UnknownGrantColumn::class, $grant->diagnostics()[0]);
     }
 
-    public function testDeriveStatementRefusesAsOutsideTheGlobalLevel(): void
+    public function testDeriveStatementKeepsAsOutsideTheGlobalLevel(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('AS clause cannot be granted at database db (ER_UNSUPPORTED_USE_OF_GRANT_AS).');
+        $statement = (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON db.* TO root AS CURRENT_USER');
+        self::assertInstanceOf(GrantPrivileges::class, $statement);
+        self::assertSame('AS clause cannot be granted at database db (ER_UNSUPPORTED_USE_OF_GRANT_AS).', $statement->condition()?->message());
+        self::assertEquals([$statement->condition()], $statement->diagnostics());
+        self::assertSame('GRANT SELECT ON db.* TO root AS CURRENT_USER', $statement->toString());
+    }
 
-        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON db.* TO root AS CURRENT_USER');
+    public function testConditionPrioritizesAsBeforeThePrivilegeScope(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON PROCEDURE d.p TO u AS CURRENT_USER WITH ROLE ALL');
+        self::assertInstanceOf(GrantPrivileges::class, $statement);
+        self::assertSame('ER_UNSUPPORTED_USE_OF_GRANT_AS', $statement->condition()?->error);
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $statement->scopeProblem()?->error);
+        self::assertSame('GRANT SELECT ON PROCEDURE d.p TO u AS CURRENT_USER WITH ROLE ALL', $statement->toString());
+    }
+
+    public function testScopeProblemRetainsTheContradictoryTarget(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON PROCEDURE d.p TO u');
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $create);
+        self::assertInstanceOf(GrantPrivileges::class, $create->body);
+        self::assertSame('SELECT cannot be granted at object d.p (ER_ILLEGAL_GRANT_FOR_TABLE).', $create->body->scopeProblem()?->message());
+        self::assertSame([], $create->diagnostics());
+    }
+
+    public function testColumnLevelDistinguishesNonObjectTargets(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT(a) ON d.* TO u');
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $create);
+        self::assertInstanceOf(GrantPrivileges::class, $create->body);
+        self::assertTrue($create->body->columnLevel());
+        self::assertSame('CREATE PROCEDURE p() GRANT SELECT (a) ON d.* TO u', $create->toString());
+    }
+
+    public function testDeriveProgramKeepsInvocationConditionsBesideOrdinaryOperands(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $create);
+        self::assertInstanceOf(GrantPrivileges::class, $create->body);
+        self::assertSame([], $create->diagnostics());
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $create->body->condition()?->error);
+        self::assertSame('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u', $create->toString());
+    }
+
+    public function testDeriveProgramRetainsAsAndRoleOperands(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER WITH ROLE ALL');
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $create);
+        self::assertInstanceOf(GrantPrivileges::class, $create->body);
+        self::assertSame([], $create->diagnostics());
+        self::assertSame('ER_UNSUPPORTED_USE_OF_GRANT_AS', $create->body->condition()?->error);
+        self::assertSame('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER WITH ROLE ALL', $create->toString());
     }
 
     public function testRenderWritesEveryClause(): void

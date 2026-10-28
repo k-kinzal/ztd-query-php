@@ -23,6 +23,17 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Medium]
 final class PrivilegeChecksTest extends TestCase
 {
+    public function testNoticesPublishesEveryDirectlyConstructedSuperOccurrence(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $grant = new GrantPrivileges([
+            new StaticPrivilege(PrivilegeKind::Super),
+            new StaticPrivilege(PrivilegeKind::Super),
+        ], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
+        $statement = Semantics::fromStatement($semantics->context(), $grant);
+        self::assertSame(['The SUPER privilege identifier is deprecated', 'The SUPER privilege identifier is deprecated'], array_map(static fn ($warning): string => $warning->message(), $statement->warnings()));
+    }
+
     public function testGrantRequiresTheTableWithoutCreate(): void
     {
         self::assertInstanceOf(MissingTable::class, (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON t TO u', [])->diagnostics()[0]);
@@ -113,7 +124,10 @@ final class PrivilegeChecksTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerModernGlobalAll')]
     public function testGrantGlobalAllRequiresTheRoutineObjectInEveryRelease(string $release): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql, $release))->analyze('GRANT ALL ON FUNCTION *.* TO u');
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze('GRANT ALL ON FUNCTION *.* TO u');
+        self::assertInstanceOf(GrantPrivileges::class, $statement);
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $statement->condition()?->error);
+        self::assertEquals([$statement->condition()], $statement->diagnostics());
+        self::assertSame('GRANT ALL ON FUNCTION *.* TO u', $statement->toString());
     }
 }

@@ -66,17 +66,15 @@ final class LegacyGrantRule
      */
     public function grant(Form $form): Statement
     {
-        $request = $this->request($form);
-        return $request instanceof GrantProxy ? $request : (new GrantRule($this->lowering))->checked($request, $form);
+        return $this->request($form);
     }
 
     /**
-     * Reads legacy privilege operands before selecting their immediate or program role.
+     * Retains complete legacy privilege and account operands before deriving conditions.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When legacy column privileges have no table target
      */
-    public function request(Form $form, bool $program = false): GrantPrivileges|GrantProxy|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel
+    public function request(Form $form): GrantPrivileges|GrantProxy
     {
         if ($form->signature !== 'grant: GRANT clear_privileges grant_command') {
             throw ImplementationGap::production($form);
@@ -94,17 +92,12 @@ final class LegacyGrantRule
 
         $items = $privileges->privileges($command->node(0));
         $level = $privileges->level($command->node(3));
-        (new Privilege\LegacyColumns())->requireTable($items, $level, (new \SqlSemantics\Construction\SourceRanges())->span($command->node(3))[1] ?? 0);
         $users = $lists->granted($command->node(5));
         $tls = $clauses->tls($command->node(6));
         $options = $clauses->grantOptions($command->node(7));
         $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
 
-        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest($items, $kind, $level, $users, $tls, $options);
-        if ($request->columnLevel()) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel($request, $program), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
-        return (new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\PrivilegeGrant())->select($request);
+        return new GrantPrivileges($items, $kind, $level, $users, $tls, $options);
     }
 
     /**

@@ -218,16 +218,6 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
     },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest": {
-        "as": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantAs",
-        "grantees": "array",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\ObjectKind",
-        "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\PrivilegeLevel",
-        "options": "array",
-        "privileges": "array",
-        "tls": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Option\\TlsRequirement"
-    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\RevokeAll": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "ifExists": "bool",
@@ -291,11 +281,6 @@
         "level": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\CurrentDatabaseLevel|SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\DatabaseLevel|SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Level\\GlobalLevel",
         "privilege": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Item\\StaticPrivilege",
         "program": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RefusedGrantLevel": {
-        "condition": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\MisplacedPrivilege",
-        "definition": "bool",
-        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RejectedPasswordHash": [],
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Problem\\RepeatedTlsAttribute": {
@@ -3059,15 +3044,6 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredEvaluation": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "items": "array"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredGrantAs": {
-        "as": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\GrantAs",
-        "grant": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
-    },
-    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredGrantLevel": {
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "request": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Privilege\\Request\\GrantRequest"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredProjection": {
         "alias": "?SqlSemantics\\Statement\\Identifier\\Name",

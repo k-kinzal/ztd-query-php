@@ -26,20 +26,21 @@ final class GrantRuleTest extends TestCase
         self::assertSame($statement->users, $statement->problem->users);
     }
 
-    public function testRequestKeepsTheProgramOnlyInterpretation(): void
+    public function testRequestKeepsTheSameStatementInsidePrograms(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON d.t TO u AS CURRENT_USER');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $create = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $create);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs::class, $create->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $create->body);
     }
 
-    public function testCheckedRefusesAnImmediateNonGlobalAsClause(): void
+    public function testRequestKeepsAnImmediateNonGlobalAsClause(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-
-        (new Semantics(Dialect::MySql))->analyze('GRANT ALL ON d.* TO u AS CURRENT_USER');
+        $statement = (new Semantics(Dialect::MySql))->analyze('GRANT ALL ON d.* TO u AS CURRENT_USER');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
+        self::assertSame('ER_UNSUPPORTED_USE_OF_GRANT_AS', $statement->condition()?->error);
+        self::assertSame('GRANT ALL ON d.* TO u AS CURRENT_USER', $statement->toString());
     }
 
     public function testGrantLowersEveryForm(): void

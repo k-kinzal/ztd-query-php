@@ -60,7 +60,7 @@ final class GrantRule
 
         return match ($form->signature) {
             'grant: GRANT role_or_privilege_list TO_SYM user_list opt_with_admin_option' => $this->roles($form),
-            'grant: GRANT role_or_privilege_list ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => $this->checked($this->request($form, false), $form),
+            'grant: GRANT role_or_privilege_list ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => $this->request($form, false),
             'grant: GRANT ALL opt_privileges ON_SYM opt_acl_type grant_ident TO_SYM user_list grant_options opt_grant_as' => $this->all($form),
             'grant: GRANT PROXY_SYM ON_SYM user TO_SYM user_list opt_grant_option' => new GrantProxy(
                 $this->lowering->users->account($form->node(3)),
@@ -92,13 +92,13 @@ final class GrantRule
      */
     public function all(Form $form): GrantPrivileges
     {
-        return $this->checked($this->request($form, true), $form);
+        return $this->request($form, true);
     }
 
     /**
-     * Reads either privilege spelling without publishing an invalid standalone statement.
+     * Retains either privilege spelling and every recipient before deriving level conditions.
      */
-    public function request(Form $form, bool $all): GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel
+    public function request(Form $form, bool $all): GrantPrivileges
     {
         if ($all) {
             $this->privileges->words($form->node(2));
@@ -111,21 +111,7 @@ final class GrantRule
         $options = (new ClauseRule($this->lowering))->grantOptions($form->node(7 + $offset));
         $as = $this->grantAs($form->node(8 + $offset));
         $this->privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
-        return (new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\PrivilegeGrant())->select(new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest($items, $kind, $level, $grantees, options: $options, as: $as));
-    }
-
-    /**
-     * Reports the immediate constraint before publishing a standalone grant.
-     *
-     * @throws \SqlSemantics\Construction\RejectedInput When the privilege target contradicts the immediate GRANT role
-     */
-    public function checked(GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel $request, Form $form): GrantPrivileges
-    {
-        if (!$request instanceof GrantPrivileges) {
-            throw new \SqlSemantics\Construction\RejectedInput($request->problem(), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
-
-        return $request;
+        return new GrantPrivileges($items, $kind, $level, $grantees, options: $options, as: $as);
     }
 
     /**

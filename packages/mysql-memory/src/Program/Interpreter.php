@@ -107,7 +107,7 @@ final class Interpreter
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredAssignments => $this->assignments($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection => $this->selection($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge => $this->administrative($statement),
-            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart => $this->deferredCondition($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart => $this->deferredCondition($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet, $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery => $this->write($statement),
             $statement instanceof Block => $this->block($statement),
             $statement instanceof IfStatement => $this->branches($statement->branches, $statement->otherwise, null, false),
@@ -182,7 +182,7 @@ final class Interpreter
     /**
      * Raises a deferred instruction condition through the program's handlers.
      */
-    public function deferredCondition(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantAs|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart $statement): ?Jump
+    public function deferredCondition(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart $statement): ?Jump
     {
         $this->activation->sqlStatements++;
         $jump = $this->instruction(fn () => $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation

@@ -120,10 +120,6 @@ final class StatementRule
         if ($evaluation !== null) {
             return $evaluation;
         }
-        $grant = (new PrivilegeGrant())->read($node, $this->lowering);
-        if ($grant !== null) {
-            return $grant;
-        }
         try {
             $statement = $this->lowering->statement($node);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {

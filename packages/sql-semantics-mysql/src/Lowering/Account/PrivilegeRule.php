@@ -224,12 +224,7 @@ final class PrivilegeRule
         $kind = self::STATIC[$form->signature] ?? null;
         if ($kind !== null) {
             $privilege = new StaticPrivilege($kind, $kind->columns() ? $this->columns($form->node(1)) : []);
-            $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::SuperPrivilege;
-            if ($kind === PrivilegeKind::Super && $deprecated->warnedIn($this->lowering->profile->grammar)) {
-                $this->lowering->origins->notice($privilege, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);
-            }
-
-            return $privilege;
+            return $this->lowering->origins->record($privilege, $form->node);
         }
         $names = $this->lowering->names;
 

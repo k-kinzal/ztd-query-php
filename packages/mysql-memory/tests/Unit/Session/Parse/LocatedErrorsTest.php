@@ -15,6 +15,20 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpr
 #[Small]
 final class LocatedErrorsTest extends TestCase
 {
+    public function testParsedResolvesAnInvalidLegacyGrantTargetBeforeItsCondition(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->text = 'unrelated input';
+        $grant = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('c')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $grant);
+        $notice = $statement->statementInformation()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
+        self::assertSame(1046, (new LocatedErrors())->parsed($notice, $statement, $session)->getCode());
+        $session->variables->database = 'd';
+        self::assertSame(1144, (new LocatedErrors())->parsed($notice, $statement, $session)->getCode());
+        self::assertSame('unrelated input', $session->text);
+    }
+
     public function testParsedPreservesTheSpecificConditionWithoutALocation(): void
     {
         $session = (new Instance())->connect();

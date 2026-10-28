@@ -60,6 +60,21 @@ use SqlSemantics\Statement\Type\Known;
 final class PrivilegeChecks
 {
     /**
+     * Publishes privilege-token notices for both parsed and directly constructed requests.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges Written privilege occurrences
+     */
+    public function notices(array $privileges, Derivation $derivation): void
+    {
+        $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::SuperPrivilege;
+        foreach ($privileges as $privilege) {
+            if ($privilege instanceof StaticPrivilege && $privilege->kind === PrivilegeKind::Super && $deprecated->warnedIn($derivation->context->profile->grammar)) {
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $privilege);
+            }
+        }
+    }
+
+    /**
      * Derives the facts of a GRANT of privileges.
      *
      * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges

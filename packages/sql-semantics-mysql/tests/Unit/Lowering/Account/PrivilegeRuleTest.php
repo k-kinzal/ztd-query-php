@@ -46,10 +46,13 @@ final class PrivilegeRuleTest extends TestCase
         self::assertSame('GRANT SELECT, INSERT, CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert, create role, drop role on *.* to u')->toString());
     }
 
-    public function testItemsRefusesAColumnListAtTheGlobalLevel(): void
+    public function testItemsRetainsAColumnListAtTheGlobalLevel(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u');
+        $statement = (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $statement->condition()?->error);
+        self::assertCount(4, $statement->privileges);
+        self::assertSame('GRANT SELECT, INSERT (a), CREATE ROLE, DROP ROLE ON *.* TO u', $statement->toString());
     }
 
     public function testItemLowersEveryStaticPrivilege(): void

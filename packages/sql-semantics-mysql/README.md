@@ -740,6 +740,14 @@ session modes. SIGNAL and RESIGNAL also retain repeated information items.
 Their conditions are evaluated in semantic operand order, so directly constructed
 statements need no SQL text or source locations to reproduce that order.
 
+`GrantPrivileges` retains the complete privilege list, target, recipients and
+`AS` clause when the requested privilege scope is invalid. `condition()` exposes
+the intrinsic condition; `scopeProblem()` checks the target independently of
+`AS`. Stored programs contain the same statement type and defer these conditions
+until invocation. MySQL 5.6 and 5.7 instead reject column privileges outside an
+individual table while reading the definition. The model keeps all operands in
+both cases, including recipients following the invalid target.
+
 Additional authentication factors use `Statement\Account\User\Factor`, whose cases are `Second` and `Third`. Registration and factor-change constructors accept this enum; factor changes also reject duplicates and adding the third factor before the second. Invalid SQL operands produce a typed input refusal during lowering instead of a statement that is intrinsically invalid. Account existence and installed authentication plugins remain execution-state concerns.
 
 `Statement\Name\AccountName` excludes names outside every supported release's domain: more than 32 trimmed user characters, more than 255 trimmed host bytes, or an at sign in the host. It preserves decoded operands, including embedded NUL bytes; `username()` and `hostname()` provide their whitespace-normalized interpretation. MySQL 5.6 has limits of 16 user characters and 60 host bytes; 5.7 has limits of 32 and 60. Input lowering applies the selected release's limits before publishing accounts and definers, and reports `AccountNameFailure` through `RejectedInput`. MySQL 5.6 checks the original operands before trimming when the host is explicit. Structure composition rejects a longer name combined with features that require an incompatible older release. Account existence remains an execution-state concern.

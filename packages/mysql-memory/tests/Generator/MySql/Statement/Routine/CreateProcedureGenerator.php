@@ -1007,29 +1007,27 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredGrantLevelGenerator(
-                request: new \Tests\Generator\MySql\Statement\Account\Privilege\Request\GrantRequestGenerator(
-                    privileges: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
-                    ),
-                    kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure]),
-                    level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\GlobalLevelGenerator()]),
-                    grantees: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
-                            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                                user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('u'),
-                                    quote: Generators::constant(null)
-                                ),
-                                host: Generators::constant(null)
-                            )]),
-                            identification: Generators::constant(null)
-                        )
-                    ),
-                    tls: Generators::constant(null),
-                    options: Generators::constant([]),
-                    as: Generators::constant(null)
-                )
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator(
+                privileges: \Tests\Generator\Operands::tuple(
+                    new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
+                ),
+                kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure]),
+                level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\GlobalLevelGenerator()]),
+                grantees: \Tests\Generator\Operands::tuple(
+                    new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
+                        user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
+                            user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                                value: Generators::constant('u'),
+                                quote: Generators::constant(null)
+                            ),
+                            host: Generators::constant(null)
+                        )]),
+                        identification: Generators::constant(null)
+                    )
+                ),
+                tls: Generators::constant(null),
+                options: Generators::constant([]),
+                as: Generators::constant(null)
             )]),
             characteristics: Generators::constant([]),
             definer: Generators::constant(null),
@@ -1047,35 +1045,33 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredGrantLevelGenerator(
-                request: new \Tests\Generator\MySql\Statement\Account\Privilege\Request\GrantRequestGenerator(
-                    privileges: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
-                    ),
-                    kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure]),
-                    level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\GlobalLevelGenerator()]),
-                    grantees: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
-                            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                                user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('u'),
-                                    quote: Generators::constant(null)
-                                ),
-                                host: Generators::constant(null)
-                            )]),
-                            identification: Generators::constant(null)
-                        )
-                    ),
-                    tls: Generators::constant(null),
-                    options: Generators::constant([]),
-                    as: new \Tests\Generator\MySql\Statement\Account\Privilege\GrantAsGenerator(
-                        user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                            parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator(
+                privileges: \Tests\Generator\Operands::tuple(
+                    new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
+                ),
+                kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure]),
+                level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\GlobalLevelGenerator()]),
+                grantees: \Tests\Generator\Operands::tuple(
+                    new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
+                        user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
+                            user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                                value: Generators::constant('u'),
+                                quote: Generators::constant(null)
+                            ),
+                            host: Generators::constant(null)
                         )]),
-                        roles: new \Tests\Generator\MySql\Statement\Account\User\RoleSelectionGenerator(
-                            set: \Tests\Generator\MySql\Statement\Account\User\RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All]),
-                            roles: Generators::constant([])
-                        )
+                        identification: Generators::constant(null)
+                    )
+                ),
+                tls: Generators::constant(null),
+                options: Generators::constant([]),
+                as: new \Tests\Generator\MySql\Statement\Account\Privilege\GrantAsGenerator(
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
+                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
+                    )]),
+                    roles: new \Tests\Generator\MySql\Statement\Account\User\RoleSelectionGenerator(
+                        set: \Tests\Generator\MySql\Statement\Account\User\RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All]),
+                        roles: Generators::constant([])
                     )
                 )
             )]),
@@ -1116,34 +1112,31 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredGrantAsGenerator(
-                grant: new \Tests\Generator\MySql\Statement\Account\Privilege\Request\GrantRequestGenerator(
-                    privileges: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
-                    ),
-                    kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table]),
-                    level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\DatabaseLevelGenerator(
-                        database: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::constant('d'),
-                            quote: Generators::constant(null)
-                        )
-                    )]),
-                    grantees: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
-                            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                                user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('u'),
-                                    quote: Generators::constant(null)
-                                ),
-                                host: Generators::constant(null)
-                            )]),
-                            identification: Generators::constant(null)
-                        )
-                    ),
-                    tls: Generators::constant(null),
-                    options: Generators::constant([]),
-                    as: Generators::constant(null)
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator(
+                privileges: \Tests\Generator\Operands::tuple(
+                    new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
                 ),
+                kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table]),
+                level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\DatabaseLevelGenerator(
+                    database: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                        value: Generators::constant('d'),
+                        quote: Generators::constant(null)
+                    )
+                )]),
+                grantees: \Tests\Generator\Operands::tuple(
+                    new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
+                        user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
+                            user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                                value: Generators::constant('u'),
+                                quote: Generators::constant(null)
+                            ),
+                            host: Generators::constant(null)
+                        )]),
+                        identification: Generators::constant(null)
+                    )
+                ),
+                tls: Generators::constant(null),
+                options: Generators::constant([]),
                 as: new \Tests\Generator\MySql\Statement\Account\Privilege\GrantAsGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])

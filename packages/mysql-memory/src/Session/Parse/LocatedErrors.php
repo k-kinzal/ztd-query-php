@@ -26,6 +26,9 @@ final class LocatedErrors
      */
     public function parsed(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $warning, MySqlStatement $operation, Session $session): SqlError
     {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege) {
+            return (new Entry\PrivilegeInput())->level($operation, $session);
+        }
         if (\MySqlMemory\Session\Problem\Stages::locked($warning->problem)) {
             (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
         }

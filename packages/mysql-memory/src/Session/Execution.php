@@ -167,6 +167,9 @@ final class Execution
         if ($read && !$session->replayed) {
             $this->parsing($operation, array_diff_key($operation->statementInformation()->warnings, $late));
         }
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && $operation->condition() !== null) {
+            throw (new Parse\Entry\PrivilegeInput())->level($operation, $session, !$read);
+        }
         foreach ($session->replayed ? $operation->statementInformation()->warnings : [] as $warning) {
             if ($warning instanceof Deprecation && $warning->construct === \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryBitwise) {
                 $session->diagnostics->warning($warning->code(), $warning->message());

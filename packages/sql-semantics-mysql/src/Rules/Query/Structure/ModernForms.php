@@ -99,7 +99,6 @@ final class ModernForms
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions => true,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput => $value->source !== \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile || $value->count !== null || $value->primaryKeyOrder,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable => $value->compression !== null,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredGrantLevel => $value->request->columnLevel(),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName => (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->problem($value->user, $value->host, \SqlSemantics\Contract\GrammarRelease::MySql5744) !== null,
             $value === ElementaryKind::Vector, $value === TextOptionKind::EngineAttribute,
             $value === TextOptionKind::SecondaryEngineAttribute, $value instanceof AutoextendSizeOption => true,

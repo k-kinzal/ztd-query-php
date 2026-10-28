@@ -27,11 +27,8 @@ final class PrivilegeInput
     /**
      * Formats immediate or deferred target contradictions using their semantic operands.
      */
-    public function placement(\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege|\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel $problem, Session $session): ?SqlError
+    public function placement(\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege $problem, Session $session): ?SqlError
     {
-        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel) {
-            return $this->level($problem, $session);
-        }
         return match ($problem->error) {
             'ER_UNSUPPORTED_USE_OF_GRANT_AS' => \MySqlMemory\Error\Family\AccountError::UnsupportedGrantAs->error(),
             'ER_ILLEGAL_GRANT_FOR_TABLE' => \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error(),
@@ -42,12 +39,11 @@ final class PrivilegeInput
     /**
      * Preserves account spelling, database and AS precedence before a target condition.
      */
-    public function level(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel $problem, Session $session): SqlError
+    public function level(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges $request, Session $session, bool $stored = false): SqlError
     {
-        if ($problem->definition) {
-            return \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
+        if ($stored && $request->as !== null && !$request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel) {
+            return \MySqlMemory\Error\Family\AccountError::UnsupportedGrantAs->error();
         }
-        $request = $problem->request;
         $names = new \MySqlMemory\Command\Account\Names($session->settings()->release());
         try {
             if (!$session->settings()->legacy() || !$request->columnLevel()) {
@@ -65,8 +61,9 @@ final class PrivilegeInput
                 $names->resolve($names->identity($grantee->user, $session), $session->diagnostics);
             }
         }
-        return $problem->condition->error === 'ER_ILLEGAL_PRIVILEGE_LEVEL'
-            ? \MySqlMemory\Error\Family\AccountError::IllegalPrivilegeLevel->error($request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel ? $request->level->name->name->value : strtoupper($problem->condition->privilege))
+        $problem = $request->scopeProblem();
+        return $problem?->error === 'ER_ILLEGAL_PRIVILEGE_LEVEL'
+            ? \MySqlMemory\Error\Family\AccountError::IllegalPrivilegeLevel->error($request->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel ? $request->level->name->name->value : strtoupper($problem->privilege))
             : \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
     }
 

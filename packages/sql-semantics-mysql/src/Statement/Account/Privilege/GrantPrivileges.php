@@ -31,20 +31,16 @@ use SqlSemantics\Rendering\Output;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html,
  * https://dev.mysql.com/doc/refman/5.7/en/grant.html. Status: Implemented.
  *
- * A standalone AS clause requires the global level. Stored program instructions
- * that defer this condition use DeferredGrantAs instead.
+ * Intrinsic level conditions remain beside the complete request. Stored programs
+ * bind and execute the same statement type when the instruction is reached.
  *
  * @visibility public
- * @example Refusing AS at a database privilege level
- *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel(new \SqlSemantics\Statement\Identifier\Name('d')), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())], as: new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Refusing a routine kind at the global level
- *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing column privileges on a routine
  *     new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'))), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Granting table privileges with the grant option
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('grant select, insert on table shop.t to app@localhost with grant option')->toString() // => 'GRANT SELECT, INSERT ON shop.t TO app@localhost WITH GRANT OPTION'
  */
-final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
+final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
@@ -86,21 +82,98 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
-        $request = new Request\GrantRequest($privileges, $kind, $level, $grantees, $tls, $options, $as);
-        $this->privileges = $request->privileges;
-        $this->grantees = $request->grantees;
-        $this->options = $request->options;
-        Check::input($request->scopeProblem() === null, 'The privilege and object kind must fit the grant level.');
-        Check::input($as === null || $level instanceof Level\GlobalLevel, 'GRANT AS applies only at the global privilege level.');
+        $this->privileges = Check::listOf($privileges, Privilege::class, 'GRANT names at least one privilege.', 1);
+        $this->grantees = array_map(Grantee::from(...), Check::listOf($grantees, \SqlSemantics\Statement\Node::class, 'GRANT names at least one account.', 1));
+        $this->options = Check::listOf($options, WithOption::class, 'The WITH clause lists options.');
+        foreach ($this->privileges as $privilege) {
+            Check::input($kind === ObjectKind::Table || !$privilege instanceof Item\StaticPrivilege || $privilege->columns === [], 'Column privileges apply only to tables.');
+            Check::input(!$privilege instanceof Item\AllPrivileges || count($this->privileges) === 1, 'ALL is the only item of its list.');
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives the level, the table and the account clauses.
+     * Answers a target-kind, column-level, dynamic-level or static object privilege contradiction.
+     *
+     * Database-only static restrictions have later account resolution precedence
+     * and are derived separately. Dynamic privileges precede object lookup.
+     */
+    public function scopeProblem(): ?\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege
+    {
+        if ($this->kind !== ObjectKind::Table && !$this->level instanceof Level\ObjectLevel) {
+            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege((string) $this->kind->keyword(), $this->level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE');
+        }
+        $invalid = null;
+        $dynamic = null;
+        foreach ($this->privileges as $privilege) {
+            if ($privilege instanceof Item\DynamicPrivilege && !$this->level instanceof Level\GlobalLevel) {
+                $dynamic ??= new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege($privilege->name->value, $this->level->describe(), 'ER_ILLEGAL_PRIVILEGE_LEVEL');
+            }
+            if (!$privilege instanceof Item\StaticPrivilege) {
+                continue;
+            }
+            if ($privilege->columns !== [] && !$this->level instanceof Level\ObjectLevel) {
+                return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege($privilege->kind->value . ' with a column list', $this->level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE');
+            }
+            if ($this->level instanceof Level\ObjectLevel && !($this->kind === ObjectKind::Table ? $privilege->kind->table() : $privilege->kind->routine())) {
+                $invalid ??= new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege($privilege->kind->value, $this->level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE');
+            }
+        }
+        return $dynamic ?? $invalid;
+    }
+
+    /**
+     * Identifies column privileges outside a table target, refused at legacy definition time.
+     */
+    public function columnLevel(): bool
+    {
+        return !$this->level instanceof Level\ObjectLevel && array_filter($this->privileges, static fn (Privilege $privilege): bool => $privilege instanceof Item\StaticPrivilege && $privilege->columns !== []) !== [];
+    }
+
+    /**
+     * Answers the condition of a complete privilege request before object lookup.
+     */
+    public function condition(): ?\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege
+    {
+        if ($this->as !== null && !$this->level instanceof Level\GlobalLevel) {
+            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', $this->level->describe(), 'ER_UNSUPPORTED_USE_OF_GRANT_AS');
+        }
+        return $this->scopeProblem();
+    }
+
+    /**
+     * Derives the complete request, keeping invocation conditions out of stored definitions.
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new PrivilegeChecks())->grant($derivation, $this->privileges, $this->kind, $this->level);
+        (new PrivilegeChecks())->notices($this->privileges, $derivation);
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($legacy && $this->columnLevel()) {
+            $problem = $this->scopeProblem();
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->level);
+            }
+            return;
+        }
+        $condition = $this->condition();
+        if ($condition !== null && !$derivation->inProgram()) {
+            $derivation->report($condition);
+        }
+        if ($this->scopeProblem() === null) {
+            (new PrivilegeChecks())->grant($derivation, $this->privileges, $this->kind, $this->level);
+        }
+    }
+
+    /**
+     * Derives a stored request through the same statement boundary as ordinary GRANT.
+     */
+    public function deriveProgram(Derivation $derivation, \SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope $scope): void
+    {
+        if ($scope->kind !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Routine\ProgramRestrictions())->check($this, $scope->kind, $derivation);
+        }
+        $derivation->program($this, $scope->environment);
     }
 
     /**
@@ -108,6 +181,18 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
      */
     public function render(Output $out): void
     {
-        $out->node(new Request\GrantRequest($this->privileges, $this->kind, $this->level, $this->grantees, $this->tls, $this->options, $this->as));
+        $out->keyword('GRANT')->list($this->privileges)->keyword('ON');
+        $keyword = $this->kind->keyword();
+        if ($keyword !== null) {
+            $out->keyword($keyword);
+        }
+        $out->node($this->level)->keyword('TO')->list($this->grantees)->node($this->tls);
+        if ($this->options !== []) {
+            $out->keyword('WITH');
+            foreach ($this->options as $option) {
+                $out->node($option);
+            }
+        }
+        $out->node($this->as);
     }
 }

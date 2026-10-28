@@ -25,24 +25,22 @@ final class PrivilegeInputTest extends TestCase
 
     public function testLevelUsesTypedTargetsWithoutReadingRequestText(): void
     {
-        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
-        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel($request);
+        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())]);
         $session = (new Instance())->connect();
         $session->text = 'unrelated invalid input';
-        self::assertSame(1046, (new PrivilegeInput())->level($problem, $session)->getCode());
+        self::assertSame(1046, (new PrivilegeInput())->level($request, $session)->getCode());
         $session->variables->database = 'd';
-        self::assertSame(1144, (new PrivilegeInput())->level($problem, $session)->getCode());
+        self::assertSame(1144, (new PrivilegeInput())->level($request, $session)->getCode());
     }
 
     public function testLevelPreservesLegacyDatabaseAndColumnScopePriorityBeforeRecipientLength(): void
     {
-        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Request\GrantRequest([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('_sqlfaker_identifier')))]);
-        $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedGrantLevel($request);
+        $request = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [new \SqlSemantics\Statement\Identifier\Name('a')])], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel(), [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('_sqlfaker_identifier')))]);
         $session = (new Instance('5.6.51'))->connect();
         $session->text = 'unrelated invalid input';
-        self::assertSame(1046, (new PrivilegeInput())->level($problem, $session)->getCode());
+        self::assertSame(1046, (new PrivilegeInput())->level($request, $session)->getCode());
         $session->variables->database = 'd';
-        self::assertSame(1144, (new PrivilegeInput())->level($problem, $session)->getCode());
+        self::assertSame(1144, (new PrivilegeInput())->level($request, $session)->getCode());
         self::assertSame('unrelated invalid input', $session->text);
     }
 
