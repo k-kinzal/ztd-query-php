@@ -97,6 +97,12 @@ table use COPY even for an identical replacement, and reject INPLACE or INSTANT.
 MySQL 5.6 and 5.7 ignore index direction; newer releases reject descending
 indexes on MyISAM and MEMORY.
 
+InnoDB applies its virtual-column restrictions to functional indexes as well.
+Replacing a functional index or adding a visible virtual column before an
+existing functional-index slot requires COPY. Adding a functional index alone
+can use INPLACE, but requires a shared lock. Unsupported ALGORITHM and LOCK
+choices report the corresponding server error before changing the table.
+
 ## Verification
 
 The package uses the repository's ordinary unit, integration and property tests

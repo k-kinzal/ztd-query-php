@@ -99,6 +99,41 @@ final class AlterTableGenerator implements ErisGenerator
     }
 
     /**
+     * Composes functional-index and virtual-column changes with the table and rows they need.
+     *
+     * @return ErisGenerator<array{AnalyzedStatement, AnalyzedStatement, AnalyzedStatement, int}>
+     */
+    public static function functionalSequences(GrammarRelease $release): ErisGenerator
+    {
+        $values = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(MySql\Type\Resolved\Collation::known('utf8mb4_unicode_ci'), Generators::map(static fn (int $value): string => (string) $value, Generators::choose(-10000, 10000)));
+        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(Generators::vector(1, $values))));
+        return Generators::map(static function (array $parts) use ($release): array {
+            [$name, $column, $rows, $action] = $parts;
+            $table = new QualifiedName($name);
+            $expression = static fn (string $amount): MySql\Expression\Operator\Arithmetic => new MySql\Expression\Operator\Arithmetic(MySql\Expression\Operator\ArithmeticOperator::Plus, new MySql\Name\ColumnUse($column), new MySql\Literal\NumberLiteral($amount));
+            $index = new MySql\Table\Key\IndexDefinition(MySql\Table\Key\IndexKind::Index, [new MySql\Table\Key\ExpressionPart($expression('1'))], new MySql\Name\ColumnName(new Name('i')));
+            $field = new MySql\Table\Column\ColumnDefinition(new MySql\Name\ColumnName($column), new MySql\Table\Column\OrdinaryColumn(new MySql\Type\Integral(MySql\Type\Kind\IntegralKind::Int)));
+            $create = new MySql\Table\CreateTable($table, [$field, $index]);
+            $virtual = new MySql\Table\Column\ColumnDefinition(new MySql\Name\ColumnName(new Name('generated_value')), new MySql\Table\Column\GeneratedColumn(new MySql\Type\Integral(MySql\Type\Kind\IntegralKind::Int), $expression('2')));
+            $add = new MySql\Alter\Command\AddConstraint(new MySql\Table\Key\IndexDefinition(MySql\Table\Key\IndexKind::Index, [new MySql\Table\Key\ExpressionPart($expression($action === 0 ? '2' : '1'))], new MySql\Name\ColumnName(new Name($action === 0 ? 'j' : 'i'))));
+            $drop = new MySql\Alter\Command\DropElement(MySql\Alter\Command\ElementKind::Index, new MySql\Name\ColumnName(new Name('i')));
+            $commands = match ($action) {
+                0 => [$add],
+                1 => [$drop],
+                2 => [$drop, $add],
+                3 => [new MySql\Alter\Column\AddColumns([$virtual])],
+                default => [new MySql\Alter\Column\AddColumns([$virtual]), new MySql\Alter\Command\AddConstraint(new MySql\Table\Key\IndexDefinition(MySql\Table\Key\IndexKind::Index, [new MySql\Table\Key\ColumnPart(new Name('generated_value'))], new MySql\Name\ColumnName(new Name('j'))))],
+            };
+            $context = new AnalysisContext(new LanguageProfile($release), [new Name('pbt')], session: new MySql\Type\Resolved\Settings(MySql\Type\Resolved\Collation::known('utf8mb4_unicode_ci')));
+            $publication = new Publication();
+            $definition = $publication->publish($context, $create);
+            $context = new AnalysisContext($context->profile, [new Name('pbt')], $definition->declarations(), session: $context->session);
+            $insert = new MySql\Dml\Insert\InsertRows(new MySql\Dml\Insert\InsertInto(false, null, false, new MySql\Dml\WriteTarget($table)), $rows);
+            return [$definition, $publication->publish($context, $insert), $publication->publish($context, new MySql\Alter\AlterTable($table, $commands)), $action >= 2 ? count($rows) : 0];
+        }, \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $rows, Generators::choose(0, 4)));
+    }
+
+    /**
      * Composes the statement's SQL forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<MySql\Alter\AlterTable>>

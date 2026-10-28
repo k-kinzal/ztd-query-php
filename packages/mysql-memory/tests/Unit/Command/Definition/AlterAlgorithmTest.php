@@ -75,7 +75,7 @@ final class AlterAlgorithmTest extends TestCase
     }
 
     #[DataProvider('providerRestrictions')]
-    public function testRefusesUnsupportedAlgorithmsBeforePublishingChanges(string $engine, bool $temporary, string $action, int $code, string $message): void
+    public function testInstantAndOtherRestrictionsPreventPublishingChanges(string $engine, bool $temporary, string $action, int $code, string $message): void
     {
         $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
         $session->query('CREATE ' . ($temporary ? 'TEMPORARY ' : '') . "TABLE t(a INT, b INT, KEY i(a)) ENGINE=$engine");
@@ -183,6 +183,89 @@ final class AlterAlgorithmTest extends TestCase
         $rows = $session->query('SELECT a, b FROM t ORDER BY a')[0];
         self::assertInstanceOf(ResultSet::class, $rows);
         self::assertSame([['1', null], ['2', null]], $rows->rows);
+    }
+
+    public function testOriginsRetainsTheHiddenSlotAfterAddingAnSqlColumn(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, KEY i((a + 1)))');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $layout = \MySqlMemory\Command\Definition\TableLayout::of($table->definition);
+        $session->query('ALTER TABLE t ADD b INT');
+        self::assertSame([0, null, 1], (new AlterAlgorithm())->origins($table->definition, [0, null], $layout));
+    }
+
+    #[DataProvider('providerVirtualChanges')]
+    public function testVirtualAlgorithmReportsTheCopiedRows(string $action, int $affected): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, KEY i((a + 1))); INSERT INTO t VALUES (1), (2)');
+        $reply = $session->query('ALTER TABLE t ' . $action)[0];
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame($affected, $reply->affectedRows);
+        self::assertSame("Records: $affected  Duplicates: 0  Warnings: 0", $reply->info);
+        $rows = $session->query('SELECT a FROM t ORDER BY a')[0];
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['1'], ['2']], $rows->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerVirtualChanges(): iterable
+    {
+        yield 'added functional index' => ['ADD INDEX j((a + 2))', 0];
+        yield 'dropped functional index' => ['DROP INDEX i', 0];
+        yield 'replaced functional index' => ['DROP INDEX i, ADD INDEX i((a + 1))', 2];
+        yield 'new visible virtual column' => ['ADD COLUMN v INT AS (a + 2)', 2];
+        yield 'new indexed virtual column' => ['ADD COLUMN v INT AS (a + 2), ADD INDEX j(v)', 2];
+        yield 'replaced hidden column with visible column' => ['DROP INDEX i, ADD COLUMN v INT AS (a + 2), ADD INDEX j(v)', 2];
+    }
+
+    #[DataProvider('providerVirtualRestrictions')]
+    public function testVirtualAlgorithmRefusesUnsupportedAlgorithmsAndLocks(string $action, string $message): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, KEY i((a + 1)))');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1846);
+        $this->expectExceptionMessage($message);
+        $session->query('ALTER TABLE t ' . $action);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerVirtualRestrictions(): iterable
+    {
+        yield 'index requires shared lock' => ['ADD INDEX j((a + 2)), LOCK=NONE', 'LOCK=NONE is not supported. Reason: ADD COLUMN col...VIRTUAL, ADD INDEX(col). Try LOCK=SHARED.'];
+        yield 'index cannot be instant' => ['ADD INDEX j((a + 2)), ALGORITHM=INSTANT', 'ALGORITHM=INSTANT is not supported. Reason: ADD COLUMN col...VIRTUAL, ADD INDEX(col). Try ALGORITHM=COPY/INPLACE.'];
+        foreach (['DROP INDEX i, ADD INDEX i((a + 1))', 'ADD COLUMN v INT AS (a + 2)'] as $action) {
+            foreach (['ALGORITHM=INSTANT' => 'ALGORITHM=COPY/INPLACE', 'ALGORITHM=INPLACE' => 'ALGORITHM=COPY', 'LOCK=NONE' => 'LOCK=SHARED'] as $option => $alternative) {
+                yield "$action/$option" => [$action . ', ' . $option, "$option is not supported. Reason: INPLACE ADD or DROP of virtual columns cannot be combined with other ALTER TABLE actions. Try $alternative."];
+            }
+        }
+    }
+
+    public function testVirtualOrderPreservesTheValuesOfANewVisibleColumnBeforeAFunctionalSlot(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT, KEY i((a + 1))); INSERT INTO t VALUES (1), (2)');
+        $session->query('ALTER TABLE t ADD v INT AS (a + 2)');
+        $rows = $session->query('SELECT a, v FROM t ORDER BY a')[0];
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['1', '3'], ['2', '4']], $rows->rows);
+    }
+
+    public function testTypeAlgorithmRefusesInstantTypeChangesWithTheEngineReason(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1846);
+        $this->expectExceptionMessage('ALGORITHM=INSTANT is not supported. Reason: Need to rebuild the table to change column type. Try ALGORITHM=COPY/INPLACE.');
+        $session->query('ALTER TABLE t MODIFY a BIGINT, ALGORITHM=INSTANT');
     }
 
     #[DataProvider('providerRenames')]

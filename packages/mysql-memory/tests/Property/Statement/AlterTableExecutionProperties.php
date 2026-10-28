@@ -70,6 +70,52 @@ final class AlterTableExecutionProperties extends TestCase
     }
 
     /**
+     * Functional-index slots follow generated definitions through additions and replacements.
+     */
+    #[Test]
+    #[DataProvider('providerFunctionalReleases')]
+    public function satisfiesFunctionalIndexChangesPreserveRowsAndCountVirtualCopies(GrammarRelease $release): void
+    {
+        $this->forAll(AlterTableGenerator::functionalSequences($release))->then(static function (array $sequence) use ($release): void {
+            [$create, $insert, $alter, $affected] = $sequence;
+            self::assertInstanceOf(CreateTable::class, $create);
+            self::assertInstanceOf(InsertRows::class, $insert);
+            self::assertInstanceOf(AlterTable::class, $alter);
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $session->text = 'Generated functional index without SQL';
+            $execution = new Execution($session);
+            $execution->statement($create);
+            $execution->statement($insert);
+            $reply = $execution->statement($alter);
+            self::assertInstanceOf(Completion::class, $reply);
+            self::assertSame($affected, $reply->affectedRows);
+            self::assertSame('Records: ' . $reply->affectedRows . '  Duplicates: 0  Warnings: 0', $reply->info);
+            self::assertSame(0, $reply->warnings);
+            $table = $session->instance->dictionary->table('pbt', $create->name->name->value);
+            self::assertNotNull($table);
+            $expected = [];
+            foreach ($insert->rows as $row) {
+                self::assertInstanceOf(StringLiteral::class, $row->values[0]);
+                $expected[] = (int) $row->values[0]->value();
+            }
+            self::assertSame($expected, array_column($table->data->rows, 0));
+            self::assertSame('Generated functional index without SQL', $session->text);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerFunctionalReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql' && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

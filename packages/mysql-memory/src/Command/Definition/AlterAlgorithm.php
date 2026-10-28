@@ -47,16 +47,19 @@ final class AlterAlgorithm
         $innoDb = strcasecmp($old->engine, 'InnoDB') === 0;
         $engineCopy = !$innoDb && ($rekeyed || $retyped);
         $copies = $copies || $engineCopy;
-        if ($change->algorithm === 'instant' && ($retyped || $copies || $rekeyed || ($innoDb && $this->renamedKeys($change->layout)))) {
-            throw SchemaError::AlterOperationNotSupported->error('ALGORITHM=INSTANT', 'ALGORITHM=COPY/INPLACE');
+        if ($innoDb && $change->algorithm !== 'copy') {
+            if ($retyped) {
+                $this->typeAlgorithm($change);
+            } else {
+                $copies = $this->virtualAlgorithm($old, $new, $origins, $change) || $copies;
+            }
         }
+        $this->instant($change, $copies, $rekeyed, $innoDb);
         if ($change->algorithm === 'copy' && $change->lock === 'none') {
             throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'COPY algorithm requires a lock', 'LOCK=SHARED');
         }
         if ($engineCopy) {
             $this->engineAlgorithm($change);
-        } elseif ($retyped) {
-            $this->typeAlgorithm($change);
         }
 
         return $copies || $retyped;
@@ -87,12 +90,28 @@ final class AlterAlgorithm
     }
 
     /**
+     * Rejects INSTANT when storage work remains or InnoDB must rename an index.
+     * More specific column and virtual-slot restrictions have already been checked.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the requested change has no instant implementation
+     */
+    public function instant(TableChange $change, bool $copies, bool $rekeyed, bool $innoDb): void
+    {
+        if ($change->algorithm === 'instant' && ($copies || $rekeyed || ($innoDb && $this->renamedKeys($change->layout)))) {
+            throw SchemaError::AlterOperationNotSupported->error('ALGORITHM=INSTANT', 'ALGORITHM=COPY/INPLACE');
+        }
+    }
+
+    /**
      * Refuses algorithms and locks that cannot rebuild changed column types.
      *
      * @throws \MySqlMemory\Error\SqlError When the selected algorithm or lock requires an in-place type change
      */
     public function typeAlgorithm(TableChange $change): void
     {
+        if ($change->algorithm === 'instant') {
+            throw SchemaError::AlterOperationNotSupportedReason->error('ALGORITHM=INSTANT', 'Need to rebuild the table to change column type', 'ALGORITHM=COPY/INPLACE');
+        }
         if ($change->algorithm === 'inplace') {
             throw SchemaError::AlterOperationNotSupportedReason->error('ALGORITHM=INPLACE', 'Cannot change column type INPLACE', 'ALGORITHM=COPY');
         }
@@ -143,11 +162,10 @@ final class AlterAlgorithm
             return true;
         }
         $renames = [];
-        $retained = [];
+        $origins = $this->origins($new, $origins, $layout);
         foreach ($layout->keys as [$element, $origin]) {
             if ($element instanceof IndexDefinition && $origin !== null && $element->name !== null) {
                 $renames[strtolower($origin->name)] = strtolower($element->name->column->value);
-                $retained[strtolower($element->name->column->value)] = true;
             }
         }
         $before = [];
@@ -159,7 +177,7 @@ final class AlterAlgorithm
             if ($previous === null) {
                 return true;
             }
-            $positions = array_map(static fn (int $column, int $part): ?int => $new->columns[$column]->functional !== null && isset($retained[strtolower($key->name)]) ? ($previous->columns[$part] ?? null) : ($origins[$column] ?? null), $key->columns, array_keys($key->columns));
+            $positions = array_map(static fn (int $column): ?int => $origins[$column], $key->columns);
             if ($previous->columns !== $positions) {
                 return true;
             }
@@ -184,5 +202,103 @@ final class AlterAlgorithm
         }
 
         return false;
+    }
+
+    /**
+     * Extends SQL column origins to the hidden slots of retained functional indexes.
+     *
+     * @param list<int|null> $origins Origins of visible SQL declarations
+     * @return list<int|null> Origins of every stored slot, including functional key parts
+     */
+    public function origins(TableDefinition $new, array $origins, TableLayout $layout): array
+    {
+        $retained = [];
+        foreach ($layout->keys as [$element, $origin]) {
+            if ($element instanceof IndexDefinition && $origin !== null && $element->name !== null) {
+                $retained[strtolower($element->name->column->value)] = $origin;
+            }
+        }
+        $functional = [];
+        foreach ($new->keys as $key) {
+            $old = $retained[strtolower($key->name)] ?? null;
+            foreach ($old === null ? [] : $key->columns as $part => $column) {
+                if ($new->columns[$column]->functional !== null) {
+                    $functional[$column] = $old->columns[$part] ?? null;
+                }
+            }
+        }
+        $mapped = [];
+        foreach ($new->columns as $position => $column) {
+            $mapped[] = $column->functional === null ? ($origins[$position] ?? null) : ($functional[$position] ?? null);
+        }
+
+        return $mapped;
+    }
+
+    /**
+     * Applies InnoDB's restrictions on virtual-column order and newly indexed virtual slots.
+     * Functional indexes use these same slots. Adding an indexed virtual column while
+     * dropping another requires COPY; adding one alone needs a shared lock.
+     * Source: MySQL 8.4.7 storage/innobase/handler/handler0alter.cc,
+     * check_v_col_in_order() and ha_innobase::check_if_supported_inplace_alter().
+     *
+     * @param list<int|null> $origins Origins of visible SQL declarations
+     * @throws \MySqlMemory\Error\SqlError When an algorithm or lock cannot perform the change
+     */
+    public function virtualAlgorithm(TableDefinition $old, TableDefinition $new, array $origins, TableChange $change): bool
+    {
+        $origins = $this->origins($new, $origins, $change->layout);
+        $virtual = static fn (ColumnDefinition $column): bool => $column->generated !== null && !$column->stored;
+        $dropped = array_diff(array_keys(array_filter($old->columns, $virtual)), $origins) !== [];
+        $indexed = false;
+        foreach ($new->keys as $key) {
+            foreach ($key->columns as $column) {
+                $indexed = $indexed || ($origins[$column] === null && $virtual($new->columns[$column]));
+            }
+        }
+        $reordered = $this->virtualOrder($old, $new, $origins);
+        if (!$reordered && !$indexed) {
+            return false;
+        }
+        $copies = $reordered || $dropped;
+        $reason = $copies ? 'INPLACE ADD or DROP of virtual columns cannot be combined with other ALTER TABLE actions' : 'ADD COLUMN col...VIRTUAL, ADD INDEX(col)';
+        if ($change->algorithm === 'instant' || ($copies && $change->algorithm === 'inplace')) {
+            throw SchemaError::AlterOperationNotSupportedReason->error('ALGORITHM=' . strtoupper($change->algorithm), $reason, $change->algorithm === 'instant' ? 'ALGORITHM=COPY/INPLACE' : 'ALGORITHM=COPY');
+        }
+        if ($change->lock === 'none') {
+            throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', $reason, 'LOCK=SHARED');
+        }
+
+        return $copies;
+    }
+
+    /**
+     * Detects a newly added virtual slot before a retained virtual or auto-increment column,
+     * or a different relative order of retained virtual slots.
+     *
+     * @param list<int|null> $origins Origins including hidden functional slots
+     */
+    public function virtualOrder(TableDefinition $old, TableDefinition $new, array $origins): bool
+    {
+        $added = false;
+        $retained = [];
+        foreach ($new->columns as $position => $column) {
+            if ($column->generated === null || $column->stored) {
+                if ($added && $column->autoIncrement) {
+                    return true;
+                }
+                continue;
+            }
+            if ($origins[$position] === null) {
+                $added = true;
+            } elseif ($added) {
+                return true;
+            } else {
+                $retained[] = $origins[$position];
+            }
+        }
+        $before = array_keys(array_filter($old->columns, static fn (ColumnDefinition $column, int $position): bool => $column->generated !== null && !$column->stored && in_array($position, $origins, true), ARRAY_FILTER_USE_BOTH));
+
+        return $before !== $retained;
     }
 }
