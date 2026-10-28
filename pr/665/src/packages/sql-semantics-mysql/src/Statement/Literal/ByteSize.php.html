@@ -61,12 +61,12 @@
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> * @example Holding a size written with a multiplier</span></span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name(&#039;16M&#039;)))-&gt;word?-&gt;value // =&gt; &#039;16M&#039;</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * @example Refusing an unknown multiplier</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name(&#039;3T&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Refusing an overflowing coefficient</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name(&#039;2147483648K&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Refusing a fractional byte count</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;1.5&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * @example Retaining an unknown multiplier</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name(&#039;3T&#039;)))-&gt;word?-&gt;value // =&gt; &#039;3T&#039;</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Retaining an overflowing coefficient</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name(&#039;2147483648K&#039;)))-&gt;word?-&gt;value // =&gt; &#039;2147483648K&#039;</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Retaining a fractional byte count</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;1.5&#039;)))-&gt;number?-&gt;text // =&gt; &#039;1.5&#039;</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ByteSize</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>{</span>
@@ -81,21 +81,20 @@
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Numeral</span> <span class="tok-var">$number</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Name</span> <span class="tok-var">$word</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>)</span>
 <span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    {</span>
 <span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>((<span class="tok-var">$number</span> === <span class="tok-id">null</span>) !== (<span class="tok-var">$word</span> === <span class="tok-id">null</span>), <span class="tok-str">&#039;A size is either a number or a word.&#039;</span>);</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>((<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Server\StorageSizes</span>())-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$number</span>, <span class="tok-var">$word</span>) === <span class="tok-id">null</span>, <span class="tok-str">&#039;A storage size is an integer token or a bounded K, M or G coefficient.&#039;</span>);</span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    }</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * Writes the number or the word.</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    {</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">word</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">word</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Label</span>);</span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        }</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">number</span>);</span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    }</span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>}</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * Writes the number or the word.</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">word</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">word</span>, <span class="tok-id">NameUse</span>::<span class="tok-id">Label</span>);</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>        }</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">number</span>);</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>    }</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>}</span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

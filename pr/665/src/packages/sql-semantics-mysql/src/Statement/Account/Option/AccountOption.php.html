@@ -44,17 +44,17 @@
 <span class="src-line" id="L5" data-diff="same"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Account\Option</span>;</span>
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Rules\Account\NumberChecks</span>;</span>
-<span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\Numeral</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
+<span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Literal\Numeral</span>;</span>
+<span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a></span>
-<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * One password management or account locking option of CREATE USER or ALTER USER, with its number when it takes one.</span></span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a></span>
+<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com"> * One password management or account locking option of CREATE USER or ALTER USER, with its number when it takes one.</span></span>
+<span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-com"> * The number is kept as written. Several options may be written; for one</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * The number is an integer token within the option&#039;s range, kept as written.</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Every written number is retained; integer-token and option-range conditions</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * belong to the containing request.</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Several options may be written; for one</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-com"> * field the last option written wins in the server, so the list keeps every</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * option in source order.</span></span>
@@ -65,12 +65,12 @@
 <span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-com"> *     $option = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CREATE USER u PASSWORD HISTORY 5&#039;)-&gt;statement-&gt;options[0];</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> *     $option = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;CREATE USER u PASSWORD HISTORY 5&#039;)-&gt;options[0];</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com"> *     [$option-&gt;kind, $option-&gt;number?-&gt;text] // =&gt; [\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, &#039;5&#039;]</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Refusing an intrinsically invalid locking interval</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::LockTime, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;00032768&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Refusing a fractional password history</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;1.0&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Refusing a decimal token above the unsigned integer domain</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;18446744073709551616&#039;)) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Retaining an invalid locking interval</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::LockTime, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;00032768&#039;)))-&gt;number?-&gt;text // =&gt; &#039;00032768&#039;</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Retaining a fractional password history</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;1.0&#039;)))-&gt;number?-&gt;text // =&gt; &#039;1.0&#039;</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Retaining a number beyond the unsigned integer domain</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::HistoryCount, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral(&#039;18446744073709551616&#039;)))-&gt;number?-&gt;text // =&gt; &#039;18446744073709551616&#039;</span></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AccountOption</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>{</span>
@@ -85,23 +85,21 @@
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">AccountOptionKind</span> <span class="tok-var">$kind</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Numeral</span> <span class="tok-var">$number</span> = <span class="tok-id">null</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Statement\Source\Span</span> <span class="tok-var">$inputSource</span> = <span class="tok-id">null</span>)</span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    {</span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>((<span class="tok-var">$number</span> !== <span class="tok-id">null</span>) === <span class="tok-var">$kind</span>-&gt;<span class="tok-id">numbered</span>(), <span class="tok-str">&#039;A number is written exactly for an option that takes one.&#039;</span>);</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-var">$problem</span> = <span class="tok-var">$number</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : (<span class="tok-kw">new</span> <span class="tok-id">NumberChecks</span>())-&gt;<span class="tok-id">option</span>(<span class="tok-var">$kind</span>, <span class="tok-var">$number</span>);</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-var">$problem</span> === <span class="tok-id">null</span>, <span class="tok-var">$problem</span>?-&gt;<span class="tok-id">message</span>() ?? <span class="tok-str">&#039;An account option has an integer in its permitted range.&#039;</span>);</span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    }</span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a></span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a><span class="tok-com">     * Writes the option.</span></span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    {</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(...<span class="tok-var">$this</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">words</span>())-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">number</span>);</span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>        <span class="tok-var">$unit</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">unit</span>();</span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>        <span class="tok-kw">if</span> (<span class="tok-var">$unit</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-var">$unit</span>);</span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>        }</span>
-<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>    }</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>}</span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * Writes the option.</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    {</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(...<span class="tok-var">$this</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">words</span>())-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">number</span>);</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        <span class="tok-var">$unit</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">unit</span>();</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>        <span class="tok-kw">if</span> (<span class="tok-var">$unit</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-var">$unit</span>);</span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>        }</span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    }</span>
+<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>}</span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

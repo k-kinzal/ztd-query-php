@@ -64,8 +64,8 @@
 <span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-com"> * twice is RepeatedTlsAttribute (ER_DUP_ARGUMENT). PASSWORD EXPIRE INTERVAL</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">25</span><span class="tok-com"> * takes 1 to 65535 days, FAILED_LOGIN_ATTEMPTS and PASSWORD_LOCK_TIME 0 to</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">26</span><span class="tok-com"> * 32767, every other number of an option any integer (MYSQL-ACCOUNT-NUMBER-001).</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * twice and numeric options outside their domain are refused before ordinary</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * construction. The typed values enforce these intrinsic constraints.</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * twice is refused before construction. Numeric options retain their values;</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * their integer-token and range conditions are derived here.</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> * An ATTRIBUTE string that is not a JSON object is InvalidUserAttribute;</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-com"> * the JSON text is read with the JSON grammar of RFC 8259, which the server</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">29</span><span class="tok-com"> * also implements. A factor change names factors 2 or 3, two changes name</span></span>
@@ -125,11 +125,15 @@
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        }</span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    }</span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a></span>
-<span class="src-line" data-diff="removed"><span class="ln">84</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">85</span><span class="tok-com">     * Reports the factor numbers and the factor pair of an ALTER USER factor change.</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">86</span><span class="tok-com">     */</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * Publishes numeric option conditions without losing later options or accounts.</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption&gt; $options The written options</span></span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">87</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">factors</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-id">FactorChange</span> <span class="tok-var">$change</span>): <span class="tok-id">void</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">88</span>    {</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">options</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-kw">array</span> <span class="tok-var">$options</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">89</span>        <span class="tok-var">$numbers</span> = <span class="tok-kw">new</span> <span class="tok-id">NumberChecks</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">90</span>        <span class="tok-kw">foreach</span> (<span class="tok-var">$change</span>-&gt;<span class="tok-id">steps</span> <span class="tok-kw">as</span> <span class="tok-var">$step</span>) {</span>
 <span class="src-line" data-diff="removed"><span class="ln">91</span>            <span class="tok-var">$numbers</span>-&gt;<span class="tok-id">factor</span>(<span class="tok-var">$derivation</span>, <span class="tok-var">$step</span>-&gt;<span class="tok-id">factor</span>);</span>
@@ -141,11 +145,20 @@
 <span class="src-line" data-diff="removed"><span class="ln">97</span>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-kw">new</span> <span class="tok-id">InvalidFactorPair</span>(<span class="tok-id">true</span>));</span>
 <span class="src-line" data-diff="removed"><span class="ln">98</span>            } <span class="tok-kw">elseif</span> (<span class="tok-var">$change</span>-&gt;<span class="tok-id">action</span> === <span class="tok-id">FactorAction</span>::<span class="tok-id">Add</span> &amp;&amp; <span class="tok-var">$numbers</span>-&gt;<span class="tok-id">compare</span>(<span class="tok-var">$first</span>, <span class="tok-var">$second</span>) &gt; <span class="tok-num">0</span>) {</span>
 <span class="src-line" data-diff="removed"><span class="ln">99</span>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-kw">new</span> <span class="tok-id">InvalidFactorPair</span>(<span class="tok-id">false</span>));</span>
-<span class="src-line" data-diff="removed"><span class="ln">100</span>            }</span>
-<span class="src-line" data-diff="removed"><span class="ln">101</span>        }</span>
-<span class="src-line" data-diff="removed"><span class="ln">102</span>    }</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>}</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$options</span> <span class="tok-kw">as</span> <span class="tok-var">$option</span>) {</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>            <span class="tok-kw">if</span> (<span class="tok-var">$option</span>-&gt;<span class="tok-id">number</span> === <span class="tok-id">null</span> || !(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Rules\Server\Magnitudes</span>())-&gt;<span class="tok-id">integer</span>(<span class="tok-var">$derivation</span>, <span class="tok-var">$option</span>-&gt;<span class="tok-id">number</span>)) {</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>            }</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>            <span class="tok-var">$problem</span> = (<span class="tok-kw">new</span> <span class="tok-id">NumberChecks</span>())-&gt;<span class="tok-id">option</span>(<span class="tok-var">$option</span>-&gt;<span class="tok-id">kind</span>, <span class="tok-var">$option</span>-&gt;<span class="tok-id">number</span>);</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>            <span class="tok-kw">if</span> (<span class="tok-var">$problem</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-var">$problem</span>);</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">warn</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure</span>(<span class="tok-var">$problem</span>, <span class="tok-id">true</span>), <span class="tok-var">$option</span>);</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>            }</span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>        }</span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    }</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a></span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>}</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
