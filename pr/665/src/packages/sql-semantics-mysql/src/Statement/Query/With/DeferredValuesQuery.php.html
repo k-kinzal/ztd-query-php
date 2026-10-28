@@ -59,16 +59,16 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * A VALUES query template with a retained operand preparation condition.</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * QueryRoot excludes reached templates. CTE and stored instruction roles retain</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * every row, including rows before and after the first deferred operand.</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * QueryRoot, CTE and stored instruction roles retain every row, including rows</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * before and after the first deferred operand. Reading checks the condition.</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * @example Refusing a template without a deferred row</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Refusing a reached template as an ordinary read statement</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Retaining a reached template with its execution condition</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;1&#039;), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(&#039;2&#039;)]);</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow([$row])]);</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query))-&gt;hasExecutionCondition() // =&gt; true</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">DeferredValuesQuery</span> <span class="tok-kw">implements</span> <span class="tok-id">Query</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>{</span>
