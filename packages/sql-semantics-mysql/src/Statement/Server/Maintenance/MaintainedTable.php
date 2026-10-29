@@ -29,14 +29,16 @@ final class MaintainedTable implements Node, \SqlSemantics\Statement\TableUse
 
     /**
      * @param QualifiedName $name The table name with its optional database
+     * @param \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $dot Whether the legacy unqualified name has a leading dot
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
+    public function __construct(public readonly QualifiedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null, public readonly \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $dot = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
         }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A table is qualified by at most a database.');
+        Check::input($dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted || $name->schema === null, 'Only a table name without database is written after a leading dot.');
     }
 
     /**
@@ -44,6 +46,9 @@ final class MaintainedTable implements Node, \SqlSemantics\Statement\TableUse
      */
     public function render(Output $out): void
     {
+        if ($this->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+            (new \SqlSemantics\Platform\MySql\Rendering\LeadingDot())->write($out);
+        }
         if ($this->name->schema !== null) {
             $out->name($this->name->schema, NameUse::Qualifier)->symbol('.');
         }

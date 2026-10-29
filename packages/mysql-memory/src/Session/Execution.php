@@ -246,7 +246,6 @@ final class Execution
         $warnings = Stages::grammar((new Parse\SpatialWarnings())->accepted($operation, $warnings), $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651, $operation->statementInformation());
         $hints = array_filter($warnings, static fn ($warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError);
         $warnings = array_diff_key($warnings, $hints);
-        $dots = $session->dots;
         $failure = null;
         (new \MySqlMemory\Hint\Hints())->warnings($hints, true, $session);
         foreach ((new Parse\Entry\ProgramInput())->retained($operation, $warnings, $session) as $warning) {
@@ -258,12 +257,6 @@ final class Execution
                 $session->diagnostics->error($warning->getCode(), $warning->getMessage());
                 $failure ??= $warning;
                 break;
-            }
-            if (!$warning instanceof Deprecation || !in_array($warning->construct, Syntax::HEAD, true)) {
-                foreach ($dots as $construct) {
-                    $session->diagnostics->warning($construct->code(), $construct->value);
-                }
-                $dots = [];
             }
             if ($warning instanceof ParseFailure) {
                 $error = (new Parse\LocatedErrors())->parsed($warning, $operation, $session);
@@ -280,9 +273,6 @@ final class Execution
             }
         }
         (new \MySqlMemory\Hint\Hints())->warnings($hints, false, $session);
-        foreach ($dots as $construct) {
-            $session->diagnostics->warning($construct->code(), $construct->value);
-        }
         if ($failure !== null) {
             throw new SqlError($failure->error, $failure->getMessage(), $failure, [], null, null, true);
         }

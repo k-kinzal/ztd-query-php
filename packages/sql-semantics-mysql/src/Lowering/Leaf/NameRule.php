@@ -246,20 +246,26 @@ final class NameRule
      */
     public function qualifiedList(Node $list): array
     {
+        return array_map($this->qualified(...), $this->qualifiedNodes($list));
+    }
+
+    /**
+     * Keeps each table-list operand available for its role-specific spelling.
+     *
+     * @return list<Node>
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function qualifiedNodes(Node $list): array
+    {
         $form = $this->lowering->productions->form($list);
         if ($form->signature === 'opt_table_list:') {
             return [];
         }
         $spine = $form->signature === 'opt_table_list: table_list' ? $form->node(0) : $list;
-        $names = [];
-        foreach ((new Lists())->items($spine) as $item) {
-            $names[] = $this->qualified($item);
-        }
         $this->claimed($this->lowering->productions->form($spine), [
             'table_list: table_name', 'table_list: table_list , table_name', 'table_list: table_ident', 'table_list: table_list , table_ident',
         ]);
-
-        return $names;
+        return (new Lists())->items($spine);
     }
 
     /**

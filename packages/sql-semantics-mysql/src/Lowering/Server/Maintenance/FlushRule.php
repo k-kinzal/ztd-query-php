@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
-use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
@@ -87,10 +86,7 @@ final class FlushRule
     public function tables(?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $noWriteToBinlog, Form $form): FlushTables
     {
         $word = $this->lowering->options->tableWord($form->node(0));
-        $tables = [];
-        foreach ($this->lowering->names->qualifiedList($form->node(1)) as $name) {
-            $tables[] = new MaintainedTable($name);
-        }
+        $tables = (new MaintenanceRule($this->lowering))->tables($form->node(1));
         $lock = $this->lowering->form($form->node(2));
         $mode = match ($lock->signature) {
             'opt_flush_lock:' => null,

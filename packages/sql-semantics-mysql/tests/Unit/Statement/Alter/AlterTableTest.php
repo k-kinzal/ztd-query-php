@@ -19,6 +19,12 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 #[Medium]
 final class AlterTableTest extends TestCase
 {
+    public function testRenderRejectsALeadingDotBeforeAQualifiedTable(): void
+    {
+        $this->expectExceptionMessage('Only a table name without database is written after a leading dot.');
+        (new AlterTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('d')), [], dot: M\Expression\OptionalWords::Written))->toString();
+    }
+
     public function testDeriveStatementKeepsTheCompleteLegacyRequestWithAnInvalidColumnAttribute(): void
     {
         $sql = 'ALTER TABLE t ADD COLUMN a BIT ON UPDATE CURRENT_TIMESTAMP';

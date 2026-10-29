@@ -474,6 +474,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\AlterTable": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "commands": "array",
+        "dot": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
         "ignore": "bool",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -3959,6 +3960,7 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Maintenance\\MaintainedTable": {
+        "dot": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords",
         "inputInformation": "?SqlSemantics\\Statement\\Fact\\RelationFact",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"

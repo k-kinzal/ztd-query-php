@@ -98,6 +98,9 @@ final class TableReference implements NamedRelation, TableSource, \SqlSemantics\
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
+        if ($this->dot === OptionalWords::Written) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable, $derivation, $this, false);
+        }
         if ($this->sample !== null) {
             $derivation->scalar($this->sample->percentage, new Environment($derivation->context, $environment));
         }

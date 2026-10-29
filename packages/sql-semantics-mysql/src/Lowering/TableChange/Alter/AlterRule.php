@@ -85,18 +85,22 @@ final class AlterRule
      */
     public function statement(Form $form): AlterTable
     {
-        $this->lowering->columnTable = $this->lowering->names->qualified($form->node(str_contains($form->signature, 'opt_ignore') ? 3 : 2));
+        $name = $form->node(str_contains($form->signature, 'opt_ignore') ? 3 : 2);
+        $this->lowering->columnTable = $this->lowering->names->qualified($name);
+        $dot = $this->lowering->names->dotted($name) ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted;
         return match ($form->signature) {
             'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => $this->definition(
                 $this->lowering->columnTable,
                 $this->commands($form->node(4)),
                 $this->lowering->options->present($form->node(1)),
+                $dot,
             ),
             'alter: ALTER TABLE_SYM table_ident alter_commands',
             'alter_table_stmt: ALTER TABLE_SYM table_ident opt_alter_table_actions',
             'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => $this->definition(
                 $this->lowering->columnTable,
                 $this->commands($form->node(3)),
+                dot: $dot,
             ),
             default => throw ImplementationGap::production($form),
         };
@@ -107,9 +111,9 @@ final class AlterRule
      *
      * @param list<AlterCommand> $commands The ordered actions
      */
-    public function definition(\SqlSemantics\Statement\Identifier\QualifiedName $table, array $commands, bool $ignore = false): AlterTable
+    public function definition(\SqlSemantics\Statement\Identifier\QualifiedName $table, array $commands, bool $ignore = false, \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $dot = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted): AlterTable
     {
-        return new AlterTable($table, $commands, $ignore);
+        return new AlterTable($table, $commands, $ignore, dot: $dot);
     }
 
     /**

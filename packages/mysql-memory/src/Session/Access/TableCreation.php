@@ -46,6 +46,10 @@ final class TableCreation
             default => null,
         };
         if (($session->settings()->legacy() || $contextualizing) && $name !== null && $name->schema === null && $session->variables->database === '') {
+            if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $statement->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+                $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable;
+                $session->diagnostics->warning($notice->code(), $notice->value);
+            }
             throw \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
         }
     }

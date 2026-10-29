@@ -123,10 +123,9 @@ final class MaintenanceRule
      */
     public function tables(Node $list): array
     {
-        $names = $this->lowering->names->qualifiedList($list);
         $tables = [];
-        foreach ($names as $name) {
-            $tables[] = new MaintainedTable($name);
+        foreach ($this->lowering->names->qualifiedNodes($list) as $node) {
+            $tables[] = $this->lowering->origins->record(new MaintainedTable($this->lowering->names->qualified($node), dot: $this->lowering->names->dotted($node) ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), $node);
         }
 
         return $tables;

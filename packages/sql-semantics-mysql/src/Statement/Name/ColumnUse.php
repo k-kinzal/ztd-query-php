@@ -64,6 +64,9 @@ final class ColumnUse implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->dot === OptionalWords::Written) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotColumn, $derivation, $this, false);
+        }
         return (new ColumnResolver())->fact($environment, $this->name, $this->qualifier);
     }
 

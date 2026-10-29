@@ -15,6 +15,24 @@ use SqlSemantics\Platform\MySql\Statement as M;
 #[Small]
 final class GenerationParametersTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER TABLE pbt.t ADD COLUMN j INT DEFAULT (ABS(?))', 'j'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE pbt.t (j INT DEFAULT (?))', 'j'])]
+    public function testDefaultsRefusesNestedMarkersWithTheirOwningColumn(string $sql, string $column): void
+    {
+        $statement = (new \MySqlMemory\Instance())->connect()->analyze($sql, true);
+        $this->expectExceptionCode(3769);
+        $this->expectExceptionMessage("Default value expression of column '" . $column . "' contains a disallowed function.");
+        (new GenerationParameters())->defaults($statement);
+    }
+
+    public function testDefaultsKeepsAlteredDefaultsAvailableForExecution(): void
+    {
+        $statement = (new \MySqlMemory\Instance())->connect()->analyze('ALTER TABLE pbt.t ALTER COLUMN k SET DEFAULT (1 + ?)', true);
+        $parameters = new GenerationParameters();
+        $parameters->defaults($statement);
+        self::assertCount(1, $parameters->occurrences($statement));
+    }
+
     public function testOccurrencesRetainsMarkerIdentityAndWrittenOrder(): void
     {
         $left = new M\Literal\Parameter();

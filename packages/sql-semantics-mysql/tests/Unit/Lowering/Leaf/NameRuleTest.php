@@ -28,6 +28,22 @@ use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 #[Medium]
 final class NameRuleTest extends TestCase
 {
+    public function testQualifiedNodesKeepsEachTableOperandInOrder(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $platform = new Platform();
+        $profile = $semantics->profile();
+        $rule = new NameRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $tree = $semantics->parser()->parse('CHECK TABLE .t, db.u');
+        $nodes = $rule->qualifiedNodes($tree->find('table_list')[0]);
+
+        self::assertCount(2, $nodes);
+        self::assertTrue($rule->dotted($nodes[0]));
+        self::assertFalse($rule->dotted($nodes[1]));
+        self::assertSame('u', $rule->qualified($nodes[1])->name->value);
+        self::assertSame([], $rule->qualifiedNodes($semantics->parser()->parse('FLUSH TABLES')->find('opt_table_list')[0]));
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

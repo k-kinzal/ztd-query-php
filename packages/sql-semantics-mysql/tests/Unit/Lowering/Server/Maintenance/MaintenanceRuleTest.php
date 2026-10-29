@@ -16,6 +16,26 @@ use SqlSemantics\Platform\MySql\Lowering\Server\Maintenance\MaintenanceRule;
 #[Medium]
 final class MaintenanceRuleTest extends TestCase
 {
+    #[DataProvider('providerLegacyTargets')]
+    public function testTablesRetainsLeadingDotsInEveryMaintenanceRole(string $version, string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql, $version))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertCount($version === 'mysql-5.7.44' ? 2 : 0, $statement->warnings());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLegacyTargets(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44'] as $version) {
+            foreach (['ANALYZE TABLE', 'CHECK TABLE', 'CHECKSUM TABLE', 'OPTIMIZE TABLE', 'REPAIR TABLE', 'FLUSH TABLES'] as $command) {
+                yield $version . ' ' . $command => [$version, $command . ' .t, .u'];
+            }
+        }
+    }
+
     public function testStatementLowersEveryMaintenanceStatement(): void
     {
         self::assertSame('ANALYZE TABLE t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('analyze table t')->toString());

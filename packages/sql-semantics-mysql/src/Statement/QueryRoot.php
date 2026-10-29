@@ -91,6 +91,7 @@ final class QueryRoot extends SqlStatement implements Explainable, \SqlSemantics
     public function deriveStatement(Derivation $derivation): void
     {
         $derivation->output((new SetOutput())->derive($this->query, $derivation));
+        $derivation->orderWarnings($this, (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($this, childrenFirst: true));
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($this->query);
         if ($problem === null) {
             return;

@@ -45,6 +45,9 @@ final class MaintainedTables
     {
         $named = [];
         foreach ($tables as $table) {
+            if ($table->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+                \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable, $derivation, $table, false);
+            }
             $named[] = [$table, $table->name, null];
         }
         return (new TableNames())->record($derivation, $named);

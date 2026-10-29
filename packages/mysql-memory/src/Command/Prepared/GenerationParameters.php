@@ -19,6 +19,25 @@ use SqlSemantics\Statement\Scalar;
 final class GenerationParameters
 {
     /**
+     * Refuses markers in declared column defaults before opening the altered table.
+     * ALTER COLUMN SET DEFAULT has a later check and can be prepared with markers.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a default contains a parameter marker
+     */
+    public function defaults(Node $definition): void
+    {
+        foreach ((new \MySqlMemory\Evaluation\Compile\Walker())->find($definition, M\Table\Column\ColumnDefinition::class) as $node) {
+            $name = $node->name->column->value;
+            $attributes = $node->specification->columnAttributes();
+            foreach ($attributes as $attribute) {
+                if ($attribute instanceof M\Table\Column\DefaultExpression && $this->occurrences($attribute->expression) !== []) {
+                    throw \MySqlMemory\Error\Family\ConstraintError::DefaultSubquery->error($name);
+                }
+            }
+        }
+    }
+
+    /**
      * Reads marker occurrences in their semantic input-slot order.
      *
      * @return list<M\Literal\Parameter>

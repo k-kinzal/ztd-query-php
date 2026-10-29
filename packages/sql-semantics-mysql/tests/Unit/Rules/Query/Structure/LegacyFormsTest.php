@@ -66,6 +66,15 @@ final class LegacyFormsTest extends TestCase
         self::assertTrue((new LegacyForms())->query($ordered));
     }
 
+    public function testRequiresDistinguishesDottedAlterTargetsFromPlainNames(): void
+    {
+        $forms = new LegacyForms();
+        $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+
+        self::assertTrue($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($table, [], dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)));
+        self::assertFalse($forms->requires(new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($table, [])));
+    }
+
     public function testDefinitionRecognizesOnlyDefaultRoutineCollation(): void
     {
         $forms = new LegacyForms();

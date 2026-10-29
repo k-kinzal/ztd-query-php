@@ -102,6 +102,7 @@ final class TableUse
         $this->contextualize($definition, $session);
         (new \MySqlMemory\Command\Definition\Expression\GenerationExecution())->variables($definition, $session);
         $storage->engine($definition, $session->variables, $context);
+        (new \MySqlMemory\Command\Prepared\GenerationParameters())->defaults($definition);
         if ($preparing && (new \MySqlMemory\Session\Access\TableCreation())->requested($definition)) {
             throw \MySqlMemory\Error\Family\StatementError::UnsupportedPreparedStatement->error();
         }

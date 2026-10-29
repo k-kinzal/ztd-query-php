@@ -67,8 +67,9 @@ final class AlterTable extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      * @param QualifiedName $table The table with its optional database
      * @param list<AlterCommand> $commands The actions in the order written
      * @param bool $ignore Whether IGNORE is written (5.6)
+     * @param \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $dot Whether the unqualified table name has a leading dot (5.6 and 5.7)
      */
-    public function __construct(public readonly QualifiedName $table, array $commands, public readonly bool $ignore = false, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly QualifiedName $table, array $commands, public readonly bool $ignore = false, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $dot = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
@@ -78,6 +79,7 @@ final class AlterTable extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
         }
         (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
+        Check::input($dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted || $table->schema === null, 'Only a table name without database is written after a leading dot.');
         $this->commands = Check::listOf($commands, AlterCommand::class, 'ALTER TABLE holds a list of actions.');
         $last = count($this->commands) - 1;
         foreach ($this->commands as $index => $command) {
@@ -105,6 +107,9 @@ final class AlterTable extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable, $derivation, $this, false);
+        }
         if ($this->ignore) {
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AlterIgnore, $derivation);
         }
@@ -166,6 +171,9 @@ final class AlterTable extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
             $out->keyword('IGNORE');
         }
         $out->keyword('TABLE');
+        if ($this->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+            $out->separate()->symbol('.');
+        }
         if ($this->table->schema !== null) {
             $out->name($this->table->schema, NameUse::Qualifier)->symbol('.');
         }

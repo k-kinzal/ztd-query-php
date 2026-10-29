@@ -39,6 +39,9 @@ final class AlterTableGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = $release->database() === 'mysql' ? [self::partitionDefinitions()] : [];
+            if (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(null), Generators::constant(null)), Generators::constant([]), dot: new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator());
+            }
             if ($release === GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -104,13 +107,14 @@ final class AlterTableGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
      * @param ErisGenerator<MySql\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<MySql\Expression\OptionalWords>|null $dot Generated leading-dot spelling
      * @return ErisGenerator<MySql\Alter\AlterTable>
      */
-    public static function operands(ErisGenerator $table, ErisGenerator $commands, ?ErisGenerator $ignore = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public static function operands(ErisGenerator $table, ErisGenerator $commands, ?ErisGenerator $ignore = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $dot = null): ErisGenerator
     {
         return Generators::map(static function (array $parts): MySql\Alter\AlterTable {
-            return new MySql\Alter\AlterTable(table: $parts[0], commands: $parts[1], ignore: $parts[2], relationInformation: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple($table, $commands, $ignore ?? Generators::constant(false), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+            return new MySql\Alter\AlterTable(table: $parts[0], commands: $parts[1], ignore: $parts[2], relationInformation: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], dot: $parts[6]);
+        }, Generators::tuple($table, $commands, $ignore ?? Generators::constant(false), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $dot ?? Generators::constant(MySql\Expression\OptionalWords::Omitted)));
     }
     /**
      * Generates a table, its rows and a dependent index alteration before execution.

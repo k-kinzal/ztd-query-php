@@ -15,6 +15,15 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\AlterRule;
 #[Medium]
 final class AlterRuleTest extends TestCase
 {
+    public function testStatementRetainsTheLegacyLeadingDot(): void
+    {
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE .t ADD COLUMN j INT');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $statement);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, $statement->dot);
+        self::assertSame('ALTER TABLE .t ADD COLUMN j INT', $statement->toString());
+        self::assertSame('ALTER IGNORE TABLE .t FORCE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER IGNORE TABLE .t FORCE')->toString());
+    }
+
     public function testStatementLowersEveryGeneration(): void
     {
         self::assertSame('ALTER IGNORE TABLE t FORCE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter ignore table t force')->toString());

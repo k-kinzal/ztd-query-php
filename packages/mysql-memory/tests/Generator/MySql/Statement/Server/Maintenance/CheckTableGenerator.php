@@ -6,7 +6,6 @@ namespace Tests\Generator\MySql\Statement\Server\Maintenance;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
-use InvalidArgumentException;
 use LogicException;
 use Tests\Generator\Composition;
 
@@ -25,21 +24,20 @@ final class CheckTableGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
-            $forms = [];
+            $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            $name = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 't_' . $id, Generators::choose(0, 8)), Generators::constant(null));
+            $table = new MaintainedTableGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator($name), dot: $legacy ? new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator() : Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted));
+            $forms = [self::operands(Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $table)))];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CheckTable forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable {

@@ -48,6 +48,7 @@ final class AlterUse
         }
         (new AlterTableCommand())->read($definition->commands, $facts, $session->settings()->legacy());
         (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($definition, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant()), $database);
+        (new \MySqlMemory\Command\Prepared\GenerationParameters())->defaults($definition);
         foreach ($facts->warnings as $warning) {
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar && $warning->problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
                 throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));

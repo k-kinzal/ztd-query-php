@@ -44,6 +44,7 @@ final class Preparation
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges) {
             (new DefaultDatabase())->check($operation, $session);
         }
+        (new TableCreation())->database($operation, $session);
         (new Execution($session))->parsing($operation, $operation->statementInformation()->warnings);
         if ($this->conditional($operation, $session)) {
             return;
@@ -80,7 +81,7 @@ final class Preparation
             (new \MySqlMemory\Program\Expression\TableUse())->prepare($statement, $session);
             return true;
         }
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $statement->hasExecutionCondition()) {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable) {
             (new \MySqlMemory\Program\Expression\AlterUse())->header($statement, $session);
             $this->alterParameters($statement, $session);
             return true;
@@ -215,6 +216,7 @@ final class Preparation
             $storage = new \MySqlMemory\Command\Definition\StorageOptions();
             $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
             $storage->resolve($statement, $session, $context);
+            (new \MySqlMemory\Command\Prepared\GenerationParameters())->defaults($statement);
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) {
             $this->alterParameters($statement, $session);
