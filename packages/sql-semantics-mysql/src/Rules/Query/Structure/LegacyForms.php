@@ -43,19 +43,31 @@ final class LegacyForms
      */
     public function requires(object $value): bool
     {
-        return in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName::class, ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class], true)
+        return in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName::class, ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class, ExplainModifier::class, \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment::class], true)
             || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn && !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value->expression))
             || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Redo, SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
             || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)
-            || $value instanceof ExplainModifier
-            || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment
             || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash
             || ($value instanceof DatabaseCollation && $value->collation->name === null)
             || (($value instanceof ResetReplica || $value instanceof SourceOption) && $value->terminology === Terminology::Legacy)
+            || $this->conditionAssignment($value)
             || $this->definition($value)
             || ($value instanceof \SqlSemantics\Statement\Query && $this->query($value));
     }
+    /**
+     * Legacy condition grammars admit assignments and then refuse their operand role.
+     */
+    public function conditionAssignment(object $condition): bool
+    {
+        $value = match (true) {
+            $condition instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem => $condition->value,
+            $condition instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionDiagnostics => $condition->number,
+            default => null,
+        };
+        return $value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment;
+    }
+
     /**
      * Identifies ordering and set operands that only legacy query grammars admit.
      */

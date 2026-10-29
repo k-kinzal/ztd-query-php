@@ -20,7 +20,7 @@ final class SignalItemGenerator implements ErisGenerator
 
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\LiteralExpression|\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable> $value Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\LiteralExpression|\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable|\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment> $value Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      */
     public function __construct(ErisGenerator $name, ErisGenerator $value, ?ErisGenerator $inputSource = null)

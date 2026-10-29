@@ -138,7 +138,7 @@ final class SignalRule
         $items = [];
         foreach (array_reverse($pending) as [$item, $offset]) {
             $name = $this->lowering->form($item->node($offset));
-            $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2), $clause));
+            $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2)));
             $items[] = $candidate;
         }
 
@@ -150,9 +150,8 @@ final class SignalRule
      *
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When a literal is outside its value domain
-     * @throws \SqlSemantics\Diagnostic\AnalysisException When the operand assigns a variable instead of reading it
      */
-    public function operand(Node $expression, ?Node $container = null): LiteralExpression|ColumnUse|SystemVariable|UserVariable
+    public function operand(Node $expression): LiteralExpression|ColumnUse|SystemVariable|UserVariable|VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment
     {
         $form = $this->lowering->form($expression);
 
@@ -162,19 +161,7 @@ final class SignalRule
             'signal_allowed_expr: simple_ident' => $this->lowering->names->column($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
-        if ($value instanceof VariableAssignment || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment) {
-            $tokens = $expression->tokens();
-            $end = $tokens[count($tokens) - 1]->end();
-            $at = new \SqlParser\Lexer\Token(0, '$end', '', $end);
-            foreach ($container === null ? [] : $container->tokens() as $token) {
-                if ($token->offset >= $end) {
-                    $at = $token->text === ',' ? new \SqlParser\Lexer\Token(0, '$end', '', $token->end()) : $token;
-                    break;
-                }
-            }
-            throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: a condition operand reads a variable; it cannot assign one.', 0, new \SqlParser\Parser\SyntaxException($at, [], ''));
-        }
 
-        return $value;
+        return $this->lowering->origins->record($value, $expression);
     }
 }

@@ -53,6 +53,7 @@ final class AlterUserProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
+        yield GrammarRelease::MySql5744->value => [GrammarRelease::MySql5744];
         yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
     }
 }

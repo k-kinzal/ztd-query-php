@@ -137,9 +137,17 @@ final class ConditionFacts
      * MySQL itemizes signal_allowed_expr before it checks a repeated item name.
      * Source: https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy#L4253-L4259.
      */
-    public function operand(\SqlSemantics\Platform\MySql\Statement\LiteralExpression|\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|UserVariable $value, Derivation $derivation, ProgramScope $scope): void
+    public function operand(\SqlSemantics\Platform\MySql\Statement\LiteralExpression|\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|UserVariable|\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment $value, Derivation $derivation, ProgramScope $scope): void
     {
-        $derivation->scalar($value, $scope->environment, $value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral ? fn () => $value->deriveScalar($derivation, $scope->environment, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) : null);
+        $fact = $derivation->scalar($value, $scope->environment, $value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral ? fn () => $value->deriveScalar($derivation, $scope->environment, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) : null);
+        if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment) {
+            if ($fact->type instanceof \SqlSemantics\Statement\Type\Invalid && ($fact->type->cause instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision || $fact->type->cause instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $fact->type->cause instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput)) {
+                return;
+            }
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand($value);
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $value);
+        }
     }
 
     /**

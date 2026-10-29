@@ -37,6 +37,19 @@ final class ResignalGenerator implements ErisGenerator
                 }
             }
 
+            if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                $forms[] = self::operands(
+                    new SqlStateGenerator(new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::constant('45000'))),
+                    Generators::seq(new SignalItemGenerator(
+                        ConditionItemNameGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MessageText, \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MysqlErrno]),
+                        Generators::oneOf(
+                            \Tests\Generator\MySql\Statement\Variable\VariableAssignmentGenerator::numbers(),
+                            new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(\Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::elements('missing_variable', 'autocommit'), Generators::constant(null))),
+                        ),
+                    )),
+                );
+            }
+
             if ($forms === []) {
                 throw new InvalidArgumentException('No Resignal forms are defined for the selected grammar.');
             }

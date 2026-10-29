@@ -22,14 +22,12 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Small]
 final class ItemLayoutsTest extends TestCase
 {
-    public function testCheckUsesTheLexicalContextOfAUserVariableName(): void
+    public function testCheckRefusesARedundantLayoutForAnUnquotedVariableName(): void
     {
         $expression = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('..'));
         $layout = new Layout([new Spelled('', '@'), new Spelled('', '..')]);
-        $item = new SelectExpression($expression, layout: $layout);
-
-        self::assertSame($layout, $item->layout);
-        self::assertSame($expression, $item->expression);
+        $this->expectExceptionMessage('A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
+        new SelectExpression($expression, layout: $layout);
     }
 
     public function testPairsFindsNonOverlappingPairsInEachContiguousRun(): void

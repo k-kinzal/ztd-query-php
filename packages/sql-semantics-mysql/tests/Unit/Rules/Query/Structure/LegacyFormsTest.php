@@ -15,6 +15,16 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
 #[Small]
 final class LegacyFormsTest extends TestCase
 {
+    public function testConditionAssignmentRecognizesTheLegacyConditionOperandRole(): void
+    {
+        $assignment = new \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('n')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+        $item = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem(\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MessageText, $assignment);
+        $read = new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem(\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::MessageText, new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('n')));
+        self::assertTrue((new LegacyForms())->conditionAssignment($item));
+        self::assertTrue((new LegacyForms())->requires($item));
+        self::assertFalse((new LegacyForms())->conditionAssignment($read));
+    }
+
     public function testDefinitionDistinguishesLegacyInsertWildcardsFromColumnNames(): void
     {
         $forms = new LegacyForms();

@@ -45,17 +45,17 @@ final class SignalRuleTest extends TestCase
     public static function providerRefusedAssignments(): iterable
     {
         foreach (['mysql-5.6.51', 'mysql-5.7.44'] as $release) {
-            yield $release . ' signal' => [$release, "SIGNAL SQLSTATE '01000' SET MYSQL_ERRNO=@n:=1001"];
-            yield $release . ' diagnostics' => [$release, 'GET DIAGNOSTICS CONDITION @n:=1 @m=MESSAGE_TEXT'];
+            yield $release . ' signal' => [$release, "SIGNAL SQLSTATE '01000' SET MYSQL_ERRNO = @n := 1001"];
+            yield $release . ' diagnostics' => [$release, 'GET DIAGNOSTICS CONDITION @n := 1 @m = MESSAGE_TEXT'];
         }
     }
 
     #[DataProvider('providerRefusedAssignments')]
-    public function testOperandRefusesAssignmentBeforePublishingTheStructure(string $release, string $sql): void
+    public function testOperandRetainsTheAssignmentWithItsExecutionCondition(string $release, string $sql): void
     {
-        $this->expectExceptionMessage('Syntax error: a condition operand reads a variable; it cannot assign one.');
-
-        (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertNotEmpty($statement->warnings());
+        self::assertSame($sql, $statement->toString());
     }
 
     /**

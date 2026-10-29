@@ -7,6 +7,7 @@ namespace MySqlMemory\Session\Parse;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
+use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -29,16 +30,11 @@ final class LocatedErrors
         if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable && $operation instanceof \SqlSemantics\Platform\MySql\Statement\Alter\DropTable) {
             (new \MySqlMemory\Session\Access\DefaultDatabase())->beforeRepeatedDrop($operation, $warning->problem, $session);
         }
+        if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand) {
+            (new \MySqlMemory\Command\Condition\SignalProblems())->assignment($warning->problem, $operation, $session, $operation->statementInformation()->warningInstruction($warning));
+        }
         if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel) {
-            $database = match (true) {
-                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure,
-                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
-                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger,
-                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent,
-                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent => $operation->name->schema->value ?? $session->variables->database,
-                default => $session->variables->database,
-            };
-            return (new Entry\PrivilegeInput())->target($warning->problem, $session, $database);
+            return $this->privilege($warning->problem, $operation, $session);
         }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege) {
             return (new Entry\PrivilegeInput())->level($operation, $session);
@@ -55,11 +51,31 @@ final class LocatedErrors
             $definition = $operation->statementInformation()->warningSubject($warning);
             return (new Entry\PartitionInput())->bound($warning->problem, $definition instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition ? $definition->boundarySource : null, $session);
         }
+        if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash) {
+            $source = $operation->statementInformation()->warningSubject($warning)?->source();
+            return $source === null ? StatementError::ParseError->error('', 1) : (new \MySqlMemory\Session\Syntax($session->resolution()->client))->near($source->offset, $session->text, $session->following, new RuntimeException($warning->problem->message()), true, $session->semantics()->parser());
+        }
         $instruction = $operation->statementInformation()->warningInstruction($warning) ?? $operation;
         if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute && \MySqlMemory\Command\Dispatcher::program($operation)) {
             return (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session, 'field list', $operation);
         }
         return (new \MySqlMemory\Session\Problem\Precision())->legacy($this->error($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\CacheOptions())->placed($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session, 'field list', $instruction), $session->settings()->release());
+    }
+
+    /**
+     * Resolves a refused privilege level within its enclosing definition's database.
+     */
+    public function privilege(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel $problem, MySqlStatement $operation, Session $session): SqlError
+    {
+        $database = match (true) {
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent => $operation->name->schema->value ?? $session->variables->database,
+            default => $session->variables->database,
+        };
+        return (new Entry\PrivilegeInput())->target($problem, $session, $database);
     }
 
     /**
@@ -75,6 +91,9 @@ final class LocatedErrors
      */
     public function located(Diagnostic $problem, ?\SqlSemantics\Statement\Source\SourceMap $sources, Session $session): ?SqlError
     {
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand) {
+            return $this->condition($problem, $session);
+        }
         if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier) {
             return (new Entry\XaInput())->error($problem, $session);
         }
@@ -111,6 +130,27 @@ final class LocatedErrors
         $line = substr_count(ltrim(substr($session->text, 0, $offset)), "\n") + 1;
 
         return new SqlError(StatementError::ParseError, $problem->message() . " near '" . $tail . "' at line " . $line);
+    }
+
+    /**
+     * Formats the token after a complete refused condition assignment.
+     * Source SQL supplies only this diagnostic excerpt, never the assigned value.
+     */
+    public function condition(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand $problem, Session $session): SqlError
+    {
+        $source = $problem->operand->source();
+        if ($source === null) {
+            return StatementError::ParseError->error('', 1);
+        }
+        $end = $source->offset + $source->length;
+        $offset = strlen($session->text);
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($session->semantics()->parser(), $session->text) as $token) {
+            if ($token->offset >= $end) {
+                $offset = $token->text === ',' ? $token->end() : $token->offset;
+                break;
+            }
+        }
+        return (new \MySqlMemory\Session\Syntax($session->resolution()->client))->near($offset, $session->text, $session->following, new RuntimeException($problem->message()), true, $session->semantics()->parser());
     }
 
     /**

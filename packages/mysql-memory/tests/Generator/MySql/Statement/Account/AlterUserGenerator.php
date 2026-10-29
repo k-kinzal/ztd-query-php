@@ -37,6 +37,14 @@ final class AlterUserGenerator implements ErisGenerator
                 }
             }
 
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+                $user = new User\UserSpecificationGenerator(
+                    new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(),
+                    new User\IdentificationGenerator(Generators::constant(null), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::string())),
+                );
+                $forms[] = self::operands(Generators::bool(), Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $user)));
+            }
+
             if ($forms === []) {
                 throw new InvalidArgumentException('No AlterUser forms are defined for the selected grammar.');
             }

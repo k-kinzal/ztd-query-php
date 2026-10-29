@@ -202,17 +202,12 @@ final class UserListRule
      * Lowers the legacy account list in the ALTER USER role.
      *
      * @return non-empty-list<UserSpecification>
-     * @throws \SqlSemantics\Construction\RejectedInput When an account uses IDENTIFIED BY PASSWORD
      */
     public function legacyAltered(Node $list): array
     {
         $users = [];
         foreach ($this->spine($list) as $item) {
-            $form = $this->lowering->form($item);
             $user = $this->grant($item);
-            if ($user->identification?->credential === Credential::PasswordHash) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash(), $form->token(4)->offset);
-            }
             $users[] = $user;
         }
 

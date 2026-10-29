@@ -35,4 +35,13 @@ final class VariableAssignmentGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null)
         ));
     }
+    /**
+     * Composes assigned numbers without deriving or executing the assignment.
+     *
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment>
+     */
+    public static function numbers(): ErisGenerator
+    {
+        return new self(new UserVariableGenerator(UserVariableGenerator::names()), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 1000))));
+    }
 }

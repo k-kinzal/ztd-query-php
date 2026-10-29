@@ -37,6 +37,16 @@ final class GetDiagnosticsGenerator implements ErisGenerator
                 }
             }
 
+            if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                $forms[] = self::operands(new ConditionDiagnosticsGenerator(
+                    \Tests\Generator\MySql\Statement\Variable\VariableAssignmentGenerator::numbers(),
+                    Generators::tuple(new InformationItemGenerator(
+                        new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(\Tests\Generator\MySql\Statement\Variable\UserVariableGenerator::names()),
+                        new \Tests\Generator\MySql\Statement\Routine\Condition\ConditionItemNameGenerator(),
+                    )),
+                ));
+            }
+
             if ($forms === []) {
                 throw new InvalidArgumentException('No GetDiagnostics forms are defined for the selected grammar.');
             }

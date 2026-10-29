@@ -100,7 +100,7 @@ final class DiagnosticsRule
             throw ImplementationGap::production($number);
         }
 
-        return new GetDiagnostics(new ConditionDiagnostics((new SignalRule($this->lowering))->operand($number->node(0), $information->node), $this->items($information->node(2))), self::AREAS[$area->signature]);
+        return new GetDiagnostics(new ConditionDiagnostics((new SignalRule($this->lowering))->operand($number->node(0)), $this->items($information->node(2))), self::AREAS[$area->signature]);
     }
 
     /**

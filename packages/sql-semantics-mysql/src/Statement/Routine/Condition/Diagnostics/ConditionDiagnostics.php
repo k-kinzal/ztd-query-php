@@ -33,10 +33,10 @@ final class ConditionDiagnostics implements Node
     public readonly array $items;
 
     /**
-     * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable $number The number of the condition, counted from 1: a literal, a variable or a name
+     * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable|\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment $number The number of the condition, counted from 1: a literal, a variable or a name
      * @param list<InformationItem> $items The assignments; at least one, each of a condition information item
      */
-    public function __construct(public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $number, array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable|\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment $number, array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->items = Check::listOf($items, InformationItem::class, 'GET DIAGNOSTICS reads at least one item.', 1);
         foreach ($this->items as $item) {

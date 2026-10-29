@@ -200,6 +200,7 @@ final class InputErrors
     public function source(Diagnostic $diagnostic, Session $session): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand => (new \MySqlMemory\Session\Parse\LocatedErrors())->condition($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail => (new \MySqlMemory\Session\Parse\Definition\TableInput())->diagnostic($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong => (new \MySqlMemory\Error\IdentifierErrors())->length($diagnostic, $session->settings()->legacy()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput => $this->castSize($diagnostic, $session->text, $session),

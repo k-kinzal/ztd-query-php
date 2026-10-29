@@ -28,9 +28,9 @@ final class SignalItem implements \SqlSemantics\Statement\Node
 
     /**
      * @param ConditionItemName $name The item that is set; not RETURNED_SQLSTATE
-     * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable $value The value
+     * @param LiteralExpression|ColumnUse|SystemVariable|UserVariable|\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment $value The value
      */
-    public function __construct(public readonly ConditionItemName $name, public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ConditionItemName $name, public readonly LiteralExpression|ColumnUse|SystemVariable|UserVariable|\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($name !== ConditionItemName::ReturnedSqlstate, 'RETURNED_SQLSTATE is set by the condition value, not by an item.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);

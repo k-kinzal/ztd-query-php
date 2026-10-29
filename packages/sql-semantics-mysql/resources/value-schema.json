@@ -2803,7 +2803,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\ConditionDiagnostics": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "items": "array",
-        "number": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
+        "number": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredAssignment"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\Diagnostics\\DiagnosticsArea": {
         "name": "string",
@@ -2851,7 +2851,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SignalItem": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\ConditionItemName",
-        "value": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
+        "value": "SqlSemantics\\Platform\\MySql\\Statement\\LiteralExpression|SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredAssignment"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Condition\\SqlState": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -2993,6 +2993,9 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\ParameterMode": {
         "name": "string",
         "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\AssignedConditionOperand": {
+        "operand": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableAssignment|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\Operator\\DeferredAssignment"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Problem\\EmptyEventAlteration": {
         "definer": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",

@@ -53,6 +53,8 @@ final class SignalProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
+        yield GrammarRelease::MySql5651->value => [GrammarRelease::MySql5651];
+        yield GrammarRelease::MySql5744->value => [GrammarRelease::MySql5744];
         yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
     }
 }

@@ -220,9 +220,12 @@ final class Execution
             return;
         }
         $resetsOnParseFailure = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors || ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings && $session->settings()->legacy()) || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
-        if ($command->clearsDiagnostics() && $this->retains($operation, $command)) {
+        $signalFailure = ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal) && $operation->statementInformation()->diagnostics !== [];
+        if ($signalFailure) {
+            $session->diagnostics->clear();
+        } elseif ($command->clearsDiagnostics() && $this->retains($operation, $command)) {
             $session->diagnostics->retain();
-        } elseif ($command->clearsDiagnostics() || ($resetsOnParseFailure && ($this->undeclared($operation) || array_filter($operation->statementInformation()->diagnostics, Stages::parsed(...)) !== []))) {
+        } elseif ($command->clearsDiagnostics() || ($resetsOnParseFailure && ($this->undeclared($operation) || array_filter($operation->statementInformation()->diagnostics, Stages::parsed(...)) !== [] || array_filter($operation->statementInformation()->warnings, static fn ($warning): bool => $warning instanceof ParseFailure) !== []))) {
             $session->diagnostics->clear();
         }
     }

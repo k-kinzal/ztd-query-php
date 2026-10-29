@@ -303,6 +303,16 @@ final class ExecutionTest extends TestCase
         self::assertSame([['Error', 1193, "Unknown system variable 'nosuch'"]], $session->diagnostics->conditions);
     }
 
+    public function testAreaClearsEarlierErrorsBeforeAConditionAssignmentFails(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run('SELECT @@missing_variable');
+        $session->run('GET DIAGNOSTICS CONDITION @n := CAST(1 AS DATETIME(7)) @m = MESSAGE_TEXT');
+        self::assertSame([['Error', 1426, "Too-big precision 7 specified for 'CAST'. Maximum is 6."]], $session->diagnostics->conditions);
+        $session->run("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT=@n:=1");
+        self::assertSame([['Error', 1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '' at line 1"]], $session->diagnostics->conditions);
+    }
+
     public function testFailedRecordsTheErrorAndAnswersTheRepliesBeforeIt(): void
     {
         $session = (new Instance())->connect();

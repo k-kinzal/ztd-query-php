@@ -55,6 +55,9 @@ final class SignalProblems
                 throw (new ProgramErrors())->error($diagnostic);
             }
         }
+        if (array_filter($statement->items, static fn ($item): bool => $item->value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment || $item->value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment) !== []) {
+            return;
+        }
         $seen = [];
         foreach ($statement->items as $item) {
             foreach ((new Walker())->find($item->value, Node::class) as $node) {
@@ -64,6 +67,31 @@ final class SignalProblems
                 throw (new ProgramErrors())->error(new ProgramProblem(ProgramRule::DuplicateSignalItem, $item->name->value));
             }
             $seen[] = $item->name;
+        }
+    }
+
+    /**
+     * Resolves a legacy condition assignment before refusing its operand role.
+     * MySQL 5.7 itemizes signal_allowed_expr inside its grammar action, earlier
+     * than an ordinary SELECT expression. This does not change SELECT's phases.
+     * Source: https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_yacc.yy.
+     *
+     * @throws SqlError When an operand cannot be resolved in this context
+     */
+    public function assignment(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand $problem, MySqlStatement $operation, Session $session, ?Node $instruction = null): void
+    {
+        $instruction ??= $operation;
+        $values = $instruction instanceof Signal || $instruction instanceof Resignal ? array_map(static fn ($item) => $item->value, $instruction->items) : [$problem->operand];
+        foreach ($values as $value) {
+            foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($value, childrenFirst: $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) as $node) {
+                $this->value($node, $operation, $session);
+                if (($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall) && !\MySqlMemory\Command\Dispatcher::program($operation)) {
+                    (new \MySqlMemory\Session\Access\DefaultDatabase())->calls($node, $session);
+                }
+            }
+            if ($value === $problem->operand) {
+                break;
+            }
         }
     }
 

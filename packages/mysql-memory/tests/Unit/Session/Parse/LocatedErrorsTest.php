@@ -29,6 +29,16 @@ final class LocatedErrorsTest extends TestCase
         self::assertSame('unrelated input', $session->text);
     }
 
+    public function testPrivilegeResolvesTheEnclosingProgramsDatabase(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect();
+        $statement = $session->analyze('CREATE PROCEDURE d.p() GRANT SELECT(c) ON * TO u');
+        $warning = $statement->statementInformation()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel::class, $warning->problem);
+        self::assertSame(1144, (new LocatedErrors())->privilege($warning->problem, $statement, $session)->getCode());
+    }
+
     public function testParsedResolvesAColumnConditionWithinItsQualifiedProgram(): void
     {
         $session = (new Instance('8.4.7', databases: ['d']))->connect();
@@ -37,6 +47,17 @@ final class LocatedErrorsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
         self::assertSame(1067, (new LocatedErrors())->parsed($notice, $statement, $session)->getCode());
         self::assertSame('', $session->variables->database);
+    }
+
+    public function testConditionQuotesTheTokenAfterTheCompleteAssignedExpression(): void
+    {
+        $session = (new Instance('5.7.44', databases: ['d']))->connect(database: 'd');
+        $session->text = 'GET DIAGNOSTICS CONDITION @n := (((1))) @m = MESSAGE_TEXT';
+        $statement = $session->analyze($session->text);
+        $warning = $statement->statementInformation()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand::class, $warning->problem);
+        self::assertStringEndsWith("near '@m = MESSAGE_TEXT' at line 1", (new LocatedErrors())->condition($warning->problem, $session)->getMessage());
     }
 
     public function testParsedPreservesTheSpecificConditionWithoutALocation(): void
