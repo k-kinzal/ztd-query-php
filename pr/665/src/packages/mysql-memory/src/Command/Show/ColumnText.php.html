@@ -354,7 +354,7 @@
 <span class="src-line" id="L314" data-diff="added"><a class="ln" href="#L314">314</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L315" data-diff="added"><a class="ln" href="#L315">315</a><span class="tok-com">     * Writes a bit value as a bit literal: b&#039;&#039; followed by its bits without leading zeros.</span></span>
 <span class="src-line" id="L316" data-diff="added"><a class="ln" href="#L316">316</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L317" data-diff="added"><a class="ln" href="#L317">317</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bits</span>(<span class="tok-id">int</span>|<span class="tok-id">float</span>|<span class="tok-id">string</span> <span class="tok-var">$value</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L317" data-diff="added"><a class="ln" href="#L317">317</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bits</span>(<span class="tok-id">int</span>|<span class="tok-id">float</span>|<span class="tok-id">string</span>|<span class="tok-id">\MySqlMemory\Evaluation\ExactDecimal</span> <span class="tok-var">$value</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L318" data-diff="added"><a class="ln" href="#L318">318</a>    {</span>
 <span class="src-line" id="L319" data-diff="added"><a class="ln" href="#L319">319</a>        <span class="tok-var">$number</span> = <span class="tok-num">0</span>;</span>
 <span class="src-line" id="L320" data-diff="added"><a class="ln" href="#L320">320</a>        <span class="tok-kw">if</span> (<span class="tok-id">is_string</span>(<span class="tok-var">$value</span>)) {</span>
@@ -362,7 +362,7 @@
 <span class="src-line" id="L322" data-diff="added"><a class="ln" href="#L322">322</a>                <span class="tok-var">$number</span> = (<span class="tok-var">$number</span> &lt;&lt; <span class="tok-num">8</span>) | <span class="tok-id">ord</span>(<span class="tok-var">$byte</span>);</span>
 <span class="src-line" id="L323" data-diff="added"><a class="ln" href="#L323">323</a>            }</span>
 <span class="src-line" id="L324" data-diff="added"><a class="ln" href="#L324">324</a>        } <span class="tok-kw">else</span> {</span>
-<span class="src-line" id="L325" data-diff="added"><a class="ln" href="#L325">325</a>            <span class="tok-var">$number</span> = (int) <span class="tok-var">$value</span>;</span>
+<span class="src-line" id="L325" data-diff="added"><a class="ln" href="#L325">325</a>            <span class="tok-var">$number</span> = (int) <span class="tok-id">\MySqlMemory\Evaluation\ExactDecimal</span>::<span class="tok-id">raw</span>(<span class="tok-var">$value</span>);</span>
 <span class="src-line" id="L326" data-diff="added"><a class="ln" href="#L326">326</a>        }</span>
 <span class="src-line" id="L327" data-diff="added"><a class="ln" href="#L327">327</a></span>
 <span class="src-line" id="L328" data-diff="added"><a class="ln" href="#L328">328</a>        <span class="tok-kw">return</span> <span class="tok-str">&quot;b&#039;&quot;</span> . <span class="tok-id">decbin</span>(<span class="tok-var">$number</span>) . <span class="tok-str">&quot;&#039;&quot;</span>;</span>

@@ -264,7 +264,7 @@
 <span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a><span class="tok-com">     * Runs the statements of a text until one fails, and answers the reply or error of each run.</span></span>
 <span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a><span class="tok-com">     * @param list&lt;array{int|float|string|null, \MySqlMemory\Typing\Domain}&gt; $parameters The values bound to parameter markers</span></span>
+<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a><span class="tok-com">     * @param list&lt;array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}&gt; $parameters The values bound to parameter markers</span></span>
 <span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a><span class="tok-com">     * @param bool $prepared Whether the text is a prepared statement, where parameter markers are allowed</span></span>
 <span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a><span class="tok-com">     * @return list&lt;Reply|SqlError&gt;</span></span>
 <span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a><span class="tok-com">     */</span></span>
@@ -309,7 +309,7 @@
 <span class="src-line" id="L269" data-diff="added"><a class="ln" href="#L269">269</a><span class="tok-com">     * to one that stops the parse; the first of those errors fails the statement.</span></span>
 <span class="src-line" id="L270" data-diff="added"><a class="ln" href="#L270">270</a><span class="tok-com">     * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_row-count.</span></span>
 <span class="src-line" id="L271" data-diff="added"><a class="ln" href="#L271">271</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a><span class="tok-com">     * @param list&lt;array{int|float|string|null, \MySqlMemory\Typing\Domain}&gt; $parameters</span></span>
+<span class="src-line" id="L272" data-diff="added"><a class="ln" href="#L272">272</a><span class="tok-com">     * @param list&lt;array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}&gt; $parameters</span></span>
 <span class="src-line" id="L273" data-diff="added"><a class="ln" href="#L273">273</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L274" data-diff="added"><a class="ln" href="#L274">274</a><span class="tok-com">     * @throws SqlError When the statement fails</span></span>
 <span class="src-line" id="L275" data-diff="added"><a class="ln" href="#L275">275</a><span class="tok-com">     */</span></span>
@@ -340,7 +340,7 @@
 <span class="src-line" id="L300" data-diff="added"><a class="ln" href="#L300">300</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L301" data-diff="added"><a class="ln" href="#L301">301</a><span class="tok-com">     * @throws SqlError When the statement does not parse or does not resolve</span></span>
 <span class="src-line" id="L302" data-diff="added"><a class="ln" href="#L302">302</a><span class="tok-com">     * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition</span></span>
-<span class="src-line" id="L303" data-diff="added"><a class="ln" href="#L303">303</a><span class="tok-com">     * @param list&lt;array{int|float|string|null, \MySqlMemory\Typing\Domain}&gt; $parameters The values bound to the parameter markers, in their order</span></span>
+<span class="src-line" id="L303" data-diff="added"><a class="ln" href="#L303">303</a><span class="tok-com">     * @param list&lt;array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}&gt; $parameters The values bound to the parameter markers, in their order</span></span>
 <span class="src-line" id="L304" data-diff="added"><a class="ln" href="#L304">304</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L305" data-diff="added"><a class="ln" href="#L305">305</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">analyze</span>(<span class="tok-id">string</span> <span class="tok-var">$statement</span>, <span class="tok-id">bool</span> <span class="tok-var">$prepared</span> = <span class="tok-id">false</span>, <span class="tok-kw">array</span> <span class="tok-var">$parameters</span> = []): <span class="tok-id">MySqlStatement</span></span>
 <span class="src-line" id="L306" data-diff="added"><a class="ln" href="#L306">306</a>    {</span>

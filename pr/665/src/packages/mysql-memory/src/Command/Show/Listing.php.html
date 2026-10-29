@@ -93,7 +93,7 @@
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     * Answers the result set of rows, filtered by the clause of the statement.</span></span>
 <span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|null&gt;&gt; $rows The rows, each value in the domain of its column</span></span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt; $rows The rows, each value in the domain of its column</span></span>
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a><span class="tok-com">     * @param int $named The position of the column LIKE matches</span></span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * @param string $collation The collation LIKE compares that column in</span></span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     * @param string $derivation How strongly that collation holds, as ER_CANT_AGGREGATE_2COLLATIONS names it</span></span>
@@ -144,8 +144,8 @@
 <span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a><span class="tok-com">     * Keeps the rows whose named column matches a LIKE pattern.</span></span>
 <span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|null&gt;&gt; $rows</span></span>
-<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|null&gt;&gt;</span></span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt; $rows</span></span>
+<span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt;</span></span>
 <span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a><span class="tok-com">     * @throws \MySqlMemory\Error\SqlError When matching fails</span></span>
 <span class="src-line" id="L111" data-diff="added"><a class="ln" href="#L111">111</a><span class="tok-com">     */</span></span>
@@ -168,8 +168,8 @@
 <span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a><span class="tok-com">     * Keeps the rows a WHERE condition is true for.</span></span>
 <span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|null&gt;&gt; $rows</span></span>
-<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|null&gt;&gt;</span></span>
+<span class="src-line" id="L131" data-diff="added"><a class="ln" href="#L131">131</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt; $rows</span></span>
+<span class="src-line" id="L132" data-diff="added"><a class="ln" href="#L132">132</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt;</span></span>
 <span class="src-line" id="L133" data-diff="added"><a class="ln" href="#L133">133</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L134" data-diff="added"><a class="ln" href="#L134">134</a><span class="tok-com">     * @throws \MySqlMemory\Error\SqlError When evaluating the condition fails</span></span>
 <span class="src-line" id="L135" data-diff="added"><a class="ln" href="#L135">135</a><span class="tok-com">     */</span></span>
@@ -198,7 +198,7 @@
 <span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a><span class="tok-com">     * Answers the result set of rows: each value in its text, a text value in the character set of the results.</span></span>
 <span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|null&gt;&gt; $rows</span></span>
+<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a><span class="tok-com">     * @param list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt; $rows</span></span>
 <span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sent</span>(<span class="tok-kw">array</span> <span class="tok-var">$rows</span>, <span class="tok-id">Context</span> <span class="tok-var">$context</span>): <span class="tok-id">ResultSet</span></span>
 <span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a>    {</span>

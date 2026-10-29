@@ -69,7 +69,7 @@
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">JsonTableIterator</span> <span class="tok-kw">implements</span> <span class="tok-id">RowIterator</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>{</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @var list&lt;list&lt;int|float|string|null&gt;&gt;</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @var list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt;</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">private</span> <span class="tok-kw">array</span> <span class="tok-var">$rows</span> = [];</span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
@@ -97,7 +97,7 @@
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a><span class="tok-com">     * Computes the rows a path and its columns make of a value.</span></span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     * @param list&lt;JsonColumn&gt; $columns</span></span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|null&gt;&gt;</span></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt;</span></span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-com">     * @throws SqlError When a column raises its error</span></span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a><span class="tok-com">     */</span></span>

@@ -104,7 +104,7 @@
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-com">     * @param bool $containers Whether an array or an object converts to a type that is not JSON, as its JSON text</span></span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     * @return array{bool, int|float|string|null}</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     * @return array{bool, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null}</span></span>
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">coerce</span>(<span class="tok-id">JsonNode</span> <span class="tok-var">$node</span>, <span class="tok-id">bool</span> <span class="tok-var">$containers</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    {</span>

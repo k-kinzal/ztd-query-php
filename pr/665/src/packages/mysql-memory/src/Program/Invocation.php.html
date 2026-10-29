@@ -131,7 +131,7 @@
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     * Calls a stored function with the values of its arguments and answers the value it returns.</span></span>
 <span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     * @param list&lt;array{int|float|string|null, Domain}&gt; $arguments The value and type of each argument</span></span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     * @param list&lt;array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}&gt; $arguments The value and type of each argument</span></span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     * @param string $name The name of the call, which an error converting the value it returns names</span></span>
 <span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a><span class="tok-com">     * @throws SqlError When the function calls itself, fails, ends without RETURN, or its value is refused</span></span>
@@ -200,7 +200,7 @@
 <span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a><span class="tok-com">     * Binds the values of the arguments of a routine to its parameters, each stored as into a column of its type.</span></span>
 <span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a><span class="tok-com">     * @param list&lt;array{int|float|string|null, Domain}&gt; $arguments The value and type of each argument; a missing one leaves its parameter NULL</span></span>
+<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a><span class="tok-com">     * @param list&lt;array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}&gt; $arguments The value and type of each argument; a missing one leaves its parameter NULL</span></span>
 <span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a><span class="tok-com">     * @throws SqlError When a value is refused</span></span>
 <span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a><span class="tok-com">     */</span></span>

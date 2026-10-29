@@ -98,7 +98,7 @@
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    <span class="tok-kw">public</span> ?<span class="tok-id">Scope</span> <span class="tok-var">$sources</span> = <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a></span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * @var list&lt;int|float|string|null&gt; The row of the FROM clause of the query the row being written comes from</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * @var list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt; The row of the FROM clause of the query the row being written comes from</span></span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">array</span> <span class="tok-var">$source</span> = [];</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a></span>
@@ -141,7 +141,7 @@
 <span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a><span class="tok-com">     * had not received a value for yet, in the order of the table.</span></span>
 <span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a><span class="tok-com">     * @param list&lt;int&gt; $positions</span></span>
-<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a><span class="tok-com">     * @param list&lt;Evaluable|DefaultRequest|array{int|float|string|null, Domain}&gt; $values</span></span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a><span class="tok-com">     * @param list&lt;Evaluable|DefaultRequest|array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}&gt; $values</span></span>
 <span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a><span class="tok-com">     * @param bool $queried Whether the row is a row of the query of INSERT ... SELECT</span></span>
 <span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a><span class="tok-com">     * @throws SqlError When the row is refused</span></span>

@@ -105,7 +105,7 @@
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">decimal</span>((string) <span class="tok-id">Convert</span>::<span class="tok-id">operandDecimal</span>(<span class="tok-var">$value</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">operand</span>, <span class="tok-var">$frame</span>-&gt;<span class="tok-id">context</span>));</span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        }</span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a></span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">integer</span>((int) <span class="tok-var">$value</span>, <span class="tok-var">$from</span>);</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">integer</span>((int) <span class="tok-id">\MySqlMemory\Evaluation\ExactDecimal</span>::<span class="tok-id">raw</span>(<span class="tok-var">$value</span>), <span class="tok-var">$from</span>);</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    }</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>

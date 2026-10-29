@@ -59,7 +59,7 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">RecursiveUnionIterator</span> <span class="tok-kw">implements</span> <span class="tok-id">RowIterator</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>{</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @var list&lt;list&lt;int|float|string|null&gt;&gt;</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @var list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt;</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">private</span> <span class="tok-kw">array</span> <span class="tok-var">$rows</span> = [];</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a></span>
@@ -98,7 +98,7 @@
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * Reads the rows of one part that were not produced before, under UNION DISTINCT.</span></span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a><span class="tok-com">     * @param array&lt;string, true&gt; $seen</span></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|null&gt;&gt;</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * @return list&lt;list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;&gt;</span></span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">collect</span>(<span class="tok-id">RowIterator</span> <span class="tok-var">$part</span>, <span class="tok-id">Frame</span> <span class="tok-var">$frame</span>, <span class="tok-kw">array</span> &amp;<span class="tok-var">$seen</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    {</span>
@@ -110,7 +110,7 @@
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">path</span>-&gt;<span class="tok-id">distinct</span>) {</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>                <span class="tok-var">$key</span> = <span class="tok-str">&#039;&#039;</span>;</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>                <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">path</span>-&gt;<span class="tok-id">domains</span> <span class="tok-kw">as</span> <span class="tok-var">$position</span> =&gt; <span class="tok-var">$domain</span>) {</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>                    <span class="tok-var">$key</span> .= <span class="tok-id">Order</span>::<span class="tok-id">key</span>(<span class="tok-var">$row</span>[<span class="tok-var">$position</span>], <span class="tok-var">$domain</span>) . <span class="tok-str">&quot;\0&quot;</span>;</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>                    <span class="tok-var">$key</span> .= <span class="tok-id">Order</span>::<span class="tok-id">key</span>(<span class="tok-id">\MySqlMemory\Evaluation\ExactDecimal</span>::<span class="tok-id">raw</span>(<span class="tok-var">$row</span>[<span class="tok-var">$position</span>]), <span class="tok-var">$domain</span>) . <span class="tok-str">&quot;\0&quot;</span>;</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>                }</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>                <span class="tok-kw">if</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$seen</span>[<span class="tok-var">$key</span>])) {</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>                    <span class="tok-kw">continue</span>;</span>

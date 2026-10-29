@@ -205,7 +205,7 @@
 <span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a><span class="tok-com">     * Answers the value and type each parameter starts with: the value of the argument of an IN parameter, the value of the variable of an INOUT parameter, and NULL for an OUT parameter.</span></span>
 <span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a><span class="tok-com">     * @param array&lt;int, string|Variable&gt; $targets The variables of the OUT and INOUT parameters</span></span>
-<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a><span class="tok-com">     * @return list&lt;array{int|float|string|null, Domain}&gt;</span></span>
+<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a><span class="tok-com">     * @return list&lt;array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}&gt;</span></span>
 <span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a><span class="tok-com">     * @throws SqlError When an argument is refused</span></span>
 <span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a><span class="tok-com">     */</span></span>
@@ -229,7 +229,7 @@
 <span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a><span class="tok-com">     * Evaluates a compiled argument.</span></span>
 <span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a><span class="tok-com">     * @return array{int|float|string|null, Domain}</span></span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a><span class="tok-com">     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}</span></span>
 <span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">evaluated</span>(<span class="tok-id">\MySqlMemory\Evaluation\Evaluable</span> <span class="tok-var">$argument</span>, <span class="tok-id">Context</span> <span class="tok-var">$context</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a>    {</span>

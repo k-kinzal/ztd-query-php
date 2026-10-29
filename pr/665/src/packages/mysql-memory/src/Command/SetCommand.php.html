@@ -299,7 +299,7 @@
 <span class="src-line" id="L259" data-diff="added"><a class="ln" href="#L259">259</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L260" data-diff="added"><a class="ln" href="#L260">260</a><span class="tok-com">     * Computes an assigned value: an expression, a bare word, or DEFAULT (null domain).</span></span>
 <span class="src-line" id="L261" data-diff="added"><a class="ln" href="#L261">261</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a><span class="tok-com">     * @return array{int|float|string|null, Domain|null}</span></span>
+<span class="src-line" id="L262" data-diff="added"><a class="ln" href="#L262">262</a><span class="tok-com">     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain|null}</span></span>
 <span class="src-line" id="L263" data-diff="added"><a class="ln" href="#L263">263</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L264" data-diff="added"><a class="ln" href="#L264">264</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">value</span>(<span class="tok-id">Scalar</span>|<span class="tok-id">BareName</span>|<span class="tok-id">SetWord</span> <span class="tok-var">$value</span>, <span class="tok-id">Planner</span> <span class="tok-var">$planner</span>, <span class="tok-id">Frame</span> <span class="tok-var">$frame</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L265" data-diff="added"><a class="ln" href="#L265">265</a>    {</span>

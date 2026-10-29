@@ -177,7 +177,7 @@
 <span class="src-line" id="L137" data-diff="added"><a class="ln" href="#L137">137</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L138" data-diff="added"><a class="ln" href="#L138">138</a><span class="tok-com">     * Tells whether a row meets the condition of the block.</span></span>
 <span class="src-line" id="L139" data-diff="added"><a class="ln" href="#L139">139</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a><span class="tok-com">     * @param list&lt;int|float|string|null&gt; $row</span></span>
+<span class="src-line" id="L140" data-diff="added"><a class="ln" href="#L140">140</a><span class="tok-com">     * @param list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt; $row</span></span>
 <span class="src-line" id="L141" data-diff="added"><a class="ln" href="#L141">141</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L142" data-diff="added"><a class="ln" href="#L142">142</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">meets</span>(<span class="tok-kw">array</span> <span class="tok-var">$row</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L143" data-diff="added"><a class="ln" href="#L143">143</a>    {</span>
@@ -193,7 +193,7 @@
 <span class="src-line" id="L153" data-diff="added"><a class="ln" href="#L153">153</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L154" data-diff="added"><a class="ln" href="#L154">154</a><span class="tok-com">     * Tells whether a row meets the condition with the committed version of a row another transaction changed in place of its latest one.</span></span>
 <span class="src-line" id="L155" data-diff="added"><a class="ln" href="#L155">155</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a><span class="tok-com">     * @param list&lt;int|float|string|null&gt; $row</span></span>
+<span class="src-line" id="L156" data-diff="added"><a class="ln" href="#L156">156</a><span class="tok-com">     * @param list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt; $row</span></span>
 <span class="src-line" id="L157" data-diff="added"><a class="ln" href="#L157">157</a><span class="tok-com">     * @param array&lt;int, true&gt; $contended The targets whose rows another transaction holds, by position</span></span>
 <span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">committedMeets</span>(<span class="tok-kw">array</span> <span class="tok-var">$row</span>, <span class="tok-kw">array</span> <span class="tok-var">$contended</span>): <span class="tok-id">bool</span></span>
@@ -212,8 +212,8 @@
 <span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a><span class="tok-com">     * Answers a row with the latest version of the row of each locked table in place, or null when one was deleted.</span></span>
 <span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a><span class="tok-com">     * @param list&lt;int|float|string|null&gt; $row</span></span>
-<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a><span class="tok-com">     * @return list&lt;int|float|string|null&gt;|null</span></span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a><span class="tok-com">     * @param list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt; $row</span></span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a><span class="tok-com">     * @return list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;|null</span></span>
 <span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">latest</span>(<span class="tok-kw">array</span> <span class="tok-var">$row</span>): ?<span class="tok-kw">array</span></span>
 <span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>    {</span>
@@ -234,9 +234,9 @@
 <span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a><span class="tok-com">     * Answers a row with a version of the row of a table in place of the one it holds.</span></span>
 <span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a><span class="tok-com">     * @param list&lt;int|float|string|null&gt; $row</span></span>
-<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a><span class="tok-com">     * @param list&lt;int|float|string|null&gt; $version</span></span>
-<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a><span class="tok-com">     * @return list&lt;int|float|string|null&gt;</span></span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a><span class="tok-com">     * @param list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt; $row</span></span>
+<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a><span class="tok-com">     * @param list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt; $version</span></span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a><span class="tok-com">     * @return list&lt;int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null&gt;</span></span>
 <span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">spliced</span>(<span class="tok-kw">array</span> <span class="tok-var">$row</span>, <span class="tok-id">TableScanIterator</span> <span class="tok-var">$scan</span>, <span class="tok-id">int</span> <span class="tok-var">$offset</span>, <span class="tok-kw">array</span> <span class="tok-var">$version</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>    {</span>
