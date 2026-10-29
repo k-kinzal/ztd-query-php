@@ -83,7 +83,7 @@
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">optional</span>(): <span class="tok-id">ErisGenerator</span></span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> <span class="tok-id">\Tests\Generator\Operands</span>::<span class="tok-id">oneOf</span>([<span class="tok-id">Generators</span>::<span class="tok-id">constant</span>(<span class="tok-id">null</span>), <span class="tok-kw">new</span> <span class="tok-id">self</span>()]);</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> <span class="tok-id">Generators</span>::<span class="tok-id">oneOf</span>(...[<span class="tok-id">Generators</span>::<span class="tok-id">constant</span>(<span class="tok-id">null</span>), <span class="tok-kw">new</span> <span class="tok-id">self</span>()]);</span>
 <span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>}</span>
