@@ -8,16 +8,12 @@
         "maximumBudget": 49
     },
     "coverage": {
-        "productions": 2591,
-        "reached": 2590,
-        "emitted": 2189,
-        "seeds": 1773,
-        "unreached": [
-            "keyword_sp#296"
-        ],
-        "failures": {
-            "keyword_sp#296": "Unsupported MySQL terminal for mysql-5.7.44: UDF_RETURNS_SYM"
-        }
+        "productions": 2586,
+        "reached": 2586,
+        "emitted": 2187,
+        "seeds": 1770,
+        "unreached": [],
+        "failures": []
     },
     "seeds": [
         {
@@ -187,18 +183,6 @@
             "target": "statement#27",
             "budget": 11,
             "sql": "CACHE INDEX _sqlfaker_identifier IN DEFAULT"
-        },
-        {
-            "file": "statement-28.txt",
-            "target": "statement#28",
-            "budget": 9,
-            "sql": "PARSE_GCOL_EXPR ( ( ( ( ( USER ( ) ) ) ) ) )"
-        },
-        {
-            "file": "statement-29.txt",
-            "target": "statement#29",
-            "budget": 9,
-            "sql": "PARTITION BY RANGE COLUMNS ( )"
         },
         {
             "file": "statement-30.txt",
@@ -1799,206 +1783,206 @@
         {
             "file": "part_type_def-0.txt",
             "target": "part_type_def#0",
-            "budget": 10,
-            "sql": "PARTITION BY KEY ( )"
+            "budget": 16,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY KEY ( )"
         },
         {
             "file": "part_type_def-1.txt",
             "target": "part_type_def#1",
-            "budget": 13,
-            "sql": "PARTITION BY HASH ( ( USER ( ) ) )"
+            "budget": 19,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY HASH ( ( USER ( ) ) )"
         },
         {
             "file": "part_type_def-2.txt",
             "target": "part_type_def#2",
-            "budget": 12,
-            "sql": "PARTITION BY RANGE ( ( USER ( ) ) )"
+            "budget": 18,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE ( ( USER ( ) ) )"
         },
         {
             "file": "part_type_def-4.txt",
             "target": "part_type_def#4",
-            "budget": 12,
-            "sql": "PARTITION BY LIST ( ( USER ( ) ) )"
+            "budget": 18,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY LIST ( ( USER ( ) ) )"
         },
         {
             "file": "part_type_def-5.txt",
             "target": "part_type_def#5",
-            "budget": 9,
-            "sql": "PARTITION BY LIST COLUMNS ( )"
+            "budget": 15,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY LIST COLUMNS ( )"
         },
         {
             "file": "opt_linear-1.txt",
             "target": "opt_linear#1",
-            "budget": 10,
-            "sql": "PARTITION BY LINEAR KEY ( )"
+            "budget": 16,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY LINEAR KEY ( )"
         },
         {
             "file": "opt_key_algo-1.txt",
             "target": "opt_key_algo#1",
-            "budget": 11,
-            "sql": "PARTITION BY KEY ALGORITHM = 1 ( )"
+            "budget": 17,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY KEY ALGORITHM = 1 ( )"
         },
         {
             "file": "part_field_list-1.txt",
             "target": "part_field_list#1",
-            "budget": 14,
-            "sql": "PARTITION BY KEY ( _sqlfaker_identifier )"
+            "budget": 20,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY KEY ( _sqlfaker_identifier )"
         },
         {
             "file": "part_field_item_list-1.txt",
             "target": "part_field_item_list#1",
-            "budget": 18,
-            "sql": "PARTITION BY KEY ( _sqlfaker_identifier , _sqlfaker_identifier )"
+            "budget": 24,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY KEY ( _sqlfaker_identifier , _sqlfaker_identifier )"
         },
         {
             "file": "sub_part_func-0.txt",
             "target": "sub_part_func#0",
-            "budget": 16,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY HASH ( ( USER ( ) ) )"
+            "budget": 22,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY HASH ( ( USER ( ) ) )"
         },
         {
             "file": "opt_num_parts-1.txt",
             "target": "opt_num_parts#1",
-            "budget": 10,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) PARTITIONS 1"
+            "budget": 16,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) PARTITIONS 1"
         },
         {
             "file": "opt_sub_part-2.txt",
             "target": "opt_sub_part#2",
-            "budget": 16,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY KEY ( _sqlfaker_identifier )"
+            "budget": 22,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY KEY ( _sqlfaker_identifier )"
         },
         {
             "file": "sub_part_field_list-1.txt",
             "target": "sub_part_field_list#1",
-            "budget": 20,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY KEY ( _sqlfaker_identifier , _sqlfaker_identifier )"
+            "budget": 26,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY KEY ( _sqlfaker_identifier , _sqlfaker_identifier )"
         },
         {
             "file": "opt_num_subparts-1.txt",
             "target": "opt_num_subparts#1",
-            "budget": 17,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY HASH ( ( USER ( ) ) ) SUBPARTITIONS 1"
+            "budget": 23,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) SUBPARTITION BY HASH ( ( USER ( ) ) ) SUBPARTITIONS 1"
         },
         {
             "file": "part_defs-1.txt",
             "target": "part_defs#1",
-            "budget": 17,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier )"
+            "budget": 23,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier )"
         },
         {
             "file": "part_def_list-1.txt",
             "target": "part_def_list#1",
-            "budget": 25,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier , PARTITION _sqlfaker_identifier )"
+            "budget": 31,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier , PARTITION _sqlfaker_identifier )"
         },
         {
             "file": "opt_part_values-1.txt",
             "target": "opt_part_values#1",
-            "budget": 18,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN MAXVALUE )"
+            "budget": 24,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN MAXVALUE )"
         },
         {
             "file": "opt_part_values-2.txt",
             "target": "opt_part_values#2",
-            "budget": 21,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES IN ( 1 ) )"
+            "budget": 27,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES IN ( 1 ) )"
         },
         {
             "file": "part_func_max-1.txt",
             "target": "part_func_max#1",
-            "budget": 21,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN ( MAXVALUE ) )"
+            "budget": 27,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN ( MAXVALUE ) )"
         },
         {
             "file": "part_values_in-1.txt",
             "target": "part_values_in#1",
-            "budget": 22,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES IN ( ( 1 , 1 ) ) )"
+            "budget": 28,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES IN ( ( 1 , 1 ) ) )"
         },
         {
             "file": "part_value_list-1.txt",
             "target": "part_value_list#1",
-            "budget": 26,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES IN ( ( 1 , 1 ) , ( 1 , 1 ) ) )"
+            "budget": 32,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES IN ( ( 1 , 1 ) , ( 1 , 1 ) ) )"
         },
         {
             "file": "part_value_item_list-1.txt",
             "target": "part_value_item_list#1",
-            "budget": 23,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN ( MAXVALUE , MAXVALUE ) )"
+            "budget": 29,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN ( MAXVALUE , MAXVALUE ) )"
         },
         {
             "file": "part_value_expr_item-1.txt",
             "target": "part_value_expr_item#1",
-            "budget": 24,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN ( ( ( USER ( ) ) ) ) )"
+            "budget": 30,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier VALUES LESS THAN ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "opt_sub_partition-1.txt",
             "target": "opt_sub_partition#1",
-            "budget": 22,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier ( SUBPARTITION _sqlfaker_identifier ) )"
+            "budget": 28,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier ( SUBPARTITION _sqlfaker_identifier ) )"
         },
         {
             "file": "sub_part_list-1.txt",
             "target": "sub_part_list#1",
-            "budget": 27,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier ( SUBPARTITION _sqlfaker_identifier , SUBPARTITION _sqlfaker_identifier ) )"
+            "budget": 33,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier ( SUBPARTITION _sqlfaker_identifier , SUBPARTITION _sqlfaker_identifier ) )"
         },
         {
             "file": "opt_part_options-1.txt",
             "target": "opt_part_options#1",
-            "budget": 21,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 )"
+            "budget": 27,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 )"
         },
         {
             "file": "opt_part_option_list-0.txt",
             "target": "opt_part_option_list#0",
-            "budget": 25,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 NODEGROUP 1 )"
+            "budget": 31,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 NODEGROUP 1 )"
         },
         {
             "file": "opt_part_option-0.txt",
             "target": "opt_part_option#0",
-            "budget": 26,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 TABLESPACE _sqlfaker_identifier )"
+            "budget": 32,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 TABLESPACE _sqlfaker_identifier )"
         },
         {
             "file": "opt_part_option-1.txt",
             "target": "opt_part_option#1",
-            "budget": 27,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 ENGINE _sqlfaker_identifier )"
+            "budget": 33,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 ENGINE _sqlfaker_identifier )"
         },
         {
             "file": "opt_part_option-3.txt",
             "target": "opt_part_option#3",
-            "budget": 25,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 MAX_ROWS 1 )"
+            "budget": 31,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 MAX_ROWS 1 )"
         },
         {
             "file": "opt_part_option-4.txt",
             "target": "opt_part_option#4",
-            "budget": 25,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 MIN_ROWS 1 )"
+            "budget": 31,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 MIN_ROWS 1 )"
         },
         {
             "file": "opt_part_option-5.txt",
             "target": "opt_part_option#5",
-            "budget": 25,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 DATA DIRECTORY 'text' )"
+            "budget": 31,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 DATA DIRECTORY 'text' )"
         },
         {
             "file": "opt_part_option-6.txt",
             "target": "opt_part_option#6",
-            "budget": 25,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 INDEX DIRECTORY 'text' )"
+            "budget": 31,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 INDEX DIRECTORY 'text' )"
         },
         {
             "file": "opt_part_option-7.txt",
             "target": "opt_part_option#7",
-            "budget": 25,
-            "sql": "PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 COMMENT 'text' )"
+            "budget": 31,
+            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( ) ( PARTITION _sqlfaker_identifier NODEGROUP 1 COMMENT 'text' )"
         },
         {
             "file": "opt_as-1.txt",
@@ -3541,12 +3525,6 @@
             "target": "ident_or_empty#1",
             "budget": 11,
             "sql": "ALTER DATABASE _sqlfaker_identifier COLLATE DEFAULT"
-        },
-        {
-            "file": "alter_commands-1.txt",
-            "target": "alter_commands#1",
-            "budget": 15,
-            "sql": "ALTER TABLE _sqlfaker_identifier PARTITION BY RANGE COLUMNS ( )"
         },
         {
             "file": "alter_commands-2.txt",

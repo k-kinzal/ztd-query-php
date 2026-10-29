@@ -85,6 +85,19 @@ ordinals to choose for successive occurrences of enclosing or sibling rules.
 These choices are encoded in the seed itself; replay needs no recipe or special
 generation settings. MySQL operator-mode supplements live under `modes/HIGH_NOT_PRECEDENCE/` and `modes/PIPES_AS_CONCAT/`; their manifests record the required mode. The builder reads their target recipes from `seeds/modes/`. Replay uses the same byte plan with the corresponding provider flag, and execution must enable that mode in the database session. Diagnostic supplements under `diagnostics/` replay the original grammar with structural rewrites disabled. Their manifests record `structuralRewrites: false`; recipes are in `seeds/diagnostics/`. These inputs retain forms the server refuses, including decimal operands at integer-only positions and `SET NAMES = expr`, so differential tests can verify the errors as well as successful statements.
 
+MySQL 5.6 and 5.7 use `statement` as the corpus root. Their normal provider
+excludes its `partition_entry` alternative: the server uses that entry to read
+`.frm` metadata and rejects every client invocation before reading its body.
+Partition clauses remain reachable through CREATE TABLE and ALTER TABLE. MySQL
+5.7 also excludes the internal `statement: parse_gcol_expr` alternative, while
+retaining `PARSE_GCOL_EXPR` as an ordinary identifier keyword. The
+coverage inventory records the excluded source alternative, and the internal
+fragment remains available when explicitly requested by rule name. The provider
+also excludes `keyword_sp: UDF_RETURNS_SYM`: neither legacy lexer emits that
+token. The ordinary `RETURNS_SYM` alternative remains available. Raw diagnostic
+generation still uses the original grammar. Legacy seeds must be rebuilt after
+these changes because their production-choice domains have changed.
+
 Contexts matter because structural rewrites can replace a selected alternative.
 For example, a `SUPER` privilege needs a `GRANT ... ON ...` context to remain a
 privilege, and a stored-program `RETURN` needs a function context to remain a

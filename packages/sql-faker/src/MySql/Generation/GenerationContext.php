@@ -54,7 +54,7 @@ final class GenerationContext
     {
         $version = MySqlGrammar::resolveVersion($version);
         $lexical = new LexicalGrammar($faker, $version, highNotPrecedence: $highNotPrecedence, pipesAsConcat: $pipesAsConcat);
-        $this->grammar = $grammar;
+        $this->grammar = (new GrammarAdaptation())->adapted($grammar);
         $this->rewriter = (new RewriteDefinitions())->create($version, $highNotPrecedence, $pipesAsConcat);
         $this->startSymbol = (new StartRuleResolver($grammar))->startSymbolFor(...);
         $this->lexicalGrammar = $lexical;
