@@ -136,7 +136,7 @@ final class AlterTable extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
             };
             foreach ($columns as $column) {
                 if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) {
-                    (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($column->specification->dataType(), $column->name->column->value, $derivation);
+                    (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($column->specification->dataType(), $column->name->column->value, $derivation, $column);
                 }
             }
         }

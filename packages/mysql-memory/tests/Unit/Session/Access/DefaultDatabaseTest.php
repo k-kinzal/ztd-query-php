@@ -34,6 +34,19 @@ use Tests\Generator\Embedding;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    public function testBeforeRepeatedDropRequiresTheEarlierTargetsDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Alter\DropTable(false, false, [
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new QualifiedName(new Name('t'))),
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new QualifiedName(new Name('t'))),
+        ]);
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable($statement->tables[1]->name);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+        (new DefaultDatabase())->beforeRepeatedDrop($statement, $problem, $session);
+    }
+
     #[\PHPUnit\Framework\Attributes\DataProvider('providerPrivilegeTargets')]
     public function testPrivilegeIdentifiesOnlyImplicitDatabases(string $sql, bool $required): void
     {

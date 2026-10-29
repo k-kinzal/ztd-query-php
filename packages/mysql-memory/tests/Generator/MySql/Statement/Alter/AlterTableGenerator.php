@@ -39,6 +39,11 @@ final class AlterTableGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = $release->database() === 'mysql' ? [self::partitionDefinitions()] : [];
+            if ($release->database() === 'mysql') {
+                $columns = \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator::sized();
+                $commands = Generators::oneOf(new Column\AddColumnGenerator($columns), new Column\ChangeColumnGenerator(Generators::constant(null), $columns));
+                $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, $commands)));
+            }
             if (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
                 $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(null), Generators::constant(null)), Generators::constant([]), dot: new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator());
             }

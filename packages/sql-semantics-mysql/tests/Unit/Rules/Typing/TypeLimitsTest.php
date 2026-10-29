@@ -32,6 +32,7 @@ final class TypeLimitsTest extends TestCase
         yield 'floating width' => ['FLOAT(0,0)', TypeLimit::Width];
         yield 'floating precision' => ['FLOAT(54)', TypeLimit::Specifier];
         yield 'floating scale' => ['DOUBLE(50,31)', TypeLimit::Scale];
+        yield 'floating scale before width' => ['FLOAT(256,31)', TypeLimit::Scale];
         yield 'decimal precision' => ['DECIMAL(66,0)', TypeLimit::Precision];
         yield 'decimal scale order' => ['DECIMAL(2,3)', TypeLimit::ScaleExceedsPrecision];
         yield 'temporal fraction' => ['TIME(7)', TypeLimit::Precision];
@@ -78,13 +79,12 @@ final class TypeLimitsTest extends TestCase
     public function testCheckSharesBoundsAcrossDeclarations(string $sql, TypeLimit $rule, string $name): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        try {
-            $semantics->analyze($sql);
-            self::fail('An intrinsic size contradiction cannot publish a statement.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            $problem = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody ? $failure->problem->problem : $failure->problem;
-        }
-        self::assertInstanceOf(InvalidTypeSize::class, $problem);
+        $statement = $semantics->analyze($sql);
+        $problems = array_values(array_filter($statement->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof InvalidTypeSize));
+        self::assertCount(1, $problems);
+        $problem = $problems[0];
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
         self::assertSame([$rule, $name], [$problem->rule, $problem->name]);
     }
 

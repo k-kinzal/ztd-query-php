@@ -104,14 +104,12 @@ final class Generations
 
     /**
      * Applies complete statement and scalar constraints to ordinary public roots.
-     * Stored definitions retain fixed type bounds as definition-time conditions.
+     * Declared type bounds remain conditions on retained SQL operands.
      */
     public function ordinary(Node $root): void
     {
         if ($root instanceof \SqlSemantics\Statement\Statement || $root instanceof \SqlSemantics\Statement\Scalar) {
             (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles())->check($root);
-            $definition = $root instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure || $root instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction || $root instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger || $root instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent || $root instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
-            Check::input($definition || (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->problem($root) === null, 'A statement excludes declared type sizes invalid in every supported release.');
         }
     }
 

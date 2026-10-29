@@ -27,6 +27,27 @@ use SqlSemantics\Statement\Statement;
 final class DefaultDatabase
 {
     /**
+     * Resolves DROP targets only through the first repeated identity.
+     * A later unqualified target cannot replace that earlier condition.
+     *
+     * @throws SqlError When a preceding target requires the current database
+     */
+    public function beforeRepeatedDrop(\SqlSemantics\Platform\MySql\Statement\Alter\DropTable $statement, \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable $problem, Session $session): void
+    {
+        if ($session->variables->database !== '') {
+            return;
+        }
+        foreach ($statement->tables as $target) {
+            if ($target->name->schema === null) {
+                throw QueryError::NoDatabase->error();
+            }
+            if ($target->name === $problem->name) {
+                break;
+            }
+        }
+    }
+
+    /**
      * Checks the names whose implicit database is needed before their later clauses.
      * Modern DELETE collects grammar notices before resolving its target names;
      * MySQL 5.6 DELETE and stored-definition names resolve while reading the header.

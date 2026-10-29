@@ -167,7 +167,7 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
             (new ElementFacts())->names($element, $derivation, $this->name);
             if ($element instanceof ColumnDefinition) {
                 (new TypeNotices())->type($element->specification->dataType(), $derivation);
-                (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation);
+                (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation, $element);
             } elseif ($element instanceof Key\IndexDefinition) {
                 (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->parsers($element->options, $derivation);
             }

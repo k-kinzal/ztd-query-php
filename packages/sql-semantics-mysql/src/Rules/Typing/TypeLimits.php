@@ -53,7 +53,8 @@ final class TypeLimits
         $problem = $this->problem($type, $name, $derivation->context->profile->grammar);
         if ($problem !== null) {
             $derivation->report($problem);
-            $derivation->warn(new ParseFailure($problem, true), $at);
+            $contextual = $at instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition && !in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            $derivation->warn(new ParseFailure($problem, true, $contextual ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax), $at);
         }
     }
 
@@ -119,11 +120,11 @@ final class TypeLimits
         if ($type instanceof Floating && $type->scale === null) {
             return $type->precision !== null && $precision > 53 ? new InvalidTypeSize(TypeLimit::Specifier, $name) : null;
         }
-        if ($type instanceof Floating && ($precision === 0 || $precision > 255)) {
-            return new InvalidTypeSize(TypeLimit::Width, $name, $precision, 255);
-        }
         if ($scale > 30) {
             return new InvalidTypeSize(TypeLimit::Scale, $name, $scale, 30);
+        }
+        if ($type instanceof Floating && ($precision === 0 || $precision > 255)) {
+            return new InvalidTypeSize(TypeLimit::Width, $name, $precision, 255);
         }
         if ($type instanceof Decimal && $precision > 65) {
             return new InvalidTypeSize(TypeLimit::Precision, $name, $precision >= 2147483648 ? $precision - 4294967296 : $precision, 65);

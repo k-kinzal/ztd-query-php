@@ -20,8 +20,8 @@ use SqlSemantics\Rendering\Output;
  * resolves by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact
  * of its TargetTable; under IF EXISTS a name a complete context does not
  * declare resolves to AbsentTable. A table named twice is the diagnostic
- * RepeatedTable after contextual name comparison; identical written identities
- * are excluded by construction. A declared view is not a table DROP TABLE finds: without
+ * RepeatedTable after contextual name comparison. Every written target remains
+ * in the statement, including repeated identities. A declared view is not a table DROP TABLE finds: without
  * IF EXISTS it is refused (MYSQL-RELATION-KIND-001). TEMPORARY restricts the request to temporary tables, which a
  * declaration context does not distinguish. RESTRICT and CASCADE have no
  * effect and are kept as written. The statement removes no declaration and
@@ -57,7 +57,6 @@ final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
         }
         Check::input($tables !== [], 'DROP TABLE names at least one table.');
         $this->tables = Check::listOf($tables, TargetTable::class, 'DROP TABLE names a list of tables.');
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->repeated(array_map(static fn (TargetTable $table): \SqlSemantics\Statement\Identifier\QualifiedName => $table->name, $this->tables)) === null, 'DROP TABLE cannot repeat an identical table name.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -73,8 +72,11 @@ final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
                 (new RelationKinds())->refuseView($derivation, $table->name, $fact->table, KindRefusal::UnknownTable);
             }
             foreach (array_slice($this->tables, 0, $index) as $earlier) {
-                if ($targets->same($derivation->context, $earlier->name, $table->name)) {
-                    $derivation->report(new RepeatedTable($table->name));
+                if ($targets->same($derivation->environment()->context, $earlier->name, $table->name)) {
+                    $problem = new RepeatedTable($table->name);
+                    $derivation->report($problem);
+                    $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+                    $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization), $table);
                     break;
                 }
             }

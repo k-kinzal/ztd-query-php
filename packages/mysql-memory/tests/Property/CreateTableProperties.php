@@ -53,7 +53,7 @@ final class CreateTableProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        yield from self::providerDependentReleases();
     }
     /**
      * With generated prerequisites, every statement must execute successfully.

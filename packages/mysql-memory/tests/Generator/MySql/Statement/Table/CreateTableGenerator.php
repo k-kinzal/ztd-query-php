@@ -43,6 +43,12 @@ final class CreateTableGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
+            if ($release->database() === 'mysql') {
+                $names = new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
+                $columns = Column\ColumnDefinitionGenerator::sized();
+                $elements = Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, $columns));
+                $forms[] = Generators::map(static fn (array $parts): CreateTable => new CreateTable($parts[0], $parts[1]), Generators::tuple($names, $elements));
+            }
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;

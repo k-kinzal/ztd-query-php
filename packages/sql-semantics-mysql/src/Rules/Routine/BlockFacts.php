@@ -50,7 +50,7 @@ final class BlockFacts
     public function derive(Block $block, Derivation $derivation, ProgramScope $scope): void
     {
         $outer = (new LabelFacts())->enter($block->label, $block->endLabel, false, $derivation, $scope);
-        $inside = $outer->declared(new Environment($derivation->context, $outer->environment), $outer->conditions, $outer->cursors);
+        $inside = $outer->declared(new Environment($outer->environment->context, $outer->environment), $outer->conditions, $outer->cursors);
         $stage = 0;
         $names = [];
         $conditions = [];
@@ -161,7 +161,7 @@ final class BlockFacts
             }
             $declared[] = $name;
         }
-        $environment = new Environment($derivation->context, $scope->environment->outer, [...$scope->environment->relations, new VisibleRelation($declaration, $fact->shape, null, null, $hidden)]);
+        $environment = new Environment($scope->environment->context, $scope->environment->outer, [...$scope->environment->relations, new VisibleRelation($declaration, $fact->shape, null, null, $hidden)]);
 
         return $scope->declared($environment, $scope->conditions, $scope->cursors);
     }

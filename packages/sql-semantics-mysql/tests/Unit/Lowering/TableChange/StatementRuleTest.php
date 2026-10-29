@@ -26,10 +26,9 @@ final class StatementRuleTest extends TestCase
         self::assertSame('DROP TEMPORARY TABLE IF EXISTS a, b.c CASCADE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('drop temporary table if exists a, b.c cascade')->toString());
     }
 
-    public function testDropTableRefusesAnIdenticalTargetBeforePublishingTheStatement(): void
+    public function testDropTableRetainsEveryRepeatedTarget(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        (new Semantics(Dialect::MySql))->analyze('DROP TABLE t, t');
+        self::assertSame('DROP TABLE t, t', (new Semantics(Dialect::MySql))->analyze('DROP TABLE t, t')->toString());
     }
 
     public function testRenameLowersTheRenames(): void

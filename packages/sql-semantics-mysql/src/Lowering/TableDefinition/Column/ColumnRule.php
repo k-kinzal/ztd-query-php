@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\References;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -84,7 +83,7 @@ final class ColumnRule
     public function specification(Node $definition, ?Node $attributes = null, ?References $references = null, array $trailing = [], ?\SqlSemantics\Statement\Identifier\Name $name = null): ColumnSpecification
     {
         if ($definition->name === 'type') {
-            return $this->ordinary($definition, $attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes'), $references, $trailing, $name);
+            return $this->ordinary($definition, $attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes'), $references, $trailing);
         }
         $form = $this->lowering->productions->form($definition);
         $positions = self::GENERATED[$form->signature] ?? null;
@@ -93,7 +92,6 @@ final class ColumnRule
             $written = $this->always($form->node($always));
             $type = $this->lowering->types->type($form->node(0));
             $attributes = $this->attributes($form->node($list));
-            $this->size($type, $name, $definition);
             $value = $this->expression($form->node($expression), $name);
             if (($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value)) {
                 return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references, generatedAlways: $written);
@@ -110,7 +108,7 @@ final class ColumnRule
         }
 
         return match ($form->signature) {
-            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => $this->ordinary($form->node(0), $form->node(1), $references, $trailing, $name),
+            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => $this->ordinary($form->node(0), $form->node(1), $references, $trailing),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -121,28 +119,11 @@ final class ColumnRule
      * @param list<ColumnAttribute> $trailing Attributes after the type's own list
      * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
      */
-    public function ordinary(Node $definition, Node $list, ?References $references, array $trailing, ?\SqlSemantics\Statement\Identifier\Name $name): OrdinaryColumn
+    public function ordinary(Node $definition, Node $list, ?References $references, array $trailing): OrdinaryColumn
     {
         $type = $this->lowering->types->type($definition);
         $attributes = [...$this->attributes($list), ...$trailing];
-        $this->size($type, $name, $list);
         return new OrdinaryColumn($type, $attributes, $references);
-    }
-
-    /**
-     * Converts an out-of-range type size to a typed source refusal.
-     *
-     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds its declared size bounds
-     */
-    public function size(TypeName $type, ?\SqlSemantics\Statement\Identifier\Name $name, Node $boundary): void
-    {
-        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->type($type, $name->value ?? '');
-        if ($size !== null) {
-            $scope = $this->lowering->programName ?? $this->lowering->columnTable;
-            $problem = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($size->rule, $size->name, $size->actual, $size->maximum, $scope);
-            $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($boundary)[1] ?? 0, $legacy);
-        }
     }
 
     /**

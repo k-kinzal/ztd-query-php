@@ -17,8 +17,8 @@ use SqlSemantics\Statement\Node;
  * Finds declared type sizes that no supported release can interpret.
  *
  * These are fixed operand constraints, independent of catalogs, row values or
- * execution. Ordinary statements exclude these sizes. Stored definitions keep
- * their typed operands and publish definition-time conditions even for dead branches.
+ * execution. Statements keep their typed operands and publish these conditions;
+ * stored definitions also check them in branches that never execute.
  * BIT(0) remains a legacy type: a release-specific refusal is not intrinsic.
  *
  * @visibility SqlSemantics\Platform\MySql

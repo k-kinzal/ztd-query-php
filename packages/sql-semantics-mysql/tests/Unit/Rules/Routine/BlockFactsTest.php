@@ -25,6 +25,15 @@ use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 #[Medium]
 final class BlockFactsTest extends TestCase
 {
+    public function testDerivePreservesTheProgramsDatabaseThroughNestedVariableScopes(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE d.p() BEGIN DECLARE x INT; BEGIN DECLARE y INT; DROP TABLE t, d.t; END; END');
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        $conditions = array_values(array_filter($statement->diagnostics(), static fn (Diagnostic $condition): bool => $condition instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable));
+        self::assertCount(1, $conditions);
+        self::assertSame('Table d.t is named more than once.', $conditions[0]->message());
+    }
+
     public function testDeriveResolvesTheVariableOfTheInnermostBlock(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; BEGIN DECLARE x CHAR(1); SELECT x; END; END');

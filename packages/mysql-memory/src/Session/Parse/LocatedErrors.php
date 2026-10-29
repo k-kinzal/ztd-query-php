@@ -26,6 +26,9 @@ final class LocatedErrors
      */
     public function parsed(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $warning, MySqlStatement $operation, Session $session): SqlError
     {
+        if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable && $operation instanceof \SqlSemantics\Platform\MySql\Statement\Alter\DropTable) {
+            (new \MySqlMemory\Session\Access\DefaultDatabase())->beforeRepeatedDrop($operation, $warning->problem, $session);
+        }
         if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel) {
             $database = match (true) {
                 $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure,

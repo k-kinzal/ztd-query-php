@@ -106,6 +106,10 @@ final class SyntaxColumns
                 continue;
             }
             $scope = $lowering->programName ?? $lowering->columnTable;
+            $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($column->specification->dataType(), $column->name->column->value, $lowering->profile->grammar);
+            if ($size !== null) {
+                return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($size->rule, $size->name, $size->actual, $size->maximum, $scope), true);
+            }
             $generation = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Conditions())->problem($column, $lowering->profile->grammar, $scope);
             if ($generation instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand) {
                 \SqlSemantics\Diagnostic\Check::invariant($column->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn, 'An eager generation condition retains its complete expression.');

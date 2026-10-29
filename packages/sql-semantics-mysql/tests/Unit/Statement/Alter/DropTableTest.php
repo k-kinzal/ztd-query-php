@@ -33,13 +33,36 @@ final class DropTableTest extends TestCase
         self::assertSame('DROP TEMPORARY TABLES IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
     }
 
-    public function testRenderRequiresDistinctTableIdentities(): void
+    public function testRenderPreservesRepeatedTableIdentities(): void
     {
-        $this->expectExceptionMessage('DROP TABLE cannot repeat an identical table name.');
-        new DropTable(false, false, [
+        $drop = new DropTable(false, false, [
             new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
             new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
         ]);
+        $published = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context(), $drop);
+        self::assertSame('DROP TABLE t, t', $published->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReleases')]
+    public function testDeriveStatementRetainsARepeatedTargetAsAnOrderedCondition(string $version): void
+    {
+        $drop = (new Semantics(Dialect::MySql, 'mysql-' . $version))->analyze('DROP TEMPORARY TABLES t, t');
+        self::assertInstanceOf(DropTable::class, $drop);
+        self::assertCount(2, $drop->tables);
+        self::assertSame('DROP TEMPORARY TABLES t, t', $drop->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $drop->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable::class, $drop->warnings()[0]->problem);
+        self::assertSame($drop->tables[1]->name, $drop->warnings()[0]->problem->name);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerReleases(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            yield $version => [$version];
+        }
     }
 
     public function testDeriveStatementRefusesAViewWithoutIfExists(): void

@@ -46,12 +46,12 @@ final class FixedSizeBoundsTest extends TestCase
     /**
      * @return iterable<string, array{Closure(): M\Statement, string}>
      */
-    public static function providerRefusedDeclarations(): iterable
+    public static function providerColumnDeclarations(): iterable
     {
         $column = static fn (): M\Table\Column\ColumnDefinition => new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Temporal(M\Type\Kind\TemporalKind::Time, '7')));
-        yield 'table' => [static fn (): M\Statement => new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column()]), 'A statement excludes declared type sizes invalid in every supported release.'];
-        yield 'altered column' => [static fn (): M\Statement => new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Column\AddColumn($column())]), 'A statement excludes declared type sizes invalid in every supported release.'];
-        yield 'unused branch' => [static fn (): M\Statement => new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column()])])])), 'A statement excludes declared type sizes invalid in every supported release.'];
+        yield 'table' => [static fn (): M\Statement => new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column()]), "Too-big precision 7 specified for 'a'. Maximum is 6."];
+        yield 'altered column' => [static fn (): M\Statement => new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Column\AddColumn($column())]), "Too-big precision 7 specified for 'a'. Maximum is 6."];
+        yield 'unused branch' => [static fn (): M\Statement => new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column()])])])), "Too-big precision 7 specified for 'a'. Maximum is 6."];
     }
 
     /**
@@ -77,10 +77,16 @@ final class FixedSizeBoundsTest extends TestCase
         self::assertSame($message, $published->warnings()[0]->message());
     }
 
-    #[DataProvider('providerRefusedDeclarations')]
-    public function testProblemPreventsAnOrdinaryDeclarationWithAFixedTypeContradiction(Closure $construct, string $message): void
+    /**
+     * @param Closure(): M\Statement $construct
+     */
+    #[DataProvider('providerColumnDeclarations')]
+    public function testProblemRetainsAnOrdinaryDeclarationsFixedTypeCondition(Closure $construct, string $message): void
     {
-        $this->expectExceptionMessage($message);
-        $construct();
+        $statement = $construct();
+        self::assertSame($message, (new FixedSizeBounds())->problem($statement)?->message());
+        $context = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context();
+        $published = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement);
+        self::assertSame($message, $published->warnings()[0]->message());
     }
 }
