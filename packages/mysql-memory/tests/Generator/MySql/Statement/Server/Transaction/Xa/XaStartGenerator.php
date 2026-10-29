@@ -32,21 +32,21 @@ final class XaStartGenerator implements ErisGenerator
      *
      * @param ErisGenerator<XaStart>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
+     * @throws InvalidArgumentException When the release belongs to another database.
      */
     public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
+        if ($release->database() !== 'mysql') {
+            throw new InvalidArgumentException('XA statements require a MySQL grammar release.');
+        }
         if ($operands === null) {
-            $forms = [];
+            $forms = [self::operands($release)];
             if ($release === GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No XaStart forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): XaStart {

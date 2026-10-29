@@ -50,6 +50,9 @@ final class LocatedErrors
      */
     public function located(Diagnostic $problem, ?\SqlSemantics\Statement\Source\SourceMap $sources, Session $session): ?SqlError
     {
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier) {
+            return (new Entry\XaInput())->error($problem, $session);
+        }
         if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput) {
             return (new Entry\InputErrors())->castSize($problem, $session->text, $session);
         }

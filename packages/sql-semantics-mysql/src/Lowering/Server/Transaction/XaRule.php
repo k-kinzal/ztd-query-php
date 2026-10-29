@@ -9,7 +9,6 @@ use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaCommit;
@@ -70,7 +69,6 @@ final class XaRule
      * Lowers an XA statement: a node of `xa`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When an identifier part exceeds its limit
      */
     public function statement(Form $form): Statement
     {
@@ -92,7 +90,6 @@ final class XaRule
      * Lowers XA START or XA BEGIN.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When an identifier part exceeds its limit
      */
     public function start(Form $form, ?Span $source = null): XaStart
     {
@@ -155,7 +152,6 @@ final class XaRule
      * Lowers an XA transaction identifier: a node of `xid`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When a part exceeds its limit
      */
     public function xid(Node $xid): Xid
     {
@@ -167,14 +163,8 @@ final class XaRule
             'xid: text_string , text_string , ulong_num' => [$literals->text($form->node(0)), $literals->text($form->node(2)), $this->lowering->numbers->numeral($form->node(4))],
             default => throw ImplementationGap::production($form),
         };
-        if (!$this->limits($transaction, $branch, $format)) {
-            $ranges = new SourceRanges();
-            $end = $ranges->span($xid)[1] ?? 0;
-            $offset = $format === null ? $end : ($ranges->span($form->node(4))[0] ?? 0);
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier($offset, $format === null), $end);
-        }
-
-        return new Xid($transaction, $branch, $format);
+        $range = (new SourceRanges())->span($xid);
+        return new Xid($transaction, $branch, $format, $range === null ? null : new Span($range[0], $range[1] - $range[0]));
     }
 
     /**
@@ -182,10 +172,6 @@ final class XaRule
      */
     public function limits(Text $transaction, ?Text $branch, ?Numeral $format): bool
     {
-        $magnitudes = new Magnitudes();
-
-        return $magnitudes->bytes($transaction) <= 64
-            && ($branch === null || $magnitudes->bytes($branch) <= 64)
-            && ($format === null || $magnitudes->format($format, $this->lowering->profile->grammar));
+        return (new Xid($transaction, $branch, $format))->problem($this->lowering->profile->grammar) === null;
     }
 }

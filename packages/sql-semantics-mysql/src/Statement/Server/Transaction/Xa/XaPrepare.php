@@ -9,7 +9,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
-use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
@@ -27,8 +26,8 @@ use SqlSemantics\Statement\Source\Span;
  * @example Reading the request
  *     $xa = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("xa prepare 'g'");
  *     [$xa->toString(), $xa->xid->transaction->value === 'g'] // => ["XA PREPARE 'g'", true]
- * @example Refusing a format identifier outside the selected release
- *     new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9223372036854775808'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining a format identifier outside the selected release
+ *     (new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9223372036854775808'))))->xid->problem(\SqlSemantics\Contract\GrammarRelease::MySql847) instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier // => true
  */
 final class XaPrepare extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
@@ -47,18 +46,15 @@ final class XaPrepare extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
             $this->initializeStatementInformation($statementInformation);
         }
         Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
-        (new Magnitudes())->identifier($xid, $profile->grammar);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Refuses a format identifier the release rejects; the request names no relation and no value.
-     *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the release does not read the format identifier
+     * Records the identifier condition for execution in the selected release.
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new Magnitudes())->identifier($this->xid, $derivation->context->profile->grammar);
+        $this->xid->derive($derivation);
     }
 
     /**

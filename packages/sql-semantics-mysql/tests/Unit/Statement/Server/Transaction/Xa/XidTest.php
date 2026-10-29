@@ -38,17 +38,35 @@ final class XidTest extends TestCase
     }
 
     #[DataProvider('providerOversizedParts')]
-    public function testValueRefusesOversizedTransactionsBeforePublication(Text $text): void
+    public function testProblemRetainsOversizedTransactions(Text $text): void
     {
-        $this->expectExceptionMessage('A global transaction identifier holds at most 64 bytes.');
-        new Xid($text);
+        $identifier = new Xid($text);
+        self::assertSame($text, $identifier->transaction);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier::class, $identifier->problem(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
     #[DataProvider('providerOversizedParts')]
-    public function testValueRefusesOversizedBranchesBeforePublication(Text $text): void
+    public function testProblemRetainsOversizedBranches(Text $text): void
     {
-        $this->expectExceptionMessage('A branch qualifier holds at most 64 bytes.');
-        new Xid(new Text('g'), $text);
+        $identifier = new Xid(new Text('g'), $text);
+        self::assertSame($text, $identifier->branch);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier::class, $identifier->problem(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+    public function testDeriveRecordsTheCompleteIdentifierCondition(): void
+    {
+        $sql = "XA ROLLBACK '" . str_repeat('g', 65) . "'";
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier(strlen($sql), true), $statement->diagnostics()[0]);
+    }
+
+    public function testProblemKeepsTheReleaseSpecificNumericBoundary(): void
+    {
+        $identifier = new Xid(new Text('g'), new Text('b'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9223372036854775808'));
+        self::assertNull($identifier->problem(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier(0), $identifier->problem(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertNull((new Xid(new Text(str_repeat('g', 64))))->problem(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
 }

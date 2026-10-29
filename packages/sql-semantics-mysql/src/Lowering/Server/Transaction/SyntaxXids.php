@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 /**
  * Preserves a completed XA identifier's refusal before later input errors.
  *
- * Every path uses the ordinary identifier lowering and constructor domains.
+ * Every path uses the complete identifier and its release-specific conditions.
  * No parser node or input text survives in the returned notice.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -30,19 +30,16 @@ final class SyntaxXids
     }
 
     /**
-     * Refuses an identifier before its semantic value is constructed.
+     * Reports a completed identifier condition before a later malformed suffix.
      */
     public function rejected(Node $node, Lowering $lowering): ?RejectedInput
     {
         if ($node->name !== 'xid') {
             return null;
         }
-        try {
-            (new XaRule($lowering))->xid($node);
-        } catch (RejectedInput $failure) {
-            return $failure;
-        }
-
-        return null;
+        $identifier = (new XaRule($lowering))->xid($node);
+        $problem = $identifier->problem($lowering->profile->grammar);
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0;
+        return $problem === null ? null : new RejectedInput($problem, $end);
     }
 }

@@ -15,7 +15,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
-use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 
 #[CoversClass(Magnitudes::class)]
 #[Medium]
@@ -94,16 +93,6 @@ final class MagnitudesTest extends TestCase
         self::assertTrue($magnitudes->format(new Numeral('ffffffffffffffffff', true), GrammarRelease::MySql847));
     }
 
-    public function testIdentifierRefusesAFormatTheReleaseRejects(): void
-    {
-        $xid = new Xid(new Text('a'), new Text('b'), new Numeral('18446744073709551615'));
-        (new Magnitudes())->identifier($xid, GrammarRelease::MySql5651);
-        (new Magnitudes())->identifier(new Xid(new Text('a')), GrammarRelease::MySql847);
-
-        $this->expectExceptionMessage('A format identifier is at most 9223372036854775807 from MySQL 5.7 on.');
-
-        (new Magnitudes())->identifier($xid, GrammarRelease::MySql847);
-    }
     public function testConnectionNarrowsAfterTheTokenSpecificConversion(): void
     {
         $numbers = new Magnitudes();

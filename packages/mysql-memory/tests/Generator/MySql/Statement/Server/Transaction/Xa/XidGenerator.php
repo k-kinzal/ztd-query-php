@@ -26,11 +26,11 @@ final class XidGenerator implements ErisGenerator
      */
     public function __construct()
     {
-        $bytes = Generators::bind(Generators::choose(0, 64), static fn (int $length): ErisGenerator => Generators::map(static fn (array $bytes): string => implode('', $bytes), Generators::vector($length, Generators::map(static fn (int $byte): string => chr($byte), Generators::choose(0, 255)))));
+        $bytes = Generators::bind(Generators::choose(0, 80), static fn (int $length): ErisGenerator => Generators::map(static fn (array $bytes): string => implode('', $bytes), Generators::vector($length, Generators::map(static fn (int $byte): string => chr($byte), Generators::choose(0, 255)))));
         $this->delegate = Generators::map(static function (array $data): Xid {
             [$global, $branch, $format] = $data;
             return new Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($global), $branch === null ? null : new \SqlSemantics\Platform\MySql\Statement\Literal\Text($branch), $branch === null || $format === null ? null : new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral((string) $format));
-        }, Generators::tuple($bytes, Generators::oneOf(Generators::constant(null), $bytes), Generators::oneOf(Generators::constant(null), Generators::nat())));
+        }, Generators::tuple($bytes, Generators::oneOf(Generators::constant(null), $bytes), Generators::oneOf(Generators::constant(null), Generators::nat(), Generators::elements('9223372036854775807', '9223372036854775808', '18446744073709551616'))));
     }
 
     /**

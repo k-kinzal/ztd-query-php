@@ -7,7 +7,6 @@ namespace Tests\Unit\Lowering\Server\Transaction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\XaRule;
@@ -51,8 +50,8 @@ final class XaRuleTest extends TestCase
         self::assertSame("XA COMMIT 'a', 'b', 9223372036854775808", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("XA COMMIT 'a', 'b', 9223372036854775808")->toString());
         self::assertSame("XA COMMIT 'a', 'b', 0x8000000000000000", (new Semantics(Dialect::MySql))->analyze("XA COMMIT 'a', 'b', 0x8000000000000000")->toString());
 
-        $this->expectException(RejectedInput::class);
-
-        (new Semantics(Dialect::MySql))->analyze("XA COMMIT 'a', 'b', 9223372036854775808");
+        $statement = (new Semantics(Dialect::MySql))->analyze("XA COMMIT 'a', 'b', 9223372036854775808");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier::class, $statement->diagnostics()[0]);
+        self::assertSame("XA COMMIT 'a', 'b', 9223372036854775808", $statement->toString());
     }
 }

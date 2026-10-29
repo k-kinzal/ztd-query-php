@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
-use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\Xid;
 
 /**
  * Measures the operands whose size the server checks while it parses a server administration statement.
@@ -130,16 +129,6 @@ final class Magnitudes
     public function format(Numeral $format, GrammarRelease $release): bool
     {
         return $release === GrammarRelease::MySql5651 || $this->atMost($format, self::LARGEST);
-    }
-
-    /**
-     * Refuses an XA transaction identifier whose format identifier the release rejects while it parses.
-     *
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the format identifier exceeds what the release reads
-     */
-    public function identifier(Xid $xid, GrammarRelease $release): void
-    {
-        Check::input($xid->format === null || $this->format($xid->format, $release), 'A format identifier is at most 9223372036854775807 from MySQL 5.7 on.');
     }
 
     /**
