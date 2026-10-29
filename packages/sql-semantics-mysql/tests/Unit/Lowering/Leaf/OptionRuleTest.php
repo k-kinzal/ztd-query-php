@@ -20,6 +20,25 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
 #[Medium]
 final class OptionRuleTest extends TestCase
 {
+    public function testAssignmentRetainsBothSigns(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal, $rule->assignment(new Node('equal', 0, [new Token(0, 'EQ', '=', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::ColonEqual, $rule->assignment(new Node('equal', 1, [new Token(0, 'SET_VAR', ':=', 0)])));
+    }
+
+    public function testOptionalAssignmentRetainsOmissionAndWrittenSigns(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertNull($rule->optionalAssignment(new Node('opt_equal', 0, [])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal, $rule->optionalAssignment(new Node('opt_equal', 1, [new Node('equal', 0, [new Token(0, 'EQ', '=', 0)])])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::ColonEqual, $rule->optionalAssignment(new Node('opt_equal', 1, [new Node('equal', 1, [new Token(0, 'SET_VAR', ':=', 0)])])));
+    }
+
     public function testBinlogRetainsBothKeywordsAndOmission(): void
     {
         $platform = new Platform();

@@ -52,8 +52,9 @@ final class NameAssignment implements SetItem
      * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
      * @param VariableScope|null $scope The scope keyword written before the name
      * @param Name|null $qualifier The component, key cache instance or trigger row written before the name
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly Name $name, public readonly Scalar|BareName|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, public readonly Scalar|BareName|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
         Check::input(!$value instanceof BareName || $value->system === ($scope !== null), 'A bare name value is known to be text exactly when a scope keyword names a system variable.');
     }
@@ -84,7 +85,7 @@ final class NameAssignment implements SetItem
     }
 
     /**
-     * Writes the scope, the name, an equals sign and the value.
+     * Writes the scope, the name, the chosen assignment sign and the value.
      */
     public function render(Output $out): void
     {
@@ -99,7 +100,7 @@ final class NameAssignment implements SetItem
             }
             $out->symbol('.');
         }
-        $out->name($this->name, NameUse::Label)->symbol('=');
+        $out->name($this->name, NameUse::Label)->symbol($this->operator->value);
         if ($this->value instanceof SetWord) {
             $out->keyword($this->value->value);
         } else {

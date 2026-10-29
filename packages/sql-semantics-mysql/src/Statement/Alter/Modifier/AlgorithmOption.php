@@ -35,9 +35,9 @@ final class AlgorithmOption implements AlterOption, AlterModifier
 
     /**
      * @param Name|null $algorithm The algorithm name, or null for the keyword DEFAULT
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly ?Name $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = true)
+    public function __construct(public readonly ?Name $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
     }
 
@@ -63,8 +63,8 @@ final class AlgorithmOption implements AlterOption, AlterModifier
     public function render(Output $out): void
     {
         $out->keyword('ALGORITHM');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         if ($this->algorithm === null) {
             $out->keyword('DEFAULT');

@@ -76,16 +76,14 @@ final class ItemRule
             case 'option_value_no_option_type: lvalue_variable equal set_expr_or_default':
                 return $this->named(null, $form);
             case 'option_value_no_option_type: @ ident_or_text equal expr':
-                return new UserAssignment($this->lowering->variables->user($form->node(1)), $this->lowering->expressions->expression($form->node(3)));
+                return new UserAssignment($this->lowering->variables->user($form->node(1)), $this->lowering->expressions->expression($form->node(3)), operator: $this->lowering->options->assignment($form->node(2)));
             case 'option_value_no_option_type: @ @ opt_var_ident_type internal_variable_name equal set_expr_or_default':
-                $this->lowering->options->skip($form->node(4));
                 [$name, $instance] = $this->variable($form->node(3));
 
-                return new SystemAssignment($this->lowering->origins->record($this->lowering->leaves->record(new SystemTarget($name, $this->lowering->variables->scope($form->node(2)), $instance)), $form->node(3)), $values->value($form->node(5), true));
+                return new SystemAssignment($this->lowering->origins->record($this->lowering->leaves->record(new SystemTarget($name, $this->lowering->variables->scope($form->node(2)), $instance)), $form->node(3)), $values->value($form->node(5), true), operator: $this->lowering->options->assignment($form->node(4)));
             case 'option_value_no_option_type: @ @ opt_set_var_ident_type lvalue_variable equal set_expr_or_default':
-                $this->lowering->options->skip($form->node(4));
 
-                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2)), true), $values->value($form->node(5), true));
+                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2)), true), $values->value($form->node(5), true), operator: $this->lowering->options->assignment($form->node(4)));
             default:
                 return $this->connection($form);
         }
@@ -111,12 +109,11 @@ final class ItemRule
             case 'option_value_no_option_type: NAMES_SYM equal expr':
                 $range = (new \SqlSemantics\Construction\SourceRanges())->span($form->node(1));
                 $source = $range === null ? null : new \SqlSemantics\Statement\Source\Span($range[0], $range[1] - $range[0]);
-                return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesAssignment($this->lowering->expressions->operand($form->node(2)), $source), $form->node);
+                return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesAssignment($this->lowering->expressions->operand($form->node(2)), $source, operator: $this->lowering->options->assignment($form->node(1))), $form->node);
         }
         [$user, $password] = self::PASSWORDS[$form->signature] ?? throw ImplementationGap::production($form);
-        $this->lowering->options->skip($form->node($password - 1));
 
-        return new PasswordAssignment($this->lowering->accounts->password($form->node($password)), $user === null ? null : $this->lowering->users->account($form->node($user)));
+        return new PasswordAssignment($this->lowering->accounts->password($form->node($password)), $user === null ? null : $this->lowering->users->account($form->node($user)), operator: $this->lowering->options->assignment($form->node($password - 1)));
     }
 
     /**
@@ -142,9 +139,8 @@ final class ItemRule
     public function named(?VariableScope $scope, Form $form): NameAssignment
     {
         [$name, $qualifier] = $this->variable($form->node(0));
-        $this->lowering->options->skip($form->node(1));
 
-        return $this->lowering->origins->record(new NameAssignment($name, (new ValueRule($this->lowering))->value($form->node(2), $scope !== null), $scope, $qualifier), $form->node(0));
+        return $this->lowering->origins->record(new NameAssignment($name, (new ValueRule($this->lowering))->value($form->node(2), $scope !== null), $scope, $qualifier, operator: $this->lowering->options->assignment($form->node(1))), $form->node(0));
     }
 
     /**

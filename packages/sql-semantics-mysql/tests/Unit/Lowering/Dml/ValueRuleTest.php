@@ -27,7 +27,7 @@ final class ValueRuleTest extends TestCase
 
     public function testAssignmentsLowersEveryAssignmentList(): void
     {
-        self::assertSame('INSERT t SET a = 1, b = 2 ON DUPLICATE KEY UPDATE a = 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('insert t set a = 1, b := 2 on duplicate key update a = 3')->toString());
+        self::assertSame('INSERT t SET a = 1, b := 2 ON DUPLICATE KEY UPDATE a = 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('insert t set a = 1, b := 2 on duplicate key update a = 3')->toString());
     }
 
     public function testAssignmentLowersColumnAndValue(): void

@@ -32,6 +32,6 @@ final class PluginRuleTest extends TestCase
 
     public function testSettingLowersPersist(): void
     {
-        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST x = 2", (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze("install component 'a' set persist x := 2")->toString());
+        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST x := 2", (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze("install component 'a' set persist x := 2")->toString());
     }
 }

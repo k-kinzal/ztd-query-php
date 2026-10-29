@@ -38,22 +38,20 @@ final class StoredItems
         if ($form->signature === 'option_value_no_option_type: @ ident_or_text equal expr') {
             $target = $this->lowering->variables->user($form->node(1));
             $value = $this->lowering->expressions->operand($form->node(3));
-            return $value instanceof Scalar ? new UserAssignment($target, $value) : new DeferredAssignment($target, $value);
+            return $value instanceof Scalar ? new UserAssignment($target, $value, operator: $this->lowering->options->assignment($form->node(2))) : new DeferredAssignment($target, $value, operator: $this->lowering->options->assignment($form->node(2)));
         }
         if (in_array($form->signature, ['option_value_no_option_type: @ @ opt_var_ident_type internal_variable_name equal set_expr_or_default', 'option_value_no_option_type: @ @ opt_set_var_ident_type lvalue_variable equal set_expr_or_default'], true)) {
             [$name, $instance] = $rule->variable($form->node(3));
-            $this->lowering->options->skip($form->node(4));
             $target = $this->lowering->origins->record($this->lowering->leaves->record(new SystemTarget($name, $this->lowering->variables->scope($form->node(2)), $instance)), $form->node(3));
             $value = (new ValueRule($this->lowering))->operand($form->node(5), true);
-            return $value instanceof Scalar || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord ? new SystemAssignment($target, $value) : new DeferredAssignment($target, $value);
+            return $value instanceof Scalar || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord ? new SystemAssignment($target, $value, operator: $this->lowering->options->assignment($form->node(4))) : new DeferredAssignment($target, $value, operator: $this->lowering->options->assignment($form->node(4)));
         }
         if (!in_array($form->node->children[0]->name ?? '', ['internal_variable_name', 'lvalue_variable'], true)) {
             return $rule->connection($form);
         }
         [$name, $qualifier] = $rule->variable($form->node(0));
-        $this->lowering->options->skip($form->node(1));
         $value = (new ValueRule($this->lowering))->operand($form->node(2), $scope !== null);
-        $item = $value instanceof Scalar || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord ? new NameAssignment($name, $value, $scope, $qualifier) : new DeferredAssignment($name, $value, $scope, $qualifier);
+        $item = $value instanceof Scalar || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName || $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord ? new NameAssignment($name, $value, $scope, $qualifier, operator: $this->lowering->options->assignment($form->node(1))) : new DeferredAssignment($name, $value, $scope, $qualifier, operator: $this->lowering->options->assignment($form->node(1)));
         return $this->lowering->origins->record($item, $form->node);
     }
 }

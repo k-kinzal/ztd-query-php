@@ -25,9 +25,9 @@ final class NodegroupOption implements StorageOption
 
     /**
      * @param Numeral $group The node group identifier
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly Numeral $group, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
+    public function __construct(public readonly Numeral $group, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
     }
 
@@ -45,8 +45,8 @@ final class NodegroupOption implements StorageOption
     public function render(Output $out): void
     {
         $out->keyword('NODEGROUP');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->node($this->group);
     }

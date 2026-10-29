@@ -23,9 +23,9 @@ final class EngineAttributeOption implements StorageOption
 
     /**
      * @param Text $attribute The JSON text
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly Text $attribute, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
+    public function __construct(public readonly Text $attribute, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
         \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($attribute);
     }
@@ -44,8 +44,8 @@ final class EngineAttributeOption implements StorageOption
     public function render(Output $out): void
     {
         $out->keyword('ENGINE_ATTRIBUTE');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->node($this->attribute);
     }

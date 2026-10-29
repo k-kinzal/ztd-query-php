@@ -28,9 +28,10 @@ final class NamesAssignmentGenerator implements ErisGenerator
      * @param ErisGenerator<Scalar|RowOperand|DeferredOperand> $value The complete generated expression
      * @param ErisGenerator<Span|null>|null $operatorSource Optional assignment-operator locations
      * @param ErisGenerator<Span|null>|null $inputSource Optional complete-item locations
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator>|null $operator Generated assignment sign
      */
-    public function __construct(ErisGenerator $value, ?ErisGenerator $operatorSource = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $value, ?ErisGenerator $operatorSource = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
     {
-        $this->delegate = Generators::map(static fn (array $parts): NamesAssignment => new NamesAssignment($parts[0], $parts[1], $parts[2]), Operands::tuple($value, $operatorSource ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+        $this->delegate = Generators::map(static fn (array $parts): NamesAssignment => new NamesAssignment($parts[0], $parts[1], $parts[2], $parts[3]), Operands::tuple($value, $operatorSource ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $operator ?? new \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator()));
     }
 }

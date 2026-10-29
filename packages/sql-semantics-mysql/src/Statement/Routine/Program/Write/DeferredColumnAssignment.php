@@ -28,8 +28,9 @@ final class DeferredColumnAssignment implements Node
     /**
      * @param ColumnUse $column The complete assignment target
      * @param RowOperand|DeferredOperand $value The non-scalar operand in a scalar assignment position
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly ColumnUse $column, public readonly RowOperand|DeferredOperand $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ColumnUse $column, public readonly RowOperand|DeferredOperand $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
     }
 
@@ -38,6 +39,6 @@ final class DeferredColumnAssignment implements Node
      */
     public function render(Output $out): void
     {
-        $out->node($this->column)->symbol('=')->node($this->value);
+        $out->node($this->column)->symbol($this->operator->value)->node($this->value);
     }
 }

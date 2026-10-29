@@ -21,17 +21,17 @@ final class CollationOptionGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\CollationName> $collation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<bool>|null $equals Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $operator Generated constructor operand
      * @param ErisGenerator<bool>|null $defaultKeyword Generated constructor operand
      */
-    public function __construct(ErisGenerator $collation, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null, ?ErisGenerator $defaultKeyword = null)
+    public function __construct(ErisGenerator $collation, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null, ?ErisGenerator $defaultKeyword = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption(collation: $parts[0], inputSource: $parts[1], equals: $parts[2], defaultKeyword: $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption(collation: $parts[0], inputSource: $parts[1], operator: $parts[2], defaultKeyword: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $collation,
             $inputSource ?? Generators::constant(null),
-            $equals ?? Generators::bool(),
+            $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(),
             $defaultKeyword ?? Generators::bool()
         ));
     }

@@ -83,10 +83,10 @@ final class ModifierRule
     {
         $form = $this->lowering->form($option);
         [$lock, $value] = self::OPTIONS[$form->signature] ?? throw ImplementationGap::production($form);
-        $equals = $this->lowering->options->present($form->node(1));
+        $operator = $this->lowering->options->optionalAssignment($form->node(1));
         $name = $value === null ? null : $this->value($form->node($value));
 
-        return $lock ? new LockOption($name, equals: $equals) : new AlgorithmOption($name, equals: $equals);
+        return $lock ? new LockOption($name, operator: $operator) : new AlgorithmOption($name, operator: $operator);
     }
 
     /**

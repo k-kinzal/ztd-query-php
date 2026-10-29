@@ -24,17 +24,19 @@ final class NameAssignmentGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope|null>|null $scope Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $qualifier Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator>|null $operator Generated assignment sign
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $value, ?ErisGenerator $scope = null, ?ErisGenerator $qualifier = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $name, ErisGenerator $value, ?ErisGenerator $scope = null, ?ErisGenerator $qualifier = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment(name: $parts[0], value: $parts[1], scope: $parts[2], qualifier: $parts[3], inputSource: $parts[4]);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment(name: $parts[0], value: $parts[1], scope: $parts[2], qualifier: $parts[3], inputSource: $parts[4], operator: $parts[5]);
         }, \Tests\Generator\Operands::tuple(
             $name,
             $value,
             $scope ?? Generators::constant(null),
             $qualifier ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $operator ?? new \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator()
         ));
     }
 }

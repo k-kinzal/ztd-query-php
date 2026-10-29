@@ -51,6 +51,6 @@ final class UserAssignmentTest extends TestCase
 
     public function testRenderWritesAnEqualsSign(): void
     {
-        self::assertSame("SET @'a b' = 'x'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("set @'a b' := 'x'")->toString());
+        self::assertSame("SET @'a b' := 'x'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("set @'a b' := 'x'")->toString());
     }
 }

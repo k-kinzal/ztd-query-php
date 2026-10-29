@@ -11,7 +11,7 @@ use SqlSemantics\Rendering\Output;
 /**
  * The INSERT_METHOD option of a MERGE table.
  *
- * The optional equals sign is retained independently of the option value.
+ * The optional assignment sign is retained independently of the option value.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-options.
  *
  * @visibility public
@@ -25,9 +25,9 @@ final class InsertMethodOption implements TableOption
 
     /**
      * @param InsertMethod $method The table that receives inserted rows
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly InsertMethod $method, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
+    public function __construct(public readonly InsertMethod $method, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
     }
 
@@ -37,8 +37,8 @@ final class InsertMethodOption implements TableOption
     public function render(Output $out): void
     {
         $out->keyword('INSERT_METHOD');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->keyword($this->method->value);
     }

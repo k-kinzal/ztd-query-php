@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Scalar;
  * @visibility public
  * @example Reading a user variable assignment
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET @total := 1 + 2');
- *     [$set->items[0]->variable->name->value, $set->toString()] // => ['total', 'SET @total = 1 + 2']
+ *     [$set->items[0]->variable->name->value, $set->toString()] // => ['total', 'SET @total := 1 + 2']
  */
 final class UserAssignment implements SetItem
 {
@@ -32,8 +32,9 @@ final class UserAssignment implements SetItem
     /**
      * @param UserVariable $variable The assigned variable
      * @param Scalar $value The assigned value
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly UserVariable $variable, public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly UserVariable $variable, public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
     }
 
@@ -49,10 +50,10 @@ final class UserAssignment implements SetItem
     }
 
     /**
-     * Writes the variable, an equals sign and the value.
+     * Writes the variable, the chosen assignment sign and the value.
      */
     public function render(Output $out): void
     {
-        $out->node($this->variable)->symbol('=')->node($this->value);
+        $out->node($this->variable)->symbol($this->operator->value)->node($this->value);
     }
 }

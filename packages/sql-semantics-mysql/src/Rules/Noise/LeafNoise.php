@@ -25,12 +25,6 @@ final class LeafNoise
      *   Before a table alias (8.0 and later) the model keeps the keyword as
      *   written (AliasMark), since it can be part of the text MySQL names an
      *   unaliased select list expression after.
-     * - `equal: EQ`, `equal: SET_VAR`: an option is written `name [=] value`, and
-     *   in SET and UPDATE assignments `:=` and `=` are the same assignment
-     *   operator; where the rule is mandatory the token cannot be left out, so
-     *   dropping its key loses nothing
-     *   (https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
-     *   https://dev.mysql.com/doc/refman/8.4/en/assignment-operators.html).
      * - `opt_default: DEFAULT`, `opt_default: DEFAULT_SYM`: `[DEFAULT] CHARACTER
      *   SET`, `[DEFAULT] COLLATE` and `[DEFAULT] ENCRYPTION` are the same option
      *   with or without the keyword
@@ -67,8 +61,6 @@ final class LeafNoise
     {
         return [
             'opt_as: AS' => [0],
-            'equal: EQ' => [0],
-            'equal: SET_VAR' => [0],
             'opt_default: DEFAULT' => [0],
             'opt_default: DEFAULT_SYM' => [0],
             'opt_wild: . *' => [0, 1],

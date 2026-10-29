@@ -22,15 +22,17 @@ final class PasswordAssignmentGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Password> $password Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account|null>|null $user Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator>|null $operator Generated assignment sign
      */
-    public function __construct(ErisGenerator $password, ?ErisGenerator $user = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $password, ?ErisGenerator $user = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment(password: $parts[0], user: $parts[1], inputSource: $parts[2]);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment(password: $parts[0], user: $parts[1], inputSource: $parts[2], operator: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $password,
             $user ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $operator ?? new \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator()
         ));
     }
 }

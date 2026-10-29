@@ -331,13 +331,13 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "cpus": "array",
         "cpusCommas": "array",
-        "cpusEquals": "bool",
+        "cpusOperator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "enabled": "?bool",
         "force": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority",
-        "priorityEquals": "bool"
+        "priorityOperator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\CpuRange": {
         "first": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
@@ -348,14 +348,14 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "cpus": "array",
         "cpusCommas": "array",
-        "cpusEquals": "bool",
+        "cpusOperator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "enabled": "?bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupKind",
         "name": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ResourceGroupName",
         "priority": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\ThreadPriority",
-        "priorityEquals": "bool",
-        "typeEquals": "bool"
+        "priorityOperator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
+        "typeOperator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\ResourceGroup\\DropResourceGroup": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -393,6 +393,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Account\\SetPassword": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "password": "?SqlSemantics\\Platform\\MySql\\Statement\\Account\\Password",
         "replace": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "retainCurrent": "bool",
@@ -598,13 +599,13 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\AlgorithmOption": {
         "algorithm": "?SqlSemantics\\Statement\\Identifier\\Name",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\LockOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "lock": "?SqlSemantics\\Statement\\Identifier\\Name"
+        "lock": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Alter\\Modifier\\ValidationOption": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
@@ -710,6 +711,10 @@
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "table": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
         "tableWord": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\OptionalWords"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator": {
+        "name": "string",
+        "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\Aggregate": {
         "alias": "?SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateAlias",
@@ -1080,6 +1085,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Assignment": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DefaultRequest"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DefaultRequest": {
@@ -2130,11 +2136,11 @@
         "values": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Bound\\PartitionBound"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionOptionKind",
         "name": "?SqlSemantics\\Statement\\Identifier\\Name",
         "number": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "storageKeyword": "bool",
         "text": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
@@ -3050,6 +3056,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\DeferredAssignment": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "qualifier": "?SqlSemantics\\Statement\\Identifier\\Name",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope",
         "target": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget|SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable",
@@ -3571,6 +3578,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredColumnAssignment": {
         "column": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\ColumnUse",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Write\\DeferredDefaultSetting": {
@@ -3673,26 +3681,26 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseCharset": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
         "defaultKeyword": "bool",
-        "equals": "bool",
         "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseCollation": {
         "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "defaultKeyword": "bool",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseEncryption": {
         "defaultKeyword": "bool",
         "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\Encryption|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "spelling": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseReadOnly": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord": {
@@ -3794,21 +3802,19 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\CloneInstance": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
-        "assignment": "bool",
         "directory": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "donor": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account",
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "password": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "port": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
         "requireSsl": "?bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\CloneLocal": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
-        "assignment": "bool",
         "directory": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Instance\\Kill": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
@@ -3972,6 +3978,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\ComponentSetting": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Server\\Plugin\\OnWord",
         "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget"
     },
@@ -4170,8 +4177,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\CommentOption": {
         "comment": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\DatafileAction": {
         "name": "string",
@@ -4179,18 +4186,18 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EncryptionOption": {
         "encryption": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EngineAttributeOption": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\EngineOption": {
         "engine": "SqlSemantics\\Statement\\Identifier\\Name",
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "storageKeyword": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\LogFileKind": {
@@ -4198,14 +4205,14 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\NodegroupOption": {
-        "equals": "bool",
         "group": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOptionKind",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\Option\\SizeOptionKind": {
@@ -4442,8 +4449,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\EngineAttribute": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "secondary": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\FormatAttribute": {
@@ -4621,8 +4628,8 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexEngineAttribute": {
         "attribute": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "secondary": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\IndexParser": {
@@ -4639,8 +4646,8 @@
         "visible": "bool"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\Option\\KeyBlockSize": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceEvent": {
@@ -4669,32 +4676,32 @@
         "option": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Key\\ReferenceOption"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\AutoextendSizeOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "size": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\ByteSize"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\CharsetOption": {
         "charset": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
         "defaultKeyword": "bool",
-        "equals": "bool",
         "form": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\CollationOption": {
         "collation": "SqlSemantics\\Platform\\MySql\\Statement\\Name\\CollationName",
         "defaultKeyword": "bool",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\EngineOption": {
         "engine": "SqlSemantics\\Statement\\Identifier\\Name",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\InsertMethodOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "method": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\InsertMethod"
+        "method": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\InsertMethod",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\InsertMethod": {
         "name": "string",
@@ -4713,20 +4720,20 @@
         "value": "string"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\NumberOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\NumberOptionKind",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Numeral"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\RowFormatOption": {
-        "equals": "bool",
         "format": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\RowFormat",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\SecondaryEngineOption": {
         "engine": "?SqlSemantics\\Statement\\Identifier\\Name",
-        "equals": "bool",
-        "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\StartTransaction": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span"
@@ -4736,19 +4743,19 @@
         "medium": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Column\\Kind\\StorageMedium"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\TablespaceOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "tablespace": "SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\TextOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "kind": "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\Kind\\TextOptionKind",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Option\\UnionOption": {
-        "equals": "bool",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "?SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "tables": "array"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Table\\Problem\\Column\\SridRange": {
@@ -5207,17 +5214,20 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\NameAssignment": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "qualifier": "?SqlSemantics\\Statement\\Identifier\\Name",
         "scope": "?SqlSemantics\\Platform\\MySql\\Statement\\Variable\\VariableScope",
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\NamesAssignment": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "operatorSource": "?SqlSemantics\\Statement\\Source\\Span",
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Expression\\RowOperand|SqlSemantics\\Platform\\MySql\\Statement\\Routine\\Program\\Expression\\DeferredOperand"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\PasswordAssignment": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "password": "SqlSemantics\\Platform\\MySql\\Statement\\Account\\Password",
         "user": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\Account"
     },
@@ -5251,11 +5261,13 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SystemAssignment": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "SqlSemantics\\Statement\\Scalar|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\BareName|SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\SetWord",
         "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\SystemTarget"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Set\\UserAssignment": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "operator": "SqlSemantics\\Platform\\MySql\\Statement\\AssignmentOperator",
         "value": "SqlSemantics\\Statement\\Scalar",
         "variable": "SqlSemantics\\Platform\\MySql\\Statement\\Variable\\UserVariable"
     },

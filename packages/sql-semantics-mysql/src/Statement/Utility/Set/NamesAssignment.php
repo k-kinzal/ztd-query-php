@@ -36,8 +36,9 @@ final class NamesAssignment implements SetItem
      * @param Scalar|RowOperand|DeferredOperand $value The complete expression following the assignment operator
      * @param Span|null $operatorSource The optional location of the written assignment operator
      * @param Span|null $inputSource The optional location of the complete SET item
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $value, public readonly ?Span $operatorSource = null, public readonly ?Span $inputSource = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $value, public readonly ?Span $operatorSource = null, public readonly ?Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
     }
 
@@ -83,6 +84,6 @@ final class NamesAssignment implements SetItem
      */
     public function render(Output $out): void
     {
-        $out->keyword('NAMES')->symbol('=')->node($this->value);
+        $out->keyword('NAMES')->symbol($this->operator->value)->node($this->value);
     }
 }

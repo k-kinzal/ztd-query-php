@@ -109,14 +109,13 @@ final class PluginRule
             'install_option_type: PERSIST_SYM' => VariableScope::Persist,
             default => throw ImplementationGap::production($scope),
         }, true);
-        $this->lowering->options->skip($form->node(2));
         $value = $this->lowering->form($form->node(3));
 
         return new ComponentSetting($variable, match ($value->signature) {
             'install_set_rvalue: expr' => $this->word($value->node(0)) ?? $this->lowering->expressions->expression($value->node(0)),
             'install_set_rvalue: ON_SYM' => new OnWord(),
             default => throw ImplementationGap::production($value),
-        });
+        }, operator: $this->lowering->options->assignment($form->node(2)));
     }
 
     /**

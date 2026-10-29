@@ -308,17 +308,15 @@ final class LoadRule
         foreach ((new ListRule($this->lowering))->items($form->node(1), ['load_data_set_list: load_data_set_list , load_data_set_elem', 'load_data_set_list: load_data_set_elem']) as $item) {
             $element = $this->lowering->form($item);
             if ($element->signature === 'load_data_set_elem: simple_ident_nospvar equal remember_name expr_or_default remember_end') {
-                $this->lowering->options->skip($element->node(1));
                 $this->lowering->options->skip($element->node(2));
                 $this->lowering->options->skip($element->node(4));
-                $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(3)));
+                $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(3)), operator: $this->lowering->options->assignment($element->node(1)));
                 continue;
             }
             if ($element->signature !== 'load_data_set_elem: simple_ident_nospvar equal expr_or_default') {
                 throw ImplementationGap::production($element);
             }
-            $this->lowering->options->skip($element->node(1));
-            $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(2)));
+            $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(2)), operator: $this->lowering->options->assignment($element->node(1)));
         }
 
         return $assignments;

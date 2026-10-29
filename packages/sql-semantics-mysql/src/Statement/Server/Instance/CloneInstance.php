@@ -39,8 +39,7 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
      * @param Text $password The account's password
      * @param Text|null $directory The directory the data is cloned into, when written
      * @param bool|null $requireSsl Whether REQUIRE SSL (true) or REQUIRE NO SSL (false) is written; null when absent
-     * @param bool $equals Whether the optional equals sign is written
-     * @param bool $assignment Whether a written assignment sign is := instead of =
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
     public function __construct(
         public readonly Account $donor,
@@ -50,8 +49,7 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         public readonly ?bool $requireSsl = null,
         ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
-        public readonly bool $equals = false,
-        public readonly bool $assignment = false
+        public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null
     ) {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -78,8 +76,8 @@ final class CloneInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         $out->keyword('IDENTIFIED', 'BY')->node($this->password);
         if ($this->directory !== null) {
             $out->keyword('DATA', 'DIRECTORY');
-            if ($this->equals) {
-                $out->symbol($this->assignment ? ':=' : '=');
+            if ($this->operator !== null) {
+                $out->symbol($this->operator->value);
             }
             $out->node($this->directory);
         }

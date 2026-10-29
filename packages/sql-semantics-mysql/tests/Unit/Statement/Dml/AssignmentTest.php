@@ -22,6 +22,6 @@ final class AssignmentTest extends TestCase
         self::assertInstanceOf(Update::class, $operation);
 
         self::assertSame('a', $operation->assignments[0]->column->name->value);
-        self::assertSame('UPDATE t SET t.a = 1', $operation->toString());
+        self::assertSame('UPDATE t SET t.a := 1', $operation->toString());
     }
 }

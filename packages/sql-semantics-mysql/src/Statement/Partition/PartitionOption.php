@@ -35,7 +35,7 @@ final class PartitionOption implements Node
      * @param Numeral|null $number The node group or row count
      * @param Text|null $text The directory or comment
      * @param bool $storageKeyword Whether STORAGE precedes ENGINE
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
     public function __construct(
         public readonly PartitionOptionKind $kind,
@@ -43,7 +43,7 @@ final class PartitionOption implements Node
         public readonly ?Numeral $number = null,
         public readonly ?Text $text = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
-        public readonly bool $equals = true,
+        public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal,
         public readonly bool $storageKeyword = false,
     ) {
         Check::input(!$storageKeyword || $kind === PartitionOptionKind::Engine, 'Only ENGINE can be introduced by STORAGE.');
@@ -62,8 +62,8 @@ final class PartitionOption implements Node
             $out->keyword('STORAGE');
         }
         $out->keyword(...explode(' ', $this->kind->value));
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         if ($this->name !== null) {
             $out->name($this->name, NameUse::Label);

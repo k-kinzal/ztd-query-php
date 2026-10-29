@@ -104,7 +104,7 @@ final class ViewRewrite
             $value = $copy->node($node->value);
             assert($value instanceof Scalar);
 
-            return new Assignment(new ColumnUse($writes->written($node->column->name->value)), $value);
+            return new Assignment(new ColumnUse($writes->written($node->column->name->value)), $value, operator: $node->operator);
         }
         if ($node instanceof SelectExpression) {
             $value = $copy->node($node->expression);

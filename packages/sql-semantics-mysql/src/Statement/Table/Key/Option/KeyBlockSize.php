@@ -23,9 +23,9 @@ final class KeyBlockSize implements IndexOption
 
     /**
      * @param Numeral $size The block size
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly Numeral $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
+    public function __construct(public readonly Numeral $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
     }
 
@@ -35,8 +35,8 @@ final class KeyBlockSize implements IndexOption
     public function render(Output $out): void
     {
         $out->keyword('KEY_BLOCK_SIZE');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->node($this->size);
     }

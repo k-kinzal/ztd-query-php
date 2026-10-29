@@ -41,9 +41,10 @@ final class ExecutionTarget
     /**
      * Requires identical result sets, metadata, affected rows, errors and warning counts.
      *
+     * @return bool Whether both executions completed without a SQL error
      * @throws Error When a reply differs or the driver cannot represent it
      */
-    public function verify(string $sql, string $input): void
+    public function verify(string $sql, string $input): bool
     {
         $this->history[] = $sql;
         $expected = $this->execute($this->native, $sql);
@@ -56,6 +57,7 @@ final class ExecutionTarget
                 . "\nSQL history: " . var_export($this->history, true));
         }
         $this->verified++;
+        return $expected['error'] === null;
     }
 
     /**

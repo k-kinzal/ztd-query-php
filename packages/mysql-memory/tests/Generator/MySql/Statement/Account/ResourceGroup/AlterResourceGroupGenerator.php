@@ -27,10 +27,10 @@ final class AlterResourceGroupGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<list<bool>>|null $cpusCommas Generated list boundaries
-     * @param ErisGenerator<bool>|null $cpusEquals Generated clause notation
-     * @param ErisGenerator<bool>|null $priorityEquals Generated clause notation
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $cpusOperator Generated clause notation
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $priorityOperator Generated clause notation
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $cpus = null, ?ErisGenerator $priority = null, ?ErisGenerator $enabled = null, ?ErisGenerator $force = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $cpusCommas = null, ?ErisGenerator $cpusEquals = null, ?ErisGenerator $priorityEquals = null)
+    public function __construct(ErisGenerator $name, ?ErisGenerator $cpus = null, ?ErisGenerator $priority = null, ?ErisGenerator $enabled = null, ?ErisGenerator $force = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $cpusCommas = null, ?ErisGenerator $cpusOperator = null, ?ErisGenerator $priorityOperator = null)
     {
         $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
             $name,
@@ -40,11 +40,11 @@ final class AlterResourceGroupGenerator implements ErisGenerator
             $force ?? Generators::constant(false),
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null),
-            $cpusEquals ?? Generators::bool(),
-            $priorityEquals ?? Generators::bool()
+            $cpusOperator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(),
+            $priorityOperator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()
         ), static function (array $parts) use ($cpusCommas): ErisGenerator {
             return Generators::map(
-                static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup => new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup(name: $parts[0], cpus: $parts[1], priority: $parts[2], enabled: $parts[3], force: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], cpusEquals: $parts[7], priorityEquals: $parts[8], cpusCommas: $commas),
+                static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup => new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup(name: $parts[0], cpus: $parts[1], priority: $parts[2], enabled: $parts[3], force: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], cpusOperator: $parts[7], priorityOperator: $parts[8], cpusCommas: $commas),
                 $cpusCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool())
             );
         });

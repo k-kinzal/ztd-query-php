@@ -405,7 +405,10 @@ these dimensions from the server rather than inferring them from that text.
 
 Statement values also retain `TRUNCATE`'s optional TABLE keyword, CALL's
 parentheses, the DEALLOCATE/DROP verb of a prepared-statement release, and
-RENAME's TO/AS/equals/omitted connector. CALL requires parentheses for nonempty
+RENAME's TO/AS/equals/omitted connector. Assignment values retain `AssignmentOperator::Equal`
+or `AssignmentOperator::ColonEqual`; optional option signs use `null` when omitted.
+These choices survive publication, stored definitions and downstream copies.
+CALL requires parentheses for nonempty
 arguments. These choices survive publication inside stored programs as well as
 immediate statements; execution consumes the same target and operands.
 

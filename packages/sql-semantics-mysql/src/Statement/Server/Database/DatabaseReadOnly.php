@@ -28,9 +28,9 @@ final class DatabaseReadOnly implements DatabaseOption
 
     /**
      * @param Numeral|null $value A number converted to 0 or 1; null for DEFAULT
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly ?Numeral $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false)
+    public function __construct(public readonly ?Numeral $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
         Check::input($value === null || (new Magnitudes())->atMost($value, '1'), 'A database READ ONLY option converts to 0 or 1, or uses DEFAULT.');
     }
@@ -49,8 +49,8 @@ final class DatabaseReadOnly implements DatabaseOption
     public function render(Output $out): void
     {
         $out->keyword('READ', 'ONLY');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         if ($this->value === null) {
             $out->keyword('DEFAULT');

@@ -68,10 +68,9 @@ final class RetainedUpdates
         if (!in_array($form->signature, ['update_elem: simple_ident_nospvar equal expr_or_default', 'insert_update_elem: simple_ident_nospvar equal expr_or_default', 'ident_eq_value: simple_ident_nospvar equal expr_or_default'], true)) {
             throw ImplementationGap::production($form);
         }
-        $this->lowering->options->skip($form->node(1));
         $column = $this->lowering->names->column($form->node(0));
         $value = $this->lowering->form($form->node(2));
         $operand = $value->signature === 'expr_or_default: expr' ? $this->lowering->expressions->operand($value->node(0)) : (new ValueRule($this->lowering))->value($value->node);
-        return $operand instanceof Scalar || $operand instanceof DefaultRequest ? new Assignment($column, $operand) : new DeferredColumnAssignment($column, $operand);
+        return $operand instanceof Scalar || $operand instanceof DefaultRequest ? new Assignment($column, $operand, operator: $this->lowering->options->assignment($form->node(1))) : new DeferredColumnAssignment($column, $operand, operator: $this->lowering->options->assignment($form->node(1)));
     }
 }

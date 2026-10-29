@@ -57,7 +57,7 @@ final class SetPasswordCommand implements Command
                 throw AccountError::PasswordNoMatch->error();
             }
             $session->transaction->commit();
-            $this->legacy($account, new SetPassword($item->user, $item->password), $session);
+            $this->legacy($account, new SetPassword($item->user, $item->password, operator: $item->operator), $session);
             $account->expired = false;
             (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
         };

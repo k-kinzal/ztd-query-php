@@ -206,20 +206,20 @@ final class StorageOptionRule
         $form = $this->lowering->form($option);
         if (isset(self::SIZES[$form->signature])) {
             [$kind, $position] = self::SIZES[$form->signature];
-            $equals = $this->lowering->options->present(($position === 2 ? $form : $this->lowering->form($form->node(0)))->node(1));
+            $operator = $this->lowering->options->optionalAssignment(($position === 2 ? $form : $this->lowering->form($form->node(0)))->node(1));
 
-            return new SizeOption($kind, $this->lowering->numbers->size($form->node($position)), equals: $equals);
+            return new SizeOption($kind, $this->lowering->numbers->size($form->node($position)), operator: $operator);
         }
         $kind = self::OTHERS[$form->signature] ?? throw ImplementationGap::production($form);
 
         return match ($kind) {
-            'nodegroup' => new NodegroupOption($this->lowering->numbers->numeral($this->value($form, 2)), equals: $this->lowering->options->present($form->node(1))),
-            'comment' => new CommentOption($this->lowering->literals->text($this->value($form, 2)), equals: $this->lowering->options->present($form->node(1))),
+            'nodegroup' => new NodegroupOption($this->lowering->numbers->numeral($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'comment' => new CommentOption($this->lowering->literals->text($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
             'engine' => $this->engine($form),
             'wait' => new WaitOption(true),
             'noWait' => new WaitOption(false),
-            'encryption' => new EncryptionOption($this->lowering->literals->text($this->value($form, 2)), equals: $this->lowering->options->present($form->node(1))),
-            'attribute' => new EngineAttributeOption($this->lowering->literals->text($this->value($form, 2)), equals: $this->lowering->options->present($form->node(1))),
+            'encryption' => new EncryptionOption($this->lowering->literals->text($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'attribute' => new EngineAttributeOption($this->lowering->literals->text($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
         };
     }
 
@@ -244,6 +244,6 @@ final class StorageOptionRule
     {
         $storage = $this->lowering->options->present($form->node(0));
 
-        return new EngineOption($this->lowering->names->identifier($this->value($form, 3)), equals: $this->lowering->options->present($form->node(2)), storageKeyword: $storage);
+        return new EngineOption($this->lowering->names->identifier($this->value($form, 3)), operator: $this->lowering->options->optionalAssignment($form->node(2)), storageKeyword: $storage);
     }
 }

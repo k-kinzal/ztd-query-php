@@ -15,6 +15,13 @@ use SqlSemantics\Platform\MySql\Lowering\Account\ResourceGroupRule;
 #[Medium]
 final class ResourceGroupRuleTest extends TestCase
 {
+    public function testOperatorRetainsEachClauseSignAndOmission(): void
+    {
+        self::assertSame('ALTER RESOURCE GROUP g VCPU := 1 THREAD_PRIORITY = 2', (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g VCPU := 1 THREAD_PRIORITY = 2')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g VCPU 1 THREAD_PRIORITY := 2', (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g VCPU 1 THREAD_PRIORITY := 2')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g DISABLE', (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g DISABLE')->toString());
+    }
+
     public function testStatementLowersEveryStatement(): void
     {
         self::assertSame('SET RESOURCE GROUP g', (new Semantics(Dialect::MySql))->analyze('set resource group g')->toString());

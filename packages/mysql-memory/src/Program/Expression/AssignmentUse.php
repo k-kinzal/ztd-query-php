@@ -40,6 +40,6 @@ final class AssignmentUse
             return $item;
         }
         $value = $item->value instanceof BareName ? new BareName($item->value->word, $item->value->qualifier, true, $item->value->parentheses) : $item->value;
-        return new NameAssignment($item->name, $value, $scope, $item->qualifier);
+        return new NameAssignment($item->name, $value, $scope, $item->qualifier, operator: $item->operator);
     }
 }

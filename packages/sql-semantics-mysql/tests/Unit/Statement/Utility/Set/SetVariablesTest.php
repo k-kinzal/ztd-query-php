@@ -44,7 +44,7 @@ final class SetVariablesTest extends TestCase
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame('SET LOCAL a = 1, @b = 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set local a = 1, @b := 2')->toString());
+        self::assertSame('SET LOCAL a = 1, @b := 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set local a = 1, @b := 2')->toString());
     }
 
     public function testRefusesAnEmptyList(): void

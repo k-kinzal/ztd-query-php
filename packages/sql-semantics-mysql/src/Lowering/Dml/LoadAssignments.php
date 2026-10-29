@@ -59,7 +59,6 @@ final class LoadAssignments
         if (!$legacy && $form->signature !== 'load_data_set_elem: simple_ident_nospvar equal expr_or_default') {
             throw ImplementationGap::production($form);
         }
-        $this->lowering->options->skip($form->node(1));
         if ($legacy) {
             $this->lowering->options->skip($form->node(2));
             $this->lowering->options->skip($form->node(4));
@@ -67,7 +66,7 @@ final class LoadAssignments
         $column = $this->lowering->names->column($form->node(0));
         $value = $this->lowering->form($form->node($legacy ? 3 : 2));
         $operand = $value->signature === 'expr_or_default: expr' ? $this->lowering->expressions->operand($value->node(0)) : (new ValueRule($this->lowering))->value($value->node);
-        return $operand instanceof Scalar || $operand instanceof DefaultRequest ? new Assignment($column, $operand) : new DeferredColumnAssignment($column, $operand);
+        return $operand instanceof Scalar || $operand instanceof DefaultRequest ? new Assignment($column, $operand, operator: $this->lowering->options->assignment($form->node(1))) : new DeferredColumnAssignment($column, $operand, operator: $this->lowering->options->assignment($form->node(1)));
     }
 
 }

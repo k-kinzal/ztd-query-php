@@ -25,10 +25,10 @@ final class DatabaseCollation implements DatabaseOption
 
     /**
      * @param CollationName $collation The collation
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      * @param bool $defaultKeyword Whether the optional DEFAULT keyword is written
      */
-    public function __construct(public readonly CollationName $collation, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $defaultKeyword = false)
+    public function __construct(public readonly CollationName $collation, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null, public readonly bool $defaultKeyword = false)
     {
     }
 
@@ -41,8 +41,8 @@ final class DatabaseCollation implements DatabaseOption
             $out->keyword('DEFAULT');
         }
         $out->keyword('COLLATE');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->node($this->collation);
     }

@@ -142,8 +142,8 @@ final class DatabaseRule
         return match ($form->signature) {
             'alter_database_option: create_database_option' => $this->option($form->node(0)),
             'alter_database_option: READ_SYM ONLY_SYM opt_equal ternary_option' => $this->readOnly($form),
-            'create_database_option: default_charset' => new DatabaseCharset($charsets->charset($form->node(0)), equals: $this->lowering->options->present($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0)), form: (new \SqlSemantics\Platform\MySql\Lowering\Type\TypePartRule($this->lowering))->named($this->lowering->form($form->node(0))->node(1))),
-            'create_database_option: default_collation' => new DatabaseCollation($charsets->collation($form->node(0)) ?? new CollationName(null), equals: $this->lowering->options->present($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0))),
+            'create_database_option: default_charset' => new DatabaseCharset($charsets->charset($form->node(0)), operator: $this->lowering->options->optionalAssignment($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0)), form: (new \SqlSemantics\Platform\MySql\Lowering\Type\TypePartRule($this->lowering))->named($this->lowering->form($form->node(0))->node(1))),
+            'create_database_option: default_collation' => new DatabaseCollation($charsets->collation($form->node(0)) ?? new CollationName(null), operator: $this->lowering->options->optionalAssignment($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0))),
             'create_database_option: default_encryption' => $this->encryption($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
@@ -157,13 +157,13 @@ final class DatabaseRule
      */
     public function readOnly(Form $form): DatabaseReadOnly
     {
-        $equals = $this->lowering->options->present($form->node(2));
+        $operator = $this->lowering->options->optionalAssignment($form->node(2));
         $value = $this->lowering->numbers->ternary($form->node(3));
         if ($value !== null && !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '1')) {
             throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: READ ONLY accepts 0, 1 or DEFAULT.', 0, new \SqlParser\Parser\SyntaxException($form->node(3)->tokens()[0], [], ''));
         }
 
-        return new DatabaseReadOnly($value, equals: $equals);
+        return new DatabaseReadOnly($value, operator: $operator);
     }
 
     /**
@@ -178,16 +178,16 @@ final class DatabaseRule
             throw ImplementationGap::production($form);
         }
         $default = $this->lowering->options->present($form->node(0));
-        $equals = $this->lowering->options->present($form->node(2));
+        $operator = $this->lowering->options->optionalAssignment($form->node(2));
 
         $text = $this->lowering->literals->bytes($form->node(3));
         $value = \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::fromOperand($text);
         if ($value === null) {
-            return new DatabaseEncryption($this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), equals: $equals, defaultKeyword: $default);
+            return new DatabaseEncryption($this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), operator: $operator, defaultKeyword: $default);
         }
 
         $spelling = $text === $value->value ? null : $this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text));
 
-        return new DatabaseEncryption($this->lowering->leaves->record($value), $spelling, equals: $equals, defaultKeyword: $default);
+        return new DatabaseEncryption($this->lowering->leaves->record($value), $spelling, operator: $operator, defaultKeyword: $default);
     }
 }

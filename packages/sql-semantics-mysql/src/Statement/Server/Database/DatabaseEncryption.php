@@ -35,10 +35,10 @@ final class DatabaseEncryption implements DatabaseOption
     /**
      * @param Encryption|Text $encryption The resolved setting or an unrecognized quoted operand
      * @param Text|null $spelling A quoted operand denoting the same setting
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      * @param bool $defaultKeyword Whether the optional DEFAULT keyword is written
      */
-    public function __construct(public readonly Encryption|Text $encryption, ?Text $spelling = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $defaultKeyword = true)
+    public function __construct(public readonly Encryption|Text $encryption, ?Text $spelling = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null, public readonly bool $defaultKeyword = true)
     {
         if ($encryption instanceof Text) {
             Check::input($encryption->radix === null && Encryption::fromOperand($encryption->value) === null && $spelling === null, 'An unrecognized encryption operand is quoted text without an alternate setting spelling.');
@@ -58,8 +58,8 @@ final class DatabaseEncryption implements DatabaseOption
             $out->keyword('DEFAULT');
         }
         $out->keyword('ENCRYPTION');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->spelled($out->quote($this->spelling->value ?? $this->encryption->value));
     }

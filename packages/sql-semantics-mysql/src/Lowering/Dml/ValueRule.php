@@ -114,8 +114,7 @@ final class ValueRule
         if (!isset(self::ASSIGNMENTS[$form->signature])) {
             throw ImplementationGap::production($form);
         }
-        $this->lowering->options->skip($form->node(1));
 
-        return new Assignment($this->lowering->names->column($form->node(0)), $this->value($form->node(2)));
+        return new Assignment($this->lowering->names->column($form->node(0)), $this->value($form->node(2)), operator: $this->lowering->options->assignment($form->node(1)));
     }
 }

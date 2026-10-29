@@ -34,8 +34,9 @@ final class PasswordAssignment implements SetItem
     /**
      * @param Password $password The new password
      * @param Account|null $user The account, or null for the current user
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly Password $password, public readonly ?Account $user = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Password $password, public readonly ?Account $user = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
     }
 
@@ -49,7 +50,7 @@ final class PasswordAssignment implements SetItem
     }
 
     /**
-     * Writes PASSWORD, the account, an equals sign and the password.
+     * Writes PASSWORD, the account, the chosen assignment sign and the password.
      */
     public function render(Output $out): void
     {
@@ -57,6 +58,6 @@ final class PasswordAssignment implements SetItem
         if ($this->user !== null) {
             $out->keyword('FOR')->node($this->user);
         }
-        $out->symbol('=')->node($this->password);
+        $out->symbol($this->operator->value)->node($this->password);
     }
 }

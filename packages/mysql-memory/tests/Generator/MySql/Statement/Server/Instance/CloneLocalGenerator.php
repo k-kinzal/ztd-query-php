@@ -22,19 +22,17 @@ final class CloneLocalGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $directory Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<bool>|null $equals Generated constructor operand
-     * @param ErisGenerator<bool>|null $assignment The generated written alternative
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $operator Generated constructor operand
      */
-    public function __construct(ErisGenerator $directory, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $equals = null, ?ErisGenerator $assignment = null)
+    public function __construct(ErisGenerator $directory, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneLocal {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneLocal(directory: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], equals: $parts[3], assignment: $parts[4] && $parts[3]);
+            return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneLocal(directory: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], operator: $parts[3]);
         }, \Tests\Generator\Operands::tuple(
             $directory,
             $statementInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null),
-            $equals ?? Generators::bool(),
-            $assignment ?? Generators::bool()
+            $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()
         ));
     }
     /**

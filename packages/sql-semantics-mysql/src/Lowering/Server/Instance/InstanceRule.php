@@ -108,9 +108,9 @@ final class InstanceRule
      */
     public function local(Form $form): CloneLocal
     {
-        $equals = $this->lowering->options->present($form->node(4));
+        $operator = $this->lowering->options->optionalAssignment($form->node(4));
 
-        return new CloneLocal($this->lowering->literals->text($form->node(5)), equals: $equals, assignment: ($form->node(4)->tokens()[0]->text ?? null) === ':=');
+        return new CloneLocal($this->lowering->literals->text($form->node(5)), operator: $operator);
     }
 
     /**
@@ -135,7 +135,7 @@ final class InstanceRule
             default => throw ImplementationGap::production($options),
         };
 
-        return new CloneInstance($donor, $number, $password, $directory, $ssl, equals: $directory !== null && $this->lowering->options->present($options->node(2)), assignment: $directory !== null && ($options->node(2)->tokens()[0]->text ?? null) === ':=');
+        return new CloneInstance($donor, $number, $password, $directory, $ssl, operator: $directory === null ? null : $this->lowering->options->optionalAssignment($options->node(2)));
     }
 
     /**

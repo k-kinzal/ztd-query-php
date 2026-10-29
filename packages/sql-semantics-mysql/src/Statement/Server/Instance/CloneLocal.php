@@ -29,10 +29,9 @@ final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
 
     /**
      * @param Text $directory The directory the data is cloned into
-     * @param bool $equals Whether the optional equals sign is written
-     * @param bool $assignment Whether a written assignment sign is := instead of =
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly Text $directory, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $assignment = false)
+    public function __construct(public readonly Text $directory, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -54,8 +53,8 @@ final class CloneLocal extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
     public function render(Output $out): void
     {
         $out->keyword('CLONE', 'LOCAL', 'DATA', 'DIRECTORY');
-        if ($this->equals) {
-            $out->symbol($this->assignment ? ':=' : '=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->node($this->directory);
     }

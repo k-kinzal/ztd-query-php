@@ -56,44 +56,73 @@ if ($seed === false) {
 }
 mt_srand($seed);
 
-$containerClass = MySqlRelease::container($version);
-$reference = Testcontainers::run((new $containerClass())->withReuseMode(ReuseMode::ADD()));
-register_shutdown_function(static function () use ($reference): void {
-    $reference->stop();
+/**
+ * Starts one pair of ordinary database connections for a generated SQL history.
+ * Successful RESTART or SHUTDOWN ends that history after its reply is compared.
+ * The next input starts with a new pair; no post-shutdown scheduling race is
+ * treated as a SQL result, and no generated statement is discarded.
+ *
+ * @return array{ExecutionTarget, Closure(): void}
+ */
+$start = static function () use ($version, $mode): array {
+    $containerClass = MySqlRelease::container($version);
+    $reference = Testcontainers::run((new $containerClass())->withReuseMode(ReuseMode::ADD()));
+    $server = null;
+    $connected = false;
+    try {
+        $endpoint = $reference->getData(Endpoint::class);
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        $native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, 'test', $endpoint->port);
+        $identityResult = $native->query('SELECT USER()');
+        if (!$identityResult instanceof mysqli_result) {
+            throw new RuntimeException('MySQL must return its client identity.');
+        }
+        $identity = $identityResult->fetch_column();
+        $identityResult->free();
+        $prefix = $endpoint->username . '@';
+        if (!is_string($identity) || !str_starts_with($identity, $prefix) || strlen($identity) === strlen($prefix)) {
+            throw new RuntimeException('MySQL must identify the configured user and its connecting host.');
+        }
+        /** Docker and the local server see different peers; configure the same client identity. */
+        $server = MemoryDatabase::start($version, ['test'], clientHost: substr($identity, strlen($prefix)));
+        $memory = new mysqli($server->host, 'root', '', 'test', $server->port);
+        $identityResult = $memory->query('SELECT USER()');
+        if (!$identityResult instanceof mysqli_result || $identityResult->fetch_column() !== $identity) {
+            throw new RuntimeException('Both connections must expose the configured client identity.');
+        }
+        $identityResult->free();
+        foreach ([$native, $memory] as $connection) {
+            $connection->set_charset('utf8mb4');
+            $connection->query("SET SESSION sql_mode = '" . $connection->real_escape_string($mode) . "'");
+            $connection->query("SET SESSION time_zone = '+00:00'");
+            $connection->query('SET SESSION timestamp = 1700000000');
+        }
+        mysqli_report(MYSQLI_REPORT_OFF);
+        $target = new ExecutionTarget($native, $memory, $server);
+        $connected = true;
+        return [$target, static function () use ($native, $memory, $server, $reference): void {
+            static $stopped = false;
+            if ($stopped) {
+                return;
+            }
+            $stopped = true;
+            $native->close();
+            $memory->close();
+            $server->stop();
+            $reference->stop();
+        }];
+    } finally {
+        if (!$connected) {
+            $server?->stop();
+            $reference->stop();
+        }
+    }
+};
+[$target, $stop] = $start();
+register_shutdown_function(static function () use (&$stop): void {
+    $stop();
 });
-$endpoint = $reference->getData(Endpoint::class);
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$native = new mysqli($endpoint->host, $endpoint->username, $endpoint->password, 'test', $endpoint->port);
-$identityResult = $native->query('SELECT USER()');
-if (!$identityResult instanceof mysqli_result) {
-    throw new RuntimeException('MySQL must return its client identity.');
-}
-$identity = $identityResult->fetch_column();
-$identityResult->free();
-$prefix = $endpoint->username . '@';
-if (!is_string($identity) || !str_starts_with($identity, $prefix) || strlen($identity) === strlen($prefix)) {
-    throw new RuntimeException('MySQL must identify the configured user and its connecting host.');
-}
-/** Docker and the local server see different peers; configure the same client identity. */
-$server = MemoryDatabase::start($version, ['test'], clientHost: substr($identity, strlen($prefix)));
-register_shutdown_function(static function () use ($server): void {
-    $server->stop();
-});
-$memory = new mysqli($server->host, 'root', '', 'test', $server->port);
-$identityResult = $memory->query('SELECT USER()');
-if (!$identityResult instanceof mysqli_result || $identityResult->fetch_column() !== $identity) {
-    throw new RuntimeException('Both connections must expose the configured client identity.');
-}
-$identityResult->free();
-foreach ([$native, $memory] as $connection) {
-    $connection->set_charset('utf8mb4');
-    $connection->query("SET SESSION sql_mode = '" . $connection->real_escape_string($mode) . "'");
-    $connection->query("SET SESSION time_zone = '+00:00'");
-    $connection->query('SET SESSION timestamp = 1700000000');
-}
-mysqli_report(MYSQLI_REPORT_OFF);
-$target = new ExecutionTarget($native, $memory, $server);
-register_shutdown_function(static function () use ($target): void {
+register_shutdown_function(static function () use (&$target): void {
     if (function_exists('pcntl_alarm')) {
         pcntl_alarm(0);
     }
@@ -107,7 +136,7 @@ echo 'Execution profile: ' . json_encode(['grammar' => $grammarVersion, 'mode' =
 /** @var PhpFuzzer\Config $config */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $target, $duration): void {
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, &$target, &$stop, $start, $duration): void {
     if ($target->attempts !== $target->verified) {
         fwrite(STDERR, "Stopping after the preceding execution counterexample.\n");
         exit(1);
@@ -116,8 +145,19 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $co
     static $started = null;
     $started ??= hrtime(true);
     $target->attempts++;
+    static $terminal = false;
+    if ($terminal) {
+        $attempts = $target->attempts;
+        $verified = $target->verified;
+        $stop();
+        [$target, $stop] = $start();
+        $target->attempts = $attempts;
+        $target->verified = $verified;
+        $terminal = false;
+    }
     $sql = $provider->generate((new BytePlanCompiler())->compile($input, $planner, $constraints));
-    $target->verify($sql, $input);
+    $succeeded = $target->verify($sql, $input);
+    $terminal = $succeeded && preg_match('/\A\s*(?:RESTART|SHUTDOWN)\s*;?\s*\z/i', $sql) === 1;
     $elapsed = (hrtime(true) - $started) / 1_000_000_000;
     if ($duration !== null && $elapsed >= $duration) {
         echo "Completed {$target->verified} matching inputs in {$elapsed} seconds.\n";

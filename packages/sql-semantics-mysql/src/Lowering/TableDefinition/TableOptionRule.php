@@ -152,11 +152,11 @@ final class TableOptionRule
                 'number' => $numbers->numeral($form->node(2)),
                 'ternary' => $numbers->ternary($form->node(2)),
                 'default' => null,
-            }, equals: $this->lowering->options->present($form->node(1)));
+            }, operator: $this->lowering->options->optionalAssignment($form->node(1)));
         }
         $text = self::TEXTS[$form->signature] ?? null;
         if ($text !== null) {
-            return new TextOption($text[0], $this->lowering->literals->text($form->node($text[1])), equals: $this->lowering->options->present($form->node($text[1] - 1)));
+            return new TextOption($text[0], $this->lowering->literals->text($form->node($text[1])), operator: $this->lowering->options->optionalAssignment($form->node($text[1] - 1)));
         }
 
         return $this->named($form);
@@ -172,20 +172,20 @@ final class TableOptionRule
         $names = $this->lowering->names;
 
         return match ($form->signature) {
-            'create_table_option: ENGINE_SYM opt_equal storage_engines', 'create_table_option: ENGINE_SYM opt_equal ident_or_text' => new EngineOption($names->identifier($form->node(2)), equals: $this->lowering->options->present($form->node(1))),
-            'create_table_option: SECONDARY_ENGINE_SYM opt_equal NULL_SYM' => new SecondaryEngineOption(null, equals: $this->lowering->options->present($form->node(1))),
-            'create_table_option: SECONDARY_ENGINE_SYM opt_equal ident_or_text' => new SecondaryEngineOption($names->identifier($form->node(2)), equals: $this->lowering->options->present($form->node(1))),
-            'create_table_option: ROW_FORMAT_SYM opt_equal row_types' => new RowFormatOption($this->keyword($form->node(2), RowFormat::class), equals: $this->lowering->options->present($form->node(1))),
-            'create_table_option: INSERT_METHOD opt_equal merge_insert_types' => new InsertMethodOption($this->keyword($form->node(2), InsertMethod::class), equals: $this->lowering->options->present($form->node(1))),
-            'create_table_option: UNION_SYM opt_equal ( opt_table_list )' => new UnionOption($names->qualifiedList($form->node(3)), equals: $this->lowering->options->present($form->node(1))),
-            'create_table_option: default_charset' => new CharsetOption($this->lowering->charsets->charset($form->node(0)), equals: $this->lowering->options->present($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0)), form: (new \SqlSemantics\Platform\MySql\Lowering\Type\TypePartRule($this->lowering))->named($this->lowering->form($form->node(0))->node(1))),
-            'create_table_option: default_collation' => new CollationOption($this->lowering->charsets->collation($form->node(0)) ?? throw ImplementationGap::production($form), equals: $this->lowering->options->present($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0))),
+            'create_table_option: ENGINE_SYM opt_equal storage_engines', 'create_table_option: ENGINE_SYM opt_equal ident_or_text' => new EngineOption($names->identifier($form->node(2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'create_table_option: SECONDARY_ENGINE_SYM opt_equal NULL_SYM' => new SecondaryEngineOption(null, operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'create_table_option: SECONDARY_ENGINE_SYM opt_equal ident_or_text' => new SecondaryEngineOption($names->identifier($form->node(2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'create_table_option: ROW_FORMAT_SYM opt_equal row_types' => new RowFormatOption($this->keyword($form->node(2), RowFormat::class), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'create_table_option: INSERT_METHOD opt_equal merge_insert_types' => new InsertMethodOption($this->keyword($form->node(2), InsertMethod::class), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'create_table_option: UNION_SYM opt_equal ( opt_table_list )' => new UnionOption($names->qualifiedList($form->node(3)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'create_table_option: default_charset' => new CharsetOption($this->lowering->charsets->charset($form->node(0)), operator: $this->lowering->options->optionalAssignment($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0)), form: (new \SqlSemantics\Platform\MySql\Lowering\Type\TypePartRule($this->lowering))->named($this->lowering->form($form->node(0))->node(1))),
+            'create_table_option: default_collation' => new CollationOption($this->lowering->charsets->collation($form->node(0)) ?? throw ImplementationGap::production($form), operator: $this->lowering->options->optionalAssignment($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0))),
             'create_table_option: TABLESPACE ident' => new TablespaceOption($names->identifier($form->node(1))),
-            'create_table_option: TABLESPACE_SYM opt_equal ident' => new TablespaceOption($names->identifier($form->node(2)), equals: $this->lowering->options->present($form->node(1))),
+            'create_table_option: TABLESPACE_SYM opt_equal ident' => new TablespaceOption($names->identifier($form->node(2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
             'create_table_option: STORAGE_SYM DISK_SYM' => new StorageOption(StorageMedium::Disk),
             'create_table_option: STORAGE_SYM MEMORY_SYM' => new StorageOption(StorageMedium::Memory),
             'create_table_option: START_SYM TRANSACTION_SYM' => new StartTransaction(),
-            'create_table_option: option_autoextend_size' => new AutoextendSizeOption($this->lowering->numbers->size($form->node(0)), equals: $this->lowering->options->present($this->lowering->form($form->node(0))->node(1))),
+            'create_table_option: option_autoextend_size' => new AutoextendSizeOption($this->lowering->numbers->size($form->node(0)), operator: $this->lowering->options->optionalAssignment($this->lowering->form($form->node(0))->node(1))),
             default => throw ImplementationGap::production($form),
         };
     }

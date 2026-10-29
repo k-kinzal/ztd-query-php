@@ -36,8 +36,9 @@ final class SetPassword extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      * @param Password|null $password The password; null for TO RANDOM
      * @param Text|null $replace The current password REPLACE names
      * @param bool $retainCurrent Whether RETAIN CURRENT PASSWORD is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly ?Account $user, public readonly ?Password $password, public readonly ?Text $replace = null, public readonly bool $retainCurrent = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?Account $user, public readonly ?Password $password, public readonly ?Text $replace = null, public readonly bool $retainCurrent = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -68,7 +69,7 @@ final class SetPassword extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         if ($this->password === null) {
             $out->keyword('TO', 'RANDOM');
         } else {
-            $out->symbol('=')->node($this->password);
+            $out->symbol($this->operator->value)->node($this->password);
         }
         if ($this->replace !== null) {
             $out->keyword('REPLACE')->node($this->replace);

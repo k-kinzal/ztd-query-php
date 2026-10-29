@@ -43,8 +43,9 @@ final class ComponentSetting implements Node
      * @param SystemTarget $variable The variable with its scope and component
      * @param Scalar|BareName|OnWord $value The value: an expression, a standalone word, or OnWord
      * @throws InvalidConstruction When the scope is neither absent, GLOBAL nor PERSIST
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly SystemTarget $variable, Scalar|BareName|OnWord $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly SystemTarget $variable, Scalar|BareName|OnWord $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
         Check::input(in_array($variable->scope, [null, VariableScope::Global, VariableScope::Persist], true), 'A component variable is set GLOBAL or PERSIST.');
         $unwrapped = $value;
@@ -68,6 +69,6 @@ final class ComponentSetting implements Node
         if ($this->variable->instance !== null) {
             $out->name($this->variable->instance, NameUse::Label)->symbol('.');
         }
-        $out->name($this->variable->name, NameUse::Label)->symbol('=')->node($this->value);
+        $out->name($this->variable->name, NameUse::Label)->symbol($this->operator->value)->node($this->value);
     }
 }

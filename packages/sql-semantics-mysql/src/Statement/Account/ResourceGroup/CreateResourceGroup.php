@@ -43,11 +43,11 @@ final class CreateResourceGroup extends \SqlSemantics\Platform\MySql\Statement\S
      * @param ThreadPriority|null $priority The THREAD_PRIORITY, when written
      * @param bool|null $enabled ENABLE (true) or DISABLE (false), when written
      * @param list<bool>|null $cpusCommas Optional commas between adjacent cpus
-     * @param bool $typeEquals Whether TYPE uses an equals sign
-     * @param bool $cpusEquals Whether VCPU uses an equals sign
-     * @param bool $priorityEquals Whether THREAD_PRIORITY uses an equals sign
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $typeOperator The written assignment sign, or null when omitted
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $cpusOperator The written assignment sign, or null when omitted
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $priorityOperator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly ResourceGroupName $name, public readonly ResourceGroupKind $kind, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $cpusCommas = null, public readonly bool $typeEquals = true, public readonly bool $cpusEquals = true, public readonly bool $priorityEquals = true)
+    public function __construct(public readonly ResourceGroupName $name, public readonly ResourceGroupKind $kind, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $cpusCommas = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $typeOperator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $cpusOperator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $priorityOperator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -71,22 +71,22 @@ final class CreateResourceGroup extends \SqlSemantics\Platform\MySql\Statement\S
     public function render(Output $out): void
     {
         $out->keyword('CREATE', 'RESOURCE', 'GROUP')->node($this->name)->keyword('TYPE');
-        if ($this->typeEquals) {
-            $out->symbol('=');
+        if ($this->typeOperator !== null) {
+            $out->symbol($this->typeOperator->value);
         }
         $out->keyword($this->kind->value);
         if ($this->cpus !== []) {
             $out->keyword('VCPU');
-            if ($this->cpusEquals) {
-                $out->symbol('=');
+            if ($this->cpusOperator !== null) {
+                $out->symbol($this->cpusOperator->value);
             }
 
             (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->cpus, $this->cpusCommas);
         }
         if ($this->priority !== null) {
             $out->keyword('THREAD_PRIORITY');
-            if ($this->priorityEquals) {
-                $out->symbol('=');
+            if ($this->priorityOperator !== null) {
+                $out->symbol($this->priorityOperator->value);
             }
             $out->node($this->priority);
         }

@@ -24,10 +24,10 @@ final class EngineOption implements StorageOption
 
     /**
      * @param Name $engine The engine name
-     * @param bool $equals Whether the optional equals sign is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      * @param bool $storageKeyword Whether the optional STORAGE keyword is written
      */
-    public function __construct(public readonly Name $engine, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $equals = false, public readonly bool $storageKeyword = false)
+    public function __construct(public readonly Name $engine, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null, public readonly bool $storageKeyword = false)
     {
     }
 
@@ -48,8 +48,8 @@ final class EngineOption implements StorageOption
             $out->keyword('STORAGE');
         }
         $out->keyword('ENGINE');
-        if ($this->equals) {
-            $out->symbol('=');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
         }
         $out->name($this->engine, NameUse::Identifier);
     }

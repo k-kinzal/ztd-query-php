@@ -65,8 +65,8 @@ final class ResourceGroupRule
                 $this->enabled($form->node(6)),
                 $this->force($form->node(7)),
                 cpusCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(4), ['vcpu_num_or_range']),
-                cpusEquals: $form->node(4)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(4))->node(1)),
-                priorityEquals: $form->node(5)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(5))->node(1)),
+                cpusOperator: $this->operator($form->node(4)),
+                priorityOperator: $this->operator($form->node(5)),
             ),
             'drop_resource_group_stmt: DROP RESOURCE_SYM GROUP_SYM ident opt_force' => new DropResourceGroup($this->name($form), $this->force($form->node(4))),
             'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident' => new SetResourceGroup($this->name($form)),
@@ -83,7 +83,7 @@ final class ResourceGroupRule
     public function create(Form $form): CreateResourceGroup
     {
         $name = $this->name($form);
-        $typeEquals = $this->lowering->options->present($form->node(5));
+        $typeOperator = $this->lowering->options->optionalAssignment($form->node(5));
         $type = $this->lowering->form($form->node(6));
         $kind = match ($type->signature) {
             'resource_group_types: USER' => ResourceGroupKind::User,
@@ -98,10 +98,18 @@ final class ResourceGroupRule
             $this->priority($form->node(8)),
             $this->enabled($form->node(9)),
             cpusCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(7), ['vcpu_num_or_range']),
-            typeEquals: $typeEquals,
-            cpusEquals: $form->node(7)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(7))->node(1)),
-            priorityEquals: $form->node(8)->children !== [] && $this->lowering->options->present($this->lowering->form($form->node(8))->node(1)),
+            typeOperator: $typeOperator,
+            cpusOperator: $this->operator($form->node(7)),
+            priorityOperator: $this->operator($form->node(8)),
         );
+    }
+
+    /**
+     * Retains the assignment sign of a written VCPU or THREAD_PRIORITY clause.
+     */
+    public function operator(Node $option): ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator
+    {
+        return $option->children === [] ? null : $this->lowering->options->optionalAssignment($this->lowering->form($option)->node(1));
     }
 
     /**

@@ -37,8 +37,9 @@ final class DeferredAssignment implements Node
      * @param RowOperand|DeferredOperand $value The complete assigned operand
      * @param VariableScope|null $scope The leading scope keyword of a named assignment
      * @param Name|null $qualifier The component, cache or trigger row of a named assignment
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly Name|SystemTarget|UserVariable $target, public readonly RowOperand|DeferredOperand $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name|SystemTarget|UserVariable $target, public readonly RowOperand|DeferredOperand $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
         Check::input($target instanceof Name || ($scope === null && $qualifier === null), 'Only a named assignment carries a leading scope or qualifier.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -81,6 +82,6 @@ final class DeferredAssignment implements Node
         } else {
             $out->node($this->target);
         }
-        $out->symbol('=')->node($this->value);
+        $out->symbol($this->operator->value)->node($this->value);
     }
 }

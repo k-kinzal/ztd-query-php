@@ -39,8 +39,9 @@ final class SystemAssignment implements SetItem
     /**
      * @param SystemTarget $variable The assigned variable with the scope written inside `@@`
      * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly SystemTarget $variable, public readonly Scalar|BareName|SetWord $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly SystemTarget $variable, public readonly Scalar|BareName|SetWord $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
         Check::input(!$value instanceof BareName || $value->system, 'A bare name assigned to a system variable is its text.');
     }
@@ -71,11 +72,11 @@ final class SystemAssignment implements SetItem
     }
 
     /**
-     * Writes the variable, an equals sign and the value.
+     * Writes the variable, the chosen assignment sign and the value.
      */
     public function render(Output $out): void
     {
-        $out->node($this->variable)->symbol('=');
+        $out->node($this->variable)->symbol($this->operator->value);
         if ($this->value instanceof SetWord) {
             $out->keyword($this->value->value);
         } else {
