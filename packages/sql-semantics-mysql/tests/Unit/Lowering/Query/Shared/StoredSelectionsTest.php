@@ -51,20 +51,13 @@ final class StoredSelectionsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $create->body);
     }
 
-    public function testBodyRetainsAnUnusedQualifyConditionInsideTheRejectedUpdate(): void
+    public function testBodyRetainsAnUnusedQualifyConditionInsideTheCompleteUpdate(): void
     {
-        $semantics = new Semantics(Dialect::MySql, '8.4.7');
-        try {
-            $semantics->analyze('WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,t SET a=1');
-            self::fail('A fixed alias collision cannot publish an ordinary UPDATE.');
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate::class, $failure->problem);
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $failure->problem->with);
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $failure->problem->with->tables[0]->query);
-            $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($semantics->profile()->grammar));
-            $failure->problem->render($out);
-            self::assertSame('WITH c AS (SELECT 1 QUALIFY ROW(1, 2)) UPDATE t, t SET a = 1', (new \SqlSemantics\Rendering\Lexical())->join($out->pieces()));
-        }
+        $operation = (new Semantics(Dialect::MySql, '8.4.7'))->analyze('WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,t SET a=1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $operation->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->with->tables[0]->query);
+        self::assertSame('WITH c AS (SELECT 1 QUALIFY ROW(1, 2)) UPDATE t, t SET a = 1', $operation->toString());
     }
 
     public function testClausePreservesEveryRepresentedClause(): void

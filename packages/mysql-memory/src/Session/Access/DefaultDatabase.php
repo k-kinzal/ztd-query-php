@@ -111,8 +111,7 @@ final class DefaultDatabase
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet,
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery => [$statement->into->table],
-            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update,
-            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($statement->tables),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update => (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($statement->tables),
             default => [],
         };
         if (!$session->settings()->legacy() && $tables !== []) {

@@ -52,6 +52,36 @@ final class ChangeRuleTest extends TestCase
         self::assertStringContainsString('UPDATE t SET a = ROW(1, 2), b = DEFAULT WHERE c = 3', $operation->toString());
     }
 
+    #[DataProvider('providerUpdateCollisions')]
+    public function testUpdateRetainsTheCompleteInputWithRepeatedNames(string $release, string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertCount(2, $statement->tables);
+        self::assertCount(2, $statement->assignments);
+        self::assertSame($sql, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerUpdateCollisions(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach ([
+                'UPDATE t, t SET a = 1, b = 2',
+                'UPDATE LOW_PRIORITY IGNORE db.t AS x, db.u AS x SET a = 1, b = 2 WHERE a > 0',
+                'UPDATE t AS x, u AS x SET a = 1, b = 2 ORDER BY a LIMIT 1',
+            ] as $index => $sql) {
+                yield $release->value . ' ' . $index => [$release->value, $sql];
+            }
+        }
+    }
+
     public function testUpdateLowersEveryGeneration(): void
     {
         self::assertSame('UPDATE t SET a = 1 WHERE b ORDER BY c LIMIT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('update t set a = 1 where b order by c limit 1')->toString());

@@ -61,7 +61,7 @@ final class ChangeFacts
     /**
      * Derives UPDATE.
      */
-    public function update(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $update, Derivation $derivation, Environment $outer): void
+    public function update(Update $update, Derivation $derivation, Environment $outer): void
     {
         if (($sampling = (new Read\Sampling())->of($update)) !== null) {
             $derivation->report($sampling);

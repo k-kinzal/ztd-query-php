@@ -33,21 +33,21 @@ final class UpdateGenerator implements ErisGenerator
      *
      * @param ErisGenerator<Update>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
+     * @throws InvalidArgumentException When the release belongs to another database.
      */
     public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
+        if ($release->database() !== 'mysql') {
+            throw new InvalidArgumentException('UPDATE generation requires a MySQL grammar.');
+        }
         if ($operands === null) {
-            $forms = [];
+            $forms = [self::operands($release), self::references()];
             if ($release === GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No Update forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): Update {
@@ -73,6 +73,36 @@ final class UpdateGenerator implements ErisGenerator
             $assignment = $data['row'] ? new M\Routine\Program\Write\DeferredColumnAssignment($column, new M\Expression\Row([$number, new M\Literal\NumberLiteral('2')])) : new M\Dml\Assignment($column, $number);
             return new Update(null, false, false, [new M\Relation\TableReference(new QualifiedName(new Name('target')))], [$assignment]);
         }, $operands);
+    }
+
+    /**
+     * Varies input names, aliases and namespaces, including repeated occurrences.
+     *
+     * @return ErisGenerator<Update>
+     */
+    public static function references(): ErisGenerator
+    {
+        $tables = new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
+            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
+                name: new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('t', 'u', 'v')),
+                schema: Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('pbt', 'other')))
+            ),
+            alias: Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('x', 'y')))
+        );
+        return self::fromOperands(
+            Generators::constant(null),
+            Generators::bool(),
+            Generators::bool(),
+            Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $tables)),
+            Generators::tuple(new AssignmentGenerator(
+                new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('a', 'b'))),
+                new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 10)))
+            )),
+            Generators::constant(null),
+            Generators::constant([]),
+            Generators::constant(null),
+            Generators::constant([])
+        );
     }
 
     /**

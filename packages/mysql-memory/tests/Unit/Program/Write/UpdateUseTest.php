@@ -63,7 +63,7 @@ final class UpdateUseTest extends TestCase
     {
         $session = (new \MySqlMemory\Instance('5.6.51'))->connect();
         $first = new M\Relation\TableReference(new QualifiedName(new Name('t')));
-        $write = new M\Dml\Problem\Update\ConflictingUpdate(null, false, false, [$first, new M\Relation\TableReference(new QualifiedName(new Name('t')))], [new M\Dml\Assignment(new M\Name\ColumnUse(new Name('a')), new M\Literal\NumberLiteral('1'))]);
+        $write = new M\Dml\Update(null, false, false, [$first, new M\Relation\TableReference(new QualifiedName(new Name('t')))], [new M\Dml\Assignment(new M\Name\ColumnUse(new Name('a')), new M\Literal\NumberLiteral('1'))]);
         self::assertSame(1046, (new UpdateUse())->error($write, $session)->getCode());
         $session->query('CREATE DATABASE d; USE d');
         self::assertSame(1066, (new UpdateUse())->error($write, $session)->getCode());

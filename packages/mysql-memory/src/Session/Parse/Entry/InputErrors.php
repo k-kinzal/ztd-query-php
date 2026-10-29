@@ -210,19 +210,8 @@ final class InputErrors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns => $this->viewColumns($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount => (new SourceNumberInput())->fileCount($diagnostic, $session),
             $diagnostic instanceof RoleOrPrivilegeMismatch => (new RoleInput())->error($diagnostic, $session->text),
-            default => $this->write($diagnostic, $session) ?? $this->server($diagnostic, $session),
-        };
-    }
-
-    /**
-     * Resolves retained INSERT, UPDATE and DELETE operands without consulting source SQL.
-     */
-    public function write(Diagnostic $diagnostic, Session $session): ?SqlError
-    {
-        return match (true) {
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate => (new \MySqlMemory\Program\Write\UpdateUse())->error($diagnostic, $session),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget => (new Dml\Targets())->error($diagnostic, $session),
-            default => null,
+            default => $this->server($diagnostic, $session),
         };
     }
 

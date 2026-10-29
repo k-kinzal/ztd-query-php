@@ -107,7 +107,6 @@ final class DiagnosticGenerator implements ErisGenerator
         yield from \Tests\Generator\MySql\Statement\Account\Problem\RoutineColumnPrivilegeGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatchGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Query\Problem\Option\RestrictedSelectOptionGenerator::executionForms();
-        yield from \Tests\Generator\MySql\Statement\Dml\Problem\Update\ConflictingUpdateGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Dml\Problem\Read\OrderingPositionGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Call\Problem\WindowConstraintGenerator::executionForms();
         yield from \Tests\Generator\MySql\Statement\Utility\Problem\RefusedConnectionExplainGenerator::executionForms();

@@ -81,7 +81,6 @@ final class ChangeRule
      * Lowers a node of `update` or `update_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When the input namespace needs a retained instruction
      */
     public function update(Form $form): Update
     {
@@ -99,9 +98,6 @@ final class ChangeRule
             $this->limit($form->node($limit)),
             $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
         ];
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\Update\Structure())->names($parts[3]) !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate(...$parts), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
         return new Update(...$parts);
     }
 

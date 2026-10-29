@@ -30,7 +30,7 @@ final class InputNames
         foreach ($nodes as $node) {
             $tables = match (true) {
                 $node instanceof M\Query\Select, $node instanceof M\Routine\Program\DeferredSelection => $node->from === null || $node->from instanceof M\Relation\Dual ? [] : [$node->from],
-                $node instanceof M\Dml\Update, $node instanceof M\Dml\Problem\Update\ConflictingUpdate, $node instanceof M\Dml\MultipleDelete, $node instanceof M\Routine\Program\Write\DeferredMultipleDelete => $node->tables,
+                $node instanceof M\Dml\Update, $node instanceof M\Dml\MultipleDelete, $node instanceof M\Routine\Program\Write\DeferredMultipleDelete => $node->tables,
                 default => [],
             };
             $problem = (new Structure())->names($tables);

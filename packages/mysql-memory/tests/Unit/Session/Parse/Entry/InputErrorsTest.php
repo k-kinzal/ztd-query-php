@@ -269,18 +269,7 @@ final class InputErrorsTest extends TestCase
         self::assertNull((new InputErrors())->server(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset('missing'), $session));
     }
 
-    public function testWriteRetainsTheDatabaseDependencyOfAFixedAliasCollision(): void
-    {
-        $session = (new Instance())->connect();
-        $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
-        $problem = new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate(null, false, false, [new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($table), new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($table)], [new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]);
-        $session->text = 'unrelated request';
-        self::assertSame(1046, (new InputErrors())->write($problem, $session)?->getCode());
-        $session->use('mysql');
-        self::assertSame(1066, (new InputErrors())->write($problem, $session)?->getCode());
-        self::assertNull((new InputErrors())->write(new NotSupportedYet('feature'), $session));
-        self::assertSame('unrelated request', $session->text);
-    }
+
 
     public function testLegacyCastLabelDistinguishesLeavesFromComputedOperands(): void
     {

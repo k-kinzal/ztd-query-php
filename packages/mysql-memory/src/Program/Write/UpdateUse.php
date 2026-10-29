@@ -23,7 +23,7 @@ final class UpdateUse
     /**
      * Obtains the standalone request's first preparation condition.
      */
-    public function error(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session): SqlError
+    public function error(Update $write, Session $session): SqlError
     {
         try {
             $this->raise($write, $session);
@@ -39,7 +39,7 @@ final class UpdateUse
      * @throws SqlError When a dependency or retained input constraint is reached
      * @throws LogicException When the retained constraint loses its native error
      */
-    public function raise(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, array $parameters = []): never
+    public function raise(Update $write, Session $session, array $parameters = []): never
     {
         $this->check($write, $session, parameters: $parameters);
         throw new LogicException('A retained UPDATE keeps its input, target or clause contradiction.');
@@ -51,17 +51,13 @@ final class UpdateUse
      * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
      * @throws SqlError When an input, destination or reached clause cannot bind
      */
-    public function check(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $prepared = false, array $parameters = []): void
+    public function check(Update $write, Session $session, bool $prepared = false, array $parameters = []): void
     {
         $database = $session->variables->database;
         $context = $session->semantics()->context(\MySqlMemory\Session\Statement\Catalog::declarations($session), true, $database === '' ? null : new SearchPath($database), $session->resolution((new \MySqlMemory\Session\Statement\Binding())->parameters($session, $parameters)));
         $write = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($write);
         $derivation = new Derivation($context);
-        if ($write instanceof Update) {
-            $write->deriveStatement($derivation);
-        } else {
-            $write->derive($derivation);
-        }
+        $write->deriveStatement($derivation);
         $facts = (new \SqlSemantics\Platform\MySql\Construction\StatementResults())->of($derivation);
         (new \MySqlMemory\Session\Access\RelationEntry())->counts($write, $facts, $session);
         (new \MySqlMemory\Session\Access\DefaultDatabase())->write($write, $facts, $session);
@@ -82,10 +78,8 @@ final class UpdateUse
             throw $input;
         }
         (new \MySqlMemory\Session\Problem\Sampling())->write($facts);
-        if ($write instanceof Update) {
-            if ((new UpdateOperands())->prepare($write, $facts, $session, $prepared, $parameters)) {
-                return;
-            }
+        if ((new UpdateOperands())->prepare($write, $facts, $session, $prepared, $parameters)) {
+            return;
         }
         foreach ($facts->diagnostics as $problem) {
             throw (new Errors())->error($problem, $session, statement: $write);
@@ -99,7 +93,7 @@ final class UpdateUse
      *
      * @throws SqlError When a reached input has no database or repeats a fixed name
      */
-    public function names(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
+    public function names(Update $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
         $collisions = [];
         foreach ($facts->diagnostics as $problem) {
