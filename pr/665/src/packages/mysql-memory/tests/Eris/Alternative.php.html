@@ -46,10 +46,10 @@
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Eris\Generator</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Eris\Generator\GeneratedValue</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Eris\Generator\GeneratedValueOptions</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Eris\Generator\GeneratedValueSingle</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">LogicException</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Override</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Eris\Generator\GeneratedValueSingle</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">LogicException</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Override</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">Traversable</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Retains every nested Eris shrink candidate of the selected semantic alternative.</span></span>
@@ -80,17 +80,14 @@
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;An alternative retains the Eris choice and its generation input.&#039;</span>);</span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        }</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-var">$index</span> = <span class="tok-var">$input</span>[<span class="tok-str">&#039;generator&#039;</span>];</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-var">$options</span> = [];</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">alternatives</span>[<span class="tok-var">$index</span>]-&gt;<span class="tok-id">shrink</span>(<span class="tok-var">$input</span>[<span class="tok-str">&#039;value&#039;</span>]) <span class="tok-kw">as</span> <span class="tok-var">$candidate</span>) {</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>            <span class="tok-var">$options</span>[] = <span class="tok-id">GeneratedValueSingle</span>::<span class="tok-id">fromValueAndInput</span>(<span class="tok-var">$candidate</span>-&gt;<span class="tok-id">unbox</span>(), [<span class="tok-str">&#039;value&#039;</span> =&gt; <span class="tok-var">$candidate</span>, <span class="tok-str">&#039;generator&#039;</span> =&gt; <span class="tok-var">$index</span>], <span class="tok-str">&#039;frequency&#039;</span>);</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        }</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-kw">if</span> (<span class="tok-var">$options</span> === []) {</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">LogicException</span>(<span class="tok-str">&#039;Eris alternatives retain at least their irreducible input.&#039;</span>);</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        }</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">GeneratedValueOptions</span>(<span class="tok-var">$options</span>);</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    }</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>}</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Options</span>(<span class="tok-kw">function</span> () <span class="tok-kw">use</span> (<span class="tok-var">$input</span>, <span class="tok-var">$index</span>): <span class="tok-id">Traversable</span> {</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">alternatives</span>[<span class="tok-var">$index</span>]-&gt;<span class="tok-id">shrink</span>(<span class="tok-var">$input</span>[<span class="tok-str">&#039;value&#039;</span>]) <span class="tok-kw">as</span> <span class="tok-var">$candidate</span>) {</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>                <span class="tok-kw">yield</span> <span class="tok-id">GeneratedValueSingle</span>::<span class="tok-id">fromValueAndInput</span>(<span class="tok-var">$candidate</span>-&gt;<span class="tok-id">unbox</span>(), [<span class="tok-str">&#039;value&#039;</span> =&gt; <span class="tok-var">$candidate</span>, <span class="tok-str">&#039;generator&#039;</span> =&gt; <span class="tok-var">$index</span>], <span class="tok-str">&#039;frequency&#039;</span>);</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>            }</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        });</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>}</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
