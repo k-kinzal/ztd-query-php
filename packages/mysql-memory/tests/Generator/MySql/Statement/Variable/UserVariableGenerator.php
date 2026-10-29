@@ -34,6 +34,18 @@ final class UserVariableGenerator implements ErisGenerator
         ));
     }
     /**
+     * Composes variable names from the alphabet allowed after the at sign.
+     * Quoted forms retain the same decoded names through shrinking.
+     *
+     * @return ErisGenerator<\SqlSemantics\Statement\Identifier\Name>
+     */
+    public static function names(): ErisGenerator
+    {
+        $values = Generators::map(static fn (array $parts): string => implode('', $parts), Generators::vector(4, Generators::elements(['a', 'B', '0', '.', '_', '$'])));
+        return new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator($values, Generators::elements([null, \SqlSemantics\Statement\Identifier\NameQuote::Backtick, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote]));
+    }
+
+    /**
      * Generates a write and a locally bound read of the same session variable.
      * No context derivation or SQL parsing supplies the generated read's meaning.
      *
@@ -41,7 +53,7 @@ final class UserVariableGenerator implements ErisGenerator
      */
     public static function assignmentSequence(): ErisGenerator
     {
-        $bindings = new UserVariableBindingGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(true));
+        $bindings = new UserVariableBindingGenerator(self::names(), Generators::constant(true));
         return Generators::bind(Generators::tuple($bindings, UserVariableEntryGenerator::integers(), Generators::choose(0, 100)), static function (array $parts): ErisGenerator {
             [$binding, $entry, $value] = $parts;
             $type = new \SqlSemantics\Statement\Type\Known($entry->domain);

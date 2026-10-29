@@ -116,9 +116,9 @@ final class NameRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function identifier(Node $name): Name
+    public function identifier(Node $name, \SqlSemantics\Contract\NameUse $use = \SqlSemantics\Contract\NameUse::Identifier): Name
     {
-        $value = $this->lowering->leaves->record($this->decoded($name));
+        $value = $this->lowering->leaves->record($this->decoded($name, $use));
         $form = $this->identifierForm($name);
         $deprecated = (new SyntaxNames())->unquoted($form->node, $this->lowering->profile->grammar);
         if ($deprecated !== null) {
@@ -135,7 +135,7 @@ final class NameRule
      *
      * @throws ImplementationGap When the production is not an identifier
      */
-    public function decoded(Node $name): Name
+    public function decoded(Node $name, \SqlSemantics\Contract\NameUse $use = \SqlSemantics\Contract\NameUse::Identifier): Name
     {
         $form = $this->identifierForm($name);
         if ($form->node->name === 'TEXT_STRING_sys' || $form->node->name === 'TEXT_STRING_validated') {
@@ -158,7 +158,7 @@ final class NameRule
         }
         $automatic = new Name($value);
         $codec = new \SqlSemantics\Platform\MySql\Rendering\Codec($this->lowering->profile->grammar, $this->lowering->profile->lexical, $this->lowering->inputClient);
-        return $codec->name($automatic, \SqlSemantics\Contract\NameUse::Identifier) === $text ? $automatic : new Name($value, $quote);
+        return $codec->name($automatic, $use) === $text ? $automatic : new Name($value, $quote);
     }
 
     /**

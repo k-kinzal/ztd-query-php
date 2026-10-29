@@ -53,6 +53,9 @@ final class GetDiagnosticsProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach (\Container\MySqlRelease::versions() as $version) {
+            $release = GrammarRelease::from('mysql-' . $version);
+            yield $release->value => [$release];
+        }
     }
 }

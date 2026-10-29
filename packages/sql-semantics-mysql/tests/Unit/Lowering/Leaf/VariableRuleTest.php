@@ -65,6 +65,30 @@ final class VariableRuleTest extends TestCase
         self::assertSame('SELECT @a AS a, @`b c` AS b, @\'d\' AS d, @\'e\' AS e, @localhost AS f', $operation->toString());
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerVariableSpellings')]
+    public function testUserPreservesUnquotedVariableNames(string $release, string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerVariableSpellings(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['B.a', 'a.b.c', '.', '1.2', '$.a', '`é.a`'] as $name) {
+                foreach (['GET DIAGNOSTICS @' . $name . ' = NUMBER', 'SELECT @' . $name . ' AS v', 'SET @' . $name . ' = 7'] as $sql) {
+                    yield $release->value . ' ' . $sql => [$release->value, $sql];
+                }
+            }
+        }
+    }
+
     public function testAssignmentLowersAnAssignmentInsideAnExpression(): void
     {
         $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT @v := 1');

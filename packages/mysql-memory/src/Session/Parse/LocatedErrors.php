@@ -56,6 +56,9 @@ final class LocatedErrors
             return (new Entry\PartitionInput())->bound($warning->problem, $definition instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition ? $definition->boundarySource : null, $session);
         }
         $instruction = $operation->statementInformation()->warningInstruction($warning) ?? $operation;
+        if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute && \MySqlMemory\Command\Dispatcher::program($operation)) {
+            return (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session, 'field list', $operation);
+        }
         return (new \MySqlMemory\Session\Problem\Precision())->legacy($this->error($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\CacheOptions())->placed($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session, 'field list', $instruction), $session->settings()->release());
     }
 

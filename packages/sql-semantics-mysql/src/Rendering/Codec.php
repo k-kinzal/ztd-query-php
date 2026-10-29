@@ -68,6 +68,9 @@ final class Codec implements \SqlSemantics\Contract\StringCodec
         if (str_contains($name->value, "\0") && ($use === NameUse::Alias || $use === NameUse::Label)) {
             return $this->quote($this->spelling($name->value));
         }
+        if ($use === NameUse::Variable && preg_match('/\A[A-Za-z0-9_$.]+\z/', $name->value) === 1) {
+            return $this->spelling($name->value);
+        }
         if (preg_match('/\A[A-Za-z_][A-Za-z0-9_]*\z/', $name->value) === 1 && !$this->keywords->reserved($name->value)) {
             return $name->value;
         }

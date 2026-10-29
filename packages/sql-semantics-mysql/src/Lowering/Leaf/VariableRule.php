@@ -86,7 +86,7 @@ final class VariableRule
      */
     public function user(Node $name): UserVariable
     {
-        return $this->lowering->leaves->record(new UserVariable($this->lowering->names->identifier($name)));
+        return $this->lowering->leaves->record(new UserVariable($this->lowering->names->identifier($name, \SqlSemantics\Contract\NameUse::Variable)));
     }
 
     /**

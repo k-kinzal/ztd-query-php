@@ -31,7 +31,7 @@ final class GetDiagnosticsGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+            if ($release->database() === 'mysql') {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
@@ -63,7 +63,7 @@ final class GetDiagnosticsGenerator implements ErisGenerator
         }, Generators::tuple($information, $area ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
+     * Composes the statement's MySQL forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics>>
      */
@@ -74,10 +74,7 @@ final class GetDiagnosticsGenerator implements ErisGenerator
                 items: Generators::tuple(
                     new InformationItemGenerator(
                         target: new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(
-                            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::constant('localhost'),
-                                quote: Generators::constant(null)
-                            )
+                            name: \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator::names()
                         ),
                         item: StatementItemNameGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName::Number])
                     )
@@ -96,10 +93,7 @@ final class GetDiagnosticsGenerator implements ErisGenerator
                 items: Generators::tuple(
                     new InformationItemGenerator(
                         target: new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(
-                            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::constant('localhost'),
-                                quote: Generators::constant(null)
-                            )
+                            name: \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator::names()
                         ),
                         item: \Tests\Generator\MySql\Statement\Routine\Condition\ConditionItemNameGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::ClassOrigin])
                     )
@@ -112,10 +106,7 @@ final class GetDiagnosticsGenerator implements ErisGenerator
                 items: Generators::tuple(
                     new InformationItemGenerator(
                         target: new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(
-                            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::constant('localhost'),
-                                quote: Generators::constant(null)
-                            )
+                            name: \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator::names()
                         ),
                         item: StatementItemNameGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName::Number])
                     )
@@ -136,10 +127,7 @@ final class GetDiagnosticsGenerator implements ErisGenerator
                 items: Generators::tuple(
                     new InformationItemGenerator(
                         target: new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(
-                            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::constant('localhost'),
-                                quote: Generators::constant(null)
-                            )
+                            name: \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator::names()
                         ),
                         item: \Tests\Generator\MySql\Statement\Routine\Condition\ConditionItemNameGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::ClassOrigin])
                     )
@@ -157,10 +145,7 @@ final class GetDiagnosticsGenerator implements ErisGenerator
                 items: Generators::tuple(
                     new InformationItemGenerator(
                         target: new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(
-                            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::constant('localhost'),
-                                quote: Generators::constant(null)
-                            )
+                            name: \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator::names()
                         ),
                         item: \Tests\Generator\MySql\Statement\Routine\Condition\ConditionItemNameGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName::ClassOrigin])
                     )

@@ -29,6 +29,16 @@ final class LocatedErrorsTest extends TestCase
         self::assertSame('unrelated input', $session->text);
     }
 
+    public function testParsedResolvesAColumnConditionWithinItsQualifiedProgram(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect();
+        $statement = $session->analyze('CREATE PROCEDURE d.p() BEGIN DECLARE x INT; BEGIN DECLARE y INT; ALTER TABLE t ADD a BIT DEFAULT CURRENT_TIMESTAMP; END; END');
+        $notice = $statement->statementInformation()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notice);
+        self::assertSame(1067, (new LocatedErrors())->parsed($notice, $statement, $session)->getCode());
+        self::assertSame('', $session->variables->database);
+    }
+
     public function testParsedPreservesTheSpecificConditionWithoutALocation(): void
     {
         $session = (new Instance())->connect();

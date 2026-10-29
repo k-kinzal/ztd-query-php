@@ -72,6 +72,6 @@ final class UserVariable implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->symbol('@')->glue()->name($this->name, NameUse::Label);
+        $out->symbol('@')->glue()->name($this->name, NameUse::Variable);
     }
 }

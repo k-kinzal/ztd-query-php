@@ -37,6 +37,17 @@ final class CodecTest extends TestCase
         self::assertSame('_', $codec->name(new Name('_'), NameUse::Column));
     }
 
+    public function testNameUsesTheVariableAlphabetOnlyAfterTheVariableSigil(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql847);
+        self::assertSame('B.a', $codec->name(new Name('B.a'), NameUse::Variable));
+        self::assertSame('`B.a`', $codec->name(new Name('B.a'), NameUse::Column));
+        self::assertSame('1.2', $codec->name(new Name('1.2'), NameUse::Variable));
+        self::assertSame('select', $codec->name(new Name('select'), NameUse::Variable));
+        self::assertSame('`B.a`', $codec->name(new Name('B.a', \SqlSemantics\Statement\Identifier\NameQuote::Backtick), NameUse::Variable));
+        self::assertSame('`a b`', $codec->name(new Name('a b'), NameUse::Variable));
+    }
+
     public function testNameQuotesKeywordsFunctionNamesAndIntroducerLikeWords(): void
     {
         $codec = new Codec(GrammarRelease::MySql8044);

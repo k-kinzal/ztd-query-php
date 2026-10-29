@@ -69,6 +69,13 @@ final class UserVariableTest extends TestCase
         self::assertSame("SELECT @'my var'", $semantics->analyze("SELECT @'my var'")->toString());
     }
 
+    public function testRenderSpellsAnExplicitDottedVariableWithoutSplittingItsIdentity(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new UserVariable(new Name('B.a')))])));
+        self::assertSame('SELECT @B.a', $statement->toString());
+    }
+
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
     {
         $semantics = new Semantics(Dialect::MySql);
