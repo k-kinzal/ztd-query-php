@@ -28,7 +28,7 @@ final class ResetBinaryLogsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs(terminology: $parts[0], first: $parts[1], synonym: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $terminology,
             $first ?? Generators::constant(null),
             $synonym ?? Generators::constant(false),

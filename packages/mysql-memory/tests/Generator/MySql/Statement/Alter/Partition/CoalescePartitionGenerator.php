@@ -27,7 +27,7 @@ final class CoalescePartitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\CoalescePartition {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\CoalescePartition(binlog: $parts[0], count: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $binlog,
             $count,
             $inputSource ?? Generators::constant(null)

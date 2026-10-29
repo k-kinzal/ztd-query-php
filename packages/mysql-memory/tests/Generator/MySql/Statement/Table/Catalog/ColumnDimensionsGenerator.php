@@ -8,7 +8,6 @@ use Eris\Generator;
 use Eris\Generators;
 use SqlSemantics\Platform\MySql\Statement\Table\Catalog\ColumnDimensions;
 use Tests\Generator\Composition;
-use Tests\Generator\Operands;
 
 /**
  * Composes a catalog type's dimensions without reading its display text.
@@ -30,7 +29,7 @@ final class ColumnDimensionsGenerator implements Generator
      */
     public function __construct(Generator $name, Generator $characters, Generator $octets, Generator $precision, Generator $scale, Generator $fraction)
     {
-        $this->delegate = Generators::map(static fn (array $parts): ColumnDimensions => new ColumnDimensions(...$parts), Operands::tuple($name, $characters, $octets, $precision, $scale, $fraction));
+        $this->delegate = Generators::map(static fn (array $parts): ColumnDimensions => new ColumnDimensions(...$parts), Generators::tuple($name, $characters, $octets, $precision, $scale, $fraction));
     }
 
     /**
@@ -41,7 +40,7 @@ final class ColumnDimensionsGenerator implements Generator
      */
     public static function catalog(Generator $types): Generator
     {
-        return Operands::bind($types, static fn (ColumnDimensions $type): self => new self(
+        return Generators::bind($types, static fn (ColumnDimensions $type): self => new self(
             Generators::constant($type->name),
             Generators::constant($type->characters),
             Generators::constant($type->octets),

@@ -27,7 +27,7 @@ final class ConditionDiagnosticsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionDiagnostics {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionDiagnostics(number: $parts[0], items: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $number,
             $items,
             $inputSource ?? Generators::constant(null)

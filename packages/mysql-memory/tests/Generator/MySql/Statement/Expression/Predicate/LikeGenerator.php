@@ -30,7 +30,7 @@ final class LikeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like(operand: $parts[0], pattern: $parts[1], escape: $parts[2], negated: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $pattern,
             $escape ?? Generators::constant(null),

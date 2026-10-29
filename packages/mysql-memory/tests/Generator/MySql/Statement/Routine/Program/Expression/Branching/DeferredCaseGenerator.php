@@ -29,7 +29,7 @@ final class DeferredCaseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase(operand: $parts[0], branches: $parts[1], else: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $branches,
             $else ?? Generators::constant(null),

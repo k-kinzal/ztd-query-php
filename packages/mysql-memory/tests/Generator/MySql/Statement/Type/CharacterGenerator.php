@@ -28,10 +28,10 @@ final class CharacterGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $kind, ?ErisGenerator $length = null, ?ErisGenerator $national = null, ?ErisGenerator $charset = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($kind, $national ?? Generators::constant(false)), static function (array $selected) use ($length, $charset, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind(Generators::tuple($kind, $national ?? Generators::constant(false)), static function (array $selected) use ($length, $charset, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Character {
                 return new \SqlSemantics\Platform\MySql\Statement\Type\Character(kind: $parts[0], length: $parts[1], national: $parts[2], charset: $parts[3], inputSource: $parts[4], alias: $parts[5]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected[0]),
                 $length ?? Generators::constant(null),
                 Generators::constant($selected[1]),

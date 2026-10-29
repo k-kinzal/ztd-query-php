@@ -26,9 +26,9 @@ final class DefinitionSourceGenerator implements ErisGenerator
      */
     public function __construct(?ErisGenerator $nameEnd = null, ?ErisGenerator $typeEnds = null, ?ErisGenerator $bodyRefusalOffset = null)
     {
-        $this->delegate = Generators::map(static fn (array $parts): DefinitionSource => new DefinitionSource($parts[0], $parts[1], $parts[2]), \Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::map(static fn (array $parts): DefinitionSource => new DefinitionSource($parts[0], $parts[1], $parts[2]), Generators::tuple(
             $nameEnd ?? Generators::choose(0, 1000),
-            $typeEnds ?? \Tests\Generator\Operands::seq(Generators::choose(0, 1000)),
+            $typeEnds ?? Generators::seq(Generators::choose(0, 1000)),
             $bodyRefusalOffset ?? Generators::oneOf(Generators::constant(null), Generators::choose(0, 1000)),
         ));
     }

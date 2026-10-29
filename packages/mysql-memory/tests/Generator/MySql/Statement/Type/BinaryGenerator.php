@@ -27,7 +27,7 @@ final class BinaryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Binary {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Binary(kind: $parts[0], length: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $length ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

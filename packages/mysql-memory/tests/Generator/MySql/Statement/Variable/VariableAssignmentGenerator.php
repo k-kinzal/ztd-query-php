@@ -28,7 +28,7 @@ final class VariableAssignmentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment(target: $parts[0], value: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $target,
             $value,
             $scalarInformation ?? Generators::constant(null),

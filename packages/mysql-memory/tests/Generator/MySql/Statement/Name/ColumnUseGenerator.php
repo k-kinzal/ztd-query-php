@@ -29,7 +29,7 @@ final class ColumnUseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse {
             return new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(name: $parts[0], qualifier: $parts[1], dot: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $qualifier ?? Generators::constant(null),
             $dot ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted),

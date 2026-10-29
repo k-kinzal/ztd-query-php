@@ -30,10 +30,10 @@ final class DeferredAggregateGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $function, ErisGenerator $arguments, ?ErisGenerator $distinct = null, ?ErisGenerator $all = null, ?ErisGenerator $over = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($function, static function (\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction $selected) use ($arguments, $distinct, $all, $over, $scalarInformation, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind($function, static function (\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction $selected) use ($arguments, $distinct, $all, $over, $scalarInformation, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate {
                 return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate(function: $parts[0], arguments: $parts[1], distinct: $parts[2], all: $parts[3], over: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6], alias: $parts[7]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected),
                 $arguments,
                 $distinct ?? Generators::constant(false),

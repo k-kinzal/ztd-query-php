@@ -26,7 +26,7 @@ final class HintLiteralGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral(kind: $parts[0], value: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $value
         ));

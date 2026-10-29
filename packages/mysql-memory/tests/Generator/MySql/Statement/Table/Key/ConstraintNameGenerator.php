@@ -26,7 +26,7 @@ final class ConstraintNameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\ConstraintName {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\ConstraintName(name: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
         ));

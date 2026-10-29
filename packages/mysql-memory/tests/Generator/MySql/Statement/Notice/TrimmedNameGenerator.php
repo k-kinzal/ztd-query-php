@@ -25,7 +25,7 @@ final class TrimmedNameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }

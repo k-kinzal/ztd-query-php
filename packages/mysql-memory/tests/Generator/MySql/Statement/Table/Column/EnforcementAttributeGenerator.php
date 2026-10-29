@@ -26,7 +26,7 @@ final class EnforcementAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Column\EnforcementAttribute(enforced: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $enforced,
             $inputSource ?? Generators::constant(null)
         ));

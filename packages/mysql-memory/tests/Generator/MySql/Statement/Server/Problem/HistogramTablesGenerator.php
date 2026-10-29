@@ -25,7 +25,7 @@ final class HistogramTablesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables(count: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $count
         ));
     }

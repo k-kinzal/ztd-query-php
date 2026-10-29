@@ -26,7 +26,7 @@ final class ConditionalTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Table\ConditionalTable {
             return new \SqlSemantics\Statement\Reference\Table\ConditionalTable(candidates: $parts[0], missing: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $candidates,
             $missing
         ));

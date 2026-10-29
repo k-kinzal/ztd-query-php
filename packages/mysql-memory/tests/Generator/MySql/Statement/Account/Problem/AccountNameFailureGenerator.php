@@ -27,7 +27,7 @@ final class AccountNameFailureGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure(operand: $parts[0], host: $parts[1], limit: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $host,
             $limit ?? Generators::constant(null)

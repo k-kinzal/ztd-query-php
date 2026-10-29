@@ -23,7 +23,7 @@ final class DiagnosticGenerator implements ErisGenerator
      */
     public function __construct(array $alternatives)
     {
-        $this->delegate = \Tests\Generator\Operands::oneOf($alternatives);
+        $this->delegate = Generators::oneOf(...$alternatives);
     }
     /**
      * Supplies the typed conditions consumed by input refusal and execution diagnostics.

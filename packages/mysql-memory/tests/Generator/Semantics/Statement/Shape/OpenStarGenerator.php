@@ -25,7 +25,7 @@ final class OpenStarGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\OpenStar {
             return new \SqlSemantics\Statement\Shape\OpenStar(missing: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $missing
         ));
     }

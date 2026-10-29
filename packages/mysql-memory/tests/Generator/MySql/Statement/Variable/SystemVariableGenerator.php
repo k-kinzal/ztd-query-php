@@ -29,7 +29,7 @@ final class SystemVariableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable(name: $parts[0], scope: $parts[1], instance: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $scope ?? Generators::constant(null),
             $instance ?? Generators::constant(null),

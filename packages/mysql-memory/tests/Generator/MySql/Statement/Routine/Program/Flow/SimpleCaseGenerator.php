@@ -28,7 +28,7 @@ final class SimpleCaseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase(operand: $parts[0], branches: $parts[1], otherwise: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $branches,
             $otherwise ?? Generators::constant([]),

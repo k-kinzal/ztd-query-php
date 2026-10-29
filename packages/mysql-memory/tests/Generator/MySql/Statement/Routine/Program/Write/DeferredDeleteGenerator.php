@@ -32,7 +32,7 @@ final class DeferredDeleteGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete(with: $parts[0], options: $parts[1], table: $parts[2], where: $parts[3], orderBy: $parts[4], limit: $parts[5], hints: $parts[6], inputSource: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $with,
             $options,
             $table,

@@ -29,7 +29,7 @@ final class StatementSemanticsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\StatementSemantics {
             return new \SqlSemantics\Statement\StatementSemantics(profile: $parts[0], output: $parts[1], declarations: $parts[2], diagnostics: $parts[3], warnings: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $profile,
             $output ?? Generators::constant(null),
             $declarations ?? Generators::constant([]),

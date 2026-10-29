@@ -26,7 +26,7 @@ final class FunctionImplementationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(body: $parts[0], characteristics: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $body,
             $characteristics ?? Generators::constant([])
         ));

@@ -28,7 +28,7 @@ final class DeferredGetFormatGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredGetFormat {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredGetFormat(format: $parts[0], standard: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $format,
             $standard,
             $scalarInformation ?? Generators::constant(null),

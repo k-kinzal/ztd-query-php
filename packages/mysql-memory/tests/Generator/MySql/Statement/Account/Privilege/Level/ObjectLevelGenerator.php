@@ -27,7 +27,7 @@ final class ObjectLevelGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(name: $parts[0], inputSource: $parts[1], relationInformation: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $inputSource ?? Generators::constant(null),
             $relationInformation ?? Generators::constant(null)

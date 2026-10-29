@@ -26,7 +26,7 @@ final class SessionUserGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser {
             return new \SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser(inputSource: $parts[0], alias: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null),
             $alias ?? \Tests\Generator\MySql\Statement\Call\Keyword\KeywordAliasGenerator::forFunction(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User)
         ));

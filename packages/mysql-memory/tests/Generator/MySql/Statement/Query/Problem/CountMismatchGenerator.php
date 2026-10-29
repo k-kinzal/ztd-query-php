@@ -29,7 +29,7 @@ final class CountMismatchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch(list: $parts[0], expected: $parts[1], actual: $parts[2], row: $parts[3], valueRow: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $list,
             $expected,
             $actual,

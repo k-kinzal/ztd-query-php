@@ -26,7 +26,7 @@ final class AliasTargetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Column\AliasTarget {
             return new \SqlSemantics\Statement\Reference\Column\AliasTarget(field: $parts[0], depth: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $field,
             $depth ?? Generators::constant(0)
         ));

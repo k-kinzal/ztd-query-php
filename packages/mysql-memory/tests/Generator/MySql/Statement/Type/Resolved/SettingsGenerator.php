@@ -49,7 +49,7 @@ final class SettingsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(connection: $parts[0], divPrecisionIncrement: $parts[1], server: $parts[2], schemas: $parts[3], groupConcatMaxLen: $parts[4], userVariables: $parts[5], parameters: $parts[6], unsignedSubtraction: $parts[7], client: $parts[8], program: $parts[9], functions: $parts[10], timeNames: $parts[11], blockEncryptionMode: $parts[12], derivedMerge: $parts[13], strict: $parts[14], explicitDefaultsForTimestamp: $parts[15], noZeroDate: $parts[16], noZeroInDate: $parts[17], allowInvalidDates: $parts[18], handlers: $parts[19], databaseCollation: $parts[20], replicaNetTimeout: $parts[21], fullTextParsers: $parts[22], unboundParameters: $parts[23], realAsFloat: $parts[24]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $connection,
             $divPrecisionIncrement ?? Generators::constant(4),
             $server ?? Generators::constant(null),
@@ -76,5 +76,19 @@ final class SettingsGenerator implements ErisGenerator
             $unboundParameters ?? Generators::constant([]),
             $realAsFloat ?? Generators::constant(false)
         ));
+    }
+
+    /**
+     * Varies locale while retaining the connection defaults of the execution session.
+     *
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings>
+     */
+    public static function localized(): ErisGenerator
+    {
+        return Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale $locale): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings => new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(
+            \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_unicode_ci'),
+            client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'),
+            timeNames: $locale,
+        ), LocaleGenerator::catalog());
     }
 }

@@ -26,7 +26,7 @@ final class UnknownAlterChoiceGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice(lock: $parts[0], name: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $lock,
             $name
         ));

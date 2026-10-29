@@ -26,7 +26,7 @@ final class RefusedSpatialGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedSpatial(command: $parts[0], problem: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $command,
             $problem
         ));

@@ -28,7 +28,7 @@ final class DefaultSettingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Column\DefaultSetting {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Column\DefaultSetting(column: $parts[0], default: $parts[1], columnWritten: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $default,
             $columnWritten ?? Generators::constant(true),

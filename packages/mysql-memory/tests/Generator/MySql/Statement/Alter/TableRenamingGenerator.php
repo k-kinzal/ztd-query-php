@@ -28,7 +28,7 @@ final class TableRenamingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming(from: $parts[0], to: $parts[1], inputSource: $parts[2], relationInformation: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $from,
             $to,
             $inputSource ?? Generators::constant(null),

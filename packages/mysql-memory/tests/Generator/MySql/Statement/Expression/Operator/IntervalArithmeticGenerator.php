@@ -29,7 +29,7 @@ final class IntervalArithmeticGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic(operand: $parts[0], interval: $parts[1], subtract: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $interval,
             $subtract ?? Generators::constant(false),

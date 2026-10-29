@@ -31,7 +31,7 @@ final class DeferredIntervalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval(operand: $parts[0], quantity: $parts[1], unit: $parts[2], subtract: $parts[3], leading: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $quantity,
             $unit,

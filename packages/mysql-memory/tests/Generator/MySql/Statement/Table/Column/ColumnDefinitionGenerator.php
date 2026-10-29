@@ -27,7 +27,7 @@ final class ColumnDefinitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(name: $parts[0], specification: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $specification,
             $inputSource ?? Generators::constant(null)

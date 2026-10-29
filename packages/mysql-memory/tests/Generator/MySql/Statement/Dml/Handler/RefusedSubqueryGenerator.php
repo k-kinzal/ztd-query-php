@@ -25,7 +25,7 @@ final class RefusedSubqueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedSubquery {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedSubquery(offset: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset
         ));
     }

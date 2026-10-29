@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Dml\Handler;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,6 +21,35 @@ final class HandlerIndexReadGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete HandlerIndexRead values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No HandlerIndexRead forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead) {
+                throw new LogicException('Publishing HandlerIndexRead must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler> $handler Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $index Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection> $direction Generated constructor operand
@@ -26,29 +57,22 @@ final class HandlerIndexReadGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Limit|null>|null $limit Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead>
      */
-    public function __construct(ErisGenerator $handler, ErisGenerator $index, ErisGenerator $direction, ?ErisGenerator $where = null, ?ErisGenerator $limit = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $handler, ErisGenerator $index, ErisGenerator $direction, ?ErisGenerator $where = null, ?ErisGenerator $limit = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead(handler: $parts[0], index: $parts[1], direction: $parts[2], where: $parts[3], limit: $parts[4], statementInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
-            $handler,
-            $index,
-            $direction,
-            $where ?? Generators::constant(null),
-            $limit ?? Generators::constant(null),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($handler, $index, $direction, $where ?? Generators::constant(null), $limit ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead>>
      */
     public static function forms(): iterable
     {
-        yield 'HandlerIndexRead/395' => new HandlerIndexReadGenerator(
+        yield 'HandlerIndexRead/395' => HandlerIndexReadGenerator::operands(
             handler: new OpenHandlerGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),

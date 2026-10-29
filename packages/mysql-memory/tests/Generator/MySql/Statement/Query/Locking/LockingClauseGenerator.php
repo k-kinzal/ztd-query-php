@@ -29,7 +29,7 @@ final class LockingClauseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(strength: $parts[0], tables: $parts[1], action: $parts[2], wildcards: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $strength,
             $tables ?? Generators::constant([]),
             $action ?? Generators::constant(null),

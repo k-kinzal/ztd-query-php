@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Routine;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,6 +21,44 @@ final class CreateProcedureGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete CreateProcedure values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), new ParameterListGenerator(Generators::constant([])), new \Tests\Generator\MySql\Statement\Server\Transaction\TransactionStatementGenerator($release));
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No CreateProcedure forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure) {
+                throw new LogicException('Publishing CreateProcedure must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $name Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList> $parameters Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Node> $body Generated constructor operand
@@ -28,31 +68,22 @@ final class CreateProcedureGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure>
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $body, ?ErisGenerator $characteristics = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null)
+    public static function operands(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $body, ?ErisGenerator $characteristics = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(name: $parts[0], parameters: $parts[1], body: $parts[2], characteristics: $parts[3], definer: $parts[4], ifNotExists: $parts[5], statementInformation: $parts[6], inputSource: $parts[7], definitionSource: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
-            $name,
-            $parameters,
-            $body,
-            $characteristics ?? Generators::constant([]),
-            $definer ?? Generators::constant(null),
-            $ifNotExists ?? Generators::constant(false),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())
-        ));
+        }, Generators::tuple($name, $parameters, $body, $characteristics ?? Generators::constant([]), $definer ?? Generators::constant(null), $ifNotExists ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure>>
      */
     public static function forms(): iterable
     {
-        yield 'CreateProcedure/154' => new CreateProcedureGenerator(
+        yield 'CreateProcedure/154' => CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -70,7 +101,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                     tag: Generators::constant('')
                 )
             )]),
-            characteristics: \Tests\Generator\Operands::tuple(
+            characteristics: Generators::tuple(
                 new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                     external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('javascript'),
@@ -83,7 +114,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateProcedure/155' => new CreateProcedureGenerator(
+        yield 'CreateProcedure/155' => CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -101,7 +132,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                     tag: Generators::constant('')
                 )
             )]),
-            characteristics: \Tests\Generator\Operands::tuple(
+            characteristics: Generators::tuple(
                 new Characteristic\CharacteristicGenerator([new Characteristic\DeterminismGenerator(
                     deterministic: Generators::constant(true)
                 )]),
@@ -126,7 +157,7 @@ final class CreateProcedureGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
-        yield 'CreateProcedure/additional/12' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/12' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -140,9 +171,9 @@ final class CreateProcedureGenerator implements ErisGenerator
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Selection\DeferredQueryGenerator(
                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(
-                    rows: \Tests\Generator\Operands::tuple(
+                    rows: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(
-                            values: \Tests\Generator\Operands::tuple(
+                            values: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Dml\DefaultRequestGenerator()
                             )
                         )
@@ -153,7 +184,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/14' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/14' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -192,10 +223,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                 ),
                 source: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\With\DeferredBodyGenerator(
                     selection: new Program\DeferredSelectionGenerator(
-                        items: \Tests\Generator\Operands::tuple(
+                        items: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                                 expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -228,7 +259,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/15' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/15' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -265,11 +296,11 @@ final class CreateProcedureGenerator implements ErisGenerator
                     hints: Generators::constant([]),
                     intoWritten: Generators::constant(true)
                 ),
-                rows: \Tests\Generator\Operands::tuple(
+                rows: Generators::tuple(
                     new Program\Write\DeferredInsertedRowGenerator(
-                        values: \Tests\Generator\Operands::tuple(
+                        values: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
@@ -289,7 +320,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/16' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/16' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -304,7 +335,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Write\DeferredDeleteGenerator(
                 with: new \Tests\Generator\MySql\Statement\Query\With\WithGenerator(
                     recursive: Generators::constant(false),
-                    tables: \Tests\Generator\Operands::tuple(
+                    tables: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Query\With\CommonTableExpressionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('c'),
@@ -313,7 +344,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             columns: Generators::constant([]),
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                                 options: Generators::constant([]),
-                                items: \Tests\Generator\Operands::tuple(
+                                items: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -365,7 +396,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/18' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/18' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -375,7 +406,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 catalog: Generators::constant(null)
             ),
             parameters: new ParameterListGenerator(
-                parameters: \Tests\Generator\Operands::tuple(
+                parameters: Generators::tuple(
                     new ParameterGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('a'),
@@ -417,10 +448,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                     )
                 )
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\QueryRootGenerator(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                     options: Generators::constant([]),
-                    items: \Tests\Generator\Operands::tuple(
+                    items: Generators::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                             expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -451,7 +482,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/20' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/20' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -485,7 +516,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                     hints: Generators::constant([]),
                     intoWritten: Generators::constant(true)
                 ),
-                assignments: \Tests\Generator\Operands::tuple(
+                assignments: Generators::tuple(
                     new Program\Write\DeferredColumnAssignmentGenerator(
                         column: new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -496,7 +527,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                         ),
                         value: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                            elements: \Tests\Generator\Operands::tuple(
+                            elements: Generators::tuple(
                                 \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('unknown'),
@@ -531,7 +562,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/21' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/21' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -543,7 +574,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Dml\Insert\InsertQueryGenerator(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Dml\Insert\InsertQueryGenerator::operands(
                 into: new \Tests\Generator\MySql\Statement\Dml\Insert\InsertIntoGenerator(
                     replace: Generators::constant(false),
                     priority: Generators::constant(null),
@@ -567,7 +598,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 ),
                 source: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                     options: Generators::constant([]),
-                    items: \Tests\Generator\Operands::tuple(
+                    items: Generators::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Name\TableWildcardGenerator(
                             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -615,7 +646,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/22' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/22' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -652,12 +683,12 @@ final class CreateProcedureGenerator implements ErisGenerator
                     hints: Generators::constant([]),
                     intoWritten: Generators::constant(true)
                 ),
-                rows: \Tests\Generator\Operands::tuple(
+                rows: Generators::tuple(
                     new Program\Write\DeferredInsertedRowGenerator(
-                        values: \Tests\Generator\Operands::tuple(
+                        values: Generators::tuple(
                             new Program\Expression\DeferredOperandGenerator([new Program\Expression\Call\DeferredWeightStringGenerator(
                                 subject: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Subquery\ScalarSubqueryGenerator(
                                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
                                                 table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
@@ -694,7 +725,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/23' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/23' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -706,7 +737,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Alter\AlterTableGenerator(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Alter\AlterTableGenerator::operands(
                 table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('t'),
@@ -715,7 +746,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                     schema: Generators::constant(null),
                     catalog: Generators::constant(null)
                 ),
-                commands: \Tests\Generator\Operands::tuple(
+                commands: Generators::tuple(
                     new Program\Write\DeferredDefaultSettingGenerator(
                         column: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                             column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -726,7 +757,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                         ),
                         expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                            elements: \Tests\Generator\Operands::tuple(
+                            elements: Generators::tuple(
                                 \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )]),
@@ -746,7 +777,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/24' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/24' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -762,11 +793,11 @@ final class CreateProcedureGenerator implements ErisGenerator
                 with: Generators::constant(null),
                 options: Generators::constant([]),
                 input: new \Tests\Generator\MySql\Statement\Dml\Target\DeletionInputGenerator(
-                    tables: \Tests\Generator\Operands::tuple(
+                    tables: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\DerivedTableGenerator(
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                                 options: Generators::constant([]),
-                                items: \Tests\Generator\Operands::tuple(
+                                items: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\StarGenerator()])
                                 ),
                                 from: new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
@@ -808,7 +839,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::Bare])
                         )])
                     ),
-                    targets: \Tests\Generator\Operands::tuple(
+                    targets: Generators::tuple(
                         new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('q'),
@@ -828,7 +859,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/25' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/25' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -838,7 +869,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 catalog: Generators::constant(null)
             ),
             parameters: new ParameterListGenerator(
-                parameters: \Tests\Generator\Operands::tuple(
+                parameters: Generators::tuple(
                     new ParameterGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('a'),
@@ -855,9 +886,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                 )
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: \Tests\Generator\Operands::tuple(
+                declarations: Generators::tuple(
                     new Program\DeclarationGenerator([new Program\VariableDeclarationGenerator(
-                        names: \Tests\Generator\Operands::tuple(
+                        names: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('b'),
                                 quote: Generators::constant(null)
@@ -876,10 +907,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                             value: Generators::constant('c'),
                             quote: Generators::constant(null)
                         ),
-                        query: new \Tests\Generator\MySql\Statement\QueryRootGenerator(
+                        query: \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                                 options: Generators::constant([]),
-                                items: \Tests\Generator\Operands::tuple(
+                                items: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -917,13 +948,13 @@ final class CreateProcedureGenerator implements ErisGenerator
                         )
                     )])
                 ),
-                statements: \Tests\Generator\Operands::tuple(
+                statements: Generators::tuple(
                     new Program\ProgramStatementGenerator([new Program\Cursor\FetchCursorGenerator(
                         cursor: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('c'),
                             quote: Generators::constant(null)
                         ),
-                        targets: \Tests\Generator\Operands::tuple(
+                        targets: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -942,7 +973,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/26' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/26' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -952,7 +983,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 catalog: Generators::constant(null)
             ),
             parameters: new ParameterListGenerator(
-                parameters: \Tests\Generator\Operands::tuple(
+                parameters: Generators::tuple(
                     new ParameterGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('x'),
@@ -969,14 +1000,14 @@ final class CreateProcedureGenerator implements ErisGenerator
                 )
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredAssignmentsGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new Program\DeferredAssignmentGenerator(
                         target: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('x'),
                             quote: Generators::constant(null)
                         ),
                         value: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                            elements: \Tests\Generator\Operands::tuple(
+                            elements: Generators::tuple(
                                 \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )]),
@@ -995,7 +1026,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/27' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/27' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1007,13 +1038,13 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator(
-                privileges: \Tests\Generator\Operands::tuple(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator::operands(
+                privileges: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
                 ),
                 kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure]),
                 level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\GlobalLevelGenerator()]),
-                grantees: \Tests\Generator\Operands::tuple(
+                grantees: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                         user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
                             user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1033,7 +1064,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/28' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/28' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1045,13 +1076,13 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator(
-                privileges: \Tests\Generator\Operands::tuple(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator::operands(
+                privileges: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
                 ),
                 kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure]),
                 level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\GlobalLevelGenerator()]),
-                grantees: \Tests\Generator\Operands::tuple(
+                grantees: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                         user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
                             user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1079,7 +1110,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/29' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/29' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1092,7 +1123,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredEvaluationGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\StarGenerator()
                 )
             )]),
@@ -1100,7 +1131,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/30' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/30' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1112,8 +1143,8 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator(
-                privileges: \Tests\Generator\Operands::tuple(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator::operands(
+                privileges: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Item\AllPrivilegesGenerator()])
                 ),
                 kind: \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table]),
@@ -1123,7 +1154,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         quote: Generators::constant(null)
                     )
                 )]),
-                grantees: \Tests\Generator\Operands::tuple(
+                grantees: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                         user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
                             user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1148,7 +1179,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/31' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/31' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1163,7 +1194,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Server\DeferredKillGenerator(
                 scope: \Tests\Generator\MySql\Statement\Server\Instance\KillScopeGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query]),
                 process: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                    elements: \Tests\Generator\Operands::tuple(
+                    elements: Generators::tuple(
                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('missing'),
@@ -1183,7 +1214,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/32' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/32' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1196,7 +1227,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Server\DeferredGroupStartGenerator(
-                options: \Tests\Generator\Operands::tuple(
+                options: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Replication\Group\CredentialOptionGenerator(
                         credential: \Tests\Generator\MySql\Statement\Replication\Group\CredentialGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::Password]),
                         value: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
@@ -1210,7 +1241,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/33' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/33' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1224,7 +1255,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Server\DeferredPurgeGenerator(
                 moment: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                    elements: \Tests\Generator\Operands::tuple(
+                    elements: Generators::tuple(
                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('missing'),
@@ -1244,7 +1275,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/34' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/34' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1254,7 +1285,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 catalog: Generators::constant(null)
             ),
             parameters: new ParameterListGenerator(
-                parameters: \Tests\Generator\Operands::tuple(
+                parameters: Generators::tuple(
                     new ParameterGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('local_value'),
@@ -1271,10 +1302,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                 )
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Server\DeferredExplainGenerator(
-                statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([new \Tests\Generator\MySql\Statement\QueryRootGenerator(
+                statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([\Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
                     query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                         options: Generators::constant([]),
-                        items: \Tests\Generator\Operands::tuple(
+                        items: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                 expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1352,7 +1383,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/35' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/35' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1365,7 +1396,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1400,10 +1431,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                 where: Generators::constant(null),
                 options: Generators::constant([]),
                 groupBy: new Program\Selection\DeferredGroupingGenerator(
-                    items: \Tests\Generator\Operands::tuple(
+                    items: Generators::tuple(
                         new Program\Selection\DeferredOrderItemGenerator(
                             expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                             value: Generators::constant('a'),
@@ -1446,7 +1477,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/36' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/36' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1462,7 +1493,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 scope: Generators::constant(null),
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredLikeGenerator(
                     operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                        elements: \Tests\Generator\Operands::tuple(
+                        elements: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
@@ -1483,7 +1514,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/37' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/37' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1499,7 +1530,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 scope: Generators::constant(null),
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Predicate\DeferredRegexpGenerator(
                     operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                        elements: \Tests\Generator\Operands::tuple(
+                        elements: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
@@ -1519,7 +1550,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/38' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/38' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1529,7 +1560,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 catalog: Generators::constant(null)
             ),
             parameters: new ParameterListGenerator(
-                parameters: \Tests\Generator\Operands::tuple(
+                parameters: Generators::tuple(
                     new ParameterGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('x'),
@@ -1546,7 +1577,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 )
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredSubqueryPredicateGenerator(
                             operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
@@ -1559,7 +1590,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             )]),
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                                 options: Generators::constant([]),
-                                items: \Tests\Generator\Operands::tuple(
+                                items: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -1618,7 +1649,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/39' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/39' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1631,7 +1662,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\IfStatementGenerator(
-                branches: \Tests\Generator\Operands::tuple(
+                branches: Generators::tuple(
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredArithmeticGenerator(
                             operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
@@ -1639,7 +1670,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             right: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
@@ -1650,9 +1681,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 keyword: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                             )])
                         )]),
-                        statements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
-                                items: \Tests\Generator\Operands::tuple(
+                        statements: Generators::tuple(
+                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
+                                items: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -1673,7 +1704,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/40' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/40' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1686,15 +1717,15 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\IfStatementGenerator(
-                branches: \Tests\Generator\Operands::tuple(
+                branches: Generators::tuple(
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredMembershipGenerator(
                             operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
-                            elements: \Tests\Generator\Operands::tuple(
+                            elements: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -1707,9 +1738,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                             ),
                             negated: Generators::constant(false)
                         )]),
-                        statements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
-                                items: \Tests\Generator\Operands::tuple(
+                        statements: Generators::tuple(
+                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
+                                items: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -1730,7 +1761,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/41' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/41' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1755,7 +1786,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             pattern: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
@@ -1776,7 +1807,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/42' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/42' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1789,7 +1820,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredTimeZoneGenerator(
                             operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
@@ -1822,7 +1853,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/43' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/43' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1835,11 +1866,11 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Call\Aggregate\DeferredJsonObjectAggregateGenerator(
                             key: new \Tests\Generator\Semantics\Statement\ScalarGenerator([\Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                                segments: \Tests\Generator\Operands::tuple(
+                                segments: Generators::tuple(
                                     Generators::constant('k')
                                 ),
                                 introducer: Generators::constant(null),
@@ -1848,7 +1879,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             )]),
                             value: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator(
                                 function: \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum]),
-                                arguments: \Tests\Generator\Operands::tuple(
+                                arguments: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
@@ -1881,7 +1912,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/44' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/44' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1894,10 +1925,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Call\Aggregate\DeferredGroupConcatGenerator(
-                            arguments: \Tests\Generator\Operands::tuple(
+                            arguments: Generators::tuple(
                                 new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionGenerator(
                                     kind: \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Rank]),
                                     arguments: Generators::constant([]),
@@ -1936,7 +1967,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/45' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/45' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -1949,13 +1980,13 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Call\DeferredAggregateGenerator(
                             function: \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum]),
-                            arguments: \Tests\Generator\Operands::tuple(
+                            arguments: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -1990,7 +2021,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/46' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/46' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2009,7 +2040,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     )]),
                     array: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                        elements: \Tests\Generator\Operands::tuple(
+                        elements: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
@@ -2026,7 +2057,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/47' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/47' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2039,11 +2070,11 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredSubqueryGenerator(
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(
-                                rows: \Tests\Generator\Operands::tuple(
+                                rows: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(
                                         values: Generators::constant([])
                                     )
@@ -2071,7 +2102,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/48' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/48' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2087,7 +2118,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 scope: Generators::constant(null),
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredTruthTestGenerator(
                     operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                        elements: \Tests\Generator\Operands::tuple(
+                        elements: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
@@ -2105,7 +2136,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/49' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/49' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2118,17 +2149,17 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\IfStatementGenerator(
-                branches: \Tests\Generator\Operands::tuple(
+                branches: Generators::tuple(
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredCallGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('ABS'),
                                 quote: Generators::constant(null)
                             ),
-                            arguments: \Tests\Generator\Operands::tuple(
+                            arguments: Generators::tuple(
                                 new Program\Expression\DeferredCallArgumentGenerator(
                                     expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                        elements: \Tests\Generator\Operands::tuple(
+                                        elements: Generators::tuple(
                                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
@@ -2144,9 +2175,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                             ),
                             schema: Generators::constant(null)
                         )]),
-                        statements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
-                                items: \Tests\Generator\Operands::tuple(
+                        statements: Generators::tuple(
+                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
+                                items: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -2167,7 +2198,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/50' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/50' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2180,7 +2211,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\IfStatementGenerator(
-                branches: \Tests\Generator\Operands::tuple(
+                branches: Generators::tuple(
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Operator\DeferredIntervalGenerator(
                             operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
@@ -2188,7 +2219,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             )]),
                             quantity: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedRowGenerator(
                                 operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -2204,9 +2235,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                             subtract: Generators::constant(false),
                             leading: Generators::constant(false)
                         )]),
-                        statements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
-                                items: \Tests\Generator\Operands::tuple(
+                        statements: Generators::tuple(
+                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
+                                items: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -2227,7 +2258,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/51' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/51' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2249,7 +2280,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         )
                     ),
                     value: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                        elements: \Tests\Generator\Operands::tuple(
+                        elements: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
@@ -2265,7 +2296,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/52' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/52' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2278,11 +2309,11 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Operator\DeferredCollatedGenerator(
                             operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
@@ -2317,7 +2348,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/53' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/53' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2330,7 +2361,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\IfStatementGenerator(
-                branches: \Tests\Generator\Operands::tuple(
+                branches: Generators::tuple(
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Operator\DeferredLogicalGenerator(
                             operator: \Tests\Generator\MySql\Statement\Expression\LogicalOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And]),
@@ -2338,7 +2369,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             right: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
@@ -2350,9 +2381,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                             )]),
                             symbolic: Generators::constant(false)
                         )]),
-                        statements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
-                                items: \Tests\Generator\Operands::tuple(
+                        statements: Generators::tuple(
+                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
+                                items: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -2373,7 +2404,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/54' => [\SqlSemantics\Contract\GrammarRelease::MySql5744, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/54' => [\SqlSemantics\Contract\GrammarRelease::MySql5744, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2409,10 +2440,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                 ),
                 source: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\With\DeferredBodyGenerator(
                     selection: new Program\DeferredSelectionGenerator(
-                        items: \Tests\Generator\Operands::tuple(
+                        items: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                                 expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -2435,7 +2466,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         limit: Generators::constant(null),
                         windows: Generators::constant([]),
                         procedure: new \Tests\Generator\MySql\Statement\Query\Clause\ProcedureAnalyseGenerator(
-                            arguments: \Tests\Generator\Operands::tuple(
+                            arguments: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )
@@ -2451,7 +2482,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/55' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/55' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2464,13 +2495,13 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Call\DeferredWindowFunctionGenerator(
                             kind: \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::FirstValue]),
-                            arguments: \Tests\Generator\Operands::tuple(
+                            arguments: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -2499,7 +2530,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 having: Generators::constant(null),
                 orderBy: Generators::constant([]),
                 limit: Generators::constant(null),
-                windows: \Tests\Generator\Operands::tuple(
+                windows: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\Clause\WindowDefinitionGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('w'),
@@ -2508,7 +2539,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         specification: new \Tests\Generator\MySql\Statement\Call\WindowSpecificationGenerator([new \Tests\Generator\MySql\Statement\Call\Window\WindowSpecGenerator(
                             base: Generators::constant(null),
                             partition: Generators::constant([]),
-                            order: \Tests\Generator\Operands::tuple(
+                            order: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(
                                     expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::constant('1.5')
@@ -2528,7 +2559,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/56' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/56' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2541,9 +2572,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: \Tests\Generator\Operands::tuple(
+                declarations: Generators::tuple(
                     new Program\DeclarationGenerator([new Program\VariableDeclarationGenerator(
-                        names: \Tests\Generator\Operands::tuple(
+                        names: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('x'),
                                 quote: Generators::constant(null)
@@ -2560,11 +2591,11 @@ final class CreateProcedureGenerator implements ErisGenerator
                         )])
                     )])
                 ),
-                statements: \Tests\Generator\Operands::tuple(
+                statements: Generators::tuple(
                     new Program\ProgramStatementGenerator([new Program\Flow\LoopGenerator(
-                        statements: \Tests\Generator\Operands::tuple(
+                        statements: Generators::tuple(
                             new Program\ProgramStatementGenerator([new Program\Flow\IfStatementGenerator(
-                                branches: \Tests\Generator\Operands::tuple(
+                                branches: Generators::tuple(
                                     new Program\Flow\ConditionalBranchGenerator(
                                         condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\ComparisonGenerator(
                                             operator: \Tests\Generator\MySql\Statement\Expression\ComparisonOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Greater]),
@@ -2580,7 +2611,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )])
                                         )]),
-                                        statements: \Tests\Generator\Operands::tuple(
+                                        statements: Generators::tuple(
                                             new Program\ProgramStatementGenerator([new Program\Flow\LeaveGenerator(
                                                 label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                                     value: Generators::constant('l'),
@@ -2590,9 +2621,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                                         )
                                     )
                                 ),
-                                otherwise: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Utility\Set\SetVariablesGenerator(
-                                        items: \Tests\Generator\Operands::tuple(
+                                otherwise: Generators::tuple(
+                                    new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Utility\Set\SetVariablesGenerator::operands(
+                                        items: Generators::tuple(
                                             new \Tests\Generator\MySql\Statement\Utility\Set\SetItemGenerator([new \Tests\Generator\MySql\Statement\Utility\Set\NameAssignmentGenerator(
                                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                                     value: Generators::constant('x'),
@@ -2640,7 +2671,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/61' => [\SqlSemantics\Contract\GrammarRelease::MySql5744, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/61' => [\SqlSemantics\Contract\GrammarRelease::MySql5744, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2652,7 +2683,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Alter\AlterTableGenerator(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Alter\AlterTableGenerator::operands(
                 table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('t'),
@@ -2661,7 +2692,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                     schema: Generators::constant(null),
                     catalog: Generators::constant(null)
                 ),
-                commands: \Tests\Generator\Operands::tuple(
+                commands: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Alter\Column\ChangeColumnGenerator(
                         column: Generators::constant(null),
                         definition: new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(
@@ -2723,7 +2754,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/62' => [\SqlSemantics\Contract\GrammarRelease::MySql5744, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/62' => [\SqlSemantics\Contract\GrammarRelease::MySql5744, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2735,7 +2766,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Alter\AlterTableGenerator(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Alter\AlterTableGenerator::operands(
                 table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('t'),
@@ -2744,7 +2775,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                     schema: Generators::constant(null),
                     catalog: Generators::constant(null)
                 ),
-                commands: \Tests\Generator\Operands::tuple(
+                commands: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Alter\Column\ChangeColumnGenerator(
                         column: Generators::constant(null),
                         definition: new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(
@@ -2769,7 +2800,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 )]),
                                 collation: Generators::constant(null),
                                 storage: \Tests\Generator\MySql\Statement\Table\Column\Kind\GeneratedStorageGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored]),
-                                attributes: \Tests\Generator\Operands::tuple(
+                                attributes: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Table\Column\KeywordAttributeGenerator(
                                         keyword: \Tests\Generator\MySql\Statement\Table\Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::NotNull])
                                     )
@@ -2810,7 +2841,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/74' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/74' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2822,7 +2853,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             parameters: new ParameterListGenerator(
                 parameters: Generators::constant([])
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Alter\AlterTableGenerator(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Alter\AlterTableGenerator::operands(
                 table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('t'),
@@ -2831,9 +2862,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                     schema: Generators::constant(null),
                     catalog: Generators::constant(null)
                 ),
-                commands: \Tests\Generator\Operands::tuple(
+                commands: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Alter\Command\SetTableOptionsGenerator(
-                        options: \Tests\Generator\Operands::tuple(
+                        options: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Table\Option\EngineOptionGenerator(
                                 engine: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::constant('InnoDB'),
@@ -2846,7 +2877,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         partitioning: new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator(
                             method: new \Tests\Generator\MySql\Statement\Partition\Method\DeferredMethodGenerator(
                                 expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -2874,7 +2905,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/88' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/88' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -2887,9 +2918,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: \Tests\Generator\Operands::tuple(
+                declarations: Generators::tuple(
                     new Program\DeclarationGenerator([new Program\VariableDeclarationGenerator(
-                        names: \Tests\Generator\Operands::tuple(
+                        names: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -2908,10 +2939,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                             value: Generators::constant('k'),
                             quote: Generators::constant(null)
                         ),
-                        query: new \Tests\Generator\MySql\Statement\QueryRootGenerator(
+                        query: \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                                 options: Generators::constant([]),
-                                items: \Tests\Generator\Operands::tuple(
+                                items: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -2940,7 +2971,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         )
                     )])
                 ),
-                statements: \Tests\Generator\Operands::tuple(
+                statements: Generators::tuple(
                     new Program\ProgramStatementGenerator([new Program\Cursor\OpenCursorGenerator(
                         cursor: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('k'),
@@ -2952,7 +2983,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             value: Generators::constant('k'),
                             quote: Generators::constant(null)
                         ),
-                        targets: \Tests\Generator\Operands::tuple(
+                        targets: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -2964,7 +2995,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             value: Generators::constant('k'),
                             quote: Generators::constant(null)
                         ),
-                        targets: \Tests\Generator\Operands::tuple(
+                        targets: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -2976,7 +3007,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             value: Generators::constant('k'),
                             quote: Generators::constant(null)
                         ),
-                        targets: \Tests\Generator\Operands::tuple(
+                        targets: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -2997,7 +3028,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/89' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/89' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -3010,12 +3041,12 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Call\DeferredWindowAggregateGenerator(
                             aggregate: new \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator(
                                 function: \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum]),
-                                arguments: \Tests\Generator\Operands::tuple(
+                                arguments: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                             value: Generators::constant('a'),
@@ -3080,7 +3111,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/92' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/92' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -3093,11 +3124,11 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Conversion\DeferredCharsetConversionGenerator(
                             operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
@@ -3134,7 +3165,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             definer: Generators::constant(null),
             ifNotExists: Generators::constant(false)
         )];
-        yield 'CreateProcedure/additional/93' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CreateProcedureGenerator(
+        yield 'CreateProcedure/additional/93' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateProcedureGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('p'),
@@ -3147,17 +3178,17 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Branching\DeferredCaseGenerator(
                             operand: Generators::constant(null),
-                            branches: \Tests\Generator\Operands::tuple(
+                            branches: Generators::tuple(
                                 new Program\Expression\Branching\DeferredCaseBranchGenerator(
                                     condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
                                     result: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                        elements: \Tests\Generator\Operands::tuple(
+                                        elements: Generators::tuple(
                                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),

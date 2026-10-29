@@ -27,7 +27,7 @@ final class AddColumnsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumns {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumns(elements: $parts[0], columnWritten: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $elements,
             $columnWritten ?? Generators::constant(true),
             $inputSource ?? Generators::constant(null)

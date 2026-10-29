@@ -33,7 +33,7 @@ final class InsertIntoGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(replace: $parts[0], priority: $parts[1], ignore: $parts[2], table: $parts[3], columns: $parts[4], hints: $parts[5], intoWritten: $parts[6], inputSource: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $replace,
             $priority,
             $ignore,
@@ -48,12 +48,13 @@ final class InsertIntoGenerator implements ErisGenerator
     /**
      * Composes immediate write constraints with the declaration they depend on.
      *
+     * @param 'rows'|'set'|'query' $form The concrete insertion form
      * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, int, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement}>
      */
-    public static function constraints(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public static function constraints(\SqlSemantics\Contract\GrammarRelease $release, string $form): ErisGenerator
     {
-        $definitions = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
-        return \Tests\Generator\Operands::bind($definitions, static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release): ErisGenerator {
+        $definitions = \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::operands(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
+        return Generators::bind($definitions, static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release, $form): ErisGenerator {
             $database = $create->name->schema ?? new \SqlSemantics\Statement\Identifier\Name('pbt');
             $profile = new \SqlSemantics\Contract\LanguageProfile($release);
             $missing = new \SqlSemantics\Contract\AnalysisContext($profile, [$database], [], true);
@@ -62,21 +63,24 @@ final class InsertIntoGenerator implements ErisGenerator
             $column = $definition->declarations()[0]->columns[0]->name;
             $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
             $head = new self(Generators::constant(false), Generators::constant(null), Generators::constant(false), new \Tests\Generator\MySql\Statement\Dml\WriteTargetGenerator(Generators::constant($create->name)), intoWritten: Generators::bool());
-            $row = new \Tests\Generator\MySql\Statement\Expression\RowGenerator(\Tests\Generator\Operands::tuple(Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)), $numbers));
-            $assignments = \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator(Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)), $row));
-            $scalar = new InsertedRowGenerator(\Tests\Generator\Operands::vector(1, $numbers));
-            $selection = new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($numbers)));
+            $row = new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::tuple(Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)), $numbers));
+            $assignments = Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator(Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)), $row));
+            $scalar = new InsertedRowGenerator(Generators::vector(1, $numbers));
+            $selection = new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($numbers)));
             $choices = [
-                \Tests\Generator\Operands::tuple(new InsertRowsGenerator($head, \Tests\Generator\Operands::tuple($scalar, new InsertedRowGenerator(\Tests\Generator\Operands::vector(2, $numbers))), keyword: new ValuesKeywordGenerator()), Generators::constant(1136)),
-                \Tests\Generator\Operands::tuple(new InsertRowsGenerator($head, \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredInsertedRowGenerator(\Tests\Generator\Operands::vector(1, $row))), keyword: new ValuesKeywordGenerator()), Generators::constant(1241)),
-                \Tests\Generator\Operands::tuple(new InsertRowsGenerator($head, \Tests\Generator\Operands::vector(1, $scalar), onDuplicate: $assignments, keyword: new ValuesKeywordGenerator()), Generators::constant(1241)),
-                \Tests\Generator\Operands::tuple(new InsertSetGenerator($head, $assignments), Generators::constant(1241)),
-                \Tests\Generator\Operands::tuple(new InsertQueryGenerator($head, new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()))), Generators::constant(1096)),
-                \Tests\Generator\Operands::tuple(new InsertQueryGenerator($head, $selection, $assignments), Generators::constant(1241)),
+                Generators::tuple(InsertRowsGenerator::operands($head, Generators::tuple($scalar, new InsertedRowGenerator(Generators::vector(2, $numbers))), keyword: new ValuesKeywordGenerator()), Generators::constant(1136)),
+                Generators::tuple(InsertRowsGenerator::operands($head, Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredInsertedRowGenerator(Generators::vector(1, $row))), keyword: new ValuesKeywordGenerator()), Generators::constant(1241)),
+                Generators::tuple(InsertRowsGenerator::operands($head, Generators::vector(1, $scalar), onDuplicate: $assignments, keyword: new ValuesKeywordGenerator()), Generators::constant(1241)),
+                Generators::tuple(InsertSetGenerator::operands($head, $assignments), Generators::constant(1241)),
+                Generators::tuple(InsertQueryGenerator::operands($head, new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()))), Generators::constant(1096)),
+                Generators::tuple(InsertQueryGenerator::operands($head, $selection, $assignments), Generators::constant(1241)),
             ];
-            if (!in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
-                $choices[] = \Tests\Generator\Operands::tuple(new InsertQueryGenerator($head, new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(\Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(\Tests\Generator\Operands::vector(1, \Tests\Generator\Operands::oneOf([$numbers, Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column))]))))), $assignments), Generators::constant(1241));
-                $choices[] = \Tests\Generator\Operands::tuple(new InsertQueryGenerator($head, new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(\Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(\Tests\Generator\Operands::vector(2, $numbers)))), $assignments), Generators::constant(1136));
+            $choices = match ($form) {
+                'rows' => [$choices[0], $choices[1], $choices[2]], 'set' => [$choices[3]], 'query' => [$choices[4], $choices[5]]
+            };
+            if ($form === 'query' && !in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                $choices[] = Generators::tuple(InsertQueryGenerator::operands($head, new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(Generators::vector(1, Generators::oneOf(...[$numbers, Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column))]))))), $assignments), Generators::constant(1241));
+                $choices[] = Generators::tuple(InsertQueryGenerator::operands($head, new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(Generators::vector(2, $numbers)))), $assignments), Generators::constant(1136));
 
             }
             return Generators::map(
@@ -97,7 +101,7 @@ final class InsertIntoGenerator implements ErisGenerator
                         \SqlSemantics\Facade\Semantics::fromStatement($declared, new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($write)),
                     ];
                 },
-                \Tests\Generator\Operands::oneOf($choices)
+                Generators::oneOf(...$choices)
             );
         });
     }

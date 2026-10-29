@@ -26,7 +26,7 @@ final class SelectOptionConflictGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict(first: $parts[0], second: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $first,
             $second
         ));

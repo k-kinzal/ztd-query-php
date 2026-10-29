@@ -26,7 +26,7 @@ final class TableWildcardGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard {
             return new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(table: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table,
             $inputSource ?? Generators::constant(null)
         ));

@@ -27,7 +27,7 @@ final class InsertedColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn(column: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

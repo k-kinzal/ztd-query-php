@@ -26,7 +26,7 @@ final class NameConversionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion(name: $parts[0], legacy: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $legacy ?? Generators::constant(false)
         ));

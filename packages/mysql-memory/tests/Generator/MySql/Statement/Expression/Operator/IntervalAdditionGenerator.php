@@ -28,7 +28,7 @@ final class IntervalAdditionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition(interval: $parts[0], operand: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $interval,
             $operand,
             $scalarInformation ?? Generators::constant(null),

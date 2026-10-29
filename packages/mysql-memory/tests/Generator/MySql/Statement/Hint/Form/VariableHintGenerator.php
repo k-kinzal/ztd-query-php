@@ -26,7 +26,7 @@ final class VariableHintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint(variable: $parts[0], value: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $variable,
             $value
         ));

@@ -31,7 +31,7 @@ final class DerivedTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(query: $parts[0], alias: $parts[1], columns: $parts[2], lateral: $parts[3], mark: $parts[4], relationInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $query,
             $alias,
             $columns ?? Generators::constant([]),

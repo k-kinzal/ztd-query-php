@@ -27,7 +27,7 @@ final class StringFamilyGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\StringFamily {
             return new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(binary: $parts[0], national: $parts[1], charset: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $binary ?? Generators::constant(false),
             $national ?? Generators::constant(false),
             $charset ?? Generators::constant(null)

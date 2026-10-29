@@ -26,7 +26,7 @@ final class ConflictingTablesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Table\ConflictingTables {
             return new \SqlSemantics\Statement\Reference\Table\ConflictingTables(name: $parts[0], candidates: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $candidates
         ));

@@ -30,7 +30,7 @@ final class DeferredCastGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast(operand: $parts[0], target: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3], array: $parts[4], form: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $target,
             $scalarInformation ?? Generators::constant(null),

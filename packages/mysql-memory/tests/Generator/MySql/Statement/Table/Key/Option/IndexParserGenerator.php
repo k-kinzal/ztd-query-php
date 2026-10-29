@@ -26,7 +26,7 @@ final class IndexParserGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexParser {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexParser(parser: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $parser,
             $inputSource ?? Generators::constant(null)
         ));

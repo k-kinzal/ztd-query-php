@@ -25,7 +25,7 @@ final class InvalidGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Invalid {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Invalid(position: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $position
         ));
     }

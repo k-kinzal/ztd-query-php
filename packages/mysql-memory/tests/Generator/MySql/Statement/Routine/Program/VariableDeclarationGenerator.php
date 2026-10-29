@@ -30,7 +30,7 @@ final class VariableDeclarationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration(names: $parts[0], type: $parts[1], collation: $parts[2], default: $parts[3], relationInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $names,
             $type,
             $collation ?? Generators::constant(null),

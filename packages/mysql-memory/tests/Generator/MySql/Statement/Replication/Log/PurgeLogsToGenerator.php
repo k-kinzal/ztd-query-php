@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Replication\Log;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,28 +21,54 @@ final class PurgeLogsToGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete PurgeLogsTo values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No PurgeLogsTo forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo) {
+                throw new LogicException('Publishing PurgeLogsTo must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $file Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo>
      */
-    public function __construct(ErisGenerator $file, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $file, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo(file: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
-            $file,
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($file, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo>>
      */
     public static function forms(): iterable
     {
-        yield 'PurgeLogsTo/61' => new PurgeLogsToGenerator(
+        yield 'PurgeLogsTo/61' => PurgeLogsToGenerator::operands(
             file: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                 value: Generators::constant('text'),
                 radix: Generators::constant(null)

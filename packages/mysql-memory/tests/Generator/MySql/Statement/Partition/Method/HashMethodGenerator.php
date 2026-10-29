@@ -27,7 +27,7 @@ final class HashMethodGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(linear: $parts[0], expression: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $linear,
             $expression,
             $inputSource ?? Generators::constant(null)
@@ -39,7 +39,7 @@ final class HashMethodGenerator implements ErisGenerator
      *
      * @return ErisGenerator<\SqlSemantics\Statement\AnalyzedStatement>
      */
-    public static function refusedRequests(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public static function refusedRequests(\SqlSemantics\Contract\GrammarRelease $release, bool $create): ErisGenerator
     {
         $requests = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Statement {
             [$name, $kind, $linear, $create, $variable, $count] = $parts;
@@ -58,11 +58,11 @@ final class HashMethodGenerator implements ErisGenerator
             }
             $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('id')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
             return new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable($table, [$column], partitioning: $partitions);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             Generators::choose(0, 3),
             Generators::bool(),
-            Generators::bool(),
+            Generators::constant($create),
             Generators::bool(),
             Generators::choose(1, 8)
         ));

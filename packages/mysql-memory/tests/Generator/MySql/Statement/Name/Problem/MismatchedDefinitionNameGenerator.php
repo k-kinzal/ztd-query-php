@@ -26,7 +26,7 @@ final class MismatchedDefinitionNameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName {
             return new \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName(name: $parts[0], target: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $target
         ));

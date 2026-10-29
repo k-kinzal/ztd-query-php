@@ -27,7 +27,7 @@ final class NestedColumnsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns(path: $parts[0], columns: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $path,
             $columns,
             $inputSource ?? Generators::constant(null)

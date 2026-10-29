@@ -27,9 +27,13 @@ final class ModeGenerator implements ErisGenerator
      */
     public function __construct(?ErisGenerator $ansiQuotes = null, ?ErisGenerator $pipesAsConcat = null, ?ErisGenerator $highNotPrecedence = null, ?ErisGenerator $noBackslashEscapes = null, ?ErisGenerator $ignoreSpace = null)
     {
+        if ($ansiQuotes === null && $pipesAsConcat === null && $highNotPrecedence === null && $noBackslashEscapes === null && $ignoreSpace === null) {
+            $this->delegate = Generators::constant(new \SqlSemantics\Platform\MySql\Mode());
+            return;
+        }
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Mode {
             return new \SqlSemantics\Platform\MySql\Mode(ansiQuotes: $parts[0], pipesAsConcat: $parts[1], highNotPrecedence: $parts[2], noBackslashEscapes: $parts[3], ignoreSpace: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $ansiQuotes ?? Generators::constant(false),
             $pipesAsConcat ?? Generators::constant(false),
             $highNotPrecedence ?? Generators::constant(false),

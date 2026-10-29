@@ -31,7 +31,7 @@ final class DeferredSubqueryPredicateGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate(operand: $parts[0], query: $parts[1], operator: $parts[2], quantifier: $parts[3], negated: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $query,
             $operator ?? Generators::constant(null),

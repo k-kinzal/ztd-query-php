@@ -29,7 +29,7 @@ final class ArrayPartGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\ArrayPart(expression: $parts[0], target: $parts[1], direction: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression,
             $target,
             $direction ?? Generators::constant(null),

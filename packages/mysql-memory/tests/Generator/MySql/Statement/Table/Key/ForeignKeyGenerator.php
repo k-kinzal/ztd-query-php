@@ -29,7 +29,7 @@ final class ForeignKeyGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey(columns: $parts[0], references: $parts[1], name: $parts[2], constraint: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $columns,
             $references,
             $name ?? Generators::constant(null),

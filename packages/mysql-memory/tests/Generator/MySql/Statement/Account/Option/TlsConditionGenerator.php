@@ -28,7 +28,7 @@ final class TlsConditionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Option\TlsCondition {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Option\TlsCondition(attribute: $parts[0], value: $parts[1], inputSource: $parts[2], and: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $attribute,
             $value,
             $inputSource ?? Generators::constant(null),

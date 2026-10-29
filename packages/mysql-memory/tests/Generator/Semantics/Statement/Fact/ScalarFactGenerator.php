@@ -28,7 +28,7 @@ final class ScalarFactGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Fact\ScalarFact {
             return new \SqlSemantics\Statement\Fact\ScalarFact(type: $parts[0], nullability: $parts[1], resolution: $parts[2], replacement: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $type,
             $nullability,
             $resolution ?? Generators::constant(null),

@@ -29,7 +29,7 @@ final class ResetReplicaGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica(terminology: $parts[0], all: $parts[1], channel: $parts[2], synonym: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $terminology,
             $all ?? Generators::constant(false),
             $channel ?? Generators::constant(null),

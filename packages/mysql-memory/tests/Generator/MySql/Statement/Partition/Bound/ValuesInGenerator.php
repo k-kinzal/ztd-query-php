@@ -26,7 +26,7 @@ final class ValuesInGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Bound\ValuesIn {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\ValuesIn(row: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $row,
             $inputSource ?? Generators::constant(null)
         ));

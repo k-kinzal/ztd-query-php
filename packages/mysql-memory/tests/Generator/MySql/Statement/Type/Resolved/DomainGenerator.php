@@ -36,7 +36,7 @@ final class DomainGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(kind: $parts[0], field: $parts[1], length: $parts[2], decimals: $parts[3], unsigned: $parts[4], collation: $parts[5], members: $parts[6], coercibility: $parts[7], display: $parts[8], capacity: $parts[9], displayDecimals: $parts[10], storageField: $parts[11]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $field,
             $length ?? Generators::constant(0),

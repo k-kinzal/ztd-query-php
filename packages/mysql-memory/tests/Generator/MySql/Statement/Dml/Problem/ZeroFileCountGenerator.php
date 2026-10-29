@@ -25,7 +25,7 @@ final class ZeroFileCountGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ZeroFileCount(offset: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset
         ));
     }

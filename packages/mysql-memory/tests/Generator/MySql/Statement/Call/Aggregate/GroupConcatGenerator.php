@@ -31,7 +31,7 @@ final class GroupConcatGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat(arguments: $parts[0], distinct: $parts[1], order: $parts[2], separator: $parts[3], over: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $arguments,
             $distinct ?? Generators::constant(false),
             $order ?? Generators::constant([]),

@@ -28,7 +28,7 @@ final class KeyMethodGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(linear: $parts[0], algorithm: $parts[1], columns: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $linear,
             $algorithm,
             $columns,

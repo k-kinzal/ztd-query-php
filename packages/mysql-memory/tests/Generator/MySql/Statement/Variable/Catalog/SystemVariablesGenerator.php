@@ -25,7 +25,7 @@ final class SystemVariablesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables(definitions: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $definitions
         ));
     }
@@ -38,7 +38,7 @@ final class SystemVariablesGenerator implements ErisGenerator
     public static function readQueries(): ErisGenerator
     {
         $catalogs = new self(Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition $entry): array => [$entry->name => $entry], DefinitionGenerator::catalog()));
-        return \Tests\Generator\Operands::bind($catalogs, static function (\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables $catalog): ErisGenerator {
+        return Generators::bind($catalogs, static function (\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables $catalog): ErisGenerator {
             $entry = array_values($catalog->definitions)[0];
             $variables = new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                 new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant($entry->name), Generators::constant(null)),
@@ -48,7 +48,7 @@ final class SystemVariablesGenerator implements ErisGenerator
                     \Tests\Generator\Semantics\Statement\Type\NullabilityGenerator::selecting([\SqlSemantics\Statement\Type\Nullability::Nullable]),
                 ),
             );
-            return \Tests\Generator\Operands::tuple(Generators::constant($catalog), \Tests\Generator\MySql\Statement\QueryRootGenerator::namedScalar($variables));
+            return Generators::tuple(Generators::constant($catalog), \Tests\Generator\MySql\Statement\QueryRootGenerator::namedScalar($variables));
         });
     }
 

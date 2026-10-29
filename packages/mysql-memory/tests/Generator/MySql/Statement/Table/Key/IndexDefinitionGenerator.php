@@ -32,7 +32,7 @@ final class IndexDefinitionGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $kind, ErisGenerator $parts, ?ErisGenerator $name = null, ?ErisGenerator $algorithm = null, ?ErisGenerator $options = null, ?ErisGenerator $constraint = null, ?ErisGenerator $keyword = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $typeKeyword = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $kind,
             $parts,
             $name ?? Generators::constant(null),
@@ -42,7 +42,7 @@ final class IndexDefinitionGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null),
             $typeKeyword ?? Generators::bool()
         ), static function (array $parts) use ($keyword): ErisGenerator {
-            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => new \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition(kind: $parts[0], parts: $parts[1], name: $parts[2], algorithm: $parts[3], options: $parts[4], constraint: $parts[5], keyword: $selected, inputSource: $parts[6], typeKeyword: $parts[7] && $parts[3] !== null), $keyword ?? ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary ? Generators::constant(null) : ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index ? new IndexWordGenerator() : \Tests\Generator\Operands::oneOf([Generators::constant(null), new IndexWordGenerator()]))));
+            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => new \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition(kind: $parts[0], parts: $parts[1], name: $parts[2], algorithm: $parts[3], options: $parts[4], constraint: $parts[5], keyword: $selected, inputSource: $parts[6], typeKeyword: $parts[7] && $parts[3] !== null), $keyword ?? ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary ? Generators::constant(null) : ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index ? new IndexWordGenerator() : Generators::oneOf(...[Generators::constant(null), new IndexWordGenerator()]))));
         });
     }
 
@@ -53,10 +53,10 @@ final class IndexDefinitionGenerator implements ErisGenerator
      */
     public static function tables(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        $requests = \Tests\Generator\Operands::bind(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release), static function (\SqlSemantics\Platform\MySql\Statement\Name\ColumnName $column): ErisGenerator {
+        $requests = Generators::bind(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release), static function (\SqlSemantics\Platform\MySql\Statement\Name\ColumnName $column): ErisGenerator {
             $indexes = new self(
                 Generators::constant(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index),
-                \Tests\Generator\Operands::vector(1, new ColumnPartGenerator(Generators::constant($column->column))),
+                Generators::vector(1, new ColumnPartGenerator(Generators::constant($column->column))),
                 \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(null), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)),
                 keyword: new IndexWordGenerator(),
             );

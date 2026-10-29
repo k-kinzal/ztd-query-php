@@ -26,7 +26,7 @@ final class FieldsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\Fields {
             return new \SqlSemantics\Statement\Shape\Fields(items: $parts[0], names: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $items,
             $names
         ));

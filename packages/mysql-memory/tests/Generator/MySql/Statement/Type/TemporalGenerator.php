@@ -29,7 +29,7 @@ final class TemporalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Temporal {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(kind: $parts[0], precision: $parts[1], modifiers: $parts[2], inputSource: $parts[3], sqlTsiYear: $parts[4] && $parts[0] === \SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Year);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $precision ?? Generators::constant(null),
             $modifiers ?? Generators::constant([]),

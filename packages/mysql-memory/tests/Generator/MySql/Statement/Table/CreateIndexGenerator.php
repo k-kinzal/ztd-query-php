@@ -9,6 +9,7 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
@@ -28,20 +29,52 @@ final class CreateIndexGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Composes the written operands through Eris generation and shrinking.
+     * Generates complete CreateIndex values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<CreateIndex>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No CreateIndex forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): CreateIndex {
+            if (!$statement instanceof CreateIndex) {
+                throw new LogicException('Publishing CreateIndex must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Composes the written operands through Eris generation and shrinking.
+     * @return ErisGenerator<CreateIndex>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
     {
         $operands = Generators::associative(['column' => new ColumnNameGenerator($release), 'invalid' => Generators::bool()]);
-        $this->delegate = Generators::map(
-            static function (array $data): CreateIndex {
-                if (!$data['column'] instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnName || !is_bool($data['invalid'])) {
-                    throw new LogicException('Index operands require a column name and a condition flag.');
-                }
-                return new CreateIndex(new Name($data['invalid'] ? 'PRIMARY' : 'idx'), new QualifiedName(new Name('target')), [new ColumnPart($data['column']->column)]);
-            },
-            $operands,
-        );
+        return Generators::map(static function (array $data): CreateIndex {
+            if (!$data['column'] instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnName || !is_bool($data['invalid'])) {
+                throw new LogicException('Index operands require a column name and a condition flag.');
+            }
+            return new CreateIndex(new Name($data['invalid'] ? 'PRIMARY' : 'idx'), new QualifiedName(new Name('target')), [new ColumnPart($data['column']->column)]);
+        }, $operands);
     }
 
     /**
@@ -76,11 +109,11 @@ final class CreateIndexGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $name, ErisGenerator $table, ErisGenerator $parts, ErisGenerator $kind, ErisGenerator $algorithm, ErisGenerator $options, ErisGenerator $alterOptions, ?ErisGenerator $typeKeyword = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): CreateIndex => new CreateIndex(name: $parts[0], table: $parts[1], parts: $parts[2], kind: $parts[3], algorithm: $parts[4], options: $parts[5], alterOptions: $parts[6], typeKeyword: $parts[7] && $parts[4] !== null), \Tests\Generator\Operands::tuple($name, $table, $parts, $kind, $algorithm, $options, $alterOptions, $typeKeyword ?? Generators::bool()));
+        return Generators::map(static fn (array $parts): CreateIndex => new CreateIndex(name: $parts[0], table: $parts[1], parts: $parts[2], kind: $parts[3], algorithm: $parts[4], options: $parts[5], alterOptions: $parts[6], typeKeyword: $parts[7] && $parts[4] !== null), Generators::tuple($name, $table, $parts, $kind, $algorithm, $options, $alterOptions, $typeKeyword ?? Generators::bool()));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<CreateIndex>>
      */
@@ -99,7 +132,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -127,7 +160,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -139,7 +172,7 @@ final class CreateIndexGenerator implements ErisGenerator
             ),
             kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText]),
             algorithm: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Key\Option\IndexParserGenerator(
                     parser: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -162,7 +195,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -174,7 +207,7 @@ final class CreateIndexGenerator implements ErisGenerator
             ),
             kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText]),
             algorithm: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Key\Option\IndexVisibilityGenerator(
                     visible: Generators::constant(true)
                 )
@@ -194,7 +227,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -206,7 +239,7 @@ final class CreateIndexGenerator implements ErisGenerator
             ),
             kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index]),
             algorithm: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Key\Option\IndexUsingGenerator(
                     algorithm: Key\IndexAlgorithmGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm::Btree])
                 )
@@ -226,7 +259,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -238,7 +271,7 @@ final class CreateIndexGenerator implements ErisGenerator
             ),
             kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index]),
             algorithm: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Key\Option\KeyBlockSizeGenerator(
                     size: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
                         text: Generators::constant('1'),
@@ -261,7 +294,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -273,7 +306,7 @@ final class CreateIndexGenerator implements ErisGenerator
             ),
             kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index]),
             algorithm: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Key\Option\IndexCommentGenerator(
                     comment: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                         value: Generators::constant('text'),
@@ -296,7 +329,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -340,7 +373,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -393,7 +426,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ColumnPartGenerator(
                     column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('c'),
@@ -438,7 +471,7 @@ final class CreateIndexGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            parts: \Tests\Generator\Operands::tuple(
+            parts: Generators::tuple(
                 new Key\ArrayPartGenerator(
                     expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(

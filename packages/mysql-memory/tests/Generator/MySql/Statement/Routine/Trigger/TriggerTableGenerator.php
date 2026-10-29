@@ -27,7 +27,7 @@ final class TriggerTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(name: $parts[0], relationInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $relationInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

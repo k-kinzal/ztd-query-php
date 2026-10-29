@@ -25,7 +25,7 @@ final class SearchPathGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Contract\SearchPath {
             return new \SqlSemantics\Contract\SearchPath(schemas: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $schemas
         ));
     }

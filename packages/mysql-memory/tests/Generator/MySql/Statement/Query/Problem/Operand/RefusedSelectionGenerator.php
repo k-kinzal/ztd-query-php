@@ -25,7 +25,7 @@ final class RefusedSelectionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection(selection: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $selection
         ));
     }
@@ -38,7 +38,7 @@ final class RefusedSelectionGenerator implements ErisGenerator
     {
         yield 'Query\\Problem\\Operand\\RefusedSelection' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedSelectionGenerator(
             selection: new \Tests\Generator\MySql\Statement\Routine\Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\DeferredProjectionGenerator(
                         expression: new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignmentGenerator(
                             target: new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(
@@ -48,7 +48,7 @@ final class RefusedSelectionGenerator implements ErisGenerator
                                 )
                             ),
                             value: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),

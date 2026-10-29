@@ -26,7 +26,7 @@ final class ConditionGenerator implements ErisGenerator
      */
     public function __construct(array $alternatives)
     {
-        $this->delegate = \Tests\Generator\Operands::oneOf($alternatives);
+        $this->delegate = Generators::oneOf(...$alternatives);
     }
 
     /**
@@ -34,9 +34,9 @@ final class ConditionGenerator implements ErisGenerator
      *
      * @return ErisGenerator<array{M\Statement, int, string}>
      */
-    public static function definitions(GrammarRelease $release): ErisGenerator
+    public static function definitions(GrammarRelease $release, int $owner): ErisGenerator
     {
-        return Generators::map(self::definition(...), \Tests\Generator\Operands::tuple(
+        return Generators::map(self::definition(...), Generators::tuple(
             Generators::constant($release),
             new self([
                 new SqlStateGenerator(new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'bad' . $value, Generators::choose(0, 1000)))),
@@ -44,7 +44,7 @@ final class ConditionGenerator implements ErisGenerator
             ]),
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             Generators::bool(),
-            Generators::choose(0, 4)
+            Generators::constant($owner)
         ));
     }
 

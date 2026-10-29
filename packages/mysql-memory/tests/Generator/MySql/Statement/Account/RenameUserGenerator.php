@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser;
@@ -28,16 +30,43 @@ final class RenameUserGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Selects the grammar and composes each request through Eris.
+     * Generates complete RenameUser values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<RenameUser>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No RenameUser forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): RenameUser {
+            if (!$statement instanceof RenameUser) {
+                throw new LogicException('Publishing RenameUser must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Selects the grammar and composes each request through Eris.
+     * @return ErisGenerator<RenameUser>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
     {
         $profile = new LanguageProfile($release);
-        $requests = \Tests\Generator\Operands::bind(new UserRenamingGenerator(), static fn (UserRenaming $first): ErisGenerator => Generators::map(static fn (array $rest): RenameUser => new RenameUser([$first, ...$rest], $profile), \Tests\Generator\Operands::seq(new UserRenamingGenerator())));
-        $this->delegate = Generators::oneOf(
-            $requests,
-            Generators::map(static fn (RefusedRenameUser $condition): RenameUser => new RenameUser($condition->renamings, $profile), new RefusedRenameUserGenerator()),
-        );
+        $requests = Generators::bind(new UserRenamingGenerator(), static fn (UserRenaming $first): ErisGenerator => Generators::map(static fn (array $rest): RenameUser => new RenameUser([$first, ...$rest], $profile), Generators::seq(new UserRenamingGenerator())));
+        return Generators::oneOf($requests, Generators::map(static fn (RefusedRenameUser $condition): RenameUser => new RenameUser($condition->renamings, $profile), new RefusedRenameUserGenerator()));
     }
 
     /**
@@ -67,18 +96,18 @@ final class RenameUserGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $renamings, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): RenameUser => new RenameUser(renamings: $parts[0], profile: $parts[1], client: $parts[2]), \Tests\Generator\Operands::tuple($renamings, $profile, $client));
+        return Generators::map(static fn (array $parts): RenameUser => new RenameUser(renamings: $parts[0], profile: $parts[1], client: $parts[2]), Generators::tuple($renamings, $profile, $client));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<RenameUser>>
      */
     public static function forms(): iterable
     {
         yield 'RenameUser/63' => RenameUserGenerator::fromOperands(
-            renamings: \Tests\Generator\Operands::tuple(
+            renamings: Generators::tuple(
                 UserRenamingGenerator::fromOperands(
                     from: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])

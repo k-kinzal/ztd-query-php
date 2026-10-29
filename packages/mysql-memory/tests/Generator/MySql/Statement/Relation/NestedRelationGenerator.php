@@ -27,7 +27,7 @@ final class NestedRelationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation(relation: $parts[0], relationInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $relation,
             $relationInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

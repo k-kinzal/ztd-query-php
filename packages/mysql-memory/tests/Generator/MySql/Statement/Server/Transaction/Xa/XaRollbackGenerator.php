@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback;
@@ -25,11 +27,41 @@ final class XaRollbackGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Selects the grammar before generating operands.
+     * Generates complete XaRollback values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<XaRollback>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
-        $this->delegate = Generators::map(static fn (Xid $xid): XaRollback => new XaRollback($xid, profile: new LanguageProfile($release)), new XidGenerator());
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No XaRollback forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): XaRollback {
+            if (!$statement instanceof XaRollback) {
+                throw new LogicException('Publishing XaRollback must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Selects the grammar before generating operands.
+     * @return ErisGenerator<XaRollback>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
+    {
+        return Generators::map(static fn (Xid $xid): XaRollback => new XaRollback($xid, profile: new LanguageProfile($release)), new XidGenerator());
     }
 
     /**
@@ -59,11 +91,11 @@ final class XaRollbackGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $xid, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): XaRollback => new XaRollback(xid: $parts[0], profile: $parts[1], client: $parts[2]), \Tests\Generator\Operands::tuple($xid, $profile, $client));
+        return Generators::map(static fn (array $parts): XaRollback => new XaRollback(xid: $parts[0], profile: $parts[1], client: $parts[2]), Generators::tuple($xid, $profile, $client));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<XaRollback>>
      */

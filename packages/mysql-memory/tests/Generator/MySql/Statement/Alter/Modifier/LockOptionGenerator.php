@@ -27,7 +27,7 @@ final class LockOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption(lock: $parts[0], inputSource: $parts[1], operator: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $lock,
             $inputSource ?? Generators::constant(null),
             $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()

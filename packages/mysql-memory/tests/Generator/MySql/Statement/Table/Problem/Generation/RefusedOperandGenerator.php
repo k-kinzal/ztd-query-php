@@ -29,7 +29,7 @@ final class RefusedOperandGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand(column: $parts[0], kind: $parts[1], function: $parts[2], scope: $parts[3], expression: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $kind,
             $function ?? Generators::constant(null),

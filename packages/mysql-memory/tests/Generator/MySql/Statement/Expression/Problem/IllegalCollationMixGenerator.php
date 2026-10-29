@@ -26,7 +26,7 @@ final class IllegalCollationMixGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix(operands: $parts[0], operation: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operands,
             $operation
         ));
@@ -39,12 +39,12 @@ final class IllegalCollationMixGenerator implements ErisGenerator
     public static function executionForms(): iterable
     {
         yield 'Expression\\Problem\\IllegalCollationMix' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new IllegalCollationMixGenerator(
-            operands: \Tests\Generator\Operands::tuple(
-                \Tests\Generator\Operands::tuple(
+            operands: Generators::tuple(
+                Generators::tuple(
                     Generators::constant('latin1_bin'),
                     \Tests\Generator\MySql\Statement\Type\Resolved\CoercibilityGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Explicit])
                 ),
-                \Tests\Generator\Operands::tuple(
+                Generators::tuple(
                     Generators::constant('latin1_general_ci'),
                     \Tests\Generator\MySql\Statement\Type\Resolved\CoercibilityGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Explicit])
                 )

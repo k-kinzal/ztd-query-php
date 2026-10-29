@@ -25,7 +25,7 @@ final class RefusedSetClauseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause(operand: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand
         ));
     }
@@ -39,7 +39,7 @@ final class RefusedSetClauseGenerator implements ErisGenerator
         yield 'Query\\Problem\\Operand\\RefusedSetClause' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, new RefusedSetClauseGenerator(
             operand: new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                 options: Generators::constant([]),
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                         expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -56,7 +56,7 @@ final class RefusedSetClauseGenerator implements ErisGenerator
                 having: Generators::constant(null),
                 windows: Generators::constant([]),
                 qualify: Generators::constant(null),
-                orderBy: \Tests\Generator\Operands::tuple(
+                orderBy: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(
                         expression: new \Tests\Generator\MySql\Statement\Query\Clause\OutputOrdinalGenerator(
                             expression: new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(

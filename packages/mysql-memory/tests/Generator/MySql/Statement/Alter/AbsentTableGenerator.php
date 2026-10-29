@@ -25,7 +25,7 @@ final class AbsentTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }
@@ -37,9 +37,9 @@ final class AbsentTableGenerator implements ErisGenerator
     public static function statements(): ErisGenerator
     {
         $names = new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('pbt')));
-        return \Tests\Generator\Operands::bind(new self($names), static function (\SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable $absent): DropTableGenerator {
+        return Generators::bind(new self($names), static function (\SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable $absent): ErisGenerator {
             $target = new TargetTableGenerator(Generators::constant($absent->name), relationInformation: new \Tests\Generator\Semantics\Statement\Fact\RelationFactGenerator(Generators::constant(new \SqlSemantics\Statement\Shape\RowShape([])), Generators::constant($absent)));
-            return new DropTableGenerator(Generators::bool(), Generators::constant(true), \Tests\Generator\Operands::vector(1, $target), statementInformation: new \Tests\Generator\MySql\Statement\StatementSemanticsGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847))));
+            return DropTableGenerator::operands(Generators::bool(), Generators::constant(true), Generators::vector(1, $target), statementInformation: new \Tests\Generator\MySql\Statement\StatementSemanticsGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847))));
         });
     }
 

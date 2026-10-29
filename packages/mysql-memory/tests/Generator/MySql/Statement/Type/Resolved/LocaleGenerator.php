@@ -29,7 +29,7 @@ final class LocaleGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale(name: $parts[0], months: $parts[1], shortMonths: $parts[2], days: $parts[3], shortDays: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $months,
             $shortMonths,
@@ -44,13 +44,7 @@ final class LocaleGenerator implements ErisGenerator
      */
     public static function catalog(): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::all()), static fn (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale $locale): self => new self(
-            Generators::constant($locale->name),
-            Generators::constant($locale->months),
-            Generators::constant($locale->shortMonths),
-            Generators::constant($locale->days),
-            Generators::constant($locale->shortDays),
-        ));
+        return Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::all());
     }
 
 }

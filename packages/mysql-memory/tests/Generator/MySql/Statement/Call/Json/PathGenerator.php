@@ -25,7 +25,7 @@ final class PathGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\Path {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path(legs: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $legs
         ));
     }

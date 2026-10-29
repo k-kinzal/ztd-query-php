@@ -28,7 +28,7 @@ final class LeadingUnionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion(left: $parts[0], quantifier: $parts[1], right: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $left,
             $quantifier,
             $right,

@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Server\Storage;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,6 +21,35 @@ final class AlterTablespaceDatafileGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete AlterTablespaceDatafile values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No AlterTablespaceDatafile forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile) {
+                throw new LogicException('Publishing AlterTablespaceDatafile must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\DatafileAction> $action Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $datafile Generated constructor operand
@@ -26,31 +57,22 @@ final class AlterTablespaceDatafileGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<list<bool>>|null $optionsCommas Generated list boundaries
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile>
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $action, ErisGenerator $datafile, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null)
+    public static function operands(ErisGenerator $name, ErisGenerator $action, ErisGenerator $datafile, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null): ErisGenerator
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
-            $name,
-            $action,
-            $datafile,
-            $options ?? Generators::constant([]),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ), static function (array $parts) use ($optionsCommas): ErisGenerator {
-            return Generators::map(
-                static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile(name: $parts[0], action: $parts[1], datafile: $parts[2], options: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], optionsCommas: $commas),
-                $optionsCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[3]) - 1), Generators::bool())
-            );
+        return Generators::bind(Generators::tuple($name, $action, $datafile, $options ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)), static function (array $parts) use ($optionsCommas): ErisGenerator {
+            return Generators::map(static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile(name: $parts[0], action: $parts[1], datafile: $parts[2], options: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], optionsCommas: $commas), $optionsCommas ?? Generators::vector(max(0, count($parts[3]) - 1), Generators::bool()));
         });
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile>>
      */
     public static function forms(): iterable
     {
-        yield 'AlterTablespaceDatafile/178' => new AlterTablespaceDatafileGenerator(
+        yield 'AlterTablespaceDatafile/178' => AlterTablespaceDatafileGenerator::operands(
             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
                 quote: Generators::constant(null)

@@ -27,7 +27,7 @@ final class IndexVisibilityGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\IndexVisibility(index: $parts[0], visible: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $index,
             $visible,
             $inputSource ?? Generators::constant(null)

@@ -23,6 +23,6 @@ final class TableSourceGenerator implements ErisGenerator
      */
     public function __construct(array $alternatives)
     {
-        $this->delegate = \Tests\Generator\Operands::oneOf($alternatives);
+        $this->delegate = Generators::oneOf(...$alternatives);
     }
 }

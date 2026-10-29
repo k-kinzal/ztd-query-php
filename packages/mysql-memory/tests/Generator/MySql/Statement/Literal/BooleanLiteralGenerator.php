@@ -27,7 +27,7 @@ final class BooleanLiteralGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral {
             return new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(value: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $value,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

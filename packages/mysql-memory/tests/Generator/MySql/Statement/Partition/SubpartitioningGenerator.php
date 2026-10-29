@@ -27,7 +27,7 @@ final class SubpartitioningGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning(method: $parts[0], count: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $method,
             $count,
             $inputSource ?? Generators::constant(null)

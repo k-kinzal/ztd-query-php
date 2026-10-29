@@ -25,7 +25,7 @@ final class UnknownDeleteTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable(table: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table
         ));
     }

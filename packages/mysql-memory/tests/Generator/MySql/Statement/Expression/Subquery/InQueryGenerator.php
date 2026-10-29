@@ -29,7 +29,7 @@ final class InQueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery(operand: $parts[0], query: $parts[1], negated: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $query,
             $negated ?? Generators::constant(false),

@@ -28,7 +28,7 @@ final class RowGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Row {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Row(elements: $parts[0], keyword: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $elements,
             $keyword ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted),
             $scalarInformation ?? Generators::constant(null),

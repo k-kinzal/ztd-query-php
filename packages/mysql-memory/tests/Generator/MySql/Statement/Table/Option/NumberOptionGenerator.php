@@ -28,7 +28,7 @@ final class NumberOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Option\NumberOption(kind: $parts[0], value: $parts[1], inputSource: $parts[2], operator: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $value,
             $inputSource ?? Generators::constant(null),

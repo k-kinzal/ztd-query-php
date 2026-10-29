@@ -29,7 +29,7 @@ final class DeferredRegexpGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredRegexp {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredRegexp(operand: $parts[0], pattern: $parts[1], negated: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $pattern,
             $negated ?? Generators::constant(false),

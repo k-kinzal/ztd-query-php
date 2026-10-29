@@ -26,10 +26,10 @@ final class ElementaryGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $kind, ?ErisGenerator $length = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($kind, static function (\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind $selected) use ($length, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind($kind, static function (\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind $selected) use ($length, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Elementary {
                 return new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(kind: $parts[0], length: $parts[1], inputSource: $parts[2], alias: $parts[3]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected),
                 $length ?? Generators::constant(null),
                 $inputSource ?? Generators::constant(null),

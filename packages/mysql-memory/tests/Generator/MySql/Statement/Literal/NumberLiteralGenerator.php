@@ -27,7 +27,7 @@ final class NumberLiteralGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral {
             return new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral(text: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $text,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
@@ -47,7 +47,7 @@ final class NumberLiteralGenerator implements ErisGenerator
                 \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Decimal => $value . '.5',
                 \SqlSemantics\Platform\MySql\Statement\Literal\NumberForm::Float => $value . 'e1',
             };
-        }, \Tests\Generator\Operands::tuple(new NumberFormGenerator(), Generators::choose(0, 32))));
+        }, Generators::tuple(new NumberFormGenerator(), Generators::choose(0, 32))));
     }
 
 }

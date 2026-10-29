@@ -25,7 +25,7 @@ final class FractionalNumberGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber(number: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $number
         ));
     }

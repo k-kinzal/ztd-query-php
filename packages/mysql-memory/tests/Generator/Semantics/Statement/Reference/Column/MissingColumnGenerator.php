@@ -26,7 +26,7 @@ final class MissingColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Column\MissingColumn {
             return new \SqlSemantics\Statement\Reference\Column\MissingColumn(name: $parts[0], qualifier: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $qualifier ?? Generators::constant(null)
         ));

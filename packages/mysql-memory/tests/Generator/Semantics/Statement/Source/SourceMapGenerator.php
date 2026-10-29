@@ -26,7 +26,7 @@ final class SourceMapGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Source\SourceMap {
             return new \SqlSemantics\Statement\Source\SourceMap(origins: $parts[0], notices: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $origins ?? Generators::constant([]),
             $notices ?? Generators::constant([])
         ));

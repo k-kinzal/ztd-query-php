@@ -27,7 +27,7 @@ final class WindowRefinementGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement(window: $parts[0], ancestors: $parts[1], name: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $window,
             $ancestors ?? Generators::constant([]),
             $name ?? Generators::constant(null)
@@ -40,7 +40,7 @@ final class WindowRefinementGenerator implements ErisGenerator
      */
     public static function executionForms(): iterable
     {
-        $conditions = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(new WindowRefinementKindGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::choose(0, 32)), static function (array $parts): self {
+        $conditions = Generators::bind(Generators::tuple(new WindowRefinementKindGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::choose(0, 32)), static function (array $parts): self {
             [$kind, $name, $number] = $parts;
             $order = new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $number));
             $parent = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(
@@ -52,7 +52,7 @@ final class WindowRefinementGenerator implements ErisGenerator
                 Generators::constant($kind === \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinementKind::Partition ? [$order] : []),
                 Generators::constant($kind === \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinementKind::Ordering ? [$order] : []),
             );
-            $ancestors = \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\Clause\WindowDefinitionGenerator(Generators::constant($name), Generators::constant($parent)));
+            $ancestors = Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\Clause\WindowDefinitionGenerator(Generators::constant($name), Generators::constant($parent)));
             return new self($window, $ancestors);
         });
         yield 'Call/Problem/WindowRefinement' => [\SqlSemantics\Contract\GrammarRelease::MySql847, $conditions];

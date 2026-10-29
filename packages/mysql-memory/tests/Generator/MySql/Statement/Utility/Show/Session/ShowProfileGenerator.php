@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Utility\Show\Session;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,38 +21,62 @@ final class ShowProfileGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete ShowProfile values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No ShowProfile forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile) {
+                throw new LogicException('Publishing ShowProfile must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ProfileSection>>|null $sections Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $query Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Limit|null>|null $limit Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile>
      */
-    public function __construct(?ErisGenerator $sections = null, ?ErisGenerator $query = null, ?ErisGenerator $limit = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(?ErisGenerator $sections = null, ?ErisGenerator $query = null, ?ErisGenerator $limit = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile(sections: $parts[0], query: $parts[1], limit: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
-            $sections ?? Generators::constant([]),
-            $query ?? Generators::constant(null),
-            $limit ?? Generators::constant(null),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($sections ?? Generators::constant([]), $query ?? Generators::constant(null), $limit ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile>>
      */
     public static function forms(): iterable
     {
-        yield 'ShowProfile/109' => new ShowProfileGenerator(
+        yield 'ShowProfile/109' => ShowProfileGenerator::operands(
             sections: Generators::constant([]),
             query: Generators::constant(null),
             limit: Generators::constant(null)
         );
-        yield 'ShowProfile/364' => new ShowProfileGenerator(
-            sections: \Tests\Generator\Operands::tuple(
+        yield 'ShowProfile/364' => ShowProfileGenerator::operands(
+            sections: Generators::tuple(
                 ProfileSectionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ProfileSection::Cpu])
             ),
             query: Generators::constant(null),

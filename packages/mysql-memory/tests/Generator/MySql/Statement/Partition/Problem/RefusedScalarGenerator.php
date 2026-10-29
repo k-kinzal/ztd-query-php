@@ -27,7 +27,7 @@ final class RefusedScalarGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar(operand: $parts[0], condition: $parts[1], offset: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $condition ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Function),
             $offset ?? Generators::constant(0)
@@ -42,7 +42,7 @@ final class RefusedScalarGenerator implements ErisGenerator
     {
         yield 'Partition\\Problem\\RefusedScalar' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedScalarGenerator(
             operand: new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                elements: \Tests\Generator\Operands::tuple(
+                elements: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     ),

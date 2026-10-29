@@ -25,7 +25,7 @@ final class InvalidUserAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute(text: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $text
         ));
     }

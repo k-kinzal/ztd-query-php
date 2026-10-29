@@ -27,7 +27,7 @@ final class SignalItemGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem(name: $parts[0], value: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $value,
             $inputSource ?? Generators::constant(null)

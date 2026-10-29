@@ -27,7 +27,7 @@ final class SecondaryLoadGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\SecondaryLoad {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\SecondaryLoad(load: $parts[0], partitions: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $load,
             $partitions ?? Generators::constant([]),
             $inputSource ?? Generators::constant(null)

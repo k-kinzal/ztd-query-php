@@ -29,7 +29,7 @@ final class CaseExpressionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression(operand: $parts[0], branches: $parts[1], else: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $branches,
             $else ?? Generators::constant(null),

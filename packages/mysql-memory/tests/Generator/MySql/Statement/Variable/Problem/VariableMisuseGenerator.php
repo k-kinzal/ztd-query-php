@@ -26,7 +26,7 @@ final class VariableMisuseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse(rule: $parts[0], name: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rule,
             $name
         ));

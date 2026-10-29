@@ -28,7 +28,7 @@ final class CharsetAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(form: $parts[0], charset: $parts[1], mark: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $form,
             $charset ?? Generators::constant(null),
             $mark ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark::Absent),

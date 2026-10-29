@@ -27,7 +27,7 @@ final class InformationItemGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem(target: $parts[0], item: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $target,
             $item,
             $inputSource ?? Generators::constant(null)

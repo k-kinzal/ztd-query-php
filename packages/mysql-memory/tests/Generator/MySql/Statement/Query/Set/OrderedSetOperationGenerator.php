@@ -32,7 +32,7 @@ final class OrderedSetOperationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation(left: $parts[0], operator: $parts[1], quantifier: $parts[2], right: $parts[3], orderBy: $parts[4], limit: $parts[5], queryInformation: $parts[6], inputSource: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $left,
             $operator,
             $quantifier,

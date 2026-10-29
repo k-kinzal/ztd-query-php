@@ -26,7 +26,7 @@ final class ValueRowGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\ValueRow {
             return new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow(values: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $values,
             $inputSource ?? Generators::constant(null)
         ));

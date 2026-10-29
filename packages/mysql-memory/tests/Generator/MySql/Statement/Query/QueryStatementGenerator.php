@@ -30,7 +30,7 @@ final class QueryStatementGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement {
             return new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(query: $parts[0], locking: $parts[1], into: $parts[2], intoPosition: $parts[3], queryInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $query,
             $locking ?? Generators::constant([]),
             $into ?? Generators::constant(null),

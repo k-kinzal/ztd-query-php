@@ -26,7 +26,7 @@ final class DualGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\Dual {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(relationInformation: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $relationInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
         ));

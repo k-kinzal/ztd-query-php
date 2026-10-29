@@ -29,7 +29,7 @@ final class DeferredComparisonGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredComparison {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredComparison(operator: $parts[0], left: $parts[1], right: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operator,
             $left,
             $right,

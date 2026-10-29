@@ -27,7 +27,7 @@ final class QualifiedNameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Identifier\QualifiedName {
             return new \SqlSemantics\Statement\Identifier\QualifiedName(name: $parts[0], schema: $parts[1], catalog: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $schema ?? Generators::constant(null),
             $catalog ?? Generators::constant(null)

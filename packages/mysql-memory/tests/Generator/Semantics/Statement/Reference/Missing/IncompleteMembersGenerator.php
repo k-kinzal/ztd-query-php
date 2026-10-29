@@ -25,7 +25,7 @@ final class IncompleteMembersGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Missing\IncompleteMembers {
             return new \SqlSemantics\Statement\Reference\Missing\IncompleteMembers(table: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table
         ));
     }

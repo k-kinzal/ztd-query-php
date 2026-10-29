@@ -29,7 +29,7 @@ final class DecimalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Decimal {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Decimal(precision: $parts[0], scale: $parts[1], modifiers: $parts[2], inputSource: $parts[3], word: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $precision ?? Generators::constant(null),
             $scale ?? Generators::constant(null),
             $modifiers ?? Generators::constant([]),

@@ -26,7 +26,7 @@ final class AddConstraintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint(element: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $element,
             $inputSource ?? Generators::constant(null)
         ));

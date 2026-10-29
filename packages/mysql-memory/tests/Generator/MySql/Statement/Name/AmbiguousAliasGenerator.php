@@ -26,7 +26,7 @@ final class AmbiguousAliasGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias {
             return new \SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias(name: $parts[0], candidates: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $candidates
         ));
@@ -43,7 +43,7 @@ final class AmbiguousAliasGenerator implements ErisGenerator
                 value: Generators::map(static fn (int $suffix): string => 'x' . $suffix, Generators::choose(0, 8)),
                 quote: Generators::constant(null)
             ),
-            candidates: \Tests\Generator\Operands::tuple(
+            candidates: Generators::tuple(
                 new \Tests\Generator\Semantics\Statement\Shape\FieldGenerator(
                     position: Generators::constant(0),
                     slot: new \Tests\Generator\Semantics\Statement\Shape\OutputSlotGenerator(

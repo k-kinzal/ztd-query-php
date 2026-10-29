@@ -28,7 +28,7 @@ final class IdentificationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\User\Identification {
             return new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(plugin: $parts[0], credential: $parts[1], secret: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $plugin,
             $credential,
             $secret ?? Generators::constant(null),

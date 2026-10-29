@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
@@ -31,20 +33,52 @@ final class CreateTableGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * @param ErisGenerator<ColumnName> $columnNames The declaration names to exercise
+     * Generates complete CreateTable values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<CreateTable>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(ErisGenerator $columnNames, bool $duplicateColumns = false, bool $ifNotExists = false)
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
-        $this->delegate = Generators::map(
-            static function (ColumnName $columnName) use ($duplicateColumns, $ifNotExists): CreateTable {
-                $elements = [new ColumnDefinition($columnName, new OrdinaryColumn(new Integral(IntegralKind::Int)))];
-                if ($duplicateColumns) {
-                    $elements[] = new ColumnDefinition(new ColumnName($columnName->column, $columnName->table, $columnName->dot), new OrdinaryColumn(new Integral(IntegralKind::Int)));
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
                 }
-                return new CreateTable($columnName->table ?? new QualifiedName(new Name('target')), $elements, ifNotExists: $ifNotExists);
-            },
-            $columnNames,
-        );
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No CreateTable forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): CreateTable {
+            if (!$statement instanceof CreateTable) {
+                throw new LogicException('Publishing CreateTable must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * @param ErisGenerator<ColumnName> $columnNames The declaration names to exercise
+     * @return ErisGenerator<CreateTable>
+     */
+    public static function operands(ErisGenerator $columnNames, bool $duplicateColumns = false, bool $ifNotExists = false): ErisGenerator
+    {
+        return Generators::map(static function (ColumnName $columnName) use ($duplicateColumns, $ifNotExists): CreateTable {
+            $elements = [new ColumnDefinition($columnName, new OrdinaryColumn(new Integral(IntegralKind::Int)))];
+            if ($duplicateColumns) {
+                $elements[] = new ColumnDefinition(new ColumnName($columnName->column, $columnName->table, $columnName->dot), new OrdinaryColumn(new Integral(IntegralKind::Int)));
+            }
+            return new CreateTable($columnName->table ?? new QualifiedName(new Name('target')), $elements, ifNotExists: $ifNotExists);
+        }, $columnNames);
     }
 
     /**
@@ -80,8 +114,8 @@ final class CreateTableGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $name, ErisGenerator $elements, ErisGenerator $options, ErisGenerator $partitioning, ErisGenerator $query, ErisGenerator $temporaryWords, ErisGenerator $ifNotExists, ErisGenerator $enclosed, ?ErisGenerator $optionsCommas = null): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($name, $elements, $options, $partitioning, $query, $temporaryWords, $ifNotExists, $enclosed), static function (array $parts) use ($optionsCommas): ErisGenerator {
-            return Generators::map(static fn (array $commas): CreateTable => new CreateTable(name: $parts[0], elements: $parts[1], options: $parts[2], partitioning: $parts[3], query: $parts[4], temporaryWords: $parts[5], ifNotExists: $parts[6], enclosed: $parts[7], optionsCommas: $commas), $optionsCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[2]) - 1), Generators::bool()));
+        return Generators::bind(Generators::tuple($name, $elements, $options, $partitioning, $query, $temporaryWords, $ifNotExists, $enclosed), static function (array $parts) use ($optionsCommas): ErisGenerator {
+            return Generators::map(static fn (array $commas): CreateTable => new CreateTable(name: $parts[0], elements: $parts[1], options: $parts[2], partitioning: $parts[3], query: $parts[4], temporaryWords: $parts[5], ifNotExists: $parts[6], enclosed: $parts[7], optionsCommas: $commas), $optionsCommas ?? Generators::vector(max(0, count($parts[2]) - 1), Generators::bool()));
         });
     }
 
@@ -92,15 +126,15 @@ final class CreateTableGenerator implements ErisGenerator
      */
     public static function optionDefinitions(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        $definitions = new self(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
-        $options = \Tests\Generator\Operands::tuple(
+        $definitions = self::operands(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
+        $options = Generators::tuple(
             new Option\EngineOptionGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('InnoDB'), Generators::constant(null))),
             new Option\CharsetOptionGenerator(new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('latin1'), Generators::constant(null)))),
             new Option\TextOptionGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::Comment), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'comment ' . $value, Generators::choose(0, 1000)))),
             new Option\RowFormatOptionGenerator(Generators::elements([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact])),
         );
-        $operands = \Tests\Generator\Operands::tuple($definitions, $options, \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql($release), \Tests\Generator\Operands::vector(3, Generators::bool()));
-        return \Tests\Generator\Operands::bind($operands, self::optionSample(...));
+        $operands = Generators::tuple($definitions, $options, \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql($release), Generators::vector(3, Generators::bool()));
+        return Generators::bind($operands, self::optionSample(...));
     }
 
     /**
@@ -117,7 +151,7 @@ final class CreateTableGenerator implements ErisGenerator
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<CreateTable>>
      */
@@ -149,7 +183,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -185,7 +219,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -205,7 +239,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\StorageOptionGenerator(
                     medium: Column\Kind\StorageMediumGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\StorageMedium::Disk])
                 )
@@ -225,7 +259,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -245,7 +279,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\StorageOptionGenerator(
                     medium: Column\Kind\StorageMediumGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\StorageMedium::Disk])
                 )
@@ -274,7 +308,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -294,7 +328,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\StorageOptionGenerator(
                     medium: Column\Kind\StorageMediumGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\StorageMedium::Disk])
                 )
@@ -335,7 +369,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -355,7 +389,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\EngineOptionGenerator(
                     engine: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -378,7 +412,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -398,7 +432,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\SecondaryEngineOptionGenerator(
                     engine: Generators::constant(null)
                 )
@@ -418,7 +452,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -438,7 +472,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\NumberOptionGenerator(
                     kind: Option\Kind\NumberOptionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\NumberOptionKind::MaxRows]),
                     value: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
@@ -462,7 +496,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -482,7 +516,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\TextOptionGenerator(
                     kind: Option\Kind\TextOptionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::Password]),
                     value: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
@@ -506,7 +540,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -526,7 +560,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\RowFormatOptionGenerator(
                     format: Option\Kind\RowFormatGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Default])
                 )
@@ -546,7 +580,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -566,7 +600,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\UnionOptionGenerator(
                     tables: Generators::constant([])
                 )
@@ -586,7 +620,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -606,7 +640,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\CharsetOptionGenerator(
                     charset: new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -631,7 +665,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -651,7 +685,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\CollationOptionGenerator(
                     collation: new \Tests\Generator\MySql\Statement\Name\CollationNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -676,7 +710,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -696,7 +730,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\InsertMethodOptionGenerator(
                     method: Option\Kind\InsertMethodGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\InsertMethod::No])
                 )
@@ -716,7 +750,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -736,7 +770,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\TablespaceOptionGenerator(
                     tablespace: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -759,7 +793,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -779,7 +813,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\StartTransactionGenerator()
             ),
             partitioning: Generators::constant(null),
@@ -797,7 +831,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -817,7 +851,7 @@ final class CreateTableGenerator implements ErisGenerator
                     )
                 )
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new Option\AutoextendSizeOptionGenerator(
                     size: new \Tests\Generator\MySql\Statement\Literal\ByteSizeGenerator(
                         number: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
@@ -843,10 +877,10 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Key\IndexDefinitionGenerator(
                     kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText]),
-                    parts: \Tests\Generator\Operands::tuple(
+                    parts: Generators::tuple(
                         new Key\ColumnPartGenerator(
                             column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -879,7 +913,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -927,9 +961,9 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Key\ForeignKeyGenerator(
-                    columns: \Tests\Generator\Operands::tuple(
+                    columns: Generators::tuple(
                         new Key\ColumnPartGenerator(
                             column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -972,7 +1006,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Key\CheckConstraintGenerator(
                     condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                         operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1007,10 +1041,10 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Key\IndexDefinitionGenerator(
                     kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Primary]),
-                    parts: \Tests\Generator\Operands::tuple(
+                    parts: Generators::tuple(
                         new Key\ColumnPartGenerator(
                             column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1045,7 +1079,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1060,7 +1094,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\KeywordAttributeGenerator(
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             )
@@ -1085,7 +1119,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1100,7 +1134,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\KeywordAttributeGenerator(
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             ),
@@ -1140,7 +1174,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1155,7 +1189,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\KeywordAttributeGenerator(
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             ),
@@ -1186,7 +1220,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1201,7 +1235,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\KeywordAttributeGenerator(
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             ),
@@ -1234,7 +1268,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1249,7 +1283,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\KeywordAttributeGenerator(
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             ),
@@ -1277,7 +1311,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1292,7 +1326,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\KeywordAttributeGenerator(
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             ),
@@ -1320,7 +1354,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1335,7 +1369,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\KeywordAttributeGenerator(
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             ),
@@ -1363,9 +1397,9 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Key\ForeignKeyGenerator(
-                    columns: \Tests\Generator\Operands::tuple(
+                    columns: Generators::tuple(
                         new Key\ColumnPartGenerator(
                             column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1408,9 +1442,9 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Key\ForeignKeyGenerator(
-                    columns: \Tests\Generator\Operands::tuple(
+                    columns: Generators::tuple(
                         new Key\ColumnPartGenerator(
                             column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1431,7 +1465,7 @@ final class CreateTableGenerator implements ErisGenerator
                         ),
                         columns: Generators::constant(null),
                         match: Generators::constant(null),
-                        actions: \Tests\Generator\Operands::tuple(
+                        actions: Generators::tuple(
                             new Key\ReferentialActionGenerator(
                                 event: Key\ReferenceEventGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceEvent::Update]),
                                 option: Key\ReferenceOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\ReferenceOption::Restrict])
@@ -1458,7 +1492,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1473,7 +1507,7 @@ final class CreateTableGenerator implements ErisGenerator
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
                             length: Generators::constant(null)
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Key\CheckConstraintGenerator(
                                 condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1524,7 +1558,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1540,7 +1574,7 @@ final class CreateTableGenerator implements ErisGenerator
                             precision: Generators::constant(null),
                             modifiers: Generators::constant([])
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\OnUpdateGenerator(
                                 value: new Column\Value\CurrentTimestampGenerator(
                                     precision: Generators::constant(null),
@@ -1568,7 +1602,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1584,7 +1618,7 @@ final class CreateTableGenerator implements ErisGenerator
                             width: Generators::constant(null),
                             modifiers: Generators::constant([])
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\EngineAttributeGenerator(
                                 attribute: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                                     value: Generators::constant('{}'),
@@ -1613,7 +1647,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1627,7 +1661,7 @@ final class CreateTableGenerator implements ErisGenerator
                         type: new \Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator([new \Tests\Generator\MySql\Statement\Type\SpatialGenerator(
                             kind: \Tests\Generator\MySql\Statement\Type\Kind\SpatialKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind::Point])
                         )]),
-                        attributes: \Tests\Generator\Operands::tuple(
+                        attributes: Generators::tuple(
                             new Column\SridAttributeGenerator(
                                 srid: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
                                     text: Generators::constant('4326'),
@@ -1655,7 +1689,7 @@ final class CreateTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            elements: \Tests\Generator\Operands::tuple(
+            elements: Generators::tuple(
                 new Column\ColumnDefinitionGenerator(
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1677,7 +1711,7 @@ final class CreateTableGenerator implements ErisGenerator
                 ),
                 new Key\IndexDefinitionGenerator(
                     kind: Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index]),
-                    parts: \Tests\Generator\Operands::tuple(
+                    parts: Generators::tuple(
                         new Key\ColumnPartGenerator(
                             column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
@@ -1689,7 +1723,7 @@ final class CreateTableGenerator implements ErisGenerator
                     ),
                     name: Generators::constant(null),
                     algorithm: Generators::constant(null),
-                    options: \Tests\Generator\Operands::tuple(
+                    options: Generators::tuple(
                         new Key\Option\IndexEngineAttributeGenerator(
                             attribute: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                                 value: Generators::constant('{}'),
@@ -1711,4 +1745,20 @@ final class CreateTableGenerator implements ErisGenerator
         )];
     }
 
+    /**
+     * Generates one to four named INT columns in a fresh pbt table.
+     *
+     * @return ErisGenerator<CreateTable>
+     */
+    public static function integers(): ErisGenerator
+    {
+        return Generators::map(static function (array $parts): CreateTable {
+            [$name, $width] = $parts;
+            $columns = [];
+            for ($position = 0; $position < $width; $position++) {
+                $columns[] = new ColumnDefinition(new ColumnName(new Name('column_' . $position)), new OrdinaryColumn(new Integral(IntegralKind::Int)));
+            }
+            return new CreateTable(new QualifiedName($name, new Name('pbt')), $columns);
+        }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::choose(1, 4)));
+    }
 }

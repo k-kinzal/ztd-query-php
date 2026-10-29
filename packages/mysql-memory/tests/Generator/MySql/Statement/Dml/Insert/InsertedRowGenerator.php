@@ -26,7 +26,7 @@ final class InsertedRowGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow(values: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $values,
             $inputSource ?? Generators::constant(null)
         ));

@@ -27,7 +27,7 @@ final class IntervalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval(quantity: $parts[0], unit: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $quantity,
             $unit,
             $inputSource ?? Generators::constant(null)

@@ -26,7 +26,7 @@ final class WaitOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption(wait: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $wait,
             $inputSource ?? Generators::constant(null)
         ));

@@ -31,7 +31,7 @@ final class PartitionOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption(kind: $parts[0], name: $parts[1], number: $parts[2], text: $parts[3], inputSource: $parts[4], operator: $parts[5], storageKeyword: $parts[0] === \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind::Engine && $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $name ?? Generators::constant(null),
             $number ?? Generators::constant(null),

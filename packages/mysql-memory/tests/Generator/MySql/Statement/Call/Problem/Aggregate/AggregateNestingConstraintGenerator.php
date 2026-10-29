@@ -25,7 +25,7 @@ final class AggregateNestingConstraintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint(call: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $call
         ));
     }

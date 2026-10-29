@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Alter;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,6 +21,39 @@ final class DropTableGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete DropTable values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropTable>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                $forms[] = AbsentTableGenerator::statements();
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No DropTable forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Alter\DropTable {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\DropTable) {
+                throw new LogicException('Publishing DropTable must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<bool> $temporary Generated constructor operand
      * @param ErisGenerator<bool> $ifExists Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Alter\TargetTable>> $tables Generated constructor operand
@@ -26,32 +61,25 @@ final class DropTableGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropTable>
      */
-    public function __construct(ErisGenerator $temporary, ErisGenerator $ifExists, ErisGenerator $tables, ?ErisGenerator $behavior = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null)
+    public static function operands(ErisGenerator $temporary, ErisGenerator $ifExists, ErisGenerator $tables, ?ErisGenerator $behavior = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\DropTable {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\DropTable {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\DropTable(temporary: $parts[0], ifExists: $parts[1], tables: $parts[2], behavior: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], tableWord: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
-            $temporary,
-            $ifExists,
-            $tables,
-            $behavior ?? Generators::constant(null),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()
-        ));
+        }, Generators::tuple($temporary, $ifExists, $tables, $behavior ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropTable>>
      */
     public static function forms(): iterable
     {
-        yield 'DropTable/41' => new DropTableGenerator(
+        yield 'DropTable/41' => DropTableGenerator::operands(
             temporary: Generators::constant(false),
             ifExists: Generators::constant(false),
-            tables: \Tests\Generator\Operands::tuple(
+            tables: Generators::tuple(
                 new TargetTableGenerator(
                     name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -65,10 +93,10 @@ final class DropTableGenerator implements ErisGenerator
             ),
             behavior: Generators::constant(null)
         );
-        yield 'DropTable/276' => new DropTableGenerator(
+        yield 'DropTable/276' => DropTableGenerator::operands(
             temporary: Generators::constant(false),
             ifExists: Generators::constant(false),
-            tables: \Tests\Generator\Operands::tuple(
+            tables: Generators::tuple(
                 new TargetTableGenerator(
                     name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(

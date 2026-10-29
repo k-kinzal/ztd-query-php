@@ -27,7 +27,7 @@ final class RefusedNamesAssignmentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment(offset: $parts[0], end: $parts[1], shadowed: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset,
             $end,
             $shadowed ?? Generators::constant(false)

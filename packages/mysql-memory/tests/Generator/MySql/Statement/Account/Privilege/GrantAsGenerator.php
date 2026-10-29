@@ -27,7 +27,7 @@ final class GrantAsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs(user: $parts[0], roles: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $user,
             $roles ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

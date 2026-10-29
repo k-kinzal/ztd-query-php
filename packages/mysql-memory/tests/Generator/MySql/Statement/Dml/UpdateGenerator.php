@@ -9,6 +9,7 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement as M;
@@ -28,25 +29,50 @@ final class UpdateGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Composes the written operands through Eris generation and shrinking.
+     * Generates complete Update values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<Update>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No Update forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): Update {
+            if (!$statement instanceof Update) {
+                throw new LogicException('Publishing Update must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Composes the written operands through Eris generation and shrinking.
+     * @return ErisGenerator<Update>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
     {
         $operands = Generators::associative(['column' => new ColumnNameGenerator($release), 'number' => Generators::choose(0, 10000), 'row' => Generators::bool()]);
-        $this->delegate = Generators::map(
-            static function (array $data): Update {
-                if (!$data['column'] instanceof M\Name\ColumnName || !is_int($data['number']) || !is_bool($data['row'])) {
-                    throw new LogicException('UPDATE operands require a column name, integer value and row flag.');
-                }
-                $column = new M\Name\ColumnUse($data['column']->column);
-                $number = new M\Literal\NumberLiteral((string) $data['number']);
-                $assignment = $data['row']
-                    ? new M\Routine\Program\Write\DeferredColumnAssignment($column, new M\Expression\Row([$number, new M\Literal\NumberLiteral('2')]))
-                    : new M\Dml\Assignment($column, $number);
-                return new Update(null, false, false, [new M\Relation\TableReference(new QualifiedName(new Name('target')))], [$assignment]);
-            },
-            $operands,
-        );
+        return Generators::map(static function (array $data): Update {
+            if (!$data['column'] instanceof M\Name\ColumnName || !is_int($data['number']) || !is_bool($data['row'])) {
+                throw new LogicException('UPDATE operands require a column name, integer value and row flag.');
+            }
+            $column = new M\Name\ColumnUse($data['column']->column);
+            $number = new M\Literal\NumberLiteral((string) $data['number']);
+            $assignment = $data['row'] ? new M\Routine\Program\Write\DeferredColumnAssignment($column, new M\Expression\Row([$number, new M\Literal\NumberLiteral('2')])) : new M\Dml\Assignment($column, $number);
+            return new Update(null, false, false, [new M\Relation\TableReference(new QualifiedName(new Name('target')))], [$assignment]);
+        }, $operands);
     }
 
     /**
@@ -82,11 +108,11 @@ final class UpdateGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $with, ErisGenerator $lowPriority, ErisGenerator $ignore, ErisGenerator $tables, ErisGenerator $assignments, ErisGenerator $where, ErisGenerator $orderBy, ErisGenerator $limit, ErisGenerator $hints): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): Update => new Update(with: $parts[0], lowPriority: $parts[1], ignore: $parts[2], tables: $parts[3], assignments: $parts[4], where: $parts[5], orderBy: $parts[6], limit: $parts[7], hints: $parts[8]), \Tests\Generator\Operands::tuple($with, $lowPriority, $ignore, $tables, $assignments, $where, $orderBy, $limit, $hints));
+        return Generators::map(static fn (array $parts): Update => new Update(with: $parts[0], lowPriority: $parts[1], ignore: $parts[2], tables: $parts[3], assignments: $parts[4], where: $parts[5], orderBy: $parts[6], limit: $parts[7], hints: $parts[8]), Generators::tuple($with, $lowPriority, $ignore, $tables, $assignments, $where, $orderBy, $limit, $hints));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<Update>>
      */
@@ -96,7 +122,7 @@ final class UpdateGenerator implements ErisGenerator
             with: Generators::constant(null),
             lowPriority: Generators::constant(false),
             ignore: Generators::constant(false),
-            tables: \Tests\Generator\Operands::tuple(
+            tables: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
                     name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -114,7 +140,7 @@ final class UpdateGenerator implements ErisGenerator
                     dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
                 )])
             ),
-            assignments: \Tests\Generator\Operands::tuple(
+            assignments: Generators::tuple(
                 new AssignmentGenerator(
                     column: new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(

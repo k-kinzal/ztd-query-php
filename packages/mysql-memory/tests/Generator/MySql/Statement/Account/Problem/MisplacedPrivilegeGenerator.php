@@ -27,7 +27,7 @@ final class MisplacedPrivilegeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege(privilege: $parts[0], level: $parts[1], error: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $privilege,
             $level,
             $error

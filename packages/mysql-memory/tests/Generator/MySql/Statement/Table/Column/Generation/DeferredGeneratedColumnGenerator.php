@@ -32,7 +32,7 @@ final class DeferredGeneratedColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn(type: $parts[0], expression: $parts[1], collation: $parts[2], storage: $parts[3], attributes: $parts[4], references: $parts[5], inputSource: $parts[6], generatedAlways: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $type,
             $expression,
             $collation ?? Generators::constant(null),

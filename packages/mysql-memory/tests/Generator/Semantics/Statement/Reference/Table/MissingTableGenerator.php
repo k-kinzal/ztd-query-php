@@ -25,7 +25,7 @@ final class MissingTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Table\MissingTable {
             return new \SqlSemantics\Statement\Reference\Table\MissingTable(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }

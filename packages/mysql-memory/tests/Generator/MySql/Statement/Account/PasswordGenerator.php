@@ -27,7 +27,7 @@ final class PasswordGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Password {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Password(text: $parts[0], function: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $text,
             $function ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

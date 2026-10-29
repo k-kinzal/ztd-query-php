@@ -25,7 +25,7 @@ final class UndeclaredVariableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }

@@ -26,7 +26,7 @@ final class GeneralConditionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition(class: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $class,
             $inputSource ?? Generators::constant(null)
         ));

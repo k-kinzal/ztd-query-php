@@ -25,7 +25,7 @@ final class WindowOperandConstraintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint(window: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $window
         ));
     }
@@ -40,10 +40,10 @@ final class WindowOperandConstraintGenerator implements ErisGenerator
             window: new \Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredWindowSpecGenerator(
                 base: Generators::constant(null),
                 partition: Generators::constant([]),
-                order: \Tests\Generator\Operands::tuple(
+                order: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredOrderItemGenerator(
                         expression: new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                            elements: \Tests\Generator\Operands::tuple(
+                            elements: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 ),

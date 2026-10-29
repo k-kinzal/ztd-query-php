@@ -26,7 +26,7 @@ final class DeterminismGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism(deterministic: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $deterministic,
             $inputSource ?? Generators::constant(null)
         ));

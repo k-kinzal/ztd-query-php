@@ -26,7 +26,7 @@ final class ColumnPositionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnPosition {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnPosition(after: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $after,
             $inputSource ?? Generators::constant(null)
         ));

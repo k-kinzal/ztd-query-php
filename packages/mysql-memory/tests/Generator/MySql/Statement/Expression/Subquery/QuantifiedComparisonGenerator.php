@@ -27,7 +27,7 @@ final class QuantifiedComparisonGenerator implements ErisGenerator
      */
     public static function rowQueries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        return Generators::bind(Generators::tuple(
             Generators::choose(0, 10),
             Generators::choose(0, 10),
             Generators::choose(0, 10),
@@ -62,7 +62,7 @@ final class QuantifiedComparisonGenerator implements ErisGenerator
                 Generators::constant($query),
             );
             $queries = Generators::map(static fn (M\Expression\Subquery\QuantifiedComparison $comparison): M\QueryRoot => new M\QueryRoot(new M\Query\Select([], [new M\Query\SelectExpression($comparison, new \SqlSemantics\Statement\Identifier\Name('chosen'))])), $comparisons);
-            return \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries), Generators::constant($expected));
+            return Generators::tuple(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries), Generators::constant($expected));
         });
     }
 
@@ -78,7 +78,7 @@ final class QuantifiedComparisonGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): M\Expression\Subquery\QuantifiedComparison {
             return new M\Expression\Subquery\QuantifiedComparison(operand: $parts[0], operator: $parts[1], quantifier: $parts[2], query: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $operator,
             $quantifier,

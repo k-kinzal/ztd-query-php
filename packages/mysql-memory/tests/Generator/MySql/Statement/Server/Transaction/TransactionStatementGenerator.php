@@ -28,20 +28,20 @@ final class TransactionStatementGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::oneOf(
-            new BeginGenerator($release),
-            new StartTransactionGenerator($release),
-            new CommitGenerator($release),
-            new RollbackGenerator($release),
-            new SavepointGenerator($release),
-            new RollbackToSavepointGenerator($release),
-            new ReleaseSavepointGenerator($release),
-            new \Tests\Generator\MySql\Statement\Utility\Set\SetTransactionGenerator($release),
-            new Xa\XaStartGenerator($release),
-            new Xa\XaEndGenerator($release),
-            new Xa\XaPrepareGenerator($release),
-            new Xa\XaCommitGenerator($release),
-            new Xa\XaRollbackGenerator($release),
-            new Xa\XaRecoverGenerator($release),
+            BeginGenerator::operands($release),
+            StartTransactionGenerator::operands($release),
+            CommitGenerator::operands($release),
+            RollbackGenerator::operands($release),
+            SavepointGenerator::operands($release),
+            RollbackToSavepointGenerator::operands($release),
+            ReleaseSavepointGenerator::operands($release),
+            \Tests\Generator\MySql\Statement\Utility\Set\SetTransactionGenerator::operands($release),
+            Xa\XaStartGenerator::operands($release),
+            Xa\XaEndGenerator::operands($release),
+            Xa\XaPrepareGenerator::operands($release),
+            Xa\XaCommitGenerator::operands($release),
+            Xa\XaRollbackGenerator::operands($release),
+            Xa\XaRecoverGenerator::operands($release),
         );
     }
 
@@ -52,9 +52,10 @@ final class TransactionStatementGenerator implements ErisGenerator
      * Sources: https://dev.mysql.com/doc/refman/8.4/en/savepoint.html and
      * https://dev.mysql.com/doc/refman/8.4/en/xa-states.html.
      *
+     * @param ErisGenerator<TransactionStatement> $statements The concrete transaction result to explore
      * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int}>
      */
-    public static function freshSession(GrammarRelease $release): ErisGenerator
+    public static function freshSession(GrammarRelease $release, ErisGenerator $statements): ErisGenerator
     {
         return Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): array {
             $code = match (true) {
@@ -68,7 +69,7 @@ final class TransactionStatementGenerator implements ErisGenerator
                 default => 0,
             };
             return [$statement, $code];
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new self($release)));
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $statements));
     }
 
     /**

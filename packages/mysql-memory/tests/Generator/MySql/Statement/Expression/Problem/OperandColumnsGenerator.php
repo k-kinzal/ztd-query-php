@@ -27,7 +27,7 @@ final class OperandColumnsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(expected: $parts[0], actual: $parts[1], expression: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expected,
             $actual,
             $expression ?? Generators::constant(null)

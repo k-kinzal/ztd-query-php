@@ -29,7 +29,7 @@ final class InvalidColumnAttributeGenerator implements ErisGenerator
             $attribute = $parts[1];
             \SqlSemantics\Diagnostic\Check::input(in_array($attribute, ['SRID', 'DEFAULT', 'ON UPDATE', 'AUTO_INCREMENT'], true), 'A generated incompatible column attribute names its SQL clause.');
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute(column: $parts[0], attribute: $attribute, scope: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $attribute,
             $scope ?? Generators::constant(null)

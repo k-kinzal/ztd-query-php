@@ -27,7 +27,7 @@ final class KeywordAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute(keyword: $parts[0], inputSource: $parts[1], keyAlternative: $parts[2] && in_array($parts[0], [\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::PrimaryKey, \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Unique], true));
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $keyword,
             $inputSource ?? Generators::constant(null),
             $keyAlternative ?? Generators::bool()

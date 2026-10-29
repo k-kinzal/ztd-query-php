@@ -26,7 +26,7 @@ final class DeferredGroupStartGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart(options: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $options,
             $inputSource ?? Generators::constant(null)
         ));

@@ -25,7 +25,7 @@ final class KnownGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Type\Known {
             return new \SqlSemantics\Statement\Type\Known(descriptor: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $descriptor
         ));
     }

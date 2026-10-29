@@ -25,7 +25,7 @@ final class ChoiceGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Type\Choice {
             return new \SqlSemantics\Statement\Type\Choice(alternatives: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $alternatives
         ));
     }
@@ -36,7 +36,7 @@ final class ChoiceGenerator implements ErisGenerator
      */
     public static function realCasts(): ErisGenerator
     {
-        $floating = new self(\Tests\Generator\Operands::tuple(
+        $floating = new self(Generators::tuple(
             new \Tests\Generator\MySql\Statement\Type\FloatingGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Float)),
             new \Tests\Generator\MySql\Statement\Type\FloatingGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Double)),
         ));

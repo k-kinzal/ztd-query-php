@@ -25,7 +25,7 @@ final class NullablePrimaryKeyGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey(column: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column
         ));
     }

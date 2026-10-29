@@ -27,7 +27,7 @@ final class UserVariableEntryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(domain: $parts[0], collation: $parts[1], binaryString: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $domain,
             $collation,
             $binaryString ?? Generators::constant(null)

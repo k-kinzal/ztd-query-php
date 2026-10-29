@@ -30,7 +30,7 @@ final class ExplicitIndexOrderGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder(kind: $parts[0], direction: $parts[1], table: $parts[2], algorithm: $parts[3], options: $parts[4], elements: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $direction,
             $table,

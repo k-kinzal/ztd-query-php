@@ -25,7 +25,7 @@ final class CommonTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Table\CommonTable {
             return new \SqlSemantics\Statement\Reference\Table\CommonTable(definition: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $definition
         ));
     }

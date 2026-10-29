@@ -29,7 +29,7 @@ final class WindowSpecGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(base: $parts[0], partition: $parts[1], order: $parts[2], frame: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $base ?? Generators::constant(null),
             $partition ?? Generators::constant([]),
             $order ?? Generators::constant([]),

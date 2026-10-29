@@ -124,38 +124,35 @@ and typing hints come from semantic hint values. Source locations and spelling
 notices remain attached to their owning occurrences. Binding neither tokenizes
 nor reparses the request text.
 
-The property suite composes semantic statements with Eris and executes them
-directly. Dependent requests, such as a table definition and an INSERT using its
-columns, are generated together before execution. Shrinking retains their
-relationships. These checks do not render or reparse generated values.
+The property suite checks whether MySQL Memory can consume complete semantic
+values through `Execution::statement()`, without parsing or rendering SQL input.
+Each concrete result of `Semantics::analyze()` has a class directly under
+`tests/Property`, such as `AlterDefaultRoleProperties` or `InsertRowsProperties`.
+Each property starts with that type's generator, for example
+`new AlterDefaultRoleGenerator($release)`. The generator composes its operands and
+publishes the complete concrete value before the execution callback runs.
 
-Generated workloads combine declarations, recursive expressions, writes, reads,
-views, indexes and transactions. Their expected rows and affected counts are
-computed from the generated primitive values before execution. Requests that
-require missing state carry their expected SQL error; an error from a request
-that should succeed fails the property. Parameter generators declare their
-semantic settings independently of MemoryDB's binder.
-Execution maps resolved table and column values to storage without requiring
-the generator's declaration objects to be the current catalog objects. A
-metadata rebuild therefore does not disconnect a generated write from its table.
+There are two execution properties. Without generated prerequisite state,
+execution must either complete or raise `SqlError`; representation failures and
+implementation exceptions are counterexamples. With generated prerequisites,
+all statements in the dependency sequence must complete, so `SqlError` is also a
+counterexample. Table creation, insertion and selection have dependent searches
+across the supported MySQL releases. Their shared names, column widths, rows and
+bindings are rebuilt by generator composition when inputs shrink.
 
-The broad statement property checks execution-scope cleanup across semantic
-forms. It is supplementary to the properties with expected results and the
-native comparison below; accepting an SQL reply does not establish correctness.
-An unmapped semantic diagnostic is an implementation failure, not SQL error
-1105. Such failures escape the property and the native comparison's SQL-error
-handling.
+These properties check consumption of the semantic model, not the correctness of
+every result, error number, warning count or session-state transition. The native
+differential fuzz target below checks execution results against MySQL. The
+property suite uses standard Eris generators, `TestTrait` and shrinking; it has no
+custom sampling or shrinking engine. PHPUnit's `DoesNotPerformAssertions`
+attribute records that successful execution itself is the property, rather than
+adding unrelated assertions to satisfy an assertion counter.
 
-Composition uses Eris generation and shrinking. Dependent prerequisites shrink
-before their consumers, and vectors shrink one element at a time rather than
-constructing the Cartesian product of every element's shrink candidates.
-Recursive alternatives apply to unrestricted scalar roles. Positional, sampling,
-deferred and spelling-dependent operands retain generators for their constraints.
-Sequences can remove any position while retaining the remaining operands.
-Shrink candidates and their semantic publications are evaluated one at a time;
-Eris still controls generation, trial counts, seeds, antecedents and reporting.
-Integration tests execute complete shrunk workloads to check that declarations,
-references and expected results remain related.
+The default search runs Eris's 100 trials for each concrete type/release case,
+with a maximum generation size of 10. Types run independently under ParaTest and
+can be reproduced with `ERIS_SEED` and PHPUnit's `--filter`. The baseline
+forms target MySQL 8.4.7; other release cases select their tagged forms before
+generation. A passing search does not claim exhaustive grammar or version coverage.
 
 Every public core and MySQL semantic type has a corresponding generator under
 `tests/Generator`. PHPStan checks this mapping and whether the generators are

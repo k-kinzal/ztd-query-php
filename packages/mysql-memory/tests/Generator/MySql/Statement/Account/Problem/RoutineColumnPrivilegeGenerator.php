@@ -26,7 +26,7 @@ final class RoutineColumnPrivilegeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(offset: $parts[0], level: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset,
             $level
         ));

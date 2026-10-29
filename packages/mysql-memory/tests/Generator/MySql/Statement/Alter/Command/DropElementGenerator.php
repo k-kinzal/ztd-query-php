@@ -28,7 +28,7 @@ final class DropElementGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $kind, ?ErisGenerator $name = null, ?ErisGenerator $behavior = null, ?ErisGenerator $columnWritten = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $keyword = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $kind,
             $name ?? Generators::constant(null),
             $behavior ?? Generators::constant(null),

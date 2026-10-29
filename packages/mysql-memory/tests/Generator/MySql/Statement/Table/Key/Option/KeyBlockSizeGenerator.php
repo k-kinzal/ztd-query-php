@@ -27,7 +27,7 @@ final class KeyBlockSizeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize(size: $parts[0], inputSource: $parts[1], operator: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $size,
             $inputSource ?? Generators::constant(null),
             $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()

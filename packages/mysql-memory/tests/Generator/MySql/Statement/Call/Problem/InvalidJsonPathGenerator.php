@@ -25,7 +25,7 @@ final class InvalidJsonPathGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath(expression: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression
         ));
     }
@@ -40,7 +40,7 @@ final class InvalidJsonPathGenerator implements ErisGenerator
             expression: new \Tests\Generator\MySql\Statement\Call\Json\JsonValueCallGenerator(
                 document: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NullLiteralGenerator()]),
                 path: \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                    segments: \Tests\Generator\Operands::tuple(
+                    segments: Generators::tuple(
                         Generators::constant('bad')
                     ),
                     introducer: Generators::constant(null),

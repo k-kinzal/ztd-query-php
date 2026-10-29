@@ -23,7 +23,7 @@ final class OptimizerHintGenerator implements ErisGenerator
      */
     public function __construct(array $alternatives)
     {
-        $this->delegate = \Tests\Generator\Operands::oneOf($alternatives);
+        $this->delegate = Generators::oneOf(...$alternatives);
     }
     /**
      * Generates the two name-only hint forms with their distinct meanings.
@@ -32,7 +32,7 @@ final class OptimizerHintGenerator implements ErisGenerator
      */
     public static function namedForms(): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(HintFormGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Hint\HintForm::ResourceGroup, \SqlSemantics\Platform\MySql\Statement\Hint\HintForm::BlockName]), static function (\SqlSemantics\Platform\MySql\Statement\Hint\HintForm $form): ErisGenerator {
+        return Generators::bind(HintFormGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Hint\HintForm::ResourceGroup, \SqlSemantics\Platform\MySql\Statement\Hint\HintForm::BlockName]), static function (\SqlSemantics\Platform\MySql\Statement\Hint\HintForm $form): ErisGenerator {
             $names = Generators::map(static fn (int $suffix): string => 'generated_' . $suffix, Generators::choose(0, 32));
             return $form === \SqlSemantics\Platform\MySql\Statement\Hint\HintForm::ResourceGroup ? new Form\ResourceGroupHintGenerator($names) : new Form\BlockNameHintGenerator($names);
         });

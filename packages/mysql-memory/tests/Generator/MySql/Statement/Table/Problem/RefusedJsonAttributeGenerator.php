@@ -28,7 +28,7 @@ final class RefusedJsonAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute(attribute: $parts[0], reason: $parts[1], position: $parts[2], deep: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $attribute,
             $reason,
             $position,

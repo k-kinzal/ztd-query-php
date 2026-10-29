@@ -26,7 +26,7 @@ final class AggregateInOrderingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering(position: $parts[0], distinct: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $position,
             $distinct ?? Generators::constant(false)
         ));

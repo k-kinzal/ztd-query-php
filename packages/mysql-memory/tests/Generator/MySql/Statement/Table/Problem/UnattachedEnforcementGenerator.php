@@ -25,7 +25,7 @@ final class UnattachedEnforcementGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement(offset: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset
         ));
     }

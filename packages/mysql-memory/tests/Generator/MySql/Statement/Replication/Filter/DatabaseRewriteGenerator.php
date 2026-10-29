@@ -27,7 +27,7 @@ final class DatabaseRewriteGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Filter\DatabaseRewrite {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\DatabaseRewrite(from: $parts[0], to: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $from,
             $to,
             $inputSource ?? Generators::constant(null)

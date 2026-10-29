@@ -28,7 +28,7 @@ final class TextFileFormatGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Load\TextFileFormat {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\TextFileFormat(charset: $parts[0], fields: $parts[1], lines: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $charset ?? Generators::constant(null),
             $fields ?? Generators::constant([]),
             $lines ?? Generators::constant([]),

@@ -28,7 +28,7 @@ final class FactorChangeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange {
             return new \SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange(user: $parts[0], action: $parts[1], steps: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $user,
             $action,
             $steps,

@@ -26,7 +26,7 @@ final class DefaultExpressionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression(expression: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression,
             $inputSource ?? Generators::constant(null)
         ));

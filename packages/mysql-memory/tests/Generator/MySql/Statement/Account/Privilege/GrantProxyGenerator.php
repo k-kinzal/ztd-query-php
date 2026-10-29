@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Account\Privilege;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,36 +21,60 @@ final class GrantProxyGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete GrantProxy values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No GrantProxy forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy) {
+                throw new LogicException('Publishing GrantProxy must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account> $proxied Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Account\User\Grantee|\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification>> $grantees Generated constructor operand
      * @param ErisGenerator<bool>|null $withGrantOption Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy>
      */
-    public function __construct(ErisGenerator $proxied, ErisGenerator $grantees, ?ErisGenerator $withGrantOption = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $proxied, ErisGenerator $grantees, ?ErisGenerator $withGrantOption = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy(proxied: $parts[0], grantees: $parts[1], withGrantOption: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
-            $proxied,
-            $grantees,
-            $withGrantOption ?? Generators::constant(false),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($proxied, $grantees, $withGrantOption ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy>>
      */
     public static function forms(): iterable
     {
-        yield 'GrantProxy/400' => new GrantProxyGenerator(
+        yield 'GrantProxy/400' => GrantProxyGenerator::operands(
             proxied: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                 parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
             )]),
-            grantees: \Tests\Generator\Operands::tuple(
+            grantees: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])

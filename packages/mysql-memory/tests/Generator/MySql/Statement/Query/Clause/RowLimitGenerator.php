@@ -28,7 +28,7 @@ final class RowLimitGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(count: $parts[0], offset: $parts[1], spelling: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $count,
             $offset ?? Generators::constant(null),
             $spelling ?? Generators::constant(null),

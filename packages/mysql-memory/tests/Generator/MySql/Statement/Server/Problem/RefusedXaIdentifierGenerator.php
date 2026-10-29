@@ -26,7 +26,7 @@ final class RefusedXaIdentifierGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier(offset: $parts[0], following: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset,
             $following ?? Generators::constant(false)
         ));

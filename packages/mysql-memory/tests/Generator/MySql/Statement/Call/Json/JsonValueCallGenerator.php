@@ -32,7 +32,7 @@ final class JsonValueCallGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall(document: $parts[0], path: $parts[1], returning: $parts[2], onEmpty: $parts[3], onError: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6], pathValue: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $document,
             $path,
             $returning ?? Generators::constant(null),

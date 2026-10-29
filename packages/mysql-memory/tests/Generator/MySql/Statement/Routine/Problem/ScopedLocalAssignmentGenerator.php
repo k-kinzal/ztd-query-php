@@ -26,7 +26,7 @@ final class ScopedLocalAssignmentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment(offset: $parts[0], end: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset ?? Generators::constant(null),
             $end ?? Generators::constant(null)
         ));

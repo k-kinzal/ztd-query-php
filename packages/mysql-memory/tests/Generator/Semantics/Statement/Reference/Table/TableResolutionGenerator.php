@@ -23,7 +23,7 @@ final class TableResolutionGenerator implements ErisGenerator
      */
     public function __construct(array $alternatives)
     {
-        $this->delegate = \Tests\Generator\Operands::oneOf($alternatives);
+        $this->delegate = Generators::oneOf(...$alternatives);
     }
     /**
      * Generates old ambiguous or conditional declarations and their installed replacement.
@@ -32,7 +32,7 @@ final class TableResolutionGenerator implements ErisGenerator
      */
     public static function reboundReads(): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(\Tests\Generator\MySql\Statement\QueryRootGenerator::declaredTableSequence(), \Tests\Generator\MySql\Statement\QueryRootGenerator::projection()), self::fromSequence(...));
+        return Generators::bind(Generators::tuple(\Tests\Generator\MySql\Statement\QueryRootGenerator::declaredTableSequence(), \Tests\Generator\MySql\Statement\QueryRootGenerator::projection()), self::fromSequence(...));
     }
 
     /**

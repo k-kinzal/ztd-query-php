@@ -41,18 +41,18 @@ final class ColumnNameGenerator implements ErisGenerator
             Generators::associative([
                 'prefix' => Generators::map(
                     static fn (array $characters): string => implode('', array_slice($characters, 0, 63)),
-                    \Tests\Generator\Operands::seq(Generators::elements('a', 'Z', '0', '_', '`', ' ', '.', 'é', '列')),
+                    Generators::seq(Generators::elements('a', 'Z', '0', '_', '`', ' ', '.', 'é', '列')),
                 ),
                 'last' => Generators::elements('a', 'Z', '0', '_', '`', '.', 'é', '列'),
             ]),
         ), Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::Backtick)));
         $unqualified = Generators::map(static fn (Name $name): ColumnName => new ColumnName($name), $column);
-        $table = Generators::map(static fn (int $id): Name => new Name('table_' . $id), \Tests\Generator\Operands::sized(Generators::nat(), 100000));
-        $schema = Generators::map(static fn (int $id): Name => new Name('schema_' . $id), \Tests\Generator\Operands::sized(Generators::nat(), 100000));
-        $qualified = \Tests\Generator\Operands::tuple($column, $table);
-        $qualifiedSchema = \Tests\Generator\Operands::tuple($column, $table, $schema);
+        $table = Generators::map(static fn (int $id): Name => new Name('table_' . $id), Generators::choose(0, 100000));
+        $schema = Generators::map(static fn (int $id): Name => new Name('schema_' . $id), Generators::choose(0, 100000));
+        $qualified = Generators::tuple($column, $table);
+        $qualifiedSchema = Generators::tuple($column, $table, $schema);
         $this->delegate = match ($release) {
-            GrammarRelease::MySql5651, GrammarRelease::MySql5744 => \Tests\Generator\Operands::oneOf([
+            GrammarRelease::MySql5651, GrammarRelease::MySql5744 => Generators::oneOf(...[
                 $unqualified,
                 Generators::map(static fn (Name $name): ColumnName => new ColumnName($name, dot: OptionalWords::Written), $column),
                 Generators::map(static fn (array $data): ColumnName => new ColumnName($data[0], new QualifiedName($data[1])), $qualified),
@@ -92,7 +92,7 @@ final class ColumnNameGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $column, ErisGenerator $table, ErisGenerator $dot): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): ColumnName => new ColumnName(column: $parts[0], table: $parts[1], dot: $parts[2]), \Tests\Generator\Operands::tuple($column, $table, $dot));
+        return Generators::map(static fn (array $parts): ColumnName => new ColumnName(column: $parts[0], table: $parts[1], dot: $parts[2]), Generators::tuple($column, $table, $dot));
     }
 
 }

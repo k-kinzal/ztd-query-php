@@ -28,7 +28,7 @@ final class CommonTableExpressionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression {
             return new \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression(name: $parts[0], columns: $parts[1], query: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $columns,
             $query,

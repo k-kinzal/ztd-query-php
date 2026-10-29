@@ -28,7 +28,7 @@ final class OrdinaryColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(type: $parts[0], attributes: $parts[1], references: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $type,
             $attributes ?? Generators::constant([]),
             $references ?? Generators::constant(null),

@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Server\Database;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,42 +21,71 @@ final class AlterDatabaseGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete AlterDatabase values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No AlterDatabase forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase) {
+                throw new LogicException('Publishing AlterDatabase must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $name Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption>> $options Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord>|null $databaseWord Generated database keyword
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase>
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $options, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseWord = null)
+    public static function operands(ErisGenerator $name, ErisGenerator $options, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseWord = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], databaseWord: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
-            $name,
-            $options,
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $databaseWord ?? new DatabaseWordGenerator()
-        ));
+        }, Generators::tuple($name, $options, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $databaseWord ?? new DatabaseWordGenerator()));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase>>
      */
     public static function forms(): iterable
     {
-        yield 'AlterDatabase/2' => new AlterDatabaseGenerator(
+        yield 'AlterDatabase/2' => AlterDatabaseGenerator::operands(
             name: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new DatabaseOptionGenerator([new DatabaseReadOnlyGenerator(
                     value: Generators::constant(null)
                 )])
             )
         );
-        yield 'AlterDatabase/194' => new AlterDatabaseGenerator(
+        yield 'AlterDatabase/194' => AlterDatabaseGenerator::operands(
             name: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new DatabaseOptionGenerator([new DatabaseCollationGenerator(
                     collation: new \Tests\Generator\MySql\Statement\Name\CollationNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -65,9 +96,9 @@ final class AlterDatabaseGenerator implements ErisGenerator
                 )])
             )
         );
-        yield 'AlterDatabase/195' => new AlterDatabaseGenerator(
+        yield 'AlterDatabase/195' => AlterDatabaseGenerator::operands(
             name: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new DatabaseOptionGenerator([new DatabaseCharsetGenerator(
                     charset: new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -87,12 +118,12 @@ final class AlterDatabaseGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
-        yield 'AlterDatabase/additional/58' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new AlterDatabaseGenerator(
+        yield 'AlterDatabase/additional/58' => [\SqlSemantics\Contract\GrammarRelease::MySql847, AlterDatabaseGenerator::operands(
             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                 value: Generators::constant('d'),
                 quote: Generators::constant(null)
             ),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new DatabaseOptionGenerator([new DatabaseEncryptionGenerator(
                     encryption: EncryptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled]),
                     spelling: Generators::constant(null)

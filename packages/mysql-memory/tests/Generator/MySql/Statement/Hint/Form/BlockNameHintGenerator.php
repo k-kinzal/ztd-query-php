@@ -25,7 +25,7 @@ final class BlockNameHintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint(block: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $block
         ));
     }

@@ -27,7 +27,7 @@ final class JsonResponseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse(kind: $parts[0], default: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $default ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

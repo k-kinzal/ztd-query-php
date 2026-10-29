@@ -27,7 +27,7 @@ final class SecondaryEngineOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Option\SecondaryEngineOption(engine: $parts[0], inputSource: $parts[1], operator: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $engine,
             $inputSource ?? Generators::constant(null),
             $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()

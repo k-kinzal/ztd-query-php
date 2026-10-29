@@ -28,7 +28,7 @@ final class DeferredDefaultSettingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting(column: $parts[0], expression: $parts[1], columnWritten: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $expression,
             $columnWritten ?? Generators::constant(true),

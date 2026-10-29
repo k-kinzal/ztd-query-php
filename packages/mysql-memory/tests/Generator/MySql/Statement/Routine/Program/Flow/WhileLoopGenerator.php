@@ -29,7 +29,7 @@ final class WhileLoopGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop(condition: $parts[0], statements: $parts[1], label: $parts[2], endLabel: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $condition,
             $statements,
             $label ?? Generators::constant(null),

@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Server\Instance;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,21 +21,46 @@ final class KillGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete Kill values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No Kill forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill) {
+                throw new LogicException('Publishing Kill must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope|null> $scope Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $process Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill>
      */
-    public function __construct(ErisGenerator $scope, ErisGenerator $process, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $scope, ErisGenerator $process, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill(scope: $parts[0], process: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
-            $scope,
-            $process,
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($scope, $process, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
      * Composes complete process requests whose generated row computations cannot be scalar.
@@ -43,24 +70,24 @@ final class KillGenerator implements ErisGenerator
     public static function refusedProcesses(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
         $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
-        $rows = \Tests\Generator\Operands::bind(Generators::choose(2, 4), static fn (int $count): ErisGenerator => new \Tests\Generator\MySql\Statement\Expression\RowGenerator(\Tests\Generator\Operands::vector($count, $numbers)));
-        $processes = \Tests\Generator\Operands::oneOf([
+        $rows = Generators::bind(Generators::choose(2, 4), static fn (int $count): ErisGenerator => new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector($count, $numbers)));
+        $processes = Generators::oneOf(...[
             $rows,
             Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Expression\Row $row): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus, $row, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), $rows),
             Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Expression\Row $row): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest($row, \SqlSemantics\Platform\MySql\Statement\Expression\Truth::True), $rows),
         ]);
-        $requests = new self(Generators::elements([null, ...\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::cases()]), $processes);
+        $requests = self::operands(Generators::elements([null, ...\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::cases()]), $processes);
         return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $requests);
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill>>
      */
     public static function forms(): iterable
     {
-        yield 'Kill/54' => new KillGenerator(
+        yield 'Kill/54' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -76,7 +103,7 @@ final class KillGenerator implements ErisGenerator
                 )])
             )])
         );
-        yield 'Kill/223' => new KillGenerator(
+        yield 'Kill/223' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -142,7 +169,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/224' => new KillGenerator(
+        yield 'Kill/224' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -186,7 +213,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/235' => new KillGenerator(
+        yield 'Kill/235' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -249,7 +276,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/299' => new KillGenerator(
+        yield 'Kill/299' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\LogicalGenerator(
                 operator: \Tests\Generator\MySql\Statement\Expression\LogicalOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::Or]),
@@ -286,7 +313,7 @@ final class KillGenerator implements ErisGenerator
                 symbolic: Generators::constant(false)
             )])
         );
-        yield 'Kill/300' => new KillGenerator(
+        yield 'Kill/300' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\NotGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -306,7 +333,7 @@ final class KillGenerator implements ErisGenerator
                 )])
             )])
         );
-        yield 'Kill/301' => new KillGenerator(
+        yield 'Kill/301' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -331,7 +358,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/302' => new KillGenerator(
+        yield 'Kill/302' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -367,7 +394,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/303' => new KillGenerator(
+        yield 'Kill/303' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -416,7 +443,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/304' => new KillGenerator(
+        yield 'Kill/304' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -446,7 +473,7 @@ final class KillGenerator implements ErisGenerator
                                         )])
                                     )])
                                 )]),
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                         operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                             operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -472,7 +499,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/305' => new KillGenerator(
+        yield 'Kill/305' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -531,7 +558,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/306' => new KillGenerator(
+        yield 'Kill/306' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -578,7 +605,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/307' => new KillGenerator(
+        yield 'Kill/307' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -625,7 +652,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/308' => new KillGenerator(
+        yield 'Kill/308' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -673,7 +700,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/309' => new KillGenerator(
+        yield 'Kill/309' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -736,7 +763,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/310' => new KillGenerator(
+        yield 'Kill/310' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -808,7 +835,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/311' => new KillGenerator(
+        yield 'Kill/311' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -860,7 +887,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/312' => new KillGenerator(
+        yield 'Kill/312' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -909,7 +936,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/313' => new KillGenerator(
+        yield 'Kill/313' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -963,7 +990,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/314' => new KillGenerator(
+        yield 'Kill/314' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1006,7 +1033,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/315' => new KillGenerator(
+        yield 'Kill/315' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1068,7 +1095,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/316' => new KillGenerator(
+        yield 'Kill/316' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1116,7 +1143,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/317' => new KillGenerator(
+        yield 'Kill/317' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1167,7 +1194,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/318' => new KillGenerator(
+        yield 'Kill/318' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1203,7 +1230,7 @@ final class KillGenerator implements ErisGenerator
                                             value: Generators::constant('CONCAT'),
                                             quote: Generators::constant(null)
                                         ),
-                                        arguments: \Tests\Generator\Operands::tuple(
+                                        arguments: Generators::tuple(
                                             new \Tests\Generator\MySql\Statement\Call\CallArgumentGenerator(
                                                 expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                     operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
@@ -1215,7 +1242,7 @@ final class KillGenerator implements ErisGenerator
                                                 alias: Generators::constant(null),
                                                 mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
                                                 layout: new \Tests\Generator\Semantics\Statement\Spelling\LayoutGenerator(
-                                                    tokens: \Tests\Generator\Operands::tuple(
+                                                    tokens: Generators::tuple(
                                                         new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
                                                             gap: Generators::constant(''),
                                                             text: Generators::constant('(')
@@ -1258,7 +1285,7 @@ final class KillGenerator implements ErisGenerator
                                                 alias: Generators::constant(null),
                                                 mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
                                                 layout: new \Tests\Generator\Semantics\Statement\Spelling\LayoutGenerator(
-                                                    tokens: \Tests\Generator\Operands::tuple(
+                                                    tokens: Generators::tuple(
                                                         new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
                                                             gap: Generators::constant(''),
                                                             text: Generators::constant('(')
@@ -1303,7 +1330,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/319' => new KillGenerator(
+        yield 'Kill/319' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1356,7 +1383,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/320' => new KillGenerator(
+        yield 'Kill/320' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1409,7 +1436,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/321' => new KillGenerator(
+        yield 'Kill/321' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1471,7 +1498,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/322' => new KillGenerator(
+        yield 'Kill/322' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1503,7 +1530,7 @@ final class KillGenerator implements ErisGenerator
                                 )]),
                                 array: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Access\FullTextSearchGenerator(
-                                        columns: \Tests\Generator\Operands::tuple(
+                                        columns: Generators::tuple(
                                             new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1536,7 +1563,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/323' => new KillGenerator(
+        yield 'Kill/323' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1586,7 +1613,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/324' => new KillGenerator(
+        yield 'Kill/324' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1619,7 +1646,7 @@ final class KillGenerator implements ErisGenerator
                                 array: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Branching\CaseExpressionGenerator(
                                         operand: Generators::constant(null),
-                                        branches: \Tests\Generator\Operands::tuple(
+                                        branches: Generators::tuple(
                                             new \Tests\Generator\MySql\Statement\Expression\Branching\CaseBranchGenerator(
                                                 condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1661,7 +1688,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/325' => new KillGenerator(
+        yield 'Kill/325' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1725,7 +1752,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/326' => new KillGenerator(
+        yield 'Kill/326' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1776,7 +1803,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/327' => new KillGenerator(
+        yield 'Kill/327' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1827,7 +1854,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/328' => new KillGenerator(
+        yield 'Kill/328' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1903,7 +1930,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/329' => new KillGenerator(
+        yield 'Kill/329' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1959,7 +1986,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/330' => new KillGenerator(
+        yield 'Kill/330' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -1991,7 +2018,7 @@ final class KillGenerator implements ErisGenerator
                                 )]),
                                 array: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\CharCallGenerator(
-                                        arguments: \Tests\Generator\Operands::tuple(
+                                        arguments: Generators::tuple(
                                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2018,7 +2045,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/331' => new KillGenerator(
+        yield 'Kill/331' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2056,7 +2083,7 @@ final class KillGenerator implements ErisGenerator
                                             parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                                         )]),
                                         path: \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                                            segments: \Tests\Generator\Operands::tuple(
+                                            segments: Generators::tuple(
                                                 Generators::constant('text')
                                             ),
                                             introducer: Generators::constant(null),
@@ -2077,7 +2104,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/332' => new KillGenerator(
+        yield 'Kill/332' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2135,7 +2162,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/333' => new KillGenerator(
+        yield 'Kill/333' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2205,7 +2232,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/334' => new KillGenerator(
+        yield 'Kill/334' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2276,7 +2303,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/335' => new KillGenerator(
+        yield 'Kill/335' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2333,7 +2360,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/336' => new KillGenerator(
+        yield 'Kill/336' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2390,7 +2417,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/337' => new KillGenerator(
+        yield 'Kill/337' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2453,7 +2480,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/338' => new KillGenerator(
+        yield 'Kill/338' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2524,7 +2551,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/339' => new KillGenerator(
+        yield 'Kill/339' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2592,7 +2619,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/340' => new KillGenerator(
+        yield 'Kill/340' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2664,7 +2691,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/341' => new KillGenerator(
+        yield 'Kill/341' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2696,7 +2723,7 @@ final class KillGenerator implements ErisGenerator
                                 )]),
                                 array: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\Aggregate\GroupConcatGenerator(
-                                        arguments: \Tests\Generator\Operands::tuple(
+                                        arguments: Generators::tuple(
                                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2726,7 +2753,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/342' => new KillGenerator(
+        yield 'Kill/342' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2759,7 +2786,7 @@ final class KillGenerator implements ErisGenerator
                                 array: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionGenerator(
                                         kind: \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Tile]),
-                                        arguments: \Tests\Generator\Operands::tuple(
+                                        arguments: Generators::tuple(
                                             new \Tests\Generator\MySql\Statement\Call\Window\RoutineVariableGenerator(
                                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -2784,7 +2811,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/343' => new KillGenerator(
+        yield 'Kill/343' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2817,7 +2844,7 @@ final class KillGenerator implements ErisGenerator
                                 array: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionGenerator(
                                         kind: \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Lead]),
-                                        arguments: \Tests\Generator\Operands::tuple(
+                                        arguments: Generators::tuple(
                                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2849,7 +2876,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/344' => new KillGenerator(
+        yield 'Kill/344' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2882,7 +2909,7 @@ final class KillGenerator implements ErisGenerator
                                 array: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionGenerator(
                                         kind: \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::NthValue]),
-                                        arguments: \Tests\Generator\Operands::tuple(
+                                        arguments: Generators::tuple(
                                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                                                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2919,7 +2946,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/345' => new KillGenerator(
+        yield 'Kill/345' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -2972,7 +2999,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/346' => new KillGenerator(
+        yield 'Kill/346' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -3034,7 +3061,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/348' => new KillGenerator(
+        yield 'Kill/348' => KillGenerator::operands(
             scope: Generators::constant(null),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\TruthTestGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -3072,7 +3099,7 @@ final class KillGenerator implements ErisGenerator
                                             parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                                         )]),
                                         path: \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                                            segments: \Tests\Generator\Operands::tuple(
+                                            segments: Generators::tuple(
                                                 Generators::constant('text')
                                             ),
                                             introducer: Generators::constant(null),
@@ -3096,7 +3123,7 @@ final class KillGenerator implements ErisGenerator
                 negated: Generators::constant(false)
             )])
         );
-        yield 'Kill/375' => new KillGenerator(
+        yield 'Kill/375' => KillGenerator::operands(
             scope: KillScopeGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Connection]),
             process: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(

@@ -27,7 +27,7 @@ final class SourceNoticeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Source\SourceNotice {
             return new \SqlSemantics\Statement\Source\SourceNotice(subject: $parts[0], warning: $parts[1], offset: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $subject,
             $warning,
             $offset

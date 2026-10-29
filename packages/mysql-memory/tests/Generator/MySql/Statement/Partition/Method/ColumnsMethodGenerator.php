@@ -27,7 +27,7 @@ final class ColumnsMethodGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod(kind: $parts[0], columns: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $columns,
             $inputSource ?? Generators::constant(null)

@@ -25,7 +25,7 @@ final class RefusedPurgeOperandGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand(moment: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $moment
         ));
     }
@@ -38,7 +38,7 @@ final class RefusedPurgeOperandGenerator implements ErisGenerator
     {
         yield 'Replication\\Problem\\RefusedPurgeOperand' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedPurgeOperandGenerator(
             moment: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                elements: \Tests\Generator\Operands::tuple(
+                elements: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     )]),

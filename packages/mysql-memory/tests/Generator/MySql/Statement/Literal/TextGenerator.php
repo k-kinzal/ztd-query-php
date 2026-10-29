@@ -26,7 +26,7 @@ final class TextGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $value, ?ErisGenerator $radix = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $notation = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $value,
             $radix ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

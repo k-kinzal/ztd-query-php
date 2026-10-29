@@ -25,7 +25,7 @@ final class InvalidFactorPairGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair(identical: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $identical
         ));
     }

@@ -27,7 +27,7 @@ final class AlgorithmOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption(algorithm: $parts[0], inputSource: $parts[1], operator: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $algorithm,
             $inputSource ?? Generators::constant(null),
             $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()

@@ -28,7 +28,7 @@ final class SpatialAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(kind: $parts[0], value: $parts[1], identifier: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $value,
             $identifier ?? Generators::constant(null),

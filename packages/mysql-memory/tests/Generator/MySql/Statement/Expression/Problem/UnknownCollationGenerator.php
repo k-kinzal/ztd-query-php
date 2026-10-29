@@ -26,7 +26,7 @@ final class UnknownCollationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(name: $parts[0], operand: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $operand ?? Generators::constant(null)
         ));

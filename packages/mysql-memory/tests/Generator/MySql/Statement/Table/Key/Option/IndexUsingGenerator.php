@@ -27,7 +27,7 @@ final class IndexUsingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing(algorithm: $parts[0], inputSource: $parts[1], typeKeyword: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $algorithm,
             $inputSource ?? Generators::constant(null),
             $typeKeyword ?? Generators::bool()

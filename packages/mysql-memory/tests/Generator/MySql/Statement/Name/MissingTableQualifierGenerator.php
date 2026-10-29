@@ -26,7 +26,7 @@ final class MissingTableQualifierGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier {
             return new \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier(name: $parts[0], qualifier: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $qualifier
         ));

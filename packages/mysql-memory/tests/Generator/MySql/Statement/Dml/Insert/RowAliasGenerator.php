@@ -28,7 +28,7 @@ final class RowAliasGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias(name: $parts[0], columns: $parts[1], relationInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $columns ?? Generators::constant([]),
             $relationInformation ?? Generators::constant(null),

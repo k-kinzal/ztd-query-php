@@ -27,7 +27,7 @@ final class CaseBranchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch(condition: $parts[0], result: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $condition,
             $result,
             $inputSource ?? Generators::constant(null)

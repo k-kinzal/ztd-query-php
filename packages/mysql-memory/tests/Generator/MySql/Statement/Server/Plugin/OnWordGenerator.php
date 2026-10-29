@@ -26,7 +26,7 @@ final class OnWordGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord(scalarInformation: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
         ));

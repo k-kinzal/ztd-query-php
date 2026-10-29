@@ -27,7 +27,7 @@ final class LogFileGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Storage\LogFile {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\LogFile(kind: $parts[0], file: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $file,
             $inputSource ?? Generators::constant(null)

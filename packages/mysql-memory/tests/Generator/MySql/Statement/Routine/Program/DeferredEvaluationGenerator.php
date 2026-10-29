@@ -26,7 +26,7 @@ final class DeferredEvaluationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation(items: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $items,
             $inputSource ?? Generators::constant(null)
         ));

@@ -26,7 +26,7 @@ final class PartitionByGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy(partitioning: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $partitioning,
             $inputSource ?? Generators::constant(null)
         ));

@@ -29,7 +29,7 @@ final class ChangeColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn(column: $parts[0], definition: $parts[1], position: $parts[2], columnWritten: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $definition,
             $position ?? Generators::constant(null),

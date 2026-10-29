@@ -28,7 +28,7 @@ final class BulkOptionsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions(parallel: $parts[0], memory: $parts[1], bulk: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $parallel ?? Generators::constant(null),
             $memory ?? Generators::constant(null),
             $bulk ?? Generators::constant(false),

@@ -34,7 +34,7 @@ final class TableReferenceGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\TableReference {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(name: $parts[0], alias: $parts[1], partitions: $parts[2], indexHints: $parts[3], sample: $parts[4], mark: $parts[5], dot: $parts[6], relationInformation: $parts[7], inputSource: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $alias ?? Generators::constant(null),
             $partitions ?? Generators::constant([]),
@@ -61,6 +61,6 @@ final class TableReferenceGenerator implements ErisGenerator
                 throw new LogicException('The generated reference requires a declared table.');
             }
             return new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($fact->table->name, relationInformation: $fact, inputSource: $source);
-        }, \Tests\Generator\Operands::tuple($facts, new \Tests\Generator\Semantics\Statement\Source\SpanGenerator()));
+        }, Generators::tuple($facts, new \Tests\Generator\Semantics\Statement\Source\SpanGenerator()));
     }
 }

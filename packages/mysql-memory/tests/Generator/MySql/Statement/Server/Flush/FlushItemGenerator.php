@@ -27,7 +27,7 @@ final class FlushItemGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem(option: $parts[0], channel: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $option,
             $channel ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

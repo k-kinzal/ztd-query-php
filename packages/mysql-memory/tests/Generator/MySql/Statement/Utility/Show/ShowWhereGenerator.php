@@ -26,7 +26,7 @@ final class ShowWhereGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere(condition: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $condition,
             $inputSource ?? Generators::constant(null)
         ));

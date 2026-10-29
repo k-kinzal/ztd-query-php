@@ -29,7 +29,7 @@ final class PartitionDefinitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(name: $parts[0], values: $parts[1], options: $parts[2], subpartitions: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $values,
             $options,

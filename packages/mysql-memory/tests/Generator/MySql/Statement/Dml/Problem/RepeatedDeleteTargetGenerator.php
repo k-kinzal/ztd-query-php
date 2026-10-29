@@ -26,7 +26,7 @@ final class RepeatedDeleteTargetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget(targets: $parts[0], program: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $targets,
             $program ?? Generators::constant(null)
         ));
@@ -39,7 +39,7 @@ final class RepeatedDeleteTargetGenerator implements ErisGenerator
     public static function executionForms(): iterable
     {
         yield 'Dml\\Problem\\RepeatedDeleteTarget' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RepeatedDeleteTargetGenerator(
-            targets: \Tests\Generator\Operands::tuple(
+            targets: Generators::tuple(
                 new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('a'),

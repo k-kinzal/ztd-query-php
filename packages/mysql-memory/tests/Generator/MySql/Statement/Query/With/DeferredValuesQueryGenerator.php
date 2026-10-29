@@ -27,7 +27,7 @@ final class DeferredValuesQueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery {
             return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery(rows: $parts[0], queryInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rows,
             $queryInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

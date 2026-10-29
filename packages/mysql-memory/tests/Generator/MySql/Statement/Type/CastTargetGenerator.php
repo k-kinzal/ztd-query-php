@@ -31,10 +31,10 @@ final class CastTargetGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $kind, ?ErisGenerator $length = null, ?ErisGenerator $scale = null, ?ErisGenerator $charset = null, ?ErisGenerator $words = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($kind, $words ?? Generators::constant(M\Expression\OptionalWords::Omitted)), static function (array $selected) use ($length, $scale, $charset, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind(Generators::tuple($kind, $words ?? Generators::constant(M\Expression\OptionalWords::Omitted)), static function (array $selected) use ($length, $scale, $charset, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): M\Type\CastTarget {
                 return new M\Type\CastTarget(kind: $parts[0], length: $parts[1], scale: $parts[2], charset: $parts[3], words: $parts[4], inputSource: $parts[5], alias: $parts[6]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected[0]),
                 $length ?? Generators::constant(null),
                 $scale ?? Generators::constant(null),
@@ -52,7 +52,7 @@ final class CastTargetGenerator implements ErisGenerator
      */
     public static function queries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(Keyword\CastAliasGenerator::forRelease($release), Generators::choose(0, 100)), static function (array $parts) use ($release): ErisGenerator {
+        return Generators::bind(Generators::tuple(Keyword\CastAliasGenerator::forRelease($release), Generators::choose(0, 100)), static function (array $parts) use ($release): ErisGenerator {
             [$alias, $number] = $parts;
             $number = $alias->kind() === M\Type\Kind\CastKind::Year ? 2000 + $number : $number;
             $targets = new self(Generators::constant($alias->kind()), words: Generators::constant($alias->words()), alias: Generators::constant($alias));
@@ -63,7 +63,7 @@ final class CastTargetGenerator implements ErisGenerator
                     new M\Query\SelectExpression(new M\Expression\Conversion\Cast($target->kind === M\Type\Kind\CastKind::GeometryCollection ? new M\Literal\NullLiteral() : new M\Literal\NumberLiteral((string) $number), new M\Type\CastTarget($target->kind)), new Name('canonical')),
                 ]));
             }, $targets);
-            return \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries), Generators::constant($alias->kind() === M\Type\Kind\CastKind::GeometryCollection ? null : (string) $number));
+            return Generators::tuple(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries), Generators::constant($alias->kind() === M\Type\Kind\CastKind::GeometryCollection ? null : (string) $number));
         });
     }
 

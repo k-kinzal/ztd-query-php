@@ -33,7 +33,7 @@ final class ViewDefinitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition {
             return new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(name: $parts[0], query: $parts[1], columns: $parts[2], algorithm: $parts[3], definer: $parts[4], security: $parts[5], check: $parts[6], ifNotExists: $parts[7], inputSource: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $query,
             $columns ?? Generators::constant(null),

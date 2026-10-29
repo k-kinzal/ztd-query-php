@@ -30,7 +30,7 @@ final class DeferredTimestampGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp(operation: $parts[0], unit: $parts[1], first: $parts[2], second: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operation,
             $unit,
             $first,

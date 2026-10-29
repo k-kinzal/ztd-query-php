@@ -25,7 +25,7 @@ final class UndeclaredTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Table\UndeclaredTable {
             return new \SqlSemantics\Statement\Reference\Table\UndeclaredTable(missing: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $missing
         ));
     }

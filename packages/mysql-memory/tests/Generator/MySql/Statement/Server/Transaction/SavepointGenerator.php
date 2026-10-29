@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint;
@@ -24,11 +26,41 @@ final class SavepointGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Selects the grammar before generating operands.
+     * Generates complete Savepoint values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<Savepoint>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
-        $this->delegate = Generators::map(static fn (\SqlSemantics\Statement\Identifier\Name $name): Savepoint => new Savepoint($name, profile: new LanguageProfile($release)), Generators::oneOf(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(quotes: Generators::constant(\SqlSemantics\Statement\Identifier\NameQuote::Backtick)), Generators::map(static fn (string $value): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($value, \SqlSemantics\Statement\Identifier\NameQuote::Bare), Generators::elements('FULL', 'full', 'fUlL'))));
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No Savepoint forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): Savepoint {
+            if (!$statement instanceof Savepoint) {
+                throw new LogicException('Publishing Savepoint must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Selects the grammar before generating operands.
+     * @return ErisGenerator<Savepoint>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
+    {
+        return Generators::map(static fn (\SqlSemantics\Statement\Identifier\Name $name): Savepoint => new Savepoint($name, profile: new LanguageProfile($release)), Generators::oneOf(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(quotes: Generators::constant(\SqlSemantics\Statement\Identifier\NameQuote::Backtick)), Generators::map(static fn (string $value): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($value, \SqlSemantics\Statement\Identifier\NameQuote::Bare), Generators::elements('FULL', 'full', 'fUlL'))));
     }
 
     /**
@@ -58,11 +90,11 @@ final class SavepointGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $savepoint, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): Savepoint => new Savepoint(savepoint: $parts[0], profile: $parts[1], client: $parts[2]), \Tests\Generator\Operands::tuple($savepoint, $profile, $client));
+        return Generators::map(static fn (array $parts): Savepoint => new Savepoint(savepoint: $parts[0], profile: $parts[1], client: $parts[2]), Generators::tuple($savepoint, $profile, $client));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<Savepoint>>
      */

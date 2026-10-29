@@ -26,7 +26,7 @@ final class FrameConstraintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint(window: $parts[0], condition: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $window,
             $condition
         ));

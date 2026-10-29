@@ -27,7 +27,7 @@ final class DeferredGroupingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping(items: $parts[0], modifier: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $items,
             $modifier ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

@@ -26,7 +26,7 @@ final class DeferredPurgeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge(moment: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $moment,
             $inputSource ?? Generators::constant(null)
         ));

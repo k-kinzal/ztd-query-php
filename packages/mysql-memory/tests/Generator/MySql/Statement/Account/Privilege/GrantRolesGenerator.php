@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
@@ -32,28 +34,43 @@ final class GrantRolesGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Composes operands with Eris, retaining their relationships during shrinking.
+     * Generates complete GrantRoles values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<GrantRoles>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No GrantRoles forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): GrantRoles {
+            if (!$statement instanceof GrantRoles) {
+                throw new LogicException('Publishing GrantRoles must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Composes operands with Eris, retaining their relationships during shrinking.
+     * @return ErisGenerator<GrantRoles>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
     {
         $profile = new LanguageProfile($release);
-        $requests = \Tests\Generator\Operands::bind(Generators::bool(), static fn (bool $admin): ErisGenerator => \Tests\Generator\Operands::bind(
-            new GrantedRoleGenerator(),
-            static fn (GrantedRole $firstRole): ErisGenerator => \Tests\Generator\Operands::bind(
-                new AccountGenerator(),
-                static fn (Account $firstUser): ErisGenerator => \Tests\Generator\Operands::bind(
-                    \Tests\Generator\Operands::seq(new GrantedRoleGenerator()),
-                    static fn (array $roles): ErisGenerator => Generators::map(
-                        static fn (array $users): GrantRoles => new GrantRoles([$firstRole, ...$roles], [$firstUser, ...$users], $admin, $profile),
-                        \Tests\Generator\Operands::seq(new AccountGenerator())
-                    )
-                )
-            )
-        ));
-        $this->delegate = Generators::oneOf(
-            $requests,
-            \Tests\Generator\Operands::bind(new RefusedGrantRolesGenerator(), static fn (RefusedGrantRoles $condition): ErisGenerator => Generators::map(static fn (bool $admin): GrantRoles => new GrantRoles($condition->roles, $condition->users, $admin, $profile), Generators::bool())),
-        );
+        $requests = Generators::bind(Generators::bool(), static fn (bool $admin): ErisGenerator => Generators::bind(new GrantedRoleGenerator(), static fn (GrantedRole $firstRole): ErisGenerator => Generators::bind(new AccountGenerator(), static fn (Account $firstUser): ErisGenerator => Generators::bind(Generators::seq(new GrantedRoleGenerator()), static fn (array $roles): ErisGenerator => Generators::map(static fn (array $users): GrantRoles => new GrantRoles([$firstRole, ...$roles], [$firstUser, ...$users], $admin, $profile), Generators::seq(new AccountGenerator()))))));
+        return Generators::oneOf($requests, Generators::bind(new RefusedGrantRolesGenerator(), static fn (RefusedGrantRoles $condition): ErisGenerator => Generators::map(static fn (bool $admin): GrantRoles => new GrantRoles($condition->roles, $condition->users, $admin, $profile), Generators::bool())));
     }
 
     /**
@@ -85,18 +102,18 @@ final class GrantRolesGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $roles, ErisGenerator $users, ErisGenerator $withAdminOption, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): GrantRoles => new GrantRoles(roles: $parts[0], users: $parts[1], withAdminOption: $parts[2], profile: $parts[3], client: $parts[4]), \Tests\Generator\Operands::tuple($roles, $users, $withAdminOption, $profile, $client));
+        return Generators::map(static fn (array $parts): GrantRoles => new GrantRoles(roles: $parts[0], users: $parts[1], withAdminOption: $parts[2], profile: $parts[3], client: $parts[4]), Generators::tuple($roles, $users, $withAdminOption, $profile, $client));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<GrantRoles>>
      */
     public static function forms(): iterable
     {
         yield 'GrantRoles/48' => GrantRolesGenerator::fromOperands(
-            roles: \Tests\Generator\Operands::tuple(
+            roles: Generators::tuple(
                 GrantedRoleGenerator::fromOperands(
                     role: \Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
                         user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -107,7 +124,7 @@ final class GrantRolesGenerator implements ErisGenerator
                     )
                 )
             ),
-            users: \Tests\Generator\Operands::tuple(
+            users: Generators::tuple(
                 new AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                     parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                 )])

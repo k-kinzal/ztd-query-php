@@ -26,7 +26,7 @@ final class PartitionRowGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionRow {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionRow(items: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $items,
             $inputSource ?? Generators::constant(null)
         ));

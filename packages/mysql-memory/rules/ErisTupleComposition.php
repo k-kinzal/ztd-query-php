@@ -24,18 +24,11 @@ use PHPStan\Type\Type;
 final class ErisTupleComposition implements DynamicStaticMethodReturnTypeExtension
 {
     /**
-     * @param class-string $factory The Eris tuple factory or its operand shrink adapter
-     */
-    public function __construct(private readonly string $factory = Generators::class)
-    {
-    }
-
-    /**
      * Selects Eris's generator composition factory.
      */
     public function getClass(): string
     {
-        return $this->factory;
+        return Generators::class;
     }
 
     /**

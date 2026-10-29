@@ -27,7 +27,7 @@ final class UserCommentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment(kind: $parts[0], text: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $text,
             $inputSource ?? Generators::constant(null)

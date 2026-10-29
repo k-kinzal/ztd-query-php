@@ -27,7 +27,7 @@ final class RefusedColumnLevelGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel(privilege: $parts[0], level: $parts[1], program: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $privilege,
             $level,
             $program ?? Generators::constant(null)
@@ -43,7 +43,7 @@ final class RefusedColumnLevelGenerator implements ErisGenerator
         yield 'Account\\Problem\\RefusedColumnLevel' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, new RefusedColumnLevelGenerator(
             privilege: new \Tests\Generator\MySql\Statement\Account\Privilege\Item\StaticPrivilegeGenerator(
                 kind: \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select]),
-                columns: \Tests\Generator\Operands::tuple(
+                columns: Generators::tuple(
                     \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $suffix): string => 'a' . $suffix, Generators::choose(0, 8)),
                         quote: Generators::constant(null)

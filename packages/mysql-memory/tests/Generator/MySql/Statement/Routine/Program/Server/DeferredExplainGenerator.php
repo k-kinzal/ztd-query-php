@@ -33,7 +33,7 @@ final class DeferredExplainGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain(statement: $parts[0], format: $parts[1], into: $parts[2], database: $parts[3], analyze: $parts[4], modifier: $parts[5], emptyInto: $parts[6], inputSource: $parts[7], verb: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $statement,
             $format ?? Generators::constant(null),
             $into ?? Generators::constant(null),

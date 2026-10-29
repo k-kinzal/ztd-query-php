@@ -26,7 +26,7 @@ final class WrongRelationKindGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(name: $parts[0], refusal: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $refusal
         ));

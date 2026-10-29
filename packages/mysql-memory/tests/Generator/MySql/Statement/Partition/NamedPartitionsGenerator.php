@@ -26,7 +26,7 @@ final class NamedPartitionsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions(names: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $names,
             $inputSource ?? Generators::constant(null)
         ));

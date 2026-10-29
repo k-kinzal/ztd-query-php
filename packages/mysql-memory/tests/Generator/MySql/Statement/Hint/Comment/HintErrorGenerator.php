@@ -28,7 +28,7 @@ final class HintErrorGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintError(failure: $parts[0], offset: $parts[1], closing: $parts[2], leading: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $failure,
             $offset,
             $closing ?? Generators::constant(false),

@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Routine;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,6 +21,35 @@ final class CreateFunctionGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete CreateFunction values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No CreateFunction forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction) {
+                throw new LogicException('Publishing CreateFunction must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $name Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList> $parameters Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName> $returns Generated constructor operand
@@ -29,23 +60,13 @@ final class CreateFunctionGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction>
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $returns, ErisGenerator $implementation, ?ErisGenerator $collation = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null)
+    public static function operands(ErisGenerator $name, ErisGenerator $parameters, ErisGenerator $returns, ErisGenerator $implementation, ?ErisGenerator $collation = null, ?ErisGenerator $definer = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction(name: $parts[0], parameters: $parts[1], returns: $parts[2], implementation: $parts[3], collation: $parts[4], definer: $parts[5], ifNotExists: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], definitionSource: $parts[9]);
-        }, \Tests\Generator\Operands::tuple(
-            $name,
-            $parameters,
-            $returns,
-            $implementation,
-            $collation ?? Generators::constant(null),
-            $definer ?? Generators::constant(null),
-            $ifNotExists ?? Generators::constant(false),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())
-        ));
+        }, Generators::tuple($name, $parameters, $returns, $implementation, $collation ?? Generators::constant(null), $definer ?? Generators::constant(null), $ifNotExists ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())));
     }
     /**
      * Composes a complete binary return declaration with earlier notices and later body conditions.
@@ -54,7 +75,7 @@ final class CreateFunctionGenerator implements ErisGenerator
      */
     public static function binaryReturns(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::bool(), Generators::choose(0, 255), Generators::choose(0, 3), Generators::bool()), static function (array $parts) use ($release): ErisGenerator {
+        return Generators::bind(Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::bool(), Generators::choose(0, 255), Generators::choose(0, 3), Generators::bool()), static function (array $parts) use ($release): ErisGenerator {
             [$name, $variable, $length, $kind, $width] = $parts;
             $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character($variable ? \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::VarChar : \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, (string) $length, charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Binary));
             $body = match ($kind) {
@@ -64,7 +85,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                 default => Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(statements: [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor($name, [new \SqlSemantics\Statement\Identifier\Name('target')])])),
             };
             $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name('argument'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int, $width ? '5' : null))]);
-            $definitions = new self(Generators::constant(new \SqlSemantics\Statement\Identifier\QualifiedName($name)), Generators::constant($parameters), Generators::constant($type), new Definition\FunctionImplementationGenerator($body), definitionSource: Generators::constant(null));
+            $definitions = self::operands(Generators::constant(new \SqlSemantics\Statement\Identifier\QualifiedName($name)), Generators::constant($parameters), Generators::constant($type), new Definition\FunctionImplementationGenerator($body), definitionSource: Generators::constant(null));
             $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
             $warnings = [...array_fill(0, !$legacy && $width ? 1 : 0, 1681), ...($legacy ? [] : [1287]), 1235];
             return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction $definition) use ($release, $parts, $warnings): array {
@@ -93,17 +114,17 @@ final class CreateFunctionGenerator implements ErisGenerator
             $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $definition);
             \SqlSemantics\Diagnostic\Check::invariant($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction, 'A generated function keeps its declaration role.');
             return $statement;
-        }, \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $types, Generators::choose(0, 1000)));
+        }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $types, Generators::choose(0, 1000)));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction>>
      */
     public static function forms(): iterable
     {
-        yield 'CreateFunction/159' => new CreateFunctionGenerator(
+        yield 'CreateFunction/159' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -126,7 +147,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -141,7 +162,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/160' => new CreateFunctionGenerator(
+        yield 'CreateFunction/160' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -151,7 +172,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                 catalog: Generators::constant(null)
             ),
             parameters: new ParameterListGenerator(
-                parameters: \Tests\Generator\Operands::tuple(
+                parameters: Generators::tuple(
                     new ParameterGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -177,7 +198,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -192,7 +213,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/215' => new CreateFunctionGenerator(
+        yield 'CreateFunction/215' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -216,7 +237,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -231,7 +252,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/216' => new CreateFunctionGenerator(
+        yield 'CreateFunction/216' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -256,7 +277,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -271,7 +292,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/217' => new CreateFunctionGenerator(
+        yield 'CreateFunction/217' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -296,7 +317,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -311,7 +332,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/218' => new CreateFunctionGenerator(
+        yield 'CreateFunction/218' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -334,7 +355,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -349,7 +370,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/219' => new CreateFunctionGenerator(
+        yield 'CreateFunction/219' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -373,7 +394,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -388,7 +409,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/220' => new CreateFunctionGenerator(
+        yield 'CreateFunction/220' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -410,7 +431,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -425,7 +446,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/221' => new CreateFunctionGenerator(
+        yield 'CreateFunction/221' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -439,7 +460,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             ),
             returns: new \Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator([new \Tests\Generator\MySql\Statement\Type\EnumerationGenerator(
                 kind: \Tests\Generator\MySql\Statement\Type\Kind\EnumerationKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum]),
-                members: \Tests\Generator\Operands::tuple(
+                members: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                         value: Generators::constant('0f'),
                         radix: \Tests\Generator\MySql\Statement\Literal\RadixGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal])
@@ -454,7 +475,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -469,7 +490,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/222' => new CreateFunctionGenerator(
+        yield 'CreateFunction/222' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -493,7 +514,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -508,7 +529,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/225' => new CreateFunctionGenerator(
+        yield 'CreateFunction/225' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -523,7 +544,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             returns: new \Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator([new \Tests\Generator\MySql\Statement\Type\IntegralGenerator(
                 kind: \Tests\Generator\MySql\Statement\Type\Kind\IntegralKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int]),
                 width: Generators::constant(null),
-                modifiers: \Tests\Generator\Operands::tuple(
+                modifiers: Generators::tuple(
                     \Tests\Generator\MySql\Statement\Type\Kind\NumericModifierGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier::Signed])
                 )
             )]),
@@ -534,7 +555,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -549,7 +570,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/234' => new CreateFunctionGenerator(
+        yield 'CreateFunction/234' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -578,7 +599,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         tag: Generators::constant('')
                     )
                 ),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('javascript'),
@@ -593,7 +614,7 @@ final class CreateFunctionGenerator implements ErisGenerator
             )]),
             ifNotExists: Generators::constant(false)
         );
-        yield 'CreateFunction/425' => new CreateFunctionGenerator(
+        yield 'CreateFunction/425' => CreateFunctionGenerator::operands(
             name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -625,7 +646,7 @@ final class CreateFunctionGenerator implements ErisGenerator
                         )])
                     )])
                 )]),
-                characteristics: \Tests\Generator\Operands::tuple(
+                characteristics: Generators::tuple(
                     new Characteristic\CharacteristicGenerator([new Characteristic\RoutineLanguageGenerator(
                         external: Generators::constant(null)
                     )])

@@ -29,7 +29,7 @@ final class ExchangePartitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ExchangePartition {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ExchangePartition(partition: $parts[0], table: $parts[1], validation: $parts[2], inputSource: $parts[3], relationInformation: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $partition,
             $table,
             $validation ?? Generators::constant(null),

@@ -27,7 +27,7 @@ final class RoleOrPrivilegeMismatchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch(item: $parts[0], roleExpected: $parts[1], offset: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $item,
             $roleExpected,
             $offset ?? Generators::constant(null)

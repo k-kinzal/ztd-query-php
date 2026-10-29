@@ -29,7 +29,7 @@ final class FunctionCallGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall {
             return new \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall(name: $parts[0], arguments: $parts[1], schema: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $arguments ?? Generators::constant([]),
             $schema ?? Generators::constant(null),

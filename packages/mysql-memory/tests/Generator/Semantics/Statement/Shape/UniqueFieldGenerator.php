@@ -25,7 +25,7 @@ final class UniqueFieldGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\UniqueField {
             return new \SqlSemantics\Statement\Shape\UniqueField(field: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $field
         ));
     }

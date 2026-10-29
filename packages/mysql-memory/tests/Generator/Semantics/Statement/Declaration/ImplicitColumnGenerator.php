@@ -26,7 +26,7 @@ final class ImplicitColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Declaration\ImplicitColumn {
             return new \SqlSemantics\Statement\Declaration\ImplicitColumn(names: $parts[0], column: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $names,
             $column
         ));

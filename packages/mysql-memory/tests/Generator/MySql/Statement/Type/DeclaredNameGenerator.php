@@ -36,7 +36,7 @@ final class DeclaredNameGenerator implements ErisGenerator
      */
     public static function synonymWrites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        $characters = \Tests\Generator\Operands::bind(new Keyword\CharacterAliasGenerator(), static fn (M\Type\Keyword\CharacterAlias $alias): ErisGenerator => new CharacterGenerator(
+        $characters = Generators::bind(new Keyword\CharacterAliasGenerator(), static fn (M\Type\Keyword\CharacterAlias $alias): ErisGenerator => new CharacterGenerator(
             Generators::constant($alias->kind()),
             Generators::constant(in_array($alias->kind(), [M\Type\Kind\CharacterKind::Char, M\Type\Kind\CharacterKind::VarChar, M\Type\Kind\CharacterKind::CharVarying], true) ? '12' : null),
             Generators::constant($alias->national()),
@@ -65,7 +65,7 @@ final class DeclaredNameGenerator implements ErisGenerator
                 new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('canonical')), new M\Table\Column\OrdinaryColumn($canonical)),
             ]);
         }, $types);
-        return \Tests\Generator\Operands::bind(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $tables), static function (\SqlSemantics\Statement\AnalyzedStatement $definition) use ($release): ErisGenerator {
+        return Generators::bind(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $tables), static function (\SqlSemantics\Statement\AnalyzedStatement $definition) use ($release): ErisGenerator {
             \SqlSemantics\Diagnostic\Check::invariant($definition instanceof M\Table\CreateTable, 'The dependent write names a generated table.');
             $column = $definition->elements[0];
             \SqlSemantics\Diagnostic\Check::invariant($column instanceof M\Table\Column\ColumnDefinition, 'The paired table starts with a column.');
@@ -76,7 +76,7 @@ final class DeclaredNameGenerator implements ErisGenerator
             }, Generators::choose(0, 100));
             $context = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value))->context($definition->declarations(), true, new \SqlSemantics\Contract\SearchPath('pbt'));
             $query = new M\QueryRoot(new M\Query\Select([], [new M\Query\SelectExpression(new M\Name\ColumnUse(new Name('selected'))), new M\Query\SelectExpression(new M\Name\ColumnUse(new Name('canonical')))], new M\Relation\TableReference($definition->name)));
-            return \Tests\Generator\Operands::tuple(
+            return Generators::tuple(
                 Generators::constant($definition),
                 new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $writes, Generators::constant($context)),
                 new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, Generators::constant($query), Generators::constant($context)),

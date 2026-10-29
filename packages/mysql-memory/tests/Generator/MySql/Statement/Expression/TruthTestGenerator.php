@@ -29,7 +29,7 @@ final class TruthTestGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\TruthTest {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\TruthTest(operand: $parts[0], truth: $parts[1], negated: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $truth,
             $negated ?? Generators::constant(false),

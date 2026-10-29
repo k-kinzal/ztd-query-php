@@ -25,7 +25,7 @@ final class ReloadKeyringGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadKeyring(inputSource: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null)
         ));
     }

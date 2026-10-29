@@ -30,7 +30,7 @@ final class WriteTargetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(name: $parts[0], alias: $parts[1], partitions: $parts[2], mark: $parts[3], relationInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $alias ?? Generators::constant(null),
             $partitions ?? Generators::constant([]),

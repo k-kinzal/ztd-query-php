@@ -27,7 +27,7 @@ final class IntoOutfileGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile(file: $parts[0], format: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $file,
             $format,
             $inputSource ?? Generators::constant(null)

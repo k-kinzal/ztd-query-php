@@ -25,7 +25,7 @@ final class SpatialArithmeticGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\SpatialArithmetic {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\SpatialArithmetic(operator: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operator
         ));
     }

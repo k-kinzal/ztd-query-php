@@ -28,7 +28,7 @@ final class SystemAssignmentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment(variable: $parts[0], value: $parts[1], inputSource: $parts[2], operator: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $variable,
             $value,
             $inputSource ?? Generators::constant(null),
@@ -44,7 +44,7 @@ final class SystemAssignmentGenerator implements ErisGenerator
     public static function localAssignments(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
         $values = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $number): string => (string) $number, Generators::choose(1, 10)));
-        return \Tests\Generator\Operands::bind($values, static function (\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral $value) use ($release): ErisGenerator {
+        return Generators::bind($values, static function (\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral $value) use ($release): ErisGenerator {
             return Generators::map(static function (bool $system) use ($value, $release): array {
                 $local = \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Local;
                 $name = new \SqlSemantics\Statement\Identifier\Name('auto_increment_increment');

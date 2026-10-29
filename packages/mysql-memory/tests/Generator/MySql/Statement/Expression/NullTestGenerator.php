@@ -28,7 +28,7 @@ final class NullTestGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\NullTest {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\NullTest(operand: $parts[0], negated: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $negated ?? Generators::constant(false),
             $scalarInformation ?? Generators::constant(null),

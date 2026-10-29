@@ -27,7 +27,7 @@ final class DependentFieldGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\DependentField {
             return new \SqlSemantics\Statement\Shape\DependentField(name: $parts[0], candidates: $parts[1], missing: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $candidates,
             $missing

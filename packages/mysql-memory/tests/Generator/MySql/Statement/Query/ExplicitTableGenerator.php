@@ -28,7 +28,7 @@ final class ExplicitTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable {
             return new \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable(table: $parts[0], relationInformation: $parts[1], queryInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table,
             $relationInformation ?? Generators::constant(null),
             $queryInformation ?? Generators::constant(null),

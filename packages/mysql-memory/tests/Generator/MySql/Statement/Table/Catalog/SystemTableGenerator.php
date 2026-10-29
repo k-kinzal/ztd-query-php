@@ -35,7 +35,7 @@ final class SystemTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable(schema: $parts[0], name: $parts[1], type: $parts[2], engine: $parts[3], version: $parts[4], rowFormat: $parts[5], collation: $parts[6], options: $parts[7], comment: $parts[8], columns: $parts[9], declaration: $parts[10]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $schema,
             $name,
             $type,
@@ -59,7 +59,7 @@ final class SystemTableGenerator implements ErisGenerator
     public static function catalog(\SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847, ?ErisGenerator $selected = null): ErisGenerator
     {
         $tables = \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables::of($release)->tables;
-        return \Tests\Generator\Operands::bind($selected ?? Generators::elements($tables), static function (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable $table): self {
+        return Generators::bind($selected ?? Generators::elements($tables), static function (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable $table): self {
             $columns = array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn $column) => SystemColumnGenerator::catalog(Generators::constant($column)), $table->columns);
             return new self(
                 Generators::constant($table->schema),
@@ -71,7 +71,7 @@ final class SystemTableGenerator implements ErisGenerator
                 Generators::constant($table->collation),
                 Generators::constant($table->options),
                 Generators::constant($table->comment),
-                \Tests\Generator\Operands::tuple(...$columns),
+                Generators::tuple(...$columns),
                 Generators::constant($table->declaration),
             );
         });

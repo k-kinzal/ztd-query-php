@@ -26,7 +26,7 @@ final class IndexGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Index {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Index(last: $parts[0], offset: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $last,
             $offset
         ));

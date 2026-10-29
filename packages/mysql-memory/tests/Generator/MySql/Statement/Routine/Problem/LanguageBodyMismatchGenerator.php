@@ -25,7 +25,7 @@ final class LanguageBodyMismatchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch(offset: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset ?? Generators::constant(null)
         ));
     }

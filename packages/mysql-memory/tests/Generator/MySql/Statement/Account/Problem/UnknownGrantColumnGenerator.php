@@ -26,7 +26,7 @@ final class UnknownGrantColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn(column: $parts[0], table: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $table
         ));

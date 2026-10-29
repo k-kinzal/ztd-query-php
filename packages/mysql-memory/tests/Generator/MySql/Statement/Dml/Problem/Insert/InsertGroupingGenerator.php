@@ -25,7 +25,7 @@ final class InsertGroupingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\InsertGrouping {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Insert\InsertGrouping(function: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $function
         ));
     }
@@ -39,7 +39,7 @@ final class InsertGroupingGenerator implements ErisGenerator
         yield 'Dml\\Problem\\Insert\\InsertGrouping' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new InsertGroupingGenerator(
             function: new \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator(
                 function: \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum]),
-                arguments: \Tests\Generator\Operands::tuple(
+                arguments: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     )

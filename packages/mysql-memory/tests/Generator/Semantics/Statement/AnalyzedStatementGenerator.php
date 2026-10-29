@@ -35,10 +35,10 @@ final class AnalyzedStatementGenerator implements ErisGenerator
         $contexts ??= AnalysisContextGenerator::mysql($release);
         $origins = new Source\OriginGenerator(
             new NodeGenerator([new StatementGenerator([$statements])]),
-            Generators::choose(0, 128),
-            Generators::choose(0, 64),
+            Generators::nat(),
+            Generators::nat(),
         );
-        $sources = new Source\SourceMapGenerator(\Tests\Generator\Operands::vector(1, $origins));
+        $sources = new Source\SourceMapGenerator(Generators::vector(1, $origins));
         $this->delegate = Generators::map(static function (array $parts): Statement {
             [$context, $sources] = $parts;
             $statement = $sources->origins[0]->node;
@@ -46,6 +46,6 @@ final class AnalyzedStatementGenerator implements ErisGenerator
                 throw new LogicException('The generated source origin belongs to its MySQL statement.');
             }
             return (new Publication())->publish($context, $statement, $sources);
-        }, \Tests\Generator\Operands::tuple($contexts, $sources));
+        }, Generators::tuple($contexts, $sources));
     }
 }

@@ -29,7 +29,7 @@ final class InvalidTypeSizeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(rule: $parts[0], name: $parts[1], actual: $parts[2], maximum: $parts[3], scope: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rule,
             $name,
             $actual ?? Generators::constant(0),

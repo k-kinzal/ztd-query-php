@@ -26,7 +26,7 @@ final class UnknownPartitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition(partition: $parts[0], table: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $partition,
             $table
         ));

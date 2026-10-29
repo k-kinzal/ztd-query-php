@@ -25,7 +25,7 @@ final class InvalidJsonDocumentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument(expression: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression
         ));
     }
@@ -42,7 +42,7 @@ final class InvalidJsonDocumentGenerator implements ErisGenerator
                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                 )]),
                 path: \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                    segments: \Tests\Generator\Operands::tuple(
+                    segments: Generators::tuple(
                         Generators::constant('$')
                     ),
                     introducer: Generators::constant(null),

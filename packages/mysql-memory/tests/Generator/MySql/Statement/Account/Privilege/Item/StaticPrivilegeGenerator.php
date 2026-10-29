@@ -27,7 +27,7 @@ final class StaticPrivilegeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(kind: $parts[0], columns: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $columns ?? Generators::constant([]),
             $inputSource ?? Generators::constant(null)

@@ -27,7 +27,7 @@ final class RenameElementGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $kind, ErisGenerator $from, ErisGenerator $to, ?ErisGenerator $inputSource = null, ?ErisGenerator $keyword = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $kind,
             $from,
             $to,

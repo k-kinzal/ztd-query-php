@@ -37,4 +37,26 @@ final class SystemCatalogExecutionTest extends TestCase
         }
     }
 
+
+    #[DataProvider('providerGeneratedCatalogs')]
+    public function testGeneratedCatalogMetadataIsConsumedByShowColumns(\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables $catalog, \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns $statement): void
+    {
+        $instance = new Instance('8.4.7');
+        $instance->dictionary->system = new \MySqlMemory\System\SystemSchemas($instance, \SqlSemantics\Contract\GrammarRelease::MySql847, $catalog);
+        $reply = (new \MySqlMemory\Session\Execution($instance->connect()))->statement($statement);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame(array_map(static fn ($column): string => $column->comment, $catalog->tables[0]->columns), array_column($reply->rows, 8));
+    }
+
+    /**
+     * @return iterable<array{\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables, \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns}>
+     */
+    public static function providerGeneratedCatalogs(): iterable
+    {
+        $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
+        $random->seed(1983);
+        $generator = \Tests\Generator\MySql\Statement\Table\Catalog\SystemTablesGenerator::inspections();
+        [$catalog, $statement] = $generator(8, $random)->unbox();
+        yield [$catalog, $statement];
+    }
 }

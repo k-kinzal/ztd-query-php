@@ -9,6 +9,7 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
 use LogicException;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
@@ -26,20 +27,52 @@ final class CreateTriggerGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Composes the written operands through Eris generation and shrinking.
+     * Generates complete CreateTrigger values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<CreateTrigger>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct()
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No CreateTrigger forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): CreateTrigger {
+            if (!$statement instanceof CreateTrigger) {
+                throw new LogicException('Publishing CreateTrigger must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Composes the written operands through Eris generation and shrinking.
+     * @return ErisGenerator<CreateTrigger>
+     */
+    public static function operands(): ErisGenerator
     {
         $operands = Generators::associative(['number' => Generators::choose(0, 10000), 'mismatch' => Generators::bool(), 'time' => Generators::elements(...M\Routine\Trigger\TriggerTime::cases()), 'event' => Generators::elements(...M\Routine\Trigger\TriggerEvent::cases())]);
-        $this->delegate = Generators::map(
-            static function (array $data): CreateTrigger {
-                if (!is_int($data['number']) || !is_bool($data['mismatch']) || !$data['time'] instanceof M\Routine\Trigger\TriggerTime || !$data['event'] instanceof M\Routine\Trigger\TriggerEvent) {
-                    throw new LogicException('Trigger operands require a name suffix, schema flag, time and event.');
-                }
-                return new CreateTrigger(new QualifiedName(new Name('tr' . $data['number']), new Name($data['mismatch'] ? 'other' : 'pbt')), $data['time'], $data['event'], new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('target'), new Name('pbt'))), new M\Routine\Program\Block([], []));
-            },
-            $operands,
-        );
+        return Generators::map(static function (array $data): CreateTrigger {
+            if (!is_int($data['number']) || !is_bool($data['mismatch']) || !$data['time'] instanceof M\Routine\Trigger\TriggerTime || !$data['event'] instanceof M\Routine\Trigger\TriggerEvent) {
+                throw new LogicException('Trigger operands require a name suffix, schema flag, time and event.');
+            }
+            return new CreateTrigger(new QualifiedName(new Name('tr' . $data['number']), new Name($data['mismatch'] ? 'other' : 'pbt')), $data['time'], $data['event'], new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('target'), new Name('pbt'))), new M\Routine\Program\Block([], []));
+        }, $operands);
     }
 
     /**
@@ -75,11 +108,11 @@ final class CreateTriggerGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $name, ErisGenerator $time, ErisGenerator $event, ErisGenerator $table, ErisGenerator $body, ErisGenerator $order, ErisGenerator $definer, ErisGenerator $ifNotExists, ?ErisGenerator $definitionSource = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7], definitionSource: $parts[8]), \Tests\Generator\Operands::tuple($name, $time, $event, $table, $body, $order, $definer, $ifNotExists, $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())));
+        return Generators::map(static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7], definitionSource: $parts[8]), Generators::tuple($name, $time, $event, $table, $body, $order, $definer, $ifNotExists, $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<CreateTrigger>>
      */
@@ -106,8 +139,8 @@ final class CreateTriggerGenerator implements ErisGenerator
                     catalog: Generators::constant(null)
                 )
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
-                items: \Tests\Generator\Operands::tuple(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
+                items: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                         expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                             operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
@@ -124,7 +157,7 @@ final class CreateTriggerGenerator implements ErisGenerator
                         )]),
                         alias: Generators::constant(null),
                         layout: new \Tests\Generator\Semantics\Statement\Spelling\LayoutGenerator(
-                            tokens: \Tests\Generator\Operands::tuple(
+                            tokens: Generators::tuple(
                                 new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
                                     gap: Generators::constant(''),
                                     text: Generators::constant('(')
@@ -210,7 +243,7 @@ final class CreateTriggerGenerator implements ErisGenerator
                     catalog: Generators::constant(null)
                 )
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator()]),
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()]),
             order: new Trigger\TriggerOrderGenerator(
                 placement: Trigger\OrderPlacementGenerator::selecting([M\Routine\Trigger\OrderPlacement::Follows]),
                 other: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -253,8 +286,8 @@ final class CreateTriggerGenerator implements ErisGenerator
                     catalog: Generators::constant(null)
                 )
             ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Utility\Set\SetVariablesGenerator(
-                items: \Tests\Generator\Operands::tuple(
+            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Utility\Set\SetVariablesGenerator::operands(
+                items: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Utility\Set\SetItemGenerator([new \Tests\Generator\MySql\Statement\Utility\Set\NameAssignmentGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('a'),

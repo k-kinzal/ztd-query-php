@@ -34,7 +34,7 @@ final class ConflictingUpdateGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate(with: $parts[0], lowPriority: $parts[1], ignore: $parts[2], tables: $parts[3], assignments: $parts[4], where: $parts[5], orderBy: $parts[6], limit: $parts[7], hints: $parts[8], inputSource: $parts[9]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $with,
             $lowPriority,
             $ignore,
@@ -57,7 +57,7 @@ final class ConflictingUpdateGenerator implements ErisGenerator
         yield 'Dml\\Problem\\Update\\ConflictingUpdate' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new ConflictingUpdateGenerator(
             with: new \Tests\Generator\MySql\Statement\Query\With\WithGenerator(
                 recursive: Generators::constant(false),
-                tables: \Tests\Generator\Operands::tuple(
+                tables: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\With\CommonTableExpressionGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('c'),
@@ -66,7 +66,7 @@ final class ConflictingUpdateGenerator implements ErisGenerator
                         columns: Generators::constant([]),
                         query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\With\DeferredBodyGenerator(
                             selection: new \Tests\Generator\MySql\Statement\Routine\Program\DeferredSelectionGenerator(
-                                items: \Tests\Generator\Operands::tuple(
+                                items: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                         expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
@@ -87,7 +87,7 @@ final class ConflictingUpdateGenerator implements ErisGenerator
                                 windows: Generators::constant([]),
                                 procedure: Generators::constant(null),
                                 qualify: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                    elements: \Tests\Generator\Operands::tuple(
+                                    elements: Generators::tuple(
                                         new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
@@ -105,7 +105,7 @@ final class ConflictingUpdateGenerator implements ErisGenerator
             ),
             lowPriority: Generators::constant(false),
             ignore: Generators::constant(false),
-            tables: \Tests\Generator\Operands::tuple(
+            tables: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
                     name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -139,7 +139,7 @@ final class ConflictingUpdateGenerator implements ErisGenerator
                     dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                 )])
             ),
-            assignments: \Tests\Generator\Operands::tuple(
+            assignments: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Dml\AssignmentGenerator(
                     column: new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(

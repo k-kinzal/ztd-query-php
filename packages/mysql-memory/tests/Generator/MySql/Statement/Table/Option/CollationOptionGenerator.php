@@ -28,7 +28,7 @@ final class CollationOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption(collation: $parts[0], inputSource: $parts[1], operator: $parts[2], defaultKeyword: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $collation,
             $inputSource ?? Generators::constant(null),
             $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(),

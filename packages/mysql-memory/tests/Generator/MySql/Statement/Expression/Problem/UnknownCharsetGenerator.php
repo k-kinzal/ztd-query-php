@@ -25,7 +25,7 @@ final class UnknownCharsetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }

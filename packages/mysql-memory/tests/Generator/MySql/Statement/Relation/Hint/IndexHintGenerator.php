@@ -27,7 +27,7 @@ final class IndexHintGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $action, ErisGenerator $scope, ErisGenerator $indexes, ?ErisGenerator $inputSource = null, ?ErisGenerator $keyword = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $action,
             $scope,
             $indexes,

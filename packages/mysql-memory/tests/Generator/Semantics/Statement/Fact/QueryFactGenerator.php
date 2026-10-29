@@ -28,7 +28,7 @@ final class QueryFactGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Fact\QueryFact {
             return new \SqlSemantics\Statement\Fact\QueryFact(projection: $parts[0], names: $parts[1], aggregates: $parts[2], diagnostics: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $projection,
             $names,
             $aggregates ?? Generators::constant([]),

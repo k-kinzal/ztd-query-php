@@ -26,7 +26,7 @@ final class NameTooLongGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong {
             return new \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong(name: $parts[0], kind: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $kind ?? Generators::constant(null)
         ));

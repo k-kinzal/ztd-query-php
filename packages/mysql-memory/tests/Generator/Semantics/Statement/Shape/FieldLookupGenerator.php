@@ -23,7 +23,7 @@ final class FieldLookupGenerator implements ErisGenerator
      */
     public function __construct(array $alternatives)
     {
-        $this->delegate = \Tests\Generator\Operands::oneOf($alternatives);
+        $this->delegate = Generators::oneOf(...$alternatives);
     }
 
     /**
@@ -38,7 +38,7 @@ final class FieldLookupGenerator implements ErisGenerator
             new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\KnownGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer())), \Tests\Generator\Semantics\Statement\Type\NullabilityGenerator::selecting([\SqlSemantics\Statement\Type\Nullability::NotNull])),
         );
         $fields = FieldGenerator::namedExpression($numbers);
-        $ambiguous = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($fields, $numbers), static function (array $parts): AmbiguousFieldsGenerator {
+        $ambiguous = Generators::bind(Generators::tuple($fields, $numbers), static function (array $parts): AmbiguousFieldsGenerator {
             [$first, $second] = $parts;
             \SqlSemantics\Diagnostic\Check::invariant($first->name !== null, 'The generated duplicate outputs have a named alias.');
             $other = new \SqlSemantics\Statement\Shape\Field(1, $first->slot, $second);
@@ -48,9 +48,9 @@ final class FieldLookupGenerator implements ErisGenerator
         $lookups = new self([
             new UniqueFieldGenerator($fields), $ambiguous,
             new AbsentFieldGenerator(Generators::map(static fn (int $suffix): string => 'absent_' . $suffix, Generators::choose(0, 100))),
-            new DependentFieldGenerator(Generators::map(static fn (int $suffix): string => 'unknown_' . $suffix, Generators::choose(0, 100)), Generators::constant([]), \Tests\Generator\Operands::vector(1, $missing)),
+            new DependentFieldGenerator(Generators::map(static fn (int $suffix): string => 'unknown_' . $suffix, Generators::choose(0, 100)), Generators::constant([]), Generators::vector(1, $missing)),
         ]);
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($lookups, $numbers), static function (array $parts): ErisGenerator {
+        return Generators::bind(Generators::tuple($lookups, $numbers), static function (array $parts): ErisGenerator {
             [$lookup, $number] = $parts;
             $names = \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive;
             $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
@@ -65,7 +65,7 @@ final class FieldLookupGenerator implements ErisGenerator
                     $output = new \SqlSemantics\Statement\Fact\QueryFact([$star], $names);
                     $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], $relation, queryInformation: $output), new \SqlSemantics\Platform\MySql\Statement\StatementSemantics($profile, output: $output));
                     return [$query, $lookup, $lookup->name];
-                }, \Tests\Generator\Operands::tuple($tables, $stars));
+                }, Generators::tuple($tables, $stars));
             }
             if ($lookup instanceof \SqlSemantics\Statement\Shape\UniqueField) {
                 $fields = [$lookup->field];

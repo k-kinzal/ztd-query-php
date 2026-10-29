@@ -30,7 +30,7 @@ final class DeferredInsertRowsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows(into: $parts[0], rows: $parts[1], alias: $parts[2], onDuplicate: $parts[3], inputSource: $parts[4], keyword: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $into,
             $rows,
             $alias ?? Generators::constant(null),

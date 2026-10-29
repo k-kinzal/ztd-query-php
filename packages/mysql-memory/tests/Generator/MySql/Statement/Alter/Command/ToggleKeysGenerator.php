@@ -26,7 +26,7 @@ final class ToggleKeysGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\ToggleKeys {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\ToggleKeys(enable: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $enable,
             $inputSource ?? Generators::constant(null)
         ));

@@ -35,7 +35,7 @@ final class ScalarGenerator implements ErisGenerator
      */
     public static function integers(): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(Generators::choose(0, 4), self::integerTree(...));
+        return Generators::bind(Generators::choose(0, 4), self::integerTree(...));
     }
 
     /**
@@ -50,7 +50,7 @@ final class ScalarGenerator implements ErisGenerator
     public static function composed(array $alternatives): ErisGenerator
     {
         $leaves = new self([...$alternatives, Generators::map(static fn (array $sample): \SqlSemantics\Statement\Scalar => new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($sample[0]), self::integers())]);
-        return \Tests\Generator\Operands::bind(Generators::choose(0, 3), static function (int $depth) use ($leaves): ErisGenerator {
+        return Generators::bind(Generators::choose(0, 3), static function (int $depth) use ($leaves): ErisGenerator {
             $tree = $leaves;
             for ($level = 0; $level < $depth; $level++) {
                 $tree = new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator($tree);
@@ -64,16 +64,16 @@ final class ScalarGenerator implements ErisGenerator
      */
     public static function integerTree(int $depth): ErisGenerator
     {
-        $leaf = Generators::map(static fn (int $value): array => [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $value), $value], \Tests\Generator\Operands::sized(Generators::nat(), 100));
+        $leaf = Generators::map(static fn (int $value): array => [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $value), $value], Generators::choose(0, 100));
         if ($depth === 0) {
             return $leaf;
         }
         $child = self::integerTree($depth - 1);
         $group = Generators::map(self::integerGroup(...), $child);
         $negative = Generators::map(self::integerNegative(...), $child);
-        $arithmetic = Generators::map(self::integerArithmetic(...), \Tests\Generator\Operands::tuple($child, $child, Generators::bool()));
-        $branch = Generators::map(self::integerBranch(...), \Tests\Generator\Operands::tuple($child, $child, $child));
-        return \Tests\Generator\Operands::oneOf([$leaf, $group, $negative, $arithmetic, $branch]);
+        $arithmetic = Generators::map(self::integerArithmetic(...), Generators::tuple($child, $child, Generators::bool()));
+        $branch = Generators::map(self::integerBranch(...), Generators::tuple($child, $child, $child));
+        return Generators::oneOf(...[$leaf, $group, $negative, $arithmetic, $branch]);
     }
     /**
      * @param array{\SqlSemantics\Statement\Scalar, int} $value
@@ -122,7 +122,7 @@ final class ScalarGenerator implements ErisGenerator
     public static function expressionForms(): iterable
     {
         $numbers = \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator::numbers();
-        $strings = \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(\Tests\Generator\Operands::vector(1, Generators::map(static fn (int $value): string => 'value' . $value, Generators::choose(0, 32))), Generators::constant(null), Generators::constant(false), Generators::constant(null));
+        $strings = \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(Generators::vector(1, Generators::map(static fn (int $value): string => 'value' . $value, Generators::choose(0, 32))), Generators::constant(null), Generators::constant(false), Generators::constant(null));
         yield 'Numeric categories' => $numbers;
         yield 'Concatenation operands' => new \Tests\Generator\MySql\Statement\Expression\Operator\ConcatenationGenerator($strings, $strings);
         yield 'Timestamp at time zone' => new \Tests\Generator\MySql\Statement\Expression\Conversion\AtTimeZoneGenerator(
@@ -132,9 +132,9 @@ final class ScalarGenerator implements ErisGenerator
             Generators::map(static fn (int $precision): string => (string) $precision, Generators::choose(0, 6)),
         );
         $levels = new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $level): string => (string) $level, Generators::choose(1, 6)));
-        yield 'Weight level list' => new \Tests\Generator\MySql\Statement\Call\Weight\WeightStringGenerator($strings, levels: \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Call\Weight\WeightLevelGenerator($levels, reverse: Generators::bool())));
+        yield 'Weight level list' => new \Tests\Generator\MySql\Statement\Call\Weight\WeightStringGenerator($strings, levels: Generators::vector(1, new \Tests\Generator\MySql\Statement\Call\Weight\WeightLevelGenerator($levels, reverse: Generators::bool())));
         yield 'Weight level range' => new \Tests\Generator\MySql\Statement\Call\Weight\WeightStringGenerator($strings, range: new \Tests\Generator\MySql\Statement\Call\Weight\WeightLevelRangeGenerator($levels, $levels));
-        $projection = new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), \Tests\Generator\Operands::vector(2, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($numbers)));
+        $projection = new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), Generators::vector(2, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($numbers)));
         $rows = new \Tests\Generator\MySql\Statement\Expression\Subquery\RowSubqueryGenerator($projection);
         yield 'Row subquery comparison' => new \Tests\Generator\MySql\Statement\Expression\ComparisonGenerator(
             \Tests\Generator\MySql\Statement\Expression\ComparisonOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal]),

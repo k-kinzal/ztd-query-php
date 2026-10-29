@@ -27,7 +27,7 @@ final class TablespaceOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption(tablespace: $parts[0], inputSource: $parts[1], operator: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $tablespace,
             $inputSource ?? Generators::constant(null),
             $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()

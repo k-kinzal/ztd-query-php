@@ -26,7 +26,7 @@ final class IndexCommentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexComment {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexComment(comment: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $comment,
             $inputSource ?? Generators::constant(null)
         ));

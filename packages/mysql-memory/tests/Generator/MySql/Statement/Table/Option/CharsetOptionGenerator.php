@@ -29,7 +29,7 @@ final class CharsetOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption(charset: $parts[0], inputSource: $parts[1], operator: $parts[2], defaultKeyword: $parts[3], form: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $charset,
             $inputSource ?? Generators::constant(null),
             $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(),

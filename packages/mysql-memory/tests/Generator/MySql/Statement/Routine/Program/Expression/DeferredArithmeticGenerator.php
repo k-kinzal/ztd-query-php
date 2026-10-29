@@ -30,7 +30,7 @@ final class DeferredArithmeticGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic(operator: $parts[0], left: $parts[1], right: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], modWord: $parts[5] && $parts[0] === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Modulo);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operator,
             $left,
             $right,

@@ -28,7 +28,7 @@ final class OrdinalOutOfRangeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\OrdinalOutOfRange(position: $parts[0], items: $parts[1], ordinal: $parts[2], grouped: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $position,
             $items,
             $ordinal ?? Generators::constant(null),

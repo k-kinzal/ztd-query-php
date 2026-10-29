@@ -27,7 +27,7 @@ final class SyntaxRefusalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\SyntaxRefusal {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\SyntaxRefusal(offset: $parts[0], line: $parts[1], near: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset,
             $line,
             $near

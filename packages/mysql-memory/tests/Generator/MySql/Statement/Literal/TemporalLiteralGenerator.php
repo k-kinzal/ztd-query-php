@@ -30,7 +30,7 @@ final class TemporalLiteralGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): M\Literal\TemporalLiteral {
             return new M\Literal\TemporalLiteral(form: $parts[0], text: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $form,
             $text,
             $scalarInformation ?? Generators::constant(null),

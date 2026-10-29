@@ -26,11 +26,11 @@ final class XidGenerator implements ErisGenerator
      */
     public function __construct()
     {
-        $bytes = \Tests\Generator\Operands::bind(Generators::choose(0, 64), static fn (int $length): ErisGenerator => Generators::map(static fn (array $bytes): string => implode('', $bytes), \Tests\Generator\Operands::vector($length, Generators::map(static fn (int $byte): string => chr($byte), Generators::choose(0, 255)))));
+        $bytes = Generators::bind(Generators::choose(0, 64), static fn (int $length): ErisGenerator => Generators::map(static fn (array $bytes): string => implode('', $bytes), Generators::vector($length, Generators::map(static fn (int $byte): string => chr($byte), Generators::choose(0, 255)))));
         $this->delegate = Generators::map(static function (array $data): Xid {
             [$global, $branch, $format] = $data;
             return new Xid(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($global), $branch === null ? null : new \SqlSemantics\Platform\MySql\Statement\Literal\Text($branch), $branch === null || $format === null ? null : new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral((string) $format));
-        }, \Tests\Generator\Operands::tuple($bytes, Generators::oneOf(Generators::constant(null), $bytes), Generators::oneOf(Generators::constant(null), Generators::nat())));
+        }, Generators::tuple($bytes, Generators::oneOf(Generators::constant(null), $bytes), Generators::oneOf(Generators::constant(null), Generators::nat())));
     }
 
     /**
@@ -60,7 +60,7 @@ final class XidGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $transaction, ErisGenerator $branch, ErisGenerator $format): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): Xid => new Xid(transaction: $parts[0], branch: $parts[1], format: $parts[2]), \Tests\Generator\Operands::tuple($transaction, $branch, $format));
+        return Generators::map(static fn (array $parts): Xid => new Xid(transaction: $parts[0], branch: $parts[1], format: $parts[2]), Generators::tuple($transaction, $branch, $format));
     }
 
 }

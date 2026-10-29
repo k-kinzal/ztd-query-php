@@ -31,7 +31,7 @@ final class WeightStringGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString(subject: $parts[0], cast: $parts[1], length: $parts[2], levels: $parts[3], range: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $subject,
             $cast ?? Generators::constant(null),
             $length ?? Generators::constant(null),

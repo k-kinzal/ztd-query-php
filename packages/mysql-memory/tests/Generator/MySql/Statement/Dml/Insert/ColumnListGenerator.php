@@ -26,7 +26,7 @@ final class ColumnListGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList(columns: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $columns,
             $inputSource ?? Generators::constant(null)
         ));

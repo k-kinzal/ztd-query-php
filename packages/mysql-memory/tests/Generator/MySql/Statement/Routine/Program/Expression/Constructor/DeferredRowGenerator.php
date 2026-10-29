@@ -28,7 +28,7 @@ final class DeferredRowGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Constructor\DeferredRow(elements: $parts[0], keyword: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $elements,
             $keyword ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted),
             $scalarInformation ?? Generators::constant(null),

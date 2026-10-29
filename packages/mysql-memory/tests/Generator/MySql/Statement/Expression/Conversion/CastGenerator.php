@@ -34,7 +34,7 @@ final class CastGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): M\Expression\Conversion\Cast {
             return new M\Expression\Conversion\Cast(operand: $parts[0], target: $parts[1], array: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], form: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $target,
             $array ?? Generators::constant(false),
@@ -88,7 +88,7 @@ final class CastGenerator implements ErisGenerator
             return [$publication->publish($context, $request), $publication->publish($context, $definition), match ($family) {
                 2 => 1425, 3 => 1427, 4 => 1439, 5, 6 => 1235, default => 1426
             }, $earlier ? 1193 : ($family === 6 ? 1221 : null)];
-        }, \Tests\Generator\Operands::tuple(Generators::choose(0, $modern ? 9 : 4), Generators::choose(0, 19), Generators::bool(), CastFormGenerator::selecting([M\Expression\Conversion\CastForm::Cast, M\Expression\Conversion\CastForm::Convert]), Generators::bool()));
+        }, Generators::tuple(Generators::choose(0, $modern ? 9 : 4), Generators::choose(0, 19), Generators::bool(), CastFormGenerator::selecting([M\Expression\Conversion\CastForm::Cast, M\Expression\Conversion\CastForm::Convert]), Generators::bool()));
     }
 
 }

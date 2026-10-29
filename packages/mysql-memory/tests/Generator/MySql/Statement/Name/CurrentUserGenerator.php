@@ -55,7 +55,7 @@ final class CurrentUserGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $parentheses): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): CurrentUser => new CurrentUser(parentheses: $parts[0]), \Tests\Generator\Operands::tuple($parentheses));
+        return Generators::map(static fn (array $parts): CurrentUser => new CurrentUser(parentheses: $parts[0]), Generators::tuple($parentheses));
     }
 
 }

@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint;
@@ -24,15 +26,45 @@ final class RollbackToSavepointGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Selects the grammar before generating operands.
+     * Generates complete RollbackToSavepoint values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<RollbackToSavepoint>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No RollbackToSavepoint forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): RollbackToSavepoint {
+            if (!$statement instanceof RollbackToSavepoint) {
+                throw new LogicException('Publishing RollbackToSavepoint must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Selects the grammar before generating operands.
+     * @return ErisGenerator<RollbackToSavepoint>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
     {
         $names = Generators::oneOf(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(quotes: Generators::constant(\SqlSemantics\Statement\Identifier\NameQuote::Backtick)), Generators::map(static fn (string $value): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($value, \SqlSemantics\Statement\Identifier\NameQuote::Bare), Generators::elements('FULL', 'full', 'fUlL')));
-        $this->delegate = Generators::map(static function (array $parts) use ($release): RollbackToSavepoint {
+        return Generators::map(static function (array $parts) use ($release): RollbackToSavepoint {
             [$name, $work, $savepointWritten] = $parts;
             return new RollbackToSavepoint($name, $work, $savepointWritten, profile: new LanguageProfile($release));
-        }, \Tests\Generator\Operands::tuple($names, Generators::bool(), Generators::bool()));
+        }, Generators::tuple($names, Generators::bool(), Generators::bool()));
     }
 
     /**
@@ -64,11 +96,11 @@ final class RollbackToSavepointGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $savepoint, ErisGenerator $work, ErisGenerator $savepointWritten, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): RollbackToSavepoint => new RollbackToSavepoint(savepoint: $parts[0], work: $parts[1], savepointWritten: $parts[2], profile: $parts[3], client: $parts[4]), \Tests\Generator\Operands::tuple($savepoint, $work, $savepointWritten, $profile, $client));
+        return Generators::map(static fn (array $parts): RollbackToSavepoint => new RollbackToSavepoint(savepoint: $parts[0], work: $parts[1], savepointWritten: $parts[2], profile: $parts[3], client: $parts[4]), Generators::tuple($savepoint, $work, $savepointWritten, $profile, $client));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<RollbackToSavepoint>>
      */

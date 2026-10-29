@@ -30,7 +30,7 @@ final class RefusedReadGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead(handler: $parts[0], mode: $parts[1], index: $parts[2], values: $parts[3], where: $parts[4], limit: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $handler,
             $mode,
             $index ?? Generators::constant(null),
@@ -62,7 +62,7 @@ final class RefusedReadGenerator implements ErisGenerator
             where: new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredArithmeticGenerator(
                 operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
                 left: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                    elements: \Tests\Generator\Operands::tuple(
+                    elements: Generators::tuple(
                         new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )]),

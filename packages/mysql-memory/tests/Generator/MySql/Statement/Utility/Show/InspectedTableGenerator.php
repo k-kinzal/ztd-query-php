@@ -27,7 +27,7 @@ final class InspectedTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(name: $parts[0], inputSource: $parts[1], relationInformation: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $inputSource ?? Generators::constant(null),
             $relationInformation ?? Generators::constant(null)

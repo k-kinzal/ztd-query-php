@@ -30,7 +30,7 @@ final class AtTimeZoneGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone(operand: $parts[0], zone: $parts[1], interval: $parts[2], precision: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $zone,
             $interval ?? Generators::constant(false),

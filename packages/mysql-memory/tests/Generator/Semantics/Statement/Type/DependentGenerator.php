@@ -25,7 +25,7 @@ final class DependentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Type\Dependent {
             return new \SqlSemantics\Statement\Type\Dependent(missing: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $missing
         ));
     }

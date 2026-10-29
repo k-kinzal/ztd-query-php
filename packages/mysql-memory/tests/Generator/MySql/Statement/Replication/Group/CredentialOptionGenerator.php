@@ -27,7 +27,7 @@ final class CredentialOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption(credential: $parts[0], value: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $credential,
             $value,
             $inputSource ?? Generators::constant(null)

@@ -29,7 +29,7 @@ final class SourceOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(terminology: $parts[0], kind: $parts[1], value: $parts[2], synonym: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $terminology,
             $kind,
             $value,

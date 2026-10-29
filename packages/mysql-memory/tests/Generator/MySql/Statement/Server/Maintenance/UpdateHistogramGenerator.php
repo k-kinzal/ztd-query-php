@@ -28,7 +28,7 @@ final class UpdateHistogramGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram(columns: $parts[0], buckets: $parts[1], update: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $columns,
             $buckets ?? Generators::constant(null),
             $update ?? Generators::constant(null),

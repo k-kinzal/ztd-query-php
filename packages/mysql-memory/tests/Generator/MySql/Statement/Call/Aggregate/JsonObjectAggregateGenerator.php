@@ -31,7 +31,7 @@ final class JsonObjectAggregateGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate(key: $parts[0], value: $parts[1], keyAll: $parts[2], valueAll: $parts[3], over: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $key,
             $value,
             $keyAll ?? Generators::constant(false),

@@ -31,7 +31,7 @@ final class JoinedTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable(left: $parts[0], operator: $parts[1], right: $parts[2], on: $parts[3], using: $parts[4], relationInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $left,
             $operator,
             $right,

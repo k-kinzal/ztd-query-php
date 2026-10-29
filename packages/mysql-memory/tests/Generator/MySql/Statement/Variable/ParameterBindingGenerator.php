@@ -26,7 +26,7 @@ final class ParameterBindingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding(position: $parts[0], unbound: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $position,
             $unbound ?? Generators::bool()
         ));

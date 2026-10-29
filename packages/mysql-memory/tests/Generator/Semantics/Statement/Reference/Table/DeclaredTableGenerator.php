@@ -26,7 +26,7 @@ final class DeclaredTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Table\DeclaredTable {
             return new \SqlSemantics\Statement\Reference\Table\DeclaredTable(table: $parts[0], schema: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table,
             $schema ?? Generators::constant(null)
         ));

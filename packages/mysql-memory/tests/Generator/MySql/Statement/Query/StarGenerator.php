@@ -25,7 +25,7 @@ final class StarGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Star {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Star(inputSource: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null)
         ));
     }

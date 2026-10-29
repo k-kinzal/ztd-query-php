@@ -33,7 +33,7 @@ final class PathColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn(name: $parts[0], type: $parts[1], path: $parts[2], exists: $parts[3], collation: $parts[4], onEmpty: $parts[5], onError: $parts[6], errorFirst: $parts[7], inputSource: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $type,
             $path,

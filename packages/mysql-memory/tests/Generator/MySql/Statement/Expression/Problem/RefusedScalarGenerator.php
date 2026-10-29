@@ -25,7 +25,7 @@ final class RefusedScalarGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar(operand: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand
         ));
     }
@@ -40,7 +40,7 @@ final class RefusedScalarGenerator implements ErisGenerator
             operand: new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredSubqueryGenerator(
                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\Set\SetOperationGenerator(
                     left: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(
-                        rows: \Tests\Generator\Operands::tuple(
+                        rows: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(
                                 values: Generators::constant([])
                             )
@@ -50,7 +50,7 @@ final class RefusedScalarGenerator implements ErisGenerator
                     quantifier: Generators::constant(null),
                     right: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                         options: Generators::constant([]),
-                        items: \Tests\Generator\Operands::tuple(
+                        items: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                 expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(

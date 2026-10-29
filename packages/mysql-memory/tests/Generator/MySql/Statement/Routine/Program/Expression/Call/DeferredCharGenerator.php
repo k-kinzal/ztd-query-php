@@ -28,7 +28,7 @@ final class DeferredCharGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredChar {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredChar(arguments: $parts[0], charset: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $arguments,
             $charset ?? Generators::constant(null),
             $scalarInformation ?? Generators::constant(null),

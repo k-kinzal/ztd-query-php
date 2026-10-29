@@ -27,9 +27,9 @@ final class AggregateGenerator implements ErisGenerator
      */
     public static function populations(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(new AggregateAliasGenerator(), Generators::choose(0, 100), Generators::choose(0, 100)), static function (array $parts) use ($release): ErisGenerator {
+        return Generators::bind(Generators::tuple(new AggregateAliasGenerator(), Generators::choose(0, 100), Generators::choose(0, 100)), static function (array $parts) use ($release): ErisGenerator {
             [$alias, $first, $second] = $parts;
-            $calls = new self(Generators::constant($alias->function()), \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(Generators::constant(new Name('value')))), all: Generators::bool(), alias: Generators::constant($alias));
+            $calls = new self(Generators::constant($alias->function()), Generators::vector(1, new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(Generators::constant(new Name('value')))), all: Generators::bool(), alias: Generators::constant($alias));
             $queries = Generators::map(static function (M\Call\Aggregate\Aggregate $call) use ($first, $second): M\QueryRoot {
                 $rows = new M\Query\Set\SetOperation(
                     new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral((string) $first), new Name('value'))]),
@@ -45,7 +45,7 @@ final class AggregateGenerator implements ErisGenerator
             }, $calls);
             $deviation = abs($first - $second) / 2.0;
             $expected = $alias->function() === M\Call\Aggregate\AggregateFunction::Variance ? $deviation * $deviation : $deviation;
-            return \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries), Generators::constant($expected));
+            return Generators::tuple(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries), Generators::constant($expected));
         });
     }
 
@@ -62,10 +62,10 @@ final class AggregateGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $function, ErisGenerator $arguments, ?ErisGenerator $distinct = null, ?ErisGenerator $all = null, ?ErisGenerator $over = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null, ?ErisGenerator $divisionPrecision = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($function, static function (M\Call\Aggregate\AggregateFunction $selected) use ($arguments, $distinct, $all, $over, $scalarInformation, $inputSource, $alias, $divisionPrecision): ErisGenerator {
+        $this->delegate = Generators::bind($function, static function (M\Call\Aggregate\AggregateFunction $selected) use ($arguments, $distinct, $all, $over, $scalarInformation, $inputSource, $alias, $divisionPrecision): ErisGenerator {
             return Generators::map(static function (array $parts): M\Call\Aggregate\Aggregate {
                 return new M\Call\Aggregate\Aggregate(function: $parts[0], arguments: $parts[1], distinct: $parts[2], all: $parts[3], over: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6], alias: $parts[7], divisionPrecision: $parts[5] !== null && $parts[0] === M\Call\Aggregate\AggregateFunction::Average ? $parts[8] : null);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected),
                 $arguments,
                 $distinct ?? Generators::constant(false),

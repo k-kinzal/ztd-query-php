@@ -28,7 +28,7 @@ final class CheckConstraintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint(condition: $parts[0], name: $parts[1], enforced: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $condition,
             $name ?? Generators::constant(null),
             $enforced ?? Generators::constant(null),

@@ -28,7 +28,7 @@ final class ComponentSettingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting(variable: $parts[0], value: $parts[1], inputSource: $parts[2], operator: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $variable,
             $value,
             $inputSource ?? Generators::constant(null),

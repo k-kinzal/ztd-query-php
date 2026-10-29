@@ -32,7 +32,7 @@ final class StatementSemanticsGenerator implements ErisGenerator
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\StatementSemantics {
             [$statement, $client, $connection] = $parts;
             return new \SqlSemantics\Platform\MySql\Statement\StatementSemantics($statement->profile, $client, $statement->output, $statement->declarations, $statement->diagnostics, $statement->notices, $connection);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             new \Tests\Generator\Semantics\Statement\StatementSemanticsGenerator($profile, $output, $declarations, $diagnostics, $warnings),
             $client ?? Generators::constant(null),
             $connection ?? Generators::constant(null)

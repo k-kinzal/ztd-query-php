@@ -27,7 +27,7 @@ final class RoleSelectionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection {
             return new \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection(set: $parts[0], roles: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $set,
             $roles ?? Generators::constant([]),
             $inputSource ?? Generators::constant(null)

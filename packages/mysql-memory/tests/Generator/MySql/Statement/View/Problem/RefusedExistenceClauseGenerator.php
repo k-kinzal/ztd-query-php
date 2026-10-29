@@ -25,7 +25,7 @@ final class RefusedExistenceClauseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedExistenceClause {
             return new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedExistenceClause(offset: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset
         ));
     }

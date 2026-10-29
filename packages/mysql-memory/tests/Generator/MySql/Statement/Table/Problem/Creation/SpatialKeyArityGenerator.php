@@ -25,7 +25,7 @@ final class SpatialKeyArityGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity(owner: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $owner
         ));
     }

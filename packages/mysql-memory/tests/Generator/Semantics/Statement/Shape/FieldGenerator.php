@@ -28,7 +28,7 @@ final class FieldGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\Field {
             return new \SqlSemantics\Statement\Shape\Field(position: $parts[0], slot: $parts[1], expression: $parts[2], resolution: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $position,
             $slot,
             $expression ?? Generators::constant(null),
@@ -48,6 +48,6 @@ final class FieldGenerator implements ErisGenerator
             [$expression, $name] = $parts;
             $fact = $expression->scalarInformation();
             return new \SqlSemantics\Statement\Shape\Field(0, new \SqlSemantics\Statement\Shape\OutputSlot($name, $fact->type, $fact->nullability), $expression, $fact->resolution);
-        }, \Tests\Generator\Operands::tuple($expressions, new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()));
+        }, Generators::tuple($expressions, new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()));
     }
 }

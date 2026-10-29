@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Dml\Insert;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,32 +21,61 @@ final class InsertQueryGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete InsertQuery values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No InsertQuery forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery) {
+                throw new LogicException('Publishing InsertQuery must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto> $into Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Query> $source Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment>>|null $onDuplicate Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery>
      */
-    public function __construct(ErisGenerator $into, ErisGenerator $source, ?ErisGenerator $onDuplicate = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $into, ErisGenerator $source, ?ErisGenerator $onDuplicate = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery(into: $parts[0], source: $parts[1], onDuplicate: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
-            $into,
-            $source,
-            $onDuplicate ?? Generators::constant([]),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($into, $source, $onDuplicate ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery>>
      */
     public static function forms(): iterable
     {
-        yield 'InsertQuery/359' => new InsertQueryGenerator(
+        yield 'InsertQuery/359' => InsertQueryGenerator::operands(
             into: new InsertIntoGenerator(
                 replace: Generators::constant(false),
                 priority: Generators::constant(null),
@@ -87,7 +118,7 @@ final class InsertQueryGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
-        yield 'InsertQuery/additional/10' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new InsertQueryGenerator(
+        yield 'InsertQuery/additional/10' => [\SqlSemantics\Contract\GrammarRelease::MySql847, InsertQueryGenerator::operands(
             into: new InsertIntoGenerator(
                 replace: Generators::constant(false),
                 priority: Generators::constant(null),
@@ -112,9 +143,9 @@ final class InsertQueryGenerator implements ErisGenerator
             source: new \Tests\Generator\Semantics\Statement\QueryGenerator([new ValuesClausesGenerator(
                 with: Generators::constant(null),
                 body: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(
-                    rows: \Tests\Generator\Operands::tuple(
+                    rows: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(
-                            values: \Tests\Generator\Operands::tuple(
+                            values: Generators::tuple(
                                 \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )])
@@ -122,10 +153,10 @@ final class InsertQueryGenerator implements ErisGenerator
                         )
                     )
                 )]),
-                orderBy: \Tests\Generator\Operands::tuple(
+                orderBy: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredOrderItemGenerator(
                         expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                            elements: \Tests\Generator\Operands::tuple(
+                            elements: Generators::tuple(
                                 \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )]),
@@ -151,7 +182,7 @@ final class InsertQueryGenerator implements ErisGenerator
             )]),
             onDuplicate: Generators::constant([])
         )];
-        yield 'InsertQuery/additional/11' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new InsertQueryGenerator(
+        yield 'InsertQuery/additional/11' => [\SqlSemantics\Contract\GrammarRelease::MySql847, InsertQueryGenerator::operands(
             into: new InsertIntoGenerator(
                 replace: Generators::constant(false),
                 priority: Generators::constant(null),
@@ -177,7 +208,7 @@ final class InsertQueryGenerator implements ErisGenerator
                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new ValuesClausesGenerator(
                     with: new \Tests\Generator\MySql\Statement\Query\With\WithGenerator(
                         recursive: Generators::constant(false),
-                        tables: \Tests\Generator\Operands::tuple(
+                        tables: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Query\With\CommonTableExpressionGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::constant('x'),
@@ -186,7 +217,7 @@ final class InsertQueryGenerator implements ErisGenerator
                                 columns: Generators::constant([]),
                                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                                     options: Generators::constant([]),
-                                    items: \Tests\Generator\Operands::tuple(
+                                    items: Generators::tuple(
                                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                             expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -222,9 +253,9 @@ final class InsertQueryGenerator implements ErisGenerator
                     ),
                     body: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ParenthesizedQueryGenerator(
                         query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(
-                            rows: \Tests\Generator\Operands::tuple(
+                            rows: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(
-                                    values: \Tests\Generator\Operands::tuple(
+                                    values: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
@@ -233,7 +264,7 @@ final class InsertQueryGenerator implements ErisGenerator
                             )
                         )])
                     )]),
-                    orderBy: \Tests\Generator\Operands::tuple(
+                    orderBy: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredOrderItemGenerator(
                             expression: new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\Call\DormantCallGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -256,10 +287,10 @@ final class InsertQueryGenerator implements ErisGenerator
                         spelling: Generators::constant(null)
                     )
                 )]),
-                locking: \Tests\Generator\Operands::tuple(
+                locking: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\Locking\LockingClauseGenerator(
                         strength: \Tests\Generator\MySql\Statement\Query\Locking\LockStrengthGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update]),
-                        tables: \Tests\Generator\Operands::tuple(
+                        tables: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::constant('missing'),
@@ -270,7 +301,7 @@ final class InsertQueryGenerator implements ErisGenerator
                             )
                         ),
                         action: Generators::constant(null),
-                        wildcards: \Tests\Generator\Operands::tuple(
+                        wildcards: Generators::tuple(
                             \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                         )
                     )

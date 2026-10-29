@@ -25,7 +25,7 @@ final class PartitionMaximumGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionMaximum {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\PartitionMaximum(inputSource: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null)
         ));
     }

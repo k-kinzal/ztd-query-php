@@ -27,7 +27,7 @@ final class TargetTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(name: $parts[0], inputSource: $parts[1], relationInformation: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $inputSource ?? Generators::constant(null),
             $relationInformation ?? Generators::constant(null)

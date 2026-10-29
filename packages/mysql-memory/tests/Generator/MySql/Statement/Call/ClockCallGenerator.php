@@ -27,11 +27,11 @@ final class ClockCallGenerator implements ErisGenerator
      */
     public static function queries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        $calls = \Tests\Generator\Operands::bind(new Keyword\ClockAliasGenerator(), static function (M\Call\Keyword\ClockAlias $alias): ErisGenerator {
+        $calls = Generators::bind(new Keyword\ClockAliasGenerator(), static function (M\Call\Keyword\ClockAlias $alias): ErisGenerator {
             $precisions = $alias->clock()->precise()
                 ? Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 6))))
                 : Generators::constant(null);
-            return \Tests\Generator\Operands::bind($precisions, static fn (?M\Literal\Numeral $precision): ErisGenerator => new self(
+            return Generators::bind($precisions, static fn (?M\Literal\Numeral $precision): ErisGenerator => new self(
                 Generators::constant($alias->clock()),
                 Generators::constant($precision),
                 $precision === null ? new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator() : Generators::constant(M\Expression\OptionalWords::Written),
@@ -58,10 +58,10 @@ final class ClockCallGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $clock, ?ErisGenerator $precision = null, ?ErisGenerator $parentheses = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($clock, static function (M\Call\Clock $selected) use ($precision, $parentheses, $scalarInformation, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind($clock, static function (M\Call\Clock $selected) use ($precision, $parentheses, $scalarInformation, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): M\Call\ClockCall {
                 return new M\Call\ClockCall(clock: $parts[0], precision: $parts[1], parentheses: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], alias: $parts[5]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected),
                 $precision ?? Generators::constant(null),
                 $parentheses ?? Generators::constant(M\Expression\OptionalWords::Written),

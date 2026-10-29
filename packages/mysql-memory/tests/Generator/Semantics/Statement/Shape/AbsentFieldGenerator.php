@@ -25,7 +25,7 @@ final class AbsentFieldGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\AbsentField {
             return new \SqlSemantics\Statement\Shape\AbsentField(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }

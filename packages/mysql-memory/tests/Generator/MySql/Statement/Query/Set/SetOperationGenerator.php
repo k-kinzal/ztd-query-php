@@ -30,7 +30,7 @@ final class SetOperationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(left: $parts[0], operator: $parts[1], quantifier: $parts[2], right: $parts[3], queryInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $left,
             $operator,
             $quantifier,

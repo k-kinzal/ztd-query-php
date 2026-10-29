@@ -27,7 +27,7 @@ final class RefusedColumnsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns {
             return new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedColumns(view: $parts[0], column: $parts[1], program: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $view,
             $column,
             $program ?? Generators::constant(null)

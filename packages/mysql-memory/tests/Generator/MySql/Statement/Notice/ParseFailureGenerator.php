@@ -28,7 +28,7 @@ final class ParseFailureGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(problem: $parts[0], aborts: $parts[1], phase: $parts[2], endsProgramStatement: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $problem,
             $aborts ?? Generators::constant(false),
             $phase ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax),
@@ -44,7 +44,7 @@ final class ParseFailureGenerator implements ErisGenerator
      */
     public static function completedConditions(): ErisGenerator
     {
-        $warnings = \Tests\Generator\Operands::oneOf([
+        $warnings = Generators::oneOf(...[
             new NameConversionGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $suffix): string => '😀' . $suffix, Generators::choose(0, 100)), Generators::constant(null)), Generators::bool()),
             new HeartbeatPeriodGenerator(new HeartbeatConditionGenerator()),
         ]);
@@ -53,7 +53,7 @@ final class ParseFailureGenerator implements ErisGenerator
             Generators::bool(),
             NoticePhaseGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization]),
         );
-        return \Tests\Generator\Operands::tuple($warnings, $failures, new ParseStopGenerator(), DeprecatedGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot]));
+        return Generators::tuple($warnings, $failures, new ParseStopGenerator(), DeprecatedGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot]));
     }
 
 }

@@ -26,7 +26,7 @@ final class CollationNameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\CollationName {
             return new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(name: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $inputSource ?? Generators::constant(null)
         ));

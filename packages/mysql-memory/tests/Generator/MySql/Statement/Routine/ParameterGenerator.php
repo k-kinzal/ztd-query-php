@@ -29,7 +29,7 @@ final class ParameterGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Parameter {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(name: $parts[0], type: $parts[1], collation: $parts[2], mode: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $type,
             $collation ?? Generators::constant(null),

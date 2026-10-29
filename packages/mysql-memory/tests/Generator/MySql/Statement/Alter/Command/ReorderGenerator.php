@@ -26,7 +26,7 @@ final class ReorderGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\Reorder {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\Reorder(items: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $items,
             $inputSource ?? Generators::constant(null)
         ));

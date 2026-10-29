@@ -26,7 +26,7 @@ final class InterpretationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Interpretation {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Interpretation(language: $parts[0], client: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $language,
             $client
         ));

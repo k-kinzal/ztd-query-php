@@ -27,7 +27,7 @@ final class RenameToGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameTo {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameTo(table: $parts[0], inputSource: $parts[1], mark: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table,
             $inputSource ?? Generators::constant(null),
             $mark ?? new RenameMarkGenerator()

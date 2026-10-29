@@ -29,7 +29,7 @@ final class DeferredMemberOfGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredMemberOf(operand: $parts[0], array: $parts[1], of: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $array,
             $of ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written),

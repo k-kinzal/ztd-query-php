@@ -25,7 +25,7 @@ final class RefusedExplainGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain(explanation: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $explanation
         ));
     }
@@ -38,10 +38,10 @@ final class RefusedExplainGenerator implements ErisGenerator
     {
         yield 'Utility\\Problem\\RefusedExplain' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedExplainGenerator(
             explanation: new \Tests\Generator\MySql\Statement\Routine\Program\Server\DeferredExplainGenerator(
-                statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([new \Tests\Generator\MySql\Statement\QueryRootGenerator(
+                statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([\Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
                     query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                         options: Generators::constant([]),
-                        items: \Tests\Generator\Operands::tuple(
+                        items: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                 expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))

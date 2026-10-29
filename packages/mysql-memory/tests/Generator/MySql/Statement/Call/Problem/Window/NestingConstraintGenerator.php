@@ -25,7 +25,7 @@ final class NestingConstraintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint(window: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $window
         ));
     }
@@ -40,7 +40,7 @@ final class NestingConstraintGenerator implements ErisGenerator
             window: new \Tests\Generator\MySql\Statement\Call\Window\WindowSpecGenerator(
                 base: Generators::constant(null),
                 partition: Generators::constant([]),
-                order: \Tests\Generator\Operands::tuple(
+                order: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(
                         expression: new \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionGenerator(
                             kind: \Tests\Generator\MySql\Statement\Call\Window\WindowFunctionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber]),

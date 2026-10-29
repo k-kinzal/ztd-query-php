@@ -26,7 +26,7 @@ final class StorageOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\StorageOption {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Option\StorageOption(medium: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $medium,
             $inputSource ?? Generators::constant(null)
         ));

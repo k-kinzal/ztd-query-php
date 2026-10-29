@@ -26,7 +26,7 @@ final class CharsetConflictGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\CharsetConflict {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\CharsetConflict(earlier: $parts[0], later: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $earlier,
             $later
         ));
@@ -38,7 +38,7 @@ final class CharsetConflictGenerator implements ErisGenerator
      */
     public static function executionForms(): iterable
     {
-        yield 'Server/Database/Problem/CharsetConflict' => [\SqlSemantics\Contract\GrammarRelease::MySql847, \Tests\Generator\Operands::bind(Generators::elements([['latin1', 1, 'utf8mb4', 4], ['ascii', 1, 'utf8mb3', 3], ['utf8mb4', 4, 'latin1', 1]]), static fn (array $parts): self => new self(
+        yield 'Server/Database/Problem/CharsetConflict' => [\SqlSemantics\Contract\GrammarRelease::MySql847, Generators::bind(Generators::elements([['latin1', 1, 'utf8mb4', 4], ['ascii', 1, 'utf8mb3', 3], ['utf8mb4', 4, 'latin1', 1]]), static fn (array $parts): self => new self(
             new \Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator(Generators::constant($parts[0]), Generators::constant($parts[1])),
             new \Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator(Generators::constant($parts[2]), Generators::constant($parts[3])),
         ))];

@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Utility\Explain;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,32 +21,56 @@ final class DescribeTableGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete DescribeTable values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No DescribeTable forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable) {
+                throw new LogicException('Publishing DescribeTable must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable> $table Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $column Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb>|null $verb Generated command choice
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable>
      */
-    public function __construct(ErisGenerator $table, ?ErisGenerator $column = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $verb = null)
+    public static function operands(ErisGenerator $table, ?ErisGenerator $column = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $verb = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable(table: $parts[0], column: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], verb: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
-            $table,
-            $column ?? Generators::constant(null),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $verb ?? new ExplainVerbGenerator()
-        ));
+        }, Generators::tuple($table, $column ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $verb ?? new ExplainVerbGenerator()));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable>>
      */
     public static function forms(): iterable
     {
-        yield 'DescribeTable/30' => new DescribeTableGenerator(
+        yield 'DescribeTable/30' => DescribeTableGenerator::operands(
             table: new \Tests\Generator\MySql\Statement\Utility\Show\InspectedTableGenerator(
                 name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(

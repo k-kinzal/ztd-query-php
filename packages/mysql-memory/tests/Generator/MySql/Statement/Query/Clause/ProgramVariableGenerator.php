@@ -27,7 +27,7 @@ final class ProgramVariableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable(name: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

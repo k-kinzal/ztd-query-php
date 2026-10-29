@@ -28,7 +28,7 @@ final class ConvertCharsetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConvertCharset {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\ConvertCharset(charset: $parts[0], collation: $parts[1], inputSource: $parts[2], form: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $charset,
             $collation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null),

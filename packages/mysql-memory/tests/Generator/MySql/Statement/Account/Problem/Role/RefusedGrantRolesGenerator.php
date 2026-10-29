@@ -64,7 +64,7 @@ final class RefusedGrantRolesGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $roles, ErisGenerator $users): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): RefusedGrantRoles => new RefusedGrantRoles(roles: $parts[0], users: $parts[1]), \Tests\Generator\Operands::tuple($roles, $users));
+        return Generators::map(static fn (array $parts): RefusedGrantRoles => new RefusedGrantRoles(roles: $parts[0], users: $parts[1]), Generators::tuple($roles, $users));
     }
 
 

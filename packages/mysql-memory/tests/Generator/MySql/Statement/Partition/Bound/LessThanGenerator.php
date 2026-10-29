@@ -26,7 +26,7 @@ final class LessThanGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Bound\LessThan {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\LessThan(row: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $row,
             $inputSource ?? Generators::constant(null)
         ));

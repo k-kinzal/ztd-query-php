@@ -30,7 +30,7 @@ final class OutputSlotGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\OutputSlot {
             return new \SqlSemantics\Statement\Shape\OutputSlot(name: $parts[0], type: $parts[1], nullability: $parts[2], column: $parts[3], origin: $parts[4], unnamed: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $type,
             $nullability,

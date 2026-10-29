@@ -42,7 +42,7 @@ final class SelectGenerator implements ErisGenerator
     {
         $this->delegate = new \Tests\Generator\Semantics\Statement\SelectionGenerator([Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Select {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Select(options: $parts[0], items: $parts[1], from: $parts[2], where: $parts[3], groupBy: $parts[4], having: $parts[5], windows: $parts[6], qualify: $parts[7], orderBy: $parts[8], limit: $parts[9], procedure: $parts[10], locking: $parts[11], into: $parts[12], intoPosition: $parts[13], late: $parts[14], hints: $parts[15], queryInformation: $parts[16], inputSource: $parts[17]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $options,
             $items,
             $from ?? Generators::constant(null),

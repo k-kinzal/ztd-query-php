@@ -31,7 +31,7 @@ final class NameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): Name {
             return new Name($parts[0], $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $values ?? Generators::map(static fn (int $number): string => 'name_' . abs($number), Generators::int()),
             $quotes ?? new NameQuoteGenerator(),
         ));
@@ -63,7 +63,7 @@ final class NameGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $value, ErisGenerator $quote): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): Name => new Name(value: $parts[0], quote: $parts[1]), \Tests\Generator\Operands::tuple($value, $quote));
+        return Generators::map(static fn (array $parts): Name => new Name(value: $parts[0], quote: $parts[1]), Generators::tuple($value, $quote));
     }
 
 }

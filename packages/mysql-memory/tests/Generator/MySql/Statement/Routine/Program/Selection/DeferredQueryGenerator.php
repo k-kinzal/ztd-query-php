@@ -26,7 +26,7 @@ final class DeferredQueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery(query: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $query,
             $inputSource ?? Generators::constant(null)
         ));

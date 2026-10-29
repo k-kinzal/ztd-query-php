@@ -26,7 +26,7 @@ final class NullLiteralGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral {
             return new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(scalarInformation: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
         ));

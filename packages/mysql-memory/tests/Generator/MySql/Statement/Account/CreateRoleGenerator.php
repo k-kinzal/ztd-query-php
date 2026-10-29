@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateRole;
@@ -30,16 +32,43 @@ final class CreateRoleGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Composes operands with Eris, retaining their relationships during shrinking.
+     * Generates complete CreateRole values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<CreateRole>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No CreateRole forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): CreateRole {
+            if (!$statement instanceof CreateRole) {
+                throw new LogicException('Publishing CreateRole must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Composes operands with Eris, retaining their relationships during shrinking.
+     * @return ErisGenerator<CreateRole>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
     {
         $profile = new LanguageProfile($release);
-        $requests = \Tests\Generator\Operands::bind(Generators::bool(), static fn (bool $conditional): ErisGenerator => \Tests\Generator\Operands::bind(new AccountNameGenerator(), static fn (AccountName $first): ErisGenerator => Generators::map(static fn (array $rest): CreateRole => new CreateRole($conditional, [$first, ...$rest], $profile), \Tests\Generator\Operands::seq(new AccountNameGenerator()))));
-        $this->delegate = Generators::oneOf(
-            $requests,
-            \Tests\Generator\Operands::bind(new RefusedCreateRoleGenerator(), static fn (RefusedCreateRole $condition): ErisGenerator => Generators::map(static fn (bool $conditional): CreateRole => new CreateRole($conditional, $condition->roles, $profile), Generators::bool())),
-        );
+        $requests = Generators::bind(Generators::bool(), static fn (bool $conditional): ErisGenerator => Generators::bind(new AccountNameGenerator(), static fn (AccountName $first): ErisGenerator => Generators::map(static fn (array $rest): CreateRole => new CreateRole($conditional, [$first, ...$rest], $profile), Generators::seq(new AccountNameGenerator()))));
+        return Generators::oneOf($requests, Generators::bind(new RefusedCreateRoleGenerator(), static fn (RefusedCreateRole $condition): ErisGenerator => Generators::map(static fn (bool $conditional): CreateRole => new CreateRole($conditional, $condition->roles, $profile), Generators::bool())));
     }
 
     /**
@@ -70,11 +99,11 @@ final class CreateRoleGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $ifNotExists, ErisGenerator $roles, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): CreateRole => new CreateRole(ifNotExists: $parts[0], roles: $parts[1], profile: $parts[2], client: $parts[3]), \Tests\Generator\Operands::tuple($ifNotExists, $roles, $profile, $client));
+        return Generators::map(static fn (array $parts): CreateRole => new CreateRole(ifNotExists: $parts[0], roles: $parts[1], profile: $parts[2], client: $parts[3]), Generators::tuple($ifNotExists, $roles, $profile, $client));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<CreateRole>>
      */
@@ -82,7 +111,7 @@ final class CreateRoleGenerator implements ErisGenerator
     {
         yield 'CreateRole/25' => CreateRoleGenerator::fromOperands(
             ifNotExists: Generators::constant(false),
-            roles: \Tests\Generator\Operands::tuple(
+            roles: Generators::tuple(
                 AccountNameGenerator::fromOperands(
                     user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),

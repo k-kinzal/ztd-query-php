@@ -30,7 +30,7 @@ final class DeferredBetweenGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredBetween {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredBetween(operand: $parts[0], lower: $parts[1], upper: $parts[2], negated: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $lower,
             $upper,

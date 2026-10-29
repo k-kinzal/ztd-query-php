@@ -26,7 +26,7 @@ final class UnsupportedWindowingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing(limit: $parts[0], expression: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $limit,
             $expression ?? Generators::constant(null)
         ));

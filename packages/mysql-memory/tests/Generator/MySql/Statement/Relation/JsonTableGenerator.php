@@ -31,7 +31,7 @@ final class JsonTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\JsonTable(document: $parts[0], path: $parts[1], columns: $parts[2], alias: $parts[3], mark: $parts[4], relationInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $document,
             $path,
             $columns,
@@ -50,8 +50,8 @@ final class JsonTableGenerator implements ErisGenerator
     {
         $documents = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::map(static fn (int $length): string => '[' . implode(',', array_fill(0, $length, '[1,2]')) . ']', Generators::choose(0, 8)));
         $paths = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::constant('$[*]'));
-        $columns = new \Tests\Generator\MySql\Statement\Call\Json\NestedColumnsGenerator($paths, \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Call\Json\OrdinalityColumnGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('position')))));
-        return new self($documents, $paths, \Tests\Generator\Operands::vector(1, $columns), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
+        $columns = new \Tests\Generator\MySql\Statement\Call\Json\NestedColumnsGenerator($paths, Generators::vector(1, new \Tests\Generator\MySql\Statement\Call\Json\OrdinalityColumnGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('position')))));
+        return new self($documents, $paths, Generators::vector(1, $columns), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
     }
 
 }

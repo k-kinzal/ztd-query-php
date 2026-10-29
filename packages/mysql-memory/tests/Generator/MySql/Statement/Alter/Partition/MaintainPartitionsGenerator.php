@@ -34,9 +34,9 @@ final class MaintainPartitionsGenerator implements ErisGenerator
      */
     public static function withRows(GrammarRelease $release): ErisGenerator
     {
-        $layouts = \Tests\Generator\Operands::bind(Generators::choose(1, 8), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::tuple(Generators::constant($count), Generators::choose(0, $count - 1), Generators::bool()));
-        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::vector($count, Generators::choose(0, 1000)));
-        return Generators::map(self::sample(...), \Tests\Generator\Operands::tuple(
+        $layouts = Generators::bind(Generators::choose(1, 8), static fn (int $count): ErisGenerator => Generators::tuple(Generators::constant($count), Generators::choose(0, $count - 1), Generators::bool()));
+        $rows = Generators::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => Generators::vector($count, Generators::choose(0, 1000)));
+        return Generators::map(self::sample(...), Generators::tuple(
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             $layouts,
@@ -89,7 +89,7 @@ final class MaintainPartitionsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): MySql\Alter\Partition\MaintainPartitions {
             return new MySql\Alter\Partition\MaintainPartitions(kind: $parts[0], binlog: $parts[1], partitions: $parts[2], options: $parts[3], ignoredBinlog: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $binlog,
             $partitions,

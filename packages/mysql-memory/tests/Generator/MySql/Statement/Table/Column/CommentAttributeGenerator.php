@@ -26,7 +26,7 @@ final class CommentAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute(comment: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $comment,
             $inputSource ?? Generators::constant(null)
         ));

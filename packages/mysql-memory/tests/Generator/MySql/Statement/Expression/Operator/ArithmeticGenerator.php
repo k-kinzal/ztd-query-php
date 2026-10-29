@@ -34,7 +34,7 @@ final class ArithmeticGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): M\Expression\Operator\Arithmetic {
             return new M\Expression\Operator\Arithmetic(operator: $parts[0], left: $parts[1], right: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], modWord: $parts[5] && $parts[0] === M\Expression\Operator\ArithmeticOperator::Modulo, divisionPrecision: $parts[3] !== null && $parts[0] === M\Expression\Operator\ArithmeticOperator::Divide ? $parts[6] : null);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operator,
             $left,
             $right,
@@ -52,7 +52,7 @@ final class ArithmeticGenerator implements ErisGenerator
      */
     public static function precisionQueries(GrammarRelease $release): ErisGenerator
     {
-        return Generators::map(self::precisionSample(...), \Tests\Generator\Operands::tuple(Generators::constant($release), Generators::choose(-999, 999), Generators::choose(2, 19), Generators::choose(0, 12), Generators::bool()));
+        return Generators::map(self::precisionSample(...), Generators::tuple(Generators::constant($release), Generators::choose(-999, 999), Generators::choose(2, 19), Generators::choose(0, 12), Generators::bool()));
     }
 
     /**

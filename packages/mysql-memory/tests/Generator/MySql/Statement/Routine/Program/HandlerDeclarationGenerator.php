@@ -28,7 +28,7 @@ final class HandlerDeclarationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerDeclaration(action: $parts[0], conditions: $parts[1], statement: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $action,
             $conditions,
             $statement,

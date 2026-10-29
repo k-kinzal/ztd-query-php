@@ -26,7 +26,7 @@ final class RowShapeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\RowShape {
             return new \SqlSemantics\Statement\Shape\RowShape(slots: $parts[0], missing: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $slots,
             $missing ?? Generators::constant([])
         ));

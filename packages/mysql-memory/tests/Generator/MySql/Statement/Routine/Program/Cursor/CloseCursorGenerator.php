@@ -26,7 +26,7 @@ final class CloseCursorGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CloseCursor {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CloseCursor(cursor: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $cursor,
             $inputSource ?? Generators::constant(null)
         ));

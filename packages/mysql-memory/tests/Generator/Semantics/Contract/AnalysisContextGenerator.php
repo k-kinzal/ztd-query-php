@@ -33,7 +33,7 @@ final class AnalysisContextGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Contract\AnalysisContext {
             return new \SqlSemantics\Contract\AnalysisContext(profile: $parts[0], searchPath: $parts[1], tables: $parts[2], complete: $parts[3], relationNames: $parts[4], columnNames: $parts[5], declarationSchema: $parts[6], session: $parts[7], foldedSchemas: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $profile,
             $searchPath,
             $tables ?? Generators::constant([]),
@@ -55,13 +55,15 @@ final class AnalysisContextGenerator implements ErisGenerator
      */
     public static function mysql(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $modes = null): ErisGenerator
     {
-        $charset = new \Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator(Generators::constant('utf8mb4'), Generators::constant(4));
-        $collation = new \Tests\Generator\MySql\Statement\Type\Resolved\CollationGenerator(Generators::constant('utf8mb4_unicode_ci'), Generators::constant(224), $charset, Generators::constant(true));
-        $settings = new SessionGenerator([new \Tests\Generator\MySql\Statement\Type\Resolved\SettingsGenerator($collation, client: $charset, timeNames: \Tests\Generator\MySql\Statement\Type\Resolved\LocaleGenerator::catalog())]);
         $modes ??= new ModeGenerator([new \Tests\Generator\MySql\ModeGenerator()]);
         return Generators::map(static function (array $parts) use ($release): \SqlSemantics\Contract\AnalysisContext {
-            [$dialect, $mode, $search, $settings] = $parts;
-            return (new \SqlSemantics\Facade\Semantics($dialect, substr($release->value, 6), $mode, searchPath: $search, session: $settings))->context();
-        }, \Tests\Generator\Operands::tuple(new DialectGenerator([new \Tests\Generator\MySql\DialectGenerator()]), $modes, new SearchPathGenerator(Generators::constant('pbt')), $settings));
+            [$mode, $settings, $dialect, $searchPath] = $parts;
+            return (new \SqlSemantics\Facade\Semantics($dialect, substr($release->value, 6), $mode, searchPath: $searchPath, session: $settings))->context();
+        }, Generators::tuple(
+            $modes,
+            new SessionGenerator([\Tests\Generator\MySql\Statement\Type\Resolved\SettingsGenerator::localized()]),
+            new DialectGenerator([new \Tests\Generator\MySql\DialectGenerator()]),
+            new SearchPathGenerator(Generators::constant('pbt')),
+        ));
     }
 }

@@ -28,7 +28,7 @@ final class ExtractGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Extract {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Extract(unit: $parts[0], source: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $unit,
             $source,
             $scalarInformation ?? Generators::constant(null),

@@ -29,7 +29,7 @@ final class FetchCursorGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor(cursor: $parts[0], targets: $parts[1], inputSource: $parts[2], from: $parts[3], next: $parts[4] && $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $cursor,
             $targets,
             $inputSource ?? Generators::constant(null),
@@ -71,6 +71,6 @@ final class FetchCursorGenerator implements ErisGenerator
             };
             $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
             return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement), 'Undefined CURSOR: ' . $cursor->value, [...array_fill(0, $kind < 2 ? count($members) - 1 : 0, 1291), ...array_fill(0, $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? 0 : count($instructions) - 2, 1681), 1324]];
-        }, \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::choose(0, 4), Generators::choose(0, 3), Generators::choose(0, 2)));
+        }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::choose(0, 4), Generators::choose(0, 3), Generators::choose(0, 2)));
     }
 }

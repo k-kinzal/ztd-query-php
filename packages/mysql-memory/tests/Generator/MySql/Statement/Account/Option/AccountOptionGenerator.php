@@ -27,7 +27,7 @@ final class AccountOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption(kind: $parts[0], number: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $number ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

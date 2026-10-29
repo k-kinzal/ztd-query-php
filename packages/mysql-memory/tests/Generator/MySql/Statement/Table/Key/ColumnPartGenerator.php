@@ -28,7 +28,7 @@ final class ColumnPartGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(column: $parts[0], length: $parts[1], direction: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $length ?? Generators::constant(null),
             $direction ?? Generators::constant(null),

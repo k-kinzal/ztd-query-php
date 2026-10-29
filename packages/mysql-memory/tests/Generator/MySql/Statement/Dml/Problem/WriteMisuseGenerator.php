@@ -27,7 +27,7 @@ final class WriteMisuseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse(rule: $parts[0], table: $parts[1], target: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rule,
             $table ?? Generators::constant(null),
             $target ?? Generators::constant(null)

@@ -28,7 +28,7 @@ final class WeightLevelGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel(number: $parts[0], direction: $parts[1], reverse: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $number,
             $direction ?? Generators::constant(null),
             $reverse ?? Generators::constant(false),

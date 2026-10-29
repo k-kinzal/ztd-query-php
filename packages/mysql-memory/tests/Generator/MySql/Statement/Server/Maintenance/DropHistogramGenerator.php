@@ -26,7 +26,7 @@ final class DropHistogramGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram(columns: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $columns,
             $inputSource ?? Generators::constant(null)
         ));

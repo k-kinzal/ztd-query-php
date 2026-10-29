@@ -26,7 +26,7 @@ final class SpelledGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Spelling\Spelled {
             return new \SqlSemantics\Statement\Spelling\Spelled(gap: $parts[0], text: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $gap,
             $text
         ));

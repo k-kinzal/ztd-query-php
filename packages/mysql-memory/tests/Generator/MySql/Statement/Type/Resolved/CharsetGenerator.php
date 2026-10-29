@@ -26,7 +26,7 @@ final class CharsetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset(name: $parts[0], maxLength: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $maxLength
         ));

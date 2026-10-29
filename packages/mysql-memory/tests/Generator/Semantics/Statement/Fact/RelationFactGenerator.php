@@ -27,7 +27,7 @@ final class RelationFactGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Fact\RelationFact {
             return new \SqlSemantics\Statement\Fact\RelationFact(shape: $parts[0], table: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $shape,
             $table ?? Generators::constant(null)
         ));
@@ -41,7 +41,7 @@ final class RelationFactGenerator implements ErisGenerator
      */
     public static function declared(ErisGenerator $tables): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind($tables, static function (\SqlSemantics\Statement\Reference\Table\TableResolution $table): self {
+        return Generators::bind($tables, static function (\SqlSemantics\Statement\Reference\Table\TableResolution $table): self {
             if (!$table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable) {
                 throw new LogicException('Declared slots require a table declaration.');
             }

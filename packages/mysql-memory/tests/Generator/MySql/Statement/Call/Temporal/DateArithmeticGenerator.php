@@ -65,8 +65,8 @@ final class DateArithmeticGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit, ?ErisGenerator $alias = null): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind($subtract, static function (bool $selected) use ($date, $quantity, $unit, $alias): ErisGenerator {
-            return Generators::map(static fn (array $parts): DateArithmetic => new DateArithmetic(subtract: $selected, date: $parts[0], quantity: $parts[1], unit: $parts[2], alias: $parts[3]), \Tests\Generator\Operands::tuple(
+        return Generators::bind($subtract, static function (bool $selected) use ($date, $quantity, $unit, $alias): ErisGenerator {
+            return Generators::map(static fn (array $parts): DateArithmetic => new DateArithmetic(subtract: $selected, date: $parts[0], quantity: $parts[1], unit: $parts[2], alias: $parts[3]), Generators::tuple(
                 $date,
                 $quantity,
                 $unit,

@@ -27,7 +27,7 @@ final class SearchedCaseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SearchedCase {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SearchedCase(branches: $parts[0], otherwise: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $branches,
             $otherwise ?? Generators::constant([]),
             $inputSource ?? Generators::constant(null)

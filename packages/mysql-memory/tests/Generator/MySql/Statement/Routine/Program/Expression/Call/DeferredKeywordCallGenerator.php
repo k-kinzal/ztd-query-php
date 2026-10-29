@@ -28,10 +28,10 @@ final class DeferredKeywordCallGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $function, ErisGenerator $arguments, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null, ?ErisGenerator $syntax = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($function, static function (\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction $selected) use ($arguments, $scalarInformation, $inputSource, $alias, $syntax): ErisGenerator {
+        $this->delegate = Generators::bind($function, static function (\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction $selected) use ($arguments, $scalarInformation, $inputSource, $alias, $syntax): ErisGenerator {
             return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall {
                 return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall(function: $parts[0], arguments: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3], alias: $parts[4], syntax: $parts[5]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected),
                 $arguments,
                 $scalarInformation ?? Generators::constant(null),

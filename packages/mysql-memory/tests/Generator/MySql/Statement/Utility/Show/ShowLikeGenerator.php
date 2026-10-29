@@ -26,7 +26,7 @@ final class ShowLikeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike(pattern: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $pattern,
             $inputSource ?? Generators::constant(null)
         ));

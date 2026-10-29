@@ -27,7 +27,7 @@ final class SqlStateGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState(state: $parts[0], inputSource: $parts[1], valueWord: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $state,
             $inputSource ?? Generators::constant(null),
             $valueWord ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)

@@ -28,7 +28,7 @@ final class ResolvedColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Column\ResolvedColumn {
             return new \SqlSemantics\Statement\Reference\Column\ResolvedColumn(relation: $parts[0], slot: $parts[1], depth: $parts[2], resultReference: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $relation,
             $slot,
             $depth ?? Generators::constant(0),
@@ -45,7 +45,7 @@ final class ResolvedColumnGenerator implements ErisGenerator
      */
     public static function selecting(ErisGenerator $relations): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind($relations, static function (\SqlSemantics\Statement\Relation $relation): ErisGenerator {
+        return Generators::bind($relations, static function (\SqlSemantics\Statement\Relation $relation): ErisGenerator {
             $fact = $relation->relationInformation();
             $slots = $fact->shape->slots;
             if ($fact->table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable) {

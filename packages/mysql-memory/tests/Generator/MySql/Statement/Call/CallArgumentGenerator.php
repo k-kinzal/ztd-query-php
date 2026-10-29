@@ -30,7 +30,7 @@ final class CallArgumentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\CallArgument {
             return new \SqlSemantics\Platform\MySql\Statement\Call\CallArgument(expression: $parts[0], alias: $parts[1], mark: $parts[2], layout: $parts[3], spellingProfile: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression,
             $alias ?? Generators::constant(null),
             $mark ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As),

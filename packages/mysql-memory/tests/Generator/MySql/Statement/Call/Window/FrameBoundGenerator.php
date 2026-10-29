@@ -28,7 +28,7 @@ final class FrameBoundGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(kind: $parts[0], offset: $parts[1], unit: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $offset ?? Generators::constant(null),
             $unit ?? Generators::constant(null),

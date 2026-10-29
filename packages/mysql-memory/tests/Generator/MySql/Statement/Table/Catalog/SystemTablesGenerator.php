@@ -29,7 +29,7 @@ final class SystemTablesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): M\Table\Catalog\SystemTables {
             return new M\Table\Catalog\SystemTables(tables: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $tables
         ));
     }
@@ -41,7 +41,7 @@ final class SystemTablesGenerator implements ErisGenerator
      */
     public static function inspections(GrammarRelease $release = GrammarRelease::MySql847): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(Generators::elements(M\Table\Catalog\SystemTables::of($release)->tables), Generators::bool()), static function (array $parts) use ($release): ErisGenerator {
+        return Generators::bind(Generators::tuple(Generators::elements(M\Table\Catalog\SystemTables::of($release)->tables), Generators::bool()), static function (array $parts) use ($release): ErisGenerator {
             [$table, $fieldsKeyword] = $parts;
             $remaining = array_values(array_filter(M\Table\Catalog\SystemTables::of($release)->tables, static fn (M\Table\Catalog\SystemTable $entry): bool => $entry->schema !== $table->schema || $entry->name !== $table->name));
             $catalog = new M\Table\Catalog\SystemTables([$table, ...$remaining]);
@@ -60,7 +60,7 @@ final class SystemTablesGenerator implements ErisGenerator
             $show = \SqlSemantics\Facade\Semantics::fromStatement($context, $show);
             $query = \SqlSemantics\Facade\Semantics::fromStatement($context, $query);
             \SqlSemantics\Diagnostic\Check::invariant($show instanceof M\Utility\Show\Schema\ShowColumns && $query instanceof M\QueryRoot, 'Catalog inspections retain their concrete statement kinds.');
-            return \Tests\Generator\Operands::bind(new self(\Tests\Generator\Operands::vector(1, SystemTableGenerator::catalog($release, Generators::constant($table)))), static function (M\Table\Catalog\SystemTables $selected) use ($remaining, $show, $query): ErisGenerator {
+            return Generators::bind(new self(Generators::vector(1, SystemTableGenerator::catalog($release, Generators::constant($table)))), static function (M\Table\Catalog\SystemTables $selected) use ($remaining, $show, $query): ErisGenerator {
                 return Generators::constant([new M\Table\Catalog\SystemTables([$selected->tables[0], ...$remaining]), $show, $query]);
             });
         });

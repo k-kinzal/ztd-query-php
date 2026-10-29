@@ -27,7 +27,7 @@ final class DynamicPrivilegeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege(name: $parts[0], columns: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $columns ?? Generators::constant([]),
             $inputSource ?? Generators::constant(null)

@@ -28,7 +28,7 @@ final class DeferredMethodGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod(expression: $parts[0], kind: $parts[1], linear: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression,
             $kind ?? Generators::constant(null),
             $linear ?? Generators::constant(false),

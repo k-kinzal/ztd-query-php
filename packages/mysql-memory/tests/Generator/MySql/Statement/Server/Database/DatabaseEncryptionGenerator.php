@@ -29,7 +29,7 @@ final class DatabaseEncryptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption(encryption: $parts[0], spelling: $parts[1], inputSource: $parts[2], operator: $parts[3], defaultKeyword: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $encryption,
             $spelling ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null),

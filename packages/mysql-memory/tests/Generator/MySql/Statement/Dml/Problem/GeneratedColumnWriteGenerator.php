@@ -26,7 +26,7 @@ final class GeneratedColumnWriteGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite(column: $parts[0], table: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $table
         ));

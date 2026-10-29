@@ -27,7 +27,7 @@ final class CollationMismatchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch(collation: $parts[0], charset: $parts[1], expression: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $collation,
             $charset,
             $expression ?? Generators::constant(null)

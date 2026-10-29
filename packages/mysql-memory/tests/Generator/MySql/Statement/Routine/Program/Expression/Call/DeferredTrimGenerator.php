@@ -29,7 +29,7 @@ final class DeferredTrimGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim(subject: $parts[0], side: $parts[1], removed: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $subject,
             $side ?? Generators::constant(null),
             $removed ?? Generators::constant(null),

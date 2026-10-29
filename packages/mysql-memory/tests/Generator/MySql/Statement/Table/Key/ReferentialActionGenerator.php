@@ -27,7 +27,7 @@ final class ReferentialActionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\ReferentialAction {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\ReferentialAction(event: $parts[0], option: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $event,
             $option,
             $inputSource ?? Generators::constant(null)

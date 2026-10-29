@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Alter;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -27,25 +29,57 @@ final class AlterTableGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete AlterTable values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<MySql\Alter\AlterTable>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($release === GrammarRelease::MySql847) {
+                $forms[] = Generators::map(static fn (array $parts): MySql\Statement => $parts[1], Problem\DuplicateColumnGenerator::statements());
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No AlterTable forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (AnalyzedStatement $statement): MySql\Alter\AlterTable {
+            if (!$statement instanceof MySql\Alter\AlterTable) {
+                throw new LogicException('Publishing AlterTable must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<QualifiedName> $table Generated constructor operand
      * @param ErisGenerator<list<MySql\Alter\AlterCommand>> $commands Generated constructor operand
      * @param ErisGenerator<bool>|null $ignore Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
      * @param ErisGenerator<MySql\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<MySql\Alter\AlterTable>
      */
-    public function __construct(ErisGenerator $table, ErisGenerator $commands, ?ErisGenerator $ignore = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $table, ErisGenerator $commands, ?ErisGenerator $ignore = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): MySql\Alter\AlterTable {
+        return Generators::map(static function (array $parts): MySql\Alter\AlterTable {
             return new MySql\Alter\AlterTable(table: $parts[0], commands: $parts[1], ignore: $parts[2], relationInformation: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
-            $table,
-            $commands,
-            $ignore ?? Generators::constant(false),
-            $relationInformation ?? Generators::constant(null),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($table, $commands, $ignore ?? Generators::constant(false), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
      * Generates a table, its rows and a dependent index alteration before execution.
@@ -56,8 +90,8 @@ final class AlterTableGenerator implements ErisGenerator
     public static function indexSequences(GrammarRelease $release): ErisGenerator
     {
         $values = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(MySql\Type\Resolved\Collation::known('utf8mb4_unicode_ci'), Generators::map(static fn (int $value): string => (string) $value, Generators::choose(-10000, 10000)));
-        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(\Tests\Generator\Operands::vector(2, $values))));
-        $operands = \Tests\Generator\Operands::tuple(
+        $rows = Generators::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(Generators::vector(2, $values))));
+        $operands = Generators::tuple(
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             Generators::elements(['InnoDB', 'MyISAM', 'MEMORY']),
@@ -106,7 +140,7 @@ final class AlterTableGenerator implements ErisGenerator
     public static function functionalSequences(GrammarRelease $release): ErisGenerator
     {
         $values = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(MySql\Type\Resolved\Collation::known('utf8mb4_unicode_ci'), Generators::map(static fn (int $value): string => (string) $value, Generators::choose(-10000, 10000)));
-        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(\Tests\Generator\Operands::vector(1, $values))));
+        $rows = Generators::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(Generators::vector(1, $values))));
         return Generators::map(static function (array $parts) use ($release): array {
             [$name, $column, $rows, $action] = $parts;
             $table = new QualifiedName($name);
@@ -130,17 +164,17 @@ final class AlterTableGenerator implements ErisGenerator
             $context = new AnalysisContext($context->profile, [new Name('pbt')], $definition->declarations(), session: $context->session);
             $insert = new MySql\Dml\Insert\InsertRows(new MySql\Dml\Insert\InsertInto(false, null, false, new MySql\Dml\WriteTarget($table)), $rows);
             return [$definition, $publication->publish($context, $insert), $publication->publish($context, new MySql\Alter\AlterTable($table, $commands)), $action >= 2 ? count($rows) : 0];
-        }, \Tests\Generator\Operands::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $rows, Generators::choose(0, 4)));
+        }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $rows, Generators::choose(0, 4)));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<MySql\Alter\AlterTable>>
      */
     public static function forms(): iterable
     {
-        yield 'AlterTable/11' => new AlterTableGenerator(
+        yield 'AlterTable/11' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -152,7 +186,7 @@ final class AlterTableGenerator implements ErisGenerator
             commands: Generators::constant([]),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/184' => new AlterTableGenerator(
+        yield 'AlterTable/184' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -161,12 +195,12 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\PartitionByGenerator(
                     partitioning: new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator(
                         method: new \Tests\Generator\MySql\Statement\Partition\Method\ColumnsMethodGenerator(
                             kind: \Tests\Generator\MySql\Statement\Partition\Method\PartitionKindGenerator::selecting([MySql\Partition\Method\PartitionKind::Range]),
-                            columns: \Tests\Generator\Operands::tuple(
+                            columns: Generators::tuple(
                                 \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
                                     quote: Generators::constant(null)
@@ -181,7 +215,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/185' => new AlterTableGenerator(
+        yield 'AlterTable/185' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -190,7 +224,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\PartitionByGenerator(
                     partitioning: new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator(
                         method: new \Tests\Generator\MySql\Statement\Partition\Method\KeyMethodGenerator(
@@ -203,7 +237,7 @@ final class AlterTableGenerator implements ErisGenerator
                             method: new \Tests\Generator\MySql\Statement\Partition\Method\KeyMethodGenerator(
                                 linear: Generators::constant(false),
                                 algorithm: Generators::constant(null),
-                                columns: \Tests\Generator\Operands::tuple(
+                                columns: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
                                         quote: Generators::constant(null)
@@ -218,7 +252,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/186' => new AlterTableGenerator(
+        yield 'AlterTable/186' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -227,7 +261,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\PartitionByGenerator(
                     partitioning: new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator(
                         method: new \Tests\Generator\MySql\Statement\Partition\Method\KeyMethodGenerator(
@@ -237,7 +271,7 @@ final class AlterTableGenerator implements ErisGenerator
                         ),
                         partitions: Generators::constant(null),
                         subpartitioning: Generators::constant(null),
-                        definitions: \Tests\Generator\Operands::tuple(
+                        definitions: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -253,7 +287,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/187' => new AlterTableGenerator(
+        yield 'AlterTable/187' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -262,10 +296,10 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\AddPartitionGenerator(
                     binlog: Generators::constant(null),
-                    definitions: \Tests\Generator\Operands::tuple(
+                    definitions: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -290,7 +324,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/188' => new AlterTableGenerator(
+        yield 'AlterTable/188' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -299,10 +333,10 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\AddPartitionGenerator(
                     binlog: Generators::constant(null),
-                    definitions: \Tests\Generator\Operands::tuple(
+                    definitions: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -320,7 +354,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/189' => new AlterTableGenerator(
+        yield 'AlterTable/189' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -329,10 +363,10 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\AddPartitionGenerator(
                     binlog: Generators::constant(null),
-                    definitions: \Tests\Generator\Operands::tuple(
+                    definitions: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -340,7 +374,7 @@ final class AlterTableGenerator implements ErisGenerator
                             ),
                             values: new \Tests\Generator\MySql\Statement\Partition\Bound\ValuesInGenerator(
                                 row: new \Tests\Generator\MySql\Statement\Partition\Bound\PartitionRowGenerator(
-                                    items: \Tests\Generator\Operands::tuple(
+                                    items: Generators::tuple(
                                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
@@ -356,7 +390,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/190' => new AlterTableGenerator(
+        yield 'AlterTable/190' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -365,10 +399,10 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\AddPartitionGenerator(
                     binlog: Generators::constant(null),
-                    definitions: \Tests\Generator\Operands::tuple(
+                    definitions: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -376,7 +410,7 @@ final class AlterTableGenerator implements ErisGenerator
                             ),
                             values: new \Tests\Generator\MySql\Statement\Partition\Bound\LessThanGenerator(
                                 row: new \Tests\Generator\MySql\Statement\Partition\Bound\PartitionRowGenerator(
-                                    items: \Tests\Generator\Operands::tuple(
+                                    items: Generators::tuple(
                                         new \Tests\Generator\MySql\Statement\Partition\Bound\PartitionMaximumGenerator()
                                     )
                                 )
@@ -390,7 +424,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/191' => new AlterTableGenerator(
+        yield 'AlterTable/191' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -399,19 +433,19 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\AddPartitionGenerator(
                     binlog: Generators::constant(null),
-                    definitions: \Tests\Generator\Operands::tuple(
+                    definitions: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
                                 quote: Generators::constant(null)
                             ),
                             values: new \Tests\Generator\MySql\Statement\Partition\Bound\ValuesInRowsGenerator(
-                                rows: \Tests\Generator\Operands::tuple(
+                                rows: Generators::tuple(
                                     new \Tests\Generator\MySql\Statement\Partition\Bound\PartitionRowGenerator(
-                                        items: \Tests\Generator\Operands::tuple(
+                                        items: Generators::tuple(
                                             \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
@@ -431,7 +465,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/192' => new AlterTableGenerator(
+        yield 'AlterTable/192' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -440,10 +474,10 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\AddPartitionGenerator(
                     binlog: Generators::constant(null),
-                    definitions: \Tests\Generator\Operands::tuple(
+                    definitions: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -451,7 +485,7 @@ final class AlterTableGenerator implements ErisGenerator
                             ),
                             values: Generators::constant(null),
                             options: Generators::constant([]),
-                            subpartitions: \Tests\Generator\Operands::tuple(
+                            subpartitions: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Partition\SubpartitionDefinitionGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -467,7 +501,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/193' => new AlterTableGenerator(
+        yield 'AlterTable/193' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -476,17 +510,17 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\AddPartitionGenerator(
                     binlog: Generators::constant(null),
-                    definitions: \Tests\Generator\Operands::tuple(
+                    definitions: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
                                 quote: Generators::constant(null)
                             ),
                             values: Generators::constant(null),
-                            options: \Tests\Generator\Operands::tuple(
+                            options: Generators::tuple(
                                 new \Tests\Generator\MySql\Statement\Partition\PartitionOptionGenerator(
                                     kind: \Tests\Generator\MySql\Statement\Partition\PartitionOptionKindGenerator::selecting([MySql\Partition\PartitionOptionKind::NodeGroup]),
                                     name: Generators::constant(null),
@@ -505,7 +539,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/196' => new AlterTableGenerator(
+        yield 'AlterTable/196' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -514,9 +548,9 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\SetTableOptionsGenerator(
-                    options: \Tests\Generator\Operands::tuple(
+                    options: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Table\Option\StorageOptionGenerator(
                             medium: \Tests\Generator\MySql\Statement\Table\Column\Kind\StorageMediumGenerator::selecting([MySql\Table\Column\Kind\StorageMedium::Disk])
                         )
@@ -525,7 +559,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/214' => new AlterTableGenerator(
+        yield 'AlterTable/214' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -534,7 +568,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\ConstraintEnforcementGenerator(
                     kind: Command\ElementKindGenerator::selecting([MySql\Alter\Command\ElementKind::Check]),
                     constraint: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -546,7 +580,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/244' => new AlterTableGenerator(
+        yield 'AlterTable/244' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -555,7 +589,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\ColumnVisibilityGenerator(
                     column: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -571,7 +605,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/253' => new AlterTableGenerator(
+        yield 'AlterTable/253' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -580,7 +614,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Modifier\ValidationOptionGenerator(
                     validate: Generators::constant(true)
                 ),
@@ -591,7 +625,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/254' => new AlterTableGenerator(
+        yield 'AlterTable/254' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -600,12 +634,12 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\RemovePartitioningGenerator()
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/255' => new AlterTableGenerator(
+        yield 'AlterTable/255' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -614,7 +648,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Modifier\ValidationOptionGenerator(
                     validate: Generators::constant(true)
                 ),
@@ -622,7 +656,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/256' => new AlterTableGenerator(
+        yield 'AlterTable/256' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -631,10 +665,10 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\DropPartitionGenerator(
                     partitions: new \Tests\Generator\MySql\Statement\Partition\NamedPartitionsGenerator(
-                        names: \Tests\Generator\Operands::tuple(
+                        names: Generators::tuple(
                             \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
                                 quote: Generators::constant(null)
@@ -645,7 +679,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/257' => new AlterTableGenerator(
+        yield 'AlterTable/257' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -654,7 +688,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\MaintainPartitionsGenerator(
                     kind: Partition\MaintenanceKindGenerator::selecting([MySql\Alter\Partition\MaintenanceKind::Rebuild]),
                     binlog: Generators::constant(null),
@@ -665,7 +699,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/258' => new AlterTableGenerator(
+        yield 'AlterTable/258' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -674,7 +708,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\CoalescePartitionGenerator(
                     binlog: Generators::constant(null),
                     count: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
@@ -685,7 +719,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/259' => new AlterTableGenerator(
+        yield 'AlterTable/259' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -694,7 +728,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\ReorganizePartitionGenerator(
                     binlog: Generators::constant(null),
                     partitions: Generators::constant(null),
@@ -703,7 +737,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/260' => new AlterTableGenerator(
+        yield 'AlterTable/260' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -712,7 +746,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\ExchangePartitionGenerator(
                     partition: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -731,7 +765,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/261' => new AlterTableGenerator(
+        yield 'AlterTable/261' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -740,7 +774,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\SecondaryLoadGenerator(
                     load: Generators::constant(true),
                     partitions: Generators::constant([])
@@ -748,7 +782,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/262' => new AlterTableGenerator(
+        yield 'AlterTable/262' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -757,7 +791,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\AddColumnGenerator(
                     column: new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(
                         name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
@@ -783,7 +817,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/263' => new AlterTableGenerator(
+        yield 'AlterTable/263' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -792,9 +826,9 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\AddColumnsGenerator(
-                    elements: \Tests\Generator\Operands::tuple(
+                    elements: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(
                             name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                                 column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -819,7 +853,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/264' => new AlterTableGenerator(
+        yield 'AlterTable/264' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -828,11 +862,11 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\AddConstraintGenerator(
                     element: new \Tests\Generator\MySql\Statement\Table\Key\IndexDefinitionGenerator(
                         kind: \Tests\Generator\MySql\Statement\Table\Key\IndexKindGenerator::selecting([MySql\Table\Key\IndexKind::FullText]),
-                        parts: \Tests\Generator\Operands::tuple(
+                        parts: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Table\Key\ColumnPartGenerator(
                                 column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -852,7 +886,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/265' => new AlterTableGenerator(
+        yield 'AlterTable/265' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -861,7 +895,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\ChangeColumnGenerator(
                     column: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -895,7 +929,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/266' => new AlterTableGenerator(
+        yield 'AlterTable/266' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -904,7 +938,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\DropElementGenerator(
                     kind: Command\ElementKindGenerator::selecting([MySql\Alter\Command\ElementKind::Column]),
                     name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
@@ -921,7 +955,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/267' => new AlterTableGenerator(
+        yield 'AlterTable/267' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -930,14 +964,14 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\ToggleKeysGenerator(
                     enable: Generators::constant(false)
                 )
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/268' => new AlterTableGenerator(
+        yield 'AlterTable/268' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -946,7 +980,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\DefaultSettingGenerator(
                     column: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -964,7 +998,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/269' => new AlterTableGenerator(
+        yield 'AlterTable/269' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -973,7 +1007,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\IndexVisibilityGenerator(
                     index: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -984,7 +1018,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/270' => new AlterTableGenerator(
+        yield 'AlterTable/270' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -993,7 +1027,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\RenameToGenerator(
                     table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1007,7 +1041,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/271' => new AlterTableGenerator(
+        yield 'AlterTable/271' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1016,7 +1050,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\RenameElementGenerator(
                     kind: Command\ElementKindGenerator::selecting([MySql\Alter\Command\ElementKind::Index]),
                     from: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
@@ -1039,7 +1073,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/272' => new AlterTableGenerator(
+        yield 'AlterTable/272' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1048,7 +1082,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\ConvertCharsetGenerator(
                     charset: new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1061,7 +1095,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/273' => new AlterTableGenerator(
+        yield 'AlterTable/273' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1070,9 +1104,9 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Command\ReorderGenerator(
-                    items: \Tests\Generator\Operands::tuple(
+                    items: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(
                             expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1089,7 +1123,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/274' => new AlterTableGenerator(
+        yield 'AlterTable/274' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1098,7 +1132,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Modifier\AlgorithmOptionGenerator(
                     algorithm: Generators::constant(null)
                 ),
@@ -1109,7 +1143,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/275' => new AlterTableGenerator(
+        yield 'AlterTable/275' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1118,7 +1152,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Modifier\LockOptionGenerator(
                     lock: Generators::constant(null)
                 ),
@@ -1129,7 +1163,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/277' => new AlterTableGenerator(
+        yield 'AlterTable/277' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1138,7 +1172,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\AddColumnGenerator(
                     column: new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(
                         name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
@@ -1169,7 +1203,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         );
-        yield 'AlterTable/379' => new AlterTableGenerator(
+        yield 'AlterTable/379' => AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -1178,7 +1212,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\DefaultSettingGenerator(
                     column: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
                         column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -1210,7 +1244,7 @@ final class AlterTableGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
-        yield 'AlterTable/additional/63' => [GrammarRelease::MySql847, new AlterTableGenerator(
+        yield 'AlterTable/additional/63' => [GrammarRelease::MySql847, AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('t'),
@@ -1219,7 +1253,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\AddColumnGenerator(
                     column: new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(
                         name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
@@ -1290,7 +1324,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         )];
-        yield 'AlterTable/additional/64' => [GrammarRelease::MySql5744, new AlterTableGenerator(
+        yield 'AlterTable/additional/64' => [GrammarRelease::MySql5744, AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('t'),
@@ -1299,12 +1333,12 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\UpgradePartitioningGenerator()
             ),
             ignore: Generators::constant(false)
         )];
-        yield 'AlterTable/additional/65' => [GrammarRelease::MySql847, new AlterTableGenerator(
+        yield 'AlterTable/additional/65' => [GrammarRelease::MySql847, AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('t'),
@@ -1313,7 +1347,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Column\AddColumnGenerator(
                     column: new \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator(
                         name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
@@ -1380,7 +1414,7 @@ final class AlterTableGenerator implements ErisGenerator
             ),
             ignore: Generators::constant(false)
         )];
-        yield 'AlterTable/additional/73' => [GrammarRelease::MySql847, new AlterTableGenerator(
+        yield 'AlterTable/additional/73' => [GrammarRelease::MySql847, AlterTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::constant('t'),
@@ -1389,7 +1423,7 @@ final class AlterTableGenerator implements ErisGenerator
                 schema: Generators::constant(null),
                 catalog: Generators::constant(null)
             ),
-            commands: \Tests\Generator\Operands::tuple(
+            commands: Generators::tuple(
                 new Partition\PartitionByGenerator(
                     partitioning: new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator(
                         method: new \Tests\Generator\MySql\Statement\Partition\Method\ExpressionMethodGenerator(
@@ -1408,7 +1442,7 @@ final class AlterTableGenerator implements ErisGenerator
                             method: new \Tests\Generator\MySql\Statement\Partition\Method\KeyMethodGenerator(
                                 linear: Generators::constant(false),
                                 algorithm: Generators::constant(null),
-                                columns: \Tests\Generator\Operands::tuple(
+                                columns: Generators::tuple(
                                     \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('b'),
                                         quote: Generators::constant(null)

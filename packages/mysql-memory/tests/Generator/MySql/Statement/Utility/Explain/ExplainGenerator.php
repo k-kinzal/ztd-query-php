@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Utility\Explain;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,6 +21,40 @@ final class ExplainGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete Explain values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No Explain forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain) {
+                throw new LogicException('Publishing Explain must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Explainable> $statement Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $format Generated constructor operand
      * @param ErisGenerator<bool>|null $analyze Generated constructor operand
@@ -29,23 +65,13 @@ final class ExplainGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb>|null $verb Generated command choice
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain>
      */
-    public function __construct(ErisGenerator $statement, ?ErisGenerator $format = null, ?ErisGenerator $analyze = null, ?ErisGenerator $modifier = null, ?ErisGenerator $into = null, ?ErisGenerator $database = null, ?ErisGenerator $emptyInto = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $verb = null)
+    public static function operands(ErisGenerator $statement, ?ErisGenerator $format = null, ?ErisGenerator $analyze = null, ?ErisGenerator $modifier = null, ?ErisGenerator $into = null, ?ErisGenerator $database = null, ?ErisGenerator $emptyInto = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $verb = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain(statement: $parts[0], format: $parts[1], analyze: $parts[2], modifier: $parts[3], into: $parts[4], database: $parts[5], emptyInto: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], verb: $parts[9]);
-        }, \Tests\Generator\Operands::tuple(
-            $statement,
-            $format ?? Generators::constant(null),
-            $analyze ?? Generators::constant(false),
-            $modifier ?? Generators::constant(null),
-            $into ?? Generators::constant(null),
-            $database ?? Generators::constant(null),
-            $emptyInto ?? Generators::constant(false),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $verb ?? new ExplainVerbGenerator()
-        ));
+        }, Generators::tuple($statement, $format ?? Generators::constant(null), $analyze ?? Generators::constant(false), $modifier ?? Generators::constant(null), $into ?? Generators::constant(null), $database ?? Generators::constant(null), $emptyInto ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $verb ?? new ExplainVerbGenerator()));
     }
     /**
      * Generates refused report options around a complete, independent scalar query.
@@ -72,7 +98,7 @@ final class ExplainGenerator implements ErisGenerator
     {
         [$format, $into, $code] = $option;
         $query = Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral $number): \SqlSemantics\Platform\MySql\Statement\QueryRoot => new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($number)])), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 65535))));
-        $request = new self(
+        $request = self::operands(
             $query,
             format: $format === null ? Generators::constant(null) : \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::elements($format, strtolower($format)), Generators::constant(null)),
             into: $into ? new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(\Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 'plan_' . $id, Generators::choose(0, 32)), Generators::constant(null))) : Generators::constant(null)
@@ -81,14 +107,14 @@ final class ExplainGenerator implements ErisGenerator
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain>>
      */
     public static function forms(): iterable
     {
-        yield 'Explain/368' => new ExplainGenerator(
-            statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([new \Tests\Generator\MySql\Statement\QueryRootGenerator(
+        yield 'Explain/368' => ExplainGenerator::operands(
+            statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([\Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
                     table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -116,11 +142,11 @@ final class ExplainGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
-        yield 'Explain/additional/85' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, new ExplainGenerator(
-            statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([new \Tests\Generator\MySql\Statement\QueryRootGenerator(
+        yield 'Explain/additional/85' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, ExplainGenerator::operands(
+            statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([\Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                     options: Generators::constant([]),
-                    items: \Tests\Generator\Operands::tuple(
+                    items: Generators::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                             expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))

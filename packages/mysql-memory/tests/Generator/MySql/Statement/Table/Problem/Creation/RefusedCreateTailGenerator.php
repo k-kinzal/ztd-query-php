@@ -30,7 +30,7 @@ final class RefusedCreateTailGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail(name: $parts[0], elements: $parts[1], options: $parts[2], temporaryWords: $parts[3], ifNotExists: $parts[4], problem: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $elements,
             $options,

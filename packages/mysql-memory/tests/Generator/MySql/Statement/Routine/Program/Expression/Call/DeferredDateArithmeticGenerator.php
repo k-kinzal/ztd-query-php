@@ -29,10 +29,10 @@ final class DeferredDateArithmeticGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($subtract, static function (bool $selected) use ($date, $quantity, $unit, $scalarInformation, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind($subtract, static function (bool $selected) use ($date, $quantity, $unit, $scalarInformation, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts) use ($selected): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic {
                 return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic(subtract: $selected, date: $parts[0], quantity: $parts[1], unit: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], alias: $parts[5]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 $date,
                 $quantity,
                 $unit,

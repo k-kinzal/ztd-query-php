@@ -31,7 +31,7 @@ final class WindowFunctionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(kind: $parts[0], arguments: $parts[1], over: $parts[2], nulls: $parts[3], edge: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $arguments,
             $over,

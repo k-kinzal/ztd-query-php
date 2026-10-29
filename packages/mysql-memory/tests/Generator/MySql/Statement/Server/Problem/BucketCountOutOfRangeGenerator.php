@@ -25,7 +25,7 @@ final class BucketCountOutOfRangeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\BucketCountOutOfRange {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\BucketCountOutOfRange(buckets: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $buckets
         ));
     }

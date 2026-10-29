@@ -25,7 +25,7 @@ final class NamedArgumentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument(function: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $function
         ));
     }

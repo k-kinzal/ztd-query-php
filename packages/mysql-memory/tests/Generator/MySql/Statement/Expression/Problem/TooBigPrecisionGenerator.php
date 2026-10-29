@@ -27,7 +27,7 @@ final class TooBigPrecisionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(precision: $parts[0], function: $parts[1], maximum: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $precision,
             $function,
             $maximum ?? Generators::constant(6)

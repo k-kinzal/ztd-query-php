@@ -28,7 +28,7 @@ final class SizeOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\SizeOption(kind: $parts[0], size: $parts[1], inputSource: $parts[2], operator: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $size,
             $inputSource ?? Generators::constant(null),

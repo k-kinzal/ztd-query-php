@@ -144,4 +144,56 @@ final class PreparedDefinitionExecutionTest extends TestCase
         $cache->refresh($session, $bindings, []);
         self::assertFalse($cache->changed($session));
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerGeneratedPortableDefinitions')]
+    public function testGeneratedDefinitionRebindsWithoutSourceSql(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create, \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition $definition, \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable $alter, \SqlSemantics\Platform\MySql\Statement\QueryRoot $query): void
+    {
+        $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
+        $execution = new \MySqlMemory\Session\Execution($session);
+        $execution->statement($create);
+        $cache = PreparedCache::capture($query, $session, $definition);
+        $bindings = ParameterBindings::capture($query);
+        $execution->statement($alter);
+        $session->query("SET sql_mode='NO_BACKSLASH_ESCAPES'");
+        $reply = $cache->execute($session, 'Generated preparation without SQL', [], $bindings);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertFalse($cache->changed($session));
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerGeneratedRefusedDefinitions')]
+    public function testGeneratedSyntaxRefusalPreventsRebinding(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create, \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition $definition, \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable $alter, \SqlSemantics\Platform\MySql\Statement\QueryRoot $query): void
+    {
+        $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
+        $execution = new \MySqlMemory\Session\Execution($session);
+        $execution->statement($create);
+        $cache = PreparedCache::capture($query, $session, $definition);
+        $bindings = ParameterBindings::capture($query);
+        $execution->statement($alter);
+        $session->query("SET sql_mode='NO_BACKSLASH_ESCAPES'");
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $cache->execute($session, 'Generated preparation without SQL', [], $bindings);
+    }
+
+    /**
+     * @return iterable<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition, \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable, \SqlSemantics\Platform\MySql\Statement\QueryRoot}>
+     */
+    public static function providerGeneratedPortableDefinitions(): iterable
+    {
+        $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
+        $random->seed(1983);
+        $generator = \Tests\Generator\MySql\Statement\Dml\Prepared\DefinitionGenerator::tableReads(\SqlSemantics\Contract\GrammarRelease::MySql847, false);
+        yield $generator(8, $random)->unbox();
+    }
+
+    /**
+     * @return iterable<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition, \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable, \SqlSemantics\Platform\MySql\Statement\QueryRoot}>
+     */
+    public static function providerGeneratedRefusedDefinitions(): iterable
+    {
+        $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
+        $random->seed(1983);
+        $generator = \Tests\Generator\MySql\Statement\Dml\Prepared\DefinitionGenerator::tableReads(\SqlSemantics\Contract\GrammarRelease::MySql847, true);
+        yield $generator(8, $random)->unbox();
+    }
 }

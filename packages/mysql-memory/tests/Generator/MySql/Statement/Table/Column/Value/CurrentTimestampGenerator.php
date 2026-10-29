@@ -26,10 +26,10 @@ final class CurrentTimestampGenerator implements ErisGenerator
      */
     public function __construct(?ErisGenerator $precision = null, ?ErisGenerator $parentheses = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($parentheses ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), static function (\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $words) use ($precision, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind($parentheses ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), static function (\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $words) use ($precision, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp {
                 return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp(precision: $parts[0], parentheses: $parts[1], inputSource: $parts[2], alias: $parts[3]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 $precision ?? Generators::constant(null),
                 Generators::constant($words),
                 $inputSource ?? Generators::constant(null),

@@ -27,7 +27,7 @@ final class ReloadTlsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadTls {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\ReloadTls(channel: $parts[0], noRollbackOnError: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $channel ?? Generators::constant(null),
             $noRollbackOnError ?? Generators::constant(false),
             $inputSource ?? Generators::constant(null)

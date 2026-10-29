@@ -27,7 +27,7 @@ final class ResourceLimitGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit(kind: $parts[0], number: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $number,
             $inputSource ?? Generators::constant(null)

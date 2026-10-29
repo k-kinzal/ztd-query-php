@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Account\Privilege;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Identifier\Name;
@@ -23,6 +25,45 @@ final class GrantPrivilegesGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete GrantPrivileges values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<M\Account\Privilege\GrantPrivileges>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($release === GrammarRelease::MySql847) {
+                $forms[] = Level\AbsentGrantTableGenerator::statements();
+                $forms[] = Generators::map(static fn (array $parts): M\Statement => $parts[1], \Tests\Generator\MySql\Statement\Account\Problem\UnknownGrantColumnGenerator::statements());
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No GrantPrivileges forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): M\Account\Privilege\GrantPrivileges {
+            if (!$statement instanceof M\Account\Privilege\GrantPrivileges) {
+                throw new LogicException('Publishing GrantPrivileges must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<list<M\Account\Privilege\Item\Privilege>> $privileges Generated constructor operand
      * @param ErisGenerator<M\Account\Privilege\Level\ObjectKind> $kind Generated constructor operand
      * @param ErisGenerator<M\Account\Privilege\Level\PrivilegeLevel> $level Generated constructor operand
@@ -33,33 +74,23 @@ final class GrantPrivilegesGenerator implements ErisGenerator
      * @param ErisGenerator<M\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<bool>|null $tableKeyword The optional TABLE keyword
+     * @return ErisGenerator<M\Account\Privilege\GrantPrivileges>
      */
-    public function __construct(ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $grantees, ?ErisGenerator $tls = null, ?ErisGenerator $options = null, ?ErisGenerator $as = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableKeyword = null)
+    public static function operands(ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $grantees, ?ErisGenerator $tls = null, ?ErisGenerator $options = null, ?ErisGenerator $as = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableKeyword = null): ErisGenerator
     {
-        $this->delegate = new PrivilegeChangeGenerator([Generators::map(static function (array $parts): M\Account\Privilege\GrantPrivileges {
+        return new PrivilegeChangeGenerator([Generators::map(static function (array $parts): M\Account\Privilege\GrantPrivileges {
             return new M\Account\Privilege\GrantPrivileges(privileges: $parts[0], kind: $parts[1], level: $parts[2], grantees: $parts[3], tls: $parts[4], options: $parts[5], as: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], tableKeyword: $parts[9] && $parts[1] === M\Account\Privilege\Level\ObjectKind::Table);
-        }, \Tests\Generator\Operands::tuple(
-            $privileges,
-            $kind,
-            $level,
-            $grantees,
-            $tls ?? Generators::constant(null),
-            $options ?? Generators::constant([]),
-            $as ?? Generators::constant(null),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $tableKeyword ?? Generators::bool()
-        ))]);
+        }, Generators::tuple($privileges, $kind, $level, $grantees, $tls ?? Generators::constant(null), $options ?? Generators::constant([]), $as ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $tableKeyword ?? Generators::bool()))]);
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<M\Account\Privilege\GrantPrivileges>>
      */
     public static function forms(): iterable
     {
-        yield 'GrantPrivileges/399' => new GrantPrivilegesGenerator(
-            privileges: \Tests\Generator\Operands::tuple(
+        yield 'GrantPrivileges/399' => GrantPrivilegesGenerator::operands(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
                     kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
                     columns: Generators::constant([])
@@ -67,7 +98,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             ),
             kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
             level: new Level\PrivilegeLevelGenerator([new Level\CurrentDatabaseLevelGenerator()]),
-            grantees: \Tests\Generator\Operands::tuple(
+            grantees: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
@@ -79,8 +110,8 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             options: Generators::constant([]),
             as: Generators::constant(null)
         );
-        yield 'GrantPrivileges/402' => new GrantPrivilegesGenerator(
-            privileges: \Tests\Generator\Operands::tuple(
+        yield 'GrantPrivileges/402' => GrantPrivilegesGenerator::operands(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
                     kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
                     columns: Generators::constant([])
@@ -93,7 +124,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
                     quote: Generators::constant(null)
                 )
             )]),
-            grantees: \Tests\Generator\Operands::tuple(
+            grantees: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
@@ -105,8 +136,8 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             options: Generators::constant([]),
             as: Generators::constant(null)
         );
-        yield 'GrantPrivileges/403' => new GrantPrivilegesGenerator(
-            privileges: \Tests\Generator\Operands::tuple(
+        yield 'GrantPrivileges/403' => GrantPrivilegesGenerator::operands(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
                     kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
                     columns: Generators::constant([])
@@ -114,7 +145,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             ),
             kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
             level: new Level\PrivilegeLevelGenerator([new Level\GlobalLevelGenerator()]),
-            grantees: \Tests\Generator\Operands::tuple(
+            grantees: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
@@ -126,8 +157,8 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             options: Generators::constant([]),
             as: Generators::constant(null)
         );
-        yield 'GrantPrivileges/404' => new GrantPrivilegesGenerator(
-            privileges: \Tests\Generator\Operands::tuple(
+        yield 'GrantPrivileges/404' => GrantPrivilegesGenerator::operands(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
                     kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
                     columns: Generators::constant([])
@@ -144,7 +175,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
                     catalog: Generators::constant(null)
                 )
             )]),
-            grantees: \Tests\Generator\Operands::tuple(
+            grantees: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
@@ -156,8 +187,8 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             options: Generators::constant([]),
             as: Generators::constant(null)
         );
-        yield 'GrantPrivileges/406' => new GrantPrivilegesGenerator(
-            privileges: \Tests\Generator\Operands::tuple(
+        yield 'GrantPrivileges/406' => GrantPrivilegesGenerator::operands(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
                     kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
                     columns: Generators::constant([])
@@ -165,7 +196,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             ),
             kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
             level: new Level\PrivilegeLevelGenerator([new Level\CurrentDatabaseLevelGenerator()]),
-            grantees: \Tests\Generator\Operands::tuple(
+            grantees: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
@@ -174,7 +205,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
                 )
             ),
             tls: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 new WithOptionGenerator([new GrantOptionRightGenerator()])
             ),
             as: Generators::constant(null)
@@ -188,14 +219,14 @@ final class GrantPrivilegesGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
-        yield 'GrantPrivileges/additional/75' => [GrammarRelease::MySql847, new GrantPrivilegesGenerator(
-            privileges: \Tests\Generator\Operands::tuple(
+        yield 'GrantPrivileges/additional/75' => [GrammarRelease::MySql847, GrantPrivilegesGenerator::operands(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\DynamicPrivilegeGenerator(
                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                         value: Generators::constant('XA_RECOVER_ADMIN'),
                         quote: Generators::constant(null)
                     ),
-                    columns: \Tests\Generator\Operands::tuple(
+                    columns: Generators::tuple(
                         \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('c'),
                             quote: Generators::constant(null)
@@ -205,7 +236,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             ),
             kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
             level: new Level\PrivilegeLevelGenerator([new Level\GlobalLevelGenerator()]),
-            grantees: \Tests\Generator\Operands::tuple(
+            grantees: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
                         user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -255,7 +286,7 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             return [$publication->publish($context, $grant), $publication->publish($context, $definition), $publication->publish($context, $call), match ($form) {
                 3 => 3619, 4 => 3835, default => 1144
             }, $legacy && $form === 1, $form === 5 ? [1287] : []];
-        }, \Tests\Generator\Operands::tuple(Generators::choose(0, $legacy ? 2 : 5), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $value): string => 'operand_' . $value, Generators::choose(0, 1000)), Generators::constant(null))));
+        }, Generators::tuple(Generators::choose(0, $legacy ? 2 : 5), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $value): string => 'operand_' . $value, Generators::choose(0, 1000)), Generators::constant(null))));
     }
 
 }

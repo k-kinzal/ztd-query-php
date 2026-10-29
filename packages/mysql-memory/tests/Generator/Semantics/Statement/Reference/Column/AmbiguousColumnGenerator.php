@@ -27,7 +27,7 @@ final class AmbiguousColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Column\AmbiguousColumn {
             return new \SqlSemantics\Statement\Reference\Column\AmbiguousColumn(name: $parts[0], candidates: $parts[1], qualifier: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $candidates,
             $qualifier ?? Generators::constant(null)
@@ -45,11 +45,11 @@ final class AmbiguousColumnGenerator implements ErisGenerator
                 value: Generators::map(static fn (int $suffix): string => 'b' . $suffix, Generators::choose(0, 8)),
                 quote: Generators::constant(null)
             ),
-            candidates: \Tests\Generator\Operands::tuple(
+            candidates: Generators::tuple(
                 new ResolvedColumnGenerator(
                     relation: new \Tests\Generator\Semantics\Statement\RelationGenerator([new \Tests\Generator\MySql\Statement\Relation\JsonTableGenerator(
                         document: new \Tests\Generator\Semantics\Statement\ScalarGenerator([\Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                            segments: \Tests\Generator\Operands::tuple(
+                            segments: Generators::tuple(
                                 Generators::constant('[]')
                             ),
                             introducer: Generators::constant(null),
@@ -57,14 +57,14 @@ final class AmbiguousColumnGenerator implements ErisGenerator
                             collation: Generators::constant(null)
                         )]),
                         path: \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                            segments: \Tests\Generator\Operands::tuple(
+                            segments: Generators::tuple(
                                 Generators::constant('$[*]')
                             ),
                             introducer: Generators::constant(null),
                             national: Generators::constant(false),
                             collation: Generators::constant(null)
                         ),
-                        columns: \Tests\Generator\Operands::tuple(
+                        columns: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Call\JsonTableColumnGenerator([new \Tests\Generator\MySql\Statement\Call\Json\OrdinalityColumnGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::map(static fn (int $suffix): string => 'b' . $suffix, Generators::choose(0, 8)),
@@ -124,7 +124,7 @@ final class AmbiguousColumnGenerator implements ErisGenerator
                 new ResolvedColumnGenerator(
                     relation: new \Tests\Generator\Semantics\Statement\RelationGenerator([new \Tests\Generator\MySql\Statement\Relation\JsonTableGenerator(
                         document: new \Tests\Generator\Semantics\Statement\ScalarGenerator([\Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                            segments: \Tests\Generator\Operands::tuple(
+                            segments: Generators::tuple(
                                 Generators::constant('[]')
                             ),
                             introducer: Generators::constant(null),
@@ -132,14 +132,14 @@ final class AmbiguousColumnGenerator implements ErisGenerator
                             collation: Generators::constant(null)
                         )]),
                         path: \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                            segments: \Tests\Generator\Operands::tuple(
+                            segments: Generators::tuple(
                                 Generators::constant('$[*]')
                             ),
                             introducer: Generators::constant(null),
                             national: Generators::constant(false),
                             collation: Generators::constant(null)
                         ),
-                        columns: \Tests\Generator\Operands::tuple(
+                        columns: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Call\JsonTableColumnGenerator([new \Tests\Generator\MySql\Statement\Call\Json\OrdinalityColumnGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::map(static fn (int $suffix): string => 'b' . $suffix, Generators::choose(0, 8)),

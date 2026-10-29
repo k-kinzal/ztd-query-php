@@ -30,7 +30,7 @@ final class NonGroupedColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn(rule: $parts[0], ordering: $parts[1], position: $parts[2], column: $parts[3], having: $parts[4], release: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rule,
             $ordering,
             $position,

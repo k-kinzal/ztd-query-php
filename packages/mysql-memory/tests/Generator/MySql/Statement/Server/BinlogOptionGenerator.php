@@ -43,7 +43,7 @@ final class BinlogOptionGenerator implements ErisGenerator
      */
     public static function optional(): ErisGenerator
     {
-        return \Tests\Generator\Operands::oneOf([Generators::constant(null), new self()]);
+        return Generators::oneOf(...[Generators::constant(null), new self()]);
     }
 
 }

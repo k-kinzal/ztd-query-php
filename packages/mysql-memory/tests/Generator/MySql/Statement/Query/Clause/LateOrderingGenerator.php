@@ -27,7 +27,7 @@ final class LateOrderingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering(orderBy: $parts[0], limit: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $orderBy,
             $limit ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

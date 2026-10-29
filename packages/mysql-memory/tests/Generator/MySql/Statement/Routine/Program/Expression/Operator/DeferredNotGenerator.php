@@ -27,7 +27,7 @@ final class DeferredNotGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot(operand: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

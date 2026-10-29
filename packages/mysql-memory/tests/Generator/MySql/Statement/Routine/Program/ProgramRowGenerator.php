@@ -28,7 +28,7 @@ final class ProgramRowGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(relation: $parts[0], names: $parts[1], domains: $parts[2], alias: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $relation,
             $names,
             $domains,
@@ -43,14 +43,14 @@ final class ProgramRowGenerator implements ErisGenerator
      */
     public static function invocation(): ErisGenerator
     {
-        $parameters = new \Tests\Generator\MySql\Statement\Routine\ParameterListGenerator(\Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Routine\ParameterGenerator(
+        $parameters = new \Tests\Generator\MySql\Statement\Routine\ParameterListGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\ParameterGenerator(
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             new \Tests\Generator\MySql\Statement\Type\IntegralGenerator(\Tests\Generator\MySql\Statement\Type\Kind\IntegralKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int])),
         )));
-        $rows = \Tests\Generator\Operands::bind($parameters, static fn (\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList $parameters): self => new self(
+        $rows = Generators::bind($parameters, static fn (\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList $parameters): self => new self(
             Generators::constant($parameters),
             Generators::constant([$parameters->parameters[0]->name]),
-            \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Type\Resolved\DomainGenerator(
+            Generators::vector(1, new \Tests\Generator\MySql\Statement\Type\Resolved\DomainGenerator(
                 \Tests\Generator\MySql\Statement\Type\Resolved\KindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer]),
                 \Tests\Generator\MySql\Statement\Type\Resolved\FieldGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long]),
                 length: Generators::constant(11),
@@ -67,7 +67,7 @@ final class ProgramRowGenerator implements ErisGenerator
             $call = new \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall($name, [$argument], new \SqlSemantics\Platform\MySql\Statement\StatementSemantics($context->profile, connection: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_unicode_ci')));
             \SqlSemantics\Diagnostic\Check::invariant($create instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure, 'The generated dependency is a procedure definition and call.');
             return [$create, $call];
-        }, \Tests\Generator\Operands::tuple($rows, new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)))));
+        }, Generators::tuple($rows, new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)))));
     }
 
 }

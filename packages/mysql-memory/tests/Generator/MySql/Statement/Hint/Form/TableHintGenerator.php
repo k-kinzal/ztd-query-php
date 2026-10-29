@@ -27,7 +27,7 @@ final class TableHintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\TableHint {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\TableHint(hint: $parts[0], block: $parts[1], tables: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $hint,
             $block,
             $tables

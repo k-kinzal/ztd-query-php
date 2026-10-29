@@ -29,7 +29,7 @@ final class NoticeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Fact\Notice {
             return new \SqlSemantics\Statement\Fact\Notice(warning: $parts[0], subject: $parts[1], instruction: $parts[2], inputSource: $parts[3], fromInput: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $warning,
             $subject ?? Generators::constant(null),
             $instruction ?? Generators::constant(null),

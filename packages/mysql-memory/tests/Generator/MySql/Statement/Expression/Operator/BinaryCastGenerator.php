@@ -27,7 +27,7 @@ final class BinaryCastGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast(operand: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

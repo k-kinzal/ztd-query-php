@@ -27,7 +27,7 @@ final class DeprecationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(construct: $parts[0], text: $parts[1], aborts: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $construct,
             $text ?? Generators::constant(''),
             $aborts ?? Generators::constant(false)

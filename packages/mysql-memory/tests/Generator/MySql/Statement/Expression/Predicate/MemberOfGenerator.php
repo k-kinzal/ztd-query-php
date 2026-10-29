@@ -29,7 +29,7 @@ final class MemberOfGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf(operand: $parts[0], array: $parts[1], of: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $array,
             $of ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written),

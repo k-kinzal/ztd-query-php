@@ -32,7 +32,7 @@ final class TableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Declaration\Table {
             return new \SqlSemantics\Statement\Declaration\Table(name: $parts[0], profile: $parts[1], columns: $parts[2], implicit: $parts[3], complete: $parts[4], kind: $parts[5], keys: $parts[6], partitions: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $profile,
             $columns,
@@ -64,7 +64,7 @@ final class TableGenerator implements ErisGenerator
                 \Tests\Generator\Semantics\Statement\Type\NullabilityGenerator::selecting([\SqlSemantics\Statement\Type\Nullability::Nullable]),
             );
         }
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($columns[0], $columns[1], $columns[2]), static function (array $columns): self {
+        return Generators::bind(Generators::tuple($columns[0], $columns[1], $columns[2]), static function (array $columns): self {
             $keys = new KeyGenerator(Generators::constant(false), Generators::constant([$columns[0]]));
             $implicit = new ImplicitColumnGenerator(Generators::constant([$columns[2]->name]), Generators::constant($columns[2]));
             return new self(
@@ -74,9 +74,9 @@ final class TableGenerator implements ErisGenerator
                 ),
                 new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847)),
                 Generators::constant([$columns[0], $columns[1]]),
-                implicit: \Tests\Generator\Operands::vector(1, $implicit),
+                implicit: Generators::vector(1, $implicit),
                 kind: RelationKindGenerator::selecting([\SqlSemantics\Statement\Declaration\RelationKind::BaseTable]),
-                keys: \Tests\Generator\Operands::vector(1, $keys),
+                keys: Generators::vector(1, $keys),
             );
         });
     }

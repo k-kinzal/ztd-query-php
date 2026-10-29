@@ -26,7 +26,7 @@ final class KeyGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Declaration\Key {
             return new \SqlSemantics\Statement\Declaration\Key(primary: $parts[0], columns: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $primary,
             $columns
         ));

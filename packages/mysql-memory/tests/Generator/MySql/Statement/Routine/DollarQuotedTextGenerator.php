@@ -27,7 +27,7 @@ final class DollarQuotedTextGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText(text: $parts[0], tag: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $text,
             $tag ?? Generators::constant(''),
             $inputSource ?? Generators::constant(null)

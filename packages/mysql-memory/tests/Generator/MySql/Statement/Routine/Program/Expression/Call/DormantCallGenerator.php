@@ -28,7 +28,7 @@ final class DormantCallGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall(name: $parts[0], arguments: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $arguments ?? Generators::constant([]),
             $scalarInformation ?? Generators::constant(null),

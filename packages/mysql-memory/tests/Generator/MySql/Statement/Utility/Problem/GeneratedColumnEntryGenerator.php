@@ -25,7 +25,7 @@ final class GeneratedColumnEntryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\GeneratedColumnEntry(offset: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $offset
         ));
     }

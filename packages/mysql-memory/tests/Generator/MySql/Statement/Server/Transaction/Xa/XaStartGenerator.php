@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart;
@@ -26,14 +28,44 @@ final class XaStartGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Selects the grammar before generating operands.
+     * Generates complete XaStart values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<XaStart>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
-        $this->delegate = Generators::map(static function (array $data) use ($release): XaStart {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No XaStart forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): XaStart {
+            if (!$statement instanceof XaStart) {
+                throw new LogicException('Publishing XaStart must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Selects the grammar before generating operands.
+     * @return ErisGenerator<XaStart>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
+    {
+        return Generators::map(static function (array $data) use ($release): XaStart {
             [$xid, $option, $begin] = $data;
             return new XaStart($xid, $option, profile: new LanguageProfile($release), begin: $begin);
-        }, \Tests\Generator\Operands::tuple(new XidGenerator(), Generators::elements(null, XaStartOption::Join, XaStartOption::Resume), Generators::bool()));
+        }, Generators::tuple(new XidGenerator(), Generators::elements(null, XaStartOption::Join, XaStartOption::Resume), Generators::bool()));
     }
 
     /**
@@ -65,11 +97,11 @@ final class XaStartGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $xid, ErisGenerator $option, ErisGenerator $profile, ErisGenerator $client, ?ErisGenerator $begin = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): XaStart => new XaStart(xid: $parts[0], option: $parts[1], profile: $parts[2], client: $parts[3], begin: $parts[4]), \Tests\Generator\Operands::tuple($xid, $option, $profile, $client, $begin ?? Generators::bool()));
+        return Generators::map(static fn (array $parts): XaStart => new XaStart(xid: $parts[0], option: $parts[1], profile: $parts[2], client: $parts[3], begin: $parts[4]), Generators::tuple($xid, $option, $profile, $client, $begin ?? Generators::bool()));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<XaStart>>
      */

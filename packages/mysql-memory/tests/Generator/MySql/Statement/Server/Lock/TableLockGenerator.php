@@ -30,7 +30,7 @@ final class TableLockGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock(table: $parts[0], alias: $parts[1], mode: $parts[2], mark: $parts[3], inputSource: $parts[4], relationInformation: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table,
             $alias,
             $mode,

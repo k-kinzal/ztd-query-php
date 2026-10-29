@@ -27,7 +27,7 @@ final class TableListGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\TableList {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\TableList(members: $parts[0], relationInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $members,
             $relationInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

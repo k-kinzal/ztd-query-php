@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Alter;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -22,32 +24,56 @@ final class TruncateTableGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete TruncateTable values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<M\Alter\TruncateTable>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No TruncateTable forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): M\Alter\TruncateTable {
+            if (!$statement instanceof M\Alter\TruncateTable) {
+                throw new LogicException('Publishing TruncateTable must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<QualifiedName> $table Generated constructor operand
      * @param ErisGenerator<M\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
      * @param ErisGenerator<M\Expression\OptionalWords>|null $tableWord Generated written alternative
+     * @return ErisGenerator<M\Alter\TruncateTable>
      */
-    public function __construct(ErisGenerator $table, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $tableWord = null)
+    public static function operands(ErisGenerator $table, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $tableWord = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): M\Alter\TruncateTable {
+        return Generators::map(static function (array $parts): M\Alter\TruncateTable {
             return new M\Alter\TruncateTable(table: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], relationInformation: $parts[3], tableWord: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
-            $table,
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $relationInformation ?? Generators::constant(null),
-            $tableWord ?? new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator()
-        ));
+        }, Generators::tuple($table, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $tableWord ?? new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator()));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<M\Alter\TruncateTable>>
      */
     public static function forms(): iterable
     {
-        yield 'TruncateTable/125' => new TruncateTableGenerator(
+        yield 'TruncateTable/125' => TruncateTableGenerator::operands(
             table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -66,7 +92,7 @@ final class TruncateTableGenerator implements ErisGenerator
      */
     public static function renamedTables(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator::synonymWrites($release), static function (array $inputs) use ($release): ErisGenerator {
+        return Generators::bind(\Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator::synonymWrites($release), static function (array $inputs) use ($release): ErisGenerator {
             [$create, $insert, $before] = $inputs;
             \SqlSemantics\Diagnostic\Check::invariant($create instanceof M\Table\CreateTable, 'The dependent rename starts with a table definition.');
             \SqlSemantics\Diagnostic\Check::invariant($insert instanceof M\Dml\Insert\InsertRows && $before instanceof M\QueryRoot, 'The generated rows and read use that definition.');
@@ -79,13 +105,13 @@ final class TruncateTableGenerator implements ErisGenerator
             $actions = new Command\RenameToGenerator(Generators::constant($name));
             $changes = Generators::map(static fn (M\Alter\Command\RenameTo $action): M\Alter\AlterTable => new M\Alter\AlterTable($create->name, [$action]), $actions);
             $after = new M\QueryRoot(new M\Query\Select([], [new M\Query\Star()], new M\Relation\TableReference($name)));
-            return \Tests\Generator\Operands::tuple(
+            return Generators::tuple(
                 Generators::constant($create),
                 Generators::constant($insert),
                 Generators::constant($before),
                 new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $changes, Generators::constant($original)),
                 new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, Generators::constant($after), Generators::constant($context)),
-                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new self(Generators::constant($name)), Generators::constant($context)),
+                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, self::operands(Generators::constant($name)), Generators::constant($context)),
             );
         });
     }

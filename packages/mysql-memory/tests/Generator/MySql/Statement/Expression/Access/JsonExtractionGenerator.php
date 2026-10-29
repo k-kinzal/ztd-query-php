@@ -29,7 +29,7 @@ final class JsonExtractionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Access\JsonExtraction {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Access\JsonExtraction(column: $parts[0], path: $parts[1], unquote: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $path,
             $unquote ?? Generators::constant(false),

@@ -30,7 +30,7 @@ final class StringLiteralGenerator implements ErisGenerator
      */
     public function __construct(?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation $collation = null, ?ErisGenerator $strings = null, ?ErisGenerator $locations = null)
     {
-        $strings ??= Generators::map(static fn (array $characters): string => implode('', $characters), \Tests\Generator\Operands::seq(Generators::elements('0', '1', 'a', "'", '\\\\', 'é', '列')));
+        $strings ??= Generators::map(static fn (array $characters): string => implode('', $characters), Generators::seq(Generators::elements('0', '1', 'a', "'", '\\\\', 'é', '列')));
         $this->delegate = Generators::map(static function (array $data) use ($collation): StringLiteral {
             if (!is_string($data['value']) || ($data['location'] !== null && !$data['location'] instanceof \SqlSemantics\Statement\Source\Span)) {
                 throw new LogicException('Literal generators must produce decoded text and optional source metadata.');
@@ -69,7 +69,7 @@ final class StringLiteralGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $segments, ErisGenerator $introducer, ErisGenerator $national, ErisGenerator $collation, ?ErisGenerator $location = null, ?ErisGenerator $scalarInformation = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): StringLiteral => new StringLiteral(segments: $parts[0], introducer: $parts[1], national: $parts[2], collation: $parts[3], location: $parts[4], scalarInformation: $parts[5]), \Tests\Generator\Operands::tuple($segments, $introducer, $national, $collation, $location ?? Generators::constant(null), $scalarInformation ?? Generators::constant(null)));
+        return Generators::map(static fn (array $parts): StringLiteral => new StringLiteral(segments: $parts[0], introducer: $parts[1], national: $parts[2], collation: $parts[3], location: $parts[4], scalarInformation: $parts[5]), Generators::tuple($segments, $introducer, $national, $collation, $location ?? Generators::constant(null), $scalarInformation ?? Generators::constant(null)));
     }
 
 }

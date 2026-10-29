@@ -25,7 +25,7 @@ final class InvalidEncryptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption(value: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $value
         ));
     }

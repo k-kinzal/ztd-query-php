@@ -30,7 +30,7 @@ final class QueryExpressionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression {
             return new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(with: $parts[0], body: $parts[1], orderBy: $parts[2], limit: $parts[3], queryInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $with,
             $body,
             $orderBy ?? Generators::constant([]),

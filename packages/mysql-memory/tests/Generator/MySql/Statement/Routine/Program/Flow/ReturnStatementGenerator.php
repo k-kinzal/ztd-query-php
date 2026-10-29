@@ -26,7 +26,7 @@ final class ReturnStatementGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ReturnStatement(value: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $value,
             $inputSource ?? Generators::constant(null)
         ));

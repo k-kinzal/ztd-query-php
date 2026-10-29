@@ -26,7 +26,7 @@ final class RefusedExplainIntoGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto(format: $parts[0], analyze: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $format ?? Generators::constant(null),
             $analyze ?? Generators::constant(false)
         ));

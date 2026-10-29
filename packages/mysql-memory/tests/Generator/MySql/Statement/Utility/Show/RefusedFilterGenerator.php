@@ -26,7 +26,7 @@ final class RefusedFilterGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter(header: $parts[0], condition: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $header,
             $condition
         ));
@@ -39,7 +39,7 @@ final class RefusedFilterGenerator implements ErisGenerator
     public static function executionForms(): iterable
     {
         yield 'Utility\\Show\\RefusedFilter' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedFilterGenerator(
-            header: new Schema\ShowTableStatusGenerator(
+            header: Schema\ShowTableStatusGenerator::operands(
                 database: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $suffix): string => 'd' . $suffix, Generators::choose(0, 8)),
                     quote: Generators::constant(null)
@@ -49,7 +49,7 @@ final class RefusedFilterGenerator implements ErisGenerator
             condition: new \Tests\Generator\MySql\Statement\Expression\Problem\RefusedScalarGenerator(
                 operand: new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredLikeGenerator(
                     operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                        elements: \Tests\Generator\Operands::tuple(
+                        elements: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),

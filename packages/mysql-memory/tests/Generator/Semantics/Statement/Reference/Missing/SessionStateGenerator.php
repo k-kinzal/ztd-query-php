@@ -25,7 +25,7 @@ final class SessionStateGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Missing\SessionState {
             return new \SqlSemantics\Statement\Reference\Missing\SessionState(subject: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $subject
         ));
     }

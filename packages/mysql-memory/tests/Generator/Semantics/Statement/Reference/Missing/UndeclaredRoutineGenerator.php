@@ -25,7 +25,7 @@ final class UndeclaredRoutineGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine {
             return new \SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }
@@ -37,7 +37,7 @@ final class UndeclaredRoutineGenerator implements ErisGenerator
     public static function queries(): ErisGenerator
     {
         $names = new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('pbt')));
-        $calls = \Tests\Generator\Operands::bind(new self($names), static fn (\SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine $missing): \Tests\Generator\MySql\Statement\Call\FunctionCallGenerator => new \Tests\Generator\MySql\Statement\Call\FunctionCallGenerator(
+        $calls = Generators::bind(new self($names), static fn (\SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine $missing): \Tests\Generator\MySql\Statement\Call\FunctionCallGenerator => new \Tests\Generator\MySql\Statement\Call\FunctionCallGenerator(
             Generators::constant($missing->name->name),
             schema: Generators::constant($missing->name->schema),
             scalarInformation: new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(Generators::constant([$missing])), Generators::constant(\SqlSemantics\Statement\Type\Nullability::Dependent)),

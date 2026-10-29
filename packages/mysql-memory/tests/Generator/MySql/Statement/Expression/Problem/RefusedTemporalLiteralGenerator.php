@@ -26,7 +26,7 @@ final class RefusedTemporalLiteralGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral(text: $parts[0], form: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $text,
             $form ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date)
         ));

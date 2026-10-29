@@ -25,7 +25,7 @@ final class GlobalLevelGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel(inputSource: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null)
         ));
     }

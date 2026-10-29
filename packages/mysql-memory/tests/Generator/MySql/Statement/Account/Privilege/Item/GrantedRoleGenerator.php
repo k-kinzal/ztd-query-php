@@ -58,7 +58,7 @@ final class GrantedRoleGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $role): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): GrantedRole => new GrantedRole(role: $parts[0]), \Tests\Generator\Operands::tuple($role));
+        return Generators::map(static fn (array $parts): GrantedRole => new GrantedRole(role: $parts[0]), Generators::tuple($role));
     }
 
 }

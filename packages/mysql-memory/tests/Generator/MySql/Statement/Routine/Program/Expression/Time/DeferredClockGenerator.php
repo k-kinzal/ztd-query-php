@@ -27,10 +27,10 @@ final class DeferredClockGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $clock, ErisGenerator $precision, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($clock, static function (\SqlSemantics\Platform\MySql\Statement\Call\Clock $selected) use ($precision, $scalarInformation, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind($clock, static function (\SqlSemantics\Platform\MySql\Statement\Call\Clock $selected) use ($precision, $scalarInformation, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock {
                 return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(clock: $parts[0], precision: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3], alias: $parts[4]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected),
                 $precision,
                 $scalarInformation ?? Generators::constant(null),

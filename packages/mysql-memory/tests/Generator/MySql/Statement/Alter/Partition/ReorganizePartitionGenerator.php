@@ -28,7 +28,7 @@ final class ReorganizePartitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\ReorganizePartition(binlog: $parts[0], partitions: $parts[1], definitions: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $binlog,
             $partitions ?? Generators::constant(null),
             $definitions ?? Generators::constant([]),

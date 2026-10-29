@@ -25,7 +25,7 @@ final class NotSupportedYetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet(feature: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $feature
         ));
     }

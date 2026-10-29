@@ -39,7 +39,7 @@ final class SystemColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn(name: $parts[0], domain: $parts[1], nullable: $parts[2], flags: $parts[3], originalName: $parts[4], originalTable: $parts[5], database: $parts[6], columnType: $parts[7], default: $parts[8], key: $parts[9], extra: $parts[10], comment: $parts[11], collation: $parts[12], listedNullable: $parts[13], dimensions: $parts[14]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $domain,
             $nullable,
@@ -66,7 +66,7 @@ final class SystemColumnGenerator implements ErisGenerator
      */
     public static function catalog(ErisGenerator $columns): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind($columns, static fn (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn $column): self => new self(
+        return Generators::bind($columns, static fn (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn $column): self => new self(
             Generators::constant($column->name),
             Generators::constant($column->domain),
             Generators::constant($column->nullable),
@@ -78,7 +78,7 @@ final class SystemColumnGenerator implements ErisGenerator
             Generators::constant($column->default),
             Generators::constant($column->key),
             Generators::constant($column->extra),
-            Generators::map(static fn (int $value): string => 'generated comment ' . $value, \Tests\Generator\Operands::sized(Generators::nat(), 1000)),
+            Generators::map(static fn (int $value): string => 'generated comment ' . $value, Generators::choose(0, 1000)),
             Generators::constant($column->collation),
             Generators::constant($column->listedNullable),
             ColumnDimensionsGenerator::catalog(Generators::constant($column->dimensions)),

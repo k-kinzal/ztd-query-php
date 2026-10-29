@@ -26,7 +26,7 @@ final class OnceScheduleGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule(at: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $at,
             $inputSource ?? Generators::constant(null)
         ));

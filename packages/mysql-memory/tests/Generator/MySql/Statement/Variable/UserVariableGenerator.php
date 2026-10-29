@@ -27,7 +27,7 @@ final class UserVariableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(name: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
@@ -42,7 +42,7 @@ final class UserVariableGenerator implements ErisGenerator
     public static function assignmentSequence(): ErisGenerator
     {
         $bindings = new UserVariableBindingGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(true));
-        return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($bindings, UserVariableEntryGenerator::integers(), Generators::choose(0, 100)), static function (array $parts): ErisGenerator {
+        return Generators::bind(Generators::tuple($bindings, UserVariableEntryGenerator::integers(), Generators::choose(0, 100)), static function (array $parts): ErisGenerator {
             [$binding, $entry, $value] = $parts;
             $type = new \SqlSemantics\Statement\Type\Known($entry->domain);
             $fact = new \SqlSemantics\Statement\Fact\ScalarFact($type, \SqlSemantics\Statement\Type\Nullability::Nullable, $binding);
@@ -53,7 +53,7 @@ final class UserVariableGenerator implements ErisGenerator
                 [new \SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment($target, $literal)],
                 new \SqlSemantics\Platform\MySql\Statement\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), connection: $entry->collation),
             );
-            return \Tests\Generator\Operands::tuple(Generators::constant($write), \Tests\Generator\MySql\Statement\QueryRootGenerator::namedScalar($expressions));
+            return Generators::tuple(Generators::constant($write), \Tests\Generator\MySql\Statement\QueryRootGenerator::namedScalar($expressions));
         });
     }
 
@@ -65,7 +65,7 @@ final class UserVariableGenerator implements ErisGenerator
     public static function missingState(): ErisGenerator
     {
         $state = new \Tests\Generator\Semantics\Statement\Reference\Missing\SessionStateGenerator(Generators::map(static fn (int $suffix): string => 'user variable @missing_' . $suffix, Generators::choose(0, 32)));
-        return \Tests\Generator\Operands::bind($state, static function (\SqlSemantics\Statement\Reference\Missing\SessionState $missing): ErisGenerator {
+        return Generators::bind($state, static function (\SqlSemantics\Statement\Reference\Missing\SessionState $missing): ErisGenerator {
             $name = new \SqlSemantics\Statement\Identifier\Name(substr($missing->subject, strlen('user variable @')));
             $fact = new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(Generators::constant([$missing])), \Tests\Generator\Semantics\Statement\Type\NullabilityGenerator::selecting([\SqlSemantics\Statement\Type\Nullability::Dependent]));
             return \Tests\Generator\MySql\Statement\QueryRootGenerator::namedScalar(new self(Generators::constant($name), $fact));

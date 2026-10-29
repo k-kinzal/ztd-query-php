@@ -28,7 +28,7 @@ final class EnumerationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Enumeration {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(kind: $parts[0], members: $parts[1], charset: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $members,
             $charset ?? Generators::constant(null),

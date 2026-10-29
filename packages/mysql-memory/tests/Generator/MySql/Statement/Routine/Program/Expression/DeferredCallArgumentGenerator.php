@@ -28,7 +28,7 @@ final class DeferredCallArgumentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCallArgument {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCallArgument(expression: $parts[0], alias: $parts[1], mark: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression,
             $alias ?? Generators::constant(null),
             $mark ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As),

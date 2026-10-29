@@ -28,7 +28,7 @@ final class PositionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Position {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Position(substring: $parts[0], string: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $substring,
             $string,
             $scalarInformation ?? Generators::constant(null),

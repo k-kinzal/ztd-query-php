@@ -26,7 +26,7 @@ final class IntoVariablesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables(targets: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $targets,
             $inputSource ?? Generators::constant(null)
         ));

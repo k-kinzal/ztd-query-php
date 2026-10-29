@@ -73,7 +73,6 @@ final class ErisTupleCompositionTest extends TestCase
                 namespace Example;
                 use Eris\Generator;
                 use Eris\Generators;
-                use Tests\Generator\Operands;
                 final class Sequence {
                     /** @param list<int> $numbers */
                     public function __construct(public array $numbers) {}
@@ -83,14 +82,14 @@ final class ErisTupleCompositionTest extends TestCase
                  * @return Generator<Sequence>
                  */
                 function integers(array $generators): Generator {
-                    return Generators::map(static fn (array $values): Sequence => new Sequence($values), Operands::tuple(...$generators));
+                    return Generators::map(static fn (array $values): Sequence => new Sequence($values), \Eris\Generators::tuple(...$generators));
                 }
                 /**
                  * @param list<Generator<string>> $generators
                  * @return Generator<Sequence>
                  */
                 function wrong(array $generators): Generator {
-                    return Generators::map(static fn (array $values): Sequence => new Sequence($values), Operands::tuple(...$generators));
+                    return Generators::map(static fn (array $values): Sequence => new Sequence($values), \Eris\Generators::tuple(...$generators));
                 }
                 PHP);
             $filesystem->dumpFile($directory . '/phpstan.neon', <<<'NEON'
@@ -103,7 +102,6 @@ final class ErisTupleCompositionTest extends TestCase
                 services:
                     -
                         class: Rules\ErisTupleComposition
-                        arguments: [Tests\Generator\Operands]
                         tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]
                 NEON);
             $process = new Process([PHP_BINARY, $package . '/vendor/bin/phpstan', 'analyse', '--configuration=' . $directory . '/phpstan.neon', '--autoload-file=' . $package . '/vendor/autoload.php', '--error-format=json', '--no-progress'], $package);

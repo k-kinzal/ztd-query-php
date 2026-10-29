@@ -25,7 +25,7 @@ final class HeartbeatPeriodGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod(condition: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $condition
         ));
     }

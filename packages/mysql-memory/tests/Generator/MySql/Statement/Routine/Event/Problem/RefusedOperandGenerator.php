@@ -28,7 +28,7 @@ final class RefusedOperandGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand(name: $parts[0], problem: $parts[1], definer: $parts[2], operands: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $problem,
             $definer ?? Generators::constant(null),
@@ -61,7 +61,7 @@ final class RefusedOperandGenerator implements ErisGenerator
                 rowValue: Generators::constant(false)
             ),
             definer: Generators::constant(null),
-            operands: \Tests\Generator\Operands::tuple(
+            operands: Generators::tuple(
                 new \Tests\Generator\Semantics\Statement\OperandGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                 )]),
@@ -70,10 +70,10 @@ final class RefusedOperandGenerator implements ErisGenerator
                         value: Generators::constant('ABS'),
                         quote: Generators::constant(null)
                     ),
-                    arguments: \Tests\Generator\Operands::tuple(
+                    arguments: Generators::tuple(
                         new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredCallArgumentGenerator(
                             expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: \Tests\Generator\Operands::tuple(
+                                elements: Generators::tuple(
                                     new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),

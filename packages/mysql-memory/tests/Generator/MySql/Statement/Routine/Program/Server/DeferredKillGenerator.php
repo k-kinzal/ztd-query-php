@@ -27,7 +27,7 @@ final class DeferredKillGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill(scope: $parts[0], process: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $scope,
             $process,
             $inputSource ?? Generators::constant(null)

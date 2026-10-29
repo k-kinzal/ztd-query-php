@@ -25,7 +25,7 @@ final class AllPartitionsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\AllPartitions {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\AllPartitions(inputSource: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null)
         ));
     }

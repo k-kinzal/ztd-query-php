@@ -28,7 +28,7 @@ final class ReplicaUntilGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil(point: $parts[0], gtids: $parts[1], positions: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $point,
             $gtids ?? Generators::constant(null),
             $positions ?? Generators::constant([]),
@@ -42,12 +42,12 @@ final class ReplicaUntilGenerator implements ErisGenerator
      */
     public static function conditions(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        $positions = \Tests\Generator\Operands::tuple(new \Tests\Generator\MySql\Statement\Replication\Source\SourceOptionGenerator(
+        $positions = Generators::tuple(new \Tests\Generator\MySql\Statement\Replication\Source\SourceOptionGenerator(
             Generators::constant((new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($release)),
             \Tests\Generator\MySql\Statement\Replication\Source\SourceOptionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::LogPosition, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::RelayLogPosition]),
             new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(4, 10000))),
         ));
-        return \Tests\Generator\Operands::oneOf([
+        return Generators::oneOf(...[
             new self(Generators::constant(null), positions: $positions),
             new self(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGaps), positions: $positions),
             new self(UntilPointGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::BeforeGtids, \SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGtids]), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => '3E11FA47-71CA-11E1-9E33-C80AA9429562:1-' . $value, Generators::choose(1, 1000))), $positions),

@@ -27,7 +27,7 @@ final class ByteSizeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize {
             return new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(number: $parts[0], word: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $number,
             $word ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

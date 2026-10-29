@@ -30,7 +30,7 @@ final class LogicalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Logical {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Logical(operator: $parts[0], left: $parts[1], right: $parts[2], symbolic: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operator,
             $left,
             $right,

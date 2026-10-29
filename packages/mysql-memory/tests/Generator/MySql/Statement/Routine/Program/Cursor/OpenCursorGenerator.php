@@ -26,7 +26,7 @@ final class OpenCursorGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\OpenCursor {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\OpenCursor(cursor: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $cursor,
             $inputSource ?? Generators::constant(null)
         ));

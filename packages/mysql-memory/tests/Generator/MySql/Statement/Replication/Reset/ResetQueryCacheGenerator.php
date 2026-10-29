@@ -25,7 +25,7 @@ final class ResetQueryCacheGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache(inputSource: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null)
         ));
     }

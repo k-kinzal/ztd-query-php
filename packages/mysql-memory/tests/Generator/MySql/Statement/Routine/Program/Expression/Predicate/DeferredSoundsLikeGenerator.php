@@ -28,7 +28,7 @@ final class DeferredSoundsLikeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredSoundsLike {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Predicate\DeferredSoundsLike(operand: $parts[0], pattern: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $pattern,
             $scalarInformation ?? Generators::constant(null),

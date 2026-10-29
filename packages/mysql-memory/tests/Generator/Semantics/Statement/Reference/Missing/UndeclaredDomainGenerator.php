@@ -25,7 +25,7 @@ final class UndeclaredDomainGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Missing\UndeclaredDomain {
             return new \SqlSemantics\Statement\Reference\Missing\UndeclaredDomain(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }
@@ -40,7 +40,7 @@ final class UndeclaredDomainGenerator implements ErisGenerator
     {
         $domains = new self(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()));
         $parameters = new \Tests\Generator\MySql\Statement\Literal\ParameterGenerator(
-            scalarInformation: new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(\Tests\Generator\Operands::vector(1, $domains)), Generators::constant(\SqlSemantics\Statement\Type\Nullability::Dependent), new \Tests\Generator\MySql\Statement\Variable\ParameterBindingGenerator(Generators::constant(0))),
+            scalarInformation: new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(Generators::vector(1, $domains)), Generators::constant(\SqlSemantics\Statement\Type\Nullability::Dependent), new \Tests\Generator\MySql\Statement\Variable\ParameterBindingGenerator(Generators::constant(0))),
             position: Generators::constant(0),
         );
         return \Tests\Generator\MySql\Statement\QueryRootGenerator::namedScalar($parameters);

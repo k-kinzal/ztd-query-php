@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Replication\Log;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,28 +21,54 @@ final class BinlogEventGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete BinlogEvent values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No BinlogEvent forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent) {
+                throw new LogicException('Publishing BinlogEvent must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $events Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent>
      */
-    public function __construct(ErisGenerator $events, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $events, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent(events: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
-            $events,
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($events, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent>>
      */
     public static function forms(): iterable
     {
-        yield 'BinlogEvent/15' => new BinlogEventGenerator(
+        yield 'BinlogEvent/15' => BinlogEventGenerator::operands(
             events: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                 value: Generators::constant('text'),
                 radix: Generators::constant(null)

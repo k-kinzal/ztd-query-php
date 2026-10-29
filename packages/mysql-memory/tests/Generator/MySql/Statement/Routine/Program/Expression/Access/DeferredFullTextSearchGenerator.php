@@ -31,7 +31,7 @@ final class DeferredFullTextSearchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch(columns: $parts[0], against: $parts[1], mode: $parts[2], parentheses: $parts[3], stated: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $columns,
             $against,
             $mode ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextMode::NaturalLanguage),

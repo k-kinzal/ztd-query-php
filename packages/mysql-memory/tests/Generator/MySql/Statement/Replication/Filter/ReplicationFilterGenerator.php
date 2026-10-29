@@ -27,7 +27,7 @@ final class ReplicationFilterGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter(kind: $parts[0], values: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $values,
             $inputSource ?? Generators::constant(null)

@@ -32,7 +32,7 @@ final class UserSpecificationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification {
             return new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(user: $parts[0], identification: $parts[1], factors: $parts[2], initial: $parts[3], replace: $parts[4], retainCurrent: $parts[5], discardOld: $parts[6], inputSource: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $user,
             $identification ?? Generators::constant(null),
             $factors ?? Generators::constant([]),

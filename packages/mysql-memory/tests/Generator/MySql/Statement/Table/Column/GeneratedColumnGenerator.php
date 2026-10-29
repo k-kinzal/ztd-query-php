@@ -33,7 +33,7 @@ final class GeneratedColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): M\Table\Column\GeneratedColumn {
             return new M\Table\Column\GeneratedColumn(type: $parts[0], expression: $parts[1], collation: $parts[2], storage: $parts[3], attributes: $parts[4], references: $parts[5], inputSource: $parts[6], generatedAlways: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $type,
             $expression,
             $collation ?? Generators::constant(null),
@@ -49,21 +49,21 @@ final class GeneratedColumnGenerator implements ErisGenerator
      *
      * @return non-empty-list<ErisGenerator<array{M\Statement, int}>>
      */
-    public static function definitionForms(\SqlSemantics\Contract\GrammarRelease $release, M\Table\CreateTable $create): array
+    public static function definitionForms(\SqlSemantics\Contract\GrammarRelease $release, M\Table\CreateTable $create, bool $alter): array
     {
         $column = $create->elements[0];
         \SqlSemantics\Diagnostic\Check::invariant($column instanceof M\Table\Column\ColumnDefinition, 'A generated table supplies the prerequisite column.');
-        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, \Tests\Generator\Operands::sized(Generators::nat(), 1000)));
+        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 1000)));
         $type = Generators::map(static fn (M\Type\DeclaredName $type): M\Type\DeclaredName => \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($type), Generators::constant($column->specification->dataType()));
         $forms = [
             self::withCondition($type, new \Tests\Generator\MySql\Statement\Literal\ParameterGenerator(), 3102),
             self::withCondition($type, new \Tests\Generator\MySql\Statement\Expression\Subquery\ScalarSubqueryGenerator(Generators::map(static fn (\SqlSemantics\Statement\Scalar $number): \SqlSemantics\Statement\Query => new M\Query\Select([], [new M\Query\SelectExpression($number)]), $numbers)), 3102),
         ];
         if ($release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Expression\RowGenerator(\Tests\Generator\Operands::vector(2, $numbers)), 3764);
+            $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector(2, $numbers)), 3764);
             $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(Generators::constant(M\Call\KeywordFunction::User), Generators::constant([])), 3763);
-            $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $value): string => 'v' . $value, \Tests\Generator\Operands::sized(Generators::nat(), 1000)))), 3772);
-            $attributes = \Tests\Generator\Operands::oneOf([
+            $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $value): string => 'v' . $value, Generators::choose(0, 1000)))), 3772);
+            $attributes = Generators::oneOf(...[
                 new DefaultLiteralGenerator($numbers),
                 new DefaultExpressionGenerator($numbers),
                 new OnUpdateGenerator(Generators::constant(new M\Table\Column\Value\CurrentTimestamp())),
@@ -71,13 +71,12 @@ final class GeneratedColumnGenerator implements ErisGenerator
                 new FormatAttributeGenerator(Generators::elements(M\Table\Column\Kind\ColumnFormat::cases())),
                 new StorageAttributeGenerator(Generators::elements(M\Table\Column\Kind\StorageMedium::cases())),
             ]);
-            $forms[] = self::withCondition($type, $numbers, 1221, \Tests\Generator\Operands::vector(1, $attributes));
+            $forms[] = self::withCondition($type, $numbers, 1221, Generators::vector(1, $attributes));
             $forms[] = self::withCondition(Generators::constant(new M\Type\Elementary(M\Type\Kind\ElementaryKind::Serial)), $numbers, 1221);
         }
-        $columns = \Tests\Generator\Operands::oneOf($forms);
+        $columns = Generators::oneOf(...$forms);
         return [
-            Generators::map(static fn (array $input): array => self::definition($input[0], $input[1], $create, $column, false), $columns),
-            Generators::map(static fn (array $input): array => self::definition($input[0], $input[1], $create, $column, true), $columns),
+            Generators::map(static fn (array $input): array => self::definition($input[0], $input[1], $create, $column, $alter), $columns),
         ];
     }
 

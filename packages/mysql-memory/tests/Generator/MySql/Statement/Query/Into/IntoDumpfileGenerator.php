@@ -26,7 +26,7 @@ final class IntoDumpfileGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDumpfile {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDumpfile(file: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $file,
             $inputSource ?? Generators::constant(null)
         ));

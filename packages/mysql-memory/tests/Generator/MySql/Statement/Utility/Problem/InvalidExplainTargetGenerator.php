@@ -25,7 +25,7 @@ final class InvalidExplainTargetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget(target: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $target
         ));
     }

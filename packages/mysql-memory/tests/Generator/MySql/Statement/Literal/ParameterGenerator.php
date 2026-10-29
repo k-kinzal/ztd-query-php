@@ -29,7 +29,7 @@ final class ParameterGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Literal\Parameter {
             return new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(marker: $parts[0], position: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $marker ?? Generators::constant('?'),
             $position ?? Generators::constant(0),
             $scalarInformation ?? Generators::constant(null),
@@ -51,7 +51,7 @@ final class ParameterGenerator implements ErisGenerator
                 Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 12)),
             ),
         );
-        return Generators::map(self::division(...), \Tests\Generator\Operands::tuple(Generators::constant($release), $precision, Generators::choose(1, 10000), Generators::choose(1, 99), Generators::bool(), Generators::bool()));
+        return Generators::map(self::division(...), Generators::tuple(Generators::constant($release), $precision, Generators::choose(1, 10000), Generators::choose(1, 99), Generators::bool(), Generators::bool()));
     }
 
     /**
@@ -92,7 +92,7 @@ final class ParameterGenerator implements ErisGenerator
             \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Modulo,
             \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide,
         ]);
-        return Generators::map(self::arithmeticSample(...), \Tests\Generator\Operands::tuple(Generators::constant($release), $operators, Generators::choose(-10000, 10000), Generators::choose(1, 99), Generators::bool()));
+        return Generators::map(self::arithmeticSample(...), Generators::tuple(Generators::constant($release), $operators, Generators::choose(-10000, 10000), Generators::choose(1, 99), Generators::bool()));
     }
 
     /**
@@ -140,7 +140,7 @@ final class ParameterGenerator implements ErisGenerator
      */
     public static function lifetime(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        return Generators::map(self::lifetimeSample(...), \Tests\Generator\Operands::tuple(Generators::constant($release), Generators::choose(-999, 999), Generators::choose(2, 19), Generators::choose(1, 6)));
+        return Generators::map(self::lifetimeSample(...), Generators::tuple(Generators::constant($release), Generators::choose(-999, 999), Generators::choose(2, 19), Generators::choose(1, 6)));
     }
 
     /**

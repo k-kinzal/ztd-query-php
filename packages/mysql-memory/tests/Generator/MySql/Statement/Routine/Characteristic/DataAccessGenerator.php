@@ -26,7 +26,7 @@ final class DataAccessGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\DataAccess {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\DataAccess(level: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $level,
             $inputSource ?? Generators::constant(null)
         ));

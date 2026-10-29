@@ -26,7 +26,7 @@ final class TimeZoneConversionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TimeZoneConversion(expression: $parts[0], operand: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression,
             $operand
         ));

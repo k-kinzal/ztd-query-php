@@ -28,7 +28,7 @@ final class RadixLiteralGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $radix, ErisGenerator $digits, ?ErisGenerator $introducer = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $notation = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $radix,
             $digits,
             $introducer ?? Generators::constant(null),
@@ -46,16 +46,16 @@ final class RadixLiteralGenerator implements ErisGenerator
      */
     public static function queries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
-        $literals = \Tests\Generator\Operands::bind(new RadixGenerator(), static function (\SqlSemantics\Platform\MySql\Statement\Literal\Radix $radix): ErisGenerator {
+        $literals = Generators::bind(new RadixGenerator(), static function (\SqlSemantics\Platform\MySql\Statement\Literal\Radix $radix): ErisGenerator {
             $digits = Generators::map(static function (array $parts) use ($radix): string {
                 [$number, $zeros, $empty] = $parts;
                 return $empty ? '' : str_repeat('0', $zeros) . ($radix === \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal ? dechex($number) : decbin($number));
-            }, \Tests\Generator\Operands::tuple(Generators::choose(0, 65535), Generators::choose(0, 3), Generators::bool()));
+            }, Generators::tuple(Generators::choose(0, 65535), Generators::choose(0, 3), Generators::bool()));
             return new self(Generators::constant($radix), $digits);
         });
-        $statements = new \Tests\Generator\MySql\Statement\QueryRootGenerator(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
+        $statements = \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
             Generators::constant([]),
-            \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($literals, new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
+            Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($literals, new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
         ));
         return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $statements);
     }

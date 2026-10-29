@@ -27,7 +27,7 @@ final class LoadHistogramGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\LoadHistogram {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\LoadHistogram(columns: $parts[0], data: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $columns,
             $data,
             $inputSource ?? Generators::constant(null)

@@ -28,7 +28,7 @@ final class ConditionalColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Column\ConditionalColumn {
             return new \SqlSemantics\Statement\Reference\Column\ConditionalColumn(name: $parts[0], candidates: $parts[1], relations: $parts[2], missing: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $candidates,
             $relations,
@@ -43,7 +43,7 @@ final class ConditionalColumnGenerator implements ErisGenerator
      */
     public static function incompleteReads(): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(\Tests\Generator\MySql\Statement\QueryRootGenerator::declaredTableSequence(), self::fromSequence(...));
+        return Generators::bind(\Tests\Generator\MySql\Statement\QueryRootGenerator::declaredTableSequence(), self::fromSequence(...));
     }
 
     /**
@@ -60,7 +60,7 @@ final class ConditionalColumnGenerator implements ErisGenerator
         \SqlSemantics\Diagnostic\Check::invariant($field->name !== null, 'The generated dependent column has a name.');
         $incomplete = new \Tests\Generator\Semantics\Statement\Declaration\TableGenerator(Generators::constant($table->name), Generators::constant($table->profile), Generators::constant([]), complete: Generators::constant(false));
         $missing = new \Tests\Generator\Semantics\Statement\Reference\Missing\IncompleteMembersGenerator($incomplete);
-        return \Tests\Generator\Operands::bind($missing, static function (\SqlSemantics\Statement\Reference\Missing\IncompleteMembers $missing) use ($create, $insert, $expected, $field): ErisGenerator {
+        return Generators::bind($missing, static function (\SqlSemantics\Statement\Reference\Missing\IncompleteMembers $missing) use ($create, $insert, $expected, $field): ErisGenerator {
             $relation = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($missing->table->name, relationInformation: new \SqlSemantics\Statement\Fact\RelationFact(new \SqlSemantics\Statement\Shape\RowShape([], [$missing]), new \SqlSemantics\Statement\Reference\Table\DeclaredTable($missing->table)));
             $bindings = new self(Generators::constant($field->name), Generators::constant([]), Generators::constant([$relation]), Generators::constant([$missing]));
             return Generators::map(static function (\SqlSemantics\Statement\Reference\Column\ConditionalColumn $binding) use ($create, $insert, $expected, $relation): array {

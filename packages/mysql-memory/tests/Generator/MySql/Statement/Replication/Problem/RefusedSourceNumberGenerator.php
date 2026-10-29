@@ -27,7 +27,7 @@ final class RefusedSourceNumberGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber {
             return new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber(kind: $parts[0], number: $parts[1], offset: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $number,
             $offset

@@ -26,7 +26,7 @@ final class UtilityMisuseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse(rule: $parts[0], subject: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rule,
             $subject ?? Generators::constant(null)
         ));

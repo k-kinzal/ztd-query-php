@@ -32,7 +32,7 @@ final class LoadInputGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(local: $parts[0], source: $parts[1], file: $parts[2], count: $parts[3], primaryKeyOrder: $parts[4], countWord: $parts[5], inputSource: $parts[6], from: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $local,
             $source,
             $file,

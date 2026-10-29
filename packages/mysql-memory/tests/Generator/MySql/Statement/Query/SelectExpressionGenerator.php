@@ -30,7 +30,7 @@ final class SelectExpressionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression {
             return new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(expression: $parts[0], alias: $parts[1], layout: $parts[2], mark: $parts[3], spellingProfile: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expression,
             $alias ?? Generators::constant(null),
             $layout ?? Generators::constant(null),

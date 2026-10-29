@@ -28,7 +28,7 @@ final class OdbcEscapeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape(kind: $parts[0], operand: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $operand,
             $scalarInformation ?? Generators::constant(null),

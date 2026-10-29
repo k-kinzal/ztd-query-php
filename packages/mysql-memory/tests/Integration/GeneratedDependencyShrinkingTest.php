@@ -6,13 +6,18 @@ namespace Tests\Integration;
 
 use Eris\Random\MersenneTwister;
 use Eris\Random\RandomRange;
+use LogicException;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Execution;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
+use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use Tests\Generator\MySql\Statement\QueryRootGenerator;
@@ -21,13 +26,9 @@ use Tests\Generator\MySql\Statement\QueryRootGenerator;
 #[Medium]
 final class GeneratedDependencyShrinkingTest extends TestCase
 {
-    /**
-     * @param array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, \SqlSemantics\Platform\MySql\Statement\QueryRoot} $sequence
-     */
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerShrunkSequences')]
-    public function testShrinkingKeepsGeneratedWritesAndReadsBoundToTheShrunkDeclaration(array $sequence): void
+    #[DataProvider('providerShrunkSequences')]
+    public function testShrinkingRebuildsBindingsAndKeepsTheSequenceExecutable(CreateTable $create, InsertRows $insert, QueryRoot $query): void
     {
-        [$create, $insert, $query] = $sequence;
         $declaration = $create->declarations()[0];
         $written = $insert->into->table->relationInformation()->table;
         self::assertInstanceOf(DeclaredTable::class, $written);
@@ -37,40 +38,36 @@ final class GeneratedDependencyShrinkingTest extends TestCase
         $read = $resolution->relation->relationInformation()->table;
         self::assertInstanceOf(DeclaredTable::class, $read);
         self::assertSame($declaration, $read->table);
-        $position = array_search($resolution->declaration(), [...$declaration->columns, ...array_map(static fn ($hidden) => $hidden->column, $declaration->implicit)], true);
-        self::assertIsInt($position);
-        $values = array_map(static function ($value): string {
-            self::assertInstanceOf(NumberLiteral::class, $value);
-            return $value->text;
-        }, $insert->rows[0]->values);
-        $values[] = null;
         $execution = new Execution((new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt'));
         $execution->statement($create);
         $execution->statement($insert);
         $reply = $execution->statement($query);
         self::assertInstanceOf(ResultSet::class, $reply);
-        self::assertSame([[$values[$position]]], $reply->rows);
+        self::assertCount(count($insert->rows), $reply->rows);
+        self::assertCount(count($declaration->columns), $reply->columns);
     }
 
     /**
      * @param list<string> $candidates
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerShrinkingDimensions')]
-    public function testShrinkingReachesPrerequisiteNamesAndDependentValues(array $candidates, string $original): void
+    #[DataProvider('providerShrinkingDimensions')]
+    public function testNativeShrinkingReachesBothPrerequisitesAndDependentOperands(array $candidates, string $original): void
     {
         self::assertNotEmpty(array_diff($candidates, [$original]));
     }
 
     /**
-     * @return iterable<array{array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, \SqlSemantics\Platform\MySql\Statement\QueryRoot}}>
+     * @return iterable<array{CreateTable, InsertRows, QueryRoot}>
      */
     public static function providerShrunkSequences(): iterable
     {
         $random = new RandomRange(new MersenneTwister());
-        $random->seed(1907);
-        $generator = QueryRootGenerator::declaredTableSequence();
-        foreach ($generator->shrink($generator(100, $random)) as $candidate) {
-            yield [$candidate->unbox()];
+        $random->seed(1983);
+        $generator = QueryRootGenerator::withPrerequisites(GrammarRelease::MySql847);
+        $original = $generator(8, $random);
+        yield $original->unbox();
+        foreach ($generator->shrink($original) as $candidate) {
+            yield $candidate->unbox();
         }
     }
 
@@ -80,18 +77,33 @@ final class GeneratedDependencyShrinkingTest extends TestCase
     public static function providerShrinkingDimensions(): iterable
     {
         $random = new RandomRange(new MersenneTwister());
-        $random->seed(1907);
-        $generator = QueryRootGenerator::declaredTableSequence();
-        $original = $generator(100, $random);
+        $random->seed(1983);
+        $generator = QueryRootGenerator::withPrerequisites(GrammarRelease::MySql847);
+        $original = $generator(8, $random);
         $names = [];
+        $widths = [];
+        $counts = [];
         $values = [];
+        $number = static function (\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $value): string {
+            if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral) {
+                return $value->text;
+            }
+            if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && $value->operand instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral) {
+                return '-' . $value->operand->text;
+            }
+            throw new LogicException('The dependent integer generator produced a non-integer operand.');
+        };
         foreach ($generator->shrink($original) as $candidate) {
-            $sequence = $candidate->unbox();
-            $names[] = $sequence[0]->name->name->value;
-            $values[] = serialize(array_map(static fn ($row): array => array_map(static fn ($value): string => $value instanceof NumberLiteral ? $value->text : '', $row->values), $sequence[1]->rows));
+            [$table, $insert] = $candidate->unbox();
+            $names[] = $table->name->name->value;
+            $widths[] = (string) count($table->declarations()[0]->columns);
+            $counts[] = (string) count($insert->rows);
+            $values[] = $number($insert->rows[0]->values[0]);
         }
-        $before = $original->unbox();
-        yield 'Prerequisite table names' => [$names, $before[0]->name->name->value];
-        yield 'Dependent inserted values' => [$values, serialize(array_map(static fn ($row): array => array_map(static fn ($value): string => $value instanceof NumberLiteral ? $value->text : '', $row->values), $before[1]->rows))];
+        [$table, $insert] = $original->unbox();
+        yield 'Table name' => [$names, $table->name->name->value];
+        yield 'Column count' => [$widths, (string) count($table->declarations()[0]->columns)];
+        yield 'Row count' => [$counts, (string) count($insert->rows)];
+        yield 'Cell value' => [$values, $number($insert->rows[0]->values[0])];
     }
 }

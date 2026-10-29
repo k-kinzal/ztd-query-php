@@ -29,7 +29,7 @@ final class FrameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(unit: $parts[0], start: $parts[1], end: $parts[2], exclusion: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $unit,
             $start,
             $end ?? Generators::constant(null),

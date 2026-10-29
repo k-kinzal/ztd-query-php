@@ -26,7 +26,7 @@ final class HintTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintTable {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintTable(name: $parts[0], block: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $block ?? Generators::constant(null)
         ));

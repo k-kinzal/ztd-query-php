@@ -31,7 +31,7 @@ final class ParameterListGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): M\Routine\ParameterList {
             return new M\Routine\ParameterList(parameters: $parts[0], relationInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $parameters,
             $relationInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
@@ -43,10 +43,11 @@ final class ParameterListGenerator implements ErisGenerator
      *
      * @return ErisGenerator<array{M\Statement, int, string}>
      */
-    public static function definitions(GrammarRelease $release): ErisGenerator
+    public static function definitions(GrammarRelease $release, bool $function): ErisGenerator
     {
         $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $external = !$legacy && $release !== GrammarRelease::MySql8044;
+        $forms = $function ? ($external ? [1, 6, 7] : [1]) : ($legacy ? [0, 2] : ($external ? [0, 2, 3, 4, 5, 8, 9] : [0, 2, 3, 4, 5]));
         return Generators::map(static function (array $parts) use ($release): array {
             [$form, $name] = $parts;
             $invalidName = match ($form) {
@@ -70,7 +71,7 @@ final class ParameterListGenerator implements ErisGenerator
                 : new M\Routine\CreateProcedure($routine, $parameters, $form >= 8 ? new M\Routine\ExternalBody(new M\Literal\Text('return 1;')) : new M\Routine\Program\Block(), characteristics: $form >= 8 ? [new M\Routine\Characteristic\RoutineLanguage(new Name('JAVASCRIPT'))] : []);
             $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
             return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $definition), $form === 5 ? 1059 : ($invalidName === null ? 1330 : 1458), $form === 5 ? "Identifier name '" . $invalidName . "' is too long" : ($invalidName === null ? 'Duplicate parameter: ' . $second->value : "Incorrect routine name '" . $invalidName . "'")];
-        }, \Tests\Generator\Operands::tuple(Generators::choose(0, $legacy ? 2 : ($external ? 9 : 5)), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $value): string => 'arg_' . $value, Generators::choose(0, 1000)), Generators::constant(null))));
+        }, Generators::tuple(Generators::elements($forms), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $value): string => 'arg_' . $value, Generators::choose(0, 1000)), Generators::constant(null))));
     }
 
 }

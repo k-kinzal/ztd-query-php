@@ -28,7 +28,7 @@ final class DeferredInsertQueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery(into: $parts[0], source: $parts[1], onDuplicate: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $into,
             $source,
             $onDuplicate ?? Generators::constant([]),

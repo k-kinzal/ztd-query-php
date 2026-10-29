@@ -28,7 +28,7 @@ final class KeyHintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\KeyHint {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\KeyHint(hint: $parts[0], block: $parts[1], table: $parts[2], indexes: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $hint,
             $block,
             $table,

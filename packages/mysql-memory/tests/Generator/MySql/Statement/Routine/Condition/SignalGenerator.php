@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Routine\Condition;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement as M;
 use Tests\Generator\Composition;
@@ -21,30 +23,60 @@ final class SignalGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete Signal values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<M\Routine\Condition\Signal>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+            foreach (self::additionalForms() as [$grammar, $form]) {
+                if ($grammar === $release) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No Signal forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): M\Routine\Condition\Signal {
+            if (!$statement instanceof M\Routine\Condition\Signal) {
+                throw new LogicException('Publishing Signal must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<M\Routine\Condition\ConditionName|M\Routine\Condition\SqlState> $condition Generated constructor operand
      * @param ErisGenerator<list<M\Routine\Condition\SignalItem>>|null $items Generated constructor operand
      * @param ErisGenerator<M\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<M\Routine\Condition\Signal>
      */
-    public function __construct(ErisGenerator $condition, ?ErisGenerator $items = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $condition, ?ErisGenerator $items = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): M\Routine\Condition\Signal {
+        return Generators::map(static function (array $parts): M\Routine\Condition\Signal {
             return new M\Routine\Condition\Signal(condition: $parts[0], items: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
-            $condition,
-            $items ?? Generators::constant([]),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($condition, $items ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<M\Routine\Condition\Signal>>
      */
     public static function forms(): iterable
     {
-        yield 'Signal/121' => new SignalGenerator(
+        yield 'Signal/121' => SignalGenerator::operands(
             condition: new ConditionNameGenerator(
                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                     value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
@@ -62,7 +94,7 @@ final class SignalGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
-        yield 'Signal/additional/19' => [GrammarRelease::MySql847, new SignalGenerator(
+        yield 'Signal/additional/19' => [GrammarRelease::MySql847, SignalGenerator::operands(
             condition: new SqlStateGenerator(
                 state: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                     value: Generators::constant('42S02'),
@@ -80,16 +112,16 @@ final class SignalGenerator implements ErisGenerator
      *
      * @return ErisGenerator<array{M\Statement, int, string}>
      */
-    public static function inputConditions(GrammarRelease $release): ErisGenerator
+    public static function inputConditions(GrammarRelease $release, int $owner): ErisGenerator
     {
-        return Generators::map(self::inputCondition(...), \Tests\Generator\Operands::tuple(
+        return Generators::map(self::inputCondition(...), Generators::tuple(
             Generators::constant($release),
             new SqlStateGenerator(new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'bad' . $value, Generators::choose(0, 1000))), valueWord: new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator()),
             \Tests\Generator\MySql\Statement\Literal\TemporalLiteralGenerator::invalid(),
             ConditionItemNameGenerator::selecting([M\Routine\Condition\ConditionItemName::ClassOrigin, M\Routine\Condition\ConditionItemName::SubclassOrigin, M\Routine\Condition\ConditionItemName::ConstraintCatalog, M\Routine\Condition\ConditionItemName::ConstraintSchema, M\Routine\Condition\ConditionItemName::ConstraintName, M\Routine\Condition\ConditionItemName::CatalogName, M\Routine\Condition\ConditionItemName::SchemaName, M\Routine\Condition\ConditionItemName::TableName, M\Routine\Condition\ConditionItemName::ColumnName, M\Routine\Condition\ConditionItemName::CursorName, M\Routine\Condition\ConditionItemName::MessageText, M\Routine\Condition\ConditionItemName::MysqlErrno]),
             Generators::choose(1, 1000),
             Generators::choose(0, 2),
-            Generators::choose(0, 3),
+            Generators::constant($owner),
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()
         ));
     }

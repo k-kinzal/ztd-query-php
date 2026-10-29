@@ -26,7 +26,7 @@ final class RefusedKeyAlgorithmGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedKeyAlgorithm(number: $parts[0], offset: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $number,
             $offset
         ));

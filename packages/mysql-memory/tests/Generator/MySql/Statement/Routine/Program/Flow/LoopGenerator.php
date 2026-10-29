@@ -28,7 +28,7 @@ final class LoopGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Loop {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\Loop(statements: $parts[0], label: $parts[1], endLabel: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $statements,
             $label ?? Generators::constant(null),
             $endLabel ?? Generators::constant(null),

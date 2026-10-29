@@ -28,7 +28,7 @@ final class DeletionInputGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput(tables: $parts[0], targets: $parts[1], resolutions: $parts[2], wildcards: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $tables,
             $targets ?? Generators::constant(null),
             $resolutions ?? Generators::constant(null),

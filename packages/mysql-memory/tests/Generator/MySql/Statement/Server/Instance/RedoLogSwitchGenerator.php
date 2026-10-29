@@ -28,7 +28,7 @@ final class RedoLogSwitchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Instance\RedoLogSwitch {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Instance\RedoLogSwitch(enable: $parts[0], engine: $parts[1], log: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $enable,
             $engine,
             $log,

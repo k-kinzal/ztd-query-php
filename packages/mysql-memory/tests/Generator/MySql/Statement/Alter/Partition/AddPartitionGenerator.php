@@ -28,7 +28,7 @@ final class AddPartitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\AddPartition {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\AddPartition(binlog: $parts[0], definitions: $parts[1], count: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $binlog,
             $definitions,
             $count ?? Generators::constant(null),

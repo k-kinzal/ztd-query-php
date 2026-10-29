@@ -26,7 +26,7 @@ final class ViewColumnCountGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount(listed: $parts[0], returned: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $listed,
             $returned
         ));

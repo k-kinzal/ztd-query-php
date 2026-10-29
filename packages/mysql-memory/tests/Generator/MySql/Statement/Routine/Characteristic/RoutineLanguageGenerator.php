@@ -26,7 +26,7 @@ final class RoutineLanguageGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage(external: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $external ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
         ));

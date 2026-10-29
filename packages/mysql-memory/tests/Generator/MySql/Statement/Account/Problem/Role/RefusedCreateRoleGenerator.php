@@ -62,7 +62,7 @@ final class RefusedCreateRoleGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $ifNotExists, ErisGenerator $roles): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): RefusedCreateRole => new RefusedCreateRole(ifNotExists: $parts[0], roles: $parts[1]), \Tests\Generator\Operands::tuple($ifNotExists, $roles));
+        return Generators::map(static fn (array $parts): RefusedCreateRole => new RefusedCreateRole(ifNotExists: $parts[0], roles: $parts[1]), Generators::tuple($ifNotExists, $roles));
     }
 
 

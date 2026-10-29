@@ -30,7 +30,7 @@ final class NameAssignmentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment(name: $parts[0], value: $parts[1], scope: $parts[2], qualifier: $parts[3], inputSource: $parts[4], operator: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $value,
             $scope ?? Generators::constant(null),

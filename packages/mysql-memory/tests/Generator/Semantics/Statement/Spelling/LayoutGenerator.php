@@ -26,7 +26,7 @@ final class LayoutGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Spelling\Layout {
             return new \SqlSemantics\Statement\Spelling\Layout(tokens: $parts[0], trail: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $tokens,
             $trail ?? Generators::constant('')
         ));

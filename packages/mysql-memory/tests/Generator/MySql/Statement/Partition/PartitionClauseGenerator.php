@@ -29,7 +29,7 @@ final class PartitionClauseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause {
             return new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(method: $parts[0], partitions: $parts[1], subpartitioning: $parts[2], definitions: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $method,
             $partitions,
             $subpartitioning,

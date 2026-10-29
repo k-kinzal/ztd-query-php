@@ -33,7 +33,7 @@ final class RefusedProgramBodyGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody(name: $parts[0], kind: $parts[1], problem: $parts[2], definer: $parts[3], parameters: $parts[4], returns: $parts[5], collation: $parts[6], typeEnds: $parts[7], nameEnd: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $kind,
             $problem,

@@ -26,7 +26,7 @@ final class UserVariableBindingGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding(name: $parts[0], exists: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $exists
         ));

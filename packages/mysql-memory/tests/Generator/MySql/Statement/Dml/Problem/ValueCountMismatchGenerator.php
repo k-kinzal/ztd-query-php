@@ -27,7 +27,7 @@ final class ValueCountMismatchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch(expected: $parts[0], actual: $parts[1], row: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $expected,
             $actual,
             $row ?? Generators::constant(null)

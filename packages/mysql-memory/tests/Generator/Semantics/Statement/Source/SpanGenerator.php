@@ -58,7 +58,7 @@ final class SpanGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $offset, ErisGenerator $length): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): Span => new Span(offset: $parts[0], length: $parts[1]), \Tests\Generator\Operands::tuple($offset, $length));
+        return Generators::map(static fn (array $parts): Span => new Span(offset: $parts[0], length: $parts[1]), Generators::tuple($offset, $length));
     }
 
 }

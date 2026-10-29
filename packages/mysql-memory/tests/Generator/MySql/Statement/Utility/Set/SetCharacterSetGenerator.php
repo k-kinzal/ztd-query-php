@@ -27,7 +27,7 @@ final class SetCharacterSetGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetCharacterSet {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetCharacterSet(charset: $parts[0], inputSource: $parts[1], form: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $charset,
             $inputSource ?? Generators::constant(null),
             $form ?? \Tests\Generator\MySql\Statement\Type\Kind\CharsetFormGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharSet])
@@ -45,7 +45,7 @@ final class SetCharacterSetGenerator implements ErisGenerator
             Generators::elements(['binary', 'latin1', 'utf8mb4']),
             new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::Bare, \SqlSemantics\Statement\Identifier\NameQuote::Backtick),
         );
-        $items = \Tests\Generator\Operands::vector(1, new self(new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator($names)));
-        return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new SetVariablesGenerator($items));
+        $items = Generators::vector(1, new self(new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator($names)));
+        return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, SetVariablesGenerator::operands($items));
     }
 }

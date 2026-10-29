@@ -27,7 +27,7 @@ final class ConditionalBranchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ConditionalBranch {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ConditionalBranch(condition: $parts[0], statements: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $condition,
             $statements,
             $inputSource ?? Generators::constant(null)

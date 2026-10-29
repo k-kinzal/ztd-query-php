@@ -27,7 +27,7 @@ final class OriginGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Source\Origin {
             return new \SqlSemantics\Statement\Source\Origin(node: $parts[0], offset: $parts[1], length: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $node,
             $offset,
             $length

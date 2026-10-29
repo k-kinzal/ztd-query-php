@@ -26,7 +26,7 @@ final class AmbiguousFieldsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Shape\AmbiguousFields {
             return new \SqlSemantics\Statement\Shape\AmbiguousFields(name: $parts[0], fields: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $fields
         ));

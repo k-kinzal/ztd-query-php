@@ -9,6 +9,7 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
 use LogicException;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement as M;
@@ -25,20 +26,47 @@ final class RevokePrivilegesGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Composes the written operands through Eris generation and shrinking.
+     * Generates complete RevokePrivileges values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<RevokePrivileges>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct()
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No RevokePrivileges forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): RevokePrivileges {
+            if (!$statement instanceof RevokePrivileges) {
+                throw new LogicException('Publishing RevokePrivileges must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Composes the written operands through Eris generation and shrinking.
+     * @return ErisGenerator<RevokePrivileges>
+     */
+    public static function operands(): ErisGenerator
     {
         $operands = Generators::associative(['account' => new AccountNameGenerator(), 'kind' => Generators::elements(M\Account\Privilege\Level\ObjectKind::Function, M\Account\Privilege\Level\ObjectKind::Procedure)]);
-        $this->delegate = Generators::map(
-            static function (array $data): RevokePrivileges {
-                if (!$data['account'] instanceof M\Name\AccountName || !$data['kind'] instanceof M\Account\Privilege\Level\ObjectKind) {
-                    throw new LogicException('Revocation operands require an account and object kind.');
-                }
-                return new RevokePrivileges(false, [new M\Account\Privilege\Item\AllPrivileges()], $data['kind'], new M\Account\Privilege\Level\CurrentDatabaseLevel(), [new M\Account\User\UserSpecification($data['account'])]);
-            },
-            $operands,
-        );
+        return Generators::map(static function (array $data): RevokePrivileges {
+            if (!$data['account'] instanceof M\Name\AccountName || !$data['kind'] instanceof M\Account\Privilege\Level\ObjectKind) {
+                throw new LogicException('Revocation operands require an account and object kind.');
+            }
+            return new RevokePrivileges(false, [new M\Account\Privilege\Item\AllPrivileges()], $data['kind'], new M\Account\Privilege\Level\CurrentDatabaseLevel(), [new M\Account\User\UserSpecification($data['account'])]);
+        }, $operands);
     }
 
     /**
@@ -72,11 +100,11 @@ final class RevokePrivilegesGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $ifExists, ErisGenerator $privileges, ErisGenerator $kind, ErisGenerator $level, ErisGenerator $users, ErisGenerator $ignoreUnknownUser, ?ErisGenerator $tableKeyword = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): RevokePrivileges => new RevokePrivileges(ifExists: $parts[0], privileges: $parts[1], kind: $parts[2], level: $parts[3], users: $parts[4], ignoreUnknownUser: $parts[5], tableKeyword: $parts[6] && $parts[2] === M\Account\Privilege\Level\ObjectKind::Table), \Tests\Generator\Operands::tuple($ifExists, $privileges, $kind, $level, $users, $ignoreUnknownUser, $tableKeyword ?? Generators::bool()));
+        return Generators::map(static fn (array $parts): RevokePrivileges => new RevokePrivileges(ifExists: $parts[0], privileges: $parts[1], kind: $parts[2], level: $parts[3], users: $parts[4], ignoreUnknownUser: $parts[5], tableKeyword: $parts[6] && $parts[2] === M\Account\Privilege\Level\ObjectKind::Table), Generators::tuple($ifExists, $privileges, $kind, $level, $users, $ignoreUnknownUser, $tableKeyword ?? Generators::bool()));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<RevokePrivileges>>
      */
@@ -84,7 +112,7 @@ final class RevokePrivilegesGenerator implements ErisGenerator
     {
         yield 'RevokePrivileges/396' => RevokePrivilegesGenerator::fromOperands(
             ifExists: Generators::constant(false),
-            privileges: \Tests\Generator\Operands::tuple(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
                     kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
                     columns: Generators::constant([])
@@ -92,7 +120,7 @@ final class RevokePrivilegesGenerator implements ErisGenerator
             ),
             kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
             level: new Level\PrivilegeLevelGenerator([new Level\CurrentDatabaseLevelGenerator()]),
-            users: \Tests\Generator\Operands::tuple(
+            users: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
@@ -109,12 +137,12 @@ final class RevokePrivilegesGenerator implements ErisGenerator
         );
         yield 'RevokePrivileges/397' => RevokePrivilegesGenerator::fromOperands(
             ifExists: Generators::constant(false),
-            privileges: \Tests\Generator\Operands::tuple(
+            privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\AllPrivilegesGenerator()])
             ),
             kind: Level\ObjectKindGenerator::selecting([M\Account\Privilege\Level\ObjectKind::Table]),
             level: new Level\PrivilegeLevelGenerator([new Level\CurrentDatabaseLevelGenerator()]),
-            users: \Tests\Generator\Operands::tuple(
+            users: Generators::tuple(
                 new \Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator(
                     user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])

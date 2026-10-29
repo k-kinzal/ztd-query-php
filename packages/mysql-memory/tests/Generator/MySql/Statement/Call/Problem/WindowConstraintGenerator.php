@@ -26,7 +26,7 @@ final class WindowConstraintGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowConstraint(window: $parts[0], positional: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $window,
             $positional
         ));
@@ -42,7 +42,7 @@ final class WindowConstraintGenerator implements ErisGenerator
             window: new \Tests\Generator\MySql\Statement\Call\Window\WindowSpecGenerator(
                 base: Generators::constant(null),
                 partition: Generators::constant([]),
-                order: \Tests\Generator\Operands::tuple(
+                order: Generators::tuple(
                     new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(
                         expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))

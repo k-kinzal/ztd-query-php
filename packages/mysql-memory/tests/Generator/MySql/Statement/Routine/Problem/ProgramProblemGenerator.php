@@ -26,7 +26,7 @@ final class ProgramProblemGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(rule: $parts[0], subject: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rule,
             $subject ?? Generators::constant(null)
         ));

@@ -26,7 +26,7 @@ final class NonUniqueTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable(alias: $parts[0], relation: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $alias,
             $relation ?? Generators::constant(null)
         ));

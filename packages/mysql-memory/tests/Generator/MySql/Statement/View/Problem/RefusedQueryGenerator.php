@@ -28,7 +28,7 @@ final class RefusedQueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery {
             return new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery(view: $parts[0], alter: $parts[1], query: $parts[2], definer: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $view,
             $alter,
             $query,
@@ -56,7 +56,7 @@ final class RefusedQueryGenerator implements ErisGenerator
                 query: new \Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredQueryGenerator(
                     query: new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                         options: Generators::constant([]),
-                        items: \Tests\Generator\Operands::tuple(
+                        items: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Query\StarGenerator()
                         ),
                         from: Generators::constant(null),

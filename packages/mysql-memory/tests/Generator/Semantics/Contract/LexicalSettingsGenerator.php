@@ -25,7 +25,7 @@ final class LexicalSettingsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Contract\LexicalSettings {
             return new \SqlSemantics\Contract\LexicalSettings(settings: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $settings ?? Generators::constant('')
         ));
     }

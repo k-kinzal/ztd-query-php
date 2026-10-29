@@ -28,7 +28,7 @@ final class ColumnVisibilityGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnVisibility {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnVisibility(column: $parts[0], visible: $parts[1], columnWritten: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $column,
             $visible,
             $columnWritten ?? Generators::constant(true),

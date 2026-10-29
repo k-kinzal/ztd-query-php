@@ -27,10 +27,10 @@ final class IntegralGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $kind, ?ErisGenerator $width = null, ?ErisGenerator $modifiers = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind($kind, static function (\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind $selected) use ($width, $modifiers, $inputSource, $alias): ErisGenerator {
+        $this->delegate = Generators::bind($kind, static function (\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind $selected) use ($width, $modifiers, $inputSource, $alias): ErisGenerator {
             return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Integral {
                 return new \SqlSemantics\Platform\MySql\Statement\Type\Integral(kind: $parts[0], width: $parts[1], modifiers: $parts[2], inputSource: $parts[3], alias: $parts[4]);
-            }, \Tests\Generator\Operands::tuple(
+            }, Generators::tuple(
                 Generators::constant($selected),
                 $width ?? Generators::constant(null),
                 $modifiers ?? Generators::constant([]),

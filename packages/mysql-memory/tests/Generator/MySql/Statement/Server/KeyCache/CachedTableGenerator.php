@@ -28,7 +28,7 @@ final class CachedTableGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $table, ?ErisGenerator $partitions = null, ?ErisGenerator $indexes = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $keyword = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $table,
             $partitions ?? Generators::constant(null),
             $indexes ?? Generators::constant(null),

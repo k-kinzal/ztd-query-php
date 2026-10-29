@@ -25,7 +25,7 @@ final class UnboundParameterGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Missing\UnboundParameter {
             return new \SqlSemantics\Statement\Reference\Missing\UnboundParameter(marker: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $marker
         ));
     }

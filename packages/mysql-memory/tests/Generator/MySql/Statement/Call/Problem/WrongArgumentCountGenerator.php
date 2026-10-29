@@ -26,7 +26,7 @@ final class WrongArgumentCountGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount(function: $parts[0], arguments: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $function,
             $arguments
         ));

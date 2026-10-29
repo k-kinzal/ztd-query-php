@@ -26,7 +26,7 @@ final class EvaluationWildcardGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard(table: $parts[0], requiresDatabase: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table ?? Generators::constant(null),
             $requiresDatabase ?? Generators::constant(false)
         ));

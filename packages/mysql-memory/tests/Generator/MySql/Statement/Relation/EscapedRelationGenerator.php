@@ -28,7 +28,7 @@ final class EscapedRelationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation {
             return new \SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation(word: $parts[0], relation: $parts[1], relationInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $word,
             $relation,
             $relationInformation ?? Generators::constant(null),

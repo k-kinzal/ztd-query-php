@@ -27,7 +27,7 @@ final class OperandWidthGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth(problem: $parts[0], clause: $parts[1], rowValue: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $problem,
             $clause,
             $rowValue

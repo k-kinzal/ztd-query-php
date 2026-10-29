@@ -29,7 +29,7 @@ final class ColumnGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Declaration\Column {
             return new \SqlSemantics\Statement\Declaration\Column(name: $parts[0], type: $parts[1], nullability: $parts[2], generated: $parts[3], expression: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $type,
             $nullability ?? Generators::constant(\SqlSemantics\Statement\Type\Nullability::Nullable),

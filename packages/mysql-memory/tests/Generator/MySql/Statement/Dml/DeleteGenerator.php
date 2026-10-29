@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
 use LogicException;
 use Tests\Generator\Composition;
 
@@ -20,6 +21,35 @@ final class DeleteGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete Delete values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Delete>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No Delete forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\Delete {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete) {
+                throw new LogicException('Publishing Delete must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\WithClause|null> $with Generated constructor operand
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption>> $options Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget> $table Generated constructor operand
@@ -29,31 +59,22 @@ final class DeleteGenerator implements ErisGenerator
      * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint>>|null $hints Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Delete>
      */
-    public function __construct(ErisGenerator $with, ErisGenerator $options, ErisGenerator $table, ?ErisGenerator $where = null, ?ErisGenerator $orderBy = null, ?ErisGenerator $limit = null, ?ErisGenerator $hints = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $with, ErisGenerator $options, ErisGenerator $table, ?ErisGenerator $where = null, ?ErisGenerator $orderBy = null, ?ErisGenerator $limit = null, ?ErisGenerator $hints = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Delete {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Delete {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(with: $parts[0], options: $parts[1], table: $parts[2], where: $parts[3], orderBy: $parts[4], limit: $parts[5], hints: $parts[6], statementInformation: $parts[7], inputSource: $parts[8]);
-        }, \Tests\Generator\Operands::tuple(
-            $with,
-            $options,
-            $table,
-            $where ?? Generators::constant(null),
-            $orderBy ?? Generators::constant([]),
-            $limit ?? Generators::constant(null),
-            $hints ?? Generators::constant([]),
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($with, $options, $table, $where ?? Generators::constant(null), $orderBy ?? Generators::constant([]), $limit ?? Generators::constant(null), $hints ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Delete>>
      */
     public static function forms(): iterable
     {
-        yield 'Delete/29' => new DeleteGenerator(
+        yield 'Delete/29' => DeleteGenerator::operands(
             with: Generators::constant(null),
             options: Generators::constant([]),
             table: new WriteTargetGenerator(
@@ -74,7 +95,7 @@ final class DeleteGenerator implements ErisGenerator
             limit: Generators::constant(null),
             hints: Generators::constant([])
         );
-        yield 'Delete/353' => new DeleteGenerator(
+        yield 'Delete/353' => DeleteGenerator::operands(
             with: Generators::constant(null),
             options: Generators::constant([]),
             table: new WriteTargetGenerator(
@@ -104,9 +125,9 @@ final class DeleteGenerator implements ErisGenerator
             ),
             hints: Generators::constant([])
         );
-        yield 'Delete/363' => new DeleteGenerator(
+        yield 'Delete/363' => DeleteGenerator::operands(
             with: Generators::constant(null),
-            options: \Tests\Generator\Operands::tuple(
+            options: Generators::tuple(
                 DeleteOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::Quick])
             ),
             table: new WriteTargetGenerator(
@@ -134,9 +155,9 @@ final class DeleteGenerator implements ErisGenerator
      *
      * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, int, int, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement}>
      */
-    public static function constraints(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public static function constraints(\SqlSemantics\Contract\GrammarRelease $release, bool $multiple): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release)), static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release): ErisGenerator {
+        return Generators::bind(\Tests\Generator\MySql\Statement\Table\CreateTableGenerator::operands(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release)), static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release, $multiple): ErisGenerator {
             $database = $create->name->schema ?? new \SqlSemantics\Statement\Identifier\Name('pbt');
             $profile = new \SqlSemantics\Contract\LanguageProfile($release);
             $missing = new \SqlSemantics\Contract\AnalysisContext($profile, [$database], [], true);
@@ -147,13 +168,13 @@ final class DeleteGenerator implements ErisGenerator
             $table = new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(Generators::constant($create->name), Generators::constant($alias));
             $wild = new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator();
             $form = new MultipleDeleteFormGenerator();
-            $query = new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()), $table);
+            $query = new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()), $table);
             $derived = new \Tests\Generator\MySql\Statement\Relation\DerivedTableGenerator($query, Generators::constant($alias));
             $choices = [
-                \Tests\Generator\Operands::tuple(new self(Generators::constant(null), Generators::constant([]), new WriteTargetGenerator(Generators::constant($create->name)), orderBy: \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(1, 20)))))), Generators::constant(\MySqlMemory\Error\Family\QueryError::BadField)),
-                \Tests\Generator\Operands::tuple(new MultipleDeleteGenerator(Generators::constant(null), Generators::constant([]), new Target\DeletionInputGenerator(\Tests\Generator\Operands::vector(1, $derived), Generators::constant([$target]), wildcards: \Tests\Generator\Operands::vector(1, $wild)), $form), Generators::constant(\MySqlMemory\Error\Family\QueryError::NonUpdatableTable)),
-                \Tests\Generator\Operands::tuple(new MultipleDeleteGenerator(Generators::constant(null), Generators::constant([]), new Target\DeletionInputGenerator(\Tests\Generator\Operands::vector(1, $table), Generators::constant([$target, $target]), wildcards: \Tests\Generator\Operands::vector(2, $wild)), $form), Generators::constant(\MySqlMemory\Error\Family\QueryError::NonUniqueTable)),
-                \Tests\Generator\Operands::tuple(new MultipleDeleteGenerator(Generators::constant(null), Generators::constant([]), new Target\DeletionInputGenerator(\Tests\Generator\Operands::vector(1, $table), Generators::constant([new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('absent_target'))]), wildcards: \Tests\Generator\Operands::vector(1, $wild)), $form), Generators::constant(\MySqlMemory\Error\Family\QueryError::UnknownTable)),
+                Generators::tuple(self::operands(Generators::constant(null), Generators::constant([]), new WriteTargetGenerator(Generators::constant($create->name)), orderBy: Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(1, 20)))))), Generators::constant(\MySqlMemory\Error\Family\QueryError::BadField)),
+                Generators::tuple(MultipleDeleteGenerator::operands(Generators::constant(null), Generators::constant([]), new Target\DeletionInputGenerator(Generators::vector(1, $derived), Generators::constant([$target]), wildcards: Generators::vector(1, $wild)), $form), Generators::constant(\MySqlMemory\Error\Family\QueryError::NonUpdatableTable)),
+                Generators::tuple(MultipleDeleteGenerator::operands(Generators::constant(null), Generators::constant([]), new Target\DeletionInputGenerator(Generators::vector(1, $table), Generators::constant([$target, $target]), wildcards: Generators::vector(2, $wild)), $form), Generators::constant(\MySqlMemory\Error\Family\QueryError::NonUniqueTable)),
+                Generators::tuple(MultipleDeleteGenerator::operands(Generators::constant(null), Generators::constant([]), new Target\DeletionInputGenerator(Generators::vector(1, $table), Generators::constant([new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('absent_target'))]), wildcards: Generators::vector(1, $wild)), $form), Generators::constant(\MySqlMemory\Error\Family\QueryError::UnknownTable)),
             ];
             return Generators::map(static function (array $parts) use ($definition, $missing, $declared): array {
                 [$write, $condition] = $parts;
@@ -171,7 +192,7 @@ final class DeleteGenerator implements ErisGenerator
                     $before->value, $expected->value,
                     \SqlSemantics\Facade\Semantics::fromStatement($missing, new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($write)),
                     \SqlSemantics\Facade\Semantics::fromStatement($declared, new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($write))];
-            }, \Tests\Generator\Operands::oneOf($choices));
+            }, Generators::oneOf(...$multiple ? [$choices[1], $choices[2], $choices[3]] : [$choices[0]]));
         });
     }
 
@@ -180,10 +201,10 @@ final class DeleteGenerator implements ErisGenerator
      *
      * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, int}>
      */
-    public static function rows(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public static function rows(\SqlSemantics\Contract\GrammarRelease $release, bool $multiple): ErisGenerator
     {
-        $definitions = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
-        return Generators::map(static fn (array $parts): array => self::sequence($release, ...$parts), \Tests\Generator\Operands::tuple($definitions, Generators::choose(-100, 100), Generators::choose(1, 20), Generators::bool(), new MultipleDeleteFormGenerator(), new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator()));
+        $definitions = \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::operands(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
+        return Generators::map(static fn (array $parts): array => self::sequence($release, ...$parts), Generators::tuple($definitions, Generators::choose(-100, 100), Generators::choose(1, 20), Generators::constant($multiple), new MultipleDeleteFormGenerator(), new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator()));
     }
 
     /**

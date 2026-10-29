@@ -27,7 +27,7 @@ final class RoutineVariableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable(name: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)

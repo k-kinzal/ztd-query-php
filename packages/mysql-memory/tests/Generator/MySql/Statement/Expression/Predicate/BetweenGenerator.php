@@ -30,7 +30,7 @@ final class BetweenGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between(operand: $parts[0], low: $parts[1], high: $parts[2], negated: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $low,
             $high,

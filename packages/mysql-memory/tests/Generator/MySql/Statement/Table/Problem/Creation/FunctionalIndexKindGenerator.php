@@ -26,7 +26,7 @@ final class FunctionalIndexKindGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind(kind: $parts[0], owner: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $owner
         ));

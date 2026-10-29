@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesAssignment;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Source\Span;
 use Tests\Generator\Composition;
-use Tests\Generator\Operands;
 
 /**
  * Composes the entire expression of a refused NAMES assignment before execution.
@@ -32,6 +31,6 @@ final class NamesAssignmentGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $value, ?ErisGenerator $operatorSource = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
     {
-        $this->delegate = Generators::map(static fn (array $parts): NamesAssignment => new NamesAssignment($parts[0], $parts[1], $parts[2], $parts[3]), Operands::tuple($value, $operatorSource ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $operator ?? new \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator()));
+        $this->delegate = Generators::map(static fn (array $parts): NamesAssignment => new NamesAssignment($parts[0], $parts[1], $parts[2], $parts[3]), Generators::tuple($value, $operatorSource ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $operator ?? new \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator()));
     }
 }

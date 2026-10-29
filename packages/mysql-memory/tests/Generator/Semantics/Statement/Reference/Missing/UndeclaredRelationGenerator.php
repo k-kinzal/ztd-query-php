@@ -25,7 +25,7 @@ final class UndeclaredRelationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Missing\UndeclaredRelation {
             return new \SqlSemantics\Statement\Reference\Missing\UndeclaredRelation(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }

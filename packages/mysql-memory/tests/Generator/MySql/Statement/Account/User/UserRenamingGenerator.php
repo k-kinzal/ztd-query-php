@@ -27,7 +27,7 @@ final class UserRenamingGenerator implements ErisGenerator
      */
     public function __construct()
     {
-        $this->delegate = Generators::map(static fn (array $parts): UserRenaming => new UserRenaming($parts[0], $parts[1]), \Tests\Generator\Operands::tuple(new AccountGenerator(), new AccountGenerator()));
+        $this->delegate = Generators::map(static fn (array $parts): UserRenaming => new UserRenaming($parts[0], $parts[1]), Generators::tuple(new AccountGenerator(), new AccountGenerator()));
     }
 
     /**
@@ -56,7 +56,7 @@ final class UserRenamingGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $from, ErisGenerator $to): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): UserRenaming => new UserRenaming(from: $parts[0], to: $parts[1]), \Tests\Generator\Operands::tuple($from, $to));
+        return Generators::map(static fn (array $parts): UserRenaming => new UserRenaming(from: $parts[0], to: $parts[1]), Generators::tuple($from, $to));
     }
 
 }

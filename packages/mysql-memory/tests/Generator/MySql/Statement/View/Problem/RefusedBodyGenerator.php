@@ -28,7 +28,7 @@ final class RefusedBodyGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody {
             return new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody(view: $parts[0], alter: $parts[1], body: $parts[2], definer: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $view,
             $alter,
             $body,
@@ -53,10 +53,10 @@ final class RefusedBodyGenerator implements ErisGenerator
             ),
             alter: Generators::constant(false),
             body: new \Tests\Generator\MySql\Statement\Routine\Program\DeferredSelectionGenerator(
-                items: \Tests\Generator\Operands::tuple(
+                items: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\DeferredProjectionGenerator(
                         expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                            elements: \Tests\Generator\Operands::tuple(
+                            elements: Generators::tuple(
                                 new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::map(static fn (int $suffix): string => 'x' . $suffix, Generators::choose(0, 8)),

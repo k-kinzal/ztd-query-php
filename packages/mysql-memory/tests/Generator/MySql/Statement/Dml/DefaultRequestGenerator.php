@@ -26,7 +26,7 @@ final class DefaultRequestGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest(scalarInformation: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
         ));

@@ -26,7 +26,7 @@ final class NumeralGenerator implements ErisGenerator
      */
     public function __construct(ErisGenerator $text, ?ErisGenerator $hexadecimal = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $notation = null)
     {
-        $this->delegate = \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $text,
             $hexadecimal ?? Generators::constant(false),
             $inputSource ?? Generators::constant(null)
@@ -45,7 +45,7 @@ final class NumeralGenerator implements ErisGenerator
             0 => (string) $parts[1] . '.5',
             1 => (string) $parts[1] . 'e0',
             default => '18446744073709551616' . (string) $parts[1],
-        }, \Tests\Generator\Operands::tuple(Generators::elements(0, 1, 2), Generators::choose(1, 99))));
+        }, Generators::tuple(Generators::elements(0, 1, 2), Generators::choose(1, 99))));
     }
 
 }

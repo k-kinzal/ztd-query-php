@@ -26,7 +26,7 @@ final class DatabaseLevelGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel {
             return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel(database: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $database,
             $inputSource ?? Generators::constant(null)
         ));

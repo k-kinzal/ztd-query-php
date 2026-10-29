@@ -25,7 +25,7 @@ final class RefusedKillOperandGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedKillOperand(process: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $process
         ));
     }
@@ -38,7 +38,7 @@ final class RefusedKillOperandGenerator implements ErisGenerator
     {
         yield 'Server\\Problem\\RefusedKillOperand' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedKillOperandGenerator(
             process: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                elements: \Tests\Generator\Operands::tuple(
+                elements: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::map(static fn (int $suffix): string => 'missing' . $suffix, Generators::choose(0, 8)),

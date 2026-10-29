@@ -28,7 +28,7 @@ final class TableQueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\TableQuery {
             return new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery(query: $parts[0], duplicate: $parts[1], inputSource: $parts[2], as: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $query,
             $duplicate ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null),

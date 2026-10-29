@@ -25,7 +25,7 @@ final class RefusedQueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery(query: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $query
         ));
     }
@@ -41,7 +41,7 @@ final class RefusedQueryGenerator implements ErisGenerator
                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\QueryExpressionGenerator(
                     with: new \Tests\Generator\MySql\Statement\Query\With\WithGenerator(
                         recursive: Generators::constant(true),
-                        tables: \Tests\Generator\Operands::tuple(
+                        tables: Generators::tuple(
                             new \Tests\Generator\MySql\Statement\Query\With\CommonTableExpressionGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::constant('c'),
@@ -50,7 +50,7 @@ final class RefusedQueryGenerator implements ErisGenerator
                                 columns: Generators::constant([]),
                                 query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                                     options: Generators::constant([]),
-                                    items: \Tests\Generator\Operands::tuple(
+                                    items: Generators::tuple(
                                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                             expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -101,7 +101,7 @@ final class RefusedQueryGenerator implements ErisGenerator
                     ),
                     body: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
                         options: Generators::constant([]),
-                        items: \Tests\Generator\Operands::tuple(
+                        items: Generators::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
                                 expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))

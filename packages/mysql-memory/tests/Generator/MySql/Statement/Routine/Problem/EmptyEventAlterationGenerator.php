@@ -27,7 +27,7 @@ final class EmptyEventAlterationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration(name: $parts[0], definer: $parts[1], offset: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $definer ?? Generators::constant(null),
             $offset ?? Generators::constant(0)

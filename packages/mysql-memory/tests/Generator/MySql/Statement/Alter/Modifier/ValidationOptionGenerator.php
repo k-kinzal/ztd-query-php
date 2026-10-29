@@ -26,7 +26,7 @@ final class ValidationOptionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(validate: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $validate,
             $inputSource ?? Generators::constant(null)
         ));

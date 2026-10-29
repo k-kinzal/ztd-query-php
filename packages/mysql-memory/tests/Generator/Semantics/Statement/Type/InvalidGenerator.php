@@ -25,7 +25,7 @@ final class InvalidGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Type\Invalid {
             return new \SqlSemantics\Statement\Type\Invalid(cause: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $cause
         ));
     }

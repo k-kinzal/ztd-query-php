@@ -32,7 +32,7 @@ final class DefinitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition {
             return new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition(name: $parts[0], reach: $parts[1], shape: $parts[2], default: $parts[3], writability: $parts[4], minimum: $parts[5], maximum: $parts[6], domain: $parts[7]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $reach,
             $shape,
@@ -52,7 +52,7 @@ final class DefinitionGenerator implements ErisGenerator
     public static function catalog(): ErisGenerator
     {
         $entries = array_values(\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of(\SqlSemantics\Contract\GrammarRelease::MySql847)->definitions);
-        return \Tests\Generator\Operands::bind(Generators::elements($entries), static fn (\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition $entry): self => new self(
+        return Generators::bind(Generators::elements($entries), static fn (\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition $entry): self => new self(
             Generators::constant($entry->name),
             ReachGenerator::selecting([$entry->reach]),
             ValueShapeGenerator::selecting([$entry->shape]),

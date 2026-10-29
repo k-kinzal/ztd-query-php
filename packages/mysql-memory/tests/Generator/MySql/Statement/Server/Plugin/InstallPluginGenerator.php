@@ -6,6 +6,8 @@ namespace Tests\Generator\MySql\Statement\Server\Plugin;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use InvalidArgumentException;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -19,30 +21,55 @@ final class InstallPluginGenerator implements ErisGenerator
     use Composition;
 
     /**
+     * Generates complete InstallPlugin values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
+     */
+    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    {
+        if ($operands === null) {
+            $forms = [];
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No InstallPlugin forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin {
+            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin) {
+                throw new LogicException('Publishing InstallPlugin must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $plugin Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $library Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin>
      */
-    public function __construct(ErisGenerator $plugin, ErisGenerator $library, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null)
+    public static function operands(ErisGenerator $plugin, ErisGenerator $library, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin {
+        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin(plugin: $parts[0], library: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
-            $plugin,
-            $library,
-            $statementInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        }, Generators::tuple($plugin, $library, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin>>
      */
     public static function forms(): iterable
     {
-        yield 'InstallPlugin/421' => new InstallPluginGenerator(
+        yield 'InstallPlugin/421' => InstallPluginGenerator::operands(
             plugin: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
                 quote: Generators::constant(null)

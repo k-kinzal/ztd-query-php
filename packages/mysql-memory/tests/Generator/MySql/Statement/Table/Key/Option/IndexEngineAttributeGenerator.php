@@ -28,7 +28,7 @@ final class IndexEngineAttributeGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute(attribute: $parts[0], secondary: $parts[1], inputSource: $parts[2], operator: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $attribute,
             $secondary ?? Generators::constant(false),
             $inputSource ?? Generators::constant(null),

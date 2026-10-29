@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Dml\Prepared;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
+use LogicException;
 use Tests\Generator\Composition;
 
 /**
@@ -27,7 +28,7 @@ final class DefinitionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition {
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition(initial: $parts[0], database: $parts[1], alternatives: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $initial,
             $database,
             $alternatives
@@ -69,7 +70,50 @@ final class DefinitionGenerator implements ErisGenerator
                 $alternatives[] = new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Alternative($interpretation, $interpretation->language->lexical->noBackslashEscapes ? $refusal : $initial->statement, $initial->sources);
             }
             return new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition($initial->interpretation, new \SqlSemantics\Statement\Identifier\Name('pbt'), $alternatives);
-        }, \Tests\Generator\Operands::tuple($initials, $refusals));
+        }, Generators::tuple($initials, $refusals));
     }
 
+
+    /**
+     * Generates a prepared table read and the metadata change that invalidates it.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition, \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable, \SqlSemantics\Platform\MySql\Statement\QueryRoot}>
+     */
+    public static function tableReads(\SqlSemantics\Contract\GrammarRelease $release, bool $refused): ErisGenerator
+    {
+        $queries = Generators::map(static fn (\SqlSemantics\Statement\Identifier\Name $name): \SqlSemantics\Platform\MySql\Statement\QueryRoot => new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select(
+            [],
+            [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([$refused ? "value'" : 'value']))],
+            new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName($name)),
+        )), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
+        $interpretations = new InterpretationGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant($release)), new \Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator(Generators::constant('utf8mb4'), Generators::constant(4)));
+        $initials = new AlternativeGenerator($interpretations, $queries);
+        return Generators::map(self::tableSequence(...), $refused ? self::changingEscapes($initials) : self::portable($initials));
+    }
+
+    /**
+     * Builds the table change and bound read belonging to a generated preparation.
+     *
+     * @return array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition, \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable, \SqlSemantics\Platform\MySql\Statement\QueryRoot}
+     * @throws LogicException When the generated definition is not a table read.
+     */
+    public static function tableSequence(\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Definition $definition): array
+    {
+        $initial = $definition->select($definition->initial);
+        if (!$initial->statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot || !$initial->statement->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || !$initial->statement->query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference) {
+            throw new LogicException('The generated preparation reads one named table.');
+        }
+        $name = $initial->statement->query->from->name;
+        $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('original')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+        $added = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('added')), $column->specification);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $definition->initial->language->grammar->value, searchPath: new \SqlSemantics\Contract\SearchPath('pbt'));
+        $create = \SqlSemantics\Facade\Semantics::fromStatement($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable($name, [$column]));
+        $context = $semantics->context([$create]);
+        $alter = \SqlSemantics\Facade\Semantics::fromStatement($context, new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($name, [new \SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn($added)]));
+        $query = \SqlSemantics\Facade\Semantics::fromStatement($context, $initial->statement);
+        if (!$create instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || !$alter instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable || !$query instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot) {
+            throw new LogicException('Publication preserves the generated preparation prerequisites.');
+        }
+        return [$create, $definition, $alter, $query];
+    }
 }

@@ -30,7 +30,7 @@ final class DeferredTimeZoneGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone(operand: $parts[0], zone: $parts[1], interval: $parts[2], precision: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $operand,
             $zone,
             $interval ?? Generators::constant(false),

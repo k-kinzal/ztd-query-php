@@ -9,6 +9,8 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use InvalidArgumentException;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
@@ -24,11 +26,41 @@ final class BeginGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Selects the grammar before generating operands.
+     * Generates complete Begin values for the post-analysis execution boundary.
+     *
+     * @param ErisGenerator<Begin>|null $operands A constrained form of this concrete result
+     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
-        $this->delegate = Generators::map(static fn (bool $work): Begin => new Begin($work, profile: new LanguageProfile($release)), Generators::bool());
+        if ($operands === null) {
+            $forms = [];
+            if ($release === GrammarRelease::MySql847) {
+                foreach (self::forms() as $form) {
+                    $forms[] = $form;
+                }
+            }
+
+            if ($forms === []) {
+                throw new InvalidArgumentException('No Begin forms are defined for the selected grammar.');
+            }
+            $operands = Generators::oneOf(...$forms);
+        }
+        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): Begin {
+            if (!$statement instanceof Begin) {
+                throw new LogicException('Publishing Begin must preserve its concrete result type.');
+            }
+            return $statement;
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+    /**
+     * Selects the grammar before generating operands.
+     * @return ErisGenerator<Begin>
+     */
+    public static function operands(GrammarRelease $release): ErisGenerator
+    {
+        return Generators::map(static fn (bool $work): Begin => new Begin($work, profile: new LanguageProfile($release)), Generators::bool());
     }
 
     /**
@@ -58,11 +90,11 @@ final class BeginGenerator implements ErisGenerator
      */
     public static function fromOperands(ErisGenerator $work, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): Begin => new Begin(work: $parts[0], profile: $parts[1], client: $parts[2]), \Tests\Generator\Operands::tuple($work, $profile, $client));
+        return Generators::map(static fn (array $parts): Begin => new Begin(work: $parts[0], profile: $parts[1], client: $parts[2]), Generators::tuple($work, $profile, $client));
     }
 
     /**
-     * Composes the statement's SQL forms from typed operand generators.
+     * Composes the statement's MySQL 8.4 forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<Begin>>
      */

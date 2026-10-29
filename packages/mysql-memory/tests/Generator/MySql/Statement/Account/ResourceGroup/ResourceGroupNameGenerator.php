@@ -26,7 +26,7 @@ final class ResourceGroupNameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName {
             return new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName(spelling: $parts[0], inputSource: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $spelling,
             $inputSource ?? Generators::constant(null)
         ));

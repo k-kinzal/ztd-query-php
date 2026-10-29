@@ -29,7 +29,7 @@ final class DeferredFrameGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\Frame\DeferredFrame(unit: $parts[0], start: $parts[1], end: $parts[2], exclusion: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $unit,
             $start,
             $end ?? Generators::constant(null),

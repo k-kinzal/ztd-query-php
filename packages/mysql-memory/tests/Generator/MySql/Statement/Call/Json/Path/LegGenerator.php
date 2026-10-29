@@ -28,7 +28,7 @@ final class LegGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Leg {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Leg(kind: $parts[0], name: $parts[1], from: $parts[2], to: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $kind,
             $name ?? Generators::constant(null),
             $from ?? Generators::constant(null),

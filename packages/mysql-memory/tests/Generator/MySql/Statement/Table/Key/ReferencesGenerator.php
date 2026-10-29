@@ -30,7 +30,7 @@ final class ReferencesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\References {
             return new \SqlSemantics\Platform\MySql\Statement\Table\Key\References(table: $parts[0], columns: $parts[1], match: $parts[2], actions: $parts[3], inputSource: $parts[4], relationInformation: $parts[5]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table,
             $columns ?? Generators::constant(null),
             $match ?? Generators::constant(null),

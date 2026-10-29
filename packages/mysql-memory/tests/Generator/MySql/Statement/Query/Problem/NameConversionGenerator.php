@@ -26,7 +26,7 @@ final class NameConversionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion(charset: $parts[0], text: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $charset,
             $text
         ));
@@ -38,7 +38,7 @@ final class NameConversionGenerator implements ErisGenerator
      */
     public static function queries(): ErisGenerator
     {
-        return \Tests\Generator\Operands::bind(new self(Generators::constant('latin2'), Generators::map(static fn (int $suffix): string => "\xE9" . $suffix, Generators::choose(0, 9))), static function (\SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion $missing): ErisGenerator {
+        return Generators::bind(new self(Generators::constant('latin2'), Generators::map(static fn (int $suffix): string => "\xE9" . $suffix, Generators::choose(0, 9))), static function (\SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion $missing): ErisGenerator {
             $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known($missing->charset . '_general_ci');
             $domain = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 2, collation: $collation, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
             $literals = \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(

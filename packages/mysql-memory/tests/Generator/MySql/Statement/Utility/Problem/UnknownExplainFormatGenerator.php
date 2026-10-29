@@ -25,7 +25,7 @@ final class UnknownExplainFormatGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat(name: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name
         ));
     }

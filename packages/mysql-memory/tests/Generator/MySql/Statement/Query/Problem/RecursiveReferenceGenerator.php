@@ -25,7 +25,7 @@ final class RecursiveReferenceGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference {
             return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference(table: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $table
         ));
     }

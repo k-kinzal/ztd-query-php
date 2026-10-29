@@ -27,7 +27,7 @@ final class SpatialProblemGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem {
             return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(rule: $parts[0], attribute: $parts[1], value: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $rule,
             $attribute ?? Generators::constant(null),
             $value ?? Generators::constant(null)

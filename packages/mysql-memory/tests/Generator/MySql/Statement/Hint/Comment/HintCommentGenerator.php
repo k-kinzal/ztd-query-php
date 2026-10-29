@@ -26,7 +26,7 @@ final class HintCommentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment {
             return new \SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment(hints: $parts[0], error: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $hints,
             $error ?? Generators::constant(null)
         ));
@@ -39,7 +39,7 @@ final class HintCommentGenerator implements ErisGenerator
      */
     public static function projections(): ErisGenerator
     {
-        $comments = new self(\Tests\Generator\Operands::vector(1, \Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator::namedForms()), new HintErrorGenerator(new HintFailureGenerator(), Generators::choose(0, 128), Generators::bool(), Generators::constant(true)));
+        $comments = new self(Generators::vector(1, \Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator::namedForms()), new HintErrorGenerator(new HintFailureGenerator(), Generators::choose(0, 128), Generators::bool(), Generators::constant(true)));
         return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment $comment): \SqlSemantics\Platform\MySql\Statement\QueryRoot {
             \SqlSemantics\Diagnostic\Check::invariant($comment->error !== null, 'The generated hint comment has a stopping warning.');
             $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], hints: $comment->hints));

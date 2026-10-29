@@ -29,7 +29,7 @@ final class RecurringScheduleGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule(quantity: $parts[0], unit: $parts[1], starts: $parts[2], ends: $parts[3], inputSource: $parts[4]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $quantity,
             $unit,
             $starts ?? Generators::constant(null),

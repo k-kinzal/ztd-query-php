@@ -28,7 +28,7 @@ final class ConcatenationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation {
             return new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation(left: $parts[0], right: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $left,
             $right,
             $scalarInformation ?? Generators::constant(null),

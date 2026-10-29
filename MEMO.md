@@ -92,18 +92,30 @@ exercise the actual execution results. [S1:6472]
   actually be used; implement the requested configurable class-unused rule,
   selecting the checked classes in NEON. [S1:2271, 7961, 7973, 8578]
 
-## Property grouping remains a design question
+## Current property structure and execution property
 
-The properties must test the intended execution behavior. Their final units are
-not settled. Grouping them around the principal concrete types returned by
-`Semantics::analyze()` is the user's hypothesis, not a mandatory one-class-per-
-result mapping. It suggests that most of the previous per-element property
-classes disappear as composed generators exercise those elements through the
-analysis-result boundary. It is not a deletion quota. [S1:7961, 7973; S4:217, 271]
+The subsequent user clarification selects concrete analysis-result types as the
+property units. Keep one `<ConcreteType>Properties` class directly under
+`tests/Property`, with no `MySql` or `Statement` subdirectory. Start each search
+with that concrete type's generator. A generic feature factory selected by a
+class-string is not the intended entry point.
 
-All semantic types still need generators even when they do not each have a
-standalone execution property. Determine the property units from what is being
-verified; do not equate generator count, property-file count and behavior coverage.
+The property is consumption of a generated analysis result by MemoryDB's
+post-analysis execution phase. Without prerequisite state, execution may complete
+or refuse the statement as SQL; representation and implementation failures must
+escape. With generated prerequisites, the execution must complete. Local checks
+of error numbers, account mutations, warning counts, source-text markers and scope
+cleanup do not define this property and must not substitute for it.
+
+Use standard Eris composition and shrinking. The user explicitly rejected the
+`tests/Eris` directory and the custom execution/shrinking machinery it contained;
+do not relocate that machinery under another name. Dependencies must be built in
+the generators, not reconstructed by the execution callback.
+
+All semantic types still need generators, including nested types that do not
+have standalone execution properties. Generator coverage and behavior coverage
+remain distinct. This clarification supersedes the earlier grouping hypothesis
+recorded in the historical audit below.
 
 ## Work order and completion evidence
 

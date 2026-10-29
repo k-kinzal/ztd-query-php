@@ -5,6 +5,8 @@ includes:
     - vendor/k-kinzal/php-ai-toolkit/rules.neon
 
 parameters:
+    stubFiles:
+        - rules/eris.stub
     unusedClasses:
         - 'Tests\Generator\*Generator'
     toolkit:
@@ -18,11 +20,10 @@ parameters:
 
 services:
     -
-        class: Rules\ErisTupleComposition
-        tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]
+        class: Rules\ErisForAllComposition
+        tags: [phpstan.broker.dynamicMethodReturnTypeExtension]
     -
         class: Rules\ErisTupleComposition
-        arguments: [Tests\Generator\Operands]
         tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]
     -
         class: Rules\AnalysisFileCollector

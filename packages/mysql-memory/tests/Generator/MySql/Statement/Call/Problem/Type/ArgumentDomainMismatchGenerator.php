@@ -26,7 +26,7 @@ final class ArgumentDomainMismatchGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\Type\ArgumentDomainMismatch {
             return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\Type\ArgumentDomainMismatch(function: $parts[0], argument: $parts[1]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $function,
             $argument
         ));

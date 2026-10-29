@@ -25,7 +25,7 @@ final class RemovePartitioningGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Partition\RemovePartitioning {
             return new \SqlSemantics\Platform\MySql\Statement\Alter\Partition\RemovePartitioning(inputSource: $parts[0]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $inputSource ?? Generators::constant(null)
         ));
     }

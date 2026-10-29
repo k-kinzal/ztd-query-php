@@ -27,7 +27,7 @@ final class CursorDeclarationGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CursorDeclaration {
             return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CursorDeclaration(name: $parts[0], query: $parts[1], inputSource: $parts[2]);
-        }, \Tests\Generator\Operands::tuple(
+        }, Generators::tuple(
             $name,
             $query,
             $inputSource ?? Generators::constant(null)
