@@ -207,7 +207,7 @@ final class StatementRuleTest extends TestCase
         $semantics = new Semantics(Dialect::MySql, $release);
         $function = $semantics->analyze("create function f() returns int language javascript as 'return 1'");
         self::assertInstanceOf(CreateFunction::class, $function);
-        self::assertEquals(new ExternalBody(new Text('return 1')), $function->body);
+        self::assertEquals(new ExternalBody(new Text('return 1', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation())), $function->body);
         self::assertSame("CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS 'return 1'", $function->toString());
 
         $procedure = $semantics->analyze('create procedure p() language javascript as $$ return 1 $$');

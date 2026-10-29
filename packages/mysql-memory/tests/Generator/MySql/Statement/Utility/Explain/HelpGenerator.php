@@ -50,7 +50,7 @@ final class HelpGenerator implements ErisGenerator
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
     }
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $topic Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Literal\Text> $topic Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help>
@@ -68,6 +68,7 @@ final class HelpGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
+        yield 'Help/quoted' => self::operands(new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (array $bytes): string => implode('', $bytes), Generators::seq(Generators::elements(['a', "\x1a", "\n", "'", '\\'])))));
         yield 'Help/50' => HelpGenerator::operands(
             topic: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                 value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),

@@ -116,8 +116,8 @@ final class TemporalLiteralTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame("SELECT DATE '2024-01-02' AS v", $semantics->analyze("select date '2024-01-02' as v")->toString());
-        self::assertSame("SELECT TIME '01:02:03' AS v", $semantics->analyze('SELECT TIME "01:02:03" AS v')->toString());
-        self::assertSame("SELECT TIMESTAMP '2024-01-02 03:04:05' AS v", $semantics->analyze('SELECT TIMESTAMP "2024-01-02 03:04:05" AS v')->toString());
+        self::assertSame('SELECT TIME "01:02:03" AS v', $semantics->analyze('SELECT TIME "01:02:03" AS v')->toString());
+        self::assertSame('SELECT TIMESTAMP "2024-01-02 03:04:05" AS v', $semantics->analyze('SELECT TIMESTAMP "2024-01-02 03:04:05" AS v')->toString());
         self::assertSame("SELECT date '2024-01-02'", $semantics->analyze("SELECT date '2024-01-02'")->toString());
     }
 

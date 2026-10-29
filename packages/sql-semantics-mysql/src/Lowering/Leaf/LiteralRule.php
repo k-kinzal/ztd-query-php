@@ -139,7 +139,7 @@ final class LiteralRule
     {
         $kind = self::TEMPORAL[$form->signature];
         $text = $this->decode($form->token(1)->text);
-        return $this->lowering->origins->record($this->lowering->leaves->record(new TemporalLiteral($kind, $text)), $form->node);
+        return $this->lowering->origins->record($this->lowering->leaves->record(new TemporalLiteral($kind, $text, quotation: $this->quotation($form->token(1)->text))), $form->node);
     }
 
     /**
@@ -232,16 +232,18 @@ final class LiteralRule
     public function string(Node $literal): StringLiteral
     {
         $segments = [];
+        $quotations = [];
         $form = $this->lowering->productions->form($literal);
         while ($form->signature === 'text_literal: text_literal TEXT_STRING_literal') {
             array_unshift($segments, $this->bytes($form->node(1)));
+            array_unshift($quotations, $this->quotation($form->node(1)->tokens()[0]->text));
             $form = $this->lowering->productions->form($form->node(0));
         }
 
         return $this->lowering->leaves->record(match ($form->signature) {
-            'text_literal: TEXT_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments]),
-            'text_literal: NCHAR_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], null, true),
-            'text_literal: UNDERSCORE_CHARSET TEXT_STRING' => new StringLiteral([$this->decode($form->token(1)->text), ...$segments], $this->introducer($form)),
+            'text_literal: TEXT_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], quotations: [$this->quotation($form->token(0)->text), ...$quotations]),
+            'text_literal: NCHAR_STRING' => new StringLiteral([$this->decode($form->token(0)->text), ...$segments], null, true, quotations: [$this->quotation($form->token(0)->text), ...$quotations]),
+            'text_literal: UNDERSCORE_CHARSET TEXT_STRING' => new StringLiteral([$this->decode($form->token(1)->text), ...$segments], $this->introducer($form), quotations: [$this->quotation($form->token(1)->text), ...$quotations]),
             default => throw ImplementationGap::production($form),
         });
     }
@@ -260,6 +262,14 @@ final class LiteralRule
     public function decode(string $token): string
     {
         return (new Strings())->decode($token, !$this->lowering->profile->lexical->noBackslashEscapes);
+    }
+
+    /**
+     * Retains typed quotation choices independently of the decoded string.
+     */
+    public function quotation(string $token): Literal\Quoted\Notation
+    {
+        return (new Quoted\Spelling())->read($token, !$this->lowering->profile->lexical->noBackslashEscapes);
     }
 
     /**
@@ -294,7 +304,7 @@ final class LiteralRule
             return $this->lowering->leaves->record(new Text((new RadixSpelling())->digits($form->token(0)->text), $radix, notation: (new RadixSpelling())->notation($form->token(0)->text)));
         }
 
-        $text = new Text($this->bytes($string));
+        $text = new Text($this->bytes($string), quotation: $this->quotation($string->tokens()[0]->text));
         $problem = $string->name === 'TEXT_STRING_sys_nonewline' ? (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text) : null;
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($string)[1] ?? 0);

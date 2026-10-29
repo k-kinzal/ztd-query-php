@@ -1915,6 +1915,15 @@
         "position": "int",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Quoted\\Escape": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Quoted\\Notation": {
+        "backslashEscapes": "bool",
+        "doubleQuoted": "bool",
+        "escapes": "array"
+    },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix": {
         "name": "string"
     },
@@ -1940,6 +1949,7 @@
         "introducer": "?SqlSemantics\\Statement\\Identifier\\Name",
         "location": "?SqlSemantics\\Statement\\Source\\Span",
         "national": "bool",
+        "quotations": "array",
         "segments": "array",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
@@ -1950,12 +1960,14 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalLiteral": {
         "form": "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\TemporalForm",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "quotation": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Quoted\\Notation",
         "text": "string",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text": {
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "notation": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\RadixNotation",
+        "quotation": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Quoted\\Notation",
         "radix": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Radix",
         "value": "string"
     },
@@ -5155,7 +5167,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\Help": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "topic": "SqlSemantics\\Statement\\Identifier\\Name"
+        "topic": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Utility\\Explain\\UseDatabase": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",

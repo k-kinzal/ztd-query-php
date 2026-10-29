@@ -55,8 +55,8 @@ final class ConditionRuleTest extends TestCase
         self::assertInstanceOf(Block::class, $statement->body);
         self::assertEquals([
             new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051', inputSource: new \SqlSemantics\Statement\Source\Span(51, 4)), inputSource: new \SqlSemantics\Statement\Source\Span(51, 4)), inputSource: new \SqlSemantics\Statement\Source\Span(27, 28)),
-            new ConditionDeclaration(new Name('d'), new SqlState(new Text('42S02'), inputSource: new \SqlSemantics\Statement\Source\Span(81, 16)), inputSource: new \SqlSemantics\Statement\Source\Span(57, 40)),
-            new ConditionDeclaration(new Name('e'), new SqlState(new Text('42S01'), inputSource: new \SqlSemantics\Statement\Source\Span(123, 22), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), inputSource: new \SqlSemantics\Statement\Source\Span(99, 46)),
+            new ConditionDeclaration(new Name('d'), new SqlState(new Text('42S02', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()), inputSource: new \SqlSemantics\Statement\Source\Span(81, 16)), inputSource: new \SqlSemantics\Statement\Source\Span(57, 40)),
+            new ConditionDeclaration(new Name('e'), new SqlState(new Text('42S01', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()), inputSource: new \SqlSemantics\Statement\Source\Span(123, 22), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), inputSource: new \SqlSemantics\Statement\Source\Span(99, 46)),
         ], $statement->body->declarations);
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE d CONDITION FOR SQLSTATE '42S02'; DECLARE e CONDITION FOR SQLSTATE VALUE '42S01'; END", $operation->toString());
     }
@@ -65,7 +65,7 @@ final class ConditionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("resignal sqlstate value '45000'");
 
-        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Resignal(new SqlState(new Text('45000'), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)), $operation));
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Resignal(new SqlState(new Text('45000', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)), $operation));
         self::assertSame("RESIGNAL SQLSTATE VALUE '45000'", $operation->toString());
     }
 
@@ -104,7 +104,7 @@ final class ConditionRuleTest extends TestCase
         self::assertEquals([
             new ConditionName(new Name('c')),
             new ErrorCode(new Numeral('1052', inputSource: new \SqlSemantics\Statement\Source\Span(89, 4)), inputSource: new \SqlSemantics\Statement\Source\Span(89, 4)),
-            new SqlState(new Text('42000'), inputSource: new \SqlSemantics\Statement\Source\Span(95, 22), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written),
+            new SqlState(new Text('42000', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()), inputSource: new \SqlSemantics\Statement\Source\Span(95, 22), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written),
             new GeneralCondition(ConditionClass::SqlWarning),
             new GeneralCondition(ConditionClass::NotFound),
             new GeneralCondition(ConditionClass::SqlException),

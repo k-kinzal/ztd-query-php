@@ -29,7 +29,7 @@ final class ExternalBodyTest extends TestCase
         $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
-        self::assertEquals(new ExternalBody(new Text('return zz')), $statement->body);
+        self::assertEquals(new ExternalBody(new Text('return zz', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation())), $statement->body);
         self::assertSame([], $create->diagnostics());
     }
 

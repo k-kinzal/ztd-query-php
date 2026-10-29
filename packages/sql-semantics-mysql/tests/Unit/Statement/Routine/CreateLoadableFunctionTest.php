@@ -71,7 +71,7 @@ final class CreateLoadableFunctionTest extends TestCase
         yield 'MySQL 9.1 aggregate IF NOT EXISTS' => [
             'mysql-9.1.0',
             'create aggregate function if not exists f returns decimal soname "u.so"',
-            "CREATE AGGREGATE FUNCTION IF NOT EXISTS f RETURNS DECIMAL SONAME 'u.so'",
+            'CREATE AGGREGATE FUNCTION IF NOT EXISTS f RETURNS DECIMAL SONAME "u.so"',
         ];
     }
 

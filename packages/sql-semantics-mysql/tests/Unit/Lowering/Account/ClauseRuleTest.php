@@ -89,7 +89,7 @@ final class ClauseRuleTest extends TestCase
 
     public function testStringDecodesTheToken(): void
     {
-        self::assertSame("CREATE USER u REQUIRE ISSUER 'it''s'", (new Semantics(Dialect::MySql))->analyze('create user u require issuer \'it\\\'s\'')->toString());
+        self::assertSame("CREATE USER u REQUIRE ISSUER 'it\\'s'", (new Semantics(Dialect::MySql))->analyze('create user u require issuer \'it\\\'s\'')->toString());
     }
 
     public function testSpineFlattensTheOptionList(): void

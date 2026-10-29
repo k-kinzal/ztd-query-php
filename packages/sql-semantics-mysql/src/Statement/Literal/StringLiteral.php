@@ -65,9 +65,10 @@ final class StringLiteral implements LiteralExpression, Expression
     /**
      * @param array<array-key, string|int|bool|object|null> $segments The decoded bytes of each adjacent quoted string, as a list of strings; at least one
      * @param Name|null $introducer The introduced character set, in lower case
+     * @param list<Quoted\Notation> $quotations Explicit quotation choices for each segment, or empty for canonical output
      * @param bool $national Whether the literal is written `N'...'`; excludes an introducer
      */
-    public function __construct(array $segments, public readonly ?Name $introducer = null, public readonly bool $national = false, public readonly ?Collation $collation = null, private readonly ?Span $location = null, ?ScalarFact $scalarInformation = null)
+    public function __construct(array $segments, public readonly ?Name $introducer = null, public readonly bool $national = false, public readonly ?Collation $collation = null, private readonly ?Span $location = null, ?ScalarFact $scalarInformation = null, public readonly array $quotations = [])
     {
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
@@ -80,6 +81,10 @@ final class StringLiteral implements LiteralExpression, Expression
         Check::input($list !== [] && array_is_list($segments), 'A string literal holds at least one segment.');
         Check::input($introducer === null || (!$national && (new Introducers())->known($introducer->value)), 'An introducer names a character set of the server in lower case and excludes the national form.');
         $this->segments = $list;
+        Check::input($quotations === [] || count($quotations) === count($list), 'Quotation choices correspond to every string segment.');
+        foreach (Check::listOf($quotations, Quoted\Notation::class, 'Quotation choices are string notations.') as $index => $quotation) {
+            $quotation->validate($list[$index]);
+        }
         Check::input($collation === null || !$national || $collation->name === 'utf8mb3_general_ci', 'A national literal uses the national character set collation.');
         Check::input($collation === null || $introducer === null || $collation->charset->name === ($introducer->value === 'utf8' ? 'utf8mb3' : $introducer->value), 'An introduced literal uses the named character set.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -147,7 +152,7 @@ final class StringLiteral implements LiteralExpression, Expression
             $out->spelled('_' . $this->introducer->value);
         }
         foreach ($this->segments as $position => $segment) {
-            $out->spelled(($this->national && $position === 0 ? 'N' : '') . $out->quote($segment));
+            $out->spelled(($this->national && $position === 0 ? 'N' : '') . (($this->quotations[$position] ?? null)?->spell($segment) ?? $out->quote($segment)));
         }
     }
 }

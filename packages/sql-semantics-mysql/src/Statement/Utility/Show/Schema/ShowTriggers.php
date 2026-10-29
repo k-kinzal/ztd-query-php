@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Relation;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW FULL TRIGGERS IN shop WHERE `Table` = 'orders'");
- *     [$show->full, $show->toString()] // => [true, "SHOW FULL TRIGGERS FROM shop WHERE `Table` = 'orders'"]
+ *     [$show->full, $show->toString()] // => [true, "SHOW FULL TRIGGERS IN shop WHERE `Table` = 'orders'"]
  */
 final class ShowTriggers extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {

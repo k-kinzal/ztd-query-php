@@ -25,17 +25,16 @@ final class TemporalLiteralGenerator implements ErisGenerator
      * @param ErisGenerator<string> $text Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<M\Literal\Quoted\Notation|null>|null $quotation Generated quotation choices
      */
-    public function __construct(ErisGenerator $form, ErisGenerator $text, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $form, ErisGenerator $text, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $quotation = null)
     {
-        $this->delegate = Generators::map(static function (array $parts): M\Literal\TemporalLiteral {
-            return new M\Literal\TemporalLiteral(form: $parts[0], text: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]);
-        }, Generators::tuple(
+        $this->delegate = Generators::bind(Generators::tuple(
             $form,
             $text,
             $scalarInformation ?? Generators::constant(null),
             $inputSource ?? Generators::constant(null)
-        ));
+        ), static fn (array $parts): ErisGenerator => Generators::map(static fn (?M\Literal\Quoted\Notation $selected): M\Literal\TemporalLiteral => new M\Literal\TemporalLiteral(form: $parts[0], text: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3], quotation: $selected), $quotation ?? Quoted\NotationGenerator::forValue($parts[1])));
     }
 
     /**

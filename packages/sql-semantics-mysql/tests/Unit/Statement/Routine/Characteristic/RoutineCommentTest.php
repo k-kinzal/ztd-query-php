@@ -29,7 +29,7 @@ final class RoutineCommentTest extends TestCase
     {
         yield 'MySQL 5.6 plain text' => ['mysql-5.6.51', "alter procedure p comment 'adds'", "ALTER PROCEDURE p COMMENT 'adds'", 'adds'];
         yield 'MySQL 8.0 doubled quote' => ['mysql-8.0.44', "alter function f comment 'it''s'", "ALTER FUNCTION f COMMENT 'it''s'", "it's"];
-        yield 'MySQL 9.1 double-quoted text' => ['mysql-9.1.0', 'alter function f comment "two words"', "ALTER FUNCTION f COMMENT 'two words'", 'two words'];
+        yield 'MySQL 9.1 double-quoted text' => ['mysql-9.1.0', 'alter function f comment "two words"', 'ALTER FUNCTION f COMMENT "two words"', 'two words'];
     }
 
     #[DataProvider('providerRenderWritesTheCommentText')]

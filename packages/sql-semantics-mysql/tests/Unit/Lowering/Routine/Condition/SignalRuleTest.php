@@ -74,7 +74,7 @@ final class SignalRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze("signal sqlstate '45000'");
 
-        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('45000'))), $operation));
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('45000', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()))), $operation));
         self::assertSame("SIGNAL SQLSTATE '45000'", $operation->toString());
     }
 
@@ -85,8 +85,8 @@ final class SignalRuleTest extends TestCase
     {
         yield 'without a condition in 5.6' => ['mysql-5.6.51', 'resignal', new Resignal(null), 'RESIGNAL'];
         yield 'with items only in 5.7' => ['mysql-5.7.44', 'resignal set mysql_errno = 1', new Resignal(null, [new SignalItem(ConditionItemName::MysqlErrno, new NumberLiteral('1'))]), 'RESIGNAL SET MYSQL_ERRNO = 1'];
-        yield 'with an sqlstate in 8.0' => ['mysql-8.0.44', "resignal sqlstate '45000'", new Resignal(new SqlState(new Text('45000'))), "RESIGNAL SQLSTATE '45000'"];
-        yield 'with an sqlstate and items in 9.1' => ['mysql-9.1.0', "resignal sqlstate '45000' set message_text = 'x'", new Resignal(new SqlState(new Text('45000')), [new SignalItem(ConditionItemName::MessageText, new StringLiteral(['x']))]), "RESIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'x'"];
+        yield 'with an sqlstate in 8.0' => ['mysql-8.0.44', "resignal sqlstate '45000'", new Resignal(new SqlState(new Text('45000', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()))), "RESIGNAL SQLSTATE '45000'"];
+        yield 'with an sqlstate and items in 9.1' => ['mysql-9.1.0', "resignal sqlstate '45000' set message_text = 'x'", new Resignal(new SqlState(new Text('45000', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation())), [new SignalItem(ConditionItemName::MessageText, new StringLiteral(['x'], quotations: [new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()]))]), "RESIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'x'"];
     }
 
     #[DataProvider('providerStatementLowersResignal')]
@@ -136,7 +136,7 @@ final class SignalRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("signal sqlstate value '01000'");
 
-        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('01000'), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)), $operation));
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new Signal(new SqlState(new Text('01000', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()), valueWord: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)), $operation));
         self::assertSame("SIGNAL SQLSTATE VALUE '01000'", $operation->toString());
     }
 
@@ -199,7 +199,7 @@ final class SignalRuleTest extends TestCase
             new SignalItem(ConditionItemName::SubclassOrigin, new SystemVariable(new Name('sql_mode'), VariableScope::Session)),
             new SignalItem(ConditionItemName::TableName, new NullLiteral()),
             new SignalItem(ConditionItemName::MysqlErrno, new NumberLiteral('1000')),
-            new SignalItem(ConditionItemName::ColumnName, new StringLiteral(['c'])),
+            new SignalItem(ConditionItemName::ColumnName, new StringLiteral(['c'], quotations: [new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()])),
         ], $statement->body->items));
         self::assertSame("CREATE PROCEDURE p(m TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = m, CLASS_ORIGIN = @a, SUBCLASS_ORIGIN = @@SESSION.sql_mode, TABLE_NAME = NULL, MYSQL_ERRNO = 1000, COLUMN_NAME = 'c'", $operation->toString());
         self::assertSame([], $operation->diagnostics());

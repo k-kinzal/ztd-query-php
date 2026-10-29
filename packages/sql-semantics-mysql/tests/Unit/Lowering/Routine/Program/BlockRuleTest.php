@@ -129,7 +129,7 @@ final class BlockRuleTest extends TestCase
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new VariableDeclaration([new Name('s')], new Character(CharacterKind::VarChar, '5', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), new StringLiteral(['a']))], $statement->body->declarations));
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([new VariableDeclaration([new Name('s')], new Character(CharacterKind::VarChar, '5', charset: new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::CharacterSet, new Name('utf8mb4'))), new CollationName(new Name('utf8mb4_bin')), new StringLiteral(['a'], quotations: [new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()]))], $statement->body->declarations));
         self::assertSame("CREATE PROCEDURE p() BEGIN DECLARE s VARCHAR(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'a'; END", $operation->toString());
     }
 
@@ -184,7 +184,7 @@ final class BlockRuleTest extends TestCase
 
         self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new VariableDeclaration([new Name('x')], new Integral(IntegralKind::Int)),
-            new ConditionDeclaration(new Name('e'), new SqlState(new Text('22012'))),
+            new ConditionDeclaration(new Name('e'), new SqlState(new Text('22012', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation()))),
             new HandlerDeclaration(HandlerAction::Exit, [new GeneralCondition(ConditionClass::NotFound)], new SetVariables([new NameAssignment(new Name('x'), new NumberLiteral('0'))])),
             new HandlerDeclaration(HandlerAction::Continue, [new GeneralCondition(ConditionClass::SqlWarning)], new Block()),
         ], $statement->body->declarations));

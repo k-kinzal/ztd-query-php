@@ -81,7 +81,8 @@ final class ExplainRule
     {
         switch ($form->signature) {
             case 'help: HELP_SYM ident_or_text':
-                return new Help($this->lowering->names->identifier($form->node(1)));
+                $topic = $this->lowering->form($form->node(1));
+                return new Help($topic->signature === 'ident_or_text: TEXT_STRING_sys' ? $this->lowering->literals->text($topic->node(0)) : $this->lowering->names->identifier($form->node(1)));
             case 'use: USE_SYM ident':
                 return new UseDatabase($this->lowering->names->identifier($form->node(1)));
             case 'describe: describe_command table_ident opt_describe_column':

@@ -31,12 +31,12 @@ final class StringLiteralGenerator implements ErisGenerator
     public function __construct(?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation $collation = null, ?ErisGenerator $strings = null, ?ErisGenerator $locations = null)
     {
         $strings ??= Generators::map(static fn (array $characters): string => implode('', $characters), Generators::seq(Generators::elements('0', '1', 'a', "'", '\\\\', 'é', '列')));
-        $this->delegate = Generators::map(static function (array $data) use ($collation): StringLiteral {
+        $this->delegate = Generators::bind(Generators::associative(['value' => $strings, 'location' => $locations ?? Generators::constant(null)]), static function (array $data) use ($collation): ErisGenerator {
             if (!is_string($data['value']) || ($data['location'] !== null && !$data['location'] instanceof \SqlSemantics\Statement\Source\Span)) {
                 throw new LogicException('Literal generators must produce decoded text and optional source metadata.');
             }
-            return new StringLiteral([$data['value']], collation: $collation, location: $data['location']);
-        }, Generators::associative(['value' => $strings, 'location' => $locations ?? Generators::constant(null)]));
+            return Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation $quotation): StringLiteral => new StringLiteral([$data['value']], collation: $collation, location: $data['location'], quotations: [$quotation]), Quoted\NotationGenerator::forValue($data['value']));
+        });
     }
 
     /**
@@ -65,11 +65,12 @@ final class StringLiteralGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation|null> $collation The generated semantic operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $location Generated input range
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated local meaning
+     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation>>|null $quotations Generated segment quotations
      * @return ErisGenerator<StringLiteral>
      */
-    public static function fromOperands(ErisGenerator $segments, ErisGenerator $introducer, ErisGenerator $national, ErisGenerator $collation, ?ErisGenerator $location = null, ?ErisGenerator $scalarInformation = null): ErisGenerator
+    public static function fromOperands(ErisGenerator $segments, ErisGenerator $introducer, ErisGenerator $national, ErisGenerator $collation, ?ErisGenerator $location = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $quotations = null): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): StringLiteral => new StringLiteral(segments: $parts[0], introducer: $parts[1], national: $parts[2], collation: $parts[3], location: $parts[4], scalarInformation: $parts[5]), Generators::tuple($segments, $introducer, $national, $collation, $location ?? Generators::constant(null), $scalarInformation ?? Generators::constant(null)));
+        return Generators::map(static fn (array $parts): StringLiteral => new StringLiteral(segments: $parts[0], introducer: $parts[1], national: $parts[2], collation: $parts[3], location: $parts[4], scalarInformation: $parts[5], quotations: $parts[6]), Generators::tuple($segments, $introducer, $national, $collation, $location ?? Generators::constant(null), $scalarInformation ?? Generators::constant(null), $quotations ?? Generators::constant([])));
     }
 
 }

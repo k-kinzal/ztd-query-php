@@ -311,7 +311,7 @@ final class EventRuleTest extends TestCase
         $create = $semantics->analyze('create event e on schedule at 1 comment "it\'s" do select 1');
         self::assertInstanceOf(CreateEvent::class, $create);
         self::assertSame("it's", $create->comment?->value);
-        self::assertSame("CREATE EVENT e ON SCHEDULE AT 1 COMMENT 'it''s' DO SELECT 1", $create->toString());
+        self::assertSame("CREATE EVENT e ON SCHEDULE AT 1 COMMENT \"it's\" DO SELECT 1", $create->toString());
 
         $alter = $semantics->analyze("alter event e comment 'x'");
         self::assertInstanceOf(AlterEvent::class, $alter);

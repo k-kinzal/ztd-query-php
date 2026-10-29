@@ -38,7 +38,7 @@ final class StringLiteralTest extends TestCase
 
         self::assertSame(['x', 'y', 'z'], $literal->segments);
         self::assertSame('xyz', $literal->value());
-        self::assertSame("SELECT a FROM t WHERE a = 'x' 'y' 'z'", $operation->toString());
+        self::assertSame("SELECT a FROM t WHERE a = 'x' \"y\" 'z'", $operation->toString());
     }
 
     public function testDeriveScalarAnswersVarCharOfNoCharacterSetThatIsNeverNull(): void
@@ -128,7 +128,7 @@ final class StringLiteralTest extends TestCase
 
         self::assertSame("a\nb", $literal->value());
         self::assertSame("SELECT 'a\\nb'", $operation->toString());
-        self::assertSame("SELECT 'it''s'", $semantics->analyze("SELECT 'it\\'s'")->toString());
+        self::assertSame("SELECT 'it\\'s'", $semantics->analyze("SELECT 'it\\'s'")->toString());
         self::assertSame("SELECT 'a\\\\b'", $semantics->analyze("SELECT 'a\\\\b'")->toString());
     }
 
@@ -148,9 +148,9 @@ final class StringLiteralTest extends TestCase
         self::assertSame("SELECT 'a\\nb'", $operation->toString());
     }
 
-    public function testRenderWritesADoubleQuotedStringInSingleQuotes(): void
+    public function testRenderRetainsTheDoubleQuotedStringDelimiter(): void
     {
-        self::assertSame("SELECT 'q'", (new Semantics(Dialect::MySql))->analyze('SELECT "q"')->toString());
+        self::assertSame('SELECT "q"', (new Semantics(Dialect::MySql))->analyze('SELECT "q"')->toString());
     }
 
     public function testRejectsAnEmptySegmentList(): void

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Explain;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -34,10 +35,11 @@ final class Help extends \SqlSemantics\Platform\MySql\Statement\SqlStatement imp
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param Name $topic The search string
+     * @param Name|Text $topic The named topic or quoted search string
      */
-    public function __construct(public readonly Name $topic, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name|Text $topic, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$topic instanceof Text || $topic->radix === null, 'A HELP string is quoted character text.');
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
@@ -58,6 +60,11 @@ final class Help extends \SqlSemantics\Platform\MySql\Statement\SqlStatement imp
      */
     public function render(Output $out): void
     {
-        $out->keyword('HELP')->name($this->topic, NameUse::Label);
+        $out->keyword('HELP');
+        if ($this->topic instanceof Text) {
+            $out->node($this->topic);
+        } else {
+            $out->name($this->topic, NameUse::Label);
+        }
     }
 }

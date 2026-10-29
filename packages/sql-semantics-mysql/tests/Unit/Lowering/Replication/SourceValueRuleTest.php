@@ -49,7 +49,7 @@ final class SourceValueRuleTest extends TestCase
         $statement = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS='invalid', SOURCE_PORT=3307");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource::class, $statement);
         self::assertSame("CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'invalid', SOURCE_PORT = 3307", $statement->toString());
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid')), $statement->diagnostics()[0]);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::InvalidUuid, text: new \SqlSemantics\Platform\MySql\Statement\Literal\Text('invalid', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation())), $statement->diagnostics()[0]);
     }
 
     public function testCipherSuitesLowersAString(): void

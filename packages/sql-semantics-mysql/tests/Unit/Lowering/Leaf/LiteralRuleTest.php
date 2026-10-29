@@ -141,7 +141,7 @@ final class LiteralRuleTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item2);
         self::assertInstanceOf(StringLiteral::class, $item2->expression);
         self::assertTrue($item2->expression->national);
-        self::assertSame("SELECT 'a' 'b' 'c', _utf8mb4 'x' 'y', N'n' 'm'", $operation->toString());
+        self::assertSame("SELECT 'a' 'b' \"c\", _utf8mb4 'x' 'y', N'n' 'm'", $operation->toString());
     }
 
     public function testIntroducerNamesTheCharacterSetInLowerCase(): void
@@ -173,6 +173,14 @@ final class LiteralRuleTest extends TestCase
         self::assertSame("it's", $rule->bytes(new Node('TEXT_STRING_sys', 0, [new Token(0, 'TEXT_STRING', "'it''s'", 0)])));
         self::assertSame('x', $rule->bytes(new Node('json_attribute', 0, [new Node('TEXT_STRING_sys', 0, [new Token(0, 'TEXT_STRING', "'x'", 0)])])));
         self::assertSame([], $leaves->all());
+    }
+
+    public function testQuotationRetainsDelimiterAndEscapesInTheSelectedMode(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new LiteralRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame('"a\\Z"', $rule->quotation('"a\\Z"')->spell("a\x1a"));
     }
 
     public function testTextLowersStringsAtPositionsThatAreNotExpressions(): void

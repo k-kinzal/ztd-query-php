@@ -63,8 +63,9 @@ final class TemporalLiteral implements LiteralExpression
      * @param TemporalForm $form The keyword of the literal
      * @param string $text The decoded text
      */
-    public function __construct(public readonly TemporalForm $form, public readonly string $text, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly TemporalForm $form, public readonly string $text, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?Quoted\Notation $quotation = null)
     {
+        $quotation?->validate($text);
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
@@ -114,6 +115,6 @@ final class TemporalLiteral implements LiteralExpression
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->form->value)->spelled($out->quote($this->text));
+        $out->keyword($this->form->value)->spelled(($this->quotation?->spell($this->text) ?? $out->quote($this->text)));
     }
 }

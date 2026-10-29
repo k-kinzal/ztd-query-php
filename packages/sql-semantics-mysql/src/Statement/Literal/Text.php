@@ -36,8 +36,10 @@ final class Text implements Node
      * @param string $value The decoded bytes of a quoted string, or the digits of a hexadecimal or bit literal
      * @param Radix|null $radix The digit system when the text is written as a hexadecimal or bit literal
      */
-    public function __construct(public readonly string $value, public readonly ?Radix $radix = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?RadixNotation $notation = null)
+    public function __construct(public readonly string $value, public readonly ?Radix $radix = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?RadixNotation $notation = null, public readonly ?Quoted\Notation $quotation = null)
     {
+        Check::input($radix === null || $quotation === null, 'Only quoted text has string quotation choices.');
+        $quotation?->validate($value);
         Check::input($radix !== null || $notation === null, 'Only radix values have a radix notation.');
         $this->notation = $radix === null ? null : ($notation ?? RadixNotation::canonical($radix, $value));
         Check::input($radix === null || $this->notation?->permits($radix, $value) === true, 'A radix notation accepts the literal digit count.');
@@ -50,7 +52,7 @@ final class Text implements Node
      */
     public function render(Output $out): void
     {
-        $out->spelled($this->radix !== null && $this->notation !== null ? $this->notation->spell($this->radix, $this->value) : $out->quote($this->value));
+        $out->spelled($this->radix !== null && $this->notation !== null ? $this->notation->spell($this->radix, $this->value) : ($this->quotation?->spell($this->value) ?? $out->quote($this->value)));
     }
 
     /**
