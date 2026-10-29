@@ -55,6 +55,15 @@ final class SpatialChecksTest extends TestCase
         self::assertSame($statement->problem->message(), $operation->diagnostics()[0]->message());
     }
 
+    public function testRepeatedKeepsTheFirstDuplicateRole(): void
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'));
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('d'));
+        self::assertNull((new SpatialChecks())->repeated([$name, $definition]));
+        self::assertSame($definition->kind, (new SpatialChecks())->repeated([$name, $definition, $definition, $name])?->attribute);
+        self::assertSame($name->kind, (new SpatialChecks())->declaration(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'), [$name, $name])?->attribute);
+    }
+
     public function testIdentifierChecksTheModifiableRange(): void
     {
         $checks = new SpatialChecks();

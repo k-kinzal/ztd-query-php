@@ -100,7 +100,7 @@ final class SpatialRule
      * Lowers the attribute list: a node of `srs_attributes`.
      *
      * @return list<SpatialAttribute>
-     * @throws \SqlSemantics\Construction\RejectedInput When an attribute is intrinsically invalid or repeated
+     * @throws \SqlSemantics\Construction\RejectedInput When an attribute literal is intrinsically invalid
      * @throws ImplementationGap When a production has no rule
      */
     public function attributes(Node $list): array
@@ -112,16 +112,11 @@ final class SpatialRule
             $form = $this->lowering->form($form->node(0));
         }
         $attributes = [];
-        $seen = [];
         foreach (array_reverse($forms) as $attributeForm) {
             $kind = self::ATTRIBUTES[$attributeForm->signature] ?? throw ImplementationGap::production($attributeForm);
             $value = $this->lowering->literals->text($attributeForm->node(2));
             $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->numeral($attributeForm->node(5)) : null;
-            if (isset($seen[$kind->value])) {
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::RepeatedAttribute, $kind), (new \SqlSemantics\Construction\SourceRanges())->span($attributeForm->node)[1] ?? 0);
-            }
-            $seen[$kind->value] = true;
-            $attributes[] = new SpatialAttribute($kind, $value, $identifier);
+            $attributes[] = $this->lowering->origins->record(new SpatialAttribute($kind, $value, $identifier), $attributeForm->node);
         }
 
         return $attributes;
@@ -136,11 +131,10 @@ final class SpatialRule
             return null;
         }
         try {
-            $this->attributes($node);
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks())->repeated($this->attributes($node));
+            return $problem === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
         }
-
-        return null;
     }
 }

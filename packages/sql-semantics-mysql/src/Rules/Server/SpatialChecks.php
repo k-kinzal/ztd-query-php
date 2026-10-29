@@ -48,7 +48,7 @@ final class SpatialChecks
      */
     public function declaration(Numeral $srid, array $attributes): ?SpatialProblem
     {
-        $identifier = $this->identifier($srid);
+        $identifier = $this->repeated($attributes) ?? $this->identifier($srid);
         if ($identifier !== null) {
             return $identifier;
         }
@@ -63,6 +63,23 @@ final class SpatialChecks
                     return $problems[0];
                 }
             }
+        }
+        return null;
+    }
+
+    /**
+     * Answers the first repeated role in written attribute order.
+     *
+     * @param list<SpatialAttribute> $attributes The complete written attributes
+     */
+    public function repeated(array $attributes): ?SpatialProblem
+    {
+        $seen = [];
+        foreach ($attributes as $attribute) {
+            if (isset($seen[$attribute->kind->value])) {
+                return new SpatialProblem(SpatialRule::RepeatedAttribute, $attribute->kind);
+            }
+            $seen[$attribute->kind->value] = true;
         }
         return null;
     }
@@ -118,6 +135,10 @@ final class SpatialChecks
     {
         $seen = [];
         foreach ($attributes as $attribute) {
+            $decoded = (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($attribute->value->value, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->client);
+            if (preg_match('/[\xF0-\xF4][\x80-\xBF]{3}/', $decoded) === 1) {
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion(new \SqlSemantics\Statement\Identifier\Name($decoded)), $attribute);
+            }
             if (str_contains($attribute->value->value, "\n")) {
                 $derivation->report(new SpatialProblem(SpatialRule::LineFeed, $attribute->kind, $attribute->value->value));
             }
@@ -125,7 +146,9 @@ final class SpatialChecks
                 (new Magnitudes())->integer($derivation, $attribute->identifier);
             }
             if (isset($seen[$attribute->kind->value])) {
-                $derivation->report(new SpatialProblem(SpatialRule::RepeatedAttribute, $attribute->kind));
+                $problem = new SpatialProblem(SpatialRule::RepeatedAttribute, $attribute->kind);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $attribute);
             }
             $seen[$attribute->kind->value] = true;
         }

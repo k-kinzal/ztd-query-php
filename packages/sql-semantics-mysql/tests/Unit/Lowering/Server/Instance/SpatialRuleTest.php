@@ -25,6 +25,18 @@ final class SpatialRuleTest extends TestCase
         self::assertSame("CREATE SPATIAL REFERENCE SYSTEM 7 DESCRIPTION 'x' DEFINITION 'd' NAME 'n'", (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("create spatial reference system 7 description 'x' definition 'd' name 'n'")->toString());
     }
 
+    public function testAttributesRetainsRepeatedRolesBeforeAnIdentifierCondition(): void
+    {
+        $sql = "CREATE SPATIAL REFERENCE SYSTEM 0 NAME 'a' NAME 'b' DEFINITION 'd'";
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference::class, $statement);
+        self::assertCount(3, $statement->attributes);
+        self::assertSame('b', $statement->attributes[1]->value->value);
+        self::assertSame($sql, $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
+        self::assertTrue($statement->warnings()[0]->aborts);
+    }
+
     public function testCompletedPreservesARepeatedAttributeBeforeALaterLineFeed(): void
     {
         $semantics = new Semantics(Dialect::MySql);

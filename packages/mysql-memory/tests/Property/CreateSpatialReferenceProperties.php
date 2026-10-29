@@ -53,6 +53,10 @@ final class CreateSpatialReferenceProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql' && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                yield $release->value => [$release];
+            }
+        }
     }
 }

@@ -19,16 +19,17 @@ use SqlSemantics\Rendering\Output;
  * The request retains attributes in written order, including requests missing a
  * mandatory attribute or using an unmodifiable identifier. Its immutable problem
  * records the first declaration constraint; execution must reject it before any
- * catalog change. Syntax invariants still require distinct attribute roles,
- * and mutually exclusive modifiers. Numeric refusals retain their operands. A request is not
+ * catalog change. Repeated attribute roles remain in written order. Syntax
+ * invariants still require mutually exclusive modifiers. Numeric refusals retain their operands. A request is not
  * a successfully declared spatial reference system.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  * Status: Implemented.
  *
  * @visibility public
- * @example Rejecting repeated attribute roles before deriving an operation
+ * @example Retaining repeated attribute roles as an execution condition
  *     $name = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('n'));
- *     new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference(false, false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('7'), [$name, $name]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $second = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('other'));
+ *     (new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference(false, false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('7'), [$name, $second]))->problem->rule // => \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::RepeatedAttribute
  * @example Defining a spatial reference system
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create or replace spatial reference system 4120 name 'Greek' organization 'EPSG' identified by 4120 definition 'GEOGCS[]'");
  *     [$create->toString(), $create->diagnostics()] // => ["CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4120 NAME 'Greek' ORGANIZATION 'EPSG' IDENTIFIED BY 4120 DEFINITION 'GEOGCS[]'", []]
@@ -52,7 +53,7 @@ final class CreateSpatialReference extends \SqlSemantics\Platform\MySql\Statemen
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      * @param Numeral $srid The spatial reference system identifier
      * @param list<SpatialAttribute> $attributes The attributes in written order
-     * @throws InvalidConstruction When modifiers conflict or an attribute is repeated
+     * @throws InvalidConstruction When modifiers conflict
      */
     public function __construct(public readonly bool $orReplace, public readonly bool $ifNotExists, public readonly Numeral $srid, array $attributes, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
@@ -61,7 +62,6 @@ final class CreateSpatialReference extends \SqlSemantics\Platform\MySql\Statemen
         }
         Check::input(!$orReplace || !$ifNotExists, 'OR REPLACE and IF NOT EXISTS exclude each other.');
         $this->attributes = Check::listOf($attributes, SpatialAttribute::class, 'CREATE SPATIAL REFERENCE SYSTEM takes a list of attributes.');
-        Check::input(count(array_unique(array_map(static fn (SpatialAttribute $attribute): string => $attribute->kind->value, $this->attributes))) === count($this->attributes), 'A spatial reference definition cannot repeat an attribute.');
         $this->problem = (new SpatialChecks())->declaration($srid, $this->attributes);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

@@ -25,21 +25,21 @@ final class CreateSpatialReferenceGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
+     * @throws InvalidArgumentException When the release has no spatial reference definitions.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
+        if ($release->database() !== 'mysql' || in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            throw new InvalidArgumentException('Spatial reference definitions require MySQL 8.0 or later.');
+        }
         if ($operands === null) {
-            $forms = [];
+            $forms = [self::requests()];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateSpatialReference forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference {
@@ -49,6 +49,27 @@ final class CreateSpatialReferenceGenerator implements ErisGenerator
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
     }
+    /**
+     * Composes arbitrary attribute order and repetitions with identifier limits.
+     *
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference>
+     */
+    public static function requests(): ErisGenerator
+    {
+        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::oneOf(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100000)), Generators::elements('2147483648', '4294967295', '4294967296')));
+        $attribute = Generators::bind(new SpatialAttributeKindGenerator(), static fn (\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind $kind): ErisGenerator => new SpatialAttributeGenerator(
+            Generators::constant($kind),
+            new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::elements('', 'name', 'text', '😀')),
+            $kind === \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization ? $numbers : Generators::constant(null)
+        ));
+        return Generators::bind(Generators::bool(), static fn (bool $replace): ErisGenerator => self::operands(
+            Generators::constant($replace),
+            $replace ? Generators::constant(false) : Generators::bool(),
+            $numbers,
+            Generators::bind(Generators::choose(0, 6), static fn (int $count): ErisGenerator => Generators::vector($count, $attribute))
+        ));
+    }
+
     /**
      * @param ErisGenerator<bool> $orReplace Generated constructor operand
      * @param ErisGenerator<bool> $ifNotExists Generated constructor operand
