@@ -70,6 +70,12 @@ php bin/seeds.php build --tag mysql-8.4.7
 php bin/seeds.php check --tag mysql-8.4.7
 ```
 
+`BytePlanCompiler` uses four little-endian budget bytes followed by alternating
+production and lexical choice bytes. Inputs of at most four bytes also supply
+production choices. This lets an empty-corpus fuzzer vary statement forms during
+its initial short mutations. Inputs with a separate choice body, including the
+grammar seeds, retain their original decoding.
+
 Each seed records choices for `BytePlanCompiler` under
 `GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty()`.
 The builder first visits every reachable alternative with a short terminating

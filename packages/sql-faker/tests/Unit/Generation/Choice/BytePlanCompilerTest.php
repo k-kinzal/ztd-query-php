@@ -153,6 +153,21 @@ final class BytePlanCompilerTest extends TestCase
         yield 'largest allowed budget' => [pack('V', 999998), GenerationPlan::all()->withExpansionBudget(1000000), 1000000];
     }
 
+    public function testCompileLetsSingleByteMutationsSelectDifferentProductions(): void
+    {
+        $grammar = new Grammar('root', ['root' => new ProductionRule('root', [new Production([new Terminal('T')]), new Production([new Terminal('U')])])]);
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('isNonOutput')->willReturn(false);
+        $domain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $pipeline = new ReverseLexemeGenerator(new ChoiceLexemeGenerator(new ValueLexemeGenerator('T', $domain, ['T'], 'fixture', 'fixture-literal'), new ValueLexemeGenerator('U', $domain, ['U'], 'fixture', 'fixture-literal')), new CandidateResolver(new CombinedSpacingRule()), 'fixture');
+        $lexical->method('resolveSequence')->willReturnCallback(static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $pipeline->generate($sequence, $plan, $choose));
+        $builder = new PlanBuilder($grammar, $lexical);
+        $compiler = new BytePlanCompiler();
+        self::assertEquals(ProductionPattern::at(0), $compiler->compile("\x00", $builder)->patternAt('root', 0));
+        self::assertEquals(ProductionPattern::at(1), $compiler->compile("\x01", $builder)->patternAt('root', 0));
+        self::assertEquals(ProductionPattern::at(0), $compiler->compile("\x01\x00\x00\x00\x00", $builder)->patternAt('root', 0));
+    }
+
     public function testCompileSeparatesProductionChoicesFromLexemesAndCompletesAnOddInput(): void
     {
         $grammar = new Grammar(
