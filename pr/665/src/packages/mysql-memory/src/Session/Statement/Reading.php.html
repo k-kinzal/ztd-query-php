@@ -72,15 +72,18 @@
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">RenameUser</span>) {</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            (<span class="tok-kw">new</span> <span class="tok-id">RenameUserCommand</span>())-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$session</span>, <span class="tok-var">$notices</span>);</span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        }</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\CreateRole</span>) {</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Command\Account\Role\CreateRoleCommand</span>())-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$session</span>, <span class="tok-var">$notices</span>);</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike</span>) {</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Command\Definition\CreateTableLikeCommand</span>())-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$session</span>);</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        }</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles</span>) {</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Command\Account\Role\GrantRolesCommand</span>())-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$session</span>, <span class="tok-var">$notices</span>);</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\CreateRole</span>) {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Command\Account\Role\CreateRoleCommand</span>())-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$session</span>, <span class="tok-var">$notices</span>);</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        }</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>}</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles</span>) {</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>            (<span class="tok-kw">new</span> <span class="tok-id">\MySqlMemory\Command\Account\Role\GrantRolesCommand</span>())-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$session</span>, <span class="tok-var">$notices</span>);</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        }</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>}</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
