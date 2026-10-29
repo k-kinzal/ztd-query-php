@@ -57,8 +57,8 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Finds declared type sizes that no supported release can interpret.</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * These are fixed operand constraints, independent of catalogs, row values or</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * execution. Ordinary statements exclude these sizes. Stored definitions keep</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * their typed operands and publish definition-time conditions even for dead branches.</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * execution. Statements keep their typed operands and publish these conditions;</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * stored definitions also check them in branches that never execute.</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * BIT(0) remains a legacy type: a release-specific refusal is not intrinsic.</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * @visibility SqlSemantics\Platform\MySql</span></span>
