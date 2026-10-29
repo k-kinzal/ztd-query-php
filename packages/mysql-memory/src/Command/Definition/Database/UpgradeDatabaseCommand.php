@@ -54,7 +54,11 @@ final class UpgradeDatabaseCommand implements Command
         assert($operation instanceof MySqlStatement);
         $statement = $operation;
         assert($statement instanceof UpgradeDatabaseName);
-        $source = $this->source($statement->name->identifier()->value, $session);
+        $condition = $statement->condition();
+        if ($condition !== null) {
+            throw (new \MySqlMemory\Session\Problem\Errors())->error($condition, $session);
+        }
+        $source = $this->source($statement->identifier()->value, $session);
         $session->transaction->commit();
         $this->move($source, $session, $context, $connection);
 

@@ -10,6 +10,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute;
@@ -160,6 +161,32 @@ final class PreparedCommandTest extends TestCase
         $this->expectExceptionMessage('Incorrect arguments to EXECUTE');
 
         (new PreparedCommand())->run(new Execute(new Name('s')), $session);
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerSourceVersions(): iterable
+    {
+        yield '5.6' => ['5.6.51', 1];
+        yield '5.7' => ['5.7.44', 0];
+        yield '8.4' => ['8.4.7', 0];
+    }
+
+    #[DataProvider('providerSourceVersions')]
+    public function testPrepareConvertsLiteralSqlButKeepsUserVariableText(string $version, int $warnings): void
+    {
+        $session = (new Instance($version, ['character_set_client' => 'utf8mb4', 'character_set_connection' => 'utf8mb4', 'character_set_results' => 'utf8mb4', 'collation_connection' => 'utf8mb4_unicode_ci']))->connect();
+        $prepared = $session->query("PREPARE s FROM 'SELECT ''🦄'' AS value'")[0];
+        self::assertInstanceOf(Completion::class, $prepared);
+        self::assertSame($warnings, $prepared->warnings);
+        $literal = $session->query('EXECUTE s')[0];
+        self::assertInstanceOf(ResultSet::class, $literal);
+        self::assertSame([['?']], $literal->rows);
+        $session->query("SET @q = 'SELECT ''🦄'' AS value'; PREPARE s FROM @q");
+        $variable = $session->query('EXECUTE s')[0];
+        self::assertInstanceOf(ResultSet::class, $variable);
+        self::assertSame([['🦄']], $variable->rows);
     }
 
     public function testRunRefusesAnUnknownStatement(): void

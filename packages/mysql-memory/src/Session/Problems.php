@@ -89,7 +89,7 @@ final class Problems
         $calls = $this->calls($operation);
         $diagnostics = $this->pending($operation, $session);
         $reading = new Problem\Reading();
-        $reading->read($operation, $session, $prepared);
+        $reading->read($operation, $session);
         $reading->into($statement, $session);
         $this->prepared($operation, $session);
         foreach ($calls as $call) {

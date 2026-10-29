@@ -50,7 +50,8 @@ final class Preparation
         }
         $this->protocol($operation);
         $this->program($operation, $session);
-        (new Reading())->read($operation, $session, true);
+        (new Reading())->read($operation, $session);
+        (new \MySqlMemory\Command\Show\Inspection())->check($operation, $session, true);
         (new DefaultDatabase())->check($operation, $session);
         $this->definitions($operation, $session);
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall) {
@@ -191,7 +192,7 @@ final class Preparation
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger) {
             (new \MySqlMemory\Command\Program\RoutineCommand())->types($statement, $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, microtime(true)));
         }
-        (new Reading())->read($operation, $session, true);
+        (new Reading())->read($operation, $session);
         foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($programs->parsed($diagnostic, false)) {
                 throw (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session, 'field list', $statement);

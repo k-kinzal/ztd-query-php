@@ -93,6 +93,18 @@ final class StatusVariablesTest extends TestCase
         self::assertSame(['2', '2', '2', '2', '1'], [$values['Com_show_replicas'], $values['Com_show_slave_hosts'], $values['Com_show_replica_status'], $values['Com_show_slave_status'], $values['Com_show_master_status']]);
     }
 
+    public function testCounterSharesReplicationChangesAcrossLegacyAndModernNames(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->run('START SLAVE');
+        $session->run('STOP REPLICA');
+        $session->run("CHANGE MASTER TO MASTER_HOST='example.invalid'");
+        $catalog = StatusVariables::of(GrammarRelease::MySql8044);
+        $values = array_column($catalog->values($session->instance, false, false, 1, false, $session->id), 1, 0);
+
+        self::assertSame(['1', '1', '1', '1', '1', '1'], [$values['Com_replica_start'], $values['Com_slave_start'], $values['Com_replica_stop'], $values['Com_slave_stop'], $values['Com_change_master'], $values['Com_change_replication_source']]);
+    }
+
     public function testConnectionsSeparatesCurrentPeakAndTotalAndLocalizesThePeakTime(): void
     {
         $instance = new Instance(globals: ['event_scheduler' => 'OFF']);

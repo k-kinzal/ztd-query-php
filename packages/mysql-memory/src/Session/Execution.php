@@ -116,6 +116,10 @@ final class Execution
         $late = $operation instanceof MySqlStatement ? $this->reading($operation, $read) : [];
         (new Statement\Reading())->read($operation, $session, $read && !$session->replayed);
         State\StatementCounters::evaluated($node, $session);
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill) {
+            (new \MySqlMemory\Command\Admin\KillCommand())->process($node, $session);
+        }
+        (new \MySqlMemory\Command\Show\Inspection())->check($node, $session);
         (new Access\StatementAccess())->check($node, $session, $context);
         if ($operation instanceof MySqlStatement) {
             (new Access\DefaultDatabase())->referenced($operation, $session);

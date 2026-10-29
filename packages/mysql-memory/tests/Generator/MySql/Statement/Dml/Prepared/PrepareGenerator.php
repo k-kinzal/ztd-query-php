@@ -48,7 +48,7 @@ final class PrepareGenerator implements ErisGenerator
                 quote: Generators::constant(null)
             ),
             source: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                value: Generators::constant('text'),
+                value: Generators::elements(['text', "SELECT '🦄' AS value", "SELECT 'é' AS value", 'SELECT 1 AS `🦄`']),
                 radix: Generators::constant(null)
             )
         );

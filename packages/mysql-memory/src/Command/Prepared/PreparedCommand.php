@@ -72,6 +72,8 @@ final class PreparedCommand implements Command
 
     /**
      * Reads and retains the definition named by SQL PREPARE.
+     * Inner statement retention applies to older conditions; warnings raised by
+     * the source literal belong to this PREPARE request and remain visible.
      *
      * @throws \MySqlMemory\Error\SqlError When preparation refuses the statement
      */
@@ -81,7 +83,7 @@ final class PreparedCommand implements Command
         $key = strtolower($statement->name->value);
         unset($session->preparation->named[$key]);
         if ($statement->source instanceof Text) {
-            $text = $statement->source->value;
+            $text = \MySqlMemory\Value\Encoding::convert($statement->source->value, $session->settings()->resolution()->client ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb3'));
         } else {
             [$value, $domain] = $session->variables->user($statement->source->name->value);
             $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
@@ -100,7 +102,9 @@ final class PreparedCommand implements Command
                 throw StatementError::UnsupportedPreparedStatement->error();
             }
             $node = $prepared;
-            (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
+            if ($session->diagnostics->stale || $session->diagnostics->raised() === 0) {
+                (new \MySqlMemory\Session\Execution($session))->area($prepared, (new \MySqlMemory\Command\Dispatcher())->command($node));
+            }
             (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
             $bindings = ParameterBindings::capture($prepared);
             $cache = PreparedCache::capture($prepared, $session);

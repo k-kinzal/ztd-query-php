@@ -20,16 +20,19 @@ final class DatabaseRuleTest extends TestCase
         self::assertSame('DROP DATABASE d', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('drop database d')->toString());
     }
 
-    public function testUpgradeRetainsTheDirectoryRoleAndRejectsOrdinaryNames(): void
+    public function testUpgradeRetainsTheDirectoryRoleAndOrdinaryNames(): void
     {
         $semantics = new Semantics(Dialect::MySql, '5.7.44');
         $statement = $semantics->analyze('ALTER DATABASE `#mysql50#old-name` UPGRADE DATA DIRECTORY NAME');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName::class, $statement->name);
         self::assertSame('old-name', $statement->name->suffix->value);
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage('Incorrect usage of ALTER DATABASE UPGRADE DATA DIRECTORY NAME and name');
-        $semantics->analyze('ALTER DATABASE ordinary UPGRADE DATA DIRECTORY NAME');
+        $ordinary = $semantics->analyze('ALTER DATABASE ordinary UPGRADE DATA DIRECTORY NAME');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName::class, $ordinary);
+        self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $ordinary->name);
+        self::assertSame('ordinary', $ordinary->name->value);
+        self::assertSame('Incorrect usage of ALTER DATABASE UPGRADE DATA DIRECTORY NAME and name', $ordinary->condition()?->message());
     }
 
     public function testOptionsLowersTheList(): void

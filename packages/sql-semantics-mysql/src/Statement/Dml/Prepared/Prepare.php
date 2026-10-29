@@ -19,7 +19,10 @@ use SqlSemantics\Statement\Identifier\Name;
  * Rule: MYSQL-PREPARE-001. The text is SQL the server parses when it runs
  * PREPARE; it is kept as the string it is, because the request is to
  * prepare that text, and a text held by a user variable is a session
- * value. A user variable is derived as a session value. The statement
+ * value. Literal source text is converted to the system character set before
+ * its SQL is parsed; the retained operand still renders the original bytes.
+ * MySQL 5.6 reports lossy conversion of the complete source string.
+ * A user variable is derived as a session value. The statement
  * returns no rows. Terminates: no nested statement is lowered. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/prepare.html. Status: Implemented.
  *
@@ -52,6 +55,11 @@ final class Prepare extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
     {
         if ($this->source instanceof UserVariable) {
             $derivation->scalar($this->source, $derivation->environment());
+        } elseif ($derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $decoded = (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($this->source->value, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->client);
+            if (preg_match('/[\\xF0-\\xF4][\\x80-\\xBF]{3}/', $decoded) === 1) {
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\NameConversion(new Name($decoded), true), $this->source);
+            }
         }
     }
 

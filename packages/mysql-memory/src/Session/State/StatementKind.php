@@ -11,7 +11,10 @@ use SqlSemantics\Platform\MySql\Statement as MySql;
  *
  * INSERT SELECT and multi-table writes have distinct counters; EXPLAIN counts the command it
  * explains. SHOW COUNT(*) WARNINGS and ERRORS count as SELECT. These distinctions are observable
- * through SHOW SESSION STATUS, independently of an execution's success.
+ * through SHOW SESSION STATUS, independently of an execution's success. All tablespace and
+ * logfile-group commands share Com_alter_tablespace. Legacy SET PASSWORD counts as
+ * Com_set_option; modern releases expose Com_set_password. Replication aliases use one
+ * canonical event name, translated by the status catalog of each release.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html.
  *
  * @visibility MySqlMemory
@@ -22,6 +25,53 @@ final class StatementKind
      * @var array<class-string<\SqlSemantics\Statement\Node>, string>
      */
     public const KINDS = [
+        MySql\Account\AlterRegistration::class => 'Com_alter_user',
+        MySql\Account\ResourceGroup\AlterResourceGroup::class => 'Com_alter_resource_group',
+        MySql\Account\ResourceGroup\CreateResourceGroup::class => 'Com_create_resource_group',
+        MySql\Account\ResourceGroup\DropResourceGroup::class => 'Com_drop_resource_group',
+        MySql\Account\ResourceGroup\SetResourceGroup::class => 'Com_set_resource_group',
+        MySql\Dml\ImportTable::class => 'Com_import',
+        MySql\Dml\Load\LoadTable::class => 'Com_load',
+        MySql\EmptyStatement::class => 'Com_empty_query',
+        MySql\Replication\Filter\ChangeReplicationFilter::class => 'Com_change_repl_filter',
+        MySql\Replication\Group\StartGroupReplication::class => 'Com_group_replication_start',
+        MySql\Replication\Group\StopGroupReplication::class => 'Com_group_replication_stop',
+        MySql\Replication\Log\BinlogEvent::class => 'Com_binlog',
+        MySql\Replication\Log\PurgeLogsBefore::class => 'Com_purge_before_date',
+        MySql\Replication\Log\PurgeLogsTo::class => 'Com_purge',
+        MySql\Replication\Replica\StartReplica::class => 'Com_replica_start',
+        MySql\Replication\Replica\StopReplica::class => 'Com_replica_stop',
+        MySql\Replication\Source\ChangeReplicationSource::class => 'Com_change_replication_source',
+        MySql\Routine\CreateLoadableFunction::class => 'Com_create_udf',
+        MySql\Server\Database\UpgradeDatabaseName::class => 'Com_alter_db_upgrade',
+        MySql\Server\Instance\AlterInstance::class => 'Com_alter_instance',
+        MySql\Server\Instance\CloneInstance::class => 'Com_clone',
+        MySql\Server\Instance\CloneLocal::class => 'Com_clone',
+        MySql\Server\Instance\Kill::class => 'Com_kill',
+        MySql\Server\Instance\Restart::class => 'Com_restart',
+        MySql\Server\Instance\Shutdown::class => 'Com_shutdown',
+        MySql\Server\Lock\LockInstance::class => 'Com_lock_instance',
+        MySql\Server\Lock\UnlockInstance::class => 'Com_unlock_instance',
+        MySql\Server\Plugin\InstallComponent::class => 'Com_install_component',
+        MySql\Server\Plugin\InstallPlugin::class => 'Com_install_plugin',
+        MySql\Server\Plugin\UninstallComponent::class => 'Com_uninstall_component',
+        MySql\Server\Plugin\UninstallPlugin::class => 'Com_uninstall_plugin',
+        MySql\Server\Spatial\CreateSpatialReference::class => 'Com_create_spatial_reference_system',
+        MySql\Server\Spatial\DropSpatialReference::class => 'Com_drop_spatial_reference_system',
+        MySql\Utility\Show\Server\ShowEngineLogs::class => 'Com_show_engine_logs',
+        MySql\Utility\Show\ShowParseTree::class => 'Com_show_parse_tree',
+        MySql\Server\Storage\AlterLogfileGroup::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\AlterTablespace::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\AlterTablespaceAccess::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\AlterTablespaceDatafile::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\AlterUndoTablespace::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\CreateLogfileGroup::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\CreateTablespace::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\CreateUndoTablespace::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\DropLogfileGroup::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\DropTablespace::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\DropUndoTablespace::class => 'Com_alter_tablespace',
+        MySql\Server\Storage\RenameTablespace::class => 'Com_alter_tablespace',
         MySql\Dml\Delete::class => 'Com_delete',
         MySql\Dml\MultipleDelete::class => 'Com_delete_multi',
         MySql\Dml\Evaluation::class => 'Com_do',
@@ -172,6 +222,9 @@ final class StatementKind
         }
         if ($statement instanceof MySql\Routine\AlterRoutine) {
             return 'Com_alter_' . strtolower($statement->kind->value);
+        }
+        if ($statement instanceof MySql\Account\SetPassword) {
+            return in_array($statement->profile()->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? 'Com_set_option' : 'Com_set_password';
         }
         if ($statement instanceof MySql\QueryRoot) {
             return 'Com_select';

@@ -43,6 +43,36 @@ final class StatementKindTest extends TestCase
         yield 'alter default role' => ['ALTER USER a DEFAULT ROLE NONE', 'Com_alter_user_default_role'];
         yield 'reset' => ['RESET BINARY LOGS AND GTIDS', 'Com_reset'];
         yield 'diagnostics' => ['GET DIAGNOSTICS @a=NUMBER', 'Com_get_diagnostics'];
+        yield 'logfile group creation' => ["CREATE LOGFILE GROUP g ADD UNDOFILE 'f'", 'Com_alter_tablespace'];
+        yield 'logfile group alteration' => ["ALTER LOGFILE GROUP g ADD UNDOFILE 'f'", 'Com_alter_tablespace'];
+        yield 'logfile group removal' => ['DROP LOGFILE GROUP g', 'Com_alter_tablespace'];
+        yield 'tablespace creation' => ["CREATE TABLESPACE s ADD DATAFILE 'f'", 'Com_alter_tablespace'];
+        yield 'tablespace alteration' => ["ALTER TABLESPACE s ADD DATAFILE 'f'", 'Com_alter_tablespace'];
+        yield 'tablespace removal' => ['DROP TABLESPACE s', 'Com_alter_tablespace'];
+        yield 'loadable function' => ["CREATE FUNCTION f RETURNS INTEGER SONAME 'f.so'", 'Com_create_udf'];
+        yield 'empty request' => ['/* empty */', 'Com_empty_query'];
+        yield 'binary log event' => ["BINLOG ''", 'Com_binlog'];
+        yield 'purge to filename' => ["PURGE BINARY LOGS TO 'log'", 'Com_purge'];
+        yield 'purge by time' => ["PURGE BINARY LOGS BEFORE '2000-01-01'", 'Com_purge_before_date'];
+        yield 'clone local' => ["CLONE LOCAL DATA DIRECTORY = '/data'", 'Com_clone'];
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerPasswordVersions(): iterable
+    {
+        yield '5.6' => ['5.6.51', 'Com_set_option'];
+        yield '5.7' => ['5.7.44', 'Com_set_option'];
+        yield '8.0' => ['8.0.44', 'Com_set_password'];
+        yield '8.4' => ['8.4.7', 'Com_set_password'];
+    }
+
+    #[DataProvider('providerPasswordVersions')]
+    public function testOfSelectsThePasswordCounterOfTheStatementRelease(string $version, string $counter): void
+    {
+        $statement = (new Instance($version))->connect()->analyze("SET PASSWORD FOR absent = 'x'");
+        self::assertSame($counter, StatementKind::of($statement));
     }
 
     #[DataProvider('providerStatements')]

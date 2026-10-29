@@ -47,7 +47,7 @@ final class Reading
      *
      * @throws SqlError When the operation has such a problem
      */
-    public function read(MySqlStatement|QueryPreparation $operation, Session $session, bool $prepared = false): void
+    public function read(MySqlStatement|QueryPreparation $operation, Session $session): void
     {
         $statement = $operation instanceof QueryPreparation ? $operation->statement : $operation;
         $information = $operation instanceof QueryPreparation ? $operation->facts : $operation->statementInformation();
@@ -81,7 +81,6 @@ final class Reading
         if ($operation instanceof MySqlStatement && (($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns || ($statement) instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys)) {
             (new \MySqlMemory\Session\Access\DefaultDatabase())->referenced($operation, $session);
         }
-        (new \MySqlMemory\Command\Show\Inspection())->check($statement, $session, $prepared);
         (new \MySqlMemory\Command\Explain\ExplainCommand())->check($statement, $session);
     }
 

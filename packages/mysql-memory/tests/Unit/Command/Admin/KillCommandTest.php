@@ -18,6 +18,33 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class KillCommandTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDependencies(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7'] as $version) {
+            foreach (['KILL (SELECT 0 FROM absent)', 'KILL absent_function()'] as $sql) {
+                yield $version . ' ' . $sql => [$version, $sql];
+            }
+        }
+    }
+
+    #[DataProvider('providerDependencies')]
+    public function testPrepareDefersTableAndRoutineDependenciesUntilExecute(string $version, string $sql): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $reply = $session->query("PREPARE s FROM '" . $sql . "'")[0];
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $session->instance->registry->status->read('Com_kill', $session->id));
+        $replies = $session->run('EXECUTE s');
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame(1235, $replies[0]->getCode());
+        self::assertSame([['Error', 1235, "This version of MySQL doesn't yet support 'Usage of subqueries or stored function calls as part of this statement'"]], $session->diagnostics->conditions);
+        self::assertSame(1, $session->instance->registry->status->read('Com_kill', $session->id));
+    }
+
     public function testPrepareRetainsTheRowFailureUntilExecute(): void
     {
         $session = (new Instance())->connect();

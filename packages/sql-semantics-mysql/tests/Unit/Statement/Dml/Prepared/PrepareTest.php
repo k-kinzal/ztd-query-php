@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Dml\Prepared;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -24,6 +25,25 @@ final class PrepareTest extends TestCase
         self::assertInstanceOf(UserVariable::class, $operation->source);
 
         self::assertInstanceOf(Dependent::class, $operation->source->scalarInformation()->type);
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerSourceConversions(): iterable
+    {
+        yield '5.6' => ['5.6.51', 1];
+        yield '5.7' => ['5.7.44', 0];
+        yield '8.4' => ['8.4.7', 0];
+    }
+
+    #[DataProvider('providerSourceConversions')]
+    public function testDeriveStatementRetainsLiteralBytesAndVersionedSourceConversion(string $version, int $warnings): void
+    {
+        $sql = "PREPARE s FROM 'SELECT ''🦄'' AS value'";
+        $statement = (new Semantics(Dialect::MySql, $version))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertCount($warnings, $statement->warnings());
     }
 
     public function testRenderWritesTheSource(): void

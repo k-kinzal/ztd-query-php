@@ -84,6 +84,34 @@ final class UpgradeDatabaseCommandTest extends TestCase
         $this->expectExceptionMessage($message);
         (new UpgradeDatabaseCommand())->source($name, $session);
     }
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerPreparedNames(): iterable
+    {
+        foreach (['5.6.51', '5.7.44'] as $version) {
+            foreach ([['ordinary', 1221], ['#mysql50#', 1102], ['#mysql50#a/b', 1102], ['#mysql50#a.b', 1102], ['#mysql50#' . str_repeat('a', 65), 1059]] as [$name, $code]) {
+                yield $version . ' ' . $name => [$version, $name, $code];
+            }
+        }
+    }
+
+    #[DataProvider('providerPreparedNames')]
+    public function testExecuteDefersNameConditionsUntilPreparedExecution(string $version, string $name, int $code): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("PREPARE s FROM 'ALTER DATABASE `" . $name . "` UPGRADE DATA DIRECTORY NAME'");
+        self::assertSame(0, $session->instance->registry->status->read('Com_alter_db_upgrade', $session->id));
+        try {
+            $session->query('EXECUTE s');
+            self::fail('The retained directory condition must fail during execution.');
+        } catch (SqlError $error) {
+            self::assertSame($code, $error->getCode());
+        }
+        self::assertSame(1, $session->instance->registry->status->read('Com_alter_db_upgrade', $session->id));
+        $session->query('DEALLOCATE PREPARE s');
+    }
+
     public function testSourceFindsTheLegacySchema(): void
     {
         $session = (new Instance('5.7.44'))->connect();

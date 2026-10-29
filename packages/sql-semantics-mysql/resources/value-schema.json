@@ -3738,7 +3738,7 @@
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "databaseWord": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\DatabaseWord",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
-        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\LegacyDatabaseName"
+        "name": "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Database\\LegacyDatabaseName|SqlSemantics\\Statement\\Identifier\\Name"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Flush\\Flush": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",

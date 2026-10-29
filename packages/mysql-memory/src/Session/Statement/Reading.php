@@ -26,9 +26,6 @@ final class Reading
      */
     public function read(AnalyzedStatement $statement, Session $session, bool $notices = true): void
     {
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill) {
-            (new \MySqlMemory\Command\Admin\KillCommand())->process($statement, $session);
-        }
         if ($statement instanceof TransactionStatement && $notices) {
             (new TransactionNotices())->read($statement, $session);
         }

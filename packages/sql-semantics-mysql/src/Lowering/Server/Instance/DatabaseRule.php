@@ -86,21 +86,17 @@ final class DatabaseRule
     }
 
     /**
-     * Separates the legacy directory marker from its decoded name component.
-     *
-     * @throws \SqlSemantics\Construction\RejectedInput When the name has no legacy directory interpretation
+     * Separates a valid legacy directory role and retains other requested names for execution.
      */
     public function upgrade(Form $form): UpgradeDatabaseName
     {
         $name = $this->lowering->names->decoded($form->node(2));
         $suffix = substr($name->value, 9);
-        if (!str_starts_with($name->value, '#mysql50#') || !\SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName::valid($suffix)) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName($name), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
-        }
+        $target = str_starts_with($name->value, '#mysql50#') && \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName::valid($suffix)
+            ? $this->lowering->leaves->record($this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name($suffix)), $form->node(2)))
+            : $name;
 
-        $legacy = $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name($suffix)), $form->node(2));
-
-        return new UpgradeDatabaseName($this->lowering->leaves->record($legacy), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)));
+        return new UpgradeDatabaseName($target, databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)));
     }
 
     /**

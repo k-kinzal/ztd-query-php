@@ -108,6 +108,9 @@ final class StatusVariables
     public function counter(string $name): string
     {
         return match ($name) {
+            'Com_change_master' => 'Com_change_replication_source',
+            'Com_slave_start' => 'Com_replica_start',
+            'Com_slave_stop' => 'Com_replica_stop',
             'Com_show_slave_hosts' => 'Com_show_replicas',
             'Com_show_slave_status' => 'Com_show_replica_status',
             'Com_show_master_status' => 'Com_show_binary_log_status',

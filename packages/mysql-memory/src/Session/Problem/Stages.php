@@ -198,7 +198,6 @@ final class Stages
     {
         return $diagnostic instanceof UndeclaredVariable
             || ($diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::RecursiveReferencePosition)
-            || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::DEPENDENCIES)
             || ($diagnostic instanceof Misuse && ($diagnostic->rule === MisuseRule::UnknownLockedTable || $diagnostic->rule === MisuseRule::RepeatedLockedTable));
     }
 

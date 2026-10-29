@@ -23,6 +23,39 @@ final class UpgradeDatabaseNameTest extends TestCase
         self::assertSame('ALTER DATABASE `#mysql50#x` UPGRADE DATA DIRECTORY NAME', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter database `#mysql50#x` upgrade data directory name')->toString());
     }
 
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerRetainedNames(): iterable
+    {
+        yield 'ordinary' => ['ordinary'];
+        yield 'empty suffix' => ['#mysql50#'];
+        yield 'separator' => ['#mysql50#a/b'];
+        yield 'period' => ['#mysql50#a.b'];
+        yield 'long suffix' => ['#mysql50#' . str_repeat('a', 65)];
+    }
+
+    #[DataProvider('providerRetainedNames')]
+    public function testConditionKeepsExecutionRefusalsInAReconstructableStatement(string $name): void
+    {
+        $sql = 'ALTER DATABASE `' . $name . '` UPGRADE DATA DIRECTORY NAME';
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze($sql);
+        self::assertInstanceOf(UpgradeDatabaseName::class, $statement);
+        self::assertSame($sql, $statement->toString());
+        self::assertNotNull($statement->condition());
+        self::assertSame($name, $statement->condition()->name->value);
+        self::assertSame([], $statement->diagnostics());
+    }
+
+    public function testIdentifierConvertsRawNamesWithoutChangingTheOperand(): void
+    {
+        $statement = new UpgradeDatabaseName(new \SqlSemantics\Statement\Identifier\Name('#mysql50#🦄', \SqlSemantics\Statement\Identifier\NameQuote::Backtick));
+        self::assertSame('#mysql50#?', $statement->identifier()->value);
+        self::assertNull($statement->condition());
+        self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $statement->name);
+        self::assertSame('#mysql50#🦄', $statement->name->value);
+    }
+
     public function testDeriveStatementHasNoRelationalFacts(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER DATABASE `#mysql50#d` UPGRADE DATA DIRECTORY NAME');

@@ -101,6 +101,11 @@ final class KillCommand implements Command
      */
     public function process(Kill $statement, Session $session): \SqlSemantics\Statement\Scalar
     {
+        foreach ($statement->statementInformation()->diagnostics as $problem) {
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet && $problem->feature === Kill::DEPENDENCIES) {
+                throw (new \MySqlMemory\Session\Problem\Errors())->error($problem, $session);
+            }
+        }
         if (!$statement->process instanceof \SqlSemantics\Statement\Scalar) {
             throw (new \MySqlMemory\Program\Expression\KillUse())->error($statement->process, $session);
         }

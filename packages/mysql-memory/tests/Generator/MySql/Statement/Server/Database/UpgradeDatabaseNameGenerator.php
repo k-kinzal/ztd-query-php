@@ -19,7 +19,7 @@ final class UpgradeDatabaseNameGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName> $name Generated constructor operand
+     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName|\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord>|null $databaseWord Generated database keyword
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
@@ -42,6 +42,14 @@ final class UpgradeDatabaseNameGenerator implements ErisGenerator
      */
     public static function additionalForms(): iterable
     {
+        foreach ([\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744] as $release) {
+            yield 'UpgradeDatabaseName/retained-name/' . $release->value => [$release, new self(
+                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                    value: Generators::elements(['ordinary', '#mysql50#', '#mysql50#a/b', '#mysql50#a.b', '#mysql50#' . str_repeat('a', 65), '🦄']),
+                    quote: Generators::constant(\SqlSemantics\Statement\Identifier\NameQuote::Backtick)
+                )
+            )];
+        }
         yield 'UpgradeDatabaseName/additional/57' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, new UpgradeDatabaseNameGenerator(
             name: new LegacyDatabaseNameGenerator(
                 suffix: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(

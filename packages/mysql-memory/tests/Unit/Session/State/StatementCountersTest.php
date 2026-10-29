@@ -8,6 +8,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\State\StatementCounters;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -45,6 +46,52 @@ final class StatementCountersTest extends TestCase
 
         self::assertSame(1, $session->instance->registry->status->read('Com_select', $session->id));
         self::assertSame(0, $session->instance->registry->status->read('Com_set_option', $session->id));
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, int}>
+     */
+    public static function providerFailedCommands(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7'] as $version) {
+            foreach ([
+                ['KILL 0', 'Com_kill', 1],
+                ['KILL ROW(1,2)', 'Com_kill', 1],
+                ['KILL unknown_column', 'Com_kill', 1],
+                ['KILL ABS()', 'Com_kill', 0],
+                ['KILL (SELECT 0 FROM absent)', 'Com_kill', 1],
+                ['KILL absent_function()', 'Com_kill', 1],
+                ['ALTER DATABASE ordinary UPGRADE DATA DIRECTORY NAME', 'Com_alter_db_upgrade', str_starts_with($version, '5.') ? 1 : 0],
+                ['SHOW COLUMNS FROM absent', 'Com_show_fields', 1],
+                ['DESCRIBE absent', 'Com_show_fields', 1],
+                ['SHOW KEYS FROM absent', 'Com_show_keys', 1],
+                ['SHOW TABLES FROM absent', 'Com_show_tables', 1],
+                ['SHOW TABLE STATUS FROM absent', 'Com_show_table_status', 1],
+                ['SHOW CREATE TABLE absent', 'Com_show_create_table', 1],
+            ] as [$sql, $counter, $count]) {
+                yield $version . ' ' . $sql => [$version, $sql, $counter, $count];
+            }
+        }
+    }
+
+    #[DataProvider('providerFailedCommands')]
+    public function testEvaluatedCountsCommandsBeforeExecutionOperandAndTableFailures(string $version, string $sql, string $counter, int $count): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->run($sql);
+
+        self::assertSame($count, $session->instance->registry->status->read($counter, $session->id));
+        self::assertSame(1, $session->instance->registry->status->read('Questions', $session->id));
+    }
+
+    public function testEvaluatedDoesNotCountTheCommandRejectedDuringPrepare(): void
+    {
+        $session = (new Instance(databases: ['test']))->connect(database: 'test');
+        $session->run("PREPARE s FROM 'SHOW COLUMNS FROM absent'");
+
+        self::assertSame(1, $session->instance->registry->status->read('Com_prepare_sql', $session->id));
+        self::assertSame(0, $session->instance->registry->status->read('Com_show_fields', $session->id));
+        self::assertSame([['Error', 1146, "Table 'test.absent' doesn't exist"]], $session->diagnostics->conditions);
     }
 
     public function testCommandRetainsGlobalCountsAcrossFlushDisconnectAndReset(): void
