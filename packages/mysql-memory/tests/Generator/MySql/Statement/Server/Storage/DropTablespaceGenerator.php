@@ -25,21 +25,25 @@ final class DropTablespaceGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
+     * @throws InvalidArgumentException When the release belongs to another database.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
+        if ($release->database() !== 'mysql') {
+            throw new InvalidArgumentException('Storage statements require a MySQL grammar release.');
+        }
         if ($operands === null) {
-            $forms = [];
+            $forms = [self::operands(
+                new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
+                Generators::bind(Generators::choose(0, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new Option\WaitOptionGenerator(Generators::bool()))),
+                leadingComma: in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? Generators::bool() : Generators::constant(false)
+            )];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No DropTablespace forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace {
@@ -55,12 +59,13 @@ final class DropTablespaceGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @param ErisGenerator<list<bool>>|null $optionsCommas Generated list boundaries
+     * @param ErisGenerator<bool>|null $leadingComma The optional comma before the first option
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace>
      */
-    public static function operands(ErisGenerator $name, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null): ErisGenerator
+    public static function operands(ErisGenerator $name, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null, ?ErisGenerator $leadingComma = null): ErisGenerator
     {
-        return Generators::bind(Generators::tuple($name, $options ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)), static function (array $parts) use ($optionsCommas): ErisGenerator {
-            return Generators::map(static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $commas), $optionsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool()));
+        return Generators::bind(Generators::tuple($name, $options ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)), static function (array $parts) use ($optionsCommas, $leadingComma): ErisGenerator {
+            return Generators::map(static fn (array $boundaries): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $boundaries[0], leadingComma: $parts[1] !== [] && $boundaries[1]), Generators::tuple($optionsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool()), $leadingComma ?? Generators::constant(false)));
         });
     }
     /**

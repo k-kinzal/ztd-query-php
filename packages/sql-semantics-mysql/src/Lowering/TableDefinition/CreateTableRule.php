@@ -95,7 +95,7 @@ final class CreateTableRule
                 $exists,
                 optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(2), ['create_table_option']),
             ),
-            'create2a: opt_create_partitioning create_select ) union_opt' => $this->partitioned($name, $changes->partitioning($form->node(0)), new TableQuery($this->lowering->queries->legacyParenthesizedQuery($form->node(1), $form->node(3))), $temporary, $exists),
+            'create2a: opt_create_partitioning create_select ) union_opt' => $this->partitioned($name, $changes->partitioning($form->node(0)), new TableQuery($this->lowering->queries->legacyParenthesizedQuery($form->node(1), $form->node(3)), as: false), $temporary, $exists),
             default => throw ImplementationGap::production($form),
         };
     }

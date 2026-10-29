@@ -1306,6 +1306,7 @@
         "assignments": "array",
         "bulk": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\BulkOptions",
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "charsetForm": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
         "columns": "?array",
         "compression": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Text",
         "duplicates": "?SqlSemantics\\Platform\\MySql\\Statement\\Dml\\DuplicateHandling",
@@ -1322,6 +1323,7 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Dml\\Load\\TextFileFormat": {
         "charset": "?SqlSemantics\\Platform\\MySql\\Statement\\Name\\CharsetName",
+        "charsetForm": "SqlSemantics\\Platform\\MySql\\Statement\\Type\\Kind\\CharsetForm",
         "fields": "array",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "lines": "array"
@@ -4169,6 +4171,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropLogfileGroup": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "leadingComma": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "options": "array",
         "optionsCommas": "array"
@@ -4176,6 +4179,7 @@
     "SqlSemantics\\Platform\\MySql\\Statement\\Server\\Storage\\DropTablespace": {
         "SqlSemantics\\Platform\\MySql\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Platform\\MySql\\Statement\\StatementSemantics",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "leadingComma": "bool",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "options": "array",
         "optionsCommas": "array"

@@ -29,7 +29,7 @@ final class LoadRendering
         }
         $out->keyword('INTO', 'TABLE')->node($load->table);
         if ($load->charset !== null) {
-            $out->keyword('CHARSET')->node($load->charset);
+            $out->keyword(...explode(' ', $load->charsetForm->value))->node($load->charset);
         }
         if ($load->compression !== null) {
             $out->keyword('COMPRESSION')->symbol('=')->node($load->compression);

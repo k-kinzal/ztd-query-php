@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\TableDefinition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\ParameterStyle;
@@ -51,6 +52,32 @@ final class CreateTableRuleTest extends TestCase
 
         self::assertNotNull($create->query);
         self::assertSame(2, $create->temporaryWords);
+    }
+
+    #[DataProvider('providerQueryIntroducers')]
+    public function testEnclosedRetainsTheWrittenQueryIntroducer(string $version, string $sql, bool $as): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-' . $version))->analyze($sql);
+        self::assertInstanceOf(CreateTable::class, $statement);
+        self::assertSame($as, $statement->query?->as);
+        self::assertSame($sql, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string, bool}>
+     */
+    public static function providerQueryIntroducers(): iterable
+    {
+        foreach (['5.6.51', '5.7.44'] as $version) {
+            foreach ([
+                ['CREATE TABLE t (SELECT 1 AS a)', false],
+                ['CREATE TABLE t AS (SELECT 1 AS a)', true],
+                ['CREATE TABLE t (SELECT 1 AS a) UNION ALL SELECT 2', false],
+                ['CREATE TABLE t (a INT) (SELECT 1 AS a)', false],
+            ] as $index => [$sql, $as]) {
+                yield $version . ' ' . $index => [$version, $sql, $as];
+            }
+        }
     }
 
     public function testTemporaryCountsTheTemporaryWords(): void

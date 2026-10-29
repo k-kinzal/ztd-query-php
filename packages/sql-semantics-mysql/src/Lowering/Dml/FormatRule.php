@@ -67,6 +67,15 @@ final class FormatRule
     }
 
     /**
+     * Retains the written character-set introducer independently of the name.
+     */
+    public function charsetForm(Node $charset): \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm
+    {
+        $form = $this->lowering->form($charset);
+        return $form->signature === 'opt_load_data_charset:' ? \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named : (new \SqlSemantics\Platform\MySql\Lowering\Type\TypePartRule($this->lowering))->named($form->node(0));
+    }
+
+    /**
      * Lowers the FIELDS clause: a node of `opt_field_term`; an absent clause is empty.
      *
      * @return list<FieldOption>

@@ -25,21 +25,21 @@ final class CreateServerGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
+     * @throws InvalidArgumentException When the release belongs to another database.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
+        if ($release->database() !== 'mysql') {
+            throw new InvalidArgumentException('Foreign servers require a MySQL grammar release.');
+        }
         if ($operands === null) {
-            $forms = [];
+            $forms = [self::requests()];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateServer forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer {
@@ -49,6 +49,27 @@ final class CreateServerGenerator implements ErisGenerator
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
     }
+    /**
+     * Generates names, wrappers and repeated options, retaining empty-name conditions.
+     *
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer>
+     */
+    public static function requests(): ErisGenerator
+    {
+        $names = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+            Generators::oneOf(Generators::constant(''), Generators::map(static fn (int $length): string => str_repeat('s', $length), Generators::choose(1, 80))),
+            Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::SingleQuote, \SqlSemantics\Statement\Identifier\NameQuote::Backtick))
+        );
+        $wrappers = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::elements('', 'mysql', 'unknown', '😀'), Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::SingleQuote, \SqlSemantics\Statement\Identifier\NameQuote::Backtick)));
+        $options = Generators::bind(new ServerOptionKindGenerator(), static fn (\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind $kind): ErisGenerator => new ServerOptionGenerator(
+            Generators::constant($kind),
+            $kind === \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port
+                ? new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::oneOf(Generators::map(static fn (int $port): string => (string) $port, Generators::choose(0, 70000)), Generators::elements('1.5', '18446744073709551616')))
+                : new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::elements('', 'text', "a'b", '😀'))
+        ));
+        return Generators::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => self::operands($names, $wrappers, Generators::vector($count, $options)));
+    }
+
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $wrapper Generated constructor operand

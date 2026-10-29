@@ -113,6 +113,7 @@ final class LoadRule
             'duplicates' => $this->lowering->dml->duplicateHandling($parts['opt_duplicate']),
             'table' => new WriteTarget($this->lowering->names->qualified($parts['table_ident']), null, $queries->partitions($parts['opt_use_partition'])),
             'charset' => $format->charset($parts['opt_load_data_charset']),
+            'charsetForm' => $format->charsetForm($parts['opt_load_data_charset']),
             'compression' => $this->tagged($parts['opt_compression_algorithm'] ?? null),
             'rowTag' => $this->tagged($parts['opt_xml_rows_identified_by']),
             'fields' => $format->fields($parts['opt_field_term']),

@@ -74,6 +74,7 @@ final class LogfileGroupRule
             'drop: DROP LOGFILE_SYM GROUP_SYM logfile_group_name drop_ts_options_list', 'drop_logfile_stmt: DROP LOGFILE_SYM GROUP_SYM ident opt_drop_ts_options' => new DropLogfileGroup(
                 $tablespaces->name($form->node(3)),
                 $tablespaces->options($form->node(4)),
+                leadingComma: ($form->node(4)->tokens()[0]->text ?? '') === ',',
                 optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(4), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option']),
             ),
             default => throw ImplementationGap::production($form),

@@ -25,11 +25,23 @@ final class ForeignServerRuleTest extends TestCase
         self::assertSame("CREATE SERVER 's' FOREIGN DATA WRAPPER w OPTIONS (USER 'u')", (new Semantics(Dialect::MySql))->analyze("create server 's' foreign data wrapper w options (user 'u')")->toString());
     }
 
-    public function testCreateRefusesAnEmptyNameBeforeConstructingTheDefinition(): void
+    public function testCreateRetainsTheEmptyNameAndCompleteOptions(): void
     {
-        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
-        $this->expectExceptionMessage("Incorrect server name value: ''");
-        (new Semantics(Dialect::MySql))->analyze("CREATE SERVER '' FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'h')");
+        $sql = "CREATE SERVER '' FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'h')";
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer::class, $statement);
+        self::assertSame($sql, $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName::class, $statement->diagnostics()[0]);
+    }
+
+    public function testCompletedPreservesTheNameConditionBeforeTrailingSyntax(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $sql = "CREATE SERVER '' FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'h') trailing";
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser('mysql-8.4.7'), $sql, strlen($sql), $semantics->profile());
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[0][1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName::class, $notices[0][1]->problem);
     }
 
     public function testOptionsLowersThePort(): void

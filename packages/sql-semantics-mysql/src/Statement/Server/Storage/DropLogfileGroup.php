@@ -43,14 +43,16 @@ final class DropLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\SqlS
     /**
      * @param Name $name The log file group name
      * @param list<StorageOption> $options The options in written order
+     * @param bool $leadingComma Whether a comma precedes the first option (MySQL 5.6 and 5.7)
      * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
-    public function __construct(public readonly Name $name, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $optionsCommas = null)
+    public function __construct(public readonly Name $name, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $optionsCommas = null, public readonly bool $leadingComma = false)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
         }
         $this->options = (new StorageOptions())->checked($options, StorageOptions::DROP);
+        \SqlSemantics\Diagnostic\Check::input(!$leadingComma || $this->options !== [], 'A leading option comma requires an option.');
         $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
@@ -69,6 +71,9 @@ final class DropLogfileGroup extends \SqlSemantics\Platform\MySql\Statement\SqlS
     public function render(Output $out): void
     {
         $out->keyword('DROP', 'LOGFILE', 'GROUP')->name($this->name, NameUse::Identifier);
+        if ($this->leadingComma) {
+            $out->symbol(',');
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
     }
 }

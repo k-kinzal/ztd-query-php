@@ -46,7 +46,7 @@ final class CompletedNotice
         if ($query !== null) {
             return new ParseFailure($query->problem, true);
         }
-        $load = (new Server\Storage\SyntaxStorageOptions())->completed($node, $lowering) ?? (new TableDefinition\Column\SyntaxColumns())->completed($node, $lowering) ?? $lowering->literals->radixNotice($node) ?? (new Server\Instance\SpatialRule($lowering))->completed($node) ?? (new Dml\ChangeRule($lowering))->completed($node) ?? (new TableDefinition\Key\SyntaxPrefixes())->completed($node, $lowering) ?? (new Leaf\SyntaxJsonAttribute())->completed($node, $lowering) ?? (new Dml\SyntaxLoadInput())->completed($node, $lowering);
+        $load = (new Server\Storage\SyntaxStorageOptions())->completed($node, $lowering) ?? (new TableDefinition\Column\SyntaxColumns())->completed($node, $lowering) ?? $lowering->literals->radixNotice($node) ?? (new Server\Instance\SpatialRule($lowering))->completed($node) ?? (new Server\Instance\ForeignServerRule($lowering))->completed($node) ?? (new Dml\ChangeRule($lowering))->completed($node) ?? (new TableDefinition\Key\SyntaxPrefixes())->completed($node, $lowering) ?? (new Leaf\SyntaxJsonAttribute())->completed($node, $lowering) ?? (new Dml\SyntaxLoadInput())->completed($node, $lowering);
         if ($load !== null) {
             return $load;
         }

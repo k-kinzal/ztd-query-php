@@ -142,6 +142,7 @@ final class TablespaceRule
             'drop: DROP TABLESPACE tablespace_name drop_ts_options_list', 'drop: DROP TABLESPACE_SYM tablespace_name drop_ts_options_list' => new DropTablespace(
                 $this->name($form->node(2)),
                 $this->options($form->node(3)),
+                leadingComma: ($form->node(3)->tokens()[0]->text ?? '') === ',',
                 optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(3), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option']),
             ),
             'drop_tablespace_stmt: DROP TABLESPACE_SYM ident opt_drop_ts_options' => new DropTablespace($this->name($form->node(2)), $this->options($form->node(3)), optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(3), ['tablespace_option', 'alter_tablespace_option', 'undo_tablespace_option', 'logfile_group_option', 'alter_logfile_group_option', 'drop_ts_option', 'change_ts_option'])),

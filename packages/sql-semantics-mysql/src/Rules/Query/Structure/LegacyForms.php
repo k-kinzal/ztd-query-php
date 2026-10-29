@@ -71,6 +71,8 @@ final class LegacyForms
     public function definition(object $value): bool
     {
         return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup => $value->leadingComma,
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod => $value->columns === [],
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames => $value->collation !== null && ($value->charset->name === null || $value->collation->name === null),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnName => $value->table !== null || $value->dot === OptionalWords::Written,

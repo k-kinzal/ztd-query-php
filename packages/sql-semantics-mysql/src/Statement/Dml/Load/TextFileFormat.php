@@ -38,12 +38,14 @@ final class TextFileFormat implements FileFormat
     public readonly array $lines;
 
     /**
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $charsetForm The written character-set introducer
      * @param CharsetName|null $charset The character set of the file
      * @param list<FieldOption> $fields The FIELDS options
      * @param list<LineOption> $lines The LINES options
      */
-    public function __construct(public readonly ?CharsetName $charset = null, array $fields = [], array $lines = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?CharsetName $charset = null, array $fields = [], array $lines = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $charsetForm = \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named)
     {
+        Check::input($charsetForm->named(), 'A file character set uses a named charset form.');
         $this->fields = Check::listOf($fields, FieldOption::class, 'The FIELDS clause holds field options.');
         $this->lines = Check::listOf($lines, LineOption::class, 'The LINES clause holds line options.');
     }
@@ -54,7 +56,7 @@ final class TextFileFormat implements FileFormat
     public function render(Output $out): void
     {
         if ($this->charset !== null) {
-            $out->keyword('CHARSET')->node($this->charset);
+            $out->keyword(...explode(' ', $this->charsetForm->value))->node($this->charset);
         }
         if ($this->fields !== []) {
             $out->keyword('COLUMNS');

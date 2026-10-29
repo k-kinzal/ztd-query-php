@@ -83,7 +83,7 @@ final class DmlRules
     {
         $format = new FormatRule($this->lowering);
 
-        return new TextFileFormat($format->charset($charset), $format->fields($fields), $format->lines($lines));
+        return new TextFileFormat($format->charset($charset), $format->fields($fields), $format->lines($lines), charsetForm: $format->charsetForm($charset));
     }
 
     /**
