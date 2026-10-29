@@ -2132,6 +2132,7 @@
         "subpartitioning": "?SqlSemantics\\Platform\\MySql\\Statement\\Partition\\Subpartitioning"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Partition\\PartitionDefinition": {
+        "boundarySource": "?SqlSemantics\\Statement\\Source\\Span",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "name": "SqlSemantics\\Statement\\Identifier\\Name",
         "options": "array",

@@ -25,16 +25,17 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue;
 final class DefinitionShape
 {
     /**
-     * Excludes contradictory definitions at public constructor boundaries.
+     * Excludes inconsistent subpartition lists at public constructor boundaries.
+     * Bound and method disagreements remain complete executable definitions.
      *
      * @param list<PartitionDefinition> $definitions The definitions in order
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When definitions disagree
      */
-    public function check(array $definitions, ?PartitionMethod $method = null, ?int $count = null): void
+    public function check(array $definitions, ?int $count = null): void
     {
         $expected = ($definitions[0]->subpartitions ?? []) === [] ? 0 : $count;
         foreach ($definitions as $definition) {
-            $problem = $this->problem($definition, $method, $expected);
+            $problem = $this->problem($definition, null, $expected);
             Check::input($problem === null, $problem?->message() ?? 'Partition definitions agree.');
             $expected ??= count($definition->subpartitions);
         }

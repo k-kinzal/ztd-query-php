@@ -38,7 +38,7 @@ final class AlterTableGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
-            $forms = [];
+            $forms = $release->database() === 'mysql' ? [self::partitionDefinitions()] : [];
             if ($release === GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -66,6 +66,37 @@ final class AlterTableGenerator implements ErisGenerator
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
     }
+    /**
+     * Varies partition methods independently from complete bound definitions.
+     * Missing values and method disagreements must reach SQL execution.
+     *
+     * @return ErisGenerator<MySql\Alter\AlterTable>
+     */
+    public static function partitionDefinitions(): ErisGenerator
+    {
+        $names = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator();
+        $methods = Generators::map(static fn (int $kind): MySql\Partition\Method\PartitionMethod => match ($kind) {
+            0 => new MySql\Partition\Method\HashMethod(false, new MySql\Name\ColumnUse(new Name('i'))),
+            1 => new MySql\Partition\Method\KeyMethod(false, null, [new Name('i')]),
+            2, 3 => new MySql\Partition\Method\ExpressionMethod($kind === 2 ? MySql\Partition\Method\PartitionKind::Range : MySql\Partition\Method\PartitionKind::List, new MySql\Name\ColumnUse(new Name('i'))),
+            default => new MySql\Partition\Method\ColumnsMethod($kind === 4 ? MySql\Partition\Method\PartitionKind::Range : MySql\Partition\Method\PartitionKind::List, [new Name('i')]),
+        }, Generators::choose(0, 5));
+        $rows = new \Tests\Generator\MySql\Statement\Partition\Bound\PartitionRowGenerator(
+            Generators::vector(1, new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 20))))
+        );
+        $bounds = Generators::oneOf(
+            Generators::constant(null),
+            new \Tests\Generator\MySql\Statement\Partition\Bound\LessThanGenerator($rows),
+            new \Tests\Generator\MySql\Statement\Partition\Bound\ValuesInGenerator($rows)
+        );
+        $definition = new \Tests\Generator\MySql\Statement\Partition\PartitionDefinitionGenerator($names, $bounds, Generators::constant([]), Generators::constant([]));
+        $definitions = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $definition));
+        return self::operands(
+            new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator($names, Generators::oneOf(Generators::constant(null), $names), Generators::constant(null)),
+            Generators::tuple(new Partition\PartitionByGenerator(new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator($methods, Generators::constant(null), Generators::constant(null), $definitions)))
+        );
+    }
+
     /**
      * @param ErisGenerator<QualifiedName> $table Generated constructor operand
      * @param ErisGenerator<list<MySql\Alter\AlterCommand>> $commands Generated constructor operand

@@ -167,7 +167,7 @@ final class PartitionRule
             $method,
             $count,
             $subpartitioning,
-            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $method, $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count)),
+            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count)),
         );
     }
 

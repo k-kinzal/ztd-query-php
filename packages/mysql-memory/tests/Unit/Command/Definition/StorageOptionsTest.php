@@ -143,6 +143,24 @@ final class StorageOptionsTest extends TestCase
         (new StorageOptions())->directories($create, $session);
     }
 
+    public function testBeforePartitionKeepsEngineWarningsBeforeBoundConditions(): void
+    {
+        $session = (new Instance('5.7.44', databases: ['d']))->connect(database: 'd');
+        $session->run("SET sql_mode=''");
+        $session->run('CREATE TABLE t(i INT) ENGINE unknown PARTITION BY RANGE(i) (PARTITION p)');
+        self::assertSame([1286, 1479], array_column($session->diagnostics->conditions, 1));
+        $session->run('ALTER TABLE t ENGINE unknown PARTITION BY RANGE(i) (PARTITION p)');
+        self::assertSame([1286, 1479], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testBeforePartitionUsesTheDeclaredProgramDatabase(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect();
+        $session->run("SET sql_mode=''");
+        $session->run('CREATE PROCEDURE d.p() IF 0 THEN CREATE TABLE t(i INT) ENGINE unknown PARTITION BY RANGE(i) (PARTITION p); END IF');
+        self::assertSame([1286, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testBeforePartitionUsesTheOwningStoredInstructionAndPreservesSyntaxWarnings(): void
     {
         $session = (new Instance())->connect();

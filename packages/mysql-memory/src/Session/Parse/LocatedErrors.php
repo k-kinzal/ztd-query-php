@@ -34,6 +34,10 @@ final class LocatedErrors
         }
         (new \MySqlMemory\Command\Definition\StorageOptions())->beforePartition($warning, $operation, $session);
         (new \MySqlMemory\Session\Access\TableCreation())->database($operation, $session, $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+        if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
+            $definition = $operation->statementInformation()->warningSubject($warning);
+            return (new Entry\PartitionInput())->bound($warning->problem, $definition instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition ? $definition->boundarySource : null, $session);
+        }
         return (new \MySqlMemory\Session\Problem\Precision())->legacy($this->error($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\CacheOptions())->placed($warning->problem, $operation, $session) ?? (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session, 'field list', $operation), $session->settings()->release());
     }
 

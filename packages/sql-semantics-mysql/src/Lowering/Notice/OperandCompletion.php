@@ -35,6 +35,7 @@ final class OperandCompletion
         private readonly \SqlSemantics\Platform\MySql\Lowering\Routine\Program\VariablePrefix $variables = new \SqlSemantics\Platform\MySql\Lowering\Routine\Program\VariablePrefix(),
         private readonly \SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\SyntaxViews $views = new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\View\SyntaxViews(),
         private readonly \SqlSemantics\Platform\MySql\Lowering\Account\Authentication\SyntaxPasswords $passwords = new \SqlSemantics\Platform\MySql\Lowering\Account\Authentication\SyntaxPasswords(),
+        private readonly \SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\DefinitionPrefix $partitions = new \SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\DefinitionPrefix(),
     ) {
     }
 
@@ -62,6 +63,7 @@ final class OperandCompletion
     {
         return (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxCharsets())->completed($node, $lowering, $tokens)
             ?? $this->privileges->completed($node, $lowering)
+            ?? $this->partitions->completed($node, $lowering)
             ?? $this->arrays->completed($node, $lookahead, $lowering, $state->failedAt)
             ?? $this->variables->observe($node, $lowering)
             ?? $this->types->following($node, $lowering, $tokens)

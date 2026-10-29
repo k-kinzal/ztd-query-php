@@ -46,8 +46,9 @@ final class PartitionDefinition implements Node
      * @param PartitionBound|null $values The partition values, when written
      * @param list<PartitionOption> $options The options in order
      * @param list<SubpartitionDefinition> $subpartitions The subpartitions in order
+     * @param \SqlSemantics\Statement\Source\Span|null $boundarySource The list opening or preceding definition boundary, for diagnostic presentation only
      */
-    public function __construct(public readonly Name $name, public readonly ?PartitionBound $values, array $options, array $subpartitions, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Name $name, public readonly ?PartitionBound $values, array $options, array $subpartitions, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Statement\Source\Span $boundarySource = null)
     {
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnNameRule())->length($name->value) <= 64, 'A partition definition name has at most 64 characters.');
         $this->options = Check::listOf($options, PartitionOption::class, 'Partition options are a list of partition options.');

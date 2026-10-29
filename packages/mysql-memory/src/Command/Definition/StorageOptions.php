@@ -82,9 +82,9 @@ final class StorageOptions
      *
      * @throws SqlError When the database is unspecified or an engine is unknown
      */
-    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail $header, Session $session, Context $context): void
+    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail $header, Session $session, Context $context, ?string $database = null): void
     {
-        if ($header->name->schema === null && $session->variables->database === '') {
+        if ($header->name->schema === null && ($database ?? $session->variables->database) === '') {
             throw QueryError::NoDatabase->error();
         }
         foreach ($header->options as $option) {
@@ -143,15 +143,23 @@ final class StorageOptions
      */
     public function beforePartition(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $notice, \SqlSemantics\Platform\MySql\Statement\Statement $operation, Session $session): void
     {
-        if (!$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
+        if (!$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression && !$notice->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
             return;
         }
         $statement = $operation->statementInformation()->warningInstruction($notice) ?? $operation;
+        $database = match (true) {
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent,
+            $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent => $operation->name->schema->value ?? $session->variables->database,
+            default => $session->variables->database,
+        };
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         if ($statement instanceof CreateTable) {
-            $this->header($statement, $session, $context);
+            $this->header($statement, $session, $context, $database);
         } elseif ($statement instanceof AlterTable) {
-            if ($statement->table->schema === null && $session->variables->database === '') {
+            if ($statement->table->schema === null && $database === '') {
                 throw QueryError::NoDatabase->error();
             }
             foreach ($statement->commands as $command) {

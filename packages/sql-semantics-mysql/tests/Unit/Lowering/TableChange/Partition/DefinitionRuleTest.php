@@ -15,6 +15,37 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\DefinitionRule;
 #[Medium]
 final class DefinitionRuleTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerBoundConditions')]
+    public function testDefinitionsRetainCompleteBounds(string $release, string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $statement);
+        self::assertSame($sql, $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::class, $statement->warnings()[0]->problem);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerBoundConditions(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach ([
+                'RANGE (i) (PARTITION p)',
+                'LIST (i) (PARTITION p)',
+                'HASH (i) (PARTITION p VALUES IN (1))',
+                'LIST (i) (PARTITION p VALUES LESS THAN (1))',
+                'RANGE (i) (PARTITION p VALUES LESS THAN (1), PARTITION q)',
+            ] as $index => $clause) {
+                yield $release->value . ' ' . $index => [$release->value, 'ALTER TABLE t PARTITION BY ' . $clause];
+            }
+        }
+    }
+
     public function testNameAcceptsTheIdentifierBoundary(): void
     {
         $platform = new \SqlSemantics\Platform\MySql\Platform();

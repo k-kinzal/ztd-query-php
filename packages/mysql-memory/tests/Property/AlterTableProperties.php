@@ -53,7 +53,10 @@ final class AlterTableProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
-        yield GrammarRelease::MySql5744->value => [GrammarRelease::MySql5744];
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
     }
 }

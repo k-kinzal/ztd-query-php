@@ -16,6 +16,14 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused;
 #[Small]
 final class PartitionInputTest extends TestCase
 {
+    public function testBoundUsesSemanticConditionsWithoutSourceText(): void
+    {
+        $session = (new Instance())->connect();
+        self::assertSame(1064, (new PartitionInput())->bound(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::MissingRangeValues, null, $session)->getCode());
+        self::assertSame(1480, (new PartitionInput())->bound(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ListValues, null, $session)->getCode());
+        self::assertSame(1479, (new PartitionInput())->bound(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::MissingListValues, null, (new Instance('5.7.44'))->connect())->getCode());
+    }
+
     public function testDefinitionKeepsTriviaAfterAnOmittedSubpartitionList(): void
     {
         $session = (new Instance())->connect();

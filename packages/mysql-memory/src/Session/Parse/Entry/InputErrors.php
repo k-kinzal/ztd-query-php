@@ -56,6 +56,9 @@ final class InputErrors
      */
     public function error(Diagnostic $diagnostic, Session $session): ?SqlError
     {
+        if (in_array($diagnostic, [\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::MissingRangeValues, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::MissingListValues, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::RangeValues, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ListValues], true)) {
+            return (new PartitionInput())->bound($diagnostic, null, $session);
+        }
         return match (true) {
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral => new SqlError(\MySqlMemory\Error\Family\DataError::IllegalNonGeometric, "Illegal double '" . $diagnostic->text . "' value found during parsing"),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName => str_starts_with($diagnostic->name->value, '#mysql50#') ? ($diagnostic->identifierTooLong() ? SchemaError::TooLongIdentifier : SchemaError::WrongDatabaseName)->error((new \MySqlMemory\Error\DiagnosticText())->bytes($diagnostic->name->value, 100, true)) : \MySqlMemory\Error\Family\StatementError::WrongUsage->error('ALTER DATABASE UPGRADE DATA DIRECTORY NAME', 'name'),

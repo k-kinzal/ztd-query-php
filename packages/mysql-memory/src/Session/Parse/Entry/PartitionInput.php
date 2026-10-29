@@ -24,6 +24,33 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 final class PartitionInput
 {
     /**
+     * Formats the bound condition of a complete semantic partition definition.
+     * The source location supplies only the quoted diagnostic suffix.
+     */
+    public function bound(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue $problem, ?\SqlSemantics\Statement\Source\Span $boundary, Session $session): SqlError
+    {
+        if (in_array($problem, [\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::RangeValues, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ListValues], true)) {
+            return new SqlError(\MySqlMemory\Error\Family\PartitionError::WrongValuesKind, $problem->message());
+        }
+        if ($session->settings()->legacy()) {
+            return new SqlError(\MySqlMemory\Error\Family\PartitionError::MissingValues, $problem->message());
+        }
+        if ($boundary === null || $session->text === '') {
+            return new SqlError(StatementError::ParseError, $problem->message());
+        }
+        $offset = $boundary->offset;
+        foreach ((new \SqlSemantics\Platform\MySql\Lowering\InputTokens())->prefix($session->semantics()->parser(), $session->text) as $token) {
+            if ($token->offset >= $offset) {
+                $offset = $token->offset;
+                break;
+            }
+        }
+        $line = (new DiagnosticLine())->at($session->text, $offset, true, $session->semantics()->parser());
+        $near = Encoding::prefix(rtrim(substr($session->text, $offset) . $session->following, " \t\n\r\f\v"), $session->resolution()->client ?? Charset::known('utf8mb4'), true);
+        return new SqlError(StatementError::ParseError, $problem->message() . " near '" . $near . "' at line " . $line);
+    }
+
+    /**
      * Keeps completed prefix conditions before an entry with a malformed body.
      */
     public function refused(RejectedInput $failure, string $statement, Session $session): SqlError
