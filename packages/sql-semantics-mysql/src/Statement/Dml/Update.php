@@ -135,6 +135,7 @@ final class Update extends \SqlSemantics\Platform\MySql\Statement\SqlStatement i
     public function deriveStatement(Derivation $derivation): void
     {
         (new ChangeFacts())->update($this, $derivation, $derivation->environment());
+        $derivation->orderWarnings($this, (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($this, childrenFirst: true));
     }
 
     /**

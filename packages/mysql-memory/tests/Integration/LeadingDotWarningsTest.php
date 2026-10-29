@@ -18,6 +18,27 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class LeadingDotWarningsTest extends TestCase
 {
+    public function testDirectDerivedUpdateOrdersItsQueryWarningsBeforeItsRefusal(): void
+    {
+        $session = (new Instance('5.7.44', databases: ['pbt']))->connect(database: 'pbt');
+        $select = new M\Query\Select([], [new M\Query\SelectExpression(new M\Name\ColumnUse(new Name('c'), new QualifiedName(new Name('t')), M\Expression\OptionalWords::Written))], new M\Relation\TableReference(new QualifiedName(new Name('t')), dot: M\Expression\OptionalWords::Written));
+        $statement = new M\Dml\Update(null, false, false, [new M\Relation\DerivedTable($select, new Name('d'))], [new M\Dml\Assignment(new M\Name\ColumnUse(new Name('c')), new M\Literal\NumberLiteral('1'))]);
+        $statement = (new \MySqlMemory\Session\Statement\Binding())->statement($session, $statement);
+        $session->text = '';
+        $session->dots = [];
+        try {
+            (new Execution($session))->statement($statement);
+            self::fail('A single derived target cannot be updated in MySQL 5.7.');
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            self::assertSame(1288, $error->getCode());
+        }
+        self::assertSame([
+            ['Warning', 1287, M\Notice\Deprecated::DotColumn->value],
+            ['Warning', 1287, M\Notice\Deprecated::DotTable->value],
+            ['Error', 1288, 'The target table d of the UPDATE is not updatable'],
+        ], $session->diagnostics->conditions);
+    }
+
     #[DataProvider('providerReleases')]
     public function testDirectFlushReturnsItsTableSpellingWarnings(string $version, int $warnings): void
     {

@@ -70,8 +70,9 @@ final class ChangeFacts
         $visible = $this->references($update->tables, $derivation, $base);
         $environment = new Environment($derivation->context, $base, $visible);
         $single = count($visible) === 1 && !$this->updatable($visible[0]->relation, $derivation);
-        if ($single) {
-            $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($visible[0]->relation)));
+        $problem = $single ? new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($visible[0]->relation)) : null;
+        if ($problem !== null) {
+            $derivation->report($problem);
         }
         $this->clauses($update->where, [], null, $derivation, $base, $environment);
         $fields = (new \SqlSemantics\Platform\MySql\Rules\Dml\Update\AssignmentFacts())->derive($update->assignments, $derivation, $environment);
@@ -88,6 +89,10 @@ final class ChangeFacts
         }
         if (count($visible) > 1 && $update->limit !== null) {
             $derivation->report(new WriteMisuse(WriteRule::LimitedMultipleUpdate));
+        }
+        if ($problem !== null && in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            $phase = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization;
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $phase), $update);
         }
     }
 

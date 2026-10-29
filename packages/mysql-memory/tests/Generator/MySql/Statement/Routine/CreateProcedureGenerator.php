@@ -6,7 +6,6 @@ namespace Tests\Generator\MySql\Statement\Routine;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
-use InvalidArgumentException;
 use LogicException;
 use Tests\Generator\Composition;
 
@@ -25,12 +24,11 @@ final class CreateProcedureGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
-            $forms = [];
+            $forms = [self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), new ParameterListGenerator(Generators::constant([])), \Tests\Generator\MySql\Statement\Dml\UpdateGenerator::derivedTargets())];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -46,9 +44,6 @@ final class CreateProcedureGenerator implements ErisGenerator
                 $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), new ParameterListGenerator(Generators::constant([])), new \Tests\Generator\MySql\Statement\Server\Transaction\TransactionStatementGenerator($release, stored: true));
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateProcedure forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure {

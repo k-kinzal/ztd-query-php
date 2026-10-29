@@ -32,6 +32,25 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ChangeFactsTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDerivedUpdatePhases')]
+    public function testUpdateRetainsItsVersionedInputConditionInStoredDefinitions(string $version, bool $legacy): void
+    {
+        $operation = (new Semantics(Dialect::MySql, $version))->analyze('CREATE PROCEDURE p() UPDATE (SELECT 1 AS a) AS d SET a = 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertSame($legacy ? [\SqlSemantics\Platform\MySql\Statement\Dml\Update::class] : [], array_map(static fn ($warning): string => get_debug_type($operation->statementInformation()->warningInstruction($warning)), $operation->warnings()));
+        self::assertSame('CREATE PROCEDURE p() UPDATE (SELECT 1 AS a) AS d SET a = 1', $operation->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerDerivedUpdatePhases(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            yield $version => ['mysql-' . $version, str_starts_with($version, '5.')];
+        }
+    }
+
     public function testDeleteMultipleBindsTheTargetInTheCurrentSchema(): void
     {
         $semantics = new Semantics(Dialect::MySql);

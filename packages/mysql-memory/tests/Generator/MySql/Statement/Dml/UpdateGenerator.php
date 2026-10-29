@@ -41,7 +41,7 @@ final class UpdateGenerator implements ErisGenerator
             throw new InvalidArgumentException('UPDATE generation requires a MySQL grammar.');
         }
         if ($operands === null) {
-            $forms = [self::operands($release), self::references()];
+            $forms = [self::operands($release), self::references(), self::derivedTargets()];
             if ($release === GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -98,6 +98,30 @@ final class UpdateGenerator implements ErisGenerator
                 new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('a', 'b'))),
                 new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 10)))
             )),
+            Generators::constant(null),
+            Generators::constant([]),
+            Generators::constant(null),
+            Generators::constant([])
+        );
+    }
+
+    /**
+     * Composes derived destinations, alone or beside a writable table reference.
+     * @return ErisGenerator<Update>
+     */
+    public static function derivedTargets(): ErisGenerator
+    {
+        $names = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('a', 'b', 'c'));
+        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 65535)));
+        $items = Generators::oneOf(Generators::tuple(new \Tests\Generator\MySql\Statement\Query\StarGenerator()), Generators::tuple(new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($numbers, $names)));
+        $derived = new \Tests\Generator\MySql\Statement\Relation\DerivedTableGenerator(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), $items), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $id): string => 'd_' . $id, Generators::choose(0, 8))));
+        $table = new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('t', 'u'))));
+        return self::fromOperands(
+            Generators::constant(null),
+            Generators::bool(),
+            Generators::bool(),
+            Generators::oneOf(Generators::tuple($derived), Generators::tuple($derived, $table)),
+            Generators::tuple(new AssignmentGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator($names), $numbers)),
             Generators::constant(null),
             Generators::constant([]),
             Generators::constant(null),
