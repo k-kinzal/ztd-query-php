@@ -15,6 +15,28 @@ use SqlSemantics\Platform\MySql\Lowering\Utility\Explain\ExplainRule;
 #[Medium]
 final class ExplainRuleTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReadConditions')]
+    public function testDeferredRetainsCompleteReadConditions(string $version, string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql, $version))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement->statement);
+        self::assertTrue($statement->statement->hasExecutionCondition());
+        self::assertSame($sql, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerReadConditions(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['DESC SELECT *', 'EXPLAIN FORMAT = JSON SELECT *', 'DESCRIBE SELECT 1 UNION SELECT 1, 2'] as $sql) {
+                yield $version . ' ' . $sql => ['mysql-' . $version, $sql];
+            }
+        }
+    }
+
     public function testStatementLowersEveryForm(): void
     {
         self::assertSame('DESCRIBE t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('describe t')->toString());

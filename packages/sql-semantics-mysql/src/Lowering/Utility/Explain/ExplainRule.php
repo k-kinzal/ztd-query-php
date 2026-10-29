@@ -223,8 +223,11 @@ final class ExplainRule
     {
         $node = $form->node(self::EXPLAINED[$form->signature] ?? throw ImplementationGap::production($form));
         if (isset(self::QUERIES[$node->name])) {
-            return (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->read($node)
-                ?? $this->lowering->origins->record((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($this->lowering->queries->query($node), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0), $node);
+            $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($node) ?? $this->lowering->queries->query($node);
+            $statement = $selection instanceof \SqlSemantics\Statement\Query
+                ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($selection, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0)
+                : $selection;
+            return $this->lowering->origins->record($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery ? new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement->query) : $statement, $node);
         }
         try {
             return $this->explained($form);

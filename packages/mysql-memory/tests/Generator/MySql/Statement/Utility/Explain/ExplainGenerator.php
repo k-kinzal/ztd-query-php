@@ -6,7 +6,6 @@ namespace Tests\Generator\MySql\Statement\Utility\Explain;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
-use InvalidArgumentException;
 use LogicException;
 use Tests\Generator\Composition;
 
@@ -25,12 +24,17 @@ final class ExplainGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
-            $forms = [];
+            $numbers = new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 65535))));
+            $items = Generators::oneOf(Generators::tuple(new \Tests\Generator\MySql\Statement\Query\StarGenerator()), Generators::bind(Generators::choose(1, 4), static fn (int $width): ErisGenerator => Generators::vector($width, $numbers)));
+            $name = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 't_' . $id, Generators::choose(0, 8)), Generators::constant(null));
+            $from = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator($name)));
+            $query = \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), $items, $from));
+            $formats = Generators::oneOf(Generators::constant(null), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::elements('JSON', 'TRADITIONAL', 'XML'), Generators::constant(null)));
+            $forms = [self::operands($query, format: $formats)];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -42,9 +46,6 @@ final class ExplainGenerator implements ErisGenerator
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No Explain forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain {
