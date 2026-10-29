@@ -29,7 +29,7 @@ final class RefusedRenameUserGenerator implements ErisGenerator
      */
     public function __construct()
     {
-        $this->delegate = Generators::map(static fn (array $pairs): RefusedRenameUser => new RefusedRenameUser([...$pairs, new UserRenaming(new CurrentUser(), new CurrentUser())]), Generators::seq(new UserRenamingGenerator()));
+        $this->delegate = Generators::map(static fn (array $pairs): RefusedRenameUser => new RefusedRenameUser([...$pairs, new UserRenaming(new CurrentUser(), new CurrentUser())]), \Tests\Generator\Operands::seq(new UserRenamingGenerator()));
     }
 
     /**

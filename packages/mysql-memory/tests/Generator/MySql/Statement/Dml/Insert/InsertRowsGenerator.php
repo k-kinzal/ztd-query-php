@@ -220,7 +220,7 @@ final class InsertRowsGenerator implements ErisGenerator
             rows: \Tests\Generator\Operands::tuple(
                 new InsertedRowGenerator(
                     values: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )])
                     )

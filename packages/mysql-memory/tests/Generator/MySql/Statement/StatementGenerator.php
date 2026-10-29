@@ -73,12 +73,12 @@ final class StatementGenerator implements ErisGenerator
         $choices = [
             Operands::tuple(Generators::map(static fn (M\Alter\Modifier\AlgorithmOption $option): M\Statement => new M\Alter\AlterTable($create->name, [$option]), $algorithms), Generators::constant(1800)),
             Operands::tuple(Generators::map(static fn (M\Alter\Modifier\LockOption $option): M\Statement => new M\Alter\AlterTable($create->name, [$option]), $locks), Generators::constant(1801)),
-            Operands::tuple(new Server\Storage\CreateTablespaceGenerator($names, options: Generators::vector(2, $engine)), Generators::constant(1527)),
+            Operands::tuple(new Server\Storage\CreateTablespaceGenerator($names, options: Operands::vector(2, $engine)), Generators::constant(1527)),
         ];
         if (version_compare(substr($release->value, 6), '8.0.16', '>=')) {
             $text = new Literal\TextGenerator(Generators::map(static fn (int $value): string => 'bad_' . $value, Operands::sized(Generators::nat(), 1000)));
             $encryption = new Server\Database\DatabaseEncryptionGenerator($text);
-            $choices[] = Operands::tuple(new Server\Database\CreateDatabaseGenerator(Generators::bool(), $names, Generators::vector(1, $encryption)), Generators::constant(1525));
+            $choices[] = Operands::tuple(new Server\Database\CreateDatabaseGenerator(Generators::bool(), $names, Operands::vector(1, $encryption)), Generators::constant(1525));
         }
         if (version_compare(substr($release->value, 6), '8.0.21', '>=')) {
             array_push($choices, ...self::attributeForms($create));
@@ -111,7 +111,7 @@ final class StatementGenerator implements ErisGenerator
             Generators::map(static fn (M\Table\Option\TextOption $option): M\Statement => new M\Alter\AlterTable($create->name, [new M\Alter\Command\SetTableOptions([$option])]), $tableOption),
             Generators::map(static fn (M\Table\Key\Option\IndexEngineAttribute $option): M\Statement => new M\Table\CreateIndex(new Name('generated_index'), $create->name, [$key], options: [$option]), $indexOption),
             Generators::map(static fn (M\Table\Key\Option\IndexEngineAttribute $option): M\Statement => new M\Table\CreateTable($create->name, [$column, new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Index, [$key], options: [$option])]), $indexOption),
-            new Server\Storage\CreateTablespaceGenerator(Generators::constant($create->name->name), options: Generators::vector(1, new Server\Storage\Option\EngineAttributeOptionGenerator($text))),
+            new Server\Storage\CreateTablespaceGenerator(Generators::constant($create->name->name), options: Operands::vector(1, new Server\Storage\Option\EngineAttributeOptionGenerator($text))),
         ];
         return array_map(static fn (ErisGenerator $form): ErisGenerator => Operands::tuple($form, Generators::constant(3980)), $forms);
     }

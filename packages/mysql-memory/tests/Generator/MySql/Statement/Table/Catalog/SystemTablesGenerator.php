@@ -60,7 +60,7 @@ final class SystemTablesGenerator implements ErisGenerator
             $show = \SqlSemantics\Facade\Semantics::fromStatement($context, $show);
             $query = \SqlSemantics\Facade\Semantics::fromStatement($context, $query);
             \SqlSemantics\Diagnostic\Check::invariant($show instanceof M\Utility\Show\Schema\ShowColumns && $query instanceof M\QueryRoot, 'Catalog inspections retain their concrete statement kinds.');
-            return \Tests\Generator\Operands::bind(new self(Generators::vector(1, SystemTableGenerator::catalog($release, Generators::constant($table)))), static function (M\Table\Catalog\SystemTables $selected) use ($remaining, $show, $query): ErisGenerator {
+            return \Tests\Generator\Operands::bind(new self(\Tests\Generator\Operands::vector(1, SystemTableGenerator::catalog($release, Generators::constant($table)))), static function (M\Table\Catalog\SystemTables $selected) use ($remaining, $show, $query): ErisGenerator {
                 return Generators::constant([new M\Table\Catalog\SystemTables([$selected->tables[0], ...$remaining]), $show, $query]);
             });
         });

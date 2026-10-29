@@ -40,10 +40,10 @@ final class AbsentGrantTableGenerator implements ErisGenerator
         return \Tests\Generator\Operands::bind(new self($names), static function (\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\AbsentGrantTable $absent): \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator {
             $level = new ObjectLevelGenerator(Generators::constant($absent->name), relationInformation: new \Tests\Generator\Semantics\Statement\Fact\RelationFactGenerator(Generators::constant(new \SqlSemantics\Statement\Shape\RowShape([])), Generators::constant($absent)));
             return new \Tests\Generator\MySql\Statement\Account\Privilege\GrantPrivilegesGenerator(
-                Generators::vector(1, new \Tests\Generator\MySql\Statement\Account\Privilege\Item\StaticPrivilegeGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Create))),
+                \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Account\Privilege\Item\StaticPrivilegeGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Create))),
                 Generators::constant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table),
                 $level,
-                Generators::vector(1, new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(new \Tests\Generator\MySql\Statement\Name\CurrentUserGenerator())),
+                \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(new \Tests\Generator\MySql\Statement\Name\CurrentUserGenerator())),
                 statementInformation: new \Tests\Generator\MySql\Statement\StatementSemanticsGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847))),
             );
         });

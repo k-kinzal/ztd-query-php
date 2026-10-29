@@ -403,9 +403,9 @@ final class CreateIndexGenerator implements ErisGenerator
                     direction: Generators::constant(null)
                 ),
                 new Key\ExpressionPartGenerator(
-                    expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
+                    expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
                         operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Multiply]),
-                        left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                        left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('b'),
                                 quote: Generators::constant(null)
@@ -413,7 +413,7 @@ final class CreateIndexGenerator implements ErisGenerator
                             qualifier: Generators::constant(null),
                             dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                         )]),
-                        right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                        right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )])
                     )]),
@@ -440,7 +440,7 @@ final class CreateIndexGenerator implements ErisGenerator
             ),
             parts: \Tests\Generator\Operands::tuple(
                 new Key\ArrayPartGenerator(
-                    expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                    expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                             value: Generators::constant('j'),
                             quote: Generators::constant(null)

@@ -6,10 +6,10 @@ namespace Tests\Eris;
 
 use Eris\Generator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueOptions;
 use Eris\Generator\GeneratedValueSingle;
 use LogicException;
 use Override;
+use Traversable;
 
 /**
  * Retains every nested Eris shrink candidate of the selected semantic alternative.
@@ -40,13 +40,10 @@ final class Alternative extends Generator\OneOfGenerator
             throw new LogicException('An alternative retains the Eris choice and its generation input.');
         }
         $index = $input['generator'];
-        $options = [];
-        foreach ($this->alternatives[$index]->shrink($input['value']) as $candidate) {
-            $options[] = GeneratedValueSingle::fromValueAndInput($candidate->unbox(), ['value' => $candidate, 'generator' => $index], 'frequency');
-        }
-        if ($options === []) {
-            throw new LogicException('Eris alternatives retain at least their irreducible input.');
-        }
-        return new GeneratedValueOptions($options);
+        return new Options(function () use ($input, $index): Traversable {
+            foreach ($this->alternatives[$index]->shrink($input['value']) as $candidate) {
+                yield GeneratedValueSingle::fromValueAndInput($candidate->unbox(), ['value' => $candidate, 'generator' => $index], 'frequency');
+            }
+        });
     }
 }

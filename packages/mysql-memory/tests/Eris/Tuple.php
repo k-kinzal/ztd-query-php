@@ -11,6 +11,7 @@ use Eris\Generator\GeneratedValueSingle;
 use Eris\Generator\TupleGenerator;
 use LogicException;
 use Override;
+use Traversable;
 
 /**
  * Shrinks one composed constructor operand at a time through its original Eris generator.
@@ -49,20 +50,25 @@ final class Tuple extends TupleGenerator
                 throw new LogicException('Constructor operands retain their Eris generation inputs.');
             }
         }
-        $options = [];
-        foreach ($this->operands as $index => $generator) {
-            foreach ($generator->shrink($input[$index]) as $candidate) {
-                if ((new GeneratedValueOptions([$candidate]))->remove($input[$index])->count() === 0) {
-                    continue;
+        return new Options(function () use ($input, $original): Traversable {
+            $emitted = false;
+            foreach ($this->operands as $index => $generator) {
+                foreach ($generator->shrink($input[$index]) as $candidate) {
+                    if ((new GeneratedValueOptions([$candidate]))->remove($input[$index])->count() === 0) {
+                        continue;
+                    }
+                    $values = $original;
+                    $values[$index] = $candidate->unbox();
+                    $inputs = $input;
+                    $inputs[$index] = $candidate;
+                    $emitted = true;
+                    yield GeneratedValueSingle::fromValueAndInput(array_values($values), $inputs, 'tuple');
                 }
-                $values = $original;
-                $values[$index] = $candidate->unbox();
-                $inputs = $input;
-                $inputs[$index] = $candidate;
-                $options[] = GeneratedValueSingle::fromValueAndInput(array_values($values), $inputs, 'tuple');
             }
-        }
-        /** Eris's frequency generator unboxes even an irreducible result. */
-        return $options === [] ? GeneratedValueSingle::fromValueAndInput($original, $input, 'tuple') : new GeneratedValueOptions($options);
+            /** Eris's frequency generator unboxes even an irreducible result. */
+            if (!$emitted) {
+                yield GeneratedValueSingle::fromValueAndInput($original, $input, 'tuple');
+            }
+        });
     }
 }

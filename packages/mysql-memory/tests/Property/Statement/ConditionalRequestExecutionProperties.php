@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generators;
-use Eris\TestTrait;
 use LogicException;
 use MySqlMemory\Command\Prepared\PreparedStatement;
 use MySqlMemory\Error\SqlError;
@@ -22,6 +21,7 @@ use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Account\Privilege\RevokePrivilegesGenerator;
 use Tests\Generator\MySql\Statement\Dml\UpdateGenerator;
 use Tests\Generator\MySql\Statement\Routine\CreateTriggerGenerator;

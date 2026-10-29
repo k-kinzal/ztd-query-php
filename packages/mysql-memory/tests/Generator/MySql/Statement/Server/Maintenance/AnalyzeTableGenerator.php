@@ -32,7 +32,7 @@ final class AnalyzeTableGenerator implements ErisGenerator
         $definitions = new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release)));
         return \Tests\Generator\Operands::bind($definitions, static function (\SqlSemantics\Statement\AnalyzedStatement $definition) use ($release): ErisGenerator {
             \SqlSemantics\Diagnostic\Check::invariant($definition instanceof M\Table\CreateTable, 'Maintenance depends on a generated table declaration.');
-            $tables = Generators::vector(1, new MaintainedTableGenerator(Generators::constant($definition->name)));
+            $tables = \Tests\Generator\Operands::vector(1, new MaintainedTableGenerator(Generators::constant($definition->name)));
             $binlog = \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional();
             $requests = new \Tests\Generator\MySql\Statement\StatementGenerator([new self($binlog, $tables), new OptimizeTableGenerator($binlog, $tables), new RepairTableGenerator($binlog, $tables)]);
             $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value);

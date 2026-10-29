@@ -62,7 +62,7 @@ final class DeferredSelectionGenerator implements ErisGenerator
     public static function operandForms(): iterable
     {
         $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
-        $rows = new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector(2, $numbers));
+        $rows = new \Tests\Generator\MySql\Statement\Expression\RowGenerator(\Tests\Generator\Operands::vector(2, $numbers));
         $deferred = new Expression\DeferredArithmeticGenerator(
             \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
             $rows,
@@ -85,7 +85,7 @@ final class DeferredSelectionGenerator implements ErisGenerator
         );
         $windowAggregates = static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind $selected): ErisGenerator => \Tests\Generator\Operands::bind(Expression\Call\DeferredAggregateKindGenerator::selecting([$selected]), static function (\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind $kind) use ($numbers, $frames): ErisGenerator {
             $aggregate = $kind === \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind::GroupConcat
-                ? new \Tests\Generator\MySql\Statement\Call\Aggregate\GroupConcatGenerator(Generators::vector(1, $numbers))
+                ? new \Tests\Generator\MySql\Statement\Call\Aggregate\GroupConcatGenerator(\Tests\Generator\Operands::vector(1, $numbers))
                 : new \Tests\Generator\MySql\Statement\Call\Aggregate\JsonObjectAggregateGenerator($numbers, $numbers);
             return new Expression\Call\DeferredWindowAggregateGenerator($aggregate, new \Tests\Generator\MySql\Statement\Call\Window\WindowSpecGenerator(frame: $frames));
         });
@@ -97,7 +97,7 @@ final class DeferredSelectionGenerator implements ErisGenerator
                 new Selection\DeferredWindowSpecGenerator(frame: $deferredFrames),
             ),
             'full text dependency' => new Expression\Access\DeferredFullTextSearchGenerator(
-                Generators::vector(1, new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
+                \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
                 $rows,
             ),
             'window exclusion' => new Expression\Call\DeferredWindowAggregateGenerator(
@@ -110,7 +110,7 @@ final class DeferredSelectionGenerator implements ErisGenerator
             'extract' => new Expression\Call\DeferredExtractGenerator($units, $rows),
             'get format' => new Expression\Call\DeferredGetFormatGenerator(new \Tests\Generator\MySql\Statement\Call\Temporal\TemporalFormatGenerator(), $rows),
             'substring separators' => new Expression\Call\DeferredKeywordCallGenerator(\Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Substring]), \Tests\Generator\Operands::tuple($rows, $numbers)),
-            'keyword call' => new Expression\Call\DeferredKeywordCallGenerator(\Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Coalesce]), Generators::vector(2, $rows)),
+            'keyword call' => new Expression\Call\DeferredKeywordCallGenerator(\Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Coalesce]), \Tests\Generator\Operands::vector(2, $rows)),
             'timestamp' => new Expression\Call\DeferredTimestampGenerator(new \Tests\Generator\MySql\Statement\Call\Temporal\TimestampOperationGenerator(), \Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Second, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Day, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Month]), $rows, $numbers),
             'trim' => new Expression\Call\DeferredTrimGenerator($rows, new \Tests\Generator\MySql\Statement\Call\TrimSideGenerator(), $numbers),
             'date arithmetic' => new Expression\Call\DeferredDateArithmeticGenerator(Generators::bool(), $rows, $numbers, $units),
@@ -120,7 +120,7 @@ final class DeferredSelectionGenerator implements ErisGenerator
             'clock' => new Expression\Time\DeferredClockGenerator(\Tests\Generator\MySql\Statement\Call\ClockGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now]), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(7, 32)))),
         ];
         foreach ($expressions as $name => $expression) {
-            yield $name => new self(Generators::vector(1, new DeferredProjectionGenerator($expression)));
+            yield $name => new self(\Tests\Generator\Operands::vector(1, new DeferredProjectionGenerator($expression)));
         }
     }
 

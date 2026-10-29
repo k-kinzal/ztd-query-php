@@ -35,7 +35,7 @@ final class MaintainPartitionsGenerator implements ErisGenerator
     public static function withRows(GrammarRelease $release): ErisGenerator
     {
         $layouts = \Tests\Generator\Operands::bind(Generators::choose(1, 8), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::tuple(Generators::constant($count), Generators::choose(0, $count - 1), Generators::bool()));
-        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => Generators::vector($count, Generators::choose(0, 1000)));
+        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::vector($count, Generators::choose(0, 1000)));
         return Generators::map(self::sample(...), \Tests\Generator\Operands::tuple(
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),

@@ -64,6 +64,28 @@ final class QueryRootGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null)
         ));
     }
+
+    /**
+     * Generates differently shaped expressions and independently calculated rows.
+     * Binding and shrinking happen before the executor sees the concrete query.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Statement, list<list<string>>}>
+     */
+    public static function integerExpressions(GrammarRelease $release): ErisGenerator
+    {
+        return \Tests\Generator\Operands::bind(Generators::choose(1, 6), static function (int $width) use ($release): ErisGenerator {
+            return Generators::map(static function (array $values) use ($release): array {
+                $items = [];
+                $expected = [];
+                foreach ($values as $position => [$expression, $value]) {
+                    $items[] = new SelectExpression($expression, new \SqlSemantics\Statement\Identifier\Name('value_' . $position));
+                    $expected[] = (string) $value;
+                }
+                $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
+                return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, new QueryRoot(new Select([], $items))), [$expected]];
+            }, \Tests\Generator\Operands::vector($width, \Tests\Generator\Semantics\Statement\ScalarGenerator::integers()));
+        });
+    }
     /**
      * Generates a complete scalar projection, including its local bindings.
      *
@@ -82,7 +104,7 @@ final class QueryRootGenerator implements ErisGenerator
         )]))]);
         $nullable = NullabilityGenerator::selecting([Nullability::NotNull]);
         $expressions = StringLiteralGenerator::fromOperands(
-            segments: Generators::vector(1, Generators::map(static fn (int $value): string => 'val' . $value, Generators::choose(0, 9))),
+            segments: \Tests\Generator\Operands::vector(1, Generators::map(static fn (int $value): string => 'val' . $value, Generators::choose(0, 9))),
             introducer: Generators::constant(null),
             national: Generators::constant(false),
             collation: Generators::constant($collation),
@@ -90,7 +112,7 @@ final class QueryRootGenerator implements ErisGenerator
             scalarInformation: new ScalarFactGenerator($types, $nullable),
         );
         $fields = new FieldGenerator(Generators::constant(0), new OutputSlotGenerator($names ?? new NameGenerator(), $types, $nullable), $expressions);
-        $results = new QueryFactGenerator(Generators::vector(1, $fields), ComparisonGenerator::selecting([Comparison::AsciiInsensitive]));
+        $results = new QueryFactGenerator(\Tests\Generator\Operands::vector(1, $fields), ComparisonGenerator::selecting([Comparison::AsciiInsensitive]));
         return Generators::map(static function (StatementSemantics $information): QueryRoot {
             $field = $information->output?->projection[0] ?? null;
             if (!$field instanceof Field || !$field->expression instanceof StringLiteral) {
@@ -183,7 +205,7 @@ final class QueryRootGenerator implements ErisGenerator
             Call\Json\Path\KindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Kind::Cell]),
             from: $indices,
         );
-        $paths = new Call\Json\PathGenerator(Generators::vector(1, $legs));
+        $paths = new Call\Json\PathGenerator(\Tests\Generator\Operands::vector(1, $legs));
         return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Call\Json\Path $path): QueryRoot {
             $index = $path->legs[0]->from;
             if ($index === null) {
@@ -374,7 +396,7 @@ final class QueryRootGenerator implements ErisGenerator
                 rows: \Tests\Generator\Operands::tuple(
                     new Query\ValueRowGenerator(
                         values: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NullLiteralGenerator()])
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NullLiteralGenerator()])
                         )
                     )
                 )
@@ -551,7 +573,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )]),
                         alias: Generators::constant(null),
@@ -608,7 +630,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -688,7 +710,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -749,7 +771,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('c'),
                                 quote: Generators::constant(null)
@@ -798,9 +820,9 @@ final class QueryRootGenerator implements ErisGenerator
                             mark: Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
                             dot: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                         )]),
-                        on: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Expression\ComparisonGenerator(
+                        on: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Expression\ComparisonGenerator(
                             operator: Expression\ComparisonOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal]),
-                            left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                            left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                                 name: NameGenerator::fromOperands(
                                     value: Generators::constant('a'),
                                     quote: Generators::constant(null)
@@ -815,7 +837,7 @@ final class QueryRootGenerator implements ErisGenerator
                                 ),
                                 dot: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                             )]),
-                            right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                            right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                                 name: NameGenerator::fromOperands(
                                     value: Generators::constant('a'),
                                     quote: Generators::constant(null)
@@ -854,7 +876,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )]),
                         alias: Generators::constant(null),
@@ -923,7 +945,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -949,7 +971,7 @@ final class QueryRootGenerator implements ErisGenerator
                         options: Generators::constant([]),
                         items: \Tests\Generator\Operands::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                                expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                                     name: NameGenerator::fromOperands(
                                         value: Generators::constant('a'),
                                         quote: Generators::constant(null)
@@ -1021,7 +1043,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )]),
                         alias: Generators::constant(null),
@@ -1038,7 +1060,7 @@ final class QueryRootGenerator implements ErisGenerator
                                 options: Generators::constant([]),
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -1068,7 +1090,7 @@ final class QueryRootGenerator implements ErisGenerator
                                 options: Generators::constant([]),
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -1129,7 +1151,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -1143,7 +1165,7 @@ final class QueryRootGenerator implements ErisGenerator
                         spellingProfile: Generators::constant(null)
                     )]),
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('n'),
                                 quote: Generators::constant(null)
@@ -1158,7 +1180,7 @@ final class QueryRootGenerator implements ErisGenerator
                     )])
                 ),
                 from: new Relation\TableSourceGenerator([new Relation\JsonTableGenerator(
-                    document: new \Tests\Generator\Semantics\Statement\ScalarGenerator([StringLiteralGenerator::fromOperands(
+                    document: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([StringLiteralGenerator::fromOperands(
                         segments: \Tests\Generator\Operands::tuple(
                             Generators::constant('[1]')
                         ),
@@ -1232,7 +1254,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )]),
                         alias: Generators::constant(null),
@@ -1262,7 +1284,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -1292,9 +1314,9 @@ final class QueryRootGenerator implements ErisGenerator
                     mark: Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
                     dot: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                 )]),
-                where: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Expression\ComparisonGenerator(
+                where: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Expression\ComparisonGenerator(
                     operator: Expression\ComparisonOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal]),
-                    left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                    left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                         name: NameGenerator::fromOperands(
                             value: Generators::constant('a'),
                             quote: Generators::constant(null)
@@ -1302,7 +1324,7 @@ final class QueryRootGenerator implements ErisGenerator
                         qualifier: Generators::constant(null),
                         dot: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                     )]),
-                    right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\TemporalLiteralGenerator(
+                    right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\TemporalLiteralGenerator(
                         form: Literal\TemporalFormGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp]),
                         text: Generators::constant('2024-01-02 03:04:05.25')
                     )])
@@ -1326,7 +1348,7 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                             name: NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -1393,7 +1415,7 @@ final class QueryRootGenerator implements ErisGenerator
                 ),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )]),
                         alias: Generators::constant(null),
@@ -1437,15 +1459,15 @@ final class QueryRootGenerator implements ErisGenerator
                                 rows: \Tests\Generator\Operands::tuple(
                                     new Query\With\DeferredValueRowGenerator(
                                         values: \Tests\Generator\Operands::tuple(
-                                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
                                             new Expression\RowOperandGenerator([new Expression\RowGenerator(
                                                 elements: \Tests\Generator\Operands::tuple(
-                                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                     )]),
-                                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                     )])
                                                 ),
@@ -1463,7 +1485,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -1519,7 +1541,7 @@ final class QueryRootGenerator implements ErisGenerator
                                     rows: \Tests\Generator\Operands::tuple(
                                         new Query\ValueRowGenerator(
                                             values: \Tests\Generator\Operands::tuple(
-                                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                 )])
                                             )
@@ -1566,7 +1588,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -1602,7 +1624,7 @@ final class QueryRootGenerator implements ErisGenerator
                             options: Generators::constant([]),
                             items: \Tests\Generator\Operands::tuple(
                                 new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                    expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                    expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
                                     alias: Generators::constant(null),
@@ -1631,7 +1653,7 @@ final class QueryRootGenerator implements ErisGenerator
                             options: Generators::constant([]),
                             items: \Tests\Generator\Operands::tuple(
                                 new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                    expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                                    expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                                         name: NameGenerator::fromOperands(
                                             value: Generators::constant('a'),
                                             quote: Generators::constant(null)
@@ -1688,7 +1710,7 @@ final class QueryRootGenerator implements ErisGenerator
                         options: Generators::constant([]),
                         items: \Tests\Generator\Operands::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )]),
                                 alias: Generators::constant(null),
@@ -1725,7 +1747,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -1756,13 +1778,13 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Expression\Subquery\ScalarSubqueryGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Expression\Subquery\ScalarSubqueryGenerator(
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new Query\Set\OrderedSetOperationGenerator(
                                 left: new \Tests\Generator\Semantics\Statement\QueryGenerator([new Query\SelectGenerator(
                                     options: Generators::constant([]),
                                     items: \Tests\Generator\Operands::tuple(
                                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
                                             alias: NameGenerator::fromOperands(
@@ -1795,7 +1817,7 @@ final class QueryRootGenerator implements ErisGenerator
                                     options: Generators::constant([]),
                                     items: \Tests\Generator\Operands::tuple(
                                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
                                             alias: Generators::constant(null),
@@ -1874,12 +1896,12 @@ final class QueryRootGenerator implements ErisGenerator
                 options: Generators::constant([]),
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Expression\Subquery\ScalarSubqueryGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Expression\Subquery\ScalarSubqueryGenerator(
                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new Query\SelectGenerator(
                                 options: Generators::constant([]),
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Name\ColumnUseGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Name\ColumnUseGenerator(
                                             name: NameGenerator::fromOperands(
                                                 value: Generators::constant('a'),
                                                 quote: Generators::constant(null)
@@ -1995,16 +2017,16 @@ final class QueryRootGenerator implements ErisGenerator
                                             expression: new Routine\Program\Expression\DeferredOperandGenerator([new Routine\Program\Expression\Call\DeferredPositionGenerator(
                                                 substring: new Expression\RowOperandGenerator([new Expression\RowGenerator(
                                                     elements: \Tests\Generator\Operands::tuple(
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )]),
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )])
                                                     ),
                                                     keyword: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                                                 )]),
-                                                string: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                string: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                 )])
                                             )]),
@@ -2032,7 +2054,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -2080,21 +2102,21 @@ final class QueryRootGenerator implements ErisGenerator
                                                     new Routine\Program\Expression\DeferredOperandGenerator([new Routine\Program\Expression\Predicate\DeferredRegexpGenerator(
                                                         operand: new Expression\RowOperandGenerator([new Expression\RowGenerator(
                                                             elements: \Tests\Generator\Operands::tuple(
-                                                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                                 )]),
-                                                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                                 )])
                                                             ),
                                                             keyword: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                                                         )]),
-                                                        pattern: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        pattern: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )]),
                                                         negated: Generators::constant(false)
                                                     )]),
-                                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                     )])
                                                 ),
@@ -2124,7 +2146,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -2170,10 +2192,10 @@ final class QueryRootGenerator implements ErisGenerator
                                             expression: new Routine\Program\Expression\DeferredOperandGenerator([new Routine\Program\Expression\Conversion\DeferredBinaryCastGenerator(
                                                 operand: new Expression\RowOperandGenerator([new Expression\RowGenerator(
                                                     elements: \Tests\Generator\Operands::tuple(
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )]),
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )])
                                                     ),
@@ -2204,7 +2226,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -2250,19 +2272,19 @@ final class QueryRootGenerator implements ErisGenerator
                                             expression: new Routine\Program\Expression\DeferredOperandGenerator([new Routine\Program\Expression\Predicate\DeferredBetweenGenerator(
                                                 operand: new Expression\RowOperandGenerator([new Expression\RowGenerator(
                                                     elements: \Tests\Generator\Operands::tuple(
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )]),
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )])
                                                     ),
                                                     keyword: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                                                 )]),
-                                                lower: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                lower: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                 )]),
-                                                upper: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                upper: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                 )]),
                                                 negated: Generators::constant(false)
@@ -2291,7 +2313,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -2337,16 +2359,16 @@ final class QueryRootGenerator implements ErisGenerator
                                             expression: new Routine\Program\Expression\DeferredOperandGenerator([new Routine\Program\Expression\Predicate\DeferredSoundsLikeGenerator(
                                                 operand: new Expression\RowOperandGenerator([new Expression\RowGenerator(
                                                     elements: \Tests\Generator\Operands::tuple(
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )]),
-                                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                         )])
                                                     ),
                                                     keyword: Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                                                 )]),
-                                                pattern: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                                                pattern: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                 )])
                                             )]),
@@ -2374,7 +2396,7 @@ final class QueryRootGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -2425,7 +2447,7 @@ final class QueryRootGenerator implements ErisGenerator
             Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)),
             new ScalarFactGenerator(new TypeFactGenerator([new KnownGenerator(new TypeDescriptorGenerator([new DomainGenerator(KindGenerator::selecting([Kind::Integer]), FieldTypeGenerator::selecting([FieldType::Long]), length: Generators::constant(11))]))]), NullabilityGenerator::selecting([Nullability::NotNull])),
         );
-        $rows = new Dml\Insert\InsertedRowGenerator(Generators::vector(2, $numbers));
+        $rows = new Dml\Insert\InsertedRowGenerator(\Tests\Generator\Operands::vector(2, $numbers));
         return Generators::map(static function (array $parts): array {
             [$resolution, $row, $use] = $parts;
             if (!$resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn || !$resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference) {
@@ -2469,7 +2491,7 @@ final class QueryRootGenerator implements ErisGenerator
             new \Tests\Generator\Semantics\Statement\Fact\WarningGenerator([new Notice\DeprecationGenerator(Notice\DeprecatedGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull]))]),
             Generators::choose(0, 128),
         );
-        $sources = new \Tests\Generator\Semantics\Statement\Source\SourceMapGenerator(notices: Generators::vector(1, $notices));
+        $sources = new \Tests\Generator\Semantics\Statement\Source\SourceMapGenerator(notices: \Tests\Generator\Operands::vector(1, $notices));
         return Generators::map(static function (array $parts): QueryRoot {
             [$sources, $context] = $parts;
             $alias = $sources->notices[0]->subject;
@@ -2493,7 +2515,7 @@ final class QueryRootGenerator implements ErisGenerator
      */
     public static function namedScalar(ErisGenerator $expressions): ErisGenerator
     {
-        $fields = new \Tests\Generator\Semantics\Statement\Shape\FieldsGenerator(Generators::vector(1, FieldGenerator::namedExpression($expressions)), ComparisonGenerator::selecting([Comparison::AsciiInsensitive]));
+        $fields = new \Tests\Generator\Semantics\Statement\Shape\FieldsGenerator(\Tests\Generator\Operands::vector(1, FieldGenerator::namedExpression($expressions)), ComparisonGenerator::selecting([Comparison::AsciiInsensitive]));
         return Generators::map(static function (\SqlSemantics\Statement\Shape\Fields $fields): QueryRoot {
             $field = $fields->at(0);
             if ($field->expression === null) {
@@ -2525,7 +2547,7 @@ final class QueryRootGenerator implements ErisGenerator
         $missing = new \Tests\Generator\Semantics\Statement\Reference\Missing\MissingInputGenerator([
             new \Tests\Generator\Semantics\Statement\Reference\Missing\UnboundParameterGenerator(Generators::constant('?')),
         ]);
-        $types = new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(Generators::vector(1, $missing));
+        $types = new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(\Tests\Generator\Operands::vector(1, $missing));
         $facts = new ScalarFactGenerator($types, NullabilityGenerator::selecting([Nullability::Dependent]), new \Tests\Generator\Semantics\Statement\Reference\Column\ResolutionGenerator([new Variable\ParameterBindingGenerator(Generators::constant(0))]));
         return self::namedScalar(new Literal\ParameterGenerator(scalarInformation: $facts));
     }

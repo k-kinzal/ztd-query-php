@@ -35,7 +35,7 @@ final class CreateRoleGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $profile = new LanguageProfile($release);
-        $requests = \Tests\Generator\Operands::bind(Generators::bool(), static fn (bool $conditional): ErisGenerator => \Tests\Generator\Operands::bind(new AccountNameGenerator(), static fn (AccountName $first): ErisGenerator => Generators::map(static fn (array $rest): CreateRole => new CreateRole($conditional, [$first, ...$rest], $profile), Generators::seq(new AccountNameGenerator()))));
+        $requests = \Tests\Generator\Operands::bind(Generators::bool(), static fn (bool $conditional): ErisGenerator => \Tests\Generator\Operands::bind(new AccountNameGenerator(), static fn (AccountName $first): ErisGenerator => Generators::map(static fn (array $rest): CreateRole => new CreateRole($conditional, [$first, ...$rest], $profile), \Tests\Generator\Operands::seq(new AccountNameGenerator()))));
         $this->delegate = Generators::oneOf(
             $requests,
             \Tests\Generator\Operands::bind(new RefusedCreateRoleGenerator(), static fn (RefusedCreateRole $condition): ErisGenerator => Generators::map(static fn (bool $conditional): CreateRole => new CreateRole($conditional, $condition->roles, $profile), Generators::bool())),

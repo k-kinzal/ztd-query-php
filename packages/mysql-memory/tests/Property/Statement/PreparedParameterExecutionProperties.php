@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Statement;
 
-use Eris\TestTrait;
 use MySqlMemory\Command\Prepared\ParameterBindings;
 use MySqlMemory\Command\Prepared\PreparedCache;
 use MySqlMemory\Instance;
@@ -15,6 +14,7 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Literal\ParameterGenerator;
 
 /**

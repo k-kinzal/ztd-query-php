@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Admin;
 
+use LogicException;
 use MySqlMemory\Error\DiagnosticText;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\DataError;
@@ -57,6 +58,8 @@ final class Refusals
 
     /**
      * Answers the server error of a problem of a statement whose text is given.
+     *
+     * @throws LogicException When the diagnostic has no administrative error mapping
      */
     public function error(Diagnostic $diagnostic, ?Node $statement, string $text, bool $legacy = false): SqlError
     {
@@ -75,7 +78,7 @@ final class Refusals
             $diagnostic instanceof RefusedSetting => $this->setting($diagnostic, $statement, $text, $legacy),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute => StatementError::DuplicateArgument->error($diagnostic->attribute->value),
             $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
-            default => new SqlError(StatementError::UnknownError, $diagnostic->message()),
+            default => throw new LogicException('No administrative error mapping for ' . $diagnostic::class . ': ' . $diagnostic->message()),
         };
     }
 

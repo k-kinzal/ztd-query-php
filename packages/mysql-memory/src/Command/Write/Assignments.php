@@ -37,11 +37,11 @@ final class Assignments
             $name = ($use->qualifier?->schema === null ? '' : $use->qualifier->schema->value . '.') . ($use->qualifier === null ? '' : $use->qualifier->name->value . '.') . $use->name->value;
             throw QueryError::BadField->error((new \MySqlMemory\Error\DiagnosticText())->bytes($name, 192), 'field list');
         }
-        $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
-        foreach ($this->table->definition->columns as $index => $column) {
-            if ($declaration !== null ? $column->declaration === $declaration : strcasecmp($column->name, $use->name->value) === 0) {
-                return $index;
-            }
+        $position = $resolution instanceof ResolvedColumn
+            ? $this->table->definition->resolvedPosition($resolution)
+            : $this->table->definition->position($use->name->value);
+        if ($position !== null) {
+            return $position;
         }
 
         throw QueryError::BadField->error($use->name->value, 'field list');

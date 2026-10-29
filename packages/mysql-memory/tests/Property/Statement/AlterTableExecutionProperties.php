@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Statement;
 
-use Eris\TestTrait;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Session\Execution;
@@ -18,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Alter\AlterTableGenerator;
 
 /**

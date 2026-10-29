@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Problem;
 
+use LogicException;
 use MySqlMemory\Error\ErrorNumbers;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\DataError;
@@ -75,8 +76,8 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
  *
  * Each family of diagnostics, the names a statement reads, the rules of a query, the calls of
  * native functions, the definitions of tables, the writes, the expressions and the server
- * statements, has its own dispatcher; a diagnostic no family knows is ER_UNKNOWN_ERROR with its
- * message.
+ * statements, has its own dispatcher. An unmapped semantic diagnostic is an
+ * implementation failure, not an SQL refusal that a caller can accept as a result.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
  * @visibility MySqlMemory
@@ -87,6 +88,7 @@ final class Errors
      * Answers the server error of a diagnostic, for a name read in a clause of a statement.
      *
      * @throws SqlError When an earlier dependency or definer condition fails
+     * @throws LogicException When no implementation maps the semantic diagnostic
      */
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {
@@ -113,7 +115,7 @@ final class Errors
             ?? $this->manipulation($diagnostic, $statement)
             ?? $this->expression($diagnostic, $session->settings()->legacy())
             ?? $this->server($diagnostic, $session, $statement)
-            ?? new SqlError(StatementError::UnknownError, $diagnostic->message());
+            ?? throw new LogicException('No MySQL error mapping for ' . $diagnostic::class . ': ' . $diagnostic->message());
     }
 
     /**

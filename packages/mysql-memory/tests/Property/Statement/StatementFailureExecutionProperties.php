@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generator;
-use Eris\TestTrait;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
@@ -17,6 +16,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
 use SqlSemantics\Platform\MySql\Statement\Statement;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Account\Problem\InvalidUserAttributeGenerator;
 use Tests\Generator\MySql\Statement\Account\Problem\UnknownGrantColumnGenerator;
 use Tests\Generator\MySql\Statement\Alter\Problem\DuplicateColumnGenerator;
@@ -140,8 +140,8 @@ final class StatementFailureExecutionProperties extends TestCase
      */
     public static function providerCommands(): iterable
     {
-        yield 'Undeclared inspected relation kind' => [\Eris\Generators::vector(1, \Tests\Generator\MySql\Statement\Utility\Problem\TableOrViewGenerator::statements()), 1146];
-        yield 'Undeclared stored function' => [\Eris\Generators::vector(1, \Tests\Generator\Semantics\Statement\Reference\Missing\UndeclaredRoutineGenerator::queries()), 1305];
+        yield 'Undeclared inspected relation kind' => [\Tests\Generator\Operands::vector(1, \Tests\Generator\MySql\Statement\Utility\Problem\TableOrViewGenerator::statements()), 1146];
+        yield 'Undeclared stored function' => [\Tests\Generator\Operands::vector(1, \Tests\Generator\Semantics\Statement\Reference\Missing\UndeclaredRoutineGenerator::queries()), 1305];
         yield 'Duplicate ALTER column' => [DuplicateColumnGenerator::statements(), 1060];
         yield 'Missing GRANT column' => [UnknownGrantColumnGenerator::statements(), 1054];
         yield 'Invalid user attribute' => [InvalidUserAttributeGenerator::statements(), 3982];

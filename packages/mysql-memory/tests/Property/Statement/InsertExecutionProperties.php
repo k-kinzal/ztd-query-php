@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generators;
-use Eris\TestTrait;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
@@ -28,6 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Identifier\Name;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator;
 use Tests\Generator\MySql\Statement\Dml\Insert\InsertIntoGenerator;
 use Tests\Generator\MySql\Statement\Dml\Insert\InsertRowsGenerator;
@@ -56,7 +56,7 @@ final class InsertExecutionProperties extends TestCase
     #[DataProvider('providerReleases')]
     public function satisfiesAbsentTableIsAnSqlError(GrammarRelease $release): void
     {
-        $rows = Generators::vector(1, new InsertedRowGenerator(Generators::vector(1, new StringLiteralGenerator(Collation::known('utf8mb4_unicode_ci')))));
+        $rows = \Tests\Generator\Operands::vector(1, new InsertedRowGenerator(\Tests\Generator\Operands::vector(1, new StringLiteralGenerator(Collation::known('utf8mb4_unicode_ci')))));
         $inserts = new InsertRowsGenerator(
             new InsertIntoGenerator(Generators::constant(false), Generators::constant(null), Generators::constant(false), new WriteTargetGenerator(new QualifiedNameGenerator(new NameGenerator())), intoWritten: Generators::bool()),
             $rows,
@@ -85,7 +85,7 @@ final class InsertExecutionProperties extends TestCase
     public function satisfiesCreatedTableStoresConvertedValues(GrammarRelease $release): void
     {
         $strings = new StringLiteralGenerator(Collation::known('utf8mb4_unicode_ci'), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(-100000, 100000)));
-        $rows = Generators::vector(3, new InsertedRowGenerator(Generators::vector(1, $strings)));
+        $rows = \Tests\Generator\Operands::vector(3, new InsertedRowGenerator(\Tests\Generator\Operands::vector(1, $strings)));
         $sequences = Generators::map(static function (array $data) use ($release): array {
             [$create, $rows, $keyword] = $data;
             $database = $create->name->schema ?? new Name('pbt');

@@ -39,7 +39,7 @@ final class AbsentTableGenerator implements ErisGenerator
         $names = new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('pbt')));
         return \Tests\Generator\Operands::bind(new self($names), static function (\SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable $absent): DropTableGenerator {
             $target = new TargetTableGenerator(Generators::constant($absent->name), relationInformation: new \Tests\Generator\Semantics\Statement\Fact\RelationFactGenerator(Generators::constant(new \SqlSemantics\Statement\Shape\RowShape([])), Generators::constant($absent)));
-            return new DropTableGenerator(Generators::bool(), Generators::constant(true), Generators::vector(1, $target), statementInformation: new \Tests\Generator\MySql\Statement\StatementSemanticsGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847))));
+            return new DropTableGenerator(Generators::bool(), Generators::constant(true), \Tests\Generator\Operands::vector(1, $target), statementInformation: new \Tests\Generator\MySql\Statement\StatementSemanticsGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847))));
         });
     }
 

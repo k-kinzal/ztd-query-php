@@ -36,6 +36,34 @@ final class Operands
         $generators = array_map(static fn ($operand): Generator => $operand instanceof Generator ? $operand : Generators::constant($operand), array_values($operands));
         return new \Tests\Eris\Tuple($generators);
     }
+
+    /**
+     * Generates a fixed-width row and shrinks one element at a time. Eris's
+     * vector delegates to its Cartesian tuple shrinker, so nested rows need the
+     * same composition as constructor operands.
+     *
+     * @template T
+     * @param Generator<T> $elements
+     * @return Generator<list<T>>
+     */
+    public static function vector(int $size, Generator $elements): Generator
+    {
+        return self::tuple(...($size > 0 ? array_fill(0, $size, $elements) : []));
+    }
+
+    /**
+     * Generates a size-bounded sequence through Eris. Length and element values
+     * both shrink, retaining the other inputs when removing an element instead
+     * of multiplying every element's shrink candidates.
+     *
+     * @template T
+     * @param Generator<T> $elements
+     * @return Generator<list<T>>
+     */
+    public static function seq(Generator $elements): Generator
+    {
+        return new \Tests\Eris\Sequence($elements);
+    }
     /**
      * Selects an Eris alternative without discarding its nested shrink candidates.
      * Eris's frequency wrapper otherwise unboxes only the last candidate.

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generator;
-use Eris\TestTrait;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -18,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Statement\Fact\Diagnostic;
+use Tests\Eris\TestTrait;
 use Tests\Generator\Semantics\Statement\Fact\DiagnosticGenerator;
 
 /**

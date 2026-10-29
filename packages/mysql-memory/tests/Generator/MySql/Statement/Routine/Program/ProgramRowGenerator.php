@@ -43,14 +43,14 @@ final class ProgramRowGenerator implements ErisGenerator
      */
     public static function invocation(): ErisGenerator
     {
-        $parameters = new \Tests\Generator\MySql\Statement\Routine\ParameterListGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\ParameterGenerator(
+        $parameters = new \Tests\Generator\MySql\Statement\Routine\ParameterListGenerator(\Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Routine\ParameterGenerator(
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             new \Tests\Generator\MySql\Statement\Type\IntegralGenerator(\Tests\Generator\MySql\Statement\Type\Kind\IntegralKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int])),
         )));
         $rows = \Tests\Generator\Operands::bind($parameters, static fn (\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList $parameters): self => new self(
             Generators::constant($parameters),
             Generators::constant([$parameters->parameters[0]->name]),
-            Generators::vector(1, new \Tests\Generator\MySql\Statement\Type\Resolved\DomainGenerator(
+            \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Type\Resolved\DomainGenerator(
                 \Tests\Generator\MySql\Statement\Type\Resolved\KindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer]),
                 \Tests\Generator\MySql\Statement\Type\Resolved\FieldGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long]),
                 length: Generators::constant(11),

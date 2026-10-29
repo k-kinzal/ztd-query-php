@@ -29,7 +29,7 @@ final class EvaluationGenerator implements ErisGenerator
         return \Tests\Generator\Operands::bind(\Tests\Generator\MySql\Statement\Table\Key\IndexDefinitionGenerator::tables($release), static function (\SqlSemantics\Statement\AnalyzedStatement $definition) use ($release): ErisGenerator {
             \SqlSemantics\Diagnostic\Check::invariant($definition instanceof M\Table\CreateTable, 'A dependent DO names its generated table.');
             $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
-            $rows = new \Tests\Generator\MySql\Statement\Routine\Program\DeferredProjectionGenerator(new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector(2, $numbers)));
+            $rows = new \Tests\Generator\MySql\Statement\Routine\Program\DeferredProjectionGenerator(new \Tests\Generator\MySql\Statement\Expression\RowGenerator(\Tests\Generator\Operands::vector(2, $numbers)));
             $conditions = $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $rows : \Tests\Generator\Operands::oneOf([$rows, new \Tests\Generator\MySql\Statement\Query\StarGenerator()]);
             $items = Generators::map(static function (M\Routine\Program\DeferredProjection|M\Query\Star $condition) use ($definition): array {
                 $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], new M\Relation\TableReference($definition->name));

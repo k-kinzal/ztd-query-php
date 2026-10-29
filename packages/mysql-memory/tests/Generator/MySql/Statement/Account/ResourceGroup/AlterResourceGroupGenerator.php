@@ -45,7 +45,7 @@ final class AlterResourceGroupGenerator implements ErisGenerator
         ), static function (array $parts) use ($cpusCommas): ErisGenerator {
             return Generators::map(
                 static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup => new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup(name: $parts[0], cpus: $parts[1], priority: $parts[2], enabled: $parts[3], force: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], cpusOperator: $parts[7], priorityOperator: $parts[8], cpusCommas: $commas),
-                $cpusCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool())
+                $cpusCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[1]) - 1), Generators::bool())
             );
         });
     }

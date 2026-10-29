@@ -46,6 +46,32 @@ final class TransactionStatementGenerator implements ErisGenerator
     }
 
     /**
+     * Couples each command to its outcome in a fresh session, before execution.
+     * Missing savepoints and XIDs are explicit failures, while BEGIN, COMMIT,
+     * ROLLBACK, SAVEPOINT and characteristic assignments must succeed.
+     * Sources: https://dev.mysql.com/doc/refman/8.4/en/savepoint.html and
+     * https://dev.mysql.com/doc/refman/8.4/en/xa-states.html.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int}>
+     */
+    public static function freshSession(GrammarRelease $release): ErisGenerator
+    {
+        return Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): array {
+            $code = match (true) {
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint,
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\ReleaseSavepoint => 1305,
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart => $statement->option === null ? 0 : 1398,
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd => $statement->option === null ? 1399 : 1398,
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare => 1399,
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaCommit,
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback => 1397,
+                default => 0,
+            };
+            return [$statement, $code];
+        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new self($release)));
+    }
+
+    /**
      * @param int $size The size selected by Eris
      * @return GeneratedValueSingle<TransactionStatement>
      */

@@ -115,7 +115,7 @@ final class InsertQueryGenerator implements ErisGenerator
                     rows: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(
                             values: \Tests\Generator\Operands::tuple(
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )])
                             )
@@ -126,10 +126,10 @@ final class InsertQueryGenerator implements ErisGenerator
                     new \Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredOrderItemGenerator(
                         expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                             elements: \Tests\Generator\Operands::tuple(
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )]),
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )])
                             ),
@@ -188,7 +188,7 @@ final class InsertQueryGenerator implements ErisGenerator
                                     options: Generators::constant([]),
                                     items: \Tests\Generator\Operands::tuple(
                                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                                     value: Generators::constant('absent'),
                                                     quote: Generators::constant(null)
@@ -225,7 +225,7 @@ final class InsertQueryGenerator implements ErisGenerator
                             rows: \Tests\Generator\Operands::tuple(
                                 new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(
                                     values: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     )

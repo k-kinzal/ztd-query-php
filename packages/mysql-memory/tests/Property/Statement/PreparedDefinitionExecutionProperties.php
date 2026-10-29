@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generators;
-use Eris\TestTrait;
 use LogicException;
 use MySqlMemory\Command\Prepared\ParameterBindings;
 use MySqlMemory\Command\Prepared\PreparedCache;
@@ -32,6 +31,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Eris\TestTrait;
 
 /**
  * Exercises generated complete preparation domains through dependent DDL and execution.

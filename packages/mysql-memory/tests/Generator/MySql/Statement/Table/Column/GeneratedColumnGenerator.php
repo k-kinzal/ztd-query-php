@@ -60,7 +60,7 @@ final class GeneratedColumnGenerator implements ErisGenerator
             self::withCondition($type, new \Tests\Generator\MySql\Statement\Expression\Subquery\ScalarSubqueryGenerator(Generators::map(static fn (\SqlSemantics\Statement\Scalar $number): \SqlSemantics\Statement\Query => new M\Query\Select([], [new M\Query\SelectExpression($number)]), $numbers)), 3102),
         ];
         if ($release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector(2, $numbers)), 3764);
+            $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Expression\RowGenerator(\Tests\Generator\Operands::vector(2, $numbers)), 3764);
             $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(Generators::constant(M\Call\KeywordFunction::User), Generators::constant([])), 3763);
             $forms[] = self::withCondition($type, new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $value): string => 'v' . $value, \Tests\Generator\Operands::sized(Generators::nat(), 1000)))), 3772);
             $attributes = \Tests\Generator\Operands::oneOf([
@@ -71,7 +71,7 @@ final class GeneratedColumnGenerator implements ErisGenerator
                 new FormatAttributeGenerator(Generators::elements(M\Table\Column\Kind\ColumnFormat::cases())),
                 new StorageAttributeGenerator(Generators::elements(M\Table\Column\Kind\StorageMedium::cases())),
             ]);
-            $forms[] = self::withCondition($type, $numbers, 1221, Generators::vector(1, $attributes));
+            $forms[] = self::withCondition($type, $numbers, 1221, \Tests\Generator\Operands::vector(1, $attributes));
             $forms[] = self::withCondition(Generators::constant(new M\Type\Elementary(M\Type\Kind\ElementaryKind::Serial)), $numbers, 1221);
         }
         $columns = \Tests\Generator\Operands::oneOf($forms);

@@ -52,7 +52,7 @@ final class WindowRefinementGenerator implements ErisGenerator
                 Generators::constant($kind === \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinementKind::Partition ? [$order] : []),
                 Generators::constant($kind === \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinementKind::Ordering ? [$order] : []),
             );
-            $ancestors = Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\Clause\WindowDefinitionGenerator(Generators::constant($name), Generators::constant($parent)));
+            $ancestors = \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\Clause\WindowDefinitionGenerator(Generators::constant($name), Generators::constant($parent)));
             return new self($window, $ancestors);
         });
         yield 'Call/Problem/WindowRefinement' => [\SqlSemantics\Contract\GrammarRelease::MySql847, $conditions];

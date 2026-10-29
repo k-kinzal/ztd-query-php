@@ -55,7 +55,7 @@ final class RadixLiteralGenerator implements ErisGenerator
         });
         $statements = new \Tests\Generator\MySql\Statement\QueryRootGenerator(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
             Generators::constant([]),
-            Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($literals, new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
+            \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($literals, new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
         ));
         return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $statements);
     }

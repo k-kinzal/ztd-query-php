@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Statement;
 
-use Eris\TestTrait;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Session\Execution;
@@ -17,6 +16,7 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetCharacterSet;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Statement\AnalyzedStatement;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Utility\Set\SetCharacterSetGenerator;
 
 /**

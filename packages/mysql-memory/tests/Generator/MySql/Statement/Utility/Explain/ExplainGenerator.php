@@ -122,7 +122,7 @@ final class ExplainGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),

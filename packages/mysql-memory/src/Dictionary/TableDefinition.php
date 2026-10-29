@@ -141,6 +141,35 @@ final class TableDefinition
     }
 
     /**
+     * Maps a resolved semantic column to this stored relation. A declaration is
+     * an analysis snapshot, so rebuilding table metadata need not retain its PHP
+     * identity. The resolved table and declared column name identify storage;
+     * aliases and the column's written spelling do not participate in lookup.
+     * Re-exposed slots without a named base relation retain identity matching.
+     */
+    public function resolvedPosition(\SqlSemantics\Statement\Reference\Column\ResolvedColumn $resolution): ?int
+    {
+        $column = $resolution->declaration();
+        if ($column === null) {
+            return null;
+        }
+        foreach ($this->columns as $position => $stored) {
+            if ($stored->declaration === $column) {
+                return $position;
+            }
+        }
+        $relation = $resolution->relation->relationInformation()->table;
+        if ($relation instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable) {
+            $name = $relation->table->name;
+            if ($name->name->value !== $this->name || ($name->schema !== null && $name->schema->value !== $this->schema)) {
+                return null;
+            }
+            return $this->position($column->name->value);
+        }
+        return null;
+    }
+
+    /**
      * Answers the position of the AUTO_INCREMENT column, or null when the table has none.
      */
     public function autoIncrementColumn(): ?int

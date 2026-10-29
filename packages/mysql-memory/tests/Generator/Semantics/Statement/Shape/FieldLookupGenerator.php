@@ -48,7 +48,7 @@ final class FieldLookupGenerator implements ErisGenerator
         $lookups = new self([
             new UniqueFieldGenerator($fields), $ambiguous,
             new AbsentFieldGenerator(Generators::map(static fn (int $suffix): string => 'absent_' . $suffix, Generators::choose(0, 100))),
-            new DependentFieldGenerator(Generators::map(static fn (int $suffix): string => 'unknown_' . $suffix, Generators::choose(0, 100)), Generators::constant([]), Generators::vector(1, $missing)),
+            new DependentFieldGenerator(Generators::map(static fn (int $suffix): string => 'unknown_' . $suffix, Generators::choose(0, 100)), Generators::constant([]), \Tests\Generator\Operands::vector(1, $missing)),
         ]);
         return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($lookups, $numbers), static function (array $parts): ErisGenerator {
             [$lookup, $number] = $parts;

@@ -29,8 +29,8 @@ final class StartTransactionGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(static fn (array $characteristics): StartTransaction => new StartTransaction($characteristics, profile: new LanguageProfile($release)), Generators::oneOf(
-            Generators::seq(Generators::elements(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::WithConsistentSnapshot, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly)),
-            Generators::seq(Generators::elements(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::WithConsistentSnapshot, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadWrite)),
+            \Tests\Generator\Operands::seq(Generators::elements(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::WithConsistentSnapshot, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly)),
+            \Tests\Generator\Operands::seq(Generators::elements(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::WithConsistentSnapshot, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadWrite)),
         ));
     }
 

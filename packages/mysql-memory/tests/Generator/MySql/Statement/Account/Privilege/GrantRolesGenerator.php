@@ -42,10 +42,10 @@ final class GrantRolesGenerator implements ErisGenerator
             static fn (GrantedRole $firstRole): ErisGenerator => \Tests\Generator\Operands::bind(
                 new AccountGenerator(),
                 static fn (Account $firstUser): ErisGenerator => \Tests\Generator\Operands::bind(
-                    Generators::seq(new GrantedRoleGenerator()),
+                    \Tests\Generator\Operands::seq(new GrantedRoleGenerator()),
                     static fn (array $roles): ErisGenerator => Generators::map(
                         static fn (array $users): GrantRoles => new GrantRoles([$firstRole, ...$roles], [$firstUser, ...$users], $admin, $profile),
-                        Generators::seq(new AccountGenerator())
+                        \Tests\Generator\Operands::seq(new AccountGenerator())
                     )
                 )
             )

@@ -117,12 +117,11 @@ final class Names
     {
         $id = spl_object_id($resolution->relation);
         if (isset($holder->tables[$id])) {
-            $declaration = $resolution->slot->declaration();
-            foreach ($holder->tables[$id]->columns as $position => $column) {
-                if ($column->declaration === $declaration) {
-                    return $position;
-                }
+            $position = $holder->tables[$id]->resolvedPosition($resolution);
+            if ($position !== null) {
+                return $position;
             }
+            throw QueryError::BadField->error($resolution->declaration()?->name->value ?? $resolution->slot->name->value ?? '', $holder->clause);
         }
         $slots = $resolution->relation->relationInformation()->shape->slots;
         for ($slot = $resolution->slot; $slot instanceof OutputSlot; $slot = $slot->origin) {

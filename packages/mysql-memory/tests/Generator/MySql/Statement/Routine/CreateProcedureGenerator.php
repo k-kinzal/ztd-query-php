@@ -196,10 +196,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                                 expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -270,10 +270,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                         values: \Tests\Generator\Operands::tuple(
                             new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                 elements: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
                                 ),
@@ -315,7 +315,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 options: Generators::constant([]),
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -422,7 +422,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                     options: Generators::constant([]),
                     items: \Tests\Generator\Operands::tuple(
                         new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             alias: Generators::constant(null),
@@ -497,7 +497,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         ),
                         value: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                             elements: \Tests\Generator\Operands::tuple(
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('unknown'),
                                         quote: \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator::selecting([\SqlSemantics\Statement\Identifier\NameQuote::Bare])
@@ -505,7 +505,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                     scope: Generators::constant(null),
                                     instance: Generators::constant(null)
                                 )]),
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )])
                             ),
@@ -658,7 +658,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new Program\Expression\DeferredOperandGenerator([new Program\Expression\Call\DeferredWeightStringGenerator(
                                 subject: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\Subquery\ScalarSubqueryGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Subquery\ScalarSubqueryGenerator(
                                             query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
                                                 table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
                                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
@@ -673,7 +673,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                                 )
                                             )])
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -727,10 +727,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                         ),
                         expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                             elements: \Tests\Generator\Operands::tuple(
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )]),
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )])
                             ),
@@ -881,7 +881,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 options: Generators::constant([]),
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -890,7 +890,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                         spellingProfile: Generators::constant(null)
                                     )]),
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -977,10 +977,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                         ),
                         value: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                             elements: \Tests\Generator\Operands::tuple(
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )]),
-                                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                     text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                 )])
                             ),
@@ -1164,7 +1164,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 scope: \Tests\Generator\MySql\Statement\Server\Instance\KillScopeGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope::Query]),
                 process: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                     elements: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
+                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('missing'),
                                 quote: Generators::constant(null)
@@ -1172,7 +1172,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             scope: Generators::constant(null),
                             instance: Generators::constant(null)
                         )]),
-                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )])
                     ),
@@ -1225,7 +1225,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Server\DeferredPurgeGenerator(
                 moment: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                     elements: \Tests\Generator\Operands::tuple(
-                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
+                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('missing'),
                                 quote: Generators::constant(null)
@@ -1233,7 +1233,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             scope: Generators::constant(null),
                             instance: Generators::constant(null)
                         )]),
-                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )])
                     ),
@@ -1276,7 +1276,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         options: Generators::constant([]),
                         items: \Tests\Generator\Operands::tuple(
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('a'),
                                         quote: Generators::constant(null)
@@ -1290,7 +1290,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 spellingProfile: Generators::constant(null)
                             )]),
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('local_value'),
                                         quote: Generators::constant(null)
@@ -1367,7 +1367,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredSelectionGenerator(
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                 value: Generators::constant('a'),
                                 quote: Generators::constant(null)
@@ -1404,7 +1404,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                         new Program\Selection\DeferredOrderItemGenerator(
                             expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                 elements: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                             value: Generators::constant('a'),
                                             quote: Generators::constant(null)
@@ -1412,7 +1412,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                         qualifier: Generators::constant(null),
                                         dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                                     )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
                                 ),
@@ -1463,16 +1463,16 @@ final class CreateProcedureGenerator implements ErisGenerator
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredLikeGenerator(
                     operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                         elements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )])
                         ),
                         keyword: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                     )]),
-                    pattern: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                    pattern: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     )]),
                     escape: Generators::constant(null),
@@ -1500,16 +1500,16 @@ final class CreateProcedureGenerator implements ErisGenerator
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Predicate\DeferredRegexpGenerator(
                     operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                         elements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )])
                         ),
                         keyword: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
                     )]),
-                    pattern: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                    pattern: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     )]),
                     negated: Generators::constant(false)
@@ -1549,7 +1549,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredSubqueryPredicateGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::constant('x'),
                                     quote: Generators::constant(null)
@@ -1561,7 +1561,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 options: Generators::constant([]),
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -1570,7 +1570,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                         spellingProfile: Generators::constant(null)
                                     )]),
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -1635,15 +1635,15 @@ final class CreateProcedureGenerator implements ErisGenerator
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredArithmeticGenerator(
                             operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
-                            left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             right: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                 elements: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
                                 ),
@@ -1654,7 +1654,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -1689,16 +1689,16 @@ final class CreateProcedureGenerator implements ErisGenerator
                 branches: \Tests\Generator\Operands::tuple(
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredMembershipGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             elements: \Tests\Generator\Operands::tuple(
                                 new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -1711,7 +1711,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -1746,20 +1746,20 @@ final class CreateProcedureGenerator implements ErisGenerator
                 scope: Generators::constant(null),
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredComparisonGenerator(
                     operator: \Tests\Generator\MySql\Statement\Expression\ComparisonOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal]),
-                    left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                    left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     )]),
                     right: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredGroupedGenerator(
                         operand: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredLikeGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             pattern: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                 elements: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
                                 ),
@@ -1792,7 +1792,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 items: \Tests\Generator\Operands::tuple(
                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredTimeZoneGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             zone: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
@@ -1956,10 +1956,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                             arguments: \Tests\Generator\Operands::tuple(
                                 new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -2005,15 +2005,15 @@ final class CreateProcedureGenerator implements ErisGenerator
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Server\DeferredKillGenerator(
                 scope: Generators::constant(null),
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredMemberOfGenerator(
-                    operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                     )]),
                     array: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                         elements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )])
                         ),
@@ -2088,10 +2088,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                 process: new Program\Expression\DeferredOperandGenerator([new Program\Expression\DeferredTruthTestGenerator(
                     operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                         elements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )])
                         ),
@@ -2129,10 +2129,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 new Program\Expression\DeferredCallArgumentGenerator(
                                     expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                         elements: \Tests\Generator\Operands::tuple(
-                                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
-                                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )])
                                         ),
@@ -2148,7 +2148,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -2183,16 +2183,16 @@ final class CreateProcedureGenerator implements ErisGenerator
                 branches: \Tests\Generator\Operands::tuple(
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Operator\DeferredIntervalGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             quantity: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedRowGenerator(
                                 operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -2208,7 +2208,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -2250,10 +2250,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                     ),
                     value: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                         elements: \Tests\Generator\Operands::tuple(
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )])
                         ),
@@ -2283,10 +2283,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Operator\DeferredCollatedGenerator(
                             operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                 elements: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
                                 ),
@@ -2334,15 +2334,15 @@ final class CreateProcedureGenerator implements ErisGenerator
                     new Program\Flow\ConditionalBranchGenerator(
                         condition: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Operator\DeferredLogicalGenerator(
                             operator: \Tests\Generator\MySql\Statement\Expression\LogicalOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator::And]),
-                            left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                            left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                             )]),
                             right: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                 elements: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
                                 ),
@@ -2354,7 +2354,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new \Tests\Generator\MySql\Statement\StatementGenerator([new \Tests\Generator\MySql\Statement\Dml\EvaluationGenerator(
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -2413,10 +2413,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\DeferredProjectionGenerator(
                                 expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -2471,10 +2471,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                             arguments: \Tests\Generator\Operands::tuple(
                                 new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -2555,7 +2555,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             modifiers: Generators::constant([])
                         )]),
                         collation: Generators::constant(null),
-                        default: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                        default: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                         )])
                     )])
@@ -2566,9 +2566,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                             new Program\ProgramStatementGenerator([new Program\Flow\IfStatementGenerator(
                                 branches: \Tests\Generator\Operands::tuple(
                                     new Program\Flow\ConditionalBranchGenerator(
-                                        condition: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\ComparisonGenerator(
+                                        condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\ComparisonGenerator(
                                             operator: \Tests\Generator\MySql\Statement\Expression\ComparisonOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Greater]),
-                                            left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                            left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                                     value: Generators::constant('x'),
                                                     quote: Generators::constant(null)
@@ -2576,7 +2576,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                                 qualifier: Generators::constant(null),
                                                 dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                                             )]),
-                                            right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                            right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )])
                                         )]),
@@ -2598,9 +2598,9 @@ final class CreateProcedureGenerator implements ErisGenerator
                                                     value: Generators::constant('x'),
                                                     quote: Generators::constant(null)
                                                 ),
-                                                value: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
+                                                value: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
                                                     operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
-                                                    left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                                    left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                                             value: Generators::constant('x'),
                                                             quote: Generators::constant(null)
@@ -2608,7 +2608,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                                         qualifier: Generators::constant(null),
                                                         dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
                                                     )]),
-                                                    right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                                    right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                                     )])
                                                 )]),
@@ -2847,10 +2847,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                             method: new \Tests\Generator\MySql\Statement\Partition\Method\DeferredMethodGenerator(
                                 expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                     elements: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     ),
@@ -2913,7 +2913,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                                 options: Generators::constant([]),
                                 items: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )]),
                                         alias: Generators::constant(null),
@@ -3016,7 +3016,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                             aggregate: new \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator(
                                 function: \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum]),
                                 arguments: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                             value: Generators::constant('a'),
                                             quote: Generators::constant(null)
@@ -3098,10 +3098,10 @@ final class CreateProcedureGenerator implements ErisGenerator
                         expression: new Program\Expression\DeferredOperandGenerator([new Program\Expression\Conversion\DeferredCharsetConversionGenerator(
                             operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                 elements: \Tests\Generator\Operands::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )])
                                 ),
@@ -3153,15 +3153,15 @@ final class CreateProcedureGenerator implements ErisGenerator
                             operand: Generators::constant(null),
                             branches: \Tests\Generator\Operands::tuple(
                                 new Program\Expression\Branching\DeferredCaseBranchGenerator(
-                                    condition: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                    condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                         text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                     )]),
                                     result: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                                         elements: \Tests\Generator\Operands::tuple(
-                                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
-                                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )])
                                         ),

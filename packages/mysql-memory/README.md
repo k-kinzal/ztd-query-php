@@ -129,6 +129,34 @@ directly. Dependent requests, such as a table definition and an INSERT using its
 columns, are generated together before execution. Shrinking retains their
 relationships. These checks do not render or reparse generated values.
 
+Generated workloads combine declarations, recursive expressions, writes, reads,
+views, indexes and transactions. Their expected rows and affected counts are
+computed from the generated primitive values before execution. Requests that
+require missing state carry their expected SQL error; an error from a request
+that should succeed fails the property. Parameter generators declare their
+semantic settings independently of MemoryDB's binder.
+Execution maps resolved table and column values to storage without requiring
+the generator's declaration objects to be the current catalog objects. A
+metadata rebuild therefore does not disconnect a generated write from its table.
+
+The broad statement property checks execution-scope cleanup across semantic
+forms. It is supplementary to the properties with expected results and the
+native comparison below; accepting an SQL reply does not establish correctness.
+An unmapped semantic diagnostic is an implementation failure, not SQL error
+1105. Such failures escape the property and the native comparison's SQL-error
+handling.
+
+Composition uses Eris generation and shrinking. Dependent prerequisites shrink
+before their consumers, and vectors shrink one element at a time rather than
+constructing the Cartesian product of every element's shrink candidates.
+Recursive alternatives apply to unrestricted scalar roles. Positional, sampling,
+deferred and spelling-dependent operands retain generators for their constraints.
+Sequences can remove any position while retaining the remaining operands.
+Shrink candidates and their semantic publications are evaluated one at a time;
+Eris still controls generation, trial counts, seeds, antecedents and reporting.
+Integration tests execute complete shrunk workloads to check that declarations,
+references and expected results remain related.
+
 Every public core and MySQL semantic type has a corresponding generator under
 `tests/Generator`. PHPStan checks this mapping and whether the generators are
 used. The configurable unused-class rule accepts fully qualified names or `*`

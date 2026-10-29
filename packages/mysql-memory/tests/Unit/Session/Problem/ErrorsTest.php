@@ -776,16 +776,11 @@ final class ErrorsTest extends TestCase
         self::assertNull($errors->server(new Misuse(MisuseRule::StarWithoutTables), $session, null));
     }
 
-    public function testErrorAnswersAnUnknownErrorForADiagnosticNoFamilyKnows(): void
+    public function testErrorMapsDebugOnlyUtilityRequests(): void
     {
         $session = (new Instance())->connect();
         $known = (new Errors())->error(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly), $session);
-        $diagnostic = self::createStub(\SqlSemantics\Statement\Fact\Diagnostic::class);
-        $diagnostic->method('message')->willReturn('Unmapped diagnostic');
-        $unknown = (new Errors())->error($diagnostic, $session);
-
         self::assertSame(1289, $known->getCode());
-        self::assertSame([1105, 'Unmapped diagnostic'], [$unknown->getCode(), $unknown->getMessage()]);
     }
 
     public function testNamedAnswersTheNameOfAMisuseWithoutItsDatabase(): void

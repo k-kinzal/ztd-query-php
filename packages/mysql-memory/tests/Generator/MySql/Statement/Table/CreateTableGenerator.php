@@ -81,7 +81,7 @@ final class CreateTableGenerator implements ErisGenerator
     public static function fromOperands(ErisGenerator $name, ErisGenerator $elements, ErisGenerator $options, ErisGenerator $partitioning, ErisGenerator $query, ErisGenerator $temporaryWords, ErisGenerator $ifNotExists, ErisGenerator $enclosed, ?ErisGenerator $optionsCommas = null): ErisGenerator
     {
         return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple($name, $elements, $options, $partitioning, $query, $temporaryWords, $ifNotExists, $enclosed), static function (array $parts) use ($optionsCommas): ErisGenerator {
-            return Generators::map(static fn (array $commas): CreateTable => new CreateTable(name: $parts[0], elements: $parts[1], options: $parts[2], partitioning: $parts[3], query: $parts[4], temporaryWords: $parts[5], ifNotExists: $parts[6], enclosed: $parts[7], optionsCommas: $commas), $optionsCommas ?? Generators::vector(max(0, count($parts[2]) - 1), Generators::bool()));
+            return Generators::map(static fn (array $commas): CreateTable => new CreateTable(name: $parts[0], elements: $parts[1], options: $parts[2], partitioning: $parts[3], query: $parts[4], temporaryWords: $parts[5], ifNotExists: $parts[6], enclosed: $parts[7], optionsCommas: $commas), $optionsCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[2]) - 1), Generators::bool()));
         });
     }
 
@@ -99,7 +99,7 @@ final class CreateTableGenerator implements ErisGenerator
             new Option\TextOptionGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::Comment), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'comment ' . $value, Generators::choose(0, 1000)))),
             new Option\RowFormatOptionGenerator(Generators::elements([\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Dynamic, \SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat::Compact])),
         );
-        $operands = \Tests\Generator\Operands::tuple($definitions, $options, \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql($release), Generators::vector(3, Generators::bool()));
+        $operands = \Tests\Generator\Operands::tuple($definitions, $options, \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql($release), \Tests\Generator\Operands::vector(3, Generators::bool()));
         return \Tests\Generator\Operands::bind($operands, self::optionSample(...));
     }
 
@@ -974,11 +974,11 @@ final class CreateTableGenerator implements ErisGenerator
             ),
             elements: \Tests\Generator\Operands::tuple(
                 new Key\CheckConstraintGenerator(
-                    condition: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                        operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
+                    condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
                                         function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
                                         arguments: Generators::constant([]),
                                         parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
@@ -1105,11 +1105,11 @@ final class CreateTableGenerator implements ErisGenerator
                                 keyword: Column\Kind\ColumnKeywordGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::Null])
                             ),
                             new Column\DefaultExpressionGenerator(
-                                expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                        operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                                operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
+                                expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
                                                     function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
                                                     arguments: Generators::constant([]),
                                                     parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
@@ -1475,11 +1475,11 @@ final class CreateTableGenerator implements ErisGenerator
                         )]),
                         attributes: \Tests\Generator\Operands::tuple(
                             new Key\CheckConstraintGenerator(
-                                condition: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                        operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                                operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
+                                condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
+                                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
                                                     function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
                                                     arguments: Generators::constant([]),
                                                     parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])

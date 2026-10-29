@@ -41,7 +41,7 @@ final class ColumnNameGenerator implements ErisGenerator
             Generators::associative([
                 'prefix' => Generators::map(
                     static fn (array $characters): string => implode('', array_slice($characters, 0, 63)),
-                    Generators::seq(Generators::elements('a', 'Z', '0', '_', '`', ' ', '.', 'é', '列')),
+                    \Tests\Generator\Operands::seq(Generators::elements('a', 'Z', '0', '_', '`', ' ', '.', 'é', '列')),
                 ),
                 'last' => Generators::elements('a', 'Z', '0', '_', '`', '.', 'é', '列'),
             ]),

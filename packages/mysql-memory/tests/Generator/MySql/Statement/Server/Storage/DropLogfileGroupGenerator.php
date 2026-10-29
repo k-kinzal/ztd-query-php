@@ -35,7 +35,7 @@ final class DropLogfileGroupGenerator implements ErisGenerator
         ), static function (array $parts) use ($optionsCommas): ErisGenerator {
             return Generators::map(
                 static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $commas),
-                $optionsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool())
+                $optionsCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[1]) - 1), Generators::bool())
             );
         });
     }

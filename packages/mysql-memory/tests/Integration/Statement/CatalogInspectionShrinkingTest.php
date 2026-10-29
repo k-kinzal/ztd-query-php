@@ -7,7 +7,6 @@ namespace Tests\Integration\Statement;
 use Eris\Quantifier\ForAll;
 use Eris\Random\MersenneTwister;
 use Eris\Random\RandomRange;
-use Eris\Shrinker\ShrinkerFactory;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Execution;
@@ -19,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns;
+use Tests\Eris\ShrinkerFactory;
 use Tests\Generator\MySql\Statement\Table\Catalog\SystemTablesGenerator;
 
 #[CoversNothing]

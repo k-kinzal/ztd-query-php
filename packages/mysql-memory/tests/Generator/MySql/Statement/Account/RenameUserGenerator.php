@@ -33,7 +33,7 @@ final class RenameUserGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $profile = new LanguageProfile($release);
-        $requests = \Tests\Generator\Operands::bind(new UserRenamingGenerator(), static fn (UserRenaming $first): ErisGenerator => Generators::map(static fn (array $rest): RenameUser => new RenameUser([$first, ...$rest], $profile), Generators::seq(new UserRenamingGenerator())));
+        $requests = \Tests\Generator\Operands::bind(new UserRenamingGenerator(), static fn (UserRenaming $first): ErisGenerator => Generators::map(static fn (array $rest): RenameUser => new RenameUser([$first, ...$rest], $profile), \Tests\Generator\Operands::seq(new UserRenamingGenerator())));
         $this->delegate = Generators::oneOf(
             $requests,
             Generators::map(static fn (RefusedRenameUser $condition): RenameUser => new RenameUser($condition->renamings, $profile), new RefusedRenameUserGenerator()),

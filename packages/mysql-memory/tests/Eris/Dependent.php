@@ -11,10 +11,13 @@ use Eris\Generator\GeneratedValueOptions;
 use Eris\Generator\GeneratedValueSingle;
 use LogicException;
 use Override;
+use Traversable;
 use WeakMap;
 
 /**
  * Rebuilds dependent semantic operands while Eris shrinks either side of their dependency.
+ * Prerequisites shrink first so smaller widths, depths and lengths are explored
+ * before minimizing every operand of a larger structure.
  *
  * @template A
  * @template B
@@ -65,32 +68,36 @@ final class Dependent extends Generator\BindGenerator
     {
         $record = $this->generated[$element] ?? throw new LogicException('A dependent value retains its original Eris generators.');
         [$parent, $generator, $child, $size, $seed] = $record;
-        $options = [];
-        foreach ($generator->shrink($child) as $candidate) {
-            if ((new GeneratedValueOptions([$candidate]))->remove($child)->count() === 0) {
-                continue;
+        return new Options(function () use ($record, $parent, $generator, $child, $size, $seed): Traversable {
+            $emitted = false;
+            foreach ($this->prerequisites->shrink($parent) as $candidate) {
+                if ((new GeneratedValueOptions([$candidate]))->remove($parent)->count() === 0) {
+                    continue;
+                }
+                $dependent = ($this->dependent)($candidate->unbox());
+                $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
+                $random->seed($seed);
+                $rebuilt = $dependent($size, $random);
+                $result = GeneratedValueSingle::fromValueAndInput($rebuilt->unbox(), [$candidate, $rebuilt], 'bind');
+                $this->generated[$result] = [$candidate, $dependent, $rebuilt, $size, $seed];
+                $emitted = true;
+                yield $result;
             }
-            $result = GeneratedValueSingle::fromValueAndInput($candidate->unbox(), [$parent, $candidate], 'bind');
-            $this->generated[$result] = [$parent, $generator, $candidate, $size, $seed];
-            $options[] = $result;
-        }
-        foreach ($this->prerequisites->shrink($parent) as $candidate) {
-            if ((new GeneratedValueOptions([$candidate]))->remove($parent)->count() === 0) {
-                continue;
+            foreach ($generator->shrink($child) as $candidate) {
+                if ((new GeneratedValueOptions([$candidate]))->remove($child)->count() === 0) {
+                    continue;
+                }
+                $result = GeneratedValueSingle::fromValueAndInput($candidate->unbox(), [$parent, $candidate], 'bind');
+                $this->generated[$result] = [$parent, $generator, $candidate, $size, $seed];
+                $emitted = true;
+                yield $result;
             }
-            $dependent = ($this->dependent)($candidate->unbox());
-            $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
-            $random->seed($seed);
-            $rebuilt = $dependent($size, $random);
-            $result = GeneratedValueSingle::fromValueAndInput($rebuilt->unbox(), [$candidate, $rebuilt], 'bind');
-            $this->generated[$result] = [$candidate, $dependent, $rebuilt, $size, $seed];
-            $options[] = $result;
-        }
-        if ($options !== []) {
-            return new GeneratedValueOptions($options);
-        }
-        $unchanged = GeneratedValueSingle::fromValueAndInput($child->unbox(), [$parent, $child], 'bind');
-        $this->generated[$unchanged] = $record;
-        return $unchanged;
+            if ($emitted) {
+                return;
+            }
+            $unchanged = GeneratedValueSingle::fromValueAndInput($child->unbox(), [$parent, $child], 'bind');
+            $this->generated[$unchanged] = $record;
+            yield $unchanged;
+        });
     }
 }

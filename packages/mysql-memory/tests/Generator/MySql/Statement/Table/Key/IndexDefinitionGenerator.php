@@ -56,7 +56,7 @@ final class IndexDefinitionGenerator implements ErisGenerator
         $requests = \Tests\Generator\Operands::bind(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release), static function (\SqlSemantics\Platform\MySql\Statement\Name\ColumnName $column): ErisGenerator {
             $indexes = new self(
                 Generators::constant(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Index),
-                Generators::vector(1, new ColumnPartGenerator(Generators::constant($column->column))),
+                \Tests\Generator\Operands::vector(1, new ColumnPartGenerator(Generators::constant($column->column))),
                 \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(null), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)),
                 keyword: new IndexWordGenerator(),
             );

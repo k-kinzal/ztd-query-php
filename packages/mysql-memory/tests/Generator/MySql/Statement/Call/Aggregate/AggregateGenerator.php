@@ -29,7 +29,7 @@ final class AggregateGenerator implements ErisGenerator
     {
         return \Tests\Generator\Operands::bind(\Tests\Generator\Operands::tuple(new AggregateAliasGenerator(), Generators::choose(0, 100), Generators::choose(0, 100)), static function (array $parts) use ($release): ErisGenerator {
             [$alias, $first, $second] = $parts;
-            $calls = new self(Generators::constant($alias->function()), Generators::vector(1, new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(Generators::constant(new Name('value')))), all: Generators::bool(), alias: Generators::constant($alias));
+            $calls = new self(Generators::constant($alias->function()), \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(Generators::constant(new Name('value')))), all: Generators::bool(), alias: Generators::constant($alias));
             $queries = Generators::map(static function (M\Call\Aggregate\Aggregate $call) use ($first, $second): M\QueryRoot {
                 $rows = new M\Query\Set\SetOperation(
                     new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral((string) $first), new Name('value'))]),

@@ -131,11 +131,9 @@ final class InsertCommand implements Command
                 throw StatementError::NotSupportedYet->error('a table wildcard in the column list of INSERT');
             }
             $resolution = $use->scalarInformation()->resolution;
-            $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
-            foreach ($definition->columns as $index => $column) {
-                if ($column->declaration === $declaration || ($declaration === null && strcasecmp($column->name, $use->name->value) === 0)) {
-                    return $index;
-                }
+            $index = $resolution instanceof ResolvedColumn ? $definition->resolvedPosition($resolution) : $definition->position($use->name->value);
+            if ($index !== null) {
+                return $index;
             }
             throw QueryError::BadField->error($use->name->value, 'field list');
         };

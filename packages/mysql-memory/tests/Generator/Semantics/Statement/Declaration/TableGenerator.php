@@ -74,9 +74,9 @@ final class TableGenerator implements ErisGenerator
                 ),
                 new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847)),
                 Generators::constant([$columns[0], $columns[1]]),
-                implicit: Generators::vector(1, $implicit),
+                implicit: \Tests\Generator\Operands::vector(1, $implicit),
                 kind: RelationKindGenerator::selecting([\SqlSemantics\Statement\Declaration\RelationKind::BaseTable]),
-                keys: Generators::vector(1, $keys),
+                keys: \Tests\Generator\Operands::vector(1, $keys),
             );
         });
     }

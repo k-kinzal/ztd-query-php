@@ -45,7 +45,7 @@ final class SetCharacterSetGenerator implements ErisGenerator
             Generators::elements(['binary', 'latin1', 'utf8mb4']),
             new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::Bare, \SqlSemantics\Statement\Identifier\NameQuote::Backtick),
         );
-        $items = Generators::vector(1, new self(new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator($names)));
+        $items = \Tests\Generator\Operands::vector(1, new self(new \Tests\Generator\MySql\Statement\Name\CharsetNameGenerator($names)));
         return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new SetVariablesGenerator($items));
     }
 }

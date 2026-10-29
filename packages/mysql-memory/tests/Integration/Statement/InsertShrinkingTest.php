@@ -21,7 +21,7 @@ final class InsertShrinkingTest extends TestCase
     {
         $release = GrammarRelease::MySql847;
         $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_unicode_ci');
-        $rows = \Eris\Generators::seq(new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(\Eris\Generators::vector(
+        $rows = \Tests\Generator\Operands::seq(new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(\Tests\Generator\Operands::vector(
             1,
             new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator($collation, \Eris\Generators::map(static fn (int $number): string => (string) $number, \Eris\Generators::int()))
         )));

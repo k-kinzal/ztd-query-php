@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generators;
-use Eris\TestTrait;
 use LogicException;
 use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Command\Prepared\PreparedStatement;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
 use Tests\Generator\MySql\Statement\Table\CreateTableGenerator;
 use Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator;

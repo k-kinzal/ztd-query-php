@@ -69,9 +69,7 @@ final class ParameterGenerator implements ErisGenerator
         $right = $pair ? new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(position: $reverse ? 0 : 1) : new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $denominator);
         $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Divide, $left, $right);
         $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($expression, new \SqlSemantics\Statement\Identifier\Name('quotient'))], hints: $legacy ? [] : [$hint]));
-        $session = (new \MySqlMemory\Instance(substr($release->value, 6)))->connect();
-        $prepared = (new \MySqlMemory\Session\Statement\Binding())->statement($session, $query, prepared: true);
-        \SqlSemantics\Diagnostic\Check::invariant($prepared instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'Preparation retains the generated query.');
+        $prepared = self::prepared($release, $query, $pair ? [0, 1] : [0], $legacy ? 4 : (int) $hint->value->value);
         $values = [[$numerator, \MySqlMemory\Typing\Domain::integer()], [$denominator, \MySqlMemory\Typing\Domain::integer()]];
         $values = $pair ? $values : [$values[0]];
         $scale = $legacy ? 4 : (int) $hint->value->value;
@@ -112,9 +110,7 @@ final class ParameterGenerator implements ErisGenerator
         $b = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(position: 1);
         $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic($operator, $grouped ? new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($a) : $a, $grouped ? new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($b) : $b);
         $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($expression, new \SqlSemantics\Statement\Identifier\Name('answer'))]));
-        $session = (new \MySqlMemory\Instance(substr($release->value, 6)))->connect();
-        $prepared = (new \MySqlMemory\Session\Statement\Binding())->statement($session, $query, prepared: true);
-        \SqlSemantics\Diagnostic\Check::invariant($prepared instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'Preparation retains the generated numeric query.');
+        $prepared = self::prepared($release, $query, [0, 1]);
         $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         $integer = $operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide;
         $decimal = $legacy && $operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Divide;
@@ -156,23 +152,35 @@ final class ParameterGenerator implements ErisGenerator
     public static function lifetimeSample(array $parts): array
     {
         [$release, $value, $divisor, $precision] = $parts;
-        $session = (new \MySqlMemory\Instance(substr($release->value, 6)))->connect();
-        $setting = $session->instance->catalog->find('div_precision_increment');
-        \SqlSemantics\Diagnostic\Check::invariant($setting !== null, 'Division precision is a session variable.');
-        $session->variables->set($setting, (string) $precision);
-        $session->variables->assign('typed', 0, \MySqlMemory\Typing\Domain::integer());
         $division = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Divide, new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(position: 0), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $divisor));
         $cast = new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter(position: 1), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed));
         $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('typed'));
         $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($division, new \SqlSemantics\Statement\Identifier\Name('quotient')), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($cast, new \SqlSemantics\Statement\Identifier\Name('cast_value')), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($variable, new \SqlSemantics\Statement\Identifier\Name('variable_value'))]));
-        $prepared = (new \MySqlMemory\Session\Statement\Binding())->statement($session, $query, prepared: true);
-        \SqlSemantics\Diagnostic\Check::invariant($prepared instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'Preparation retains the generated query.');
+        $prepared = self::prepared($release, $query, [0, 1], $precision, ['typed' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
         $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         $scale = $precision + (int) $legacy;
         $fraction = bcdiv((string) $value, (string) $divisor, 9);
         $rounded = bcadd($fraction, bcdiv($value < 0 ? '-5' : '5', bcpow('10', (string) ($scale + 1)), $scale + 1), $scale);
         $text = $value . '.5';
         return [$prepared, [[$value, \MySqlMemory\Typing\Domain::integer()], [$text, \MySqlMemory\Typing\Domain::string(strlen($text), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]], $text, $precision + 1, [$rounded, (string) ($value + ($legacy ? 0 : ($value < 0 ? -1 : 1))), $legacy ? $text : (string) $value]];
+    }
+
+    /**
+     * Publishes independently declared preparation inputs, without using the
+     * MemoryDB binder or reading an execution session to construct the sample.
+     *
+     * @param list<int> $positions Generated marker positions
+     * @param array<string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain> $variables Declared user-variable domains
+     */
+    public static function prepared(\SqlSemantics\Contract\GrammarRelease $release, \SqlSemantics\Platform\MySql\Statement\QueryRoot $query, array $positions, int $precision = 4, array $variables = []): \SqlSemantics\Platform\MySql\Statement\QueryRoot
+    {
+        $connection = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::defaults($release)->connection;
+        $unbound = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(16383, $connection, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings($connection, divPrecisionIncrement: $precision, userVariables: $variables, parameters: array_fill_keys($positions, $unbound), unboundParameters: $positions);
+        $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')], session: $settings);
+        $prepared = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $query);
+        \SqlSemantics\Diagnostic\Check::invariant($prepared instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot, 'Publication retains the generated query.');
+        return $prepared;
     }
 
 }

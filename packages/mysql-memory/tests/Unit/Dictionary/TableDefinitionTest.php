@@ -14,6 +14,28 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TableDefinitionTest extends TestCase
 {
+    public function testResolvedPositionMapsIndependentSnapshotsToTheirQualifiedStoredTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t (a INT, b INT); CREATE TABLE d.u (a INT, b INT); CREATE DATABASE e; CREATE TABLE e.t (a INT, b INT)');
+        $statement = $session->analyze('SELECT target.a FROM d.t AS target');
+        $resolution = $statement->field('a')->resolution;
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $resolution);
+        $session->query('ALTER TABLE d.t MODIFY a INT AFTER b');
+        $table = $session->instance->dictionary->table('d', 't');
+        $other = $session->instance->dictionary->table('d', 'u');
+        $otherSchema = $session->instance->dictionary->table('e', 't');
+        self::assertNotNull($table);
+        self::assertNotNull($other);
+        self::assertNotNull($otherSchema);
+        self::assertNotSame($resolution->declaration(), $table->definition->columns[1]->declaration);
+        self::assertSame(1, $table->definition->resolvedPosition($resolution));
+        self::assertNull($other->definition->resolvedPosition($resolution));
+        self::assertNull($otherSchema->definition->resolvedPosition($resolution));
+        $session->query('ALTER TABLE d.t DROP COLUMN a');
+        self::assertNull($table->definition->resolvedPosition($resolution));
+    }
+
     public function testWithColumnDisplaysUpdatesRuntimeAndDeclaredColumnsWithoutLosingKeyIdentity(): void
     {
         $session = (new Instance())->connect();

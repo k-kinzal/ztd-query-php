@@ -78,7 +78,7 @@ final class LoadTableGenerator implements ErisGenerator
                 $definition = \SqlSemantics\Facade\Semantics::fromStatement($missing, $create);
                 $declared = new \SqlSemantics\Contract\AnalysisContext($profile, [$database], $definition->declarations(), true);
                 $column = $definition->declarations()[0]->columns[0]->name;
-                $assignments = $fixed ? Generators::constant([]) : Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator(
+                $assignments = $fixed ? Generators::constant([]) : \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator(
                     Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)),
                     Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Expression\Row([
                         new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column),
@@ -91,7 +91,7 @@ final class LoadTableGenerator implements ErisGenerator
                     new LoadInputGenerator(Generators::constant(false), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile), Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('generated-input'))),
                     Generators::constant(null),
                     Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget($create->name)),
-                    fields: $fixed ? Generators::vector(1, new FieldOptionGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated), Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('')))) : Generators::constant([]),
+                    fields: $fixed ? \Tests\Generator\Operands::vector(1, new FieldOptionGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated), Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('')))) : Generators::constant([]),
                     columns: $fixed ? Generators::constant([new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('input'))]) : Generators::constant(null),
                     assignments: $assignments,
                 );
@@ -114,7 +114,7 @@ final class LoadTableGenerator implements ErisGenerator
     {
         $definitions = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
         return \Tests\Generator\Operands::bind($definitions, static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release): ErisGenerator {
-            return Generators::map(static fn (array $parts): array => self::import($create, $parts[0], $parts[1], $parts[2], $release), \Tests\Generator\Operands::tuple(Generators::vector(3, Generators::choose(-10000, 10000)), Generators::bool(), new LoadFormatGenerator()));
+            return Generators::map(static fn (array $parts): array => self::import($create, $parts[0], $parts[1], $parts[2], $release), \Tests\Generator\Operands::tuple(\Tests\Generator\Operands::vector(3, Generators::choose(-10000, 10000)), Generators::bool(), new LoadFormatGenerator()));
         });
     }
 

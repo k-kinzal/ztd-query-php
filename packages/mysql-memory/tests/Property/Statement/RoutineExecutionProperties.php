@@ -6,7 +6,6 @@ namespace Tests\Property\Statement;
 
 use Eris\Generator;
 use Eris\Generators;
-use Eris\TestTrait;
 use LogicException;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Statement\AnalyzedStatement;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Routine\CreateProcedureGenerator;
 use Tests\Generator\MySql\Statement\Routine\ParameterListGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\DeferredSelectionGenerator;

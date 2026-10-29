@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generators;
-use Eris\TestTrait;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Prepared\PreparedStatement;
 use MySqlMemory\Error\SqlError;
@@ -24,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Identifier\Name;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Account\CreateRoleGenerator;
 use Tests\Generator\MySql\Statement\Account\Privilege\GrantRolesGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;

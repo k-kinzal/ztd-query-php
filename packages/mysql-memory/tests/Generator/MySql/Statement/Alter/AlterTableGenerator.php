@@ -56,7 +56,7 @@ final class AlterTableGenerator implements ErisGenerator
     public static function indexSequences(GrammarRelease $release): ErisGenerator
     {
         $values = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(MySql\Type\Resolved\Collation::known('utf8mb4_unicode_ci'), Generators::map(static fn (int $value): string => (string) $value, Generators::choose(-10000, 10000)));
-        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(Generators::vector(2, $values))));
+        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(\Tests\Generator\Operands::vector(2, $values))));
         $operands = \Tests\Generator\Operands::tuple(
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
             new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
@@ -106,7 +106,7 @@ final class AlterTableGenerator implements ErisGenerator
     public static function functionalSequences(GrammarRelease $release): ErisGenerator
     {
         $values = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(MySql\Type\Resolved\Collation::known('utf8mb4_unicode_ci'), Generators::map(static fn (int $value): string => (string) $value, Generators::choose(-10000, 10000)));
-        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(Generators::vector(1, $values))));
+        $rows = \Tests\Generator\Operands::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => \Tests\Generator\Operands::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(\Tests\Generator\Operands::vector(1, $values))));
         return Generators::map(static function (array $parts) use ($release): array {
             [$name, $column, $rows, $action] = $parts;
             $table = new QualifiedName($name);
@@ -341,7 +341,7 @@ final class AlterTableGenerator implements ErisGenerator
                             values: new \Tests\Generator\MySql\Statement\Partition\Bound\ValuesInGenerator(
                                 row: new \Tests\Generator\MySql\Statement\Partition\Bound\PartitionRowGenerator(
                                     items: \Tests\Generator\Operands::tuple(
-                                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                        \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                             text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                         )])
                                     )
@@ -412,10 +412,10 @@ final class AlterTableGenerator implements ErisGenerator
                                 rows: \Tests\Generator\Operands::tuple(
                                     new \Tests\Generator\MySql\Statement\Partition\Bound\PartitionRowGenerator(
                                         items: \Tests\Generator\Operands::tuple(
-                                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )]),
-                                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
+                                            \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
                                                 text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
                                             )])
                                         )
@@ -1236,9 +1236,9 @@ final class AlterTableGenerator implements ErisGenerator
                                 width: Generators::constant(null),
                                 modifiers: Generators::constant([])
                             )]),
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
                                 operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([MySql\Expression\Operator\ArithmeticOperator::Plus]),
-                                left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('a'),
                                         quote: Generators::constant(null)
@@ -1246,7 +1246,7 @@ final class AlterTableGenerator implements ErisGenerator
                                     qualifier: Generators::constant(null),
                                     dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([MySql\Expression\OptionalWords::Omitted])
                                 )]),
-                                right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('d'),
                                         quote: Generators::constant(null)
@@ -1341,11 +1341,11 @@ final class AlterTableGenerator implements ErisGenerator
                     partitioning: new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator(
                         method: new \Tests\Generator\MySql\Statement\Partition\Method\HashMethodGenerator(
                             linear: Generators::constant(false),
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
                                 operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([MySql\Expression\Operator\ArithmeticOperator::Plus]),
-                                left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
+                                left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
                                     operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([MySql\Expression\Operator\ArithmeticOperator::Plus]),
-                                    left: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                    left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                             value: Generators::constant('a'),
                                             quote: Generators::constant(null)
@@ -1353,7 +1353,7 @@ final class AlterTableGenerator implements ErisGenerator
                                         qualifier: Generators::constant(null),
                                         dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([MySql\Expression\OptionalWords::Omitted])
                                     )]),
-                                    right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                    right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                         name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                             value: Generators::constant('b'),
                                             quote: Generators::constant(null)
@@ -1362,7 +1362,7 @@ final class AlterTableGenerator implements ErisGenerator
                                         dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([MySql\Expression\OptionalWords::Omitted])
                                     )])
                                 )]),
-                                right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                                right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                     name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                         value: Generators::constant('c'),
                                         quote: Generators::constant(null)
@@ -1394,7 +1394,7 @@ final class AlterTableGenerator implements ErisGenerator
                     partitioning: new \Tests\Generator\MySql\Statement\Partition\PartitionClauseGenerator(
                         method: new \Tests\Generator\MySql\Statement\Partition\Method\ExpressionMethodGenerator(
                             kind: \Tests\Generator\MySql\Statement\Partition\Method\PartitionKindGenerator::selecting([MySql\Partition\Method\PartitionKind::Range]),
-                            expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
+                            expression: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
                                 name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
                                     value: Generators::constant('a'),
                                     quote: Generators::constant(null)

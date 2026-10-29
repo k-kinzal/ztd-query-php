@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generators;
-use Eris\TestTrait;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -22,6 +21,7 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction as Transaction;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetTransaction;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Server\Transaction\BeginGenerator;
 use Tests\Generator\MySql\Statement\Server\Transaction\CommitGenerator;
 use Tests\Generator\MySql\Statement\Server\Transaction\SavepointGenerator;
@@ -40,21 +40,25 @@ final class TransactionExecutionProperties extends TestCase
     use TestTrait;
 
     /**
-     * SQL errors and successful replies both leave the execution journal balanced.
+     * Fresh-session prerequisites determine the exact SQL refusal or successful reply.
      */
     #[Test]
     #[DataProvider('providerReleases')]
-    public function satisfiesEveryTransactionAlternativeUnwindsItsRuntimeScope(GrammarRelease $release): void
+    public function satisfiesEveryTransactionAlternativeHasItsFreshSessionOutcome(GrammarRelease $release): void
     {
-        $this->forAll(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new TransactionStatementGenerator($release)))->withMaxSize(10)->then(static function (Transaction\TransactionStatement $statement) use ($release): void {
+        $this->forAll(TransactionStatementGenerator::freshSession($release))->withMaxSize(10)->then(/** @param array{\SqlSemantics\Statement\AnalyzedStatement, int} $sample */ static function (array $sample) use ($release): void {
+            [$statement, $code] = $sample;
+            self::assertInstanceOf(\SqlSemantics\Statement\AnalyzedStatement::class, $statement);
             $session = (new Instance(substr($release->value, 6)))->connect();
             $session->text = 'This is not SQL; execution must use the generated values.';
             $execution = new Execution($session);
             try {
                 $reply = $execution->statement($statement);
+                self::assertSame(0, $code, 'A missing transaction dependency must be refused.');
                 self::assertTrue($reply instanceof Completion || $reply instanceof ResultSet);
                 self::assertSame($reply instanceof Completion ? $reply->affectedRows : -1, $session->variables->rowCount);
             } catch (SqlError $error) {
+                self::assertSame($code, $error->getCode(), $error->getMessage());
                 $execution->failed($error);
                 self::assertSame(-1, $session->variables->rowCount);
                 self::assertGreaterThan(0, $session->diagnostics->errors());

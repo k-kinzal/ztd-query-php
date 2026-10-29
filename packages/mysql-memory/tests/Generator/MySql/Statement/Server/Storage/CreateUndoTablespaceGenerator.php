@@ -37,7 +37,7 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
         ), static function (array $parts) use ($optionsCommas): ErisGenerator {
             return Generators::map(
                 static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateUndoTablespace(name: $parts[0], datafile: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], optionsCommas: $commas),
-                $optionsCommas ?? Generators::vector(max(0, count($parts[2]) - 1), Generators::bool())
+                $optionsCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[2]) - 1), Generators::bool())
             );
         });
     }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generators;
-use Eris\TestTrait;
 use LogicException;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
@@ -23,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\Name;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Call\Temporal\DateArithmeticGenerator;
 use Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator;
 

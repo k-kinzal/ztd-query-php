@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Statement;
 
-use Eris\TestTrait;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -15,6 +14,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Statement\AnalyzedStatement;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\StatementGenerator;
 
 /**

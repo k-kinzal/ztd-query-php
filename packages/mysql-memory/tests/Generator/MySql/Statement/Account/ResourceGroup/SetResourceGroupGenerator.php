@@ -35,7 +35,7 @@ final class SetResourceGroupGenerator implements ErisGenerator
         ), static function (array $parts) use ($threadsCommas): ErisGenerator {
             return Generators::map(
                 static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup => new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup(name: $parts[0], threads: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], threadsCommas: $commas),
-                $threadsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool())
+                $threadsCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[1]) - 1), Generators::bool())
             );
         });
     }

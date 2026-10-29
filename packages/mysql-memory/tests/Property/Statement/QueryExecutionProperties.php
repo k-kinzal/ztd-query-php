@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Statement;
 
-use Eris\TestTrait;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Execution;
@@ -15,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as FieldType;
+use Tests\Eris\TestTrait;
 
 /**
  * Executes generated expression, projection and statement meanings directly.

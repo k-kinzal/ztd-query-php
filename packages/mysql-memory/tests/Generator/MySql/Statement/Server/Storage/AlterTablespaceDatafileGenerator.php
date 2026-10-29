@@ -39,7 +39,7 @@ final class AlterTablespaceDatafileGenerator implements ErisGenerator
         ), static function (array $parts) use ($optionsCommas): ErisGenerator {
             return Generators::map(
                 static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceDatafile(name: $parts[0], action: $parts[1], datafile: $parts[2], options: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], optionsCommas: $commas),
-                $optionsCommas ?? Generators::vector(max(0, count($parts[3]) - 1), Generators::bool())
+                $optionsCommas ?? \Tests\Generator\Operands::vector(max(0, count($parts[3]) - 1), Generators::bool())
             );
         });
     }

@@ -34,7 +34,7 @@ final class CreateDatabaseGenerator implements ErisGenerator
             return \Tests\Generator\Operands::tuple(
                 Generators::constant($create),
                 new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new \Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowCreateDatabaseGenerator($name, Generators::bool())),
-                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new AlterDatabaseGenerator($name, Generators::vector(1, $collations))),
+                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new AlterDatabaseGenerator($name, \Tests\Generator\Operands::vector(1, $collations))),
                 new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, new DropDatabaseGenerator(Generators::bool(), $name)),
             );
         });

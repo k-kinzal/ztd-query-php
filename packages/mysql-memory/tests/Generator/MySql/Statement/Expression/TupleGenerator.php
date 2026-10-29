@@ -41,7 +41,7 @@ final class TupleGenerator implements ErisGenerator
                 Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 100)),
                 new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\KnownGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer())), Generators::constant(\SqlSemantics\Statement\Type\Nullability::NotNull)),
             );
-            return new RowGenerator(Generators::vector($tuple->width, $numbers), scalarInformation: new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\KnownGenerator(Generators::constant($tuple)), Generators::constant(\SqlSemantics\Statement\Type\Nullability::NotNull)));
+            return new RowGenerator(\Tests\Generator\Operands::vector($tuple->width, $numbers), scalarInformation: new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator(new \Tests\Generator\Semantics\Statement\Type\KnownGenerator(Generators::constant($tuple)), Generators::constant(\SqlSemantics\Statement\Type\Nullability::NotNull)));
         });
         $comparisons = \Tests\Generator\Operands::bind($rows, static function (\SqlSemantics\Platform\MySql\Statement\Expression\Row $row): ComparisonGenerator {
             $copies = [];

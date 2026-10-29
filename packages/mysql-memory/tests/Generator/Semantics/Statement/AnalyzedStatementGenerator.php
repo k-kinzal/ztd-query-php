@@ -38,7 +38,7 @@ final class AnalyzedStatementGenerator implements ErisGenerator
             Generators::choose(0, 128),
             Generators::choose(0, 64),
         );
-        $sources = new Source\SourceMapGenerator(Generators::vector(1, $origins));
+        $sources = new Source\SourceMapGenerator(\Tests\Generator\Operands::vector(1, $origins));
         $this->delegate = Generators::map(static function (array $parts): Statement {
             [$context, $sources] = $parts;
             $statement = $sources->origins[0]->node;

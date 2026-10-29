@@ -92,11 +92,9 @@ final class ArithmeticGenerator implements ErisGenerator
         foreach ($expressions as $index => $expression) {
             $items[] = new M\Query\SelectExpression(Occurrences::fresh($expression), new \SqlSemantics\Statement\Identifier\Name('value_' . $index));
         }
-        $session = (new \MySqlMemory\Instance(substr($release->value, 6)))->connect();
-        $setting = $session->instance->catalog->find('div_precision_increment');
-        \SqlSemantics\Diagnostic\Check::invariant($setting !== null, 'Exact division has a session precision increment.');
-        $session->variables->set($setting, (string) $precision);
-        $statement = (new \MySqlMemory\Session\Statement\Binding())->statement($session, new M\QueryRoot(new M\Query\Select([], $items)));
+        $settings = new M\Type\Resolved\Settings(M\Type\Resolved\Settings::defaults($release)->connection, divPrecisionIncrement: $precision);
+        $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')], session: $settings);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, new M\QueryRoot(new M\Query\Select([], $items)));
         \SqlSemantics\Diagnostic\Check::invariant($statement instanceof M\QueryRoot, 'Publication retains the generated query.');
         $multiplied = bcmul($raw, (string) $divisor, $workingScale);
         $branch = $chosen ? $raw : '0.1';

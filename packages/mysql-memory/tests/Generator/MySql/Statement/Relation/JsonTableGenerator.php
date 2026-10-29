@@ -50,8 +50,8 @@ final class JsonTableGenerator implements ErisGenerator
     {
         $documents = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::map(static fn (int $length): string => '[' . implode(',', array_fill(0, $length, '[1,2]')) . ']', Generators::choose(0, 8)));
         $paths = new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::constant('$[*]'));
-        $columns = new \Tests\Generator\MySql\Statement\Call\Json\NestedColumnsGenerator($paths, Generators::vector(1, new \Tests\Generator\MySql\Statement\Call\Json\OrdinalityColumnGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('position')))));
-        return new self($documents, $paths, Generators::vector(1, $columns), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
+        $columns = new \Tests\Generator\MySql\Statement\Call\Json\NestedColumnsGenerator($paths, \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Call\Json\OrdinalityColumnGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('position')))));
+        return new self($documents, $paths, \Tests\Generator\Operands::vector(1, $columns), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
     }
 
 }

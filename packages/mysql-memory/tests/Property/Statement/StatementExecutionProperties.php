@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property\Statement;
 
 use Eris\Generator;
-use Eris\TestTrait;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -18,11 +17,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Statement;
+use Tests\Eris\TestTrait;
 use Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator;
 
 /**
  * Exercises typed statement operands through planning and execution without SQL input.
- * SQL errors are observable replies; invalid model values and implementation errors fail.
+ * This broad property checks execution cleanup, not SQL result correctness.
+ * Result properties separately require generated expectations for successful
+ * requests and specific SQL refusals. Unmapped model conditions fail execution.
  */
 #[CoversNothing]
 #[Large]
@@ -140,14 +142,15 @@ final class StatementExecutionProperties extends TestCase
     }
 
     /**
-     * Every generated structure reaches the executor with its local semantic information.
+     * Every generated structure reaches the executor and leaves its scopes balanced.
+     * This does not establish that a returned SQL error or successful result is correct.
      *
      * @param Generator<Statement> $statements The composed SQL forms
      * @param Generator<\SqlSemantics\Contract\AnalysisContext>|null $contexts The generated forms' required profile and declarations
      */
     #[Test]
     #[DataProvider('providerStatements')]
-    public function satisfiesGeneratedStatementsProduceSqlReplies(Generator $statements, GrammarRelease $release = GrammarRelease::MySql847, ?Generator $contexts = null): void
+    public function satisfiesGeneratedStatementsUnwindTheirExecutionScopes(Generator $statements, GrammarRelease $release = GrammarRelease::MySql847, ?Generator $contexts = null): void
     {
         $this->forAll(new AnalyzedStatementGenerator($release, $statements, $contexts))->withMaxSize(10)->then(static function (Statement $statement) use ($release): void {
             $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
@@ -185,17 +188,17 @@ final class StatementExecutionProperties extends TestCase
         yield 'Empty input' => [new \Tests\Generator\MySql\Statement\EmptyStatementGenerator()];
         yield 'Legacy escaped relation' => [new \Tests\Generator\MySql\Statement\QueryRootGenerator(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
             \Eris\Generators::constant([]),
-            \Eris\Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()),
+            \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()),
             new \Tests\Generator\MySql\Statement\Relation\EscapedRelationGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()))),
         )), GrammarRelease::MySql5744];
         yield 'Nested JSON columns' => [new \Tests\Generator\MySql\Statement\QueryRootGenerator(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
             \Eris\Generators::constant([]),
-            \Eris\Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()),
+            \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()),
             from: \Tests\Generator\MySql\Statement\Relation\JsonTableGenerator::nestedOrdinals(),
         ))];
         foreach (\Tests\Generator\Semantics\Statement\ScalarGenerator::expressionForms() as $name => $expressions) {
             yield $name => [new \Tests\Generator\MySql\Statement\QueryRootGenerator(
-                new \Tests\Generator\MySql\Statement\Query\SelectGenerator(\Eris\Generators::constant([]), \Eris\Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($expressions))),
+                new \Tests\Generator\MySql\Statement\Query\SelectGenerator(\Eris\Generators::constant([]), \Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($expressions))),
             ), GrammarRelease::MySql847, $name === 'Concatenation operands' ? \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql(GrammarRelease::MySql847, new \Tests\Generator\MySql\ModeGenerator(pipesAsConcat: \Eris\Generators::constant(true))) : null];
         }
 

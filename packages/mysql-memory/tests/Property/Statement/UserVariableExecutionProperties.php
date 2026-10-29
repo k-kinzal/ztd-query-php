@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Property\Statement;
 
-use Eris\TestTrait;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Execution;
@@ -19,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Type\Dependent;
+use Tests\Eris\TestTrait;
 use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
 
 /**

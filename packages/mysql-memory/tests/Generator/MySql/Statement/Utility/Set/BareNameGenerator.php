@@ -52,10 +52,10 @@ final class BareNameGenerator implements ErisGenerator
             [$word, $scoped] = $parts;
             $types = $scoped
                 ? new \Tests\Generator\Semantics\Statement\Type\KnownGenerator(new \Tests\Generator\MySql\Statement\Type\StringFamilyGenerator())
-                : new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Utility\Problem\ProgramVariableGenerator(Generators::constant($word))));
+                : new \Tests\Generator\Semantics\Statement\Type\DependentGenerator(\Tests\Generator\Operands::vector(1, new \Tests\Generator\MySql\Statement\Utility\Problem\ProgramVariableGenerator(Generators::constant($word))));
             $value = new self(Generators::constant($word), system: Generators::constant($scoped), scalarInformation: new \Tests\Generator\Semantics\Statement\Fact\ScalarFactGenerator($types, Generators::constant($scoped ? \SqlSemantics\Statement\Type\Nullability::NotNull : \SqlSemantics\Statement\Type\Nullability::Dependent)));
             $assignment = new NameAssignmentGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::constant('autocommit'), Generators::constant(null)), $value, scope: Generators::constant($scoped ? \SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session : null));
-            return new SetVariablesGenerator(Generators::vector(1, $assignment), new \Tests\Generator\MySql\Statement\StatementSemanticsGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847))));
+            return new SetVariablesGenerator(\Tests\Generator\Operands::vector(1, $assignment), new \Tests\Generator\MySql\Statement\StatementSemanticsGenerator(new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(Generators::constant(\SqlSemantics\Contract\GrammarRelease::MySql847))));
         });
     }
 

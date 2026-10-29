@@ -7,7 +7,6 @@ namespace Tests\Integration\Statement;
 use Eris\Quantifier\ForAll;
 use Eris\Random\MtRandSource;
 use Eris\Random\RandomRange;
-use Eris\Shrinker\ShrinkerFactory;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Execution;
@@ -16,6 +15,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
+use Tests\Eris\ShrinkerFactory;
 use Tests\Generator\MySql\Statement\QueryRootGenerator;
 
 #[CoversNothing]
