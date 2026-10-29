@@ -52,13 +52,14 @@ final class ShowBinaryLogsGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $masterLogs Generated legacy word choice
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs>
      */
-    public static function operands(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public static function operands(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $masterLogs = null): ErisGenerator
     {
         return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs(statementInformation: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple($statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs(statementInformation: $parts[0], inputSource: $parts[1], masterLogs: $parts[2]);
+        }, Generators::tuple($statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $masterLogs ?? Generators::bool()));
     }
     /**
      * Composes the statement's MySQL 8.4 forms from typed operand generators.
@@ -67,7 +68,7 @@ final class ShowBinaryLogsGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowBinaryLogs/76' => ShowBinaryLogsGenerator::operands();
+        yield 'ShowBinaryLogs/76' => ShowBinaryLogsGenerator::operands(masterLogs: Generators::constant(false));
     }
 
 }

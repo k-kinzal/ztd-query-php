@@ -48,7 +48,7 @@ final class PreparedRevocationBoundaryTest extends TestCase
         $operation = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $request);
         $definition = PreparedStatement::capture($operation, $session);
         $reply = $definition->run($session, 'opaque label', []);
-        self::assertSame($request, $definition->statement);
+        self::assertSame($operation, $definition->statement);
         self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply[0]);
         self::assertSame(1144, $reply[0]->getCode());
         self::assertSame([['Error', 1144, 'Illegal GRANT/REVOKE command; please consult the manual to see which privileges can be used']], $session->diagnostics->conditions);

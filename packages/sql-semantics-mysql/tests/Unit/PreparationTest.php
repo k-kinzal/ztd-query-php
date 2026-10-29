@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -23,6 +24,33 @@ use SqlSemantics\Validation\ValueGraph;
 #[Large]
 final class PreparationTest extends TestCase
 {
+    #[DataProvider('providerInputs')]
+    public function testSharedInterpretationsEqualIndependentDecoding(string $sql): void
+    {
+        $initial = new Interpretation(new LanguageProfile(GrammarRelease::MySql847), Charset::known('utf8mb4'));
+        $reader = new Preparation();
+        $definition = $reader->read($sql, $initial);
+        $platform = new \SqlSemantics\Platform\MySql\Platform();
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-8.4.7');
+        $equivalence = new \SqlSemantics\Validation\Equivalence();
+        $differences = array_map(static function ($alternative) use ($reader, $sql, $platform, $parser, $equivalence): ?string {
+            $independent = $reader->alternative($sql, $alternative->interpretation, $platform, $parser);
+            return $equivalence->difference($alternative, $independent, true);
+        }, $definition->alternatives);
+        self::assertSame([], array_filter($differences, static fn (?string $difference): bool => $difference !== null));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerInputs(): iterable
+    {
+        yield 'modes and parameters' => ['SELECT ?, "a", 1||2, NOT 1 BETWEEN 0 AND 2, COUNT (1) FROM t'];
+        yield 'escaped quote' => ["SELECT 'left\\' AS changed FROM u -- ' FROM t"];
+        yield 'non-ASCII identifier' => ["SELECT `\xC3\xA9` FROM t"];
+        yield 'radix literals' => ["SELECT X'80', B'10000000', 0x80"];
+    }
+
     public function testReadCapturesClientAndModeClosureWithoutRetainingAnalysisState(): void
     {
         $initial = new Interpretation(new LanguageProfile(GrammarRelease::MySql847), Charset::known('utf8mb4'));

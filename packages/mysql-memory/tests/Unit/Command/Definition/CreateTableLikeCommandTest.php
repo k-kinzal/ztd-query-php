@@ -10,6 +10,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
@@ -23,6 +24,29 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class CreateTableLikeCommandTest extends TestCase
 {
+    #[DataProvider('providerRepeatedNames')]
+    public function testPrepareRefusesARepeatedNameBeforeCountingTheCommand(string $version, string $sql): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $answers = $session->run($sql);
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(1066, $answers[0]->getCode());
+        self::assertSame(0, $session->instance->registry->status->read('Com_create_table', $session->id));
+        self::assertSame(1, $session->instance->registry->status->read('Questions', $session->id));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRepeatedNames(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['CREATE TABLE t LIKE t', 'CREATE TABLE test.t (LIKE t)', 'CREATE TEMPORARY TABLE t LIKE test.t'] as $sql) {
+                yield $version . ' ' . $sql => [$version, $sql];
+            }
+        }
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new CreateTableLikeCommand())->clearsDiagnostics());

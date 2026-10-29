@@ -43,7 +43,7 @@ final class CreateProcedureGenerator implements ErisGenerator
             }
 
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), new ParameterListGenerator(Generators::constant([])), new \Tests\Generator\MySql\Statement\Server\Transaction\TransactionStatementGenerator($release));
+                $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), new ParameterListGenerator(Generators::constant([])), new \Tests\Generator\MySql\Statement\Server\Transaction\TransactionStatementGenerator($release, stored: true));
             }
 
             if ($forms === []) {
@@ -1254,6 +1254,7 @@ final class CreateProcedureGenerator implements ErisGenerator
                 parameters: Generators::constant([])
             ),
             body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Server\DeferredPurgeGenerator(
+                masterLogs: Generators::constant(false),
                 moment: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                     elements: Generators::tuple(
                         \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Variable\SystemVariableGenerator(

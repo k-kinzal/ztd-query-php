@@ -49,8 +49,10 @@ final class ShowKeys extends \SqlSemantics\Platform\MySql\Statement\SqlStatement
      * @param bool $extended Whether EXTENDED is written
      * @param ?Name $database The database written after FROM or IN; null for the current database
      * @param ?ShowWhere $filter The WHERE clause
+     * @param bool $databaseIn Whether the database is introduced by IN instead of FROM
+     * @param bool $tableIn Whether the table is introduced by IN instead of FROM
      */
-    public function __construct(public readonly InspectedTable $table, public readonly bool $extended = false, public readonly ?Name $database = null, public readonly ?ShowWhere $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly IndexListing $listing = IndexListing::Indexes)
+    public function __construct(public readonly InspectedTable $table, public readonly bool $extended = false, public readonly ?Name $database = null, public readonly ?ShowWhere $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly IndexListing $listing = IndexListing::Indexes, public readonly bool $databaseIn = false, public readonly bool $tableIn = false)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
@@ -88,9 +90,9 @@ final class ShowKeys extends \SqlSemantics\Platform\MySql\Statement\SqlStatement
         if ($this->extended) {
             $out->keyword('EXTENDED');
         }
-        $out->keyword($this->listing->value, 'FROM')->node($this->table);
+        $out->keyword($this->listing->value, $this->tableIn ? 'IN' : 'FROM')->node($this->table);
         if ($this->database !== null) {
-            $out->keyword('FROM')->name($this->database, NameUse::Qualifier);
+            $out->keyword($this->databaseIn ? 'IN' : 'FROM')->name($this->database, NameUse::Qualifier);
         }
         $out->node($this->filter);
     }

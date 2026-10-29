@@ -23,12 +23,12 @@ final class TransactionStatementGenerator implements ErisGenerator
     private ErisGenerator $delegate;
 
     /**
-     * Selects the grammar before generating operands.
+     * Selects the grammar and enclosing SQL context before generating operands.
+     * BEGIN has no stored-program statement form; START TRANSACTION does.
      */
-    public function __construct(GrammarRelease $release)
+    public function __construct(GrammarRelease $release, bool $stored = false)
     {
-        $this->delegate = Generators::oneOf(
-            BeginGenerator::operands($release),
+        $forms = [
             StartTransactionGenerator::operands($release),
             CommitGenerator::operands($release),
             RollbackGenerator::operands($release),
@@ -42,7 +42,11 @@ final class TransactionStatementGenerator implements ErisGenerator
             Xa\XaCommitGenerator::operands($release),
             Xa\XaRollbackGenerator::operands($release),
             Xa\XaRecoverGenerator::operands($release),
-        );
+        ];
+        if (!$stored) {
+            $forms[] = BeginGenerator::operands($release);
+        }
+        $this->delegate = Generators::oneOf(...$forms);
     }
 
     /**

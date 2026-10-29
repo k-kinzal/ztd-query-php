@@ -69,6 +69,22 @@ final class CreateViewGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
+        yield 'CreateView/tableless-star' => CreateViewGenerator::operands(
+            definition: new ViewDefinitionGenerator(
+                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
+                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
+                        value: Generators::map(static fn (int $value): string => 'view_' . $value, Generators::choose(0, 8)),
+                        quote: Generators::constant(null)
+                    )
+                ),
+                query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
+                    options: Generators::constant([]),
+                    items: Generators::tuple(new \Tests\Generator\MySql\Statement\Query\StarGenerator())
+                )]),
+                algorithm: ViewAlgorithmGenerator::selecting(\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::cases()),
+                ifNotExists: Generators::constant(false)
+            )
+        );
         yield 'CreateView/409' => CreateViewGenerator::operands(
             definition: new ViewDefinitionGenerator(
                 name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(

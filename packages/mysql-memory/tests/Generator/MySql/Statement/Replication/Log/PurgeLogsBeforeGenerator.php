@@ -54,12 +54,13 @@ final class PurgeLogsBeforeGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore>
+     * @param ErisGenerator<bool>|null $masterLogs Generated legacy word choice
      */
-    public static function operands(ErisGenerator $moment, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public static function operands(ErisGenerator $moment, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $masterLogs = null): ErisGenerator
     {
         return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(moment: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple($moment, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+            return new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(moment: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], masterLogs: $parts[3]);
+        }, Generators::tuple($moment, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $masterLogs ?? Generators::bool()));
     }
     /**
      * Composes the statement's MySQL 8.4 forms from typed operand generators.
@@ -69,6 +70,7 @@ final class PurgeLogsBeforeGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'PurgeLogsBefore/374' => PurgeLogsBeforeGenerator::operands(
+            masterLogs: Generators::constant(false),
             moment: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                 operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
                     operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -64,6 +65,10 @@ final class ResourceGroupCommand implements Command
     {
         assert($operation instanceof MySqlStatement);
         $statement = $operation;
+        $grants = $session->instance->accounts->privileges($session->variables->definer, $session->variables->roles);
+        if (!isset($grants->dynamic['RESOURCE_GROUP_ADMIN']) && (!$statement instanceof SetResourceGroup || !isset($grants->dynamic['RESOURCE_GROUP_USER']))) {
+            throw AccountError::SpecificAccessDenied->error($statement instanceof SetResourceGroup ? 'RESOURCE_GROUP_ADMIN OR RESOURCE_GROUP_USER' : 'RESOURCE_GROUP_ADMIN');
+        }
         $groups = $session->instance->registry->resourceGroups;
         if ($statement instanceof SetResourceGroup) {
             $this->assign($statement, $session, $groups);

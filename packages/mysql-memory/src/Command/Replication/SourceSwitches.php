@@ -6,7 +6,9 @@ namespace MySqlMemory\Command\Replication;
 
 use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
@@ -15,13 +17,39 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
  * Checks source switch prerequisites against the existing channel configuration.
  *
  * RESET REPLICA preserves these settings; RESET REPLICA ALL removes them.
- * Observed through SQL on MySQL 8.4.7.
+ * Observed through SQL on MySQL 5.6.51, 5.7.44, 8.0.44 and 8.4.7.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility MySqlMemory
  */
 final class SourceSwitches
 {
+    /**
+     * Refuses applier settings while the channel's SQL thread runs.
+     *
+     * @param array<string, SourceOption> $options The final option of each kind
+     */
+    public function threads(array $options, \MySqlMemory\Registry\Replication $state, string $channel, GrammarRelease $release): void
+    {
+        if (!$state->applying) {
+            return;
+        }
+        if ($release === GrammarRelease::MySql5651) {
+            throw AdministrationError::LegacyReplicaRunning->error();
+        }
+        foreach ([
+            [AdministrationError::ReplicaChannelRunning, [SourceOptionKind::AutoPosition, SourceOptionKind::GtidOnly, SourceOptionKind::AssignGtidsToAnonymousTransactions]],
+            [AdministrationError::ReplicaApplierRunning, [SourceOptionKind::RelayLogFile, SourceOptionKind::RelayLogPosition, SourceOptionKind::Delay, SourceOptionKind::PrivilegeChecksUser, SourceOptionKind::RequireRowFormat, SourceOptionKind::RequireTablePrimaryKeyCheck]],
+        ] as [$code, $kinds]) {
+            foreach ($kinds as $kind) {
+                if (isset($options[$kind->value])) {
+                    $error = $code->error($channel);
+                    throw $release === GrammarRelease::MySql5744 ? new SqlError($code, str_replace(['replica sql', 'REPLICA'], ['slave sql', 'SLAVE'], $error->getMessage())) : $error;
+                }
+            }
+        }
+    }
+
     /**
      * Requires GTIDs, row events and auto-positioning before enabling their dependent settings.
      *

@@ -97,17 +97,10 @@ final class CreateTableLikeCommand implements Command
      */
     public function source(CreateTableLike $create, Session $session): StoredTable
     {
+        $this->prepare($create, $session);
         $database = $session->variables->database;
-        if (($create->name->schema === null || $create->source->schema === null) && $database === '') {
-            throw QueryError::NoDatabase->error();
-        }
         $dictionary = $session->instance->dictionary;
-        $schema = $create->name->schema->value ?? $database;
-        $name = $create->name->name->value;
         $sourceSchema = $create->source->schema->value ?? $database;
-        if ($schema === $sourceSchema && $name === $create->source->name->value) {
-            throw QueryError::NonUniqueTable->error($name);
-        }
         if ($dictionary->schema($sourceSchema) === null) {
             throw QueryError::BadDatabase->error($sourceSchema);
         }
@@ -120,6 +113,24 @@ final class CreateTableLikeCommand implements Command
         }
 
         return $source;
+    }
+
+    /**
+     * Rejects a repeated table name before executing or counting CREATE TABLE.
+     *
+     * @throws \MySqlMemory\Error\SqlError When names lack a database or identify the same table
+     */
+    public function prepare(CreateTableLike $create, Session $session): void
+    {
+        $database = $session->variables->database;
+        if (($create->name->schema === null || $create->source->schema === null) && $database === '') {
+            throw QueryError::NoDatabase->error();
+        }
+        $schema = $create->name->schema->value ?? $database;
+        $sourceSchema = $create->source->schema->value ?? $database;
+        if ($schema === $sourceSchema && $create->name->name->value === $create->source->name->value) {
+            throw QueryError::NonUniqueTable->error($create->name->name->value);
+        }
     }
 
     /**

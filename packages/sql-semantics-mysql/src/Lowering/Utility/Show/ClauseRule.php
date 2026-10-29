@@ -35,6 +35,14 @@ use SqlSemantics\Statement\Identifier\Name;
 final class ClauseRule
 {
     /**
+     * Reads the qualifier word of a FROM/IN clause, including an absent optional clause.
+     */
+    public function usesIn(Node $clause): bool
+    {
+        return strtoupper($clause->tokens()[0]->text ?? '') === 'IN';
+    }
+
+    /**
      * The empty filter productions.
      */
     private const UNFILTERED = ['wild_and_where:' => true, 'opt_wild_or_where:' => true, 'opt_wild_or_where_for_show:' => true];
@@ -127,22 +135,22 @@ final class ClauseRule
         }
         if ($header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys) {
             \SqlSemantics\Diagnostic\Check::invariant(!$filter instanceof ShowLike, 'Index inspections admit only WHERE filters.');
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys($header->table, $header->extended, $header->database, $filter, listing: $header->listing);
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys($header->table, $header->extended, $header->database, $filter, listing: $header->listing, databaseIn: $header->databaseIn, tableIn: $header->tableIn);
         }
         return match (true) {
-            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents($header->database, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents($header->database, $filter, databaseIn: $header->databaseIn),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus($filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus($filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases($filter, listing: $header->listing),
-            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables($header->database, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables($header->database, $filter, databaseIn: $header->databaseIn),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus($header->scope, $filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables($header->scope, $filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet($filter, form: $header->form),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation($filter),
             $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns($header->table, $header->listing, $header->database, $filter, tableIn: $header->tableIn, databaseIn: $header->databaseIn, fieldsKeyword: $header->fieldsKeyword),
-            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables($header->listing, $header->database, $filter),
-            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers($header->full, $header->database, $filter),
-            default => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus($header->database, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables($header->listing, $header->database, $filter, databaseIn: $header->databaseIn),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers($header->full, $header->database, $filter, databaseIn: $header->databaseIn),
+            default => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus($header->database, $filter, databaseIn: $header->databaseIn),
         };
     }
 

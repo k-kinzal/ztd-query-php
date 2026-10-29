@@ -22,6 +22,39 @@ use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup
 #[Small]
 final class ResourceGroupCommandTest extends TestCase
 {
+    #[DataProvider('providerRestrictedStatements')]
+    public function testRevokedPrivilegesAreCheckedBeforeTheGroupAndCpuNames(string $sql, string $privilege): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('REVOKE ALL PRIVILEGES, GRANT OPTION FROM CURRENT_USER');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1227);
+        $this->expectExceptionMessage('Access denied; you need (at least one of) the ' . $privilege . ' privilege(s) for this operation');
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRestrictedStatements(): iterable
+    {
+        yield 'create' => ['CREATE RESOURCE GROUP missing TYPE USER VCPU 9999', 'RESOURCE_GROUP_ADMIN'];
+        yield 'alter' => ['ALTER RESOURCE GROUP missing VCPU 1 1', 'RESOURCE_GROUP_ADMIN'];
+        yield 'drop' => ['DROP RESOURCE GROUP missing', 'RESOURCE_GROUP_ADMIN'];
+        yield 'set' => ['SET RESOURCE GROUP missing', 'RESOURCE_GROUP_ADMIN OR RESOURCE_GROUP_USER'];
+        yield 'set threads' => ['SET RESOURCE GROUP missing FOR 1', 'RESOURCE_GROUP_ADMIN OR RESOURCE_GROUP_USER'];
+    }
+
+    public function testAnActiveRoleAllowsAssignmentWithoutAdministration(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE RESOURCE GROUP batch TYPE USER; CREATE ROLE assigner; GRANT RESOURCE_GROUP_USER ON *.* TO assigner; GRANT assigner TO CURRENT_USER; SET ROLE assigner; REVOKE RESOURCE_GROUP_ADMIN, RESOURCE_GROUP_USER ON *.* FROM CURRENT_USER');
+        self::assertInstanceOf(Completion::class, $session->query('SET RESOURCE GROUP batch')[0]);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1227);
+        $session->query('ALTER RESOURCE GROUP batch ENABLE');
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ResourceGroupCommand())->clearsDiagnostics());

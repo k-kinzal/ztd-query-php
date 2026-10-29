@@ -146,6 +146,12 @@ final class DeferredCall implements DeferredOperand
         if ($this->schema !== null) {
             $out->name($this->schema, NameUse::Qualifier)->symbol('.');
         }
-        $out->name($this->name, NameUse::Routine)->glue()->symbol('(')->list($this->arguments)->symbol(')');
+        $out->name($this->name, NameUse::Routine);
+        if ($this->schema === null && $this->name->quote === \SqlSemantics\Statement\Identifier\NameQuote::Bare) {
+            $out->separate();
+        } else {
+            $out->glue();
+        }
+        $out->symbol('(')->list($this->arguments)->symbol(')');
     }
 }

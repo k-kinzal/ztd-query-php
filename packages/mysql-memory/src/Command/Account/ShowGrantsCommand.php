@@ -94,24 +94,6 @@ final class ShowGrantsCommand implements Command
      */
     public function through(array $roles, Accounts $accounts): Grants
     {
-        $grants = new Grants();
-        $seen = [];
-        while ($roles !== []) {
-            $role = array_pop($roles);
-            if (isset($seen[$role->key()])) {
-                continue;
-            }
-            $seen[$role->key()] = true;
-            $account = $accounts->find($role);
-            if ($account === null) {
-                continue;
-            }
-            $grants->merge($account->grants);
-            foreach ($accounts->roles($role) as [$next]) {
-                $roles[] = $next;
-            }
-        }
-
-        return $grants;
+        return $accounts->through($roles);
     }
 }

@@ -19,6 +19,15 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 #[Medium]
 final class AlterTableTest extends TestCase
 {
+    public function testDeriveStatementKeepsTheCompleteLegacyRequestWithAnInvalidColumnAttribute(): void
+    {
+        $sql = 'ALTER TABLE t ADD COLUMN a BIT ON UPDATE CURRENT_TIMESTAMP';
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze($sql);
+        self::assertInstanceOf(AlterTable::class, $statement);
+        self::assertSame($sql, $statement->toString());
+        self::assertCount(1, array_filter($statement->diagnostics(), static fn ($problem): bool => $problem instanceof M\Table\Problem\InvalidColumnAttribute));
+    }
+
     public function testDeriveStatementRecordsPartitionMaintenanceResults(): void
     {
         $semantics = new Semantics(Dialect::MySql);

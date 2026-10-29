@@ -16,7 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
  * Checks additional authentication methods after the first method has been accepted.
  * An accepted initial or primary credential converts the host before additional plugin
  * lookup and authentication-policy notices. Invalid primary credentials stop earlier.
- * The first omitted plugin reports the authentication-policy warning. Existing accounts
+ * The first omitted plugin reports a policy warning for an exempt administrator
+ * and a policy error otherwise. Existing accounts
  * reach their existence error without loading additional plugins; new accounts validate
  * the second factor before the third. CURRENT_USER retains only its primary authentication
  * method, including when the account was removed earlier in the same connection.
@@ -47,7 +48,7 @@ final class CreateFactors
         }
         foreach ($user->factors as $index => $factor) {
             if ($factor->plugin === null) {
-                $session->diagnostics->warning(AccountError::FactorPolicyMismatch, AccountError::FactorPolicyMismatch->message((string) ($index + 2)));
+                (new FactorPolicy())->mismatch((string) ($index + 2), $session);
                 break;
             }
         }

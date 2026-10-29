@@ -86,7 +86,7 @@ final class ShowRule
         switch ($form->signature) {
             case 'show_binary_logs_stmt: SHOW master_or_binary LOGS_SYM':
                 $master = $this->lowering->utility->binaryLogsWord($form->node(1));
-                $statement = new ShowBinaryLogs();
+                $statement = new ShowBinaryLogs(masterLogs: $master);
                 $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ShowMasterLogs;
                 if ($master && $notice->warnedIn($this->lowering->profile->grammar)) {
                     $this->lowering->origins->notice($statement, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice), $form->node(1));

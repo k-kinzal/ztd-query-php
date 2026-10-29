@@ -64,24 +64,24 @@ final class ObjectRule
             case 'show_databases_stmt: SHOW DATABASES opt_wild_or_where':
                 return $clauses->inspection(new ShowDatabases(listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\DatabaseListing::from(strtoupper($form->token(1)->text))), $form->node(2));
             case 'show_tables_stmt: SHOW opt_show_cmd_type TABLES opt_db opt_wild_or_where':
-                return $clauses->inspection(new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3))), $form->node(4));
+                return $clauses->inspection(new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3)), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_triggers_stmt: SHOW opt_full TRIGGERS_SYM opt_db opt_wild_or_where':
-                return $clauses->inspection(new ShowTriggers($clauses->listing($form->node(1)) !== null, $clauses->database($form->node(3))), $form->node(4));
+                return $clauses->inspection(new ShowTriggers($clauses->listing($form->node(1)) !== null, $clauses->database($form->node(3)), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_events_stmt: SHOW EVENTS_SYM opt_db opt_wild_or_where':
-                return $clauses->inspection(new ShowEvents($clauses->database($form->node(2))), $form->node(3));
+                return $clauses->inspection(new ShowEvents($clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3));
             case 'show_table_status_stmt: SHOW TABLE_SYM STATUS_SYM opt_db opt_wild_or_where':
-                return $clauses->inspection(new ShowTableStatus($clauses->database($form->node(3))), $form->node(4));
+                return $clauses->inspection(new ShowTableStatus($clauses->database($form->node(3)), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_open_tables_stmt: SHOW OPEN_SYM TABLES opt_db opt_wild_or_where':
-                return $clauses->inspection(new ShowOpenTables($clauses->database($form->node(3), true)), $form->node(4));
+                return $clauses->inspection(new ShowOpenTables($clauses->database($form->node(3), true), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_columns_stmt: SHOW opt_show_cmd_type COLUMNS from_or_in table_ident opt_db opt_wild_or_where':
                 $clauses->preposition($form->node(3));
 
-                return $clauses->inspection(new ShowColumns($this->table($form, 4), $clauses->listing($form->node(1)), $clauses->database($form->node(5)), tableIn: strtoupper($form->node(3)->tokens()[0]->text) === 'IN', databaseIn: strtoupper($form->node(5)->tokens()[0]->text ?? '') === 'IN', fieldsKeyword: strtoupper($form->token(2)->text) === 'FIELDS'), $form->node(6));
+                return $clauses->inspection(new ShowColumns($this->table($form, 4), $clauses->listing($form->node(1)), $clauses->database($form->node(5)), tableIn: $clauses->usesIn($form->node(3)), databaseIn: $clauses->usesIn($form->node(5)), fieldsKeyword: strtoupper($form->token(2)->text) === 'FIELDS'), $form->node(6));
             case 'show_keys_stmt: SHOW opt_extended keys_or_index from_or_in table_ident opt_db opt_where_clause':
                 $this->lowering->options->skip($form->node(2));
                 $clauses->preposition($form->node(3));
 
-                return $clauses->inspection(new ShowKeys($this->table($form, 4), $clauses->extended($form->node(1)), $clauses->database($form->node(5)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(2))->token(0)->text))), $form->node(6));
+                return $clauses->inspection(new ShowKeys($this->table($form, 4), $clauses->extended($form->node(1)), $clauses->database($form->node(5)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(2))->token(0)->text)), databaseIn: $clauses->usesIn($form->node(5)), tableIn: $clauses->usesIn($form->node(3))), $form->node(6));
             default:
                 return $this->definition($form);
         }

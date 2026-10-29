@@ -203,12 +203,7 @@ final class ViewRule
             $end = $origin === null ? $end : $origin->offset + ($occurrence instanceof \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination ? 1 : $origin->length);
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedBody($view, $alter, $body, $definer), $end);
         }
-        if ($body instanceof \SqlSemantics\Statement\Query && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($body) !== null) {
-            $problem = $body instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody
-                ? new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($body->selection)
-                : new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery($body));
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($view, $alter, $problem, $definer), $end, false);
-        }
+
     }
 
     /**

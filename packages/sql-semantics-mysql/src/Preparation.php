@@ -39,15 +39,27 @@ final class Preparation
 {
     /**
      * Captures a previously accepted input's complete lexical domain.
+     * ASCII bytes have the same token and identifier decoding in every client
+     * encoding. Share those results within each lexical mode, except when a
+     * radix literal could decode to non-ASCII bytes. Non-ASCII inputs still
+     * pass through every client decoder. Only semantic values survive the read.
      */
     public function read(string $sql, Interpretation $initial, ?Name $database = null): Definition
     {
         $alternatives = [];
         $distinct = [];
+        $ascii = preg_match('/[^\x00-\x7f]|0[xb]|[xb]\s*\x27/i', $sql) === 0;
+        $lexical = [];
         $equivalence = new Equivalence();
         $platform = new Platform();
         $parser = new MySqlParser($platform->profile($initial->language->grammar->value, null, $initial->language->parameters)->grammar->value);
         foreach (Interpretation::all($initial->language->grammar, $initial->language->parameters) as $interpretation) {
+            $key = substr($interpretation->key(), 0, 5);
+            if ($ascii && isset($lexical[$key])) {
+                $known = $lexical[$key];
+                $alternatives[] = new Alternative($interpretation, $known->statement, $known->sources);
+                continue;
+            }
             $candidate = $this->alternative($sql, $interpretation, $platform, $parser);
             $shared = null;
             foreach (array_reverse($distinct) as $known) {
@@ -59,6 +71,7 @@ final class Preparation
             if ($shared === null) {
                 $distinct[] = $candidate;
             }
+            $lexical[$key] = $shared ?? $candidate;
             $alternatives[] = $shared === null ? $candidate : new Alternative($interpretation, $shared->statement, $shared->sources);
         }
         return new Definition($initial, $database, $alternatives);

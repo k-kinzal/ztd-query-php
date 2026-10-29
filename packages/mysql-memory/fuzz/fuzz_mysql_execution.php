@@ -96,6 +96,8 @@ $start = static function () use ($version, $mode): array {
             $connection->query("SET SESSION sql_mode = '" . $connection->real_escape_string($mode) . "'");
             $connection->query("SET SESSION time_zone = '+00:00'");
             $connection->query('SET SESSION timestamp = 1700000000');
+            $connection->query('GRANT PROXY ON CURRENT_USER TO CURRENT_USER WITH GRANT OPTION');
+            $connection->query('FLUSH TABLES');
         }
         mysqli_report(MYSQLI_REPORT_OFF);
         $target = new ExecutionTarget($native, $memory, $server);

@@ -54,12 +54,13 @@ final class PurgeLogsToGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo>
+     * @param ErisGenerator<bool>|null $masterLogs Generated legacy word choice
      */
-    public static function operands(ErisGenerator $file, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public static function operands(ErisGenerator $file, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $masterLogs = null): ErisGenerator
     {
         return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo(file: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple($file, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+            return new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo(file: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], masterLogs: $parts[3]);
+        }, Generators::tuple($file, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $masterLogs ?? Generators::bool()));
     }
     /**
      * Composes the statement's MySQL 8.4 forms from typed operand generators.
@@ -69,6 +70,7 @@ final class PurgeLogsToGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'PurgeLogsTo/61' => PurgeLogsToGenerator::operands(
+            masterLogs: Generators::constant(false),
             file: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
                 value: Generators::constant('text'),
                 radix: Generators::constant(null)

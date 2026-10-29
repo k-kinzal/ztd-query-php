@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Scalar;
  * Mirrors SQLCOM_PURGE_BEFORE with LEX::purge_value_list. The moment is an
  * query-free expression the server evaluates as a DATETIME; it is derived in an
  * environment that sees no table. MASTER LOGS is a synonym of BINARY LOGS up
- * to 8.3 and is written BINARY LOGS. Rule: MYSQL-PURGE-002. Facts: the facts
+ * to 8.3; the selected word is retained. Rule: MYSQL-PURGE-002. Facts: the facts
  * of the expression.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/purge-binary-logs.html.
  * Status: Implemented.
@@ -31,8 +31,9 @@ final class PurgeLogsBefore extends \SqlSemantics\Platform\MySql\Statement\SqlSt
     /**
      * @param Scalar $moment The moment: files last modified before it are deleted
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the moment contains a subquery
+     * @param bool $masterLogs Whether the request uses the legacy MASTER synonym
      */
-    public function __construct(public readonly Scalar $moment, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Scalar $moment, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $masterLogs = false)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);
@@ -54,6 +55,6 @@ final class PurgeLogsBefore extends \SqlSemantics\Platform\MySql\Statement\SqlSt
      */
     public function render(Output $out): void
     {
-        $out->keyword('PURGE', 'BINARY', 'LOGS', 'BEFORE')->node($this->moment);
+        $out->keyword('PURGE', $this->masterLogs ? 'MASTER' : 'BINARY', 'LOGS', 'BEFORE')->node($this->moment);
     }
 }

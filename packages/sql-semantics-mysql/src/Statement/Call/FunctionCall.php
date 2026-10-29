@@ -25,8 +25,9 @@ use SqlSemantics\Statement\Scalar;
  * The server mirrors this as PTI_function_call_generic_ident_sys and
  * PTI_function_call_generic_2d. Only the unqualified form takes argument
  * aliases. The facts follow MYSQL-ROUTINE-CALL-001. The name is written
- * against its parenthesis, because a name followed by a space is a column
- * unless IGNORE_SPACE is set.
+ * against its parenthesis, except for explicitly bare unqualified names.
+ * Those keep a separator so COUNT (1), for example, remains a generic call
+ * rather than becoming the COUNT aggregate.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/function-resolution.html.
  * Status: Implemented.
  *
@@ -137,7 +138,13 @@ final class FunctionCall implements Scalar
         if ($this->schema !== null) {
             $out->name($this->schema, NameUse::Qualifier)->symbol('.');
         }
-        $out->name($this->name, NameUse::Routine)->glue()->symbol('(')->list($this->arguments)->symbol(')');
+        $out->name($this->name, NameUse::Routine);
+        if ($this->schema === null && $this->name->quote === \SqlSemantics\Statement\Identifier\NameQuote::Bare) {
+            $out->separate();
+        } else {
+            $out->glue();
+        }
+        $out->symbol('(')->list($this->arguments)->symbol(')');
     }
 
     /**

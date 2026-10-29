@@ -16,7 +16,7 @@ use MySqlMemory\Server\MemoryDatabase;
  * inspection, state restoration or second native execution changes the result.
  * Bare SHOW STATUS preserves every row and field. Named environment-dependent
  * values are checked against their content domains instead of literal equality;
- * command counters, other values and all reply metadata still compare exactly.
+ * session command counters, other values and all reply metadata still compare exactly.
  * SHOW ENGINE ... MUTEX validates every returned physical-latch record; the
  * set of latches with OS waits belongs to each process, so its cardinality varies.
  */
@@ -47,12 +47,19 @@ final class ExecutionTarget
         . 'Innodb_system_rows_deleted Innodb_system_rows_inserted Innodb_system_rows_read Innodb_system_rows_updated '
         . 'Innodb_undo_tablespaces_active Innodb_undo_tablespaces_explicit Innodb_undo_tablespaces_implicit Innodb_undo_tablespaces_total '
         . 'Key_blocks_not_flushed Key_blocks_unused Key_blocks_used Key_read_requests Key_reads Key_write_requests Key_writes '
-        . 'Last_query_partial_plans Mysqlx_ssl_ctx_verify_depth Mysqlx_ssl_ctx_verify_mode Mysqlx_worker_threads Mysqlx_worker_threads_active '
+        . 'Last_query_partial_plans Max_used_connections Mysqlx_ssl_ctx_verify_depth Mysqlx_ssl_ctx_verify_mode Mysqlx_worker_threads Mysqlx_worker_threads_active '
         . 'Open_files Open_streams Open_table_definitions Open_tables Opened_files Opened_table_definitions Opened_tables '
         . 'Performance_schema_session_connect_attrs_longest_seen Queries Select_full_join Select_full_range_join Select_range '
         . 'Select_range_check Select_scan Sort_merge_passes Sort_range Sort_rows Sort_scan Ssl_ctx_verify_depth Ssl_ctx_verify_mode '
         . 'Table_locks_immediate Table_locks_waited Table_open_cache_hits Table_open_cache_misses Table_open_cache_overflows '
         . 'Threads_cached Threads_created Uptime Uptime_since_flush_status';
+
+    /**
+     * Commands executed by the native image's initialization and readiness connections.
+     * Their global totals include those connections; session totals remain exact.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/show-status.html.
+     */
+    private const STARTUP_COUNTERS = 'Com_change_db Com_create_db Com_create_table Com_flush Com_select Com_set_option Questions';
 
     /** @var list<string> */
     private array $history = [];
@@ -90,9 +97,11 @@ final class ExecutionTarget
         $matching = $expected === $actual;
         if ($expected['error'] === null && $actual['error'] === null && count($expected['results']) === 1 && count($actual['results']) === 1) {
             if (preg_match('/\ASHOW\s+(?:(?:SESSION|LOCAL|GLOBAL)\s+)?STATUS\s*;?\s*\z/i', trim($sql)) === 1) {
-                $matching = self::status($expected['results'][0], $actual['results'][0]);
+                $matching = self::status($expected['results'][0], $actual['results'][0], preg_match('/\ASHOW\s+GLOBAL\s+/i', trim($sql)) === 1);
             } elseif (preg_match('/\ASHOW\s+ENGINE\s+(?:ALL|INNODB|`INNODB`)\s+MUTEX\s*;?\s*\z/i', trim($sql)) === 1) {
                 $matching = self::latches($expected['results'][0], $actual['results'][0], $this->server->version === '5.6.51');
+            } elseif (preg_match('/\ASHOW\s+ENGINE\s+(?:ALL|INNODB|PERFORMANCE_SCHEMA|`INNODB`|`PERFORMANCE_SCHEMA`)\s+STATUS\s*;?\s*\z/i', trim($sql)) === 1) {
+                $matching = self::engines($expected['results'][0], $actual['results'][0]);
             }
         }
         if (!$matching) {
@@ -171,12 +180,12 @@ final class ExecutionTarget
     /**
      * Compares all status rows in order, keeping every variable name and reply field.
      * Only the explicit environment domains below permit unequal values. SQL
-     * command counts and unknown variables have no exception.
+     * session command counts and unknown variables have no exception.
      *
      * @param array{columns: list<array<string, mixed>>, rows: list<list<mixed>>, affected: int|string, insertId: int|string, warnings: int, info: string|null} $expected
      * @param array{columns: list<array<string, mixed>>, rows: list<list<mixed>>, affected: int|string, insertId: int|string, warnings: int, info: string|null} $actual
      */
-    public static function status(array $expected, array $actual): bool
+    public static function status(array $expected, array $actual, bool $global = false): bool
     {
         foreach (['columns', 'affected', 'insertId', 'warnings', 'info'] as $field) {
             if ($expected[$field] !== $actual[$field]) {
@@ -191,8 +200,48 @@ final class ExecutionTarget
             if (count($row) !== 2 || count($other) !== 2 || !is_string($row[0]) || $row[0] !== $other[0] || !is_string($row[1]) || !is_string($other[1])) {
                 return false;
             }
-            $valid = self::environment($row[0], $row[1]);
-            if ($valid === null ? $row[1] !== $other[1] : (!$valid || self::environment($row[0], $other[1]) !== true)) {
+            $name = $global && in_array($row[0], explode(' ', self::STARTUP_COUNTERS), true) ? 'Queries' : $row[0];
+            $valid = self::environment($name, $row[1]);
+            if ($valid === null ? $row[1] !== $other[1] : (!$valid || self::environment($name, $other[1]) !== true)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Keeps engine names, row order, metadata and logical monitor counters exact.
+     * Every physical monitor section and Performance Schema allocation is checked
+     * against its content domain; neither report strings nor rows are discarded.
+     *
+     * @param array{columns: list<array<string, mixed>>, rows: list<list<mixed>>, affected: int|string, insertId: int|string, warnings: int, info: string|null} $expected
+     * @param array{columns: list<array<string, mixed>>, rows: list<list<mixed>>, affected: int|string, insertId: int|string, warnings: int, info: string|null} $actual
+     */
+    public static function engines(array $expected, array $actual): bool
+    {
+        foreach (['columns', 'affected', 'insertId', 'warnings', 'info'] as $field) {
+            if ($expected[$field] !== $actual[$field]) {
+                return false;
+            }
+        }
+        if (count($expected['rows']) !== count($actual['rows'])) {
+            return false;
+        }
+        foreach ($expected['rows'] as $index => $row) {
+            $other = $actual['rows'][$index];
+            if (count($row) !== 3 || count($other) !== 3 || $row[0] !== $other[0] || $row[1] !== $other[1] || !is_string($row[2]) || !is_string($other[2])) {
+                return false;
+            }
+            if ($row[0] === 'InnoDB' && $row[1] === '') {
+                $logical = InnoDbStatus::logical($row[2]);
+                if ($logical === null || $logical !== InnoDbStatus::logical($other[2])) {
+                    return false;
+                }
+            } elseif ($row[0] === 'performance_schema' && is_string($row[1]) && preg_match('/\A(?:[a-z0-9_]+|\([a-z0-9_]+\))\.(?:size|count|memory|row_size|row_count)\z/', $row[1]) === 1) {
+                if (self::environment('Uptime', $row[2]) !== true || self::environment('Uptime', $other[2]) !== true) {
+                    return false;
+                }
+            } elseif ($row !== $other) {
                 return false;
             }
         }

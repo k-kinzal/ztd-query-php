@@ -261,7 +261,7 @@ final class StatementRule
     public function administrativeRefusal(\SqlSemantics\Statement\Fact\Diagnostic $problem): ?ProgramStatement
     {
         return match (true) {
-            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($problem->moment),
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($problem->moment, masterLogs: $problem->masterLogs),
             default => null,
         };
     }

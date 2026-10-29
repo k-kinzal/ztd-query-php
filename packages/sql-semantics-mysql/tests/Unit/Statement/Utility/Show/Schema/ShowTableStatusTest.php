@@ -32,6 +32,6 @@ final class ShowTableStatusTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW TABLE STATUS FROM db WHERE `Rows` > 1', (new Semantics(Dialect::MySql))->analyze('SHOW TABLE STATUS IN db WHERE `Rows` > 1')->toString());
+        self::assertSame('SHOW TABLE STATUS IN db WHERE `Rows` > 1', (new Semantics(Dialect::MySql))->analyze('SHOW TABLE STATUS IN db WHERE `Rows` > 1')->toString());
     }
 }

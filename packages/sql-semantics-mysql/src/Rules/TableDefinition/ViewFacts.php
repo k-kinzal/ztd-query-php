@@ -33,6 +33,10 @@ final class ViewFacts
     public function derive(ViewDefinition $definition, Derivation $derivation): Table
     {
         $output = $derivation->query($definition->query, $derivation->environment());
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($definition->query);
+        if ($problem !== null && array_filter($derivation->diagnostics(), static fn ($reported): bool => $reported::class === $problem::class && get_object_vars($reported) === get_object_vars($problem)) === []) {
+            $derivation->report($problem);
+        }
         if ($definition->columns !== null && $output->shape->complete() && count($definition->columns) !== count($output->projection)) {
             $derivation->report(new ViewColumnCount(count($definition->columns), count($output->projection)));
         }

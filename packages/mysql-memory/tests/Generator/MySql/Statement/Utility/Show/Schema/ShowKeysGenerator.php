@@ -74,13 +74,15 @@ final class ShowKeysGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing>|null $listing Generated listing keyword
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $databaseIn Generated qualifier spelling
+     * @param ErisGenerator<bool>|null $tableIn Generated qualifier spelling
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys>
      */
-    public static function operands(ErisGenerator $table, ?ErisGenerator $extended = null, ?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $listing = null): ErisGenerator
+    public static function operands(ErisGenerator $table, ?ErisGenerator $extended = null, ?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $listing = null, ?ErisGenerator $databaseIn = null, ?ErisGenerator $tableIn = null): ErisGenerator
     {
         return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys(table: $parts[0], extended: $parts[1], database: $parts[2], filter: $parts[3], relationInformation: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], listing: $parts[7]);
-        }, Generators::tuple($table, $extended ?? Generators::constant(false), $database ?? Generators::constant(null), $filter ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $listing ?? new IndexListingGenerator()));
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys(table: $parts[0], extended: $parts[1], database: $parts[2], filter: $parts[3], relationInformation: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], listing: $parts[7], databaseIn: $parts[2] !== null && $parts[8], tableIn: $parts[9]);
+        }, Generators::tuple($table, $extended ?? Generators::constant(false), $database ?? Generators::constant(null), $filter ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $listing ?? new IndexListingGenerator(), $databaseIn ?? Generators::bool(), $tableIn ?? Generators::bool()));
     }
     /**
      * Composes the statement's MySQL 8.4 forms from typed operand generators.
@@ -101,7 +103,7 @@ final class ShowKeysGenerator implements ErisGenerator
                 )
             ),
             extended: Generators::constant(false),
-            database: Generators::constant(null),
+            database: Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()),
             filter: Generators::constant(null)
         );
     }

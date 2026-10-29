@@ -122,11 +122,11 @@ final class LegacyObjectRule
 
         return match ($kind) {
             'databases' => $clauses->inspection(new ShowDatabases(listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\DatabaseListing::from(strtoupper($form->token(0)->text))), $form->node(1)),
-            'tables' => $clauses->inspection(new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2))), $form->node(3)),
-            'triggers' => $clauses->inspection(new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2))), $form->node(3)),
-            'events' => $clauses->inspection(new ShowEvents($clauses->database($form->node(1))), $form->node(2)),
-            'tableStatus' => $clauses->inspection(new ShowTableStatus($clauses->database($form->node(2))), $form->node(3)),
-            'openTables' => $clauses->inspection(new ShowOpenTables($clauses->database($form->node(2), true)), $form->node(3)),
+            'tables' => $clauses->inspection(new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
+            'triggers' => $clauses->inspection(new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
+            'events' => $clauses->inspection(new ShowEvents($clauses->database($form->node(1)), databaseIn: $clauses->usesIn($form->node(1))), $form->node(2)),
+            'tableStatus' => $clauses->inspection(new ShowTableStatus($clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
+            'openTables' => $clauses->inspection(new ShowOpenTables($clauses->database($form->node(2), true), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
             'columns' => $this->columns($form),
             'keys' => $this->keys($form),
             'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2)), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text))),
@@ -152,7 +152,7 @@ final class LegacyObjectRule
         $clauses = new ClauseRule($this->lowering);
         $clauses->preposition($form->node(2));
 
-        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), tableIn: strtoupper($form->node(2)->tokens()[0]->text) === 'IN', databaseIn: strtoupper($form->node(4)->tokens()[0]->text ?? '') === 'IN', fieldsKeyword: strtoupper($form->token(1)->text) === 'FIELDS'), $form->node(5));
+        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), tableIn: $clauses->usesIn($form->node(2)), databaseIn: $clauses->usesIn($form->node(4)), fieldsKeyword: strtoupper($form->token(1)->text) === 'FIELDS'), $form->node(5));
     }
 
     /**
@@ -166,7 +166,7 @@ final class LegacyObjectRule
         $this->lowering->options->skip($form->node(0));
         $clauses->preposition($form->node(1));
 
-        return $clauses->inspection(new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(0))->token(0)->text))), $form->node(4));
+        return $clauses->inspection(new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(0))->token(0)->text)), databaseIn: $clauses->usesIn($form->node(3)), tableIn: $clauses->usesIn($form->node(1))), $form->node(4));
     }
 
     /**

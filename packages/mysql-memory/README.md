@@ -170,15 +170,29 @@ once on each connection and compares the actual replies, including rows, column
 metadata, affected rows, insert IDs, warning counts, completion information and
 SQL errors. Both connections retain the same statement history. A failure reports
 that history and the input bytes, so state-dependent differences can be reproduced.
+Before generation, both connections execute the same session settings and grant
+the current account its own proxy permission. This makes the public account
+configuration agree with the container image's root proxy grant.
+Both connections then execute `FLUSH TABLES` once, so their generated histories
+start with closed table handles. Subsequent cache changes and `SHOW OPEN TABLES`
+replies are compared without removing rows or resetting the cache between inputs.
 Equality is exact except for explicitly identified environment-dependent output.
 For unfiltered `SHOW STATUS`, physical-engine metrics, process-wide startup
 activity, clocks and TLS configuration are checked for valid content and value
-types. Every row, variable name and metadata field is retained; command counters
-and other values still compare exactly. `SHOW ENGINE INNODB MUTEX` and
+types. Every row, variable name and metadata field is retained. Session command
+counts remain exact. Only GLOBAL totals for the initialization and readiness
+commands (`Com_change_db`, `Com_create_db`, `Com_create_table`, `Com_flush`,
+`Com_select`, `Com_set_option`, and `Questions`) permit unsigned numeric differences:
+they also count other connections, including image initialization. Other command
+counts still compare exactly. `SHOW ENGINE INNODB MUTEX` and
 `SHOW ENGINE ALL MUTEX` validate every returned latch record and its counters.
 The set of physical latches that waited can differ between processes, including
 an empty set; each reply's affected-row count must equal its own returned rows.
 SQL failures and warning counts still compare exactly.
+`SHOW ENGINE ... STATUS` validates all eight InnoDB monitor sections and every
+Performance Schema allocation value. Physical activity may differ; user-row
+totals, queued queries, read views, engine names, row order and reply metadata
+must match. Unknown monitor fields and sections fail the comparison.
 
 After PHP-Fuzzer saves the first counterexample, the campaign exits unsuccessfully
 before another input executes. Later comparisons must not use histories that have

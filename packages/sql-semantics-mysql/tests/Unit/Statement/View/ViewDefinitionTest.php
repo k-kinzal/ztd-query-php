@@ -42,6 +42,15 @@ final class ViewDefinitionTest extends TestCase
         new ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), $body);
     }
 
+    public function testHasExecutionConditionKeepsTheCompleteViewRequest(): void
+    {
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE OR REPLACE ALGORITHM = UNDEFINED VIEW v AS SELECT *');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $statement);
+        self::assertTrue($statement->definition->hasExecutionCondition());
+        self::assertSame('CREATE OR REPLACE ALGORITHM = UNDEFINED VIEW v AS SELECT *', $statement->toString());
+        self::assertSame(['No tables used'], array_map(static fn ($condition): string => $condition->message(), $statement->statementInformation()->diagnostics));
+    }
+
     public function testRenderHeadWritesAlgorithmDefinerAndSecurity(): void
     {
         self::assertSame('CREATE ALGORITHM = TEMPTABLE DEFINER = \'u\'@\'%\' SQL SECURITY DEFINER VIEW v AS SELECT 1 AS a', (new Semantics(Dialect::MySql))->analyze('CREATE ALGORITHM = TEMPTABLE DEFINER = \'u\'@\'%\' SQL SECURITY DEFINER VIEW v AS SELECT 1 AS a')->toString());

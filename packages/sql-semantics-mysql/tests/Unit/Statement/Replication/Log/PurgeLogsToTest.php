@@ -22,7 +22,7 @@ final class PurgeLogsToTest extends TestCase
 
     public function testRenderWritesBinaryLogs(): void
     {
-        self::assertSame("PURGE BINARY LOGS TO 'b.000001'", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("purge master logs to 'b.000001'")->toString());
+        self::assertSame("PURGE MASTER LOGS TO 'b.000001'", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("purge master logs to 'b.000001'")->toString());
     }
 
     public function testValueRejectsIncompatibleFile(): void

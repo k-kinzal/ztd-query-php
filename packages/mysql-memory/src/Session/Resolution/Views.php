@@ -14,6 +14,7 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Statement\Declaration\Table;
+use WeakMap;
 
 /**
  * Binds a stored view using declarations supplied by a read-only catalog snapshot.
@@ -23,20 +24,38 @@ use SqlSemantics\Statement\Declaration\Table;
  */
 final class Views
 {
+    /** @var WeakMap<Dictionary, array{list<Table>, list<View>, array<string, true>, Settings, Declarations}>|null */
+    private static ?WeakMap $snapshots = null;
+
     /**
      * Freezes the completed dependency traversal as a value-only catalog snapshot.
+     * Reuses the last snapshot only while every persistent declaration, stored
+     * view, schema name and interpretation setting remains unchanged. A weak
+     * dictionary key releases the snapshot when its instance is no longer used.
      */
     public static function capture(Dictionary $dictionary, Settings $settings): Declarations
     {
-        $bindings = new ViewBindings($dictionary, $settings);
+        $tables = $dictionary->declarations();
+        $views = [];
         $schemas = [];
         foreach ($dictionary->schemas as $schema) {
             $schemas[$schema->name] = true;
             foreach ($schema->views as $view) {
-                $bindings->resolve($view);
+                $views[] = $view;
             }
         }
-        return new Declarations($bindings->tables, $bindings->views, $schemas);
+        self::$snapshots ??= new WeakMap();
+        $previous = self::$snapshots[$dictionary] ?? null;
+        if ($previous !== null && $previous[0] === $tables && $previous[1] === $views && $previous[2] === $schemas && (new \SqlSemantics\Validation\Equivalence())->difference($previous[3], $settings, true) === null) {
+            return $previous[4];
+        }
+        $bindings = new ViewBindings($dictionary, $settings);
+        foreach ($views as $view) {
+            $bindings->resolve($view);
+        }
+        $snapshot = new Declarations($bindings->tables, $bindings->views, $schemas);
+        self::$snapshots[$dictionary] = [$tables, $views, $schemas, $settings, $snapshot];
+        return $snapshot;
     }
 
     /**

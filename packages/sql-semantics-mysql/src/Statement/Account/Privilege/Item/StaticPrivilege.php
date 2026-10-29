@@ -33,9 +33,11 @@ final class StaticPrivilege implements Privilege
     /**
      * @param PrivilegeKind $kind The privilege
      * @param list<Name> $columns The columns the privilege is limited to; none for the whole object
+     * @param bool $schemas Whether SHOW SCHEMAS is written instead of SHOW DATABASES
      */
-    public function __construct(public readonly PrivilegeKind $kind, array $columns = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly PrivilegeKind $kind, array $columns = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $schemas = false)
     {
+        Check::input(!$schemas || $kind === PrivilegeKind::ShowDatabases, 'SCHEMAS is a spelling of the SHOW DATABASES privilege only.');
         $this->columns = Check::listOf($columns, Name::class, 'A column list holds column names.');
         Check::input($this->columns === [] || $kind->columns(), 'Only SELECT, INSERT, UPDATE and REFERENCES take a column list.');
     }
@@ -45,7 +47,7 @@ final class StaticPrivilege implements Privilege
      */
     public function render(Output $out): void
     {
-        $out->keyword(...$this->kind->words());
+        $out->keyword(...($this->schemas ? ['SHOW', 'SCHEMAS'] : $this->kind->words()));
         if ($this->columns !== []) {
             $out->symbol('(');
             foreach ($this->columns as $position => $column) {

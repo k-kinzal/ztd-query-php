@@ -20,13 +20,15 @@ final class RefusedPurgeOperandGenerator implements ErisGenerator
 
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $moment Generated constructor operand
+     * @param ErisGenerator<bool>|null $masterLogs Generated legacy word choice
      */
-    public function __construct(ErisGenerator $moment)
+    public function __construct(ErisGenerator $moment, ?ErisGenerator $masterLogs = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand(moment: $parts[0]);
+            return new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand(moment: $parts[0], masterLogs: $parts[1]);
         }, Generators::tuple(
-            $moment
+            $moment,
+            $masterLogs ?? Generators::bool()
         ));
     }
     /**
@@ -37,6 +39,7 @@ final class RefusedPurgeOperandGenerator implements ErisGenerator
     public static function executionForms(): iterable
     {
         yield 'Replication\\Problem\\RefusedPurgeOperand' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedPurgeOperandGenerator(
+            masterLogs: Generators::constant(false),
             moment: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
                 elements: Generators::tuple(
                     new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(

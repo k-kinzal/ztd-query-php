@@ -47,6 +47,7 @@ final class SourceChange
             throw AdministrationError::ReplicaMultipleChannels->error();
         }
         $state = $channel === '' ? $registry->replication : ($registry->channels[$channel] ??= new \MySqlMemory\Registry\Replication());
+        (new SourceSwitches())->threads($options, $state, $channel, $session->settings()->release());
         (new SourceRepository())->open($state);
         $this->gtids($options, $session);
         (new SourceSwitches())->check($options, $session, $channel);

@@ -32,6 +32,9 @@ final class Reading
         if ($statement instanceof RenameUser) {
             (new RenameUserCommand())->prepare($statement, $session, $notices);
         }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike) {
+            (new \MySqlMemory\Command\Definition\CreateTableLikeCommand())->prepare($statement, $session);
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole) {
             (new \MySqlMemory\Command\Account\Role\CreateRoleCommand())->prepare($statement, $session, $notices);
         }

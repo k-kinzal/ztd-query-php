@@ -119,8 +119,8 @@ final class LegacyShowRule
      */
     public function binaryLogs(Form $form): ShowBinaryLogs
     {
-        $this->lowering->utility->binaryLogsWord($form->node(0));
+        $master = $this->lowering->utility->binaryLogsWord($form->node(0));
 
-        return new ShowBinaryLogs();
+        return new ShowBinaryLogs(masterLogs: $master);
     }
 }

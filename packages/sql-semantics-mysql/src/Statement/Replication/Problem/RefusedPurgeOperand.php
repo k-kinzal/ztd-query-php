@@ -25,8 +25,9 @@ final class RefusedPurgeOperand implements Diagnostic
 
     /**
      * @param RowOperand|DeferredOperand $moment The refused cutoff and all its dependencies
+     * @param bool $masterLogs Whether the request uses the legacy MASTER synonym
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $moment)
+    public function __construct(public readonly RowOperand|DeferredOperand $moment, public readonly bool $masterLogs = false)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Replication\LogMoment())->check($moment);
     }

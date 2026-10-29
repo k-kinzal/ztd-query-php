@@ -74,6 +74,7 @@ final class CreateTableCommand implements Command
         $planner = new Planner($create, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $definitions = new Definitions($planner, $schema->collation);
         $definition = $session->settings()->legacy() && $create->query === null ? $definitions->shape($create, $operation->declarations()[0], $schemaName) : null;
+        Constraint\CheckDefinitions::forbidden($create, $session->settings()->legacy(), release: $session->settings()->release());
         if ($create->temporaryWords > 0 ? $session->temporaries->table($schemaName, $name) !== null : $schema->table($name) !== null || isset($schema->views[$name])) {
             if (!$create->ifNotExists) {
                 throw SchemaError::TableExists->error($name);

@@ -56,13 +56,14 @@ final class ShowTablesGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $databaseIn Generated qualifier spelling
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables>
      */
-    public static function operands(?ErisGenerator $listing = null, ?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public static function operands(?ErisGenerator $listing = null, ?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseIn = null): ErisGenerator
     {
         return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables(listing: $parts[0], database: $parts[1], filter: $parts[2], relationInformation: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple($listing ?? Generators::constant(null), $database ?? Generators::constant(null), $filter ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables(listing: $parts[0], database: $parts[1], filter: $parts[2], relationInformation: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], databaseIn: $parts[1] !== null && $parts[6]);
+        }, Generators::tuple($listing ?? Generators::constant(null), $database ?? Generators::constant(null), $filter ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $databaseIn ?? Generators::bool()));
     }
     /**
      * Composes the statement's MySQL 8.4 forms from typed operand generators.
@@ -73,7 +74,7 @@ final class ShowTablesGenerator implements ErisGenerator
     {
         yield 'ShowTables/116' => ShowTablesGenerator::operands(
             listing: Generators::constant(null),
-            database: Generators::constant(null),
+            database: Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()),
             filter: Generators::constant(null)
         );
     }

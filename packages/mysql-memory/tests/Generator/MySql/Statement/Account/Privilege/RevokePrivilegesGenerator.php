@@ -114,7 +114,7 @@ final class RevokePrivilegesGenerator implements ErisGenerator
             ifExists: Generators::constant(false),
             privileges: Generators::tuple(
                 new Item\PrivilegeGenerator([new Item\StaticPrivilegeGenerator(
-                    kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete]),
+                    kind: Item\PrivilegeKindGenerator::selecting([M\Account\Privilege\Item\PrivilegeKind::Delete, M\Account\Privilege\Item\PrivilegeKind::ShowDatabases]),
                     columns: Generators::constant([])
                 )])
             ),

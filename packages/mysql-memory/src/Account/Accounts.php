@@ -217,6 +217,47 @@ final class Accounts
     }
 
     /**
+     * Answers the current account grants together with those of its active roles.
+     *
+     * @param list<Identity> $roles
+     */
+    public function privileges(Identity $identity, array $roles): Grants
+    {
+        $grants = $this->find($identity)?->grants->copy() ?? new Grants();
+        $grants->merge($this->through($roles));
+
+        return $grants;
+    }
+
+    /**
+     * Answers the privileges of roles and of the roles granted to them.
+     *
+     * @param list<Identity> $roles
+     */
+    public function through(array $roles): Grants
+    {
+        $grants = new Grants();
+        $seen = [];
+        while ($roles !== []) {
+            $role = array_pop($roles);
+            if (isset($seen[$role->key()])) {
+                continue;
+            }
+            $seen[$role->key()] = true;
+            $account = $this->find($role);
+            if ($account === null) {
+                continue;
+            }
+            $grants->merge($account->grants);
+            foreach ($this->roles($role) as [$next]) {
+                $roles[] = $next;
+            }
+        }
+
+        return $grants;
+    }
+
+    /**
      * Tells whether an account is granted to some account as a role.
      */
     public function granted(Identity $role): bool

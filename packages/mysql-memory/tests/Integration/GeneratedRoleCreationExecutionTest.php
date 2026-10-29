@@ -23,7 +23,7 @@ final class GeneratedRoleCreationExecutionTest extends TestCase
         $request = new M\Account\CreateRole(false, [new M\Name\AccountName(new Name('r')), new M\Name\AccountName(new Name(''))]);
         try {
             $this->expectExceptionCode(1396);
-            (new Execution($session))->statement($request);
+            (new Execution($session))->statement((new \MySqlMemory\Session\Statement\Binding())->statement($session, $request));
         } finally {
             self::assertSame('unrelated invalid input', $session->text);
             $session->query('ROLLBACK');

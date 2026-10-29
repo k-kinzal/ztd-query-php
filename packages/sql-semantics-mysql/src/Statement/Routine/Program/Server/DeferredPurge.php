@@ -28,8 +28,9 @@ final class DeferredPurge implements ProgramStatement
 
     /**
      * @param RowOperand|DeferredOperand $moment The complete non-scalar log cutoff operand
+     * @param bool $masterLogs Whether the request uses the legacy MASTER synonym
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $moment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly RowOperand|DeferredOperand $moment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $masterLogs = false)
     {
         (new \SqlSemantics\Platform\MySql\Rules\Replication\LogMoment())->check($moment);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
@@ -48,7 +49,7 @@ final class DeferredPurge implements ProgramStatement
      */
     public function render(Output $out): void
     {
-        $out->keyword('PURGE', 'BINARY', 'LOGS', 'BEFORE');
+        $out->keyword('PURGE', $this->masterLogs ? 'MASTER' : 'BINARY', 'LOGS', 'BEFORE');
         $out->node($this->moment);
     }
 }

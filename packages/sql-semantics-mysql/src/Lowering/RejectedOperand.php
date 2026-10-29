@@ -61,7 +61,7 @@ final class RejectedOperand
             return null;
         }
         $notice = ($node->name === 'NUM_literal' ? $lowering->numbers->completed($node) : null) ?? (new Query\SyntaxAliases())->completed($node, $lowering) ?? $lowering->tableChanges->completed($node, false) ?? (new Account\SyntaxPrivileges())->completed($node, $lowering);
-        return $notice?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand || $notice?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute ? null : $notice;
+        return $notice?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $notice?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand || $notice?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute ? null : $notice;
     }
 
     /**

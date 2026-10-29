@@ -21,14 +21,16 @@ final class DeferredPurgeGenerator implements ErisGenerator
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $moment Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $masterLogs Generated legacy word choice
      */
-    public function __construct(ErisGenerator $moment, ?ErisGenerator $inputSource = null)
+    public function __construct(ErisGenerator $moment, ?ErisGenerator $inputSource = null, ?ErisGenerator $masterLogs = null)
     {
         $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge(moment: $parts[0], inputSource: $parts[1]);
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge(moment: $parts[0], inputSource: $parts[1], masterLogs: $parts[2]);
         }, Generators::tuple(
             $moment,
-            $inputSource ?? Generators::constant(null)
+            $inputSource ?? Generators::constant(null),
+            $masterLogs ?? Generators::bool()
         ));
     }
 }

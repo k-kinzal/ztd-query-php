@@ -19,14 +19,14 @@ use SqlSemantics\Statement\Query;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-view.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-view.html.
  *
- * @example Refusing a view body with intrinsically empty output
+ * @example Retaining an intrinsically empty output as an execution condition
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
- *     new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), $query))->hasExecutionCondition() // => true
  *
- * @example Refusing a qualified projection that reads no relation
+ * @example Retaining a qualified projection whose relation must be resolved
  *     $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard($name)]);
- *     new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     (new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query))->hasExecutionCondition() // => true
  *
  * @visibility public
  * @example Reading a view definition
@@ -67,7 +67,14 @@ final class ViewDefinition implements Node
         Check::input($name->catalog === null, 'A view name has at most a database qualifier.');
         $this->columns = $columns === null ? null : Check::listOf($columns, Name::class, 'A written column list names at least one column.', 1);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ViewQueries())->check($query);
-        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'A view definition has coherent fixed read columns.');
+    }
+
+    /**
+     * Retains fixed read-column conditions for execution, alongside catalog dependencies.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($this->query) !== null;
     }
 
     /**

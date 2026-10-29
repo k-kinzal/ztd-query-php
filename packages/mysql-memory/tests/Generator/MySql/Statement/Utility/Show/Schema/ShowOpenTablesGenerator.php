@@ -55,13 +55,14 @@ final class ShowOpenTablesGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
      * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param ErisGenerator<bool>|null $databaseIn Generated qualifier spelling
      * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables>
      */
-    public static function operands(?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public static function operands(?ErisGenerator $database = null, ?ErisGenerator $filter = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseIn = null): ErisGenerator
     {
         return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables(database: $parts[0], filter: $parts[1], relationInformation: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple($database ?? Generators::constant(null), $filter ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables(database: $parts[0], filter: $parts[1], relationInformation: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], databaseIn: $parts[0] !== null && $parts[5]);
+        }, Generators::tuple($database ?? Generators::constant(null), $filter ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $databaseIn ?? Generators::bool()));
     }
     /**
      * Composes the statement's MySQL 8.4 forms from typed operand generators.
@@ -71,7 +72,7 @@ final class ShowOpenTablesGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'ShowOpenTables/102' => ShowOpenTablesGenerator::operands(
-            database: Generators::constant(null),
+            database: Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()),
             filter: Generators::constant(null)
         );
     }

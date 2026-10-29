@@ -14,6 +14,34 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ViewsTest extends TestCase
 {
+    public function testCaptureReusesOnlyUnchangedDeclarationAndSettingsInputs(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE VIEW v AS SELECT a FROM t');
+        $dictionary = $session->instance->dictionary;
+        $before = Views::capture($dictionary, $session->settings());
+        $session->query('INSERT t VALUES (1)');
+        self::assertSame($before, Views::capture($dictionary, $session->settings()));
+        $session->query('ALTER TABLE t MODIFY a VARCHAR(12)');
+        $changed = Views::capture($dictionary, $session->settings());
+        self::assertNotSame($before, $changed);
+        $session->query('SET div_precision_increment=6');
+        self::assertNotSame($changed, Views::capture($dictionary, $session->settings()));
+    }
+
+    public function testCaptureInvalidatesReplacedViewsAndEmptySchemas(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE VIEW v AS SELECT 1 AS a');
+        $dictionary = $session->instance->dictionary;
+        $before = Views::capture($dictionary, $session->settings());
+        $session->query('CREATE OR REPLACE VIEW v AS SELECT 2 AS b');
+        $changed = Views::capture($dictionary, $session->settings());
+        self::assertNotSame($before, $changed);
+        $session->query('CREATE DATABASE empty_schema');
+        self::assertNotSame($changed, Views::capture($dictionary, $session->settings()));
+    }
+
     public function testCapturePublishesValuesWithoutRetainingTheTraversal(): void
     {
         $session = (new Instance(databases: ['d']))->connect(database: 'd');

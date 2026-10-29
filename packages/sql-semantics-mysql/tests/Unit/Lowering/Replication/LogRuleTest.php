@@ -18,7 +18,7 @@ final class LogRuleTest extends TestCase
     public function testPurgeLowersBothForms(): void
     {
         self::assertSame("PURGE BINARY LOGS TO 'f'", (new Semantics(Dialect::MySql))->analyze("purge binary logs to 'f'")->toString());
-        self::assertSame('PURGE BINARY LOGS BEFORE NOW()', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('purge master logs before now()')->toString());
+        self::assertSame('PURGE MASTER LOGS BEFORE NOW()', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('purge master logs before now()')->toString());
     }
 
     public function testMomentRetainsTheRoleOfANonScalarCutoff(): void

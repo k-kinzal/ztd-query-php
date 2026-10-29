@@ -23,7 +23,7 @@ final class GeneratedRoleGrantExecutionTest extends TestCase
         $request = new M\Account\Privilege\GrantRoles([new M\Account\Privilege\Item\GrantedRole(new M\Name\AccountName(new Name('')))], [new M\Name\CurrentUser()]);
         try {
             $this->expectExceptionCode(3524);
-            (new Execution($session))->statement($request);
+            (new Execution($session))->statement((new \MySqlMemory\Session\Statement\Binding())->statement($session, $request));
         } finally {
             self::assertSame('unrelated invalid input', $session->text);
             $session->query('ROLLBACK');

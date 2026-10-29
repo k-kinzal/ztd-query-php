@@ -53,9 +53,10 @@ final class PreparedAccountRenameTest extends TestCase
     {
         $request = new RenameUser([new M\Account\User\UserRenaming(new M\Name\CurrentUser(), new M\Name\CurrentUser())]);
         $session = (new \MySqlMemory\Instance())->connect();
-        $definition = PreparedStatement::capture($request, $session);
+        $operation = (new \MySqlMemory\Session\Statement\Binding())->statement($session, $request);
+        $definition = PreparedStatement::capture($operation, $session);
         $reply = $definition->run($session, 'opaque label', []);
-        self::assertSame($request, $definition->statement);
+        self::assertSame($operation, $definition->statement);
         self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply[0]);
         self::assertSame(1396, $reply[0]->getCode());
         self::assertSame([['Error', 1396, "Operation RENAME USER failed for 'root'@'%'"]], $session->diagnostics->conditions);

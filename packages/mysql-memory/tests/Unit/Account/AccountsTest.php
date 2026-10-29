@@ -15,6 +15,40 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class AccountsTest extends TestCase
 {
+    public function testPrivilegesCombineOnlyActiveRolesAndReadRevocationsImmediately(): void
+    {
+        $accounts = new Accounts();
+        $user = new Account(new Identity('user', '%'));
+        $role = Account::role(new Identity('role', '%'));
+        $inherited = Account::role(new Identity('inherited', '%'));
+        $user->grants->dynamic['RESOURCE_GROUP_USER'] = false;
+        $inherited->grants->dynamic['RESOURCE_GROUP_ADMIN'] = true;
+        $accounts->add($user);
+        $accounts->add($role);
+        $accounts->add($inherited);
+        $accounts->grant($role->identity, $user->identity, false);
+        $accounts->grant($inherited->identity, $role->identity, false);
+        self::assertSame(['RESOURCE_GROUP_USER' => false], $accounts->privileges($user->identity, [])->dynamic);
+        self::assertSame(['RESOURCE_GROUP_USER' => false, 'RESOURCE_GROUP_ADMIN' => true], $accounts->privileges($user->identity, [$role->identity])->dynamic);
+        $inherited->grants->dynamic = [];
+        self::assertSame(['RESOURCE_GROUP_USER' => false], $accounts->privileges($user->identity, [$role->identity])->dynamic);
+    }
+
+    public function testThroughCollectsNestedRoleGrantsWithoutChangingTheirOriginalSets(): void
+    {
+        $accounts = new Accounts();
+        $role = Account::role(new Identity('role', '%'));
+        $inherited = Account::role(new Identity('inherited', '%'));
+        $inherited->grants->dynamic['RESOURCE_GROUP_USER'] = false;
+        $accounts->add($role);
+        $accounts->add($inherited);
+        $accounts->grant($inherited->identity, $role->identity, false);
+        $grants = $accounts->through([$role->identity, $role->identity]);
+        self::assertSame(['RESOURCE_GROUP_USER' => false], $grants->dynamic);
+        $grants->dynamic = [];
+        self::assertSame(['RESOURCE_GROUP_USER' => false], $inherited->grants->dynamic);
+    }
+
     public function testInstalledHoldsTheAccountsOfANewServer(): void
     {
         self::assertSame(["root\0localhost", "root\0%", "mysql.infoschema\0localhost", "mysql.session\0localhost", "mysql.sys\0localhost"], array_keys(Accounts::installed()->accounts));

@@ -24,6 +24,6 @@ final class ShowBinaryLogsTest extends TestCase
 
     public function testRenderWritesTheStatement(): void
     {
-        self::assertSame('SHOW BINARY LOGS', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW MASTER LOGS')->toString());
+        self::assertSame('SHOW MASTER LOGS', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW MASTER LOGS')->toString());
     }
 }

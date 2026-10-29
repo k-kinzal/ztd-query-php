@@ -86,8 +86,8 @@ final class LogRule
         }
 
         $statement = match ($option->signature) {
-            'purge_option: TO_SYM TEXT_STRING_sys' => new PurgeLogsTo($this->lowering->literals->text($option->node(1))),
-            'purge_option: BEFORE_SYM expr' => $this->moment($option->node(1)),
+            'purge_option: TO_SYM TEXT_STRING_sys' => new PurgeLogsTo($this->lowering->literals->text($option->node(1)), masterLogs: $master),
+            'purge_option: BEFORE_SYM expr' => $this->moment($option->node(1), $master),
             default => throw ImplementationGap::production($option),
         };
         $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::PurgeMasterLogs;
@@ -103,13 +103,13 @@ final class LogRule
      *
      * @throws \SqlSemantics\Construction\RejectedInput When the cutoff requires deferred preparation
      */
-    public function moment(Node $node): PurgeLogsBefore
+    public function moment(Node $node, bool $master = false): PurgeLogsBefore
     {
         $moment = $this->lowering->expressions->operand($node);
         if (!$moment instanceof \SqlSemantics\Statement\Scalar) {
-            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand($moment), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, false);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand($moment, $master), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, false);
         }
-        return new PurgeLogsBefore($moment);
+        return new PurgeLogsBefore($moment, masterLogs: $master);
     }
 
     /**

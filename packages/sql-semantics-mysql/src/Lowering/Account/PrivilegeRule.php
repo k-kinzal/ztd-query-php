@@ -222,7 +222,7 @@ final class PrivilegeRule
         }
         $kind = self::STATIC[$form->signature] ?? null;
         if ($kind !== null) {
-            $privilege = new StaticPrivilege($kind, $kind->columns() ? $this->columns($form->node(1)) : []);
+            $privilege = new StaticPrivilege($kind, $kind->columns() ? $this->columns($form->node(1)) : [], schemas: $kind === PrivilegeKind::ShowDatabases && strtoupper($form->node->tokens()[1]->text) === 'SCHEMAS');
             return $this->lowering->origins->record($privilege, $form->node);
         }
         $names = $this->lowering->names;

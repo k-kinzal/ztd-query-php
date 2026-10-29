@@ -88,6 +88,7 @@ final class SystemSchemas
         'performance_schema.replication_connection_configuration' => Performance\ReplicationConfiguration::class,
         'performance_schema.session_variables' => Performance\SessionVariables::class,
         'performance_schema.variables_by_thread' => Performance\VariablesByThread::class,
+        'performance_schema.user_variables_by_thread' => Performance\UserVariablesByThread::class,
         'performance_schema.global_status' => Performance\GlobalStatus::class,
         'performance_schema.session_status' => Performance\SessionStatus::class,
         'performance_schema.status_by_thread' => Performance\StatusByThread::class,

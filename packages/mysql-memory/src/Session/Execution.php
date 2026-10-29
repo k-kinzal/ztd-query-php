@@ -114,7 +114,7 @@ final class Execution
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->area($operation, $command);
         $late = $operation instanceof MySqlStatement ? $this->reading($operation, $read) : [];
-        (new Statement\Reading())->read($operation, $session, $read && !$session->replayed);
+        (new Statement\Reading())->read($operation, $session, false);
         State\StatementCounters::evaluated($node, $session);
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill) {
             (new \MySqlMemory\Command\Admin\KillCommand())->process($node, $session);

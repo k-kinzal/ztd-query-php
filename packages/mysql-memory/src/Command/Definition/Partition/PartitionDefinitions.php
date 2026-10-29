@@ -87,6 +87,9 @@ final class PartitionDefinitions
         }
         (new PartitionNames())->check($clause);
         $method = $this->method($clause);
+        if ($clause->subpartitioning !== null && in_array($method, [PartitionMethod::Hash, PartitionMethod::Key], true)) {
+            throw PartitionError::MixedSubpartitionMethods->error();
+        }
         $names = $this->names($clause, $method);
         [$expression, $columns, $read] = $this->source($clause, $definition);
         $bounds = new PartitionBounds($this->planner, $method, $columns, $definition);

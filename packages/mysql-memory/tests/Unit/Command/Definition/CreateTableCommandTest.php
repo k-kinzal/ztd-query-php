@@ -19,6 +19,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CreateTableCommandTest extends TestCase
 {
+    public function testCreateValidatesCheckExpressionsBeforeTheExistingTableShortcut(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t(a INT)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3812);
+        $this->expectExceptionMessage("An expression of non-boolean type specified to a check constraint 't_chk_1'.");
+        $session->query('CREATE TABLE IF NOT EXISTS t(a BIT CHECK(USER()))');
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new CreateTableCommand())->clearsDiagnostics());

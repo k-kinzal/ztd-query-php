@@ -44,7 +44,7 @@ final class GeneratedRenameExecutionTest extends TestCase
         $request = new M\Account\RenameUser([new M\Account\User\UserRenaming(new M\Name\CurrentUser(), new M\Name\CurrentUser())]);
         try {
             $this->expectExceptionCode(1396);
-            (new Execution($session))->statement($request);
+            (new Execution($session))->statement((new \MySqlMemory\Session\Statement\Binding())->statement($session, $request));
         } finally {
             self::assertSame('unrelated invalid input', $session->text);
             $session->query('ROLLBACK');

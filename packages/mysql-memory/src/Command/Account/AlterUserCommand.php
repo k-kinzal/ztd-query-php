@@ -109,7 +109,7 @@ final class AlterUserCommand implements Command
     /**
      * Refuses an unavailable factor or a built-in plugin used as an additional factor.
      *
-     * Omitted authentication plugins warn about the authentication policy before account and
+     * Omitted authentication plugins check the authentication policy before account and
      * factor checks. Existing accounts have only their first factor; ADD 3 needs factor 2 first.
      * A missing account reaches plugin validation, even with IF EXISTS (verified on 8.0–9.1).
      *
@@ -122,7 +122,7 @@ final class AlterUserCommand implements Command
         $plugin = $step->identification?->plugin?->value;
         foreach ($change->steps as $candidate) {
             if ($change->action !== FactorAction::Drop && $candidate->identification?->plugin === null) {
-                $session->diagnostics->warning(AccountError::FactorPolicyMismatch, AccountError::FactorPolicyMismatch->message($candidate->factor->value));
+                (new Authentication\FactorPolicy())->mismatch($candidate->factor->value, $session);
                 break;
             }
         }

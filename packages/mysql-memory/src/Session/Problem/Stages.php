@@ -125,7 +125,7 @@ final class Stages
      */
     public static function selfChecked(\SqlSemantics\Statement\Statement $statement): bool
     {
-        return \MySqlMemory\Command\Account\Names::owns($statement) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables
+        return (($statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView || $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\AlterView) && $statement->definition->hasExecutionCondition()) || \MySqlMemory\Command\Account\Names::owns($statement) || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables
             || (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof CreateIndex || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Update) && $statement->hasExecutionCondition());
     }
 
@@ -134,7 +134,7 @@ final class Stages
      */
     public static function definitionCondition(Node $statement): bool
     {
-        return ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof AlterTable || $statement instanceof CreateIndex) && $statement->hasExecutionCondition();
+        return (($statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView || $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\AlterView) && $statement->definition->hasExecutionCondition()) || (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof AlterTable || $statement instanceof CreateIndex) && $statement->hasExecutionCondition());
     }
 
     /**
@@ -234,7 +234,7 @@ final class Stages
         if ($statement instanceof RenameTable) {
             return $diagnostic instanceof MissingTable || $diagnostic instanceof TableExists;
         }
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $statement->query === null) {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) {
             return self::tableDefinition($statement, $diagnostic);
         }
         if ($statement instanceof CreateTableLike || $statement instanceof LockTables || $statement instanceof HandlerOpen) {
@@ -266,10 +266,13 @@ final class Stages
      */
     public static function tableDefinition(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $statement, Diagnostic $diagnostic): bool
     {
+        if ($statement->query !== null && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn) {
+            return false;
+        }
         if ((new Definition\FunctionalQueries())->deferred($diagnostic, $statement)) {
             return true;
         }
-        return $diagnostic instanceof MissingColumn || $diagnostic instanceof MissingTable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn || $diagnostic instanceof MissingColumn || $diagnostic instanceof MissingTable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
     }
 

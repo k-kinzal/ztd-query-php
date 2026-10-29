@@ -37,6 +37,7 @@ enum AdministrationError: int implements ErrorCode
     case FunctionNotDefined = 1128;
     case BinlogClosed = 1186;
     case UnknownSystemVariable = 1193;
+    case LegacyReplicaRunning = 1198;
     case ReplicaNotConfigured = 1200;
     case ReplicaConnectionInitialization = 1201;
     case CommandFailed = 1220;
@@ -83,6 +84,7 @@ enum AdministrationError: int implements ErrorCode
     case ReplicaChannelRunning = 3081;
     case ReplicaThreadsRunning = 3083;
     case ReplicaThreadsStopped = 3084;
+    case ReplicaApplierRunning = 3085;
     case GroupReplicationNotConfigured = 3092;
     case KeyringMissing = 3185;
     case ComponentSchemeMissing = 3527;

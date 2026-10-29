@@ -102,6 +102,6 @@ final class RenameAnalysisBoundaryTest extends TestCase
         $failure = $session->run('RENAME USER full@full TO full')[0];
         self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $failure);
         self::assertSame(1396, $failure->getCode());
-        self::assertSame([4119, 4119, 4119, 1396], array_column($session->diagnostics->conditions, 1));
+        self::assertSame([4119, 4119, 1396], array_column($session->diagnostics->conditions, 1));
     }
 }

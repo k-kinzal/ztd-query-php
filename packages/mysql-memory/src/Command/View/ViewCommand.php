@@ -66,8 +66,15 @@ final class ViewCommand implements Command
         assert($operation instanceof MySqlStatement);
         $statement = $operation;
         assert($statement instanceof CreateView || $statement instanceof AlterView);
-        $session->transaction->commit();
         $definition = $statement->definition;
+        if ($definition->hasExecutionCondition()) {
+            $query = $definition->query;
+            $problem = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody
+                ? new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($query->selection)
+                : new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery($query));
+            throw (new \MySqlMemory\Session\Parse\Entry\InputErrors())->view(new \SqlSemantics\Platform\MySql\Statement\View\Problem\RefusedQuery($definition->name, $statement instanceof AlterView, $problem, $definition->definer), $session);
+        }
+        $session->transaction->commit();
         $database = ProgramSource::database($definition->name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {

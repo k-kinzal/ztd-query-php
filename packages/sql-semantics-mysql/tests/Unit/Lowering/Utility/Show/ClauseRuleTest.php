@@ -15,6 +15,13 @@ use SqlSemantics\Platform\MySql\Lowering\Utility\Show\ClauseRule;
 #[Medium]
 final class ClauseRuleTest extends TestCase
 {
+    public function testUsesInDistinguishesQualifierWordsAndAbsentClauses(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        self::assertSame('SHOW KEYS IN t FROM db', $semantics->analyze('SHOW KEYS IN t FROM db')->toString());
+        self::assertSame('SHOW EVENTS', $semantics->analyze('SHOW EVENTS')->toString());
+    }
+
     public function testFilterLowersLikeAndWhere(): void
     {
         self::assertSame("SHOW STATUS LIKE 'a'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("show status like 'a'")->toString());
@@ -28,7 +35,7 @@ final class ClauseRuleTest extends TestCase
 
     public function testDatabaseLowersTheClause(): void
     {
-        self::assertSame('SHOW EVENTS FROM db', (new Semantics(Dialect::MySql))->analyze('show events in db')->toString());
+        self::assertSame('SHOW EVENTS IN db', (new Semantics(Dialect::MySql))->analyze('show events in db')->toString());
     }
 
     /**

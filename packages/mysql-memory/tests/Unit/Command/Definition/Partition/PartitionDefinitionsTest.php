@@ -9,6 +9,7 @@ use MySqlMemory\Dictionary\Partition\PartitionMethod;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -16,6 +17,32 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PartitionDefinitionsTest extends TestCase
 {
+    #[DataProvider('providerMixedMethods')]
+    public function testPartitioningRefusesMixedMethodsBeforeResolvingTheirColumns(string $version, string $sql): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1500);
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerMixedMethods(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['KEY ()', 'KEY (missing)', 'HASH (missing)'] as $method) {
+                foreach (['ALTER TABLE t', 'CREATE TABLE c (id INT)'] as $head) {
+                    $sql = "$head PARTITION BY $method SUBPARTITION BY KEY (missing)";
+                    yield "$version $sql" => [$version, $sql];
+                }
+            }
+        }
+    }
+
     public function testNamesReadsHexadecimalAndWrappedCountsAsUnsignedValues(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

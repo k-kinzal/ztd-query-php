@@ -13,8 +13,8 @@ use SqlSemantics\Rendering\Output;
 /**
  * SHOW BINARY LOGS (SHOW MASTER LOGS): the binary log files of the server.
  *
- * Rule: MYSQL-SHOW-BINARY-LOGS-001. MASTER and BINARY are the same keyword here (UtilityNoise); the
- * writer emits BINARY, which every release accepts. MySQL 8.0 added the
+ * Rule: MYSQL-SHOW-BINARY-LOGS-001. MASTER and BINARY select the same report;
+ * reconstruction preserves the written choice. MySQL 8.0 added the
  * `Encrypted` column. The columns are those of the layout of
  * MYSQL-SHOW-ROWS-001. Terminates: a fixed layout.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-binary-logs.html.
@@ -43,12 +43,12 @@ final class ShowBinaryLogs extends \SqlSemantics\Platform\MySql\Statement\SqlSta
      */
     public function render(Output $out): void
     {
-        $out->keyword('SHOW', 'BINARY', 'LOGS');
+        $out->keyword('SHOW', $this->masterLogs ? 'MASTER' : 'BINARY', 'LOGS');
     }
     /**
      * Constructs this SQL form with optional completed semantics and an input range.
      */
-    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $masterLogs = false)
     {
         if ($statementInformation !== null) {
             $this->initializeStatementInformation($statementInformation);

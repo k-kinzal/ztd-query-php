@@ -80,9 +80,10 @@ final class PreparedRoleGrantTest extends TestCase
     {
         $request = new GrantRoles([new M\Account\Privilege\Item\GrantedRole(new M\Name\AccountName(new Name('')))], [new M\Name\CurrentUser()]);
         $session = (new \MySqlMemory\Instance())->connect();
-        $definition = PreparedStatement::capture($request, $session);
+        $operation = (new \MySqlMemory\Session\Statement\Binding())->statement($session, $request);
+        $definition = PreparedStatement::capture($operation, $session);
         $reply = $definition->run($session, 'opaque label', []);
-        self::assertSame($request, $definition->statement);
+        self::assertSame($operation, $definition->statement);
         self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply[0]);
         self::assertSame(3524, $reply[0]->getCode());
         self::assertSame([['Error', 3524, 'Failed to grant ``@`%`` to `root`@`%`']], $session->diagnostics->conditions);

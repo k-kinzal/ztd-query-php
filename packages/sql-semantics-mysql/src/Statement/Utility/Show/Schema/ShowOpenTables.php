@@ -40,8 +40,9 @@ final class ShowOpenTables extends \SqlSemantics\Platform\MySql\Statement\SqlSta
     /**
      * @param ?Name $database The database written after FROM or IN; null for the current database
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
+     * @param bool $databaseIn Whether the database is introduced by IN instead of FROM
      */
-    public function __construct(public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $databaseIn = false)
     {
         if ($relationInformation !== null) {
             $this->initializeRelationInformation($relationInformation);
@@ -75,7 +76,7 @@ final class ShowOpenTables extends \SqlSemantics\Platform\MySql\Statement\SqlSta
     {
         $out->keyword('SHOW', 'OPEN', 'TABLES');
         if ($this->database !== null) {
-            $out->keyword('FROM')->name($this->database, NameUse::Qualifier);
+            $out->keyword($this->databaseIn ? 'IN' : 'FROM')->name($this->database, NameUse::Qualifier);
         }
         $out->node($this->filter);
     }
