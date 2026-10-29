@@ -298,7 +298,7 @@ final class EventCommand implements Command
     /**
      * Reads SECOND through decimal conversion and the other simple units as integers. MySQL 5.6 accepts a decimal numeric prefix without warning about trailing text.
      */
-    public function intervalNumber(int|float|string $value, \MySqlMemory\Evaluation\Evaluable $quantity, Context $context, IntervalUnit $unit = IntervalUnit::Second): string
+    public function intervalNumber(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, \MySqlMemory\Evaluation\Evaluable $quantity, Context $context, IntervalUnit $unit = IntervalUnit::Second): string
     {
         $unit = $unit->canonical();
         if ($unit !== IntervalUnit::Second) {

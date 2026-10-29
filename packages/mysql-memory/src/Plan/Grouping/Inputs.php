@@ -57,7 +57,7 @@ final class Inputs
                 $order[] = [new ColumnRead($key->domain(), $input->width() + count($values)), $descending];
                 $values[] = $key;
             }
-            $stored[] = new Accumulation($accumulation->function, $arguments, $accumulation->distinct, $accumulation->domain, $order, $accumulation->separator, $accumulation->limit, $accumulation->object);
+            $stored[] = new Accumulation($accumulation->function, $arguments, $accumulation->distinct, $accumulation->domain, $order, $accumulation->separator, $accumulation->limit, $accumulation->object, divisionPrecision: $accumulation->divisionPrecision);
         }
 
         return [$values === [] ? $input : new Project($input, $values, true), $stored];

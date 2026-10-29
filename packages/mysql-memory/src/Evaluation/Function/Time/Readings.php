@@ -43,7 +43,7 @@ final class Readings
      *
      * @return array{int, int, int, int, int, int, int}|null
      */
-    public function value(int|float|string $value, Domain $domain, Zeros $zeros, Context $context): ?array
+    public function value(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Zeros $zeros, Context $context): ?array
     {
         $modes = $context->modes;
         $flags = match ($zeros) {
@@ -68,7 +68,7 @@ final class Readings
     /**
      * Records that a value is no date the function takes: ER_TRUNCATED_WRONG_VALUE, "Incorrect datetime value".
      */
-    public function refuse(int|float|string $value, Domain $domain, Context $context): void
+    public function refuse(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Context $context): void
     {
         $context->warnMessage(DataError::TruncatedWrongValue, DataError::WrongValue->message('datetime', (string) Convert::toText($value, $domain)));
     }

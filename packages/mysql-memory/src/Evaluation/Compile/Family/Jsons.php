@@ -194,7 +194,7 @@ final class Jsons
      *
      * @throws SqlError When the argument is of another type, a binary string, or no JSON text
      */
-    public static function document(int|float|string|null $value, Domain $domain, int $position, string $function): ?JsonNode
+    public static function document(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain, int $position, string $function): ?JsonNode
     {
         if ($domain->field === Field::Geometry || ($domain->kind !== Kind::String && $domain->kind !== Kind::Json && $domain->kind !== Kind::Null)) {
             throw DataError::InvalidJsonType->error($position, $function);
@@ -310,7 +310,7 @@ final class Jsons
      *
      * @throws SqlError When a string is no JSON text
      */
-    public static function cast(int|float|string $value, Evaluable $operand): string
+    public static function cast(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Evaluable $operand): string
     {
         $domain = $operand->domain();
         if ($domain->kind === Kind::String && $domain->collation->charset !== Charset::binary() && $domain->field !== Field::Enum && $domain->field !== Field::Set) {
@@ -331,18 +331,18 @@ final class Jsons
      *
      * @param bool $boolean Whether the value is that of a predicate
      */
-    public static function value(int|float|string $value, Domain $domain, bool $boolean): JsonNode
+    public static function value(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, bool $boolean): JsonNode
     {
         if ($boolean) {
-            return new JsonNode(JsonKind::Boolean, (int) $value !== 0);
+            return new JsonNode(JsonKind::Boolean, (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value) !== 0);
         }
         $text = (string) Convert::toText($value, $domain);
 
         return match ($domain->kind) {
             Kind::Integer => new JsonNode($domain->unsigned ? JsonKind::Unsigned : JsonKind::Integer, $text),
             Kind::Year => new JsonNode(JsonKind::Unsigned, $text),
-            Kind::Double => new JsonNode(JsonKind::Double, (float) $value),
-            Kind::Decimal => new JsonNode(JsonKind::Decimal, $text),
+            Kind::Double => new JsonNode(JsonKind::Double, (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value)),
+            Kind::Decimal => new JsonNode(JsonKind::Decimal, (string) $value),
             Kind::String => $domain->collation->charset === Charset::binary() ? self::opaque($text, self::stored($domain)) : new JsonNode(JsonKind::String, Encoding::convert($text, $domain->collation->charset, Charset::known('utf8mb4'))),
             Kind::Date => new JsonNode(JsonKind::Date, $text),
             Kind::Time => new JsonNode(JsonKind::Time, self::time($text)),

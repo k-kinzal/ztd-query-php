@@ -719,6 +719,7 @@
         "function": "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateFunction",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "over": "SqlSemantics\\Statement\\Identifier\\Name|SqlSemantics\\Platform\\MySql\\Statement\\Call\\WindowSpecification|null",
+        "precisionIncrement": "?int",
         "valueInformation": "?SqlSemantics\\Statement\\Fact\\ScalarFact"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Call\\Aggregate\\AggregateAlias": {

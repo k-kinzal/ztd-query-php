@@ -72,7 +72,7 @@ final class ParameterBindings
     /**
      * Updates marker types when a bound argument requires the statement to be prepared again.
      *
-     * @param list<array{int|float|string|null, Domain}> $parameters
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}> $parameters
      */
     public function changed(array $parameters): bool
     {

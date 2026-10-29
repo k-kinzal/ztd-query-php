@@ -24,7 +24,7 @@ final class NestedLoopJoinIterator implements RowIterator
     private Frame $frame;
 
     /**
-     * @var list<int|float|string|null>|null
+     * @var list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>|null
      */
     private ?array $outerRow = null;
 

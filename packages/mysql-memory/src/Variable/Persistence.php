@@ -28,7 +28,7 @@ final class Persistence
      *
      * @throws \MySqlMemory\Error\SqlError When the variable or its value is refused
      */
-    public function assign(Assigner $assigner, string $name, ?VariableScope $scope, int|float|string|null $value, ?Domain $domain, ?string $cache = null): void
+    public function assign(Assigner $assigner, string $name, ?VariableScope $scope, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, ?Domain $domain, ?string $cache = null): void
     {
         if ($scope !== VariableScope::Persist && $scope !== VariableScope::PersistOnly) {
             $assigner->assign($name, $scope === VariableScope::Global ? Scope::Global : Scope::Session, $value, $domain, $cache);

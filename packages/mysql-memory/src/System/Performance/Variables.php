@@ -30,7 +30,7 @@ final class Variables
      *
      * @param list<array{string, string}> $values The name and value of each variable
      *
-     * @return list<array<string, int|float|string|null>>
+     * @return list<array<string, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      *
      * @throws SqlError When MySQL 5.7 reads the table from INFORMATION_SCHEMA
      */

@@ -45,7 +45,7 @@ final class OutputRead implements Evaluable
      * Reads a computed value, or evaluates the retained input of an unread value function.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if (array_key_exists($this->position, $frame->row)) {
             return $frame->row[$this->position];
@@ -83,7 +83,7 @@ final class OutputRead implements Evaluable
      * a window that ran over a table keeps the identity until it computes an output.
      * NULL inspection does not fold. Verified through SQL on MySQL 8.0, 8.4 and 9.1.
      */
-    public function aggregate(Frame $frame): int|float|string|null
+    public function aggregate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $accumulation = $this->analytic->accumulation;
         if ($accumulation === null) {
@@ -106,7 +106,7 @@ final class OutputRead implements Evaluable
     /**
      * Reads the value for the initial row position, before the window consumes input.
      */
-    public function initial(Frame $frame): int|float|string|null
+    public function initial(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $analytic = $this->analytic;
         $position = match ($analytic->kind) {

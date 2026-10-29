@@ -101,7 +101,7 @@ final class AccumulatorTest extends TestCase
         $accumulator->add(new Frame($context, [3]));
         $accumulator->add(new Frame($context, [4]));
 
-        self::assertSame('7', $accumulator->result(new Frame($context)));
+        self::assertSame('7', \MySqlMemory\Evaluation\Convert::toText($accumulator->result(new Frame($context)), Domain::decimal(65, 0)));
     }
 
     public function testFoldKeepsTheSmallestAndLargestValue(): void
@@ -180,7 +180,7 @@ final class AccumulatorTest extends TestCase
         $accumulator->add(new Frame($context, [3]));
         $accumulator->add(new Frame($context, [4]));
 
-        self::assertSame('7', $accumulator->result(new Frame($context)));
+        self::assertSame('7', \MySqlMemory\Evaluation\Convert::toText($accumulator->result(new Frame($context)), Domain::decimal(65, 0)));
     }
 
     public function testBitsCombinesAnOperandWithTheBitsFoldedSoFar(): void
@@ -257,7 +257,7 @@ final class AccumulatorTest extends TestCase
         $accumulator->add(new Frame($context, ['1.5']));
         $accumulator->add(new Frame($context, ['2.0']));
 
-        self::assertSame('3.5', $accumulator->result(new Frame($context)));
+        self::assertSame('3.5', \MySqlMemory\Evaluation\Convert::toText($accumulator->result(new Frame($context)), Domain::decimal(65, 1)));
     }
 
     public function testAverageDividesTheDecimalSumToTheScaleOfItsDomain(): void
@@ -269,7 +269,9 @@ final class AccumulatorTest extends TestCase
         $accumulator->add(new Frame($context, [1]));
         $accumulator->add(new Frame($context, [3]));
 
-        self::assertSame('2.3333', $accumulator->average());
+        $average = $accumulator->average();
+        self::assertSame('2.3333', \MySqlMemory\Evaluation\Convert::toText($average, Domain::decimal(14, 4)));
+        self::assertSame('2.333333333', \MySqlMemory\Evaluation\Convert::toDecimal($average, Domain::decimal(14, 4), $context));
     }
 
     public function testAverageOfDoublesIsADouble(): void
@@ -423,11 +425,11 @@ final class AccumulatorTest extends TestCase
         $accumulator->add($frame);
         $frame->row = [null];
         $accumulator->remove($frame);
-        self::assertSame('9', $accumulator->result($frame));
+        self::assertSame('9', \MySqlMemory\Evaluation\Convert::toText($accumulator->result($frame), $fold->domain));
         $frame->row = [7];
         $accumulator->remove($frame);
 
-        self::assertSame('2', $accumulator->result($frame));
+        self::assertSame('2', \MySqlMemory\Evaluation\Convert::toText($accumulator->result($frame), $fold->domain));
     }
 
     public function testCollectKeepsTheFirstJsonObjectMemberOnMySql57(): void

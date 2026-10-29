@@ -45,7 +45,7 @@ final class Minus implements Evaluable
      * Negates the operand for a row.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $value = $this->operand->evaluate($frame);
         if ($value === null) {
@@ -55,7 +55,7 @@ final class Minus implements Evaluable
 
         return match ($this->domain->kind) {
             Kind::Integer => $this->integer((int) Convert::toInteger($value, $domain, $frame->context), $domain->unsigned),
-            Kind::Decimal => Decimal::negate((string) Convert::toDecimal($value, $domain, $frame->context)),
+            Kind::Decimal => new \MySqlMemory\Evaluation\ExactDecimal(Decimal::negate((string) Convert::toDecimal($value, $domain, $frame->context)), $this->domain->decimals),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => -(float) Convert::toDouble($value, $domain, $frame->context),
         };
     }

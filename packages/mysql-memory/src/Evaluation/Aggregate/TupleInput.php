@@ -56,7 +56,7 @@ final class TupleInput
     /**
      * Captures every varying field before deferred expressions or NULL rejection.
      *
-     * @return array{values: list<int|float|string|null>, order: list<int|float|string|null>}
+     * @return array{values: list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, order: list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}
      */
     public function capture(Accumulation $accumulation, Frame $frame): array
     {
@@ -78,8 +78,8 @@ final class TupleInput
     /**
      * Reads deferred concatenation expressions when an accepted tuple is emitted.
      *
-     * @param list<int|float|string> $values The stored tuple fields
-     * @return list<int|float|string|null>
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal> $values The stored tuple fields
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function complete(Accumulation $accumulation, Frame $frame, array $values): array
     {

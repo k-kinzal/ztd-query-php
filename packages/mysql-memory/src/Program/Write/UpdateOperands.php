@@ -38,7 +38,7 @@ final class UpdateOperands
     /**
      * Prepares the complete write after its relation dependencies have opened.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
      * @return bool Whether MySQL 5.6 preparation defers the assignment values
      * @throws SqlError When a reached clause, destination or value cannot prepare
      */

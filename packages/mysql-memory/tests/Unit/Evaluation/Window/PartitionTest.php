@@ -109,14 +109,14 @@ final class PartitionTest extends TestCase
         $session = (new Instance())->connect();
         $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
 
-        self::assertSame(['13', '23', '27'], [$partition->aggregate($sum, 0, $frame), $partition->aggregate($sum, 3, $frame), $partition->aggregate($sum, 4, $frame)]);
+        self::assertSame(['13', '23', '27'], [\MySqlMemory\Evaluation\Convert::toText($partition->aggregate($sum, 0, $frame), $sum->domain), \MySqlMemory\Evaluation\Convert::toText($partition->aggregate($sum, 3, $frame), $sum->domain), \MySqlMemory\Evaluation\Convert::toText($partition->aggregate($sum, 4, $frame), $sum->domain)]);
     }
 
     public function testSelectedRetainsAValueAndReadsItsPreviousPositionWhenItMoves(): void
     {
         $reads = [];
         $argument = $this->createMock(Evaluable::class);
-        $argument->expects(self::exactly(3))->method('evaluate')->willReturnCallback(static function (Frame $frame) use (&$reads): int|float|string|null {
+        $argument->expects(self::exactly(3))->method('evaluate')->willReturnCallback(static function (Frame $frame) use (&$reads): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null {
             $reads[] = $frame->row[0];
 
             return $frame->row[0];
@@ -134,7 +134,7 @@ final class PartitionTest extends TestCase
     {
         $reads = [];
         $argument = $this->createMock(Evaluable::class);
-        $argument->expects(self::exactly(3))->method('evaluate')->willReturnCallback(static function (Frame $frame) use (&$reads): int|float|string|null {
+        $argument->expects(self::exactly(3))->method('evaluate')->willReturnCallback(static function (Frame $frame) use (&$reads): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null {
             $reads[] = $frame->row[0];
 
             return $frame->row[0];
@@ -190,7 +190,7 @@ final class PartitionTest extends TestCase
         $session = (new Instance())->connect();
         $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
 
-        self::assertSame(['2020-01-01 00:00:00', '1.00'], [Partition::converted('2020-01-01', new Domain(Kind::Date, Field::Date, 10), new Domain(Kind::DateTime, Field::DateTime, 19), $frame), Partition::converted(1, Domain::integer(), Domain::decimal(12, 2), $frame)]);
+        self::assertSame(['2020-01-01 00:00:00', '1.00'], [Partition::converted('2020-01-01', new Domain(Kind::Date, Field::Date, 10), new Domain(Kind::DateTime, Field::DateTime, 19), $frame), \MySqlMemory\Evaluation\Convert::toText(Partition::converted(1, Domain::integer(), Domain::decimal(12, 2), $frame), Domain::decimal(12, 2))]);
     }
     public function testFrontierLoadsOnlyTheRowsNeededByARowsFrame(): void
     {

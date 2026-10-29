@@ -114,11 +114,11 @@ final class Functions
         if ($argument instanceof Parameter && $value !== null && $domain->kind !== Kind::Integer) {
             throw StatementError::WrongArguments->error('EXECUTE');
         }
-        if ($value === null || $domain->kind !== Kind::Integer || ($domain->unsigned && (int) $value < 0) || (int) $value < $minimum) {
+        if ($value === null || $domain->kind !== Kind::Integer || ($domain->unsigned && (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value) < 0) || (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value) < $minimum) {
             throw StatementError::WrongArguments->error($name);
         }
 
-        return (int) $value;
+        return (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
     }
 
     /**
@@ -147,7 +147,7 @@ final class Functions
         if ($accumulation === null) {
             return [new Analytic($analytic->kind, null, $reads, $analytic->count, $analytic->domain), $arguments];
         }
-        $cached = new Accumulation($accumulation->function, $reads, $accumulation->distinct, $accumulation->domain, $accumulation->order, $accumulation->separator, $accumulation->limit, $accumulation->object);
+        $cached = new Accumulation($accumulation->function, $reads, $accumulation->distinct, $accumulation->domain, $accumulation->order, $accumulation->separator, $accumulation->limit, $accumulation->object, divisionPrecision: $accumulation->divisionPrecision);
 
         return [new Analytic($analytic->kind, $cached, [], $analytic->count, $analytic->domain), $arguments];
     }

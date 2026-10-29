@@ -154,7 +154,7 @@ final class Ordering
      *
      * @param list<Field> $fields The visible fields
      * @param list<Domain> $domains Their result domains
-     * @return array<int, int|float|string|null>
+     * @return array<int, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function initial(Select $select, array $fields, array $domains): array
     {

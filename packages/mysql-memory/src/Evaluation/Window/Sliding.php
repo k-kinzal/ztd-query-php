@@ -45,7 +45,7 @@ final class Sliding
     /**
      * Moves the frame and answers its aggregate, reading only entering and leaving rows.
      */
-    public function value(Partition $partition, int $row, Frame $frame): int|float|string|null
+    public function value(Partition $partition, int $row, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         [$start, $end] = $partition->extent($row, $frame);
         for ($index = $this->start; $index <= $this->end; $index++) {

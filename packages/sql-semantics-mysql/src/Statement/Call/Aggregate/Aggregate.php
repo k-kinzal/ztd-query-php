@@ -57,7 +57,10 @@ final class Aggregate implements SetFunction
      */
     public readonly array $arguments;
 
+    private ?int $precisionIncrement = null;
+
     /**
+     * @param int|null $divisionPrecision The resolved increment, required with a bound average
      * @param AggregateFunction $function The function
      * @param list<Scalar> $arguments The arguments in order; none for COUNT(*)
      * @param bool $distinct Whether DISTINCT is written
@@ -73,9 +76,14 @@ final class Aggregate implements SetFunction
         ?ScalarFact $scalarInformation = null,
         public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
         public readonly ?AggregateAlias $alias = null,
+        ?int $divisionPrecision = null,
     ) {
+        if ($divisionPrecision !== null) {
+            $this->initializeDivisionPrecision($divisionPrecision);
+        }
         Check::input($alias === null || $alias->function() === $function, 'An aggregate synonym identifies its aggregate operation.');
         if ($scalarInformation !== null) {
+            Check::input($function !== AggregateFunction::Average || $divisionPrecision !== null, 'A bound average supplies its calculation precision.');
             $this->initializeScalarInformation($scalarInformation);
         }
         Check::input($over === null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($function, $distinct) === null, 'An ordinary aggregate uses a supported window quantifier.');
@@ -118,6 +126,9 @@ final class Aggregate implements SetFunction
         (new Windows())->derive($this->over, $derivation, $environment);
         (new AggregateOwnership())->register($this, $derivation, $environment);
 
+        if ($this->function === AggregateFunction::Average) {
+            $this->initializeDivisionPrecision(Settings::of($derivation->context)->divPrecisionIncrement);
+        }
         $fact = (new AggregateResults())->aggregate($this, $facts, $derivation);
         $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
         $argument = $this->arguments[0] ?? null;
@@ -131,6 +142,26 @@ final class Aggregate implements SetFunction
         }
 
         return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
+    }
+
+    /**
+     * Retains the average's calculation precision independently of its displayed scale.
+     * Source: MySQL 8.4.7 Item_sum_avg::resolve_type and Item_sum_avg::val_decimal.
+     */
+    public function initializeDivisionPrecision(int $increment): void
+    {
+        Check::input($this->function === AggregateFunction::Average && $increment >= 0 && $increment <= 30, 'Average division precision is between zero and thirty.');
+        Check::input($this->precisionIncrement === null || $this->precisionIncrement === $increment, 'Average division precision is resolved once.');
+        $this->precisionIncrement = $increment;
+    }
+
+    /**
+     * Returns the calculation precision owned by this average occurrence.
+     */
+    public function divisionPrecision(): int
+    {
+        Check::input($this->precisionIncrement !== null, 'An average must have calculation precision before execution.');
+        return $this->precisionIncrement;
     }
 
     /**

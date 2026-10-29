@@ -10,6 +10,8 @@ use MySqlMemory\Typing\Domain;
  * An expression ready to be evaluated: its resolved domain and how to compute its value from a frame.
  *
  * The value is held as the kind of the domain says (Kind), or is null for SQL NULL.
+ * Exact decimal intermediates retain calculation digits and their text scale
+ * together, so numeric consumers do not read an already rounded display value.
  *
  * @visibility MySqlMemory
  */
@@ -29,5 +31,5 @@ interface Evaluable
      * @phpstan-impure
      * @throws \MySqlMemory\Error\SqlError When the evaluation is an error
      */
-    public function evaluate(Frame $frame): int|float|string|null;
+    public function evaluate(Frame $frame): int|float|string|ExactDecimal|null;
 }

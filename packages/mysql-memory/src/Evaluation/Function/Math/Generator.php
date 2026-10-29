@@ -51,7 +51,7 @@ final class Generator implements Evaluable
      * Reads the seed.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $this->seed->evaluate($frame);
     }
@@ -67,8 +67,8 @@ final class Generator implements Evaluable
             $kept[$this] = $this->start($seed === null ? 0 : (new Numerics())->integer($seed, $this->seed->domain(), $frame->context));
         }
         [$first, $second] = $kept[$this];
-        $first = ((int) $first * 3 + (int) $second) % self::MODULUS;
-        $second = ($first + (int) $second + 33) % self::MODULUS;
+        $first = ((int) \MySqlMemory\Evaluation\ExactDecimal::raw($first) * 3 + (int) \MySqlMemory\Evaluation\ExactDecimal::raw($second)) % self::MODULUS;
+        $second = ($first + (int) \MySqlMemory\Evaluation\ExactDecimal::raw($second) + 33) % self::MODULUS;
         $kept[$this] = [$first, $second];
 
         return $first / self::MODULUS;

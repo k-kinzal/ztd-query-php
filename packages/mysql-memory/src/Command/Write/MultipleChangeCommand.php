@@ -89,7 +89,7 @@ final class MultipleChangeCommand implements Command
     /**
      * Deletes the rows of the target tables that joined rows took part in.
      *
-     * @param list<array{list<int|float|string|null>, array<int, int|null>}> $matches
+     * @param list<array{list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, array<int, int|null>}> $matches
      */
     public function delete(MultipleDelete $statement, Scope $scope, array $matches, Session $session, Context $context, StatementSemantics $facts): Reply
     {
@@ -150,7 +150,7 @@ final class MultipleChangeCommand implements Command
     /**
      * Applies the assignments to the rows the joined rows took part in, each row once.
      *
-     * @param list<array{list<int|float|string|null>, array<int, int|null>}> $matches
+     * @param list<array{list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, array<int, int|null>}> $matches
      */
     public function update(Update $statement, Planner $planner, Scope $scope, array $matches, Session $session, Context $context): Reply
     {
@@ -190,7 +190,7 @@ final class MultipleChangeCommand implements Command
      * NULL for a NOT NULL column is refused under a strict mode and stored as the implicit
      * default of the column with a warning otherwise.
      *
-     * @param list<array{int, int, int|float|string|null, \MySqlMemory\Evaluation\Evaluable}> $values
+     * @param list<array{int, int, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Evaluation\Evaluable}> $values
      * @param array<int, int|null> $numbers
      * @param array<string, true> $done
      * @param array{int, string}|null $direct The occurrence updated while the join is read, and the name it is written under

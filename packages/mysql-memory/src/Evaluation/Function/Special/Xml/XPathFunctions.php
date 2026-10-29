@@ -178,9 +178,9 @@ final class XPathFunctions
         }
 
         return match ($domain->kind) {
-            Kind::Integer => new XPathOperand(XPathOperand::INTEGER, (int) $value),
-            Kind::Decimal => new XPathOperand(XPathOperand::DOUBLE, (float) $value, [], 30),
-            Kind::Double => new XPathOperand(XPathOperand::DOUBLE, (float) $value),
+            Kind::Integer => new XPathOperand(XPathOperand::INTEGER, (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value)),
+            Kind::Decimal => new XPathOperand(XPathOperand::DOUBLE, (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value), [], 30),
+            Kind::Double => new XPathOperand(XPathOperand::DOUBLE, (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value)),
             Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => new XPathOperand(XPathOperand::STRING, (string) Convert::toText($value, $domain), [], XPathOperand::NOT_FIXED, true),
         };
     }

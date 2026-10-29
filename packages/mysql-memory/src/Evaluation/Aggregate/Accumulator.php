@@ -33,7 +33,7 @@ final class Accumulator
 {
     private int $count = 0;
 
-    private int|float|string|null $value = null;
+    private int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value = null;
 
     private float $squares = 0.0;
 
@@ -45,7 +45,7 @@ final class Accumulator
     private array $seen = [];
 
     /**
-     * @var list<array{list<int|float|string>, list<int|float|string|null>}>
+     * @var list<array{list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal>, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}>
      */
     private array $parts = [];
 
@@ -66,7 +66,7 @@ final class Accumulator
     /**
      * Folds the arguments evaluated over the row of a frame.
      *
-     * @param array{values: list<int|float|string|null>, order: list<int|float|string|null>}|null $stored Shared ROLLUP input, or null to evaluate this level's arguments
+     * @param array{values: list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, order: list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}|null $stored Shared ROLLUP input, or null to evaluate this level's arguments
      */
     public function add(Frame $frame, ?array $stored = null): void
     {
@@ -84,7 +84,7 @@ final class Accumulator
                 return;
             }
             $values[] = $value;
-            $key .= Order::key($value, $argument->domain()) . "\0";
+            $key .= Order::key(\MySqlMemory\Evaluation\ExactDecimal::raw($value), $argument->domain()) . "\0";
         }
         if ($this->accumulation->distinct) {
             if (isset($this->seen[$key])) {
@@ -147,7 +147,7 @@ final class Accumulator
     /**
      * Folds one argument value into the function's state.
      */
-    public function fold(Frame $frame, int|float|string $value): void
+    public function fold(Frame $frame, int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value): void
     {
         $argument = $this->accumulation->arguments[0];
         $domain = $argument->domain();
@@ -183,9 +183,9 @@ final class Accumulator
     /**
      * Folds one value into a MIN or MAX: the first value, then any value ordered before (MIN) or after (MAX) the kept one.
      */
-    public function extreme(int|float|string $value, Domain $domain): void
+    public function extreme(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain): void
     {
-        $order = $this->value === null ? 0 : Order::compare($value, $this->value, $domain);
+        $order = $this->value === null ? 0 : Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($value), \MySqlMemory\Evaluation\ExactDecimal::raw($this->value), $domain);
         if ($this->count === 1 || ($this->accumulation->function === AggregateFunction::Minimum ? $order < 0 : $order > 0)) {
             $this->value = $value;
         }
@@ -194,11 +194,11 @@ final class Accumulator
     /**
      * Folds one value into a SUM or AVG, in double arithmetic for a double result or a double argument of AVG, else in exact decimal arithmetic.
      */
-    public function total(Frame $frame, int|float|string $value): void
+    public function total(Frame $frame, int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value): void
     {
         $domain = $this->accumulation->arguments[0]->domain();
         $this->value = $this->accumulation->domain->kind === Kind::Double || ($this->accumulation->function === AggregateFunction::Average && $domain->kind === Kind::Double)
-            ? (float) $this->value + (float) Convert::toDouble($value, $domain, $frame->context)
+            ? (float) \MySqlMemory\Evaluation\ExactDecimal::raw($this->value) + (float) Convert::toDouble($value, $domain, $frame->context)
             : Decimal::add((string) ($this->value ?? '0'), (string) Convert::toDecimal($value, $domain, $frame->context));
     }
 
@@ -208,11 +208,11 @@ final class Accumulator
     public function bits(int $operand): void
     {
         if ($this->accumulation->function === AggregateFunction::BitAnd) {
-            $this->value = ($this->count === 1 ? -1 : (int) $this->value) & $operand;
+            $this->value = ($this->count === 1 ? -1 : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($this->value)) & $operand;
 
             return;
         }
-        $this->value = $this->accumulation->function === AggregateFunction::BitOr ? (int) $this->value | $operand : (int) $this->value ^ $operand;
+        $this->value = $this->accumulation->function === AggregateFunction::BitOr ? (int) \MySqlMemory\Evaluation\ExactDecimal::raw($this->value) | $operand : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($this->value) ^ $operand;
     }
 
     /**
@@ -228,8 +228,8 @@ final class Accumulator
     /**
      * Folds the values of a GROUP_CONCAT call.
      *
-     * @param list<int|float|string> $values
-     * @param list<int|float|string|null>|null $order The stored sorting values, or null to evaluate them
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal> $values
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>|null $order The stored sorting values, or null to evaluate them
      */
     public function concatenate(Frame $frame, array $values, ?array $order = null): void
     {
@@ -244,14 +244,14 @@ final class Accumulator
     /**
      * Answers the result of the fold.
      */
-    public function result(Frame $frame): int|float|string|null
+    public function result(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return match ($this->accumulation->function) {
             AggregateFunction::Count => $this->count,
             AggregateFunction::BitAnd => $this->count === 0 ? -1 : $this->value,
             AggregateFunction::BitOr, AggregateFunction::BitXor => $this->count === 0 ? 0 : $this->value,
             AggregateFunction::Average => $this->average(),
-            AggregateFunction::Sum => $this->count === 0 ? null : ($this->accumulation->domain->kind === Kind::Decimal ? Decimal::round((string) $this->value, $this->accumulation->domain->decimals) : $this->value),
+            AggregateFunction::Sum => $this->count === 0 ? null : ($this->accumulation->domain->kind === Kind::Decimal ? new \MySqlMemory\Evaluation\ExactDecimal((string) $this->value, $this->accumulation->domain->decimals) : $this->value),
             AggregateFunction::StandardDeviation, AggregateFunction::SampleStandardDeviation => $this->spread(true),
             AggregateFunction::Variance, AggregateFunction::SampleVariance => $this->spread(false),
             null => $this->concatenation($frame),
@@ -265,7 +265,7 @@ final class Accumulator
      * Reads the retained extreme in its resolved evaluation domain. MySQL 5.6
      * BIT extrema evaluate as unsigned integers while still reporting BIT fields.
      */
-    public function extremeResult(Frame $frame): int|float|string|null
+    public function extremeResult(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if ($this->count === 0) {
             return null;
@@ -278,16 +278,16 @@ final class Accumulator
     /**
      * Answers the average of the folded values, or null for none.
      */
-    public function average(): float|string|null
+    public function average(): float|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if ($this->count === 0) {
             return null;
         }
         if ($this->accumulation->domain->kind === Kind::Double) {
-            return (float) $this->value / $this->count;
+            return (float) \MySqlMemory\Evaluation\ExactDecimal::raw($this->value) / $this->count;
         }
 
-        return Decimal::divide((string) $this->value, (string) $this->count, $this->accumulation->domain->decimals);
+        return new \MySqlMemory\Evaluation\ExactDecimal((string) Decimal::quotient((string) $this->value, (string) $this->count, $this->accumulation->divisionPrecision), $this->accumulation->domain->decimals);
     }
 
     /**
@@ -309,7 +309,7 @@ final class Accumulator
      * Constant keys still reverse ties even when their expressions are not read.
      * MySQL 5.6 retains DISTINCT insertion order when no ORDER BY is specified.
      *
-     * @return list<array{list<int|float|string>, list<int|float|string|null>}>
+     * @return list<array{list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal>, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}>
      */
     public function ordered(\SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): array
     {
@@ -319,7 +319,7 @@ final class Accumulator
             $parts = array_reverse($parts);
             usort($parts, static function (array $left, array $right) use ($order): int {
                 foreach ($order as $index => [$key, $descending]) {
-                    $compared = Order::compare($left[1][$index], $right[1][$index], $key->domain());
+                    $compared = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($left[1][$index]), \MySqlMemory\Evaluation\ExactDecimal::raw($right[1][$index]), $key->domain());
                     if ($compared !== 0) {
                         return $descending ? -$compared : $compared;
                     }
@@ -330,7 +330,7 @@ final class Accumulator
         } elseif ($this->accumulation->distinct && $release !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             usort($parts, function (array $left, array $right): int {
                 foreach ($this->accumulation->arguments as $position => $argument) {
-                    $compared = Order::compare($left[0][$position], $right[0][$position], $argument->domain());
+                    $compared = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($left[0][$position]), \MySqlMemory\Evaluation\ExactDecimal::raw($right[0][$position]), $argument->domain());
                     if ($compared !== 0) {
                         return $compared;
                     }
@@ -364,7 +364,7 @@ final class Accumulator
     /**
      * Converts an accepted tuple to text after reading its deferred expressions.
      *
-     * @param list<int|float|string> $values The stored tuple fields
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal> $values The stored tuple fields
      */
     public function text(Frame $frame, array $values): string
     {

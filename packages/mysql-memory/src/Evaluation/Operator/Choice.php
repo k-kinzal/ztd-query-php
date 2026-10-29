@@ -44,7 +44,7 @@ final class Choice implements Evaluable
      * Chooses and evaluates a result for a row.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $operand = $this->operand?->evaluate($frame);
         foreach ($this->branches as [$condition, $comparator, $result]) {

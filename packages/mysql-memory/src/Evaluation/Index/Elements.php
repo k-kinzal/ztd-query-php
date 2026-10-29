@@ -76,7 +76,7 @@ final class Elements
     /**
      * Reads an entry without turning JSON strings into quoted SQL strings.
      *
-     * @return array{int|float|string, Domain}
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal, Domain}
      */
     public function source(JsonNode $element): array
     {

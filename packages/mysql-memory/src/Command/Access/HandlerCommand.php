@@ -174,7 +174,7 @@ final class HandlerCommand implements Command
     /**
      * Answers the values a key seek compares the index with.
      *
-     * @return list<int|float|string|null>
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function values(HandlerIndexSeek $statement, MySqlStatement $operation, Session $session, Context $context, Connection $connection): array
     {
@@ -203,7 +203,7 @@ final class HandlerCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the index column has no default
      */
-    public function default(HandlerIndexSeek $statement, int $position, Session $session, Context $context): int|float|string|null
+    public function default(HandlerIndexSeek $statement, int $position, Session $session, Context $context): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $handler = $this->handler($session, $statement->handler->name->value);
         $table = $session->instance->dictionary->table($handler->schema, $handler->table, $session->temporaries);
@@ -304,7 +304,7 @@ final class HandlerCommand implements Command
     /**
      * Answers the rows read as SELECT * answers them: the visible columns, each value in its text.
      *
-     * @param list<list<int|float|string|null>> $rows
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
      */
     public function result(\MySqlMemory\Plan\QueryPlan $plan, array $rows, StoredTable $table, Session $session, Context $context): ResultSet
     {

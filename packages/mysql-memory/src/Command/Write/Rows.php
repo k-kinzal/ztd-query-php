@@ -58,7 +58,7 @@ final class Rows
     public ?Scope $sources = null;
 
     /**
-     * @var list<int|float|string|null> The row of the FROM clause of the query the row being written comes from
+     * @var list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> The row of the FROM clause of the query the row being written comes from
      */
     public array $source = [];
 
@@ -101,7 +101,7 @@ final class Rows
      * had not received a value for yet, in the order of the table.
      *
      * @param list<int> $positions
-     * @param list<Evaluable|DefaultRequest|array{int|float|string|null, Domain}> $values
+     * @param list<Evaluable|DefaultRequest|array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}> $values
      * @param bool $queried Whether the row is a row of the query of INSERT ... SELECT
      *
      * @throws SqlError When the row is refused

@@ -69,7 +69,7 @@ final class PreparedCache
     /**
      * Executes through the same parameter and metadata invalidation boundary for every transport.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
      * @throws \MySqlMemory\Error\SqlError When refresh or execution fails
      */
     public function execute(Session $session, string $label, array $parameters, ParameterBindings $bindings): \MySqlMemory\Result\Reply
@@ -101,7 +101,7 @@ final class PreparedCache
     /**
      * Returns protocol replies, retaining partial results and terminal SQL errors.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
      * @return list<\MySqlMemory\Result\Reply|\MySqlMemory\Error\SqlError>
      */
     public function run(Session $session, string $label, array $parameters, ParameterBindings $bindings): array
@@ -144,7 +144,7 @@ final class PreparedCache
     /**
      * Selects and binds a retained alternative, replacing the cache only on success.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The current bindings
      * @throws \MySqlMemory\Error\SqlError When the new interpretation fails
      * @throws LogicException When metadata invalidation has no typed preparation definition
      */

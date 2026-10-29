@@ -49,7 +49,7 @@ final class Store
      *
      * @throws SqlError When the value is refused
      */
-    public function value(int|float|string|null $value, Domain $from, ColumnDefinition $column): int|float|string|null
+    public function value(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $from, ColumnDefinition $column): int|float|string|null
     {
         $to = $column->domain;
         if ($to->field === Field::Geometry) {
@@ -94,7 +94,7 @@ final class Store
      *
      * @throws SqlError When the value is refused
      */
-    public function integer(int|float|string $value, Domain $from, ColumnDefinition $column): int
+    public function integer(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): int
     {
         $to = $column->domain;
         if ($from->kind === Kind::String) {
@@ -108,7 +108,7 @@ final class Store
             }
             $number = Decimal::round($read->number, 0);
         } elseif ($from->kind === Kind::Double) {
-            $number = sprintf('%.0f', round((float) $value, 0, PHP_ROUND_HALF_EVEN));
+            $number = sprintf('%.0f', round((float) \MySqlMemory\Evaluation\ExactDecimal::raw($value), 0, PHP_ROUND_HALF_EVEN));
         } else {
             $number = Decimal::round((string) Convert::toDecimal($value, $from, $this->context), 0);
         }
@@ -148,7 +148,7 @@ final class Store
      *
      * @throws SqlError When the value is refused
      */
-    public function decimal(int|float|string $value, Domain $from, ColumnDefinition $column): string
+    public function decimal(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): string
     {
         $to = $column->domain;
         if ($from->kind === Kind::String) {
@@ -180,7 +180,7 @@ final class Store
      *
      * @throws SqlError When the value is refused
      */
-    public function real(int|float|string $value, Domain $from, ColumnDefinition $column): float
+    public function real(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): float
     {
         if ($from->kind === Kind::String) {
             $read = NumericText::real((string) $value);
@@ -211,7 +211,7 @@ final class Store
      *
      * @throws SqlError When the value is refused
      */
-    public function string(int|float|string $value, Domain $from, ColumnDefinition $column): string
+    public function string(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): string
     {
         $to = $column->domain;
         $text = $this->encoded((string) Convert::toText($value, $from), $from, $column);
@@ -272,7 +272,7 @@ final class Store
      *
      * @throws SqlError When the value is refused
      */
-    public function bit(int|float|string $value, Domain $from, ColumnDefinition $column): string
+    public function bit(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): string
     {
         $bits = $column->domain->length;
         $number = $from->kind === Kind::String ? Convert::bits((string) $value) : (int) Convert::toInteger($value, $from, $this->context, true);

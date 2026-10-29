@@ -34,7 +34,7 @@ final class Retyped implements Evaluable
     /**
      * Evaluates the compiled expression.
      */
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $this->evaluable->evaluate($frame);
     }

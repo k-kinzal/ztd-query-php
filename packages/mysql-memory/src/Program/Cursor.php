@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\CursorDeclarati
 final class Cursor
 {
     /**
-     * @var list<list<int|float|string|null>>|null The rows of the query, or null while the cursor is closed
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>|null The rows of the query, or null while the cursor is closed
      */
     public ?array $rows = null;
 

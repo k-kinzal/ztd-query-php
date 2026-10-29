@@ -93,14 +93,14 @@ final class Bits implements Evaluable
      *
      * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors, or a double result is beyond the range
      */
-    public function operand(Evaluable $operand, int|float|string|null $value, Frame $frame): ?int
+    public function operand(Evaluable $operand, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Frame $frame): ?int
     {
         $domain = $operand->domain();
         if ($value !== null && $domain->kind === Kind::Decimal) {
             return Convert::decimalInteger((string) $value, $frame->context, false);
         }
         if ($value !== null && $domain->kind === Kind::Double) {
-            $real = (float) $value;
+            $real = (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
             $rounded = round($real, 0, PHP_ROUND_HALF_EVEN);
             if ($rounded >= 9223372036854775807.0 || $rounded < -9223372036854775808.0) {
                 $origin = $operand;

@@ -55,8 +55,8 @@ final class Extremes
     public function routines(): array
     {
         return [
-            new Routine('GREATEST', 2, -1, fn (Frame $f, array $a, Domain $r, string $t): int|float|string|null => $this->extreme($f, $a, $r, $t, true), 1, $this->resolve(...)),
-            new Routine('LEAST', 2, -1, fn (Frame $f, array $a, Domain $r, string $t): int|float|string|null => $this->extreme($f, $a, $r, $t, false), 1, $this->resolve(...)),
+            new Routine('GREATEST', 2, -1, fn (Frame $f, array $a, Domain $r, string $t): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $this->extreme($f, $a, $r, $t, true), 1, $this->resolve(...)),
+            new Routine('LEAST', 2, -1, fn (Frame $f, array $a, Domain $r, string $t): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $this->extreme($f, $a, $r, $t, false), 1, $this->resolve(...)),
         ];
     }
 
@@ -84,7 +84,7 @@ final class Extremes
      * @param string $text The call as the server prints it
      * @param bool $greatest Whether the largest argument is asked for
      */
-    public function extreme(Frame $frame, array $arguments, Domain $result, string $text, bool $greatest): int|float|string|null
+    public function extreme(Frame $frame, array $arguments, Domain $result, string $text, bool $greatest): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $dated = array_filter($arguments, static fn (Evaluable $argument): bool => $argument->domain()->kind === Kind::Date || $argument->domain()->kind === Kind::DateTime);
         $mode = match (true) {
@@ -121,7 +121,9 @@ final class Extremes
             return null;
         }
 
-        return $this->written($textual ? new Rank($best->order, $best->value, false, null) : $best, $winner, $mode, $result, $arguments);
+        $value = $this->written($textual ? new Rank($best->order, $best->value, false, null) : $best, $winner, $mode, $result, $arguments);
+        /** MySQL 5.6/5.7 round the decimal getter itself; modern releases round its text getter. */
+        return $value instanceof \MySqlMemory\Evaluation\ExactDecimal && in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? $value->text() : $value;
     }
 
     /**
@@ -145,7 +147,7 @@ final class Extremes
      *
      * @param list<Evaluable> $arguments
      */
-    public function rank(int|float|string $value, Domain $domain, Kind $mode, Domain $result, Frame $frame, array $arguments, string $text): Rank
+    public function rank(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Kind $mode, Domain $result, Frame $frame, array $arguments, string $text): Rank
     {
         $context = $frame->context;
         $unsigned = $domain->unsigned || $domain->kind === Kind::Bit;
@@ -165,7 +167,7 @@ final class Extremes
      *
      * @param list<Evaluable> $arguments
      */
-    public function moment(int|float|string $value, Domain $domain, Kind $mode, Frame $frame, array $arguments, string $text): Rank
+    public function moment(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Kind $mode, Frame $frame, array $arguments, string $text): Rank
     {
         $context = $frame->context;
         $shown = (string) Convert::toText($value, $domain);
@@ -270,9 +272,9 @@ final class Extremes
     public function compare(Rank $left, Rank $right, Kind $mode, Domain $result): int
     {
         return match ($mode) {
-            Kind::Integer, Kind::Year, Kind::Bit => Integer::compare((int) $left->order, $left->unsigned, (int) $right->order, $right->unsigned),
+            Kind::Integer, Kind::Year, Kind::Bit => Integer::compare((int) \MySqlMemory\Evaluation\ExactDecimal::raw($left->order), $left->unsigned, (int) \MySqlMemory\Evaluation\ExactDecimal::raw($right->order), $right->unsigned),
             Kind::Decimal => Decimal::compare((string) $left->order, (string) $right->order),
-            Kind::Double, Kind::Time => (float) $left->order <=> (float) $right->order,
+            Kind::Double, Kind::Time => (float) \MySqlMemory\Evaluation\ExactDecimal::raw($left->order) <=> (float) \MySqlMemory\Evaluation\ExactDecimal::raw($right->order),
             Kind::String, Kind::Json, Kind::Null => Ordering::of($result->collation)->compare((string) $left->order, (string) $right->order),
             Kind::Date, Kind::DateTime => strcmp((string) $left->order, (string) $right->order),
         };
@@ -283,13 +285,13 @@ final class Extremes
      *
      * @param list<Evaluable> $arguments
      */
-    public function written(Rank $best, Evaluable $winner, Kind $mode, Domain $result, array $arguments): int|float|string
+    public function written(Rank $best, Evaluable $winner, Kind $mode, Domain $result, array $arguments): int|float|string|\MySqlMemory\Evaluation\ExactDecimal
     {
         $parts = $best->parts;
         return match ($mode) {
-            Kind::Integer, Kind::Year, Kind::Bit => $result->kind === Kind::Bit ? (string) $best->order : (int) $best->order,
-            Kind::Decimal => Decimal::round((string) $best->order, $result->decimals),
-            Kind::Double => (float) $best->order,
+            Kind::Integer, Kind::Year, Kind::Bit => $result->kind === Kind::Bit ? (string) $best->order : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($best->order),
+            Kind::Decimal => new \MySqlMemory\Evaluation\ExactDecimal((string) $best->order, $result->decimals),
+            Kind::Double => (float) \MySqlMemory\Evaluation\ExactDecimal::raw($best->order),
             Kind::String, Kind::Json, Kind::Null => (string) $best->order,
             Kind::Time => $this->time((string) $best->value, $result->decimals),
             Kind::Date, Kind::DateTime => match (true) {

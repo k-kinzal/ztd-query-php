@@ -18,10 +18,10 @@ final class Jump
      * @param Flow $flow Where control goes
      * @param string|null $label The label LEAVE or ITERATE names
      * @param Block|null $block The block an EXIT handler ends
-     * @param int|float|string|null $value The value RETURN answers
+     * @param int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value The value RETURN answers
      * @param Domain|null $domain The type of the value RETURN answers
      */
-    public function __construct(public readonly Flow $flow, public readonly ?string $label = null, public readonly ?Block $block = null, public readonly int|float|string|null $value = null, public readonly ?Domain $domain = null)
+    public function __construct(public readonly Flow $flow, public readonly ?string $label = null, public readonly ?Block $block = null, public readonly int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value = null, public readonly ?Domain $domain = null)
     {
     }
 

@@ -125,7 +125,7 @@ final class Variables
     /**
      * Answers the value and domain of a user variable.
      *
-     * @return array{int|float|string|null, Domain}
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}
      */
     public function user(string $name): array
     {
@@ -141,9 +141,10 @@ final class Variables
      * Verified through PDO in Testcontainers MySQL 5.6.51 and 5.7.44.
      * @throws \MySqlMemory\Error\SqlError When a user variable name exceeds the server limit
      */
-    public function assign(string $name, int|float|string|null $value, Domain $domain, ?Collation $preparedCollation = null): void
+    public function assign(string $name, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain, ?Collation $preparedCollation = null): void
     {
         $this->checkUserName($name);
+        $value = $value instanceof \MySqlMemory\Evaluation\ExactDecimal ? $value->number : $value;
         $previous = $this->user[strtolower($name)] ?? null;
         $collation = $domain->kind->numeric() ? Collation::named((string) $this->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci') : $domain->collation;
         if ($value === null) {

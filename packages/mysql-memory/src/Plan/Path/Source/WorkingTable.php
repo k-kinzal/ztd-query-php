@@ -15,7 +15,7 @@ use Override;
 final class WorkingTable implements AccessPath
 {
     /**
-     * @var list<list<int|float|string|null>> The rows of the last iteration
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> The rows of the last iteration
      */
     public array $rows = [];
 

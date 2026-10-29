@@ -85,7 +85,7 @@ final class Weight implements Evaluable
             if (in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
                 return null;
             }
-            $integer = $domain->kind === Kind::Bit ? Convert::bits((string) $value) : (int) $value;
+            $integer = $domain->kind === Kind::Bit ? Convert::bits((string) $value) : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
             return pack('J', $domain->unsigned ? $integer : $integer ^ PHP_INT_MIN);
         }
         if ($domain->kind->temporal()) {

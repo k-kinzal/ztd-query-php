@@ -65,7 +65,7 @@ final class SetConversion implements Evaluable
             return $this->decimal((string) Convert::operandDecimal($value, $this->operand, $frame->context));
         }
 
-        return $this->integer((int) $value, $from);
+        return $this->integer((int) \MySqlMemory\Evaluation\ExactDecimal::raw($value), $from);
     }
 
     /**

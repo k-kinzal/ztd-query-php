@@ -121,7 +121,7 @@ final class Constructions
      *
      * @throws SqlError When the value is a binary string
      */
-    public static function name(int|float|string $value, Evaluable $argument): string
+    public static function name(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Evaluable $argument): string
     {
         $domain = $argument->domain();
         if ($domain->kind === Kind::Json) {

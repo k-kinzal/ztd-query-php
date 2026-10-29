@@ -44,7 +44,7 @@ final class BufferedRead implements Evaluable
      * Reads the last buffered row, retaining NULL as a value rather than an absent slot.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return !$this->initialOnly && array_key_exists($this->position, $frame->buffered) ? $frame->buffered[$this->position] : $this->initial();
     }

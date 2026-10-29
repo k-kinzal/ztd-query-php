@@ -35,7 +35,7 @@ final class UpdateUse
     /**
      * Opens the original inputs in the current state without replacing the statement.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
      * @throws SqlError When a dependency or retained input constraint is reached
      * @throws LogicException When the retained constraint loses its native error
      */
@@ -48,7 +48,7 @@ final class UpdateUse
     /**
      * Checks reached preparation phases while retaining deferred assignment values.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound marker values
      * @throws SqlError When an input, destination or reached clause cannot bind
      */
     public function check(Update|\SqlSemantics\Platform\MySql\Statement\Dml\Problem\Update\ConflictingUpdate $write, Session $session, bool $prepared = false, array $parameters = []): void

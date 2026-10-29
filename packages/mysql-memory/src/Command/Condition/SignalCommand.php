@@ -219,7 +219,7 @@ final class SignalCommand implements Command
      *
      * @throws SqlError When the value is no such integer
      */
-    public function number(int|float|string $value, \MySqlMemory\Typing\Domain $domain, Context $context): int
+    public function number(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, \MySqlMemory\Typing\Domain $domain, Context $context): int
     {
         $decimal = (string) $value;
         if ($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal && is_numeric($decimal) && (bccomp($decimal, '18446744073709551615', 0) > 0 || bccomp($decimal, '-9223372036854775808', 0) < 0)) {

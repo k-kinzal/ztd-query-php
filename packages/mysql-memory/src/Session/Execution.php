@@ -37,7 +37,7 @@ final class Execution
     /**
      * Executes the published semantic statement without rendering or analyzing it.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound parameter values
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound parameter values
      * @param bool $read Whether initial input conditions are emitted here
      * @param bool $contained Whether successful writes belong to the enclosing statement
      * @throws SqlError When SQL execution fails
@@ -63,7 +63,7 @@ final class Execution
      * The optimizer hints of the statement are applied before it starts and the variables they
      * set get their values back when it ends, whether it succeeds or fails ({@see \MySqlMemory\Hint\Hints}).
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers
      * @param bool $read Whether the statement was read from the text the session runs
      * @param bool $contained Whether the statement is part of the statement around it
      *
@@ -100,7 +100,7 @@ final class Execution
      * procedure CALL does.
      *
      * @param \MySqlMemory\Hint\Application $hints The hints of the statement, applied, whose warnings it raises
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers
      * @param bool $read Whether the statement was read from the text the session runs
      * @param bool $contained Whether the statement is part of the statement around it
      *

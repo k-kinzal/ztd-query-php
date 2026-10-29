@@ -50,7 +50,7 @@ final class DistinctIterator implements RowIterator
             $key = '';
             foreach ($this->path->domains as $position => $domain) {
                 $value = $row[$position] ?? (isset($this->path->zeroNulls[$position]) ? 0 : null);
-                $key .= Order::key($value, $domain, $this->path->hashed) . "\0";
+                $key .= Order::key(\MySqlMemory\Evaluation\ExactDecimal::raw($value), $domain, $this->path->hashed) . "\0";
             }
             if (!isset($this->seen[$key])) {
                 $this->seen[$key] = true;

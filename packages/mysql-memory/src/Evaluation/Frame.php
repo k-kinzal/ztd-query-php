@@ -22,14 +22,14 @@ final class Frame
     /**
      * Latest stored projection values, also read by legacy sorting before the next row updates them.
      *
-     * @var list<int|float|string|null>
+     * @var list<int|float|string|ExactDecimal|null>
      */
     public array $projected = [];
 
     /**
      * The latest row held by a buffered query result, distinct from the projection's input row.
      *
-     * @var list<int|float|string|null>
+     * @var list<int|float|string|ExactDecimal|null>
      */
     public array $buffered = [];
 
@@ -43,7 +43,7 @@ final class Frame
     /**
      * Last computed window slots, retained across an empty dependent execution.
      *
-     * @var array<int, int|float|string|null>
+     * @var array<int, int|float|string|ExactDecimal|null>
      */
     public array $windowSlots = [];
 
@@ -57,7 +57,7 @@ final class Frame
 
     /**
      * @param Context $context The statement being evaluated
-     * @param list<int|float|string|null> $row The current row of the block
+     * @param list<int|float|string|ExactDecimal|null> $row The current row of the block
      * @param Frame|null $outer The frame of the enclosing block, for a subquery
      */
     public function __construct(public readonly Context $context, public array $row = [], public readonly ?Frame $outer = null)

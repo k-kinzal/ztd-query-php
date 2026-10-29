@@ -38,7 +38,7 @@ final class ColumnRead implements Evaluable
      * Reads the column from the row of its block.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return ($this->depth === 0 ? $frame : $frame->out($this->depth))->row[$this->position] ?? null;
     }

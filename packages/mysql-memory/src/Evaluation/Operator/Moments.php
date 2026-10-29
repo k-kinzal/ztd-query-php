@@ -36,7 +36,7 @@ final class Moments
      *
      * @param array{bool, bool}|null $zeros Whether the zero date and a zero month or day are refused; as NO_ZERO_DATE and NO_ZERO_IN_DATE say when null
      */
-    public function convert(int|float|string $value, Domain $from, Domain $to, Context $context, ?array $zeros = null): ?string
+    public function convert(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, Domain $to, Context $context, ?array $zeros = null): ?string
     {
         if ($to->kind === Kind::Time) {
             return $this->time($value, $from, $to->decimals, $context);
@@ -79,7 +79,7 @@ final class Moments
      * @param array{bool, bool}|null $zeros Whether the zero date and a zero month or day are refused; as NO_ZERO_DATE and NO_ZERO_IN_DATE say when null
      * @return array{int, int, int, int, int, int, int, bool, string}|null
      */
-    public function parts(int|float|string $value, Domain $from, Context $context, ?array $zeros, string $shown): ?array
+    public function parts(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, Context $context, ?array $zeros, string $shown): ?array
     {
         $truncate = $context->modes->has('TIME_TRUNCATE_FRACTIONAL');
         if ($from->kind === Kind::Time) {
@@ -105,7 +105,7 @@ final class Moments
      * A string that holds a datetime gives its time. A number beyond 838:59:59 converts to NULL,
      * a string to 838:59:59.
      */
-    public function time(int|float|string $value, Domain $from, int $decimals, Context $context): ?string
+    public function time(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, int $decimals, Context $context): ?string
     {
         $truncate = $context->modes->has('TIME_TRUNCATE_FRACTIONAL');
         $shown = (string) Convert::toText($value, $from);
@@ -148,7 +148,7 @@ final class Moments
      * @param string $shown The value as the warning shows it
      * @return array{bool, int, int, int, string, string}|null Negative, hours, minute, second, fractional digits, and the text after the value
      */
-    public function clock(int|float|string $value, Domain $from, bool $numeric, string $shown, Context $context): ?array
+    public function clock(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, bool $numeric, string $shown, Context $context): ?array
     {
         $text = $numeric ? $this->digits($value, $from, $context) : (string) $value;
         $moment = $from->kind === Kind::Time ? null : Temporal::scanDateTime($text, $from->kind !== Kind::Date && $from->kind !== Kind::DateTime);
@@ -205,7 +205,7 @@ final class Moments
      * and two digits name 2000-2069 and 1970-1999, and so does the string zero; the number zero is
      * the zero year.
      */
-    public function year(int|float|string $value, Domain $from, Context $context): ?int
+    public function year(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, Context $context): ?int
     {
         if ($from->kind === Kind::Date || $from->kind === Kind::DateTime) {
             return (int) substr((string) $value, 0, 4);
@@ -252,7 +252,7 @@ final class Moments
     /**
      * Writes a number as the digits it is read as a date from.
      */
-    public function digits(int|float|string $value, Domain $from, Context $context): string
+    public function digits(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, Context $context): string
     {
         return (string) Convert::toDecimal($value, $from, $context);
     }

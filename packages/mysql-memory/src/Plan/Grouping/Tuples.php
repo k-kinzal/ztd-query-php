@@ -67,7 +67,7 @@ final class Tuples
         }
         $input = new TupleInput($select->groupBy !== null || $this->planner->settings->legacy(), !$node instanceof GroupConcat, $constants, $checks, $disabled);
 
-        return new Accumulation($accumulation->function, $accumulation->arguments, $accumulation->distinct, $accumulation->domain, $order, $accumulation->separator, $accumulation->limit, $accumulation->object, $input);
+        return new Accumulation($accumulation->function, $accumulation->arguments, $accumulation->distinct, $accumulation->domain, $order, $accumulation->separator, $accumulation->limit, $accumulation->object, $input, $accumulation->divisionPrecision);
     }
 
     /**

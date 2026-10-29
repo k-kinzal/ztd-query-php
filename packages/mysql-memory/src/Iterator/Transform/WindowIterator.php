@@ -72,8 +72,8 @@ final class WindowIterator implements RowIterator
     /**
      * Answers the indexes of the input rows in the order of the window: by partition, then by the ORDER BY expressions; ties keep input order.
      *
-     * @param list<list<int|float|string|null>> $partitions
-     * @param list<list<int|float|string|null>> $keys
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $partitions
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $keys
      * @return list<int>
      */
     public function sorted(array $partitions, array $keys): array
@@ -86,13 +86,13 @@ final class WindowIterator implements RowIterator
         $order = $this->path->order;
         usort($indexes, static function (int $left, int $right) use ($partitions, $keys, $partition, $order): int {
             foreach ($partition as $position => $expression) {
-                $compared = Order::compare($partitions[$left][$position], $partitions[$right][$position], $expression->domain());
+                $compared = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($partitions[$left][$position]), \MySqlMemory\Evaluation\ExactDecimal::raw($partitions[$right][$position]), $expression->domain());
                 if ($compared !== 0) {
                     return $compared;
                 }
             }
             foreach ($order as $position => [$expression, $descending]) {
-                $compared = Order::compare($keys[$left][$position], $keys[$right][$position], $expression->domain());
+                $compared = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($keys[$left][$position]), \MySqlMemory\Evaluation\ExactDecimal::raw($keys[$right][$position]), $expression->domain());
                 if ($compared !== 0) {
                     return $descending ? -$compared : $compared;
                 }
@@ -107,13 +107,13 @@ final class WindowIterator implements RowIterator
     /**
      * Tells whether two rows are in the same partition.
      *
-     * @param list<int|float|string|null> $left
-     * @param list<int|float|string|null> $right
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $left
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $right
      */
     public function same(array $left, array $right): bool
     {
         foreach ($this->path->partition as $position => $expression) {
-            if (Order::compare($left[$position], $right[$position], $expression->domain()) !== 0) {
+            if (Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($left[$position]), \MySqlMemory\Evaluation\ExactDecimal::raw($right[$position]), $expression->domain()) !== 0) {
                 return false;
             }
         }
@@ -125,8 +125,8 @@ final class WindowIterator implements RowIterator
      * Registers one partition for demand-driven argument and output evaluation.
      *
      * @param list<int> $members The indexes of the rows of the partition, in the order of the window
-     * @param list<list<int|float|string|null>> $rows
-     * @param list<list<int|float|string|null>> $keys
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $keys
      */
     public function emit(array $members, array $rows, array $keys, Frame $frame): void
     {

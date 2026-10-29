@@ -138,7 +138,7 @@ final class Partitions
     public function locate(array $row): int
     {
         $partitioning = $this->partitioning;
-        $value = $partitioning->expression?->evaluate(new Frame($this->context, $row));
+        $value = \MySqlMemory\Evaluation\ExactDecimal::raw($partitioning->expression?->evaluate(new Frame($this->context, $row)));
         $tuple = array_map(static fn (int $position) => $row[$position], $partitioning->columns);
         $found = match ($partitioning->method) {
             PartitionMethod::Range => $this->range($value === null ? null : [$value], $value === null),
@@ -245,7 +245,7 @@ final class Partitions
     /**
      * Answers the HASH partition of a value.
      */
-    public function hash(int|float|string|null $value): int
+    public function hash(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value): int
     {
         $count = count($this->partitioning->partitions);
         $number = $value === null ? '9223372036854775808' : ltrim((string) $value, '-');

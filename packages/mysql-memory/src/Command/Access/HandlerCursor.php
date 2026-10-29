@@ -34,7 +34,7 @@ final class HandlerCursor
     /**
      * Answers the numbers of the rows in the order a read follows: the natural order, or the order of an index after it.
      *
-     * @param array<int, list<int|float|string|null>> $rows The rows in their natural order
+     * @param array<int, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows The rows in their natural order
      * @return list<int>
      */
     public function ordered(array $rows, ?Key $key, StoredTable $table): array
@@ -50,14 +50,14 @@ final class HandlerCursor
     /**
      * Compares the leading columns of an index in a row with values, as many columns as there are values.
      *
-     * @param list<int|float|string|null> $row
-     * @param list<int|float|string|null> $values
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $values
      */
     public function compare(array $row, Key $key, StoredTable $table, array $values): int
     {
         foreach ($values as $index => $value) {
             $column = $key->columns[$index];
-            $order = Order::compare($row[$column], $value, $table->definition->columns[$column]->domain);
+            $order = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($row[$column]), \MySqlMemory\Evaluation\ExactDecimal::raw($value), $table->definition->columns[$column]->domain);
             if ($order !== 0) {
                 return $order;
             }
@@ -70,8 +70,8 @@ final class HandlerCursor
      * Answers where a read starts in its order and the direction it moves in.
      *
      * @param list<int> $numbers
-     * @param array<int, list<int|float|string|null>> $rows
-     * @param list<int|float|string|null> $values
+     * @param array<int, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $values
      * @param int|null $position Where the cursor stands in the order, or null when the read starts the order afresh
      * @return array{int, int}
      */
@@ -130,12 +130,12 @@ final class HandlerCursor
      * Reads the rows of an order from where a read starts: it skips the rows the condition rejects
      * and the rows of the offset, and stops after count rows, or at the first row an equality seek does not match.
      *
-     * @param array<int, list<int|float|string|null>> $rows The rows in their natural order
+     * @param array<int, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows The rows in their natural order
      * @param list<int> $numbers The numbers of the rows in the order of the read
-     * @param list<int|float|string|null> $values The values of an equality seek
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $values The values of an equality seek
      * @param int|null $count The number of rows the read answers at most, or null when it has no bound
      * @param Key|null $equal The index of an equality seek, or null when the read is not one
-     * @return array{list<list<int|float|string|null>>, int|null} The rows read, and where the cursor stopped or null when the read ran out of rows
+     * @return array{list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>, int|null} The rows read, and where the cursor stopped or null when the read ran out of rows
      */
     public function walk(array $rows, array $numbers, int $start, int $step, ?int $count, int $offset, ?Key $equal, StoredTable $table, array $values, ?Evaluable $condition, Context $context): array
     {

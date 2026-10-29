@@ -314,7 +314,7 @@ final class ColumnText
     /**
      * Writes a bit value as a bit literal: b'' followed by its bits without leading zeros.
      */
-    public function bits(int|float|string $value): string
+    public function bits(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value): string
     {
         $number = 0;
         if (is_string($value)) {
@@ -322,7 +322,7 @@ final class ColumnText
                 $number = ($number << 8) | ord($byte);
             }
         } else {
-            $number = (int) $value;
+            $number = (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
         }
 
         return "b'" . decbin($number) . "'";

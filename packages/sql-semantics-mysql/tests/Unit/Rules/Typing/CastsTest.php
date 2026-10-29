@@ -77,6 +77,17 @@ final class CastsTest extends TestCase
         self::assertSame([Field::Json, 16777216, 0, 'utf8mb4_bin'], [$result->field, $result->length, $result->decimals, $result->collation->name]);
     }
 
+    public function testStringUsesBlobMetadataForTheUnboundedLegacyJsonText(): void
+    {
+        $collation = Collation::known('utf8mb4_general_ci');
+        $casts = new Casts(new Settings($collation), GrammarRelease::MySql5744);
+        $json = $casts->cast(Domain::integer(), new CastTarget(CastKind::Json));
+        $text = $casts->string($json, new CastTarget(CastKind::Char), $collation);
+
+        self::assertSame([Field::LongBlob, 16777216], [$text->field, $text->metadataLength()]);
+        self::assertEquals(Domain::string(12, $collation), $casts->string($json, new CastTarget(CastKind::Char, '12'), $collation));
+    }
+
     public function testIntegerRetainsLegacyStringPrecisionBeyondTheReportedIntegerWidth(): void
     {
         $casts = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql5651);
@@ -206,7 +217,7 @@ final class CastsTest extends TestCase
         $json = new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'));
 
         self::assertEquals(Domain::string(4294967295, Collation::binary(), Field::LongBlob), (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->string($json, new CastTarget(CastKind::Binary), Collation::binary()));
-        self::assertEquals(Domain::string(4294967295, Collation::binary()), (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql5744))->string($json, new CastTarget(CastKind::Binary), Collation::binary()));
+        self::assertEquals(Domain::string(4294967295, Collation::binary(), Field::LongBlob), (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql5744))->string($json, new CastTarget(CastKind::Binary), Collation::binary()));
     }
 
     public function testCastMakesAYearOfFiveDigitsIn80(): void

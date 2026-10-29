@@ -144,7 +144,7 @@ final class PartitionBounds
                 throw PartitionError::ValuesNotInteger->error($name);
             }
             $column = $columns ? $this->definition->columns[$this->columns[$index] ?? 0] : null;
-            $values[] = $column === null || $value === null ? $value : (new Store($context))->value($value, $evaluable->domain(), $column);
+            $values[] = $column === null || $value === null ? \MySqlMemory\Evaluation\ExactDecimal::raw($value) : (new Store($context))->value($value, $evaluable->domain(), $column);
         }
 
         return $values;

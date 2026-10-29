@@ -28,7 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 final class AggregateIterator implements RowIterator
 {
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 
@@ -77,7 +77,7 @@ final class AggregateIterator implements RowIterator
             foreach ($this->path->groups as $group) {
                 $value = $group->evaluate($frame);
                 $values[] = $value;
-                $key .= Order::key($value, $group->domain(), $this->path->hashed) . "\0";
+                $key .= Order::key(\MySqlMemory\Evaluation\ExactDecimal::raw($value), $group->domain(), $this->path->hashed) . "\0";
             }
             if (!isset($groups[$key])) {
                 $groups[$key] = [$row, $values, array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), []];
@@ -101,7 +101,7 @@ final class AggregateIterator implements RowIterator
     /**
      * Orders groups by their grouping values.
      *
-     * @template T of array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, ...}
+     * @template T of array{list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, list<Accumulator>, ...}
      * @param list<T> $groups
      * @return list<T>
      */
@@ -119,7 +119,7 @@ final class AggregateIterator implements RowIterator
         $directions = $this->path->directions;
         usort($groups, static function (array $left, array $right) use ($expressions, $directions): int {
             foreach ($expressions as $index => $expression) {
-                $order = Order::compare($left[1][$index], $right[1][$index], $expression->domain());
+                $order = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($left[1][$index]), \MySqlMemory\Evaluation\ExactDecimal::raw($right[1][$index]), $expression->domain());
                 if ($order !== 0) {
                     return ($directions[$index] ?? false) ? -$order : $order;
                 }
@@ -134,8 +134,8 @@ final class AggregateIterator implements RowIterator
     /**
      * Answers the output row of each group.
      *
-     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, list<list<int|float|string|null>>}> $groups
-     * @return list<list<int|float|string|null>>
+     * @param list<array{list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, list<Accumulator>, list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>}> $groups
+     * @return list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     public function emit(array $groups, Frame $frame): array
     {
@@ -167,8 +167,8 @@ final class AggregateIterator implements RowIterator
      * group of the run, with NULL in the columns of the grouping expressions it rolls up unless a
      * grouping expression it keeps is the same column.
      *
-     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, list<list<int|float|string|null>>}> $groups
-     * @return list<list<int|float|string|null>>
+     * @param list<array{list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, list<Accumulator>, list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>}> $groups
+     * @return list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     public function rollup(array $groups, Frame $frame): array
     {
@@ -217,7 +217,7 @@ final class AggregateIterator implements RowIterator
      *
      * @param array<int, list<Accumulator>> $runs Active subtotal accumulators by prefix
      * @param list<Accumulator> $leaf The current group's accumulators
-     * @param list<list<int|float|string|null>> $members The group's input rows
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $members The group's input rows
      */
     public function foldRollup(array $runs, array $leaf, array $members, Frame $frame): void
     {
@@ -249,13 +249,13 @@ final class AggregateIterator implements RowIterator
     /**
      * Tells whether two groups agree on their leading grouping values.
      *
-     * @param list<int|float|string|null> $left
-     * @param list<int|float|string|null> $right
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $left
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $right
      */
     public function agree(array $left, array $right, int $prefix): bool
     {
         for ($position = 0; $position < $prefix; $position++) {
-            if (Order::compare($left[$position], $right[$position], $this->path->groups[$position]->domain()) !== 0) {
+            if (Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($left[$position]), \MySqlMemory\Evaluation\ExactDecimal::raw($right[$position]), $this->path->groups[$position]->domain()) !== 0) {
                 return false;
             }
         }
@@ -266,10 +266,10 @@ final class AggregateIterator implements RowIterator
     /**
      * Answers one output row WITH ROLLUP: the row, the aggregates, the grouping values and the number of grouping expressions rolled up.
      *
-     * @param list<int|float|string|null> $row
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
      * @param list<Accumulator> $accumulators
-     * @param list<int|float|string|null> $values
-     * @return list<int|float|string|null>
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $values
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function row(array $row, array $accumulators, array $values, int $level, Frame $frame): array
     {

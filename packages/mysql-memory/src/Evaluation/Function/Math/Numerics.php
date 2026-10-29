@@ -38,7 +38,7 @@ final class Numerics
     public function routines(): array
     {
         return [
-            new Routine('MOD', 2, 2, static fn (Frame $f, array $a, Domain $r, string $t): int|float|string|null => (new Arithmetic(ArithmeticOperator::Modulo, $a[0], $a[1], $r, $t))->evaluate($f)),
+            new Routine('MOD', 2, 2, static fn (Frame $f, array $a, Domain $r, string $t): int|float|\MySqlMemory\Evaluation\ExactDecimal|null => (new Arithmetic(ArithmeticOperator::Modulo, $a[0], $a[1], $r, $t))->evaluate($f)),
             new Routine('ATAN', 1, 2, $this->arcTangent(...)),
             new Routine('ATAN2', 1, 2, $this->arcTangent(...)),
             new Routine('CRC32', 1, 1, $this->checksum(...)),
@@ -106,7 +106,7 @@ final class Numerics
     /**
      * Reads a value as a signed 64-bit integer; a decimal beyond the range takes the nearest bound with a warning.
      */
-    public function integer(int|float|string $value, Domain $domain, Context $context): int
+    public function integer(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Context $context): int
     {
         return $domain->kind === Kind::Decimal ? Convert::decimalInteger((string) $value, $context, false) : (int) Convert::toInteger($value, $domain, $context);
     }

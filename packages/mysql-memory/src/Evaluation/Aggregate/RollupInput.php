@@ -21,7 +21,7 @@ final class RollupInput
     /**
      * Captures a shared tuple and its sorting values, retaining NULL short-circuiting.
      *
-     * @return array{values: list<int|float|string|null>, order: list<int|float|string|null>}|null
+     * @return array{values: list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>, order: list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}|null
      */
     public function capture(Accumulation $accumulation, Frame $frame): ?array
     {

@@ -24,7 +24,7 @@ final class Geometries
     /**
      * Checks a value and preserves the geometry's stored bytes.
      */
-    public function value(int|float|string|null $value, ColumnDefinition $column, GrammarRelease $release = GrammarRelease::MySql847): ?string
+    public function value(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, ColumnDefinition $column, GrammarRelease $release = GrammarRelease::MySql847): ?string
     {
         if ($value === null) {
             if (!$column->nullable() && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {

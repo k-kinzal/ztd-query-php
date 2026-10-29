@@ -27,7 +27,7 @@ final class SingleRow
      * @param Rows $rows The planned subquery
      * @param bool $once Whether its result is constant for this statement
      * @param list<Evaluable> $projection Output expressions readable without an input row
-     * @param list<int|float|string|null> $initial The projection's input state before a row is read
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $initial The projection's input state before a row is read
      * @param \MySqlMemory\Plan\Path\Source\TableScan|null $source The sole base table whose fields remain readable
      */
     public function __construct(public readonly Rows $rows, public readonly bool $once = false, public readonly array $projection = [], public readonly array $initial = [], public readonly ?\MySqlMemory\Plan\Path\Source\TableScan $source = null)
@@ -47,7 +47,7 @@ final class SingleRow
     /**
      * Reads the row, caching an independent subquery within its statement context.
      *
-     * @return list<int|float|string|null> An empty list means the subquery returned no row
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> An empty list means the subquery returned no row
      */
     public function read(Frame $frame): array
     {
@@ -66,7 +66,7 @@ final class SingleRow
     /**
      * Reads up to two rows to enforce the single-row cardinality requirement.
      *
-     * @return list<int|float|string|null> An empty list means the subquery returned no row
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> An empty list means the subquery returned no row
      * @throws \MySqlMemory\Error\SqlError When the subquery returns more than one row
      */
     public function fetch(Frame $frame): array

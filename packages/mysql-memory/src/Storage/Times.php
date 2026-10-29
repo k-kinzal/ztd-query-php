@@ -72,7 +72,7 @@ final class Times
      *
      * @throws SqlError When the value is refused
      */
-    public function value(int|float|string $value, Domain $from, ColumnDefinition $column): int|string
+    public function value(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): int|string
     {
         $to = $column->domain;
         if ($to->kind === Kind::Year) {
@@ -328,7 +328,7 @@ final class Times
      *
      * @throws SqlError When the value is refused
      */
-    public function year(int|float|string $value, Domain $from, ColumnDefinition $column): int
+    public function year(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): int
     {
         if ($from->kind === Kind::Date || $from->kind === Kind::DateTime) {
             return (int) substr((string) $value, 0, 4);
@@ -352,7 +352,7 @@ final class Times
                 return strlen($text) === 4 ? 0 : 2000;
             }
         } else {
-            $number = $from->kind === Kind::Double ? sprintf('%.0f', round((float) $value, 0, PHP_ROUND_HALF_EVEN)) : Decimal::round((string) Convert::toDecimal($value, $from, $this->store->context), 0);
+            $number = $from->kind === Kind::Double ? sprintf('%.0f', round((float) \MySqlMemory\Evaluation\ExactDecimal::raw($value), 0, PHP_ROUND_HALF_EVEN)) : Decimal::round((string) Convert::toDecimal($value, $from, $this->store->context), 0);
             if (Decimal::compare($number, '0') === 0) {
                 return 0;
             }
@@ -382,7 +382,7 @@ final class Times
      *
      * @throws SqlError When the value is refused
      */
-    public function json(int|float|string $value, Domain $from, ColumnDefinition $column): string
+    public function json(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, ColumnDefinition $column): string
     {
         $name = $this->store->table . '.' . $column->name;
         if ($from->kind === Kind::Json) {

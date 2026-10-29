@@ -91,7 +91,7 @@ final class Invocation
     /**
      * Calls a stored function with the values of its arguments and answers the value it returns.
      *
-     * @param list<array{int|float|string|null, Domain}> $arguments The value and type of each argument
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}> $arguments The value and type of each argument
      * @param string $name The name of the call, which an error converting the value it returns names
      *
      * @throws SqlError When the function calls itself, fails, ends without RETURN, or its value is refused
@@ -160,7 +160,7 @@ final class Invocation
     /**
      * Binds the values of the arguments of a routine to its parameters, each stored as into a column of its type.
      *
-     * @param list<array{int|float|string|null, Domain}> $arguments The value and type of each argument; a missing one leaves its parameter NULL
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}> $arguments The value and type of each argument; a missing one leaves its parameter NULL
      *
      * @throws SqlError When a value is refused
      */

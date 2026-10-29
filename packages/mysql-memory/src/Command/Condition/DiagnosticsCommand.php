@@ -139,7 +139,7 @@ final class DiagnosticsCommand implements Command
     /**
      * Answers the position in the area of the condition a number names, or null when it names none.
      */
-    public function position(int|float|string|null $value, Domain $domain, Context $context, int $count): ?int
+    public function position(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain, Context $context, int $count): ?int
     {
         $number = Convert::toInteger($value, $domain, new Context($context->modes, new Diagnostics(), $context->variables, $context->started));
         if ($number === null || $number < 1 || $number > $count) {

@@ -55,7 +55,7 @@ final class ProjectDistinctIterator implements RowIterator
             $key = '';
             foreach ($this->path->keys as $position => $domain) {
                 $values[$position] = $this->path->expressions[$position]->evaluate($this->frame);
-                $key .= Order::key($values[$position], $domain, $this->path->hashed) . "\0";
+                $key .= Order::key(\MySqlMemory\Evaluation\ExactDecimal::raw($values[$position]), $domain, $this->path->hashed) . "\0";
             }
             if ($this->path->keys !== [] && isset($this->seen[$key])) {
                 continue;

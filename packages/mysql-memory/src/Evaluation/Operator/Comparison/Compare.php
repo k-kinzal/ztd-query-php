@@ -89,7 +89,7 @@ final class Compare implements Evaluable
      *
      * @throws \MySqlMemory\Error\SqlError When evaluation cannot continue
      */
-    public function operand(Evaluable $operand, Frame $frame): int|float|string|null
+    public function operand(Evaluable $operand, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         try {
             return $operand->evaluate($frame);

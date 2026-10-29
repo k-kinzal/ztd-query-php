@@ -64,7 +64,7 @@ final class Returning
      *
      * @param bool $containers Whether an array or an object converts to a type that is not JSON, as its JSON text
      *
-     * @return array{bool, int|float|string|null}
+     * @return array{bool, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null}
      */
     public function coerce(JsonNode $node, bool $containers): array
     {

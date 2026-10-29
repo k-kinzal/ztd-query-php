@@ -70,8 +70,8 @@ final class RowComparison implements Evaluable
      * Modern releases compare the NULL states and retain the final pair's NULL state; legacy
      * releases compare the retained values. Ordinary comparisons never read this projection.
      *
-     * @param list<int|float|string|null> $left The returned left row, or none
-     * @param list<int|float|string|null> $right The returned right row, or none
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $left The returned left row, or none
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $right The returned right row, or none
      */
     public function absent(array $left, array $right, Frame $frame): int
     {
@@ -101,10 +101,10 @@ final class RowComparison implements Evaluable
      * Reads the row's values, preserving an empty subquery as an empty list.
      *
      * @param list<Evaluable>|SingleRow $operand The compiled row operand
-     * @return list<int|float|string|null>
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function values(array|SingleRow $operand, Frame $frame): array
     {
-        return $operand instanceof SingleRow ? $operand->read($frame) : array_map(static fn (Evaluable $value): int|float|string|null => $value->evaluate($frame), $operand);
+        return $operand instanceof SingleRow ? $operand->read($frame) : array_map(static fn (Evaluable $value): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $value->evaluate($frame), $operand);
     }
 }

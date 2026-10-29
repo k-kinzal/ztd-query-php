@@ -26,8 +26,9 @@ final class TimestampZones
     /**
      * Answers a row of a table as the session reads it: each TIMESTAMP in the time zone of the session.
      *
-     * @param list<int|float|string|null> $row The stored row
-     * @return list<int|float|string|null>
+     * @template T of int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
+     * @param list<T> $row The row containing stored columns and any computed values
+     * @return list<T|string>
      */
     public function local(StoredTable $table, array $row, Context $context): array
     {

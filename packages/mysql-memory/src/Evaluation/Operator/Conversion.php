@@ -85,7 +85,7 @@ final class Conversion implements Evaluable
     /**
      * Stores an unsigned value in the packed bytes of a materialized BIT column.
      */
-    public function bits(int|float|string $value, Domain $from, Context $context): string
+    public function bits(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, Context $context): string
     {
         $number = (int) Convert::toInteger($value, $from, $context, true);
         $bytes = '';
@@ -101,7 +101,7 @@ final class Conversion implements Evaluable
      *
      * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
      */
-    public function moment(int|float|string $value, Domain $from, Context $context): ?string
+    public function moment(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, Context $context): ?string
     {
         if ($from->kind === Kind::Json) {
             $read = Coercions::toTemporal((string) $value, $from, $this->domain->kind, $context);
@@ -151,7 +151,7 @@ final class Conversion implements Evaluable
      * The cast warns of a string that is more than a number wherever the string comes from, and of
      * a negative integer made unsigned except in MySQL 5.6 and 5.7 (verified on a live 5.7.44 server).
      */
-    public function integer(int|float|string $value, Domain $from, Context $context): int
+    public function integer(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $from, Context $context): int
     {
         if ($from->kind === Kind::Decimal) {
             return Convert::decimalInteger((string) $value, $context, $this->domain->unsigned);

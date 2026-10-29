@@ -57,7 +57,7 @@ final class OutputReadTest extends TestCase
         $average = new Accumulation(AggregateFunction::Average, [new Constant(Domain::integer(), 10)], false, $domain);
         $read = new OutputRead(new Analytic(null, $average, [], 1, $domain), 0, true, true);
 
-        self::assertSame(['10.0000', '20.0000'], [$read->aggregate($frame), $read->aggregate($frame)]);
+        self::assertSame(['10.0000', '20.0000'], [\MySqlMemory\Evaluation\Convert::toText($read->aggregate($frame), $domain), \MySqlMemory\Evaluation\Convert::toText($read->aggregate($frame), $domain)]);
     }
 
     public function testEvaluateReadsRetainedWindowSlotsAfterAnEmptyExecution(): void

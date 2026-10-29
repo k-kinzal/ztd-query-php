@@ -18,9 +18,9 @@ final class Constant implements Evaluable
 {
     /**
      * @param Domain $domain The domain of the value
-     * @param int|float|string|null $value The value, held as its kind says
+     * @param int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value The value, held as its kind says
      */
-    public function __construct(public readonly Domain $domain, public readonly int|float|string|null $value)
+    public function __construct(public readonly Domain $domain, public readonly int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value)
     {
     }
 
@@ -39,7 +39,7 @@ final class Constant implements Evaluable
      * @phpstan-pure
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $this->value;
     }

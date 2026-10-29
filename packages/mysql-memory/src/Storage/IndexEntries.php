@@ -33,8 +33,9 @@ final class IndexEntries
      * document itself has not changed. Ordinary generated columns retain
      * the existing write path.
      *
-     * @param list<int|float|string|null> $row
-     * @return list<int|float|string|null>
+     * @template T of int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
+     * @param list<T> $row
+     * @return list<T|string|null>
      */
     public function refresh(array $row, TableDefinition $table, \MySqlMemory\Evaluation\Context $context, int $ordinal): array
     {

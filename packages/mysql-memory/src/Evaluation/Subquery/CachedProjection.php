@@ -48,7 +48,7 @@ final class CachedProjection implements Evaluable
      * Evaluates at the first read and retains NULL as well as non-NULL results for this statement.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $kept = $frame->context->kept;
         if (!isset($kept[$this])) {

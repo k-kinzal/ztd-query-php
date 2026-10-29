@@ -66,7 +66,7 @@ final class RowMembership implements Evaluable
             $kept[$this] = [$kept[$this][0], 1];
         }
 
-        return $kept[$this][0] === null ? null : (int) $kept[$this][0];
+        return $kept[$this][0] === null ? null : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($kept[$this][0]);
     }
 
     /**
@@ -79,7 +79,7 @@ final class RowMembership implements Evaluable
         if (!$this->once || isset($kept[$this]) || $this->operands instanceof SingleRow) {
             return;
         }
-        $values = array_map(static fn (Evaluable $operand): int|float|string|null => $operand->evaluate($frame), $this->operands);
+        $values = array_map(static fn (Evaluable $operand): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $operand->evaluate($frame), $this->operands);
         if (!in_array(null, $values, true)) {
             $kept[$this] = [$this->read($frame, true, $values), 0];
         }
@@ -91,11 +91,11 @@ final class RowMembership implements Evaluable
      * Verified through SQL and EXPLAIN on MySQL 5.6, 5.7, 8.0 and 9.1.
      *
      * @param bool $preparing Whether only the preparation-time condition is evaluated
-     * @param list<int|float|string|null>|null $values Already evaluated operands, or null to read them
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>|null $values Already evaluated operands, or null to read them
      */
     public function read(Frame $frame, bool $preparing = false, ?array $values = null): ?int
     {
-        $values ??= $this->operands instanceof SingleRow ? $this->operands->read($frame) : array_map(static fn (Evaluable $operand): int|float|string|null => $operand->evaluate($frame), $this->operands);
+        $values ??= $this->operands instanceof SingleRow ? $this->operands->read($frame) : array_map(static fn (Evaluable $operand): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $operand->evaluate($frame), $this->operands);
         $values = $values === [] ? array_fill(0, count($this->comparators), null) : $values;
         $kept = $frame->context->kept;
         $iterator = $this->rows->start($frame);
@@ -126,8 +126,8 @@ final class RowMembership implements Evaluable
     /**
      * Compares corresponding columns, retaining unknown only when no pair is unequal.
      *
-     * @param list<int|float|string|null> $values The left row's values
-     * @param list<int|float|string|null> $row The subquery row's values
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $values The left row's values
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row The subquery row's values
      */
     public function matches(array $values, array $row, Context $context): ?bool
     {

@@ -345,7 +345,7 @@ final class Strings
         }
         $domain = $arguments[0]->domain();
         if ($domain->kind->numeric() && in_array($frame->context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && in_array($domain->kind, [Kind::Decimal, Kind::Double], true)) {
-            $number = $domain->kind === Kind::Double ? sprintf('%.0f', round((float) $value)) : Decimal::round((string) $value, 0);
+            $number = $domain->kind === Kind::Double ? sprintf('%.0f', round((float) \MySqlMemory\Evaluation\ExactDecimal::raw($value))) : Decimal::round((string) $value, 0);
             $integer = bccomp(Decimal::numeric($number), '-9223372036854775808') < 0 || bccomp(Decimal::numeric($number), '18446744073709551615') > 0 ? -1 : (bccomp(Decimal::numeric($number), '0') < 0 ? (int) $number : Integer::fromUnsignedText($number));
 
             return strtoupper(sprintf('%X', $integer));

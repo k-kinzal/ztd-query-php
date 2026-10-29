@@ -259,7 +259,7 @@ final class SetCommand implements Command
     /**
      * Computes an assigned value: an expression, a bare word, or DEFAULT (null domain).
      *
-     * @return array{int|float|string|null, Domain|null}
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain|null}
      */
     public function value(Scalar|BareName|SetWord $value, Planner $planner, Frame $frame): array
     {

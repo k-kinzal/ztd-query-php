@@ -90,13 +90,13 @@ final class Membership implements Evaluable
     /**
      * Answers the values of the elements, evaluated the first time they are needed in the statement.
      *
-     * @return list<int|float|string|null>
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function values(Frame $frame): array
     {
         $kept = $frame->context->kept;
         if (!isset($kept[$this])) {
-            $kept[$this] = array_map(static fn (array $element): int|float|string|null => $element[0]->evaluate($frame), $this->elements);
+            $kept[$this] = array_map(static fn (array $element): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $element[0]->evaluate($frame), $this->elements);
         }
 
         return $kept[$this];

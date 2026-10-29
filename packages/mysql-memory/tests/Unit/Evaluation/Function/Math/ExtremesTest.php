@@ -143,7 +143,7 @@ final class ExtremesTest extends TestCase
         $text = Domain::of(Resolved::string(10, Collation::known('utf8mb4_0900_ai_ci')), false);
 
         self::assertSame(['5.00', '2020-01-02', '5'], [
-            (new Extremes())->written(new Rank('5', 5), $winner, Kind::Decimal, Domain::of(Resolved::decimal(3, 2), false), [$winner]),
+            \MySqlMemory\Evaluation\Convert::toText((new Extremes())->written(new Rank('5', 5), $winner, Kind::Decimal, Domain::of(Resolved::decimal(3, 2), false), [$winner]), Domain::decimal(3, 2)),
             (new Extremes())->written(new Rank('', '2020-01-02', false, [2020, 1, 2, 10, 0, 0, 0]), $winner, Kind::Date, $text, [$winner]),
             (new Extremes())->written(new Rank('', '5', false, null), $winner, Kind::Date, $text, [$winner]),
         ]);

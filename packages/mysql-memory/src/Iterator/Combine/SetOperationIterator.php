@@ -25,7 +25,7 @@ final class SetOperationIterator implements RowIterator
     private Frame $frame;
 
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 
@@ -63,9 +63,9 @@ final class SetOperationIterator implements RowIterator
     /**
      * Combines captured operand rows, retaining the last materialized fields.
      *
-     * @param list<array{string, list<int|float|string|null>}> $left The left rows and equality keys
-     * @param list<array{string, list<int|float|string|null>}> $right The right rows and equality keys
-     * @return list<list<int|float|string|null>>
+     * @param list<array{string, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}> $left The left rows and equality keys
+     * @param list<array{string, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}> $right The right rows and equality keys
+     * @return list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     public function combine(array $left, array $right): array
     {
@@ -104,7 +104,7 @@ final class SetOperationIterator implements RowIterator
     /**
      * Reads the rows of one query with their equality keys.
      *
-     * @return list<array{string, list<int|float|string|null>}>
+     * @return list<array{string, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}>
      */
     public function rows(RowIterator $iterator, Frame $frame): array
     {
@@ -115,7 +115,7 @@ final class SetOperationIterator implements RowIterator
             $row = array_slice($row, 0, $width);
             $key = '';
             foreach ($this->path->domains as $position => $domain) {
-                $key .= Order::key($row[$position], $domain) . "\0";
+                $key .= Order::key(\MySqlMemory\Evaluation\ExactDecimal::raw($row[$position]), $domain) . "\0";
             }
             $rows[] = [$key, $row];
         }

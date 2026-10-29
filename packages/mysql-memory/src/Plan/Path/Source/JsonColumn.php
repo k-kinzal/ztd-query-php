@@ -69,7 +69,7 @@ final class JsonColumn
      *
      * @throws SqlError When a response is ERROR, or a DEFAULT value does not convert
      */
-    public function value(JsonNode $selected, Context $context): int|float|string|null
+    public function value(JsonNode $selected, Context $context): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $found = $this->path?->select($selected) ?? [];
         if ($this->kind === 'exists') {
@@ -140,7 +140,7 @@ final class JsonColumn
      *
      * @throws SqlError When the response is ERROR, or its DEFAULT value does not convert
      */
-    public function respond(array $response, DataError $failure): int|float|string|null
+    public function respond(array $response, DataError $failure): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if ($response[0] === JsonResponseKind::Error) {
             throw $failure->error($this->name);

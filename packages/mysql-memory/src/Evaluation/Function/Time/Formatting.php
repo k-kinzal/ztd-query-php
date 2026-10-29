@@ -89,7 +89,7 @@ final class Formatting
     /**
      * GET_FORMAT: the format of a kind of value in a standard, or NULL for an unknown standard.
      */
-    public function standard(TemporalFormat $kind, int|float|string|null $standard): ?string
+    public function standard(TemporalFormat $kind, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $standard): ?string
     {
         if ($standard === null) {
             return null;

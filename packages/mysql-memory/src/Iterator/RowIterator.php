@@ -23,7 +23,7 @@ interface RowIterator
     /**
      * Answers the next row, or null when there are no more.
      *
-     * @return list<int|float|string|null>|null
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>|null
      *
      * @throws \MySqlMemory\Error\SqlError When computing the row is an error
      */

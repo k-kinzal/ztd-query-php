@@ -187,6 +187,17 @@ final class ConvertTest extends TestCase
         self::assertSame(['1.50', null], [Convert::toText('1.50', Domain::decimal(3, 2)), Convert::toText(null, Domain::decimal(3, 2))]);
     }
 
+    public function testToTextDistinguishesNumericPrecisionFromTheWrittenScale(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $value = new \MySqlMemory\Evaluation\ExactDecimal('0.166666666', 4);
+        $domain = Domain::decimal(5, 4);
+        self::assertSame('0.1667', Convert::toText($value, $domain));
+        self::assertSame('0.166666666', Convert::toDecimal($value, $domain, $context));
+        self::assertSame(0.166666666, Convert::toDouble($value, $domain, $context));
+    }
+
     public function testToBoolTellsWhetherANumberIsOtherThanZero(): void
     {
         $session = (new Instance())->connect();

@@ -17,7 +17,7 @@ use Override;
 final class WorkingTableIterator implements RowIterator
 {
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 

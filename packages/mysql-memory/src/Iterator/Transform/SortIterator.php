@@ -24,7 +24,7 @@ final class SortIterator implements RowIterator
     private Frame $frame;
 
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 
@@ -70,7 +70,7 @@ final class SortIterator implements RowIterator
         $indexes = array_keys($rows);
         usort($indexes, static function (int $left, int $right) use ($rows, $keys): int {
             foreach ($keys as [$position, $domain, $descending]) {
-                $order = Order::compare($rows[$left][$position], $rows[$right][$position], $domain);
+                $order = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($rows[$left][$position]), \MySqlMemory\Evaluation\ExactDecimal::raw($rows[$right][$position]), $domain);
                 if ($order !== 0) {
                     return $descending ? -$order : $order;
                 }
@@ -86,7 +86,7 @@ final class SortIterator implements RowIterator
     /**
      * Warns once that sorting by an array or an object of a JSON key is not supported, as the server does when it meets one (verified on a live 8.4 server).
      *
-     * @param list<list<int|float|string|null>> $rows
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
      */
     public function nonScalar(array $rows, Frame $frame): void
     {

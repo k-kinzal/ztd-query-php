@@ -20,7 +20,7 @@ final class BufferIterator implements RowIterator
     private Frame $frame;
 
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 

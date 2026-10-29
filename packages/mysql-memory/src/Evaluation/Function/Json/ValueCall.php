@@ -55,7 +55,7 @@ final class ValueCall implements Evaluable
      * Answers the value at the path for a row.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         try {
             $document = Jsons::read($this->document, $frame, 1, 'json_value');
@@ -107,7 +107,7 @@ final class ValueCall implements Evaluable
      *
      * @throws SqlError When the DEFAULT value cannot be evaluated
      */
-    public function respond(array $response, Frame $frame): int|float|string|null
+    public function respond(array $response, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $response[1]?->evaluate($frame);
     }

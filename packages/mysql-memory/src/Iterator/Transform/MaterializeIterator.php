@@ -20,7 +20,7 @@ use Override;
 final class MaterializeIterator implements RowIterator
 {
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 

@@ -192,7 +192,7 @@ final class EmptyProjection
     /**
      * Initializes aggregate output slots without evaluating any aggregate argument.
      *
-     * @return list<int|float|string|null>
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function initial(QueryPlan $plan): array
     {
@@ -201,7 +201,7 @@ final class EmptyProjection
             return [];
         }
         $frame = new Frame($this->compiler->connection->context);
-        $values = array_map(static fn (\MySqlMemory\Evaluation\Aggregate\Accumulation $value): int|float|string|null => $value->start()->result($frame), $aggregate->aggregates);
+        $values = array_map(static fn (\MySqlMemory\Evaluation\Aggregate\Accumulation $value): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $value->start()->result($frame), $aggregate->aggregates);
 
         return [...array_fill(0, $aggregate->input->width(), null), ...$values];
     }

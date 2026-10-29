@@ -39,7 +39,7 @@ final class Call implements Evaluable
      * Computes the result for a row.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return ($this->routine->body)($frame, $this->arguments, $this->domain, $this->text);
     }

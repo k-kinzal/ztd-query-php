@@ -51,7 +51,7 @@ final class Assigner
      * @param string|null $cache The key cache whose parameter is assigned, or null for the variable
      * @throws \MySqlMemory\Error\SqlError When the variable or the value is refused
      */
-    public function assign(string $name, Scope $scope, int|float|string|null $value, ?Domain $domain, ?string $cache = null): void
+    public function assign(string $name, Scope $scope, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, ?Domain $domain, ?string $cache = null): void
     {
         $definition = $this->variables->catalog->find($name);
         if ($definition === null) {
@@ -124,7 +124,7 @@ final class Assigner
      * Database encoding assignments warn from MySQL 5.7 onward; reading their
      * values does not warn (verified on live 5.6, 5.7, 8.0, 8.4 and 9.1 servers).
      */
-    public function retired(string $name, int|float|string|null $value = null, ?Domain $domain = null): void
+    public function retired(string $name, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value = null, ?Domain $domain = null): void
     {
         (new EncodingSettings($this->context))->notices($name, $value, $domain);
         $definition = $this->variables->catalog->find($name);
@@ -157,7 +157,7 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the value is refused
      */
-    public function check(Definition $definition, int|float|string|null $value, Domain $domain): string|int|null
+    public function check(Definition $definition, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain): string|int|null
     {
         $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         if (in_array($definition->name, ['innodb_file_format', 'innodb_file_format_max', 'innodb_default_row_format'], true)) {
@@ -193,7 +193,7 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the value or its type is refused
      */
-    public function storageFormat(string $name, int|float|string|null $value, Domain $domain): string
+    public function storageFormat(string $name, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain): string
     {
         $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         $row = $name === 'innodb_default_row_format';
@@ -222,7 +222,7 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the value names no isolation level
      */
-    public function isolation(Definition $definition, int|float|string|null $value, Domain $domain, string $text): string
+    public function isolation(Definition $definition, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain, string $text): string
     {
         if ($value !== null && ($domain->kind === Kind::Decimal || $domain->kind === Kind::Double)) {
             throw AdministrationError::WrongTypeForVariable->error($definition->name);
@@ -237,7 +237,7 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the value is not a boolean
      */
-    public function boolean(Definition $definition, int|float|string|null $value, Domain $domain, string $text): string
+    public function boolean(Definition $definition, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain, string $text): string
     {
         if ($value === null && $domain->kind === Kind::Integer) {
             return 'OFF';
@@ -270,12 +270,12 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the value is NULL or not an integer
      */
-    public function integer(Definition $definition, int|float|string|null $value, Domain $domain, string $text): int
+    public function integer(Definition $definition, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain, string $text): int
     {
         if ($domain->kind !== Kind::Integer && $domain->kind !== Kind::Year) {
             throw AdministrationError::WrongTypeForVariable->error($definition->name);
         }
-        $number = (int) $value;
+        $number = (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
         $unsigned = $definition->shape === ValueShape::Unsigned;
         $minimum = $definition->minimum ?? ($unsigned ? 0 : PHP_INT_MIN);
         $maximum = $definition->maximum ?? ($unsigned ? -1 : PHP_INT_MAX);
@@ -300,12 +300,12 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the number does not stand for modes
      */
-    public function modes(Definition $definition, int|float|string $value, Domain $domain, string $text): string
+    public function modes(Definition $definition, int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, string $text): string
     {
         if ($domain->kind !== Kind::Integer) {
             throw AdministrationError::WrongTypeForVariable->error($definition->name);
         }
-        $number = (int) $value;
+        $number = (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
         if ($number < 0 || $number > 4294967295 || $text !== (string) $number) {
             throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
         }
@@ -350,7 +350,7 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the value is NULL for a variable that does not take it, or not a mode, collation or character set the variable takes
      */
-    public function text(Definition $definition, int|float|string|null $value, string $text): ?string
+    public function text(Definition $definition, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, string $text): ?string
     {
         if ($value === null) {
             if (!in_array($definition->name, ['character_set_results', 'session_track_system_variables', 'innodb_tmpdir', 'innodb_ft_user_stopword_table'], true)) {

@@ -40,7 +40,7 @@ final class Assignment implements Evaluable
      * Evaluates the value and assigns it.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $value = $this->value->evaluate($frame);
         if ($this->value->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit) {

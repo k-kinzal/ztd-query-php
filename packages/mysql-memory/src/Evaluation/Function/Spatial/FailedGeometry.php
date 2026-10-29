@@ -36,7 +36,7 @@ final class FailedGeometry extends RuntimeException
      *
      * @throws SqlError When operand evaluation fails, retaining the reader's diagnostics
      */
-    public static function read(Evaluable $operand, Frame $frame, ?string $function): int|float|string|null
+    public static function read(Evaluable $operand, Frame $frame, ?string $function): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         try {
             return $operand->evaluate($frame);

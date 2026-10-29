@@ -224,7 +224,7 @@ final class Session
     /**
      * Runs the statements of a text until one fails, and answers the reply or error of each run.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to parameter markers
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to parameter markers
      * @param bool $prepared Whether the text is a prepared statement, where parameter markers are allowed
      * @return list<Reply|SqlError>
      */
@@ -269,7 +269,7 @@ final class Session
      * to one that stops the parse; the first of those errors fails the statement.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_row-count.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters
      *
      * @throws SqlError When the statement fails
      */
@@ -300,7 +300,7 @@ final class Session
      *
      * @throws SqlError When the statement does not parse or does not resolve
      * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): MySqlStatement
     {

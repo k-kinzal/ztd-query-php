@@ -209,7 +209,7 @@ final class SystemSchemas
     /**
      * Answers the rows of a system table, each a value by column name.
      *
-     * @return list<array<string, int|float|string|null>>
+     * @return list<array<string, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      *
      * @throws \MySqlMemory\Error\SqlError When the release refuses to read the table
      * @throws LogicException When no provider implements the requested table's rows
@@ -225,12 +225,12 @@ final class SystemSchemas
     /**
      * Answers a value as a column of a domain holds it: an integer as an int, a string as a string.
      */
-    public static function held(int|float|string|null $value, Domain $domain): int|float|string|null
+    public static function held(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain): int|float|string|null
     {
         return match (true) {
             $value === null => null,
-            $domain->kind === Kind::Integer => is_string($value) && !is_numeric($value) ? $value : (int) $value,
-            $domain->kind === Kind::Double => (float) $value,
+            $domain->kind === Kind::Integer => is_string($value) && !is_numeric($value) ? $value : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value),
+            $domain->kind === Kind::Double => (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value),
             default => is_string($value) ? $value : (string) $value,
         };
     }

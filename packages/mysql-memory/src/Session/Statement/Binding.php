@@ -27,7 +27,7 @@ final class Binding
     /**
      * Reuses the original structure, refreshing its table and parameter facts.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      */
     public function operation(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null): MySqlStatement
     {
@@ -37,7 +37,7 @@ final class Binding
     /**
      * Publishes a bound statement through the dialect's concrete-statement boundary.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      */
     public function statement(Session $session, Statement $statement, array $parameters = [], ?LanguageProfile $profile = null, ?Settings $literals = null, SourceMap $sources = new SourceMap(), bool $prepared = false): MySqlStatement
     {
@@ -52,7 +52,7 @@ final class Binding
     /**
      * Captures the declaration and parameter inputs while typing hints apply.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      */
     public function context(Session $session, Statement $statement, array $parameters, ?LanguageProfile $profile, ?Settings $literals, bool $prepared = false): AnalysisContext
     {
@@ -77,7 +77,7 @@ final class Binding
     /**
      * Resolves bound marker domains, preserving legacy NULL metadata and derived types.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      * @return array<int, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain>
      */
     public function parameters(Session $session, array $parameters, bool $prepared = false): array

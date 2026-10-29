@@ -39,7 +39,7 @@ final class Predicate implements Evaluable
      * Evaluates the predicate.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $this->predicate->evaluate($frame);
     }

@@ -36,7 +36,7 @@ final class Replies
     /**
      * Yields a reply and whether the protocol announces more results after it.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound parameter values
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound parameter values
      * @return Generator<int, array{Reply|SqlError, bool}, void, void>
      */
     public function run(string $sql, array $parameters = [], bool $prepared = false): Generator

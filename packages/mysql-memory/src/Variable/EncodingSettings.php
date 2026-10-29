@@ -36,7 +36,7 @@ final class EncodingSettings
     /**
      * Resolves the collation id of an integer assignment, or the written name.
      */
-    public function name(int|float|string $value, bool $charset): string
+    public function name(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, bool $charset): string
     {
         if (is_int($value)) {
             foreach (Catalog::shared()->collations as $collation) {
@@ -52,7 +52,7 @@ final class EncodingSettings
     /**
      * Reports the evaluated value's notice before a database-variable notice.
      */
-    public function notices(string $variable, int|float|string|null $value, ?Domain $domain): void
+    public function notices(string $variable, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, ?Domain $domain): void
     {
         if ($value === null || $domain === null) {
             return;

@@ -53,7 +53,7 @@ final class Listing
     /**
      * Answers the result set of rows, filtered by the clause of the statement.
      *
-     * @param list<list<int|float|string|null>> $rows The rows, each value in the domain of its column
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows The rows, each value in the domain of its column
      * @param int $named The position of the column LIKE matches
      * @param string $collation The collation LIKE compares that column in
      * @param string $derivation How strongly that collation holds, as ER_CANT_AGGREGATE_2COLLATIONS names it
@@ -104,8 +104,8 @@ final class Listing
     /**
      * Keeps the rows whose named column matches a LIKE pattern.
      *
-     * @param list<list<int|float|string|null>> $rows
-     * @return list<list<int|float|string|null>>
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
+     * @return list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      *
      * @throws \MySqlMemory\Error\SqlError When matching fails
      */
@@ -128,8 +128,8 @@ final class Listing
     /**
      * Keeps the rows a WHERE condition is true for.
      *
-     * @param list<list<int|float|string|null>> $rows
-     * @return list<list<int|float|string|null>>
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
+     * @return list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating the condition fails
      */
@@ -158,7 +158,7 @@ final class Listing
     /**
      * Answers the result set of rows: each value in its text, a text value in the character set of the results.
      *
-     * @param list<list<int|float|string|null>> $rows
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
      */
     public function sent(array $rows, Context $context): ResultSet
     {

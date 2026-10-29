@@ -43,7 +43,7 @@ final class ScalarRead implements Evaluable
      * Computes the value for a row.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if (!$this->once) {
             return $this->read($frame);
@@ -61,7 +61,7 @@ final class ScalarRead implements Evaluable
      *
      * @throws \MySqlMemory\Error\SqlError When the subquery answers more than one row
      */
-    public function read(Frame $frame): int|float|string|null
+    public function read(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $iterator = $this->rows->start($frame);
         $row = $iterator->read();

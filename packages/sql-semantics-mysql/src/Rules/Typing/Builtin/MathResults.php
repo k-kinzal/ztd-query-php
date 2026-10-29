@@ -127,7 +127,8 @@ final class MathResults
     }
 
     /**
-     * Resolves ROUND and TRUNCATE.
+     * Resolves legacy rounding: only removing fractional digits can carry into another integral digit.
+     * Source: MySQL 5.7.44 Item_func_round::fix_length_and_dec.
      */
     public function rounded(Invocation $call): Domain
     {
@@ -148,7 +149,7 @@ final class MathResults
             return Domain::integer(Field::LongLong, $domain->length, $domain->unsigned);
         }
 
-        return Domain::decimal(min(65, $precision - $scale + $newScale + 1), $newScale);
+        return Domain::decimal(min(65, $precision - $scale + $newScale + ($newScale < $scale ? 1 : 0)), $newScale, $domain->unsigned);
     }
 
     /**

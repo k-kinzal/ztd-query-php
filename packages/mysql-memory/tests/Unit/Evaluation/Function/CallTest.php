@@ -51,7 +51,7 @@ final class CallTest extends TestCase
         $frame = new Frame(new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0));
         $call = new Call(new Routine('ABS', 1, 1, (new Numbers())->abs(...)), [new Constant(Domain::decimal(3, 2), '-1.50')], Domain::decimal(3, 2));
 
-        self::assertSame('1.50', $call->evaluate($frame));
+        self::assertSame('1.50', \MySqlMemory\Evaluation\Convert::toText($call->evaluate($frame), $call->domain()));
     }
 
     public function testEvaluateComputesACallInAQuery(): void

@@ -34,7 +34,10 @@ final class CoerceTest extends TestCase
         $instance = new Instance();
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0);
 
-        self::assertSame(['7.00', '1.26'], [Coerce::to(7, Domain::integer(), Domain::decimal(5, 2), $context), Coerce::to('1.255', Domain::decimal(4, 3), Domain::decimal(4, 2), $context)]);
+        $integer = Coerce::to(7, Domain::integer(), Domain::decimal(5, 2), $context);
+        $fraction = Coerce::to('1.255', Domain::decimal(4, 3), Domain::decimal(4, 2), $context);
+        self::assertSame(['7.00', '1.26'], [\MySqlMemory\Evaluation\Convert::toText($integer, Domain::decimal(5, 2)), \MySqlMemory\Evaluation\Convert::toText($fraction, Domain::decimal(4, 2))]);
+        self::assertSame('1.255', \MySqlMemory\Evaluation\Convert::toDecimal($fraction, Domain::decimal(4, 2), $context));
     }
 
     public function testToConvertsToAnIntegerOrADouble(): void

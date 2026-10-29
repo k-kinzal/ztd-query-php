@@ -38,10 +38,10 @@ final class Tally implements Evaluable
      * Reads the argument, counting the row.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $kept = $frame->context->kept;
-        $kept[$this] = [(int) ($kept[$this][0] ?? 0) + 1];
+        $kept[$this] = [(int) (\MySqlMemory\Evaluation\ExactDecimal::raw($kept[$this][0] ?? 0)) + 1];
 
         return $this->argument->evaluate($frame);
     }
@@ -51,6 +51,6 @@ final class Tally implements Evaluable
      */
     public function row(Frame $frame): int
     {
-        return max(1, (int) ($frame->context->kept[$this][0] ?? 1));
+        return max(1, (int) (\MySqlMemory\Evaluation\ExactDecimal::raw($frame->context->kept[$this][0] ?? 1)));
     }
 }

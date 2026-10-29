@@ -39,7 +39,7 @@ final class UserVariableRead implements Evaluable
      * Reads the variable.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         [$value, $domain] = $frame->context->variables->user($this->name);
         if ($value === null || $domain->kind === $this->domain->kind) {

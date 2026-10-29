@@ -38,7 +38,7 @@ final class PendingTable
     /**
      * Checks the same retained definition under the current database catalog.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The protocol bindings
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The protocol bindings
      * @throws SqlError When the destination or the retained partition condition is refused
      */
     public function execute(Session $session, string $label, array $parameters): Reply
@@ -58,7 +58,7 @@ final class PendingTable
     /**
      * Reports the execution condition through the prepared protocol.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The protocol bindings
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The protocol bindings
      * @return list<Reply|SqlError>
      */
     public function run(Session $session, string $label, array $parameters): array

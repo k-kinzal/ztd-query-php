@@ -37,7 +37,7 @@ final class Outer implements Evaluable
      * Evaluates the expression in the frame of its block.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $this->inner->evaluate($frame->out($this->depth));
     }

@@ -428,6 +428,6 @@ final class Grouping
             return new Accumulation(null, $arguments, $node->distinct, $compiler->domain($node), $order, $node->separator === null ? ',' : $node->separator->value, $limit);
         }
 
-        return new Accumulation($node->function, $arguments, $node->distinct, $compiler->domain($node), [], ',', 0);
+        return new Accumulation($node->function, $arguments, $node->distinct, $compiler->domain($node), [], ',', 0, divisionPrecision: $node->function === AggregateFunction::Average ? $node->divisionPrecision() : 4);
     }
 }

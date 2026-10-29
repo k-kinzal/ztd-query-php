@@ -14,7 +14,7 @@ interface SystemRows
     /**
      * Answers the rows of the table, each a value by column name; a column a row does not name is NULL.
      *
-     * @return list<array<string, int|float|string|null>>
+     * @return list<array<string, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      *
      * @throws \MySqlMemory\Error\SqlError When the release refuses to read the table
      */

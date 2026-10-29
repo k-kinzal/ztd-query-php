@@ -19,7 +19,7 @@ use Override;
 final class RecursiveUnionIterator implements RowIterator
 {
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 
@@ -58,7 +58,7 @@ final class RecursiveUnionIterator implements RowIterator
      * Reads the rows of one part that were not produced before, under UNION DISTINCT.
      *
      * @param array<string, true> $seen
-     * @return list<list<int|float|string|null>>
+     * @return list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     public function collect(RowIterator $part, Frame $frame, array &$seen): array
     {
@@ -70,7 +70,7 @@ final class RecursiveUnionIterator implements RowIterator
             if ($this->path->distinct) {
                 $key = '';
                 foreach ($this->path->domains as $position => $domain) {
-                    $key .= Order::key($row[$position], $domain) . "\0";
+                    $key .= Order::key(\MySqlMemory\Evaluation\ExactDecimal::raw($row[$position]), $domain) . "\0";
                 }
                 if (isset($seen[$key])) {
                     continue;

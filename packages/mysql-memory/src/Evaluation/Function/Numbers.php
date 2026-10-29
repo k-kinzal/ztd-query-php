@@ -34,7 +34,7 @@ final class Numbers
     public function routines(): array
     {
         $routines = [
-            new Routine('ABS', 1, 1, fn (Frame $f, array $a, Domain $r, string $t): int|float|string|null => $this->abs($f, $a, $r, $t)),
+            new Routine('ABS', 1, 1, fn (Frame $f, array $a, Domain $r, string $t): int|float|\MySqlMemory\Evaluation\ExactDecimal|null => $this->abs($f, $a, $r, $t)),
             new Routine('SIGN', 1, 1, $this->sign(...)),
             new Routine('CEILING', 1, 1, fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
             new Routine('CEIL', 1, 1, fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
@@ -78,7 +78,7 @@ final class Numbers
      *
      * @throws SqlError When the argument is the smallest BIGINT
      */
-    public function abs(Frame $frame, array $arguments, Domain $result, string $text = ''): int|float|string|null
+    public function abs(Frame $frame, array $arguments, Domain $result, string $text = ''): int|float|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $value = $arguments[0]->evaluate($frame);
         if ($value === null) {
@@ -88,7 +88,7 @@ final class Numbers
 
         return match ($result->kind) {
             Kind::Integer => $result->unsigned ? (int) Convert::toInteger($value, $domain, $frame->context, true) : $this->absolute((int) Convert::toInteger($value, $domain, $frame->context), $text),
-            Kind::Decimal => Decimal::round(ltrim((string) Convert::toDecimal($value, $domain, $frame->context), '-'), $result->decimals),
+            Kind::Decimal => new \MySqlMemory\Evaluation\ExactDecimal(ltrim((string) Convert::toDecimal($value, $domain, $frame->context), '-'), $result->decimals),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => abs((float) Convert::toDouble($value, $domain, $frame->context)),
         };
     }
@@ -174,7 +174,7 @@ final class Numbers
         if ($result->kind === Kind::Double) {
             return $this->roundReal((float) Convert::toDouble($value, $domain, $frame->context), $places, $truncate);
         }
-        $places = max(-65, min(30, $places));
+        $places = max(-65, min($result->kind === Kind::Decimal ? $result->decimals : 30, $places));
         $decimal = (string) Convert::toDecimal($value, $domain, $frame->context);
         $rounded = $truncate ? Decimal::truncate($decimal, $places) : Decimal::round($decimal, $places);
         if ($result->kind === Kind::Integer) {

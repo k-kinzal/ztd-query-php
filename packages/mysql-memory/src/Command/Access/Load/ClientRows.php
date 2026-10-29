@@ -111,7 +111,7 @@ final class ClientRows
     /**
      * @param list<string|null> $record The decoded input fields
      * @param list<int|UserVariable> $targets The bound input destinations
-     * @return array{list<int>, list<array{int|float|string|null, Domain}>} Converted values before SET evaluation
+     * @return array{list<int>, list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}>} Converted values before SET evaluation
      */
     public function values(array $record, array $targets, Rows $rows, Domain $domain, int $number, bool $fixed): array
     {

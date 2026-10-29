@@ -87,6 +87,18 @@ final class MathResultsTest extends TestCase
         self::assertEquals(Domain::double(23), (new MathResults())->rounded(new Invocation([Domain::double()], [new NumberLiteral('1e0')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
     }
 
+    public function testRoundedGrowsIntegralPrecisionOnlyWhenReducingScale(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $settings = new Settings(Collation::known('latin1_swedish_ci'));
+        $operand = new NumberLiteral('0.1667');
+        $rules = new MathResults();
+
+        self::assertEquals(Domain::decimal(13, 12), $rules->rounded(new Invocation([Domain::decimal(5, 4), Domain::integer()], [$operand, new NumberLiteral('12')], $settings, $derivation)));
+        self::assertEquals(Domain::decimal(5, 4), $rules->rounded(new Invocation([Domain::decimal(5, 4), Domain::integer()], [$operand, new NumberLiteral('4')], $settings, $derivation)));
+        self::assertEquals(Domain::decimal(4, 2), $rules->rounded(new Invocation([Domain::decimal(5, 4), Domain::integer()], [$operand, new NumberLiteral('2')], $settings, $derivation)));
+    }
+
     public function testNearestMakesAnIntegerABigintAndKeepsTheDecimalsOfADecimal(): void
     {
         $number = new NumberLiteral('1.55');

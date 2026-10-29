@@ -23,7 +23,7 @@ final class Routine
      * @param string $name The function name, in upper case
      * @param int $minimum The fewest arguments
      * @param int $maximum The most arguments, or -1 for no bound
-     * @param Closure(Frame, list<Evaluable>, Domain, string): (int|float|string|null) $body Computes the result
+     * @param Closure(Frame, list<Evaluable>, Domain, string): (int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null) $body Computes the result
      * @param int $step The number of arguments taken together after the fewest, as the pairs of JSON_OBJECT()
      * @param (Closure(Frame, list<Evaluable>, list<bool>): list<Evaluable>)|null $resolve Runs once when the call is compiled, given whether each argument is known then, and answers the arguments the body reads
      * @param bool $settled Whether resolve counts an argument that stays the same for the statement, as a variable or a parameter, as known

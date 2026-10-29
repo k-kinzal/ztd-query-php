@@ -165,7 +165,7 @@ final class CallCommand implements Command
      * Answers the value and type each parameter starts with: the value of the argument of an IN parameter, the value of the variable of an INOUT parameter, and NULL for an OUT parameter.
      *
      * @param array<int, string|Variable> $targets The variables of the OUT and INOUT parameters
-     * @return list<array{int|float|string|null, Domain}>
+     * @return list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}>
      *
      * @throws SqlError When an argument is refused
      */
@@ -189,7 +189,7 @@ final class CallCommand implements Command
     /**
      * Evaluates a compiled argument.
      *
-     * @return array{int|float|string|null, Domain}
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}
      */
     public function evaluated(\MySqlMemory\Evaluation\Evaluable $argument, Context $context): array
     {

@@ -27,7 +27,7 @@ final class Context
     /**
      * The values computed once for the statement, by what computes them.
      *
-     * @var WeakMap<object, list<int|float|string|null>>
+     * @var WeakMap<object, list<int|float|string|ExactDecimal|null>>
      */
     public readonly WeakMap $kept;
 

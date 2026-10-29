@@ -60,6 +60,6 @@ final class DoubleOperand implements Evaluable
         }
         $value = $kept[$this][0];
 
-        return $value === null ? null : (float) $value;
+        return $value === null ? null : (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
     }
 }

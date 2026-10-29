@@ -39,7 +39,7 @@ final class InsertIdentity
     /**
      * Records a successfully inserted row, including a replacement.
      *
-     * @param list<int|float|string|null> $row
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
      */
     public function inserted(array $row, ?int $generated): void
     {
@@ -50,12 +50,12 @@ final class InsertIdentity
     /**
      * Records the last duplicate row, even when it was unchanged; only changed rows make an id reportable.
      *
-     * @param list<int|float|string|null> $row
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
      */
     public function updated(array $row, bool $changed): void
     {
         $position = $this->table->autoIncrementColumn();
-        $this->last = $position === null ? 0 : (int) $row[$position];
+        $this->last = $position === null ? 0 : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($row[$position]);
         $this->written = $this->written || $changed;
     }
 

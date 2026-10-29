@@ -190,7 +190,7 @@ final class Output
     /**
      * Writes a value in the text the server sends, including declared ZEROFILL padding.
      */
-    public function text(int|float|string|null $value, Domain $domain, bool $zeroFill = false): ?string
+    public function text(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain, bool $zeroFill = false): ?string
     {
         if ($value === null) {
             return null;
@@ -199,13 +199,13 @@ final class Output
             return '0';
         }
         if ($zeroFill && $domain->kind === Kind::Year) {
-            return sprintf('%04d', (int) $value);
+            return sprintf('%04d', (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value));
         }
         if ($domain->kind === Kind::Bit) {
             return $domain->field === Field::Bit ? (string) $value : \MySqlMemory\Value\Integer::text(Convert::bits((string) $value), true);
         }
 
-        $text = $domain->kind === Kind::Double && $domain->field === Field::Float && $domain->decimals >= Domain::NOT_FIXED ? Real::format((float) sprintf('%.6G', (float) $value)) : Convert::toText($value, $domain);
+        $text = $domain->kind === Kind::Double && $domain->field === Field::Float && $domain->decimals >= Domain::NOT_FIXED ? Real::format((float) sprintf('%.6G', (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value))) : Convert::toText($value, $domain);
 
         return $text !== null && $zeroFill && $domain->kind->numeric() ? str_pad($text, $domain->display ?? $domain->length, '0', STR_PAD_LEFT) : $text;
     }

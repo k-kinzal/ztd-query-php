@@ -80,7 +80,7 @@ final class InsertCommand implements Command
         $rows->sources = $queried ? $planner->carried[1] ?? null : null;
         foreach ($sources as $index => $values) {
             if ($rows->sources !== null) {
-                $rows->source = array_map(static fn (array|\MySqlMemory\Evaluation\Evaluable|DefaultRequest $value): int|float|string|null => is_array($value) ? $value[0] : null, array_slice($values, count($positions)));
+                $rows->source = array_map(static fn (array|\MySqlMemory\Evaluation\Evaluable|DefaultRequest $value): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => is_array($value) ? $value[0] : null, array_slice($values, count($positions)));
                 $values = array_slice($values, 0, count($positions));
             }
             $rows->write($values === [] ? [] : $positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
@@ -120,7 +120,7 @@ final class InsertCommand implements Command
      * row names does, and a column without one is warned about once (verified on a live 8.4
      * server).
      *
-     * @return array{list<int>, list<list<Evaluable|DefaultRequest|array{int|float|string|null, Domain}>>}
+     * @return array{list<int>, list<list<Evaluable|DefaultRequest|array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}>>}
      */
     public function sources(InsertRows|InsertSet|InsertQuery $statement, Planner $planner, StoredTable $table, Context $context): array
     {
@@ -166,7 +166,7 @@ final class InsertCommand implements Command
     /**
      * Computes the rows of an INSERT ... SELECT before any is written.
      *
-     * @return list<list<array{int|float|string|null, Domain}>>
+     * @return list<list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}>>
      */
     public function queried(InsertQuery $statement, Planner $planner, Context $context, int $width): array
     {

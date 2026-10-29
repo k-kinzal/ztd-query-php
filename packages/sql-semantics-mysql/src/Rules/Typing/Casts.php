@@ -186,6 +186,11 @@ final class Casts
 
         $length = $limit ?? $this->length($operand);
         if ($operand->kind === Kind::Json) {
+            if ($limit === null) {
+                /** Legacy JSON carries a byte bound; Item_char_typecast reads max_char_length unless casting to binary. */
+                $characters = $collation->bytes() ? $operand->length : intdiv($operand->length, $operand->collation->charset->maxLength);
+                return (new Builtin\FormatResults())->sized($characters, $collation, Coercibility::Implicit);
+            }
             return Domain::string($length, $collation);
         }
         if ($collation->bytes() && $limit === null && $operand->kind === Kind::String) {

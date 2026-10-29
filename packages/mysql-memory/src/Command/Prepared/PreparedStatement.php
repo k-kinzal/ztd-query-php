@@ -60,7 +60,7 @@ final class PreparedStatement
     /**
      * Executes the prepared structure, retaining modern preparation-time types.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      * @throws SqlError When the statement fails
      */
     public function execute(Session $session, string $label, array $parameters): Reply
@@ -94,7 +94,7 @@ final class PreparedStatement
     /**
      * Reconstructs the semantic types when incompatible parameter values require preparation again.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Current argument values
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Current argument values
      */
     public function rebind(Session $session, array $parameters): self
     {
@@ -112,7 +112,7 @@ final class PreparedStatement
     /**
      * Returns protocol replies, including partial results and a terminal SQL error.
      *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters Bound values and their domains
      * @return list<Reply|SqlError>
      */
     public function run(Session $session, string $label, array $parameters): array

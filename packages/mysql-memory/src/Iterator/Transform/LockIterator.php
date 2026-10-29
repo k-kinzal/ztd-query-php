@@ -137,7 +137,7 @@ final class LockIterator implements RowIterator
     /**
      * Tells whether a row meets the condition of the block.
      *
-     * @param list<int|float|string|null> $row
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
      */
     public function meets(array $row): bool
     {
@@ -153,7 +153,7 @@ final class LockIterator implements RowIterator
     /**
      * Tells whether a row meets the condition with the committed version of a row another transaction changed in place of its latest one.
      *
-     * @param list<int|float|string|null> $row
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
      * @param array<int, true> $contended The targets whose rows another transaction holds, by position
      */
     public function committedMeets(array $row, array $contended): bool
@@ -172,8 +172,8 @@ final class LockIterator implements RowIterator
     /**
      * Answers a row with the latest version of the row of each locked table in place, or null when one was deleted.
      *
-     * @param list<int|float|string|null> $row
-     * @return list<int|float|string|null>|null
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>|null
      */
     public function latest(array $row): ?array
     {
@@ -194,9 +194,9 @@ final class LockIterator implements RowIterator
     /**
      * Answers a row with a version of the row of a table in place of the one it holds.
      *
-     * @param list<int|float|string|null> $row
-     * @param list<int|float|string|null> $version
-     * @return list<int|float|string|null>
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $row
+     * @param list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> $version
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function spliced(array $row, TableScanIterator $scan, int $offset, array $version): array
     {

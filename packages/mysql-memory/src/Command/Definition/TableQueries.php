@@ -302,7 +302,7 @@ final class TableQueries
      *
      * @throws SqlError When the value is refused
      */
-    public function stored(int|float|string|null $value, Domain $from, ColumnDefinition $column, Store $store, Writer $writer): int|float|string|null
+    public function stored(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $from, ColumnDefinition $column, Store $store, Writer $writer): int|float|string|null
     {
         $stored = $value === null ? null : $store->value($value, $from, $column);
         if ($stored !== null || $column->nullable() || $column->autoIncrement) {

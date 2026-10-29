@@ -89,7 +89,7 @@ final class Preparation
         }
         $variables = $frame->context->variables;
         $rows = $variables->instance->transactions->of($variables->connection)?->access->rows($scan->table) ?? $scan->table->data->rows;
-        $values = array_map(static fn (array $binding): int|float|string|null => $binding[1]->evaluate($frame), $path->bindings);
+        $values = array_map(static fn (array $binding): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $binding[1]->evaluate($frame), $path->bindings);
         foreach ($rows as $row) {
             $matches = true;
             foreach ($path->bindings as $index => [$position, , $comparator]) {

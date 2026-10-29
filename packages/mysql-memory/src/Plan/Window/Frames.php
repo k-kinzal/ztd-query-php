@@ -163,7 +163,7 @@ final class Frames
     /**
      * Evaluates an offset when the statement is planned, and answers it with its domain.
      *
-     * @return array{int|float|string|null, Domain}
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}
      * @throws SqlError When evaluating the offset is an error
      */
     public function value(FrameBound $bound, Scope $scope): array
@@ -231,7 +231,7 @@ final class Frames
             return new Bound($bound->kind, 0, new DateShift($key, $quantity, $bound->unit, $subtract, $moved->withNullable(true)));
         }
         $double = $key->domain()->kind === Kind::Double || $domain->kind === Kind::Double;
-        $amount = $double ? (string) (float) $value : (string) Convert::toDecimal($value, $domain, $this->quiet());
+        $amount = $double ? (string) (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value) : (string) Convert::toDecimal($value, $domain, $this->quiet());
 
         return new Bound($bound->kind, 0, new Shift($key, $amount, $subtract, $double ? Domain::double() : Domain::decimal(65, 30)));
     }

@@ -149,9 +149,9 @@ final class PreparedCommand implements Command
      * converted to it; NULL binds the type of a marker no value is bound to (verified on a live 8.4
      * server).
      *
-     * @return array{int|float|string|null, \MySqlMemory\Typing\Domain}
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}
      */
-    public function parameter(Session $session, int|float|string|null $value, \MySqlMemory\Typing\Domain $domain): array
+    public function parameter(Session $session, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, \MySqlMemory\Typing\Domain $domain): array
     {
         if (version_compare($session->instance->version, '8.0.0', '<')) {
             return $this->legacyParameter($value, $domain);
@@ -176,9 +176,9 @@ final class PreparedCommand implements Command
      * while expression evaluation retains the variable's numeric kind and precision.
      * Observed through SQL PREPARE on MySQL 5.6.51, including NULL and type changes.
      *
-     * @return array{int|float|string|null, \MySqlMemory\Typing\Domain}
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}
      */
-    public function legacyParameter(int|float|string|null $value, \MySqlMemory\Typing\Domain $domain): array
+    public function legacyParameter(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, \MySqlMemory\Typing\Domain $domain): array
     {
         if ($value === null) {
             return [null, new \MySqlMemory\Typing\Domain(Kind::Null, Field::VarString, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible)];

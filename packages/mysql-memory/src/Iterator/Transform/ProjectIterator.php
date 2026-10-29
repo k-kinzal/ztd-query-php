@@ -19,7 +19,7 @@ final class ProjectIterator implements RowIterator
     private Frame $frame;
 
     /**
-     * @var list<int|float|string|null> The last computed values retained by a marked row
+     * @var list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null> The last computed values retained by a marked row
      */
     private array $retained = [];
 

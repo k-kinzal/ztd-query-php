@@ -43,7 +43,7 @@ final class Control
      *
      * @param list<Evaluable> $arguments
      */
-    public function if(Frame $frame, array $arguments, Domain $result): int|float|string|null
+    public function if(Frame $frame, array $arguments, Domain $result): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         try {
             $condition = Convert::toBool($arguments[0]->evaluate($frame), $arguments[0]->domain(), $frame->context) === true;
@@ -64,7 +64,7 @@ final class Control
      *
      * @param list<Evaluable> $arguments
      */
-    public function coalesce(Frame $frame, array $arguments, Domain $result): int|float|string|null
+    public function coalesce(Frame $frame, array $arguments, Domain $result): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         foreach ($arguments as $argument) {
             try {
@@ -89,7 +89,7 @@ final class Control
      *
      * @param list<Evaluable> $arguments
      */
-    public function nullif(Frame $frame, array $arguments, Domain $result): int|float|string|null
+    public function nullif(Frame $frame, array $arguments, Domain $result): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $value = $arguments[0]->evaluate($frame);
         $other = $arguments[1]->evaluate($frame);

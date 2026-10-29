@@ -45,7 +45,7 @@ final class InputRead implements Evaluable
      * @phpstan-pure
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $frame->windowSlots[$this->position] ?? null;
     }

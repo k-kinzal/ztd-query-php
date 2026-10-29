@@ -20,10 +20,10 @@ final class ProjectionRead
     public readonly bool $isNull;
 
     /**
-     * @param int|float|string|null $value The expression's actual value
+     * @param int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value The expression's actual value
      * @param bool|null $isNull The observed NULL state, or null to use the value's state
      */
-    public function __construct(public readonly int|float|string|null $value, ?bool $isNull = null)
+    public function __construct(public readonly int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, ?bool $isNull = null)
     {
         $this->isNull = $isNull ?? $value === null;
     }

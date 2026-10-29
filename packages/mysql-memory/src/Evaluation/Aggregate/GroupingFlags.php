@@ -48,7 +48,7 @@ final class GroupingFlags implements Evaluable
     #[Override]
     public function evaluate(Frame $frame): int
     {
-        $rolled = (int) ($frame->row[$this->level] ?? 0);
+        $rolled = (int) (\MySqlMemory\Evaluation\ExactDecimal::raw($frame->row[$this->level] ?? 0));
         $flags = 0;
         foreach ($this->arguments as $position) {
             $flags = ($flags << 1) | ($position >= $this->groups - $rolled ? 1 : 0);

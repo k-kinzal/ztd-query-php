@@ -102,4 +102,18 @@ final class AggregateTest extends TestCase
 
         self::assertEquals([new Known(Domain::integer(Field::Tiny, 4)), Field::String, Field::Tiny], [$query->field(0)->type, $query->field(1)->type instanceof Known && $query->field(1)->type->descriptor instanceof Domain ? $query->field(1)->type->descriptor->field : null, $query->field(2)->type instanceof Known && $query->field(2)->type->descriptor instanceof Domain ? $query->field(2)->type->descriptor->field : null]);
     }
+    public function testInitializeDivisionPrecisionRetainsTheAverageCalculationIncrement(): void
+    {
+        $average = new Aggregate(AggregateFunction::Average, [new NumberLiteral('1')]);
+        $average->initializeDivisionPrecision(12);
+        self::assertSame(12, $average->divisionPrecision());
+    }
+
+    public function testDivisionPrecisionIsOwnedByThePublishedAverage(): void
+    {
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT AVG(1)');
+        $average = $query->field(0)->expression;
+        self::assertInstanceOf(Aggregate::class, $average);
+        self::assertSame(4, $average->divisionPrecision());
+    }
 }

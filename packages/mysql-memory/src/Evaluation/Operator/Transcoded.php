@@ -43,7 +43,7 @@ final class Transcoded implements Evaluable
      * Reads the string the first time it is needed, and answers the same value for every later row of the statement.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $kept = $frame->context->kept;
         if (!isset($kept[$this])) {

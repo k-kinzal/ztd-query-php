@@ -103,7 +103,7 @@ final class Geohashes
      * @param list<Evaluable> $arguments Hash and reference identifier
      * @throws \MySqlMemory\Error\SqlError When the hash or reference identifier is invalid
      */
-    public function pointValue(Frame $frame, array $arguments, int|float|string|null $hash): ?string
+    public function pointValue(Frame $frame, array $arguments, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $hash): ?string
     {
         $srid = (new Parts())->index($frame, $arguments[1], true, true);
         $modern = $frame->context->modes->release !== GrammarRelease::MySql5744;

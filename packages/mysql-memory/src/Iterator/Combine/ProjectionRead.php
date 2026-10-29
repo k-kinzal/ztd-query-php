@@ -20,7 +20,7 @@ final class ProjectionRead
     /**
      * Advances one input, preserving projection only for an emitted row.
      *
-     * @return list<int|float|string|null>|null
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>|null
      */
     public function read(RowIterator $iterator, bool $emit): ?array
     {

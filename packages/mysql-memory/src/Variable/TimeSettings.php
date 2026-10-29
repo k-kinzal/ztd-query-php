@@ -47,7 +47,7 @@ final class TimeSettings
      *
      * @throws \MySqlMemory\Error\SqlError When the value is not a string or names no zone
      */
-    public function zone(int|float|string|null $value, Domain $domain): string
+    public function zone(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain): string
     {
         if ($value === null) {
             throw AdministrationError::WrongValueForVariable->error('time_zone', 'NULL');
@@ -68,13 +68,13 @@ final class TimeSettings
      *
      * @throws \MySqlMemory\Error\SqlError When the value is NULL or names no locale
      */
-    public function locale(int|float|string|null $value, Domain $domain): string
+    public function locale(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain): string
     {
         if ($value === null) {
             throw AdministrationError::WrongValueForVariable->error('lc_time_names', 'NULL');
         }
         if ($domain->kind === Kind::Integer) {
-            $locale = Locale::numbered((int) $value);
+            $locale = Locale::numbered((int) \MySqlMemory\Evaluation\ExactDecimal::raw($value));
         } elseif ($domain->kind === Kind::String) {
             $locale = Locale::named((string) $value);
         } else {
@@ -93,12 +93,12 @@ final class TimeSettings
      *
      * @throws \MySqlMemory\Error\SqlError When the value is not a number, or is between 0 and 1 or beyond 2147483647
      */
-    public function timestamp(int|float|string|null $value, Domain $domain): ?string
+    public function timestamp(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain): ?string
     {
         if ($value === null || !in_array($domain->kind, [Kind::Integer, Kind::Decimal, Kind::Double], true)) {
             throw AdministrationError::WrongTypeForVariable->error('timestamp');
         }
-        $number = $domain->kind === Kind::Double ? Decimal::fromDouble((float) $value) : (string) Convert::toDecimal($value, $domain, $this->context);
+        $number = $domain->kind === Kind::Double ? Decimal::fromDouble((float) \MySqlMemory\Evaluation\ExactDecimal::raw($value)) : (string) Convert::toDecimal($value, $domain, $this->context);
         if (Decimal::compare($number, '0') < 0) {
             $this->context->warning(DataError::TruncatedWrongValue, 'timestamp', (string) Convert::toText($value, $domain));
 
@@ -120,7 +120,7 @@ final class TimeSettings
     /**
      * Writes a refused timestamp as the server's message shows it: an integer or a double as the shortest double, a decimal as written.
      */
-    public function shown(int|float|string $value, Domain $domain, string $number): string
+    public function shown(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, string $number): string
     {
         if ($domain->kind === Kind::Decimal) {
             return (string) $value;

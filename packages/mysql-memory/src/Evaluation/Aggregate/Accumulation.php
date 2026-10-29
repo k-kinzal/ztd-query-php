@@ -28,6 +28,7 @@ final class Accumulation
      * @param string $separator The GROUP_CONCAT separator
      * @param int $limit The longest GROUP_CONCAT result in bytes (group_concat_max_len)
      * @param bool $object Whether the fold is JSON_OBJECTAGG, whose function is JSON_ARRAYAGG's and whose arguments are a name and a value
+     * @param int $divisionPrecision The precision increment retained by an average during semantic construction
      * @param TupleInput|null $input The query block's tuple evaluation phases, or null for direct argument reads
      */
     public function __construct(
@@ -40,6 +41,7 @@ final class Accumulation
         public readonly int $limit = 1024,
         public readonly bool $object = false,
         public readonly ?TupleInput $input = null,
+        public readonly int $divisionPrecision = 4,
     ) {
     }
 

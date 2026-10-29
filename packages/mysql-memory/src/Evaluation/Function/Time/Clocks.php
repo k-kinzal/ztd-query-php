@@ -158,7 +158,7 @@ final class Clocks
      * @param bool $dated Whether strings and numbers are read as dates and times
      * @return array{string, int}|null
      */
-    public function instant(int|float|string $value, Domain $domain, bool $dated, Context $context): ?array
+    public function instant(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, bool $dated, Context $context): ?array
     {
         $kind = match ($domain->kind) {
             Kind::Date => 'date',
@@ -181,7 +181,7 @@ final class Clocks
      *
      * @param bool $time Whether a number needs twelve digits or more, as in a time context
      */
-    public function dated(int|float|string $value, Domain $domain, bool $time): bool
+    public function dated(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, bool $time): bool
     {
         if ($domain->kind === Kind::DateTime) {
             return true;
@@ -198,7 +198,7 @@ final class Clocks
     /**
      * Reads a value as a duration in microseconds, clamped to a TIME with a warning, or null.
      */
-    public function duration(int|float|string $value, Domain $domain, Context $context): ?int
+    public function duration(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Context $context): ?int
     {
         $time = (new Moments())->time($value, $domain, 6, $context);
         $parts = $time === null ? null : Temporal::parseTime($time);
@@ -299,7 +299,7 @@ final class Clocks
         $negative = str_starts_with($number, '-');
         $magnitude = ltrim($number, '-');
         if (Decimal::compare($magnitude, '3020399') > 0) {
-            $frame->context->warning(DataError::TruncatedWrongValue, 'time', $argument->domain()->kind === Kind::Double ? Decimal::canonical(sprintf('%.0f', (float) $value)) : $number);
+            $frame->context->warning(DataError::TruncatedWrongValue, 'time', $argument->domain()->kind === Kind::Double ? Decimal::canonical(sprintf('%.0f', (float) \MySqlMemory\Evaluation\ExactDecimal::raw($value))) : $number);
 
             return Temporal::time($negative, 838, 59, 59, 0, $result->decimals);
         }

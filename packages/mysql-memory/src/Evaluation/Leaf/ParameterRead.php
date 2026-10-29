@@ -25,12 +25,12 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 final class ParameterRead implements Evaluable
 {
     /**
-     * @param int|float|string|null $value The current argument
+     * @param int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value The current argument
      * @param Domain $actual The supplied value type
      * @param Domain $derived The retained parameter type
      * @param bool $modern Whether preparation derives parameter types
      */
-    public function __construct(public readonly int|float|string|null $value, public readonly Domain $actual, public readonly Domain $derived, public readonly bool $modern)
+    public function __construct(public readonly int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, public readonly Domain $actual, public readonly Domain $derived, public readonly bool $modern)
     {
     }
 
@@ -47,7 +47,7 @@ final class ParameterRead implements Evaluable
      * Converts the argument without padding decimals to the metadata scale.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $value = $this->value;
         $actual = $this->actual;

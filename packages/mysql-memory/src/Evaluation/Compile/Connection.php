@@ -21,7 +21,7 @@ final class Connection
      * @param string $user The user name the connection authenticated as
      * @param string $host The host the connection came from
      * @param int $id The connection id (CONNECTION_ID())
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in order
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in order
      * @param \MySqlMemory\Program\Activation|null $program The stored program whose variables the statement reads, or null outside a program
      * @param WeakReference<\MySqlMemory\Session\Session>|null $session The session that runs the statement, which runs the stored functions it calls, held weakly so that a session nothing else refers to closes; null where none can be called
      * @param bool $viewDefinition Whether a view body is being bound without invocation-time subquery transformations

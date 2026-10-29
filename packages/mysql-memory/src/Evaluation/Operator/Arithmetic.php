@@ -64,7 +64,7 @@ final class Arithmetic implements Evaluable
      * leaves the right one unread.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if ($this->operator === ArithmeticOperator::IntegerDivide) {
             return $this->integerDivide($frame);
@@ -124,7 +124,7 @@ final class Arithmetic implements Evaluable
     /**
      * Computes the result as an exact decimal.
      */
-    public function decimal(string $left, string $right, Frame $frame): ?string
+    public function decimal(string $left, string $right, Frame $frame): ?\MySqlMemory\Evaluation\ExactDecimal
     {
         $result = match ($this->operator) {
             ArithmeticOperator::Plus => Decimal::add($left, $right),
@@ -140,7 +140,7 @@ final class Arithmetic implements Evaluable
             throw DataError::DataOutOfRange->error('DECIMAL', $this->text);
         }
 
-        return Decimal::round($result, $this->domain->decimals);
+        return new \MySqlMemory\Evaluation\ExactDecimal($result, $this->domain->decimals);
     }
 
     /**

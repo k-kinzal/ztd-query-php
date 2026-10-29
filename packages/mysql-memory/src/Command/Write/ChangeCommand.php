@@ -179,15 +179,15 @@ final class ChangeCommand implements Command
     /**
      * Sorts the matched rows by the values of their ORDER BY keys, keeping the order of rows whose keys are equal.
      *
-     * @param list<array{int, list<int|float|string|null>}> $matched Each matched row number with the values of its keys
+     * @param list<array{int, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}> $matched Each matched row number with the values of its keys
      * @param list<array{\MySqlMemory\Evaluation\Evaluable, bool}> $keys The ORDER BY keys, each with whether it is descending
-     * @return list<array{int, list<int|float|string|null>}>
+     * @return list<array{int, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>}>
      */
     public function sorted(array $matched, array $keys): array
     {
         usort($matched, static function (array $left, array $right) use ($keys): int {
             foreach ($keys as $index => [$key, $descending]) {
-                $order = Order::compare($left[1][$index], $right[1][$index], $key->domain());
+                $order = Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($left[1][$index]), \MySqlMemory\Evaluation\ExactDecimal::raw($right[1][$index]), $key->domain());
                 if ($order !== 0) {
                     return $descending ? -$order : $order;
                 }
@@ -204,7 +204,7 @@ final class ChangeCommand implements Command
      *
      * @param list<int|float|string|null>|null $row
      * @param list<array{\MySqlMemory\Evaluation\Evaluable, bool}> $keys The ORDER BY keys, each with whether it is descending
-     * @return list<int|float|string|null>|null
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>|null
      *
      * @throws \MySqlMemory\Error\SqlError When the condition or a key cannot be evaluated
      */

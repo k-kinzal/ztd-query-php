@@ -63,18 +63,18 @@ final class Partition
     private array $sliding = [];
 
     /**
-     * @var array<int, array{int, int|float|string|null}> The current FIRST_VALUE or NTH_VALUE selection per call
+     * @var array<int, array{int, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null}> The current FIRST_VALUE or NTH_VALUE selection per call
      */
     private array $selected = [];
 
     /**
-     * @var array<int, array<int, int|float|string|null>> Argument values consumed by LAST_VALUE per call
+     * @var array<int, array<int, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> Argument values consumed by LAST_VALUE per call
      */
     private array $lastValues = [];
 
     /**
-     * @param list<list<int|float|string|null>> $rows The rows of the partition, in the order of the window
-     * @param list<list<int|float|string|null>> $keys The values of the ORDER BY expressions of each row
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows The rows of the partition, in the order of the window
+     * @param list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $keys The values of the ORDER BY expressions of each row
      * @param Window $window The window
      */
     public function __construct(public array $rows, public readonly array $keys, public readonly Window $window)
@@ -106,7 +106,7 @@ final class Partition
     public function peers(int $left, int $right): bool
     {
         foreach ($this->window->order as $position => [$key]) {
-            if (Order::compare($this->keys[$left][$position], $this->keys[$right][$position], $key->domain()) !== 0) {
+            if (Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($this->keys[$left][$position]), \MySqlMemory\Evaluation\ExactDecimal::raw($this->keys[$right][$position]), $key->domain()) !== 0) {
                 return false;
             }
         }
@@ -117,7 +117,7 @@ final class Partition
     /**
      * Answers the values of the window functions for a row.
      *
-     * @return list<int|float|string|null>
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      * @throws \MySqlMemory\Error\SqlError When computing a value is an error
      */
     public function values(int $row, Frame $frame): array
@@ -176,7 +176,7 @@ final class Partition
     /**
      * Answers the arguments and ordinary copies of the latest loaded row.
      *
-     * @return list<int|float|string|null>
+     * @return list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>
      */
     public function captured(): array
     {
@@ -188,7 +188,7 @@ final class Partition
      *
      * @throws \MySqlMemory\Error\SqlError When computing a value is an error
      */
-    public function value(Analytic $analytic, int $row, Frame $frame): int|float|string|null
+    public function value(Analytic $analytic, int $row, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $count = count($this->rows);
 
@@ -225,7 +225,7 @@ final class Partition
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating the value is an error
      */
-    public function shifted(Analytic $analytic, int $row, Frame $frame): int|float|string|null
+    public function shifted(Analytic $analytic, int $row, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $count = count($this->rows);
         $target = $analytic->kind === WindowFunctionKind::Lag ? ($analytic->count > $row ? -1 : $row - $analytic->count) : ($analytic->count >= $count - $row ? $count : $row + $analytic->count);
@@ -245,7 +245,7 @@ final class Partition
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating the value is an error
      */
-    public function framed(Analytic $analytic, int $row, Frame $frame): int|float|string|null
+    public function framed(Analytic $analytic, int $row, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         [$start, $end] = $this->extent($row, $frame);
         $target = $start;
@@ -272,7 +272,7 @@ final class Partition
      * member once. Empty frames read nothing. Verified through warning counts
      * over fixed and moving frames on MySQL 8.0, 8.4 and 9.1.
      */
-    public function selected(Analytic $analytic, int $start, int $target, Frame $frame): int|float|string|null
+    public function selected(Analytic $analytic, int $start, int $target, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         $id = spl_object_id($analytic);
         $argument = $analytic->arguments[0];
@@ -310,7 +310,7 @@ final class Partition
     /**
      * Converts a value a function reads into the type of its result: a date or a time of a datetime result as the datetime it is, any other value as the run-time kind of the result holds it.
      */
-    public static function converted(int|float|string|null $value, Domain $from, Domain $to, Frame $frame): int|float|string|null
+    public static function converted(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $from, Domain $to, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if ($value !== null && $to->kind->temporal() && $from->kind !== $to->kind) {
             return (new Moments())->convert($value, $from, $to, $frame->context);
@@ -327,7 +327,7 @@ final class Partition
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating an argument is an error
      */
-    public function aggregate(Analytic $analytic, int $row, Frame $frame): int|float|string|null
+    public function aggregate(Analytic $analytic, int $row, Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         if ($analytic->accumulation === null) {
             return null;
@@ -412,13 +412,13 @@ final class Partition
     /**
      * Compares an ordering value with where a boundary lies, a date read as the start of its day.
      */
-    public function compare(int|float|string|null $value, int|float|string $limit, Domain $domain): int
+    public function compare(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, int|float|string|\MySqlMemory\Evaluation\ExactDecimal $limit, Domain $domain): int
     {
         if ($value !== null && ($domain->kind === Kind::DateTime || $domain->kind === Kind::Date)) {
             return strcmp(self::moment((string) $value), self::moment((string) $limit));
         }
 
-        return Order::compare($value, $limit, $domain);
+        return Order::compare(\MySqlMemory\Evaluation\ExactDecimal::raw($value), \MySqlMemory\Evaluation\ExactDecimal::raw($limit), $domain);
     }
 
     /**

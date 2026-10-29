@@ -38,7 +38,7 @@ final class Convert
     /**
      * Reads a value as a double.
      */
-    public static function toDouble(int|float|string|null $value, Domain $domain, Context $context): ?float
+    public static function toDouble(int|float|string|ExactDecimal|null $value, Domain $domain, Context $context): ?float
     {
         if ($value === null) {
             return null;
@@ -53,9 +53,9 @@ final class Convert
         }
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year => Integer::real((int) $value, $domain->unsigned),
-            Kind::Double => (float) $value,
-            Kind::Decimal => (float) $value,
+            Kind::Integer, Kind::Year => Integer::real((int) ExactDecimal::raw($value), $domain->unsigned),
+            Kind::Double => (float) ExactDecimal::raw($value),
+            Kind::Decimal => (float) (string) $value,
             Kind::Date, Kind::Time, Kind::DateTime => (float) Temporal::number((string) $value),
             Kind::Bit => Integer::real(self::bits((string) $value), true),
             Kind::Json => Coercions::toDouble((string) $value, $domain, $context),
@@ -67,7 +67,7 @@ final class Convert
     /**
      * Reads a value as a 64-bit integer; the result is unsigned when the target asks for it.
      */
-    public static function toInteger(int|float|string|null $value, Domain $domain, Context $context, bool $unsigned = false): ?int
+    public static function toInteger(int|float|string|ExactDecimal|null $value, Domain $domain, Context $context, bool $unsigned = false): ?int
     {
         if ($value === null) {
             return null;
@@ -82,8 +82,8 @@ final class Convert
         }
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year => (int) $value,
-            Kind::Double => Integer::fromReal((float) $value, $unsigned),
+            Kind::Integer, Kind::Year => (int) ExactDecimal::raw($value),
+            Kind::Double => Integer::fromReal((float) ExactDecimal::raw($value), $unsigned),
             Kind::Decimal => self::exactInteger(Decimal::round((string) $value, 0), $unsigned),
             Kind::Date, Kind::Time, Kind::DateTime => self::exactInteger(Decimal::round(Temporal::number((string) $value), 0), $unsigned),
             Kind::Bit => self::bits((string) $value),
@@ -101,7 +101,7 @@ final class Convert
      * Source: https://dev.mysql.com/doc/refman/8.4/en/enum.html,
      * https://dev.mysql.com/doc/refman/8.4/en/set.html.
      */
-    public static function ordinal(int|float|string $value, Domain $domain): ?int
+    public static function ordinal(int|float|string|ExactDecimal $value, Domain $domain): ?int
     {
         if ($domain->kind !== Kind::String || $domain->members === [] || ($domain->field !== Field::Enum && $domain->field !== Field::Set)) {
             return null;
@@ -123,7 +123,7 @@ final class Convert
     /**
      * Reads a value as an exact decimal text.
      */
-    public static function toDecimal(int|float|string|null $value, Domain $domain, Context $context): ?string
+    public static function toDecimal(int|float|string|ExactDecimal|null $value, Domain $domain, Context $context): ?string
     {
         if ($value === null) {
             return null;
@@ -138,8 +138,8 @@ final class Convert
         }
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year => Integer::text((int) $value, $domain->unsigned),
-            Kind::Double => Decimal::fromDouble((float) $value),
+            Kind::Integer, Kind::Year => Integer::text((int) ExactDecimal::raw($value), $domain->unsigned),
+            Kind::Double => Decimal::fromDouble((float) ExactDecimal::raw($value)),
             Kind::Decimal => (string) $value,
             Kind::Date, Kind::Time, Kind::DateTime => Temporal::number((string) $value),
             Kind::Bit => Integer::text(self::bits((string) $value), true),
@@ -161,7 +161,7 @@ final class Convert
      *
      * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
      */
-    public static function operandDecimal(int|float|string|null $value, Evaluable $operand, Context $context): ?string
+    public static function operandDecimal(int|float|string|ExactDecimal|null $value, Evaluable $operand, Context $context): ?string
     {
         $domain = $operand->domain();
         if ($value === null || $domain->kind !== Kind::String || $domain->numericBytes) {
@@ -188,24 +188,25 @@ final class Convert
     /**
      * Reads a value as the text the server writes for it.
      */
-    public static function toText(int|float|string|null $value, Domain $domain): ?string
+    public static function toText(int|float|string|ExactDecimal|null $value, Domain $domain): ?string
     {
         if ($value === null) {
             return null;
         }
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year => Integer::text((int) $value, $domain->unsigned),
-            Kind::Double => $domain->decimals < Domain::NOT_FIXED ? Real::fixed((float) $value, $domain->decimals) : Real::format((float) $value),
+            Kind::Integer, Kind::Year => Integer::text((int) ExactDecimal::raw($value), $domain->unsigned),
+            Kind::Double => $domain->decimals < Domain::NOT_FIXED ? Real::fixed((float) ExactDecimal::raw($value), $domain->decimals) : Real::format((float) ExactDecimal::raw($value)),
             Kind::Json => Json::visible((string) $value),
-            Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Bit, Kind::Null => (string) $value,
+            Kind::Decimal => $value instanceof ExactDecimal ? $value->text() : (string) $value,
+            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Bit, Kind::Null => (string) $value,
         };
     }
 
     /**
      * Reads a value as a truth value: whether it is a number other than zero; null stays null.
      */
-    public static function toBool(int|float|string|null $value, Domain $domain, Context $context): ?bool
+    public static function toBool(int|float|string|ExactDecimal|null $value, Domain $domain, Context $context): ?bool
     {
         if ($value === null) {
             return null;
@@ -213,7 +214,7 @@ final class Convert
 
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => $value !== 0 && $value !== "\0",
-            Kind::Double => (float) $value !== 0.0,
+            Kind::Double => (float) ExactDecimal::raw($value) !== 0.0,
             Kind::Decimal => Decimal::compare((string) $value, '0') !== 0,
             Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => self::toDouble($value, $domain, $context) !== 0.0,
         };
@@ -224,7 +225,7 @@ final class Convert
      * including truncation notices, while later releases use boolean conversion.
      * IF and other expression-level truth tests continue to use toBool().
      */
-    public static function toPredicate(int|float|string|null $value, Domain $domain, Context $context): ?bool
+    public static function toPredicate(int|float|string|ExactDecimal|null $value, Domain $domain, Context $context): ?bool
     {
         if ($context->modes->release === GrammarRelease::MySql5651 || $context->modes->release === GrammarRelease::MySql5744) {
             $integer = self::toInteger($value, $domain, $context);

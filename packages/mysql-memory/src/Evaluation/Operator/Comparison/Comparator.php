@@ -127,7 +127,7 @@ final class Comparator
     /**
      * Compares two values: negative, zero or positive; null when either is NULL.
      */
-    public function compare(int|float|string|null $left, int|float|string|null $right, Context $context): ?int
+    public function compare(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $left, int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $right, Context $context): ?int
     {
         if ($left === null || $right === null) {
             return null;
@@ -148,7 +148,7 @@ final class Comparator
      *
      * @param bool $boolean Whether the value is that of a predicate
      */
-    public static function json(int|float|string $value, Domain $domain, bool $boolean): JsonNode
+    public static function json(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, bool $boolean): JsonNode
     {
         return $domain->kind === Kind::Json ? JsonNode::load((string) $value) : Jsons::value($value, $domain, $boolean);
     }
@@ -156,15 +156,15 @@ final class Comparator
     /**
      * Answers the 64 bits of a value compared as an integer: a BIT value is held as its bytes.
      */
-    public static function integer(int|float|string $value, Domain $domain, Context $context): int
+    public static function integer(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Context $context): int
     {
-        return $domain->kind === Kind::Bit ? (int) Convert::toInteger($value, $domain, $context, true) : (int) $value;
+        return $domain->kind === Kind::Bit ? (int) Convert::toInteger($value, $domain, $context, true) : (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value);
     }
 
     /**
      * Compares two values as datetimes or times.
      */
-    public function temporalOrder(int|float|string $left, int|float|string $right, Context $context): int
+    public function temporalOrder(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $left, int|float|string|\MySqlMemory\Evaluation\ExactDecimal $right, Context $context): int
     {
         $leftValue = self::moment($left, $this->left, $this->mode);
         $rightValue = self::moment($right, $this->right, $this->mode);
@@ -178,7 +178,7 @@ final class Comparator
     /**
      * Writes a value as a comparable datetime or time text, or answers null when it is none.
      */
-    public static function moment(int|float|string $value, Domain $domain, Kind $mode): ?string
+    public static function moment(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Kind $mode): ?string
     {
         if ($mode === Kind::Time) {
             $parts = Temporal::parseTime((string) $value);
@@ -196,7 +196,7 @@ final class Comparator
     /**
      * Answers the text of a value compared as a string, in the character set of the collation it is compared in.
      */
-    public static function text(int|float|string $value, Domain $domain, Collation $collation): string
+    public static function text(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, Collation $collation): string
     {
         return Encoding::convert((string) Convert::toText($value, $domain), $domain->kind === Kind::String ? $domain->collation->charset : Charset::known('utf8mb4'), $collation->charset);
     }

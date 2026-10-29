@@ -51,8 +51,8 @@ final class Miscellany
     public function routines(): array
     {
         return [
-            new Routine('ANY_VALUE', 1, 1, fn (Frame $f, array $a): int|float|string|null => $a[0]->evaluate($f)),
-            new Routine('NAME_CONST', 2, 2, fn (Frame $f, array $a): int|float|string|null => $a[1]->evaluate($f), resolve: $this->constants(...)),
+            new Routine('ANY_VALUE', 1, 1, fn (Frame $f, array $a): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $a[0]->evaluate($f)),
+            new Routine('NAME_CONST', 2, 2, fn (Frame $f, array $a): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null => $a[1]->evaluate($f), resolve: $this->constants(...)),
             new Routine('ICU_VERSION', 0, 0, fn (Frame $f): string => $this->icu($f->context->modes->release)),
             new Routine('ROLES_GRAPHML', 0, 0, fn (Frame $f): string => $this->graph($f->context->variables)),
         ];

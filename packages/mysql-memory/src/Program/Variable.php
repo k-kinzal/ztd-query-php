@@ -32,7 +32,7 @@ final class Variable
      *
      * @throws SqlError When the value is refused under a strict sql_mode
      */
-    public function assign(int|float|string|null $value, Domain $from, Context $context): void
+    public function assign(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $from, Context $context): void
     {
         $this->value = (new Store($context))->value($value, $from, new ColumnDefinition($this->name, $this->domain, Fill::none()));
     }

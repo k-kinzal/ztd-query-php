@@ -41,7 +41,7 @@ final class GenerationParameters
     /**
      * Freezes execution values by occurrence, retaining the reusable template.
      *
-     * @param list<array{int|float|string|null, Domain}> $parameters Bound protocol values
+     * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain}> $parameters Bound protocol values
      * @return array<int, Scalar> Literal values indexed by original occurrence identity
      */
     public function values(Node $definition, array $parameters): array
@@ -57,7 +57,7 @@ final class GenerationParameters
     /**
      * Preserves NULL, numeric values and decoded character bytes as semantic operands.
      */
-    public function literal(int|float|string|null $value, Domain $domain): Scalar
+    public function literal(int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null $value, Domain $domain): Scalar
     {
         if ($value === null) {
             return new M\Literal\NullLiteral();

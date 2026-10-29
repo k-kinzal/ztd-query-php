@@ -108,7 +108,7 @@ final class DateShift implements Evaluable
      * @return array{int, int, int, int, int, int, int, bool}|null
      * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
      */
-    public function moment(int|float|string $value, Frame $frame): ?array
+    public function moment(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Frame $frame): ?array
     {
         $domain = $this->operand->domain();
         if ($domain->kind === Kind::Time) {
@@ -139,12 +139,12 @@ final class DateShift implements Evaluable
     /**
      * Answers how a warning quotes a value that is no date: a string or temporal value as its text with the bytes of a binary one escaped, an integer as a signed one, and a double as the server writes it.
      */
-    public function shown(int|float|string $value, Domain $domain, string $text): string
+    public function shown(int|float|string|\MySqlMemory\Evaluation\ExactDecimal $value, Domain $domain, string $text): string
     {
         return match (true) {
             $domain->kind === Kind::String || $domain->kind->temporal() => Convert::shown($text, Convert::readableCharset($domain)),
-            $domain->kind === Kind::Integer => (string) (int) $value,
-            $domain->kind === Kind::Double => Real::format((float) $value),
+            $domain->kind === Kind::Integer => (string) (int) \MySqlMemory\Evaluation\ExactDecimal::raw($value),
+            $domain->kind === Kind::Double => Real::format((float) \MySqlMemory\Evaluation\ExactDecimal::raw($value)),
             default => $text,
         };
     }

@@ -29,7 +29,7 @@ use Override;
 final class JsonTableIterator implements RowIterator
 {
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      */
     private array $rows = [];
 
@@ -57,7 +57,7 @@ final class JsonTableIterator implements RowIterator
      * Computes the rows a path and its columns make of a value.
      *
      * @param list<JsonColumn> $columns
-     * @return list<list<int|float|string|null>>
+     * @return list<list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>>
      *
      * @throws SqlError When a column raises its error
      */

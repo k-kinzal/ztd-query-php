@@ -125,7 +125,7 @@ final class Statements
      *
      * @param bool $assigned Whether the value is stored elsewhere, as the value RETURN answers is
      *
-     * @return array{int|float|string|null, Domain} The value and its type
+     * @return array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, Domain} The value and its type
      *
      * @throws SqlError When the expression is refused or its value cannot be stored
      */

@@ -27,6 +27,29 @@ final class QueryExecutionProperties extends TestCase
     use TestTrait;
 
     /**
+     * Numeric consumers retain calculation digits while text consumers use each expression's scale.
+     */
+    #[Test]
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerKeywordReleases')]
+    public function satisfiesDecimalPrecisionSurvivesComposedConsumers(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $this->forAll(\Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator::precisionQueries($release))->then(static function (array $sample) use ($release): void {
+            [$statement, $expected] = $sample;
+            self::assertInstanceOf(QueryRoot::class, $statement);
+            self::assertIsArray($expected);
+            $session = (new Instance(substr($release->value, 6)))->connect();
+            $session->text = 'Generated exact decimal consumers without SQL';
+            $reply = (new Execution($session))->statement($statement);
+            self::assertInstanceOf(ResultSet::class, $reply);
+            self::assertSame([$expected], $reply->rows);
+            self::assertCount(12, $reply->columns);
+            self::assertSame(0, $reply->warnings());
+            self::assertSame('Generated exact decimal consumers without SQL', $session->text);
+            self::assertSame([], $session->transaction->statements->running);
+        });
+    }
+
+    /**
      * Quantified comparisons consume matching row shapes, NULLs and empty subqueries directly.
      */
     #[Test]

@@ -41,7 +41,7 @@ final class EmissionAssignment implements Evaluable
      * Reads the stored result without publishing it before row emission.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string|null
+    public function evaluate(Frame $frame): int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null
     {
         return $this->assignment->value->evaluate($frame);
     }

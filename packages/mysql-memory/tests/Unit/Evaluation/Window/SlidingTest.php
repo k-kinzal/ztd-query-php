@@ -44,6 +44,6 @@ final class SlidingTest extends TestCase
         $partition = new Partition([[2], [null], [5]], [[], [], []], new Window(new WorkingTable(1), [], [], $bounds, []));
         $sliding = new Sliding(new Accumulation(AggregateFunction::Sum, [new ColumnRead(Domain::integer(), 0)], false, Domain::decimal(33, 0)));
 
-        self::assertSame(['2', null, '5'], [$sliding->value($partition, 0, $frame), $sliding->value($partition, 1, $frame), $sliding->value($partition, 2, $frame)]);
+        self::assertSame(['2', null, '5'], [\MySqlMemory\Evaluation\Convert::toText($sliding->value($partition, 0, $frame), Domain::decimal(33, 0)), \MySqlMemory\Evaluation\Convert::toText($sliding->value($partition, 1, $frame), Domain::decimal(33, 0)), \MySqlMemory\Evaluation\Convert::toText($sliding->value($partition, 2, $frame), Domain::decimal(33, 0))]);
     }
 }

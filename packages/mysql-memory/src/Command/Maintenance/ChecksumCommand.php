@@ -91,7 +91,7 @@ final class ChecksumCommand implements Command
     /**
      * Answers the checksum of rows: the sum of the CRC-32 of each row, 0 for no rows.
      *
-     * @param array<int, list<int|float|string|null>> $rows
+     * @param array<int, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
      */
     public function checksum(array $rows): string
     {
