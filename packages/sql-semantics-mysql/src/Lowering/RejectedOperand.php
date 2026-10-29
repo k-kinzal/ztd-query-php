@@ -65,12 +65,11 @@ final class RejectedOperand
     }
 
     /**
-     * Refuses a completed privilege, LOAD operand or assignment before later clauses.
+     * Refuses a completed LOAD operand before later clauses.
      */
     public function initial(Node $node, Lowering $lowering): ?RejectedInput
     {
-        return (new Account\Privilege\LegacyColumns())->rejected($node, $lowering)
-            ?? (new Dml\SyntaxLoadInput())->rejected($node, $lowering);
+        return (new Dml\SyntaxLoadInput())->rejected($node, $lowering);
     }
 
     /**

@@ -23,6 +23,18 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Medium]
 final class PrivilegeChecksTest extends TestCase
 {
+    public function testColumnLevelDistinguishesWildcardAndIndividualTargets(): void
+    {
+        $privilege = new StaticPrivilege(PrivilegeKind::Select, [new Name('a')]);
+        $level = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel();
+        $problem = (new PrivilegeChecks())->columnLevel([$privilege], $level);
+        self::assertNotNull($problem);
+        self::assertSame($privilege, $problem->privilege);
+        self::assertSame($level, $problem->level);
+        self::assertNull((new PrivilegeChecks())->columnLevel([$privilege], new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')))));
+        self::assertNull((new PrivilegeChecks())->columnLevel([new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges()], $level));
+    }
+
     public function testNoticesPublishesEveryDirectlyConstructedSuperOccurrence(): void
     {
         $semantics = new Semantics(Dialect::MySql);

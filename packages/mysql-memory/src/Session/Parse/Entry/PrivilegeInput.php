@@ -70,9 +70,9 @@ final class PrivilegeInput
     /**
      * Resolves a completed column target before reading any recipient operands.
      */
-    public function target(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel $problem, Session $session): SqlError
+    public function target(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel $problem, Session $session, ?string $database = null): SqlError
     {
-        return $problem->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel && $problem->program?->schema === null && $session->variables->database === ''
+        return $problem->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel && $problem->program?->schema === null && ($database ?? $session->variables->database) === ''
             ? QueryError::NoDatabase->error()
             : \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error();
     }

@@ -60,6 +60,24 @@ use SqlSemantics\Statement\Type\Known;
 final class PrivilegeChecks
 {
     /**
+     * Identifies a column list whose wildcard privilege level cannot name columns.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges The written privileges
+     */
+    public function columnLevel(array $privileges, PrivilegeLevel $level): ?\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel
+    {
+        if (!$level instanceof GlobalLevel && !$level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel && !$level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel) {
+            return null;
+        }
+        foreach ($privileges as $privilege) {
+            if ($privilege instanceof StaticPrivilege && $privilege->columns !== []) {
+                return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel($privilege, $level);
+            }
+        }
+        return null;
+    }
+
+    /**
      * Publishes privilege-token notices for both parsed and directly constructed requests.
      *
      * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges Written privilege occurrences

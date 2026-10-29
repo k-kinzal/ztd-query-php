@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account\Privilege;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Construction\RejectedInput;
-use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Lowering\Account\PrivilegeRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -55,59 +53,4 @@ final class LegacyColumns
         return null;
     }
 
-    /**
-     * Reads the same prefix from a completed command before its recipients.
-     */
-    public function rejected(Node $node, Lowering $lowering): ?RejectedInput
-    {
-        if (!in_array($node->name, ['grant_command', 'revoke_command'], true)) {
-            return null;
-        }
-        foreach ($node->children as $child) {
-            if (!$child instanceof Node) {
-                continue;
-            }
-            $notice = $this->completed($child, $lowering);
-            if ($notice !== null) {
-                return new RejectedInput($notice->problem, (new SourceRanges())->span($child)[1] ?? 0, true);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Rejects the completed target before lowering any later operands.
-     *
-     * @throws RejectedInput When a column privilege has no table target
-     *
-     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $items The already interpreted privilege list
-     */
-    public function requireTable(array $items, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel|ObjectLevel $level, int $end): void
-    {
-        if ($level instanceof ObjectLevel) {
-            return;
-        }
-        foreach ($items as $item) {
-            if ($item instanceof StaticPrivilege && $item->columns !== []) {
-                throw new RejectedInput(new RefusedColumnLevel($item, $level), $end, true);
-            }
-        }
-    }
-
-    /**
-     * Attaches the enclosing declaration's database to a parsed refusal.
-     */
-    public function scoped(Node $tree, RejectedInput $failure, Lowering $lowering): RejectedInput
-    {
-        if (!$failure->problem instanceof RefusedColumnLevel) {
-            return $failure;
-        }
-        foreach ($tree->find('sp_name') as $name) {
-            if (((new SourceRanges())->span($name)[1] ?? PHP_INT_MAX) < $failure->end) {
-                $problem = $failure->problem;
-                return new RejectedInput(new RefusedColumnLevel($problem->privilege, $problem->level, $lowering->names->qualified($name)), $failure->end, $failure->aborts);
-            }
-        }
-        return $failure;
-    }
 }

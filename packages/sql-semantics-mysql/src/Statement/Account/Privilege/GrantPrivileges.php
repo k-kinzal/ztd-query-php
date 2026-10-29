@@ -151,12 +151,10 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
     {
         (new PrivilegeChecks())->notices($this->privileges, $derivation);
         $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        if ($legacy && $this->columnLevel()) {
-            $problem = $this->scopeProblem();
-            if ($problem !== null) {
-                $derivation->report($problem);
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->level);
-            }
+        $problem = $legacy ? (new PrivilegeChecks())->columnLevel($this->privileges, $this->level) : null;
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->level);
             return;
         }
         (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [...$this->grantees, $this->as]);

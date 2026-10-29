@@ -35,7 +35,7 @@ final class RevokePrivilegesGenerator implements ErisGenerator
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
-            $forms = [];
+            $forms = $release->database() === 'mysql' ? [self::columnTargets()] : [];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -54,6 +54,28 @@ final class RevokePrivilegesGenerator implements ErisGenerator
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
     }
+    /**
+     * Composes column privileges, wildcard levels and independent recipient names.
+     *
+     * @return ErisGenerator<RevokePrivileges>
+     */
+    public static function columnTargets(): ErisGenerator
+    {
+        $names = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator();
+        $columns = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $names));
+        $privilege = new Item\StaticPrivilegeGenerator(Generators::elements(M\Account\Privilege\Item\PrivilegeKind::Select, M\Account\Privilege\Item\PrivilegeKind::Insert, M\Account\Privilege\Item\PrivilegeKind::Update, M\Account\Privilege\Item\PrivilegeKind::References), $columns);
+        $privileges = Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, $privilege));
+        $levels = Generators::oneOf(
+            new Level\CurrentDatabaseLevelGenerator(),
+            new Level\GlobalLevelGenerator(),
+            new Level\DatabaseLevelGenerator($names),
+            new Level\ObjectLevelGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator($names, Generators::constant(null), Generators::constant(null)))
+        );
+        $account = new \Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator(new AccountNameGenerator(Generators::map(static fn (int $length): string => str_repeat('u', $length), Generators::choose(1, 70))));
+        $accounts = Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, $account));
+        return Generators::map(static fn (array $parts): RevokePrivileges => new RevokePrivileges(false, $parts[0], M\Account\Privilege\Level\ObjectKind::Table, $parts[1], $parts[2]), Generators::tuple($privileges, $levels, $accounts));
+    }
+
     /**
      * Composes the written operands through Eris generation and shrinking.
      * @return ErisGenerator<RevokePrivileges>

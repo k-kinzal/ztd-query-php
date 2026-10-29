@@ -16,6 +16,29 @@ use SqlSemantics\Platform\MySql\Lowering\Account\LegacyGrantRule;
 #[Medium]
 final class LegacyGrantRuleTest extends TestCase
 {
+    #[DataProvider('providerColumnTargets')]
+    public function testRequestPreservesCompleteColumnPrivileges(string $release, string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel::class, $statement->warnings()[0]->problem);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerColumnTargets(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44'] as $release) {
+            foreach (['*', '*.*', 'd.*'] as $level) {
+                foreach (['GRANT SELECT (a) ON ' . $level . ' TO u', 'REVOKE SELECT (a) ON ' . $level . ' FROM u'] as $sql) {
+                    yield $release . ' ' . $sql => [$release, $sql];
+                }
+            }
+        }
+    }
+
     public function testRequestKeepsInvalidRoutineLevelsInOrdinaryProgramStatements(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() GRANT ALL ON PROCEDURE *.* TO u');

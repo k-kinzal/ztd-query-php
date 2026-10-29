@@ -97,8 +97,15 @@ final class RevokePrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlS
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->users);
         (new PrivilegeChecks())->notices($this->privileges, $derivation);
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        $problem = $legacy ? (new PrivilegeChecks())->columnLevel($this->privileges, $this->level) : null;
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->level);
+            return;
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->users);
         (new PrivilegeChecks())->revoke($derivation, $this->privileges, $this->kind, $this->level, $this->ifExists);
     }
 

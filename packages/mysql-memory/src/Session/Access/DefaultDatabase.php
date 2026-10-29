@@ -45,6 +45,9 @@ final class DefaultDatabase
         if ($database !== '') {
             return;
         }
+        if ($this->privilege($statement)) {
+            throw QueryError::NoDatabase->error();
+        }
         if ($statement instanceof MultipleDelete && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$afterParsing) {
             return;
         }
@@ -74,6 +77,18 @@ final class DefaultDatabase
                 throw QueryError::NoDatabase->error();
             }
         }
+    }
+
+    /**
+     * Identifies privilege levels that need the connection's current database.
+     */
+    public function privilege(Statement $statement): bool
+    {
+        if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges) {
+            return false;
+        }
+        return $statement->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel
+            || ($statement->level instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel && $statement->level->name->schema === null);
     }
 
     /**

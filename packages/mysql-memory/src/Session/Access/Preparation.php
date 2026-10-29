@@ -41,7 +41,7 @@ final class Preparation
         if (!$operation instanceof MySqlStatement) {
             throw new LogicException('No preparation implementation for ' . $operation::class);
         }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable) {
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges) {
             (new DefaultDatabase())->check($operation, $session);
         }
         (new Execution($session))->parsing($operation, $operation->statementInformation()->warnings);

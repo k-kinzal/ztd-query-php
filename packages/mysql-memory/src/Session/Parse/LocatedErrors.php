@@ -26,6 +26,17 @@ final class LocatedErrors
      */
     public function parsed(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure $warning, MySqlStatement $operation, Session $session): SqlError
     {
+        if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel) {
+            $database = match (true) {
+                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure,
+                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
+                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger,
+                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent,
+                $operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent => $operation->name->schema->value ?? $session->variables->database,
+                default => $session->variables->database,
+            };
+            return (new Entry\PrivilegeInput())->target($warning->problem, $session, $database);
+        }
         if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege) {
             return (new Entry\PrivilegeInput())->level($operation, $session);
         }

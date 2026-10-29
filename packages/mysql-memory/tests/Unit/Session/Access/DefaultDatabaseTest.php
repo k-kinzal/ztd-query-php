@@ -34,6 +34,26 @@ use Tests\Generator\Embedding;
 #[Small]
 final class DefaultDatabaseTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPrivilegeTargets')]
+    public function testPrivilegeIdentifiesOnlyImplicitDatabases(string $sql, bool $required): void
+    {
+        $statement = (new Instance())->connect()->analyze($sql);
+        self::assertSame($required, (new DefaultDatabase())->privilege($statement));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerPrivilegeTargets(): iterable
+    {
+        yield 'current grant' => ['GRANT SELECT(a) ON * TO u', true];
+        yield 'object revocation' => ['REVOKE SELECT(a) ON t FROM u', true];
+        yield 'global grant' => ['GRANT SELECT(a) ON *.* TO u', false];
+        yield 'database revocation' => ['REVOKE SELECT(a) ON d.* FROM u', false];
+        yield 'qualified object' => ['GRANT SELECT(a) ON d.t TO u', false];
+        yield 'unrelated command' => ['SET @x=1', false];
+    }
+
     public function testInspectionUsesTheRetainedTableIdentity(): void
     {
         $session = (new Instance())->connect();
