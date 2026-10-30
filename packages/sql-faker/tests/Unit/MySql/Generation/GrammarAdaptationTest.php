@@ -51,9 +51,36 @@ final class GrammarAdaptationTest extends TestCase
         yield '5.7' => ['mysql-5.7.44', ['statement', 'statement', 'keyword_sp'], 5];
     }
 
-    public function testAdaptedLeavesModernGrammarUnchanged(): void
+    /**
+     * @param list<int> $countOrdinals
+     */
+    #[DataProvider('providerModernVersions')]
+    public function testAdaptedRetainsHostsAndLoadCountsThroughTheirReachableProductions(string $version, int $removed, array $countOrdinals): void
     {
-        $original = MySqlGrammar::load('mysql-8.4.7');
-        self::assertSame($original, (new GrammarAdaptation())->adapted($original));
+        $original = MySqlGrammar::load($version)->identified();
+        $adapted = (new GrammarAdaptation())->adapted($original);
+        $inventory = new GrammarCoverageInventory($adapted, 'simple_statement_or_begin', $version, $original);
+        $originalInventory = new GrammarCoverageInventory($original, 'simple_statement_or_begin', $version);
+        self::assertSame($original->ruleMap['ident_or_text'], $adapted->ruleMap['ident_or_text']);
+        self::assertSame([0, 1], array_column($adapted->ruleMap['role_ident_or_text']->alternatives, 'ordinal'));
+        self::assertSame([0, 1, 2], array_column($original->ruleMap['role_ident_or_text']->alternatives, 'ordinal'));
+        self::assertSame($countOrdinals, array_column($adapted->ruleMap['opt_source_count']->alternatives ?? [], 'ordinal'));
+        self::assertSame($original->ruleMap['sum_expr'], $adapted->ruleMap['sum_expr']);
+        self::assertSame(array_fill(0, $removed, 'excluded'), array_column($inventory->adaptations, 'status'));
+        self::assertCount(count($originalInventory->denominator) - $removed, $inventory->denominator);
+    }
+
+    /**
+     * @return iterable<string, array{string, int, list<int>}>
+     */
+    public static function providerModernVersions(): iterable
+    {
+        yield '8.0' => ['mysql-8.0.44', 2, [0, 2]];
+        yield '8.1' => ['mysql-8.1.0', 2, [0, 2]];
+        yield '8.2' => ['mysql-8.2.0', 2, [0, 2]];
+        yield '8.3' => ['mysql-8.3.0', 2, [0, 2]];
+        yield '8.4' => ['mysql-8.4.7', 1, [0, 1]];
+        yield '9.0' => ['mysql-9.0.1', 1, [0, 1]];
+        yield '9.1' => ['mysql-9.1.0', 1, [0, 1]];
     }
 }

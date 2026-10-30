@@ -9,7 +9,7 @@
         "sqlMode": "HIGH_NOT_PRECEDENCE"
     },
     "coverage": {
-        "productions": 3114,
+        "productions": 3113,
         "reached": 43,
         "emitted": 19,
         "seeds": 2,
@@ -2201,7 +2201,6 @@
             "ident_or_text#2",
             "role_ident_or_text#0",
             "role_ident_or_text#1",
-            "role_ident_or_text#2",
             "user_ident_or_text#0",
             "user_ident_or_text#1",
             "user#0",

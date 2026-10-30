@@ -8,10 +8,10 @@
         "maximumBudget": 50
     },
     "coverage": {
-        "productions": 3114,
-        "reached": 3114,
-        "emitted": 2661,
-        "seeds": 2181,
+        "productions": 3113,
+        "reached": 3113,
+        "emitted": 2678,
+        "seeds": 2180,
         "unreached": [],
         "failures": []
     },
@@ -175,8 +175,8 @@
         {
             "file": "simple_statement-24.txt",
             "target": "simple_statement#24",
-            "budget": 7,
-            "sql": "CREATE ROLE _sqlfaker_identifier"
+            "budget": 8,
+            "sql": "CREATE ROLE 'text'"
         },
         {
             "file": "simple_statement-25.txt",
@@ -259,8 +259,8 @@
         {
             "file": "simple_statement-38.txt",
             "target": "simple_statement#38",
-            "budget": 7,
-            "sql": "DROP ROLE _sqlfaker_identifier"
+            "budget": 8,
+            "sql": "DROP ROLE 'text'"
         },
         {
             "file": "simple_statement-39.txt",
@@ -1327,8 +1327,8 @@
         {
             "file": "default_role_clause-1.txt",
             "target": "default_role_clause#1",
-            "budget": 17,
-            "sql": "CREATE USER CURRENT_USER DEFAULT ROLE _sqlfaker_identifier"
+            "budget": 18,
+            "sql": "CREATE USER CURRENT_USER DEFAULT ROLE 'text'"
         },
         {
             "file": "create_index_stmt-0.txt",
@@ -4057,8 +4057,8 @@
         {
             "file": "alter_user_stmt-6.txt",
             "target": "alter_user_stmt#6",
-            "budget": 10,
-            "sql": "ALTER USER CURRENT_USER DEFAULT ROLE _sqlfaker_identifier"
+            "budget": 11,
+            "sql": "ALTER USER CURRENT_USER DEFAULT ROLE 'text'"
         },
         {
             "file": "alter_user_stmt-7.txt",
@@ -8549,12 +8549,6 @@
             "sql": "ALTER SERVER 'text' OPTIONS ( USER 'text' )"
         },
         {
-            "file": "role_ident_or_text-1.txt",
-            "target": "role_ident_or_text#1",
-            "budget": 11,
-            "sql": "ALTER USER CURRENT_USER DEFAULT ROLE 'text'"
-        },
-        {
             "file": "user_ident_or_text-1.txt",
             "target": "user_ident_or_text#1",
             "budget": 9,
@@ -8563,8 +8557,8 @@
         {
             "file": "role-1.txt",
             "target": "role#1",
-            "budget": 11,
-            "sql": "ALTER USER CURRENT_USER DEFAULT ROLE _sqlfaker_identifier @localhost"
+            "budget": 12,
+            "sql": "ALTER USER CURRENT_USER DEFAULT ROLE 'text' @localhost"
         },
         {
             "file": "ident_keyword-1.txt",
@@ -11401,8 +11395,8 @@
         {
             "file": "set_role_stmt-0.txt",
             "target": "set_role_stmt#0",
-            "budget": 6,
-            "sql": "SET ROLE _sqlfaker_identifier"
+            "budget": 7,
+            "sql": "SET ROLE 'text'"
         },
         {
             "file": "set_role_stmt-2.txt",
@@ -11413,20 +11407,20 @@
         {
             "file": "set_role_stmt-3.txt",
             "target": "set_role_stmt#3",
-            "budget": 9,
-            "sql": "SET DEFAULT ROLE _sqlfaker_identifier TO _sqlfaker_identifier"
+            "budget": 11,
+            "sql": "SET DEFAULT ROLE 'text' TO 'text'"
         },
         {
             "file": "set_role_stmt-4.txt",
             "target": "set_role_stmt#4",
-            "budget": 6,
-            "sql": "SET DEFAULT ROLE NONE TO _sqlfaker_identifier"
+            "budget": 7,
+            "sql": "SET DEFAULT ROLE NONE TO 'text'"
         },
         {
             "file": "set_role_stmt-5.txt",
             "target": "set_role_stmt#5",
-            "budget": 6,
-            "sql": "SET DEFAULT ROLE ALL TO _sqlfaker_identifier"
+            "budget": 7,
+            "sql": "SET DEFAULT ROLE ALL TO 'text'"
         },
         {
             "file": "set_role_stmt-6.txt",
@@ -11437,8 +11431,8 @@
         {
             "file": "opt_except_role_list-1.txt",
             "target": "opt_except_role_list#1",
-            "budget": 7,
-            "sql": "SET ROLE ALL EXCEPT _sqlfaker_identifier"
+            "budget": 8,
+            "sql": "SET ROLE ALL EXCEPT 'text'"
         },
         {
             "file": "set_resource_group_stmt-1.txt",
@@ -11887,14 +11881,14 @@
         {
             "file": "role_or_privilege-0.txt",
             "target": "role_or_privilege#0",
-            "budget": 11,
-            "sql": "GRANT _sqlfaker_identifier TO CURRENT_USER"
+            "budget": 12,
+            "sql": "GRANT 'text' TO CURRENT_USER"
         },
         {
             "file": "role_or_privilege-1.txt",
             "target": "role_or_privilege#1",
-            "budget": 11,
-            "sql": "GRANT _sqlfaker_identifier @localhost TO CURRENT_USER"
+            "budget": 12,
+            "sql": "GRANT 'text' @localhost TO CURRENT_USER"
         },
         {
             "file": "role_or_privilege-2.txt",
@@ -12145,8 +12139,8 @@
         {
             "file": "role_list-1.txt",
             "target": "role_list#1",
-            "budget": 13,
-            "sql": "ALTER USER CURRENT_USER DEFAULT ROLE _sqlfaker_identifier , _sqlfaker_identifier"
+            "budget": 15,
+            "sql": "ALTER USER CURRENT_USER DEFAULT ROLE 'text' , 'text'"
         },
         {
             "file": "opt_retain_current_password-1.txt",
@@ -12331,14 +12325,14 @@
         {
             "file": "opt_column_list-1.txt",
             "target": "opt_column_list#1",
-            "budget": 14,
-            "sql": "GRANT _sqlfaker_identifier TO CURRENT_USER"
+            "budget": 15,
+            "sql": "GRANT 'text' TO CURRENT_USER"
         },
         {
             "file": "column_list-1.txt",
             "target": "column_list#1",
-            "budget": 17,
-            "sql": "GRANT _sqlfaker_identifier TO CURRENT_USER"
+            "budget": 18,
+            "sql": "GRANT 'text' TO CURRENT_USER"
         },
         {
             "file": "require_clause-2.txt",
@@ -12379,8 +12373,8 @@
         {
             "file": "opt_with_roles-1.txt",
             "target": "opt_with_roles#1",
-            "budget": 18,
-            "sql": "GRANT DELETE ON * TO CURRENT_USER AS CURRENT_USER WITH ROLE _sqlfaker_identifier"
+            "budget": 19,
+            "sql": "GRANT DELETE ON * TO CURRENT_USER AS CURRENT_USER WITH ROLE 'text'"
         },
         {
             "file": "opt_with_roles-2.txt",
@@ -13013,22 +13007,22 @@
             "sql": "GRANT DROP ROLE ON * TO CURRENT_USER"
         },
         {
-            "file": "opt_column_list-1-fa2a214a.txt",
+            "file": "opt_column_list-1-6a9fe9e9.txt",
             "target": "opt_column_list#1",
-            "budget": 17,
-            "sql": "GRANT _sqlfaker_identifier ( _sqlfaker_identifier ) ON * TO CURRENT_USER"
+            "budget": 18,
+            "sql": "GRANT 'text' ( _sqlfaker_identifier ) ON * TO CURRENT_USER"
         },
         {
             "file": "column_list-0.txt",
             "target": "column_list#0",
-            "budget": 17,
-            "sql": "GRANT _sqlfaker_identifier ( _sqlfaker_identifier ) ON * TO CURRENT_USER"
+            "budget": 18,
+            "sql": "GRANT 'text' ( _sqlfaker_identifier ) ON * TO CURRENT_USER"
         },
         {
-            "file": "column_list-1-2f6b3494.txt",
+            "file": "column_list-1-97dc7998.txt",
             "target": "column_list#1",
-            "budget": 20,
-            "sql": "GRANT _sqlfaker_identifier ( _sqlfaker_identifier , _sqlfaker_identifier ) ON * TO CURRENT_USER"
+            "budget": 21,
+            "sql": "GRANT 'text' ( _sqlfaker_identifier , _sqlfaker_identifier ) ON * TO CURRENT_USER"
         },
         {
             "file": "sp_proc_stmt_return-0.txt",

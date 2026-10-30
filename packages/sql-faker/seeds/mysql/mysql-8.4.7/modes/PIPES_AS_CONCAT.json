@@ -9,7 +9,7 @@
         "sqlMode": "PIPES_AS_CONCAT"
     },
     "coverage": {
-        "productions": 3114,
+        "productions": 3113,
         "reached": 35,
         "emitted": 10,
         "seeds": 1,
@@ -2209,7 +2209,6 @@
             "ident_or_text#2",
             "role_ident_or_text#0",
             "role_ident_or_text#1",
-            "role_ident_or_text#2",
             "user_ident_or_text#0",
             "user_ident_or_text#1",
             "user#0",

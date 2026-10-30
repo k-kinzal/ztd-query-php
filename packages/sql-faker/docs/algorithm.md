@@ -109,6 +109,19 @@ token. The ordinary `RETURNS_SYM` alternative remains available. Raw diagnostic
 generation still uses the original grammar. Legacy seeds must be rebuilt after
 these changes because their production-choice domains have changed.
 
+The modern client grammar excludes two scanner-unreachable alternatives.
+`role_ident_or_text: LEX_HOSTNAME` occurs before the optional `@`, while the
+scanner produces LEX_HOSTNAME only after `@`. Host names still use
+`ident_or_text: LEX_HOSTNAME`. In releases containing
+`opt_source_count: COUNT_SYM NUM`, COUNT_SYM requires a following opening
+parenthesis, so `COUNT 1` uses the retained `IDENT_sys NUM` alternative.
+These exclusions are recorded in the coverage inventory; the original grammar
+is unchanged. See the upstream [hostname scanner](https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc#L1928-L1950),
+[role productions](https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy#L15144-L15149),
+[COUNT registration](https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/lex.h#L835)
+and [LOAD count productions](https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/sql_yacc.yy#L13700-L13711).
+Rebuild modern corpora after updating these choice domains as well.
+
 Contexts matter because structural rewrites can replace a selected alternative.
 For example, a `SUPER` privilege needs a `GRANT ... ON ...` context to remain a
 privilege, and a stored-program `RETURN` needs a function context to remain a
