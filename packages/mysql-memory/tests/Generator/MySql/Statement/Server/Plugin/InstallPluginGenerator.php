@@ -6,7 +6,6 @@ namespace Tests\Generator\MySql\Statement\Server\Plugin;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
-use InvalidArgumentException;
 use LogicException;
 use Tests\Generator\Composition;
 
@@ -25,21 +24,19 @@ final class InstallPluginGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
-            $forms = [];
+            $plugin = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::oneOf(Generators::elements('InnoDB', 'innodb', 'MEMORY', 'mysqlx', 'mysql_native_password'), Generators::map(static fn (int $id): string => 'plugin_' . $id, Generators::choose(0, 32))), Generators::constant(null));
+            $library = new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::oneOf(Generators::elements('', '.', '..', '/missing.so', 'missing/part'), Generators::map(static fn (int $length): string => str_repeat('x', $length), Generators::choose(1, 70))));
+            $forms = [self::operands($plugin, $library)];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No InstallPlugin forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin {

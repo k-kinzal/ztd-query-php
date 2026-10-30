@@ -6,7 +6,6 @@ namespace Tests\Generator\MySql\Statement\Server\Plugin;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generators;
-use InvalidArgumentException;
 use LogicException;
 use Tests\Generator\Composition;
 
@@ -25,21 +24,20 @@ final class InstallComponentGenerator implements ErisGenerator
      *
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent>|null $operands A constrained form of this concrete result
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
      */
     public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
-            $forms = [];
+            $urn = Generators::map(static fn (array $parts): string => $parts[0] . 'pbt_' . $parts[1] . $parts[2], Generators::tuple(Generators::elements('', 'file://', 'unknown://'), Generators::choose(0, 32), Generators::elements('', '.so', '/part', "\0tail")));
+            $component = new \Tests\Generator\MySql\Statement\Literal\TextGenerator($urn);
+            $components = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $component));
+            $forms = [self::operands($components)];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
             }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No InstallComponent forms are defined for the selected grammar.');
-            }
             $operands = Generators::oneOf(...$forms);
         }
         $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent {

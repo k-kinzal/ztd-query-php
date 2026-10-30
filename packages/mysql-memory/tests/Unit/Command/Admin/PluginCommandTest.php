@@ -14,6 +14,7 @@ use MySqlMemory\Session\State\StatementCounters;
 use MySqlMemory\Session\Statement\Binding;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\LanguageProfile;
@@ -26,6 +27,55 @@ use Tests\Generator\Embedding;
 #[Small]
 final class PluginCommandTest extends TestCase
 {
+    #[DataProvider('providerCatalogLocks')]
+    public function testLocksPrecedeLibraryLookupAndRetainComponentDiagnostics(string $version, string $lock, string $sql, int $code, string $message, bool $component): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); LOCK TABLES ' . $lock);
+
+        $replies = $session->run($sql);
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame($code, $replies[0]->getCode());
+        self::assertSame($message, $replies[0]->getMessage());
+        $conditions = [['Error', $code, $message]];
+        self::assertSame($component ? [...$conditions, ['Error', 3543, 'The mysql.component table is missing or has an incorrect definition.']] : $conditions, $session->diagnostics->conditions);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, int, string, bool}>
+     */
+    public static function providerCatalogLocks(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $commands = ['plugin' => ["INSTALL PLUGIN missing SONAME 'text'", "INSTALL PLUGIN InnoDB SONAME '/text'", 'UNINSTALL PLUGIN missing', 'UNINSTALL PLUGIN InnoDB']];
+            if (!str_starts_with($version, '5.')) {
+                $commands['component'] = ["INSTALL COMPONENT 'text'", "INSTALL COMPONENT 'file://text'", "UNINSTALL COMPONENT 'first', 'second'"];
+            }
+            foreach ($commands as $table => $statements) {
+                foreach (['t READ', 'mysql.' . $table . ' READ', 'mysql.' . $table . ' AS x WRITE'] as $lock) {
+                    $read = $lock === 'mysql.' . $table . ' READ';
+                    foreach ($statements as $sql) {
+                        yield $version . '/' . $lock . '/' . $sql => [$version, $lock, $sql, $read ? 1099 : 1100, $read ? "Table '$table' was locked with a READ lock and can't be updated" : "Table '$table' was not locked with LOCK TABLES", $table === 'component'];
+                    }
+                }
+            }
+        }
+    }
+
+    public function testLocksFollowComponentSettingEvaluation(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); LOCK TABLES t READ; SET @v=0');
+        $session->run("INSTALL COMPONENT 'missing' SET GLOBAL x=(@v:=@v+1), y=NULL");
+
+        self::assertSame([
+            ['Warning', 1287, "Setting user variables within expressions is deprecated and will be removed in a future release. Consider alternatives: 'SET variable=expression, ...', or 'SELECT expression(s) INTO variables(s)'."],
+            ['Error', 4160, 'The value supplied for y in the SET list cannot be null'],
+        ], $session->diagnostics->conditions);
+        self::assertSame(2, $session->variables->user('v')[0]);
+    }
+
     public function testUrnBoundsDiagnosticBytesAndTerminatesAtNul(): void
     {
         $command = new PluginCommand();

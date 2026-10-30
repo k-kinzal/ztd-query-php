@@ -65,6 +65,9 @@ final class PluginCommand implements Command
         if ($statement instanceof CreateLoadableFunction) {
             $this->loadable($statement, $session);
         }
+        if ($statement instanceof InstallPlugin || $statement instanceof UninstallPlugin) {
+            $this->locks($session, false);
+        }
         if ($statement instanceof InstallPlugin) {
             if ($this->builtIn($statement->plugin->value, $session->instance->version)) {
                 throw AdministrationError::FunctionExists->error($statement->plugin->value);
@@ -86,11 +89,13 @@ final class PluginCommand implements Command
         }
         if ($statement instanceof InstallComponent) {
             (new Plugin\Settings())->prepare($operation, $session, $context, $connection);
+            $this->locks($session, true);
             foreach ($statement->components as $component) {
                 $this->load((new Literals())->bytes($component), $directory);
             }
         }
         if ($statement instanceof UninstallComponent) {
+            $this->locks($session, true);
             $urns = array_map(fn ($component): string => $this->urn((new Literals())->bytes($component)), $statement->components);
             foreach ($urns as $urn) {
                 $session->diagnostics->warning(AdministrationError::ComponentNotPersisted, \MySqlMemory\Value\Diagnostic\Encoding::repair(AdministrationError::ComponentNotPersisted->message($urn)));
@@ -98,6 +103,30 @@ final class PluginCommand implements Command
             throw AdministrationError::ComponentNotLoaded->error($urns[0]);
         }
         throw StatementError::NotSupportedYet->error('this plugin statement');
+    }
+
+    /**
+     * Requires a writable persistent catalog before looking up or loading a library.
+     * Component assignment expressions precede this check. The persistent component
+     * loader appends its catalog-definition error after a failed table open.
+     * Source: https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/server_component/persistent_dynamic_loader.cc.
+     *
+     * @throws SqlError When the catalog table lacks its explicit write lock
+     */
+    public function locks(Session $session, bool $component): void
+    {
+        if ($session->locks === []) {
+            return;
+        }
+        $table = $component ? 'component' : 'plugin';
+        try {
+            (new \MySqlMemory\Command\Access\Locks())->allowed($session, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($table), new \SqlSemantics\Statement\Identifier\Name('mysql')), $table, [], true);
+        } catch (SqlError $error) {
+            if (!$component) {
+                throw $error;
+            }
+            throw new SqlError($error->error, $error->getMessage(), $error, [[AdministrationError::ComponentTableIncorrect->value, AdministrationError::ComponentTableIncorrect->message()]]);
+        }
     }
 
     /**

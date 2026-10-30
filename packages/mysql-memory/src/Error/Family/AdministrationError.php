@@ -94,6 +94,7 @@ enum AdministrationError: int implements ErrorCode
     case ComponentCantLoad = 3529;
     case ComponentNotLoaded = 3537;
     case ComponentNotPersisted = 3542;
+    case ComponentTableIncorrect = 3543;
     case ComponentSettingNull = 4160;
     case BinlogIndexOutOfRange = 3567;
     case VariableNotPersisted = 3615;

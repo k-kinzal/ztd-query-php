@@ -83,6 +83,7 @@ final class AdministrationMessages
         'ComponentCantLoad' => ['HY000', 'Cannot load component from specified URN: \'%s\'.'],
         'ComponentNotLoaded' => ['HY000', 'Component specified by URN \'%s\' to unload has not been loaded before.'],
         'ComponentNotPersisted' => ['HY000', 'The Persistent Dynamic Loader was used to unload a component \'%s\', but it was not used to load that component before.'],
+        'ComponentTableIncorrect' => ['HY000', 'The mysql.component table is missing or has an incorrect definition.'],
         'ComponentSettingNull' => ['HY000', 'The value supplied for %s in the SET list cannot be null'],
         'BinlogIndexOutOfRange' => ['HY000', 'The requested value \'%s\' for the next binary log index is out of range. Please use a value between \'1\' and \'2000000000\'.'],
         'VariableNotPersisted' => ['HY000', 'Variable %s does not exist in persisted config file'],
