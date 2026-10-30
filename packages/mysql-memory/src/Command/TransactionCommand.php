@@ -52,7 +52,7 @@ final class TransactionCommand implements Command
         if ($statement instanceof Commit || $statement instanceof Rollback) {
             $this->end($statement, $session, $context);
 
-            return new Completion(0, 0, $context->diagnostics->raised());
+            return new Completion(0, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
         }
         $transaction = $session->transaction;
         $transaction->guard();
@@ -67,7 +67,7 @@ final class TransactionCommand implements Command
             $context->diagnostics->warning(138, 'InnoDB: WITH CONSISTENT SNAPSHOT was ignored because this phrase can only be used with REPEATABLE READ isolation level.');
         }
 
-        return new Completion(0, 0, $context->diagnostics->raised());
+        return new Completion(0, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
     }
 
     /**

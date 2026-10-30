@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Command;
 
 use MySqlMemory\Command\TransactionCommand;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -77,7 +79,7 @@ final class TransactionCommandTest extends TestCase
         $session = (new Instance())->connect();
         $session->query("XA START 'a'");
 
-        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectException(SqlError::class);
         $this->expectExceptionCode(1399);
         $this->expectExceptionMessage('XAER_RMFAIL: The command cannot be executed when global transaction is in the  ACTIVE state');
 
@@ -113,6 +115,42 @@ final class TransactionCommandTest extends TestCase
         $session->query('CREATE TABLE t (a INT); START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT');
 
         self::assertSame([true, true, 0], [$session->transaction->readOnly, $session->transaction->explicit, $session->transaction->snapshot]);
+    }
+
+    /**
+     * @param array{string, int, string} $condition
+     */
+    #[DataProvider('providerPriorConditions')]
+    public function testExecuteCountsOnlyNewWarningsWhileKeepingLegacyConditions(string $version, string $cause, string $statement, array $condition): void
+    {
+        $session = (new Instance($version))->connect();
+        try {
+            $session->query($cause);
+        } catch (SqlError $error) {
+            self::assertSame($condition[1], $error->getCode());
+        }
+        self::assertSame([$condition], $session->diagnostics->conditions);
+
+        $reply = $session->query($statement)[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertSame($version === '5.6.51' ? [$condition] : [], $session->diagnostics->conditions);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, array{string, int, string}}>
+     */
+    public static function providerPriorConditions(): iterable
+    {
+        $causes = ['SELECT *' => ['Error', 1096, 'No tables used'], "SELECT CAST('x' AS UNSIGNED)" => ['Warning', 1292, "Truncated incorrect INTEGER value: 'x'"]];
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach ($causes as $cause => $condition) {
+                foreach (['BEGIN', 'START TRANSACTION', 'START TRANSACTION WITH CONSISTENT SNAPSHOT', 'START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY', 'COMMIT', 'ROLLBACK'] as $statement) {
+                    yield $version . ':' . $cause . ':' . $statement => [$version, $cause, $statement, $condition];
+                }
+            }
+        }
     }
 
     public function testExecuteChainsATransactionWithTheCharacteristicsOfTheOneThatEnded(): void
