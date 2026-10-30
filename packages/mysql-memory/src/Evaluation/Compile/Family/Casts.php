@@ -10,6 +10,7 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Conversion;
 use MySqlMemory\Evaluation\Operator\Zoned;
 use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
@@ -35,15 +36,20 @@ final class Casts
 
     /**
      * Compiles the conversion of an operand to a target type.
+     * A retained type choice is resolved from the target and execution settings.
      *
      */
     public function cast(Evaluable $operand, CastTarget $target, Scalar $node): Evaluable
     {
-        if ($this->compiler->domain($node)->field === Field::Geometry) {
-            return new \MySqlMemory\Evaluation\Function\Spatial\SpatialCast($operand, $this->compiler->domain($node), $target->kind->value);
+        $domain = $this->compiler->resolved($node) ?? Domain::of(
+            (new \SqlSemantics\Platform\MySql\Rules\Typing\Casts($this->compiler->settings->resolution(), $this->compiler->settings->release()))->cast($operand->domain()->resolved(), $target),
+            $node->scalarInformation()->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull,
+        );
+        if ($domain->field === Field::Geometry) {
+            return new \MySqlMemory\Evaluation\Function\Spatial\SpatialCast($operand, $domain, $target->kind->value);
         }
 
-        return new Conversion($operand, $this->compiler->domain($node)->withSource($target->kind === CastKind::Json ? 'cast_as_json' : ''), \SqlSemantics\Platform\MySql\Rules\Typing\Casts::stringLimit($target, $this->compiler->connection->context->modes->release), $target->kind->value, $this->label($node));
+        return new Conversion($operand, $domain->withSource($target->kind === CastKind::Json ? 'cast_as_json' : ''), \SqlSemantics\Platform\MySql\Rules\Typing\Casts::stringLimit($target, $this->compiler->connection->context->modes->release), $target->kind->value, $this->label($node));
     }
 
     /**

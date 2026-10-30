@@ -49,6 +49,40 @@ final class TruncateTableProperties extends TestCase
     }
 
     /**
+     * A generated table remains executable through renaming and truncation.
+     */
+    #[Test]
+    #[DataProvider('providerDependentReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesRenamedTableCanBeTruncated(GrammarRelease $release): void
+    {
+        $this->forAll(TruncateTableGenerator::renamedTables($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$create, $insert, $before, $rename, $after, $truncate] = $sequence;
+            $execution->statement($create);
+            $execution->statement($insert);
+            $execution->statement($before);
+            $execution->statement($rename);
+            $execution->statement($after);
+            $execution->statement($truncate);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerDependentReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

@@ -77,6 +77,73 @@ final class QueryRootProperties extends TestCase
     }
 
     /**
+     * Generated numeric projections execute without additional state.
+     */
+    #[Test]
+    #[DataProvider('providerDependentReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesNumericProjectionsComplete(GrammarRelease $release): void
+    {
+        $this->forAll(QueryRootGenerator::integerExpressions($release))->withMaxSize(10)->then(static function (QueryRoot $statement) use ($release): void {
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            $execution->statement($statement);
+        });
+    }
+
+    /**
+     * Complete projections execute with the generated types and notices unchanged.
+     */
+    #[Test]
+    #[DoesNotPerformAssertions]
+    public function satisfiesCompleteProjectionsExecuteWithTheirGeneratedFacts(): void
+    {
+        $this->forAll(QueryRootGenerator::completeProjections())->withMaxSize(10)->then(static function (QueryRoot $statement): void {
+            $instance = new Instance('8.4.7', databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            $execution->statement($statement);
+        });
+    }
+
+    /**
+     * A generated assignment supplies the session state required by its read.
+     */
+    #[Test]
+    #[DoesNotPerformAssertions]
+    public function satisfiesAssignedVariablesCanBeRead(): void
+    {
+        $this->forAll(QueryRootGenerator::assignedVariableReads())->withMaxSize(10)->then(static function (array $sequence): void {
+            $instance = new Instance('8.4.7', databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$assign, $read] = $sequence;
+            $execution->statement($assign);
+            $execution->statement($read);
+        });
+    }
+
+    /**
+     * Deferred query operands execute or produce a SQL refusal.
+     */
+    #[Test]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionConsumesDeferredOperands(): void
+    {
+        $this->forAll(QueryRootGenerator::deferredSelections())->withMaxSize(10)->then(static function (QueryRoot $statement): void {
+            $instance = new Instance('8.4.7', databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            try {
+                $execution->statement($statement);
+            } catch (SqlError) {
+                // SQL refusal is an allowed outcome without prerequisite state.
+            }
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerDependentReleases(): iterable

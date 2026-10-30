@@ -91,16 +91,14 @@ final class Relations
         if ($resolution instanceof CommonTable) {
             return $this->commonTable($reference, $resolution, $scope);
         }
-        if (!$resolution instanceof DeclaredTable) {
-            throw QueryError::NoSuchTable->error($reference->name->schema->value ?? $this->planner->settings->database, $reference->name->name->value);
-        }
-        $name = $resolution->table->name;
+        $declaration = $resolution instanceof DeclaredTable ? $resolution->table : null;
+        $name = $declaration->name ?? $reference->name;
         $view = $this->planner->dictionary->schema($name->schema->value ?? $this->planner->settings->database)->views[$name->name->value] ?? null;
-        if ($view !== null && $resolution->table->kind === \SqlSemantics\Statement\Declaration\RelationKind::View) {
+        if ($view !== null && ($declaration === null || $declaration->kind === \SqlSemantics\Statement\Declaration\RelationKind::View)) {
             return (new Views($this->planner))->plan($reference, $view, $scope, $this);
         }
         $system = $this->planner->dictionary->system;
-        $read = $system?->table($resolution->table);
+        $read = $declaration === null ? null : $system?->table($declaration);
         $stored = $system !== null && $read !== null ? $system->deferred($read, $this->planner->compiler->connection) : $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value, $this->planner->temporaries);
         if ($stored === null) {
             throw QueryError::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);

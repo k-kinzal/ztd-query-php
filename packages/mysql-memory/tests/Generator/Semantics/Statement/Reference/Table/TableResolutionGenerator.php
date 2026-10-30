@@ -28,7 +28,7 @@ final class TableResolutionGenerator implements ErisGenerator
     /**
      * Generates old ambiguous or conditional declarations and their installed replacement.
      *
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, \SqlSemantics\Platform\MySql\Statement\QueryRoot, \SqlSemantics\Platform\MySql\Statement\QueryRoot}>
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, \SqlSemantics\Platform\MySql\Statement\QueryRoot}>
      */
     public static function reboundReads(): ErisGenerator
     {
@@ -39,11 +39,11 @@ final class TableResolutionGenerator implements ErisGenerator
      * Composes the unresolved read from the generated definition and reference query.
      *
      * @param array{array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, \SqlSemantics\Platform\MySql\Statement\QueryRoot}, \SqlSemantics\Platform\MySql\Statement\QueryRoot} $parts The generated prerequisite statements
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, \SqlSemantics\Platform\MySql\Statement\QueryRoot, \SqlSemantics\Platform\MySql\Statement\QueryRoot}>
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, \SqlSemantics\Platform\MySql\Statement\QueryRoot}>
      */
     public static function fromSequence(array $parts): ErisGenerator
     {
-        [[$create, $insert, $selected], $projection] = $parts;
+        [[$create, $insert], $projection] = $parts;
         $table = $create->declarations()[0];
         $unqualified = new \SqlSemantics\Statement\Identifier\QualifiedName($table->name->name);
         $earlier = new \SqlSemantics\Statement\Declaration\Table($table->name, $table->profile, [$table->columns[0]]);
@@ -51,15 +51,14 @@ final class TableResolutionGenerator implements ErisGenerator
             new ConditionalTableGenerator(Generators::constant([$table]), new \Tests\Generator\Semantics\Statement\Reference\Missing\UndeclaredRelationGenerator(Generators::constant($unqualified))),
             new ConflictingTablesGenerator(Generators::constant($unqualified), Generators::constant([$earlier, $table])),
         ]);
-        return Generators::map(static function (\SqlSemantics\Statement\Reference\Table\TableResolution $binding) use ($create, $insert, $selected, $projection, $unqualified): array {
-            \SqlSemantics\Diagnostic\Check::invariant($projection->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $selected->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, 'The generated source and projection are SELECT blocks.');
+        return Generators::map(static function (\SqlSemantics\Statement\Reference\Table\TableResolution $binding) use ($create, $insert, $projection, $unqualified): array {
+            \SqlSemantics\Diagnostic\Check::invariant($projection->query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, 'The generated projection is a SELECT block.');
             $missing = $binding instanceof \SqlSemantics\Statement\Reference\Table\ConditionalTable ? [$binding->missing] : [];
             $diagnostics = $binding instanceof \SqlSemantics\Statement\Reference\Table\ConflictingTables ? [$binding] : [];
             $relation = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference($unqualified, relationInformation: new \SqlSemantics\Statement\Fact\RelationFact(new \SqlSemantics\Statement\Shape\RowShape([], $missing), $binding));
             $output = $projection->query->queryInformation();
             $input = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], $projection->query->items, $relation, queryInformation: $output), new \SqlSemantics\Platform\MySql\Statement\StatementSemantics($projection->profile(), diagnostics: $diagnostics, output: $output, connection: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_unicode_ci')));
-            $expected = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], $projection->query->items, $selected->query->from, queryInformation: $output), $projection->statementInformation());
-            return [$create, $insert, $input, $expected];
+            return [$create, $insert, $input];
         }, $bindings);
     }
 }

@@ -9,13 +9,47 @@ use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement as M;
+use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Type\Choice;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(Casts::class)]
 #[Small]
 final class CastsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, M\Type\Resolved\Field}>
+     */
+    public static function providerRealModes(): iterable
+    {
+        yield 'double' => ['', M\Type\Resolved\Field::Double];
+        yield 'float' => ['REAL_AS_FLOAT', M\Type\Resolved\Field::Float];
+    }
+
+    #[DataProvider('providerRealModes')]
+    public function testCastResolvesTheGeneratedTypeChoiceFromTheExecutionMode(string $mode, M\Type\Resolved\Field $expected): void
+    {
+        $session = (new Instance('8.4.7', ['sql_mode' => $mode]))->connect();
+        $number = new M\Literal\NumberLiteral('7', new ScalarFact(new Known(M\Type\Resolved\Domain::integer()), Nullability::NotNull));
+        $types = new Choice([new M\Type\Floating(M\Type\Kind\FloatingKind::Float), new M\Type\Floating(M\Type\Kind\FloatingKind::Double)]);
+        $cast = new M\Expression\Conversion\Cast($number, new M\Type\CastTarget(M\Type\Kind\CastKind::Real), scalarInformation: new ScalarFact($types, Nullability::NotNull));
+        $name = new \SqlSemantics\Statement\Identifier\Name('value');
+        $field = new \SqlSemantics\Statement\Shape\Field(0, new \SqlSemantics\Statement\Shape\OutputSlot($name, $types, Nullability::NotNull), $cast);
+        $output = new \SqlSemantics\Statement\Fact\QueryFact([$field], \SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive);
+        $statement = new M\QueryRoot(new M\Query\Select([], [new M\Query\SelectExpression($cast, $name)], queryInformation: $output), new M\StatementSemantics(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), output: $output));
+
+        $result = (new \MySqlMemory\Session\Execution($session))->statement($statement);
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['7']], $result->rows);
+        self::assertSame($expected, $result->columns[0]->type);
+    }
+
     public function testTimestampResolvesTheInputTypeBeforeTheDeferredZoneCondition(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

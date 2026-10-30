@@ -49,6 +49,37 @@ final class ShowKeysProperties extends TestCase
     }
 
     /**
+     * Index inspection completes after its generated schema and table are installed.
+     */
+    #[Test]
+    #[DataProvider('providerDependentReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesIndexInspectionCompletesWithItsTable(GrammarRelease $release): void
+    {
+        $this->forAll(ShowKeysGenerator::withTable($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$schema, $create, $show] = $sequence;
+            $execution->statement($schema);
+            $execution->statement($create);
+            $execution->statement($show);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerDependentReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

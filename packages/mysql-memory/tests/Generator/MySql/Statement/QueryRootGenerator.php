@@ -59,6 +59,7 @@ final class QueryRootGenerator implements ErisGenerator
      */
     public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
+        $complete = $operands === null && $contexts === null && $release === GrammarRelease::MySql847;
         if ($operands === null) {
             $forms = [];
             if ($release === GrammarRelease::MySql847) {
@@ -73,16 +74,8 @@ final class QueryRootGenerator implements ErisGenerator
             }
 
             if ($release === GrammarRelease::MySql847) {
-                $forms[] = Generators::map(static fn (array $parts): QueryRoot => $parts[0], \Tests\Generator\Semantics\Statement\Shape\FieldLookupGenerator::queries());
-                $forms[] = \Tests\Generator\Semantics\Statement\Reference\Table\CommonTableGenerator::queries();
-                $forms[] = \Tests\Generator\Semantics\Statement\Type\ChoiceGenerator::realCasts();
-                $forms[] = Generators::map(static fn (array $parts): QueryRoot => $parts[2], \Tests\Generator\Semantics\Statement\Reference\Column\ConditionalColumnGenerator::incompleteReads());
-                $forms[] = \Tests\Generator\Semantics\Statement\Reference\Missing\UndeclaredDomainGenerator::parameterQueries();
-                $forms[] = \Tests\Generator\Semantics\Statement\Reference\Missing\UndeclaredRoutineGenerator::queries();
-                $forms[] = Query\Problem\NameConversionGenerator::queries();
-                $forms[] = Expression\TupleGenerator::comparisons();
-                $forms[] = Hint\Comment\HintCommentGenerator::projections();
-                $forms[] = Generators::map(static fn (array $parts): QueryRoot => $parts[1], Variable\Catalog\SystemVariablesGenerator::readQueries());
+                $forms[] = self::jsonPath();
+                $forms[] = self::invalidJsonPath();
                 $forms[] = Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation $relation): QueryRoot => new QueryRoot(new Select([], [new SelectExpression(new StringLiteral(['value']))], $relation)), new Relation\EscapedRelationGenerator(new NameGenerator(), new Relation\TableReferenceGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new NameGenerator()))));
             }
 
@@ -97,6 +90,22 @@ final class QueryRootGenerator implements ErisGenerator
             }
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+        if ($complete) {
+            $this->delegate = Generators::oneOf($this->delegate, Generators::oneOf(
+                self::completeProjections(),
+                self::missingColumn(),
+                self::parameterProjection(),
+                Generators::map(static fn (array $parts): QueryRoot => $parts[0], \Tests\Generator\Semantics\Statement\Shape\FieldLookupGenerator::queries()),
+                \Tests\Generator\Semantics\Statement\Reference\Table\CommonTableGenerator::queries(),
+                Generators::map(static fn (array $parts): QueryRoot => $parts[2], \Tests\Generator\Semantics\Statement\Reference\Column\ConditionalColumnGenerator::incompleteReads()),
+                \Tests\Generator\Semantics\Statement\Reference\Missing\UndeclaredDomainGenerator::parameterQueries(),
+                \Tests\Generator\Semantics\Statement\Reference\Missing\UndeclaredRoutineGenerator::queries(),
+                Query\Problem\NameConversionGenerator::queries(),
+                Expression\TupleGenerator::comparisons(),
+                Hint\Comment\HintCommentGenerator::projections(),
+                Generators::map(static fn (array $parts): QueryRoot => $parts[1], Variable\Catalog\SystemVariablesGenerator::readQueries()),
+            ));
+        }
     }
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Query> $query Generated constructor operand
@@ -112,26 +121,73 @@ final class QueryRootGenerator implements ErisGenerator
     }
 
     /**
-     * Generates differently shaped expressions and independently calculated rows.
-     * Binding and shrinking happen before the executor sees the concrete query.
+     * Generates complete numeric projections without database prerequisites.
      *
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Statement, list<list<string>>}>
+     * @return ErisGenerator<QueryRoot>
      */
     public static function integerExpressions(GrammarRelease $release): ErisGenerator
     {
-        return Generators::bind(Generators::choose(1, 6), static function (int $width) use ($release): ErisGenerator {
-            return Generators::map(static function (array $values) use ($release): array {
+        $operands = Generators::bind(Generators::choose(1, 6), static function (int $width): ErisGenerator {
+            return Generators::map(static function (array $values): QueryRoot {
                 $items = [];
-                $expected = [];
-                foreach ($values as $position => [$expression, $value]) {
+                foreach ($values as $position => [$expression]) {
                     $items[] = new SelectExpression($expression, new \SqlSemantics\Statement\Identifier\Name('value_' . $position));
-                    $expected[] = (string) $value;
                 }
-                $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
-                return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, new QueryRoot(new Select([], $items))), [$expected]];
+                return new QueryRoot(new Select([], $items));
             }, Generators::vector($width, \Tests\Generator\Semantics\Statement\ScalarGenerator::integers()));
         });
+        return new self($release, $operands);
     }
+
+    /**
+     * Generates executable projections with their types, names and notices intact.
+     *
+     * @return ErisGenerator<QueryRoot>
+     */
+    public static function completeProjections(): ErisGenerator
+    {
+        return Generators::oneOf(self::projection(), self::nullProjection(), self::warnedProjection(), self::spellingNotice(), self::trimmedAlias(), \Tests\Generator\Semantics\Statement\Type\ChoiceGenerator::realCasts(), Variable\UserVariableGenerator::missingState());
+    }
+
+    /**
+     * Generates invocation-time query operands, preserving deferred expression roles.
+     *
+     * @return ErisGenerator<QueryRoot>
+     */
+    public static function deferredSelections(): ErisGenerator
+    {
+        $forms = [];
+        foreach (Routine\Program\DeferredSelectionGenerator::operandForms() as $selection) {
+            $forms[] = Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $body): QueryRoot => new QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($body)), $selection);
+        }
+        return new self(GrammarRelease::MySql847, Generators::oneOf(...$forms));
+    }
+
+    /**
+     * Generates the session assignment required by a locally bound variable read.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables, QueryRoot}>
+     */
+    public static function assignedVariableReads(): ErisGenerator
+    {
+        return Variable\UserVariableGenerator::assignmentSequence();
+    }
+
+    /**
+     * Generates reads with complete, incomplete or conflicting prior declarations.
+     * Every sequence installs the definition and row needed at execution time.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows, QueryRoot}>
+     */
+    public static function declaredReads(): ErisGenerator
+    {
+        return Generators::oneOf(
+            self::declaredTableSequence(),
+            \Tests\Generator\Semantics\Statement\Reference\Column\ConditionalColumnGenerator::incompleteReads(),
+            \Tests\Generator\Semantics\Statement\Reference\Table\TableResolutionGenerator::reboundReads(),
+        );
+    }
+
     /**
      * Generates a complete scalar projection, including its local bindings.
      *
@@ -2655,7 +2711,8 @@ final class QueryRootGenerator implements ErisGenerator
      */
     public static function withPrerequisites(GrammarRelease $release): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): array => self::readFrom($release, $parts[0], $parts[1]), Dml\Insert\InsertRowsGenerator::withPrerequisites($release));
+        $published = Generators::map(static fn (array $parts): array => self::readFrom($release, $parts[0], $parts[1]), Dml\Insert\InsertRowsGenerator::withPrerequisites($release));
+        return $release === GrammarRelease::MySql847 ? Generators::oneOf($published, self::declaredReads()) : $published;
     }
 
     /**

@@ -21,9 +21,9 @@ final class ShowKeysGenerator implements ErisGenerator
     use Composition;
 
     /**
-     * Generates an index inspection together with the table and index it names.
+     * Generates an index inspection with its schema, table and index prerequisites.
      *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement}>
+     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement}>
      */
     public static function withTable(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
@@ -32,7 +32,12 @@ final class ShowKeysGenerator implements ErisGenerator
             $requests = self::operands(new \Tests\Generator\MySql\Statement\Utility\Show\InspectedTableGenerator(Generators::constant($definition->name)));
             $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value);
             $context = $semantics->context($definition->declarations(), true, new \SqlSemantics\Contract\SearchPath($definition->name->schema->value ?? 'pbt'));
-            return Generators::map(static fn (\SqlSemantics\Statement\AnalyzedStatement $request): array => [$definition, $request], new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $requests, Generators::constant($context)));
+            $schemas = \Tests\Generator\MySql\Statement\Server\Database\CreateDatabaseGenerator::operands(Generators::constant(true), Generators::constant($definition->name->schema ?? new \SqlSemantics\Statement\Identifier\Name('pbt')));
+            return Generators::tuple(
+                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $schemas),
+                Generators::constant($definition),
+                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $requests, Generators::constant($context)),
+            );
         });
     }
 

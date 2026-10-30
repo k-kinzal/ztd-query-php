@@ -49,6 +49,38 @@ final class CreateDatabaseProperties extends TestCase
     }
 
     /**
+     * Database creation, inspection, alteration and removal complete in sequence.
+     */
+    #[Test]
+    #[DataProvider('providerDependentReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesDatabaseLifecycleCompletes(GrammarRelease $release): void
+    {
+        $this->forAll(CreateDatabaseGenerator::lifecycle($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$create, $show, $alter, $drop] = $sequence;
+            $execution->statement($create);
+            $execution->statement($show);
+            $execution->statement($alter);
+            $execution->statement($drop);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerDependentReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

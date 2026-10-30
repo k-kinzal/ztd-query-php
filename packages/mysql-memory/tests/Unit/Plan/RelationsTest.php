@@ -33,6 +33,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class RelationsTest extends TestCase
 {
+    public function testTableUsesTheInstalledDefinitionWhenAnalysisHadConflictingDeclarations(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7');
+        $context = $semantics->context([$semantics->analyze('CREATE TABLE d.t(a INT)'), $semantics->analyze('CREATE TABLE d.t(b INT)')], true, new \SqlSemantics\Contract\SearchPath('d'));
+        $statement = $semantics->analyze('SELECT 1 FROM t', $context);
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); INSERT INTO t VALUES(7)');
+
+        $result = (new \MySqlMemory\Session\Execution($session))->statement($statement);
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

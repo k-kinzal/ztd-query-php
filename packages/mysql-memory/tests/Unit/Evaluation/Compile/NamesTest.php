@@ -19,6 +19,56 @@ use PHPUnit\Framework\TestCase;
 final class NamesTest extends TestCase
 {
     /**
+     * @return iterable<string, array{string, string, list<list<string>>}>
+     */
+    public static function providerConditionalColumns(): iterable
+    {
+        yield 'installed column' => ['SELECT v FROM t', 'CREATE TABLE t(v INT); INSERT INTO t VALUES(7)', [['7']]];
+        yield 'nearer scope' => ['SELECT (SELECT v FROM u) FROM t', 'CREATE TABLE t(v INT); INSERT INTO t VALUES(7); CREATE TABLE u(v INT); INSERT INTO u VALUES(9)', [['9']]];
+        yield 'outer fallback' => ['SELECT (SELECT v FROM u) FROM t', 'CREATE TABLE t(v INT); INSERT INTO t VALUES(7); CREATE TABLE u(w INT); INSERT INTO u VALUES(9)', [['7']]];
+        yield 'qualified outer' => ['SELECT (SELECT t.v FROM u) FROM t', 'CREATE TABLE t(v INT); INSERT INTO t VALUES(7); CREATE TABLE u(v INT); INSERT INTO u VALUES(9)', [['7']]];
+    }
+
+    /**
+     * @param list<list<string>> $rows
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerConditionalColumns')]
+    public function testConditionalReadsTheInstalledColumnInTheNearestScope(string $sql, string $setup, array $rows): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7');
+        $statement = $semantics->analyze($sql, $semantics->context([], false, new \SqlSemantics\Contract\SearchPath('d')));
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query($setup);
+        $result = (new \MySqlMemory\Session\Execution($session))->statement($statement);
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame($rows, $result->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerUnresolvedColumns(): iterable
+    {
+        yield 'absent' => ['SELECT v FROM t', 'CREATE TABLE t(w INT)', 1054];
+        yield 'missing table' => ['SELECT v FROM t', 'CREATE TABLE u(v INT)', 1146];
+        yield 'ambiguous' => ['SELECT v FROM t,u', 'CREATE TABLE t(v INT); CREATE TABLE u(v INT)', 1052];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUnresolvedColumns')]
+    public function testConditionalRefusesAbsentAndAmbiguousInstalledColumns(string $sql, string $setup, int $code): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7');
+        $statement = $semantics->analyze($sql, $semantics->context([], false, new \SqlSemantics\Contract\SearchPath('d')));
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query($setup);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        (new \MySqlMemory\Session\Execution($session))->statement($statement);
+    }
+
+    /**
      * @return iterable<string, array{string, string, list<array{string, int, string}>}>
      */
     public static function providerGtidReads(): iterable

@@ -283,6 +283,7 @@ final class Stages
     /**
      * Tells whether the planner checks a diagnostic after resolving every name and window.
      *
+     * Conflicting prior declarations are resolved from the installed table when planning.
      * IGNORE NULLS and FROM LAST are checked with window function arguments. Unsupported frames
      * are checked after resolving names and refusing misplaced calls. Aggregate diagnostics with
      * an owning expression are located in their own window by Locations. A RANGE
@@ -304,7 +305,7 @@ final class Stages
             }
             return false;
         }
-        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
+        return $diagnostic instanceof \SqlSemantics\Statement\Reference\Table\ConflictingTables || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
     }
     /**
      * Identifies character interpretation failures before relation contextualization.

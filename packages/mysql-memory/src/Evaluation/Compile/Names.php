@@ -35,6 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope as Written;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field as ShapeField;
@@ -72,6 +73,9 @@ final class Names
         if ($resolution instanceof AliasTarget) {
             return $this->field($resolution->field, $scope);
         }
+        if ($resolution instanceof ConditionalColumn) {
+            return $this->conditional($resolution, $scope);
+        }
         if (!$resolution instanceof ResolvedColumn) {
             $qualifier = $use->qualifier === null ? '' : ($use->qualifier->schema === null ? '' : $use->qualifier->schema->value . '.') . $use->qualifier->name->value;
             if ($resolution instanceof \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier) {
@@ -88,6 +92,42 @@ final class Names
         }
 
         return $this->resolved($resolution, $scope, $fact->nullability !== Nullability::NotNull);
+    }
+
+    /**
+     * Resolves an incomplete column binding against the installed relation scopes.
+     * A nearer scope takes precedence; duplicate matches within it remain ambiguous.
+     *
+     * @throws \MySqlMemory\Error\SqlError When no unique installed column matches
+     */
+    public function conditional(ConditionalColumn $resolution, Scope $scope): Evaluable
+    {
+        $relations = array_merge($resolution->relations, array_map(static fn (ResolvedColumn $candidate): \SqlSemantics\Statement\Relation => $candidate->relation, $resolution->candidates));
+        $matches = [];
+        $nearest = PHP_INT_MAX;
+        foreach ($relations as $relation) {
+            $located = $scope->locate($relation);
+            if ($located === null || $located[0] > $nearest) {
+                continue;
+            }
+            [$depth, $holder] = $located;
+            $id = spl_object_id($relation);
+            foreach ($holder->names[$id] ?? [] as $ordinal => $name) {
+                if (!\SqlSemantics\Statement\Identifier\Comparison::AsciiInsensitive->equal($name, $resolution->name->value)) {
+                    continue;
+                }
+                if ($depth < $nearest) {
+                    $matches = [];
+                    $nearest = $depth;
+                }
+                $domain = $holder->columns[$id][$ordinal];
+                $matches[$id . ':' . $ordinal] = new ColumnRead($domain->kind === Kind::Json ? $domain->withSource($name) : $domain, $holder->offsets[$id] + $ordinal, $depth);
+            }
+        }
+        if (count($matches) > 1) {
+            throw QueryError::NonUniqueColumn->error($resolution->name->value, $scope->clause);
+        }
+        return array_values($matches)[0] ?? throw QueryError::BadField->error($resolution->name->value, $scope->clause);
     }
 
     /**
