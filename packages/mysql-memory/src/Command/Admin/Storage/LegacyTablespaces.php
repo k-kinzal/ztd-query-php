@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\Admin\Storage;
 
 use MySqlMemory\Command\Admin\TablespaceCommand;
 use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Session;
@@ -21,7 +22,8 @@ use SqlSemantics\Statement\Statement;
  * Executes MySQL 5.7 general tablespace requests with their legacy engine checks and conditions.
  *
  * InnoDB supports creation and removal, but refuses ALTER before looking up
- * the tablespace. An explicit engine is resolved before existence checks.
+ * the tablespace. An explicit engine is resolved before checking table locks;
+ * locks are refused before inspecting engine support or tablespace existence.
  * Observed through SQL on MySQL 5.7.44, including creation and removal histories.
  *
  * @visibility MySqlMemory
@@ -43,6 +45,9 @@ final class LegacyTablespaces
         }
         $options = $statement instanceof AlterTablespaceAccess ? [] : $statement->options;
         $engine = (new LegacySupport())->engine($options, $session, $context);
+        if ($session->locks !== []) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         if ($engine !== 'InnoDB') {
             throw SchemaError::IllegalCreateOption->error($engine, 'TABLESPACE or LOGFILE GROUP');
         }

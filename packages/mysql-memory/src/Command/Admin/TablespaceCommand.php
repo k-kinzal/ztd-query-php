@@ -38,7 +38,9 @@ use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 /**
  * Executes the statements on InnoDB general and undo tablespaces: CREATE, ALTER, RENAME and DROP TABLESPACE, and CREATE, ALTER and DROP UNDO TABLESPACE.
  *
- * Each commits the open transaction. An ENGINE option must name an enabled storage engine
+ * Each commits the open transaction. Explicit table locks refuse the request
+ * before name and file checks; creation and undo commands resolve ENGINE first.
+ * An ENGINE option must name an enabled storage engine
  * (ER_UNKNOWN_STORAGE_ENGINE), and InnoDB (ER_ILLEGAL_HA_CREATE_OPTION). The names mysql,
  * innodb_system and innodb_temporary, and the names starting with innodb_, are reserved; the
  * server has those tablespaces, and the undo tablespaces innodb_undo_001 and innodb_undo_002.
@@ -88,6 +90,16 @@ final class TablespaceCommand implements Command
         (new Storage\LegacySupport())->check($statement, $session, $context);
         if ((new Storage\LegacyTablespaces())->execute($statement, $session, $context)) {
             return new Completion(0, 0, $context->diagnostics->raised());
+        }
+        if ($session->locks !== []) {
+            match (true) {
+                $statement instanceof CreateTablespace => $this->engine($statement->options, 'CREATE TABLESPACE'),
+                $statement instanceof CreateUndoTablespace => $this->engine($statement->options, 'CREATE UNDO TABLESPACE'),
+                $statement instanceof AlterUndoTablespace => $this->engine($statement->options, 'ALTER UNDO TABLESPACE'),
+                $statement instanceof DropUndoTablespace => $this->engine($statement->options, 'DROP UNDO TABLESPACE'),
+                default => null,
+            };
+            throw StatementError::LockedOrActiveTransaction->error();
         }
         match (true) {
             $statement instanceof CreateTablespace => $this->create($statement, $registry, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known((string) $session->variables->read('character_set_client'))),

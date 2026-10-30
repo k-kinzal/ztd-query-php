@@ -7,6 +7,7 @@ namespace MySqlMemory\Command\Admin;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -25,7 +26,8 @@ use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
  * then fails: InnoDB does not support log file groups (ER_FEATURE_UNSUPPORTED, followed by
  * ER_CHECK_NOT_IMPLEMENTED; verified on a live 8.4 server). MySQL 5.7 reports
  * ER_ILLEGAL_HA_CREATE_OPTION before ER_CHECK_NOT_IMPLEMENTED for CREATE, and
- * only the latter for ALTER or DROP.
+ * only the latter for ALTER or DROP. Modern releases check explicit table locks
+ * after the ENGINE option and before reporting InnoDB support.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-logfile-group.html.
  *
  * @visibility MySqlMemory
@@ -65,6 +67,9 @@ final class LogfileGroupCommand implements Command
         }
         if ($statement instanceof CreateLogfileGroup || $statement instanceof AlterLogfileGroup || $statement instanceof DropLogfileGroup) {
             (new TablespaceCommand())->engine($statement->options, $operationName);
+        }
+        if ($session->locks !== []) {
+            throw StatementError::LockedOrActiveTransaction->error();
         }
         throw new SqlError(AdministrationError::FeatureUnsupported, AdministrationError::FeatureUnsupported->message('LOGFILE GROUP', 'by InnoDB'), null, [[SchemaError::EngineUnsupportedOperation->value, SchemaError::EngineUnsupportedOperation->message($operationName)]]);
     }
