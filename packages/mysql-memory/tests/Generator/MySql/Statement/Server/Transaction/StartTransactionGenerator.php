@@ -6,17 +6,26 @@ namespace Tests\Generator\MySql\Statement\Server\Transaction;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
-use LogicException;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
+use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes StartTransaction operands through Eris; shrinking reconstructs the same SQL alternative.
+ * Generates StartTransaction values from the generators of its operands.
  *
  * @implements ErisGenerator<StartTransaction>
  */
@@ -25,105 +34,56 @@ final class StartTransactionGenerator implements ErisGenerator
     /** @var ErisGenerator<StartTransaction> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete StartTransaction values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<StartTransaction>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): StartTransaction => new StartTransaction(characteristics: array_values(array_unique(array_filter($parts[0], static fn (TransactionCharacteristic $characteristic): bool => $characteristic !== TransactionCharacteristic::ReadWrite), SORT_REGULAR)), profile: $parts[1], client: $parts[2], source: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]),
+            Generators::tuple(
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TransactionCharacteristicGenerator($release))),
+                new LanguageProfileGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CharsetGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (StartTransaction $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No StartTransaction forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): StartTransaction {
-            if (!$statement instanceof StartTransaction) {
-                throw new LogicException('Publishing StartTransaction must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Selects the grammar before generating operands.
-     * @return ErisGenerator<StartTransaction>
-     */
-    public static function operands(GrammarRelease $release): ErisGenerator
-    {
-        return Generators::map(static fn (array $characteristics): StartTransaction => new StartTransaction($characteristics, profile: new LanguageProfile($release)), Generators::oneOf(Generators::seq(Generators::elements(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::WithConsistentSnapshot, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly)), Generators::seq(Generators::elements(\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::WithConsistentSnapshot, \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadWrite))));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (StartTransaction $statement): StartTransaction => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (StartTransaction $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<StartTransaction>
+     * @return GeneratedValue<StartTransaction>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<StartTransaction> $element The generated counterexample
      * @return GeneratedValue<StartTransaction>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic>> $characteristics The generated semantic operand
-     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
-     * @return ErisGenerator<StartTransaction>
-     */
-    public static function fromOperands(ErisGenerator $characteristics, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): StartTransaction => new StartTransaction(characteristics: $parts[0], profile: $parts[1], client: $parts[2]), Generators::tuple($characteristics, $profile, $client));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<StartTransaction>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'StartTransaction/122' => StartTransactionGenerator::fromOperands(
-            characteristics: Generators::constant([]),
-            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
-                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                    settings: Generators::constant('')
-                ),
-                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-            ),
-            client: Generators::constant(null)
-        );
-        yield 'StartTransaction/280' => StartTransactionGenerator::fromOperands(
-            characteristics: Generators::tuple(
-                TransactionCharacteristicGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic::ReadOnly])
-            ),
-            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
-                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                    settings: Generators::constant('')
-                ),
-                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-            ),
-            client: Generators::constant(null)
-        );
-    }
-
 }

@@ -5,30 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Server;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential;
+use SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Replication\Group\CredentialOptionGenerator;
 
 /**
- * Composes DeferredGroupStart values and preserves their operand generators when shrinking.
+ * Generates DeferredGroupStart values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart>
+ * @implements ErisGenerator<DeferredGroupStart>
  */
 final class DeferredGroupStartGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart> */
-    use Composition;
+    /** @var ErisGenerator<DeferredGroupStart> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredGroupStart => new DeferredGroupStart(options: [new CredentialOption(Credential::Password, $parts[0]), ...array_values(array_filter($parts[1], static fn (CredentialOption $option): bool => $option->credential !== Credential::User))], inputSource: null),
+            Generators::tuple(new TextGenerator($release), Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CredentialOptionGenerator($release))))
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredGroupStart $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Replication\Group\CredentialOption>> $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredGroupStart>
      */
-    public function __construct(ErisGenerator $options, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart(options: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple(
-            $options,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredGroupStart> $element The generated counterexample
+     * @return GeneratedValue<DeferredGroupStart>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

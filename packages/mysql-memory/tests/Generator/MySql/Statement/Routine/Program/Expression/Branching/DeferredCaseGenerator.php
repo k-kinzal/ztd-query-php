@@ -5,36 +5,88 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Expression\Branching;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase;
+use Tests\Generator\MySql\Statement\Expression\Branching\CaseBranchGenerator;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes DeferredCase values and preserves their operand generators when shrinking.
+ * Generates DeferredCase values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase>
+ * @implements ErisGenerator<DeferredCase>
  */
 final class DeferredCaseGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase> */
-    use Composition;
+    /** @var ErisGenerator<DeferredCase> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredCase => new DeferredCase(operand: $parts[0], branches: [$parts[5], ...$parts[1]], else: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]),
+            Generators::tuple(
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release, $depth - 1),
+                    1 => new RowOperandGenerator($release, $depth - 1),
+                    2 => new DeferredOperandGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new CaseBranchGenerator($release, $depth - 1),
+                    1 => new DeferredCaseBranchGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }))) : Generators::constant([]),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release, $depth - 1),
+                    1 => new RowOperandGenerator($release, $depth - 1),
+                    2 => new DeferredOperandGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null),
+                new DeferredCaseBranchGenerator($release, $depth - 1)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredCase $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null> $operand Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCaseBranch>> $branches Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null>|null $else Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredCase>
      */
-    public function __construct(ErisGenerator $operand, ErisGenerator $branches, ?ErisGenerator $else = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Branching\DeferredCase(operand: $parts[0], branches: $parts[1], else: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple(
-            $operand,
-            $branches,
-            $else ?? Generators::constant(null),
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredCase> $element The generated counterexample
+     * @return GeneratedValue<DeferredCase>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

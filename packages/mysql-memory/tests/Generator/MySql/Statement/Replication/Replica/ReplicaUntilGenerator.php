@@ -5,53 +5,75 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Replication\Replica;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil;
+use SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Replication\Source\SourceOptionGenerator;
 
 /**
- * Composes ReplicaUntil values and preserves their operand generators when shrinking.
+ * Generates ReplicaUntil values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil>
+ * @implements ErisGenerator<ReplicaUntil>
  */
 final class ReplicaUntilGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil> */
-    use Composition;
+    /** @var ErisGenerator<ReplicaUntil> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint|null> $point Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $gtids Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption>>|null $positions Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     */
-    public function __construct(ErisGenerator $point, ?ErisGenerator $gtids = null, ?ErisGenerator $positions = null, ?ErisGenerator $inputSource = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil(point: $parts[0], gtids: $parts[1], positions: $parts[2], inputSource: $parts[3]);
-        }, Generators::tuple(
-            $point,
-            $gtids ?? Generators::constant(null),
-            $positions ?? Generators::constant([]),
-            $inputSource ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Generates an incomplete coordinate or a coordinate mixed with a GTID/gap condition.
-     *
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil>
-     */
-    public static function conditions(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
-    {
-        $positions = Generators::tuple(new \Tests\Generator\MySql\Statement\Replication\Source\SourceOptionGenerator(
-            Generators::constant((new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($release)),
-            \Tests\Generator\MySql\Statement\Replication\Source\SourceOptionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::LogPosition, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::RelayLogPosition]),
-            new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(4, 10000))),
-        ));
-        return Generators::oneOf(...[
-            new self(Generators::constant(null), positions: $positions),
-            new self(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGaps), positions: $positions),
-            new self(UntilPointGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::BeforeGtids, \SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGtids]), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => '3E11FA47-71CA-11E1-9E33-C80AA9429562:1-' . $value, Generators::choose(1, 1000))), $positions),
-        ]);
+        $this->delegate = Generators::map(
+            static fn (array $parts): ReplicaUntil => new ReplicaUntil(point: $parts[0], gtids: in_array($parts[0], [UntilPoint::BeforeGtids, UntilPoint::AfterGtids], true) ? $parts[1] ?? new Text('uuid:1') : null, positions: array_values(array_filter($parts[2], static fn (SourceOption $option): bool => $option->kind->position())), inputSource: $parts[3]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[0]) !== null || array_filter((array_values(array_filter($parts[2], static fn (SourceOption $option): bool => $option->kind->position()))), static fn (SourceOption $option): bool => $option->kind->position()) !== [],
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), new UntilPointGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SourceOptionGenerator($release))),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ReplicaUntil $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ReplicaUntil>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ReplicaUntil> $element The generated counterexample
+     * @return GeneratedValue<ReplicaUntil>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

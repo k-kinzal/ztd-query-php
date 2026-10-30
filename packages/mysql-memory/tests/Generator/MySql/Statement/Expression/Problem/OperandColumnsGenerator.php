@@ -5,46 +5,67 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Expression\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes OperandColumns values and preserves their operand generators when shrinking.
+ * Generates OperandColumns values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns>
+ * @implements ErisGenerator<OperandColumns>
  */
 final class OperandColumnsGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns> */
-    use Composition;
+    /** @var ErisGenerator<OperandColumns> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<int> $expected Generated constructor operand
-     * @param ErisGenerator<int> $actual Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $expression Generated constructor operand
-     */
-    public function __construct(ErisGenerator $expected, ErisGenerator $actual, ?ErisGenerator $expression = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns {
-            return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(expected: $parts[0], actual: $parts[1], expression: $parts[2]);
-        }, Generators::tuple(
-            $expected,
-            $actual,
-            $expression ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Expression\\Problem\\OperandColumns' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new OperandColumnsGenerator(
-            expected: Generators::constant(2),
-            actual: Generators::constant(3),
-            expression: Generators::constant(null)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): OperandColumns => new OperandColumns(expected: 1 + $parts[0], actual: 2 + $parts[0] + $parts[1], expression: $parts[2]),
+            Generators::tuple(
+                Generators::choose(0, 100),
+                Generators::choose(0, 100),
+                Generators::oneOf(Generators::constant(null), new ScalarGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (OperandColumns $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<OperandColumns>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<OperandColumns> $element The generated counterexample
+     * @return GeneratedValue<OperandColumns>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

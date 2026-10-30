@@ -5,30 +5,71 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Selection;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
+use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery;
+use Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator;
 
 /**
- * Composes DeferredQuery values and preserves their operand generators when shrinking.
+ * Generates DeferredQuery values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery>
+ * @implements ErisGenerator<DeferredQuery>
  */
 final class DeferredQueryGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery> */
-    use Composition;
+    /** @var ErisGenerator<DeferredQuery> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredQuery => new DeferredQuery(query: new Select(options: [], items: [$parts[0]], orderBy: [new OrderItem(new OutputOrdinal(new NumberLiteral((string) (2 + $parts[1]))))]), inputSource: null),
+            Generators::suchThat(
+                static fn (array $parts): bool => (new StatementQuery())->refusal((new Select(options: [], items: [$parts[0]], orderBy: [new OrderItem(new OutputOrdinal(new NumberLiteral((string) (2 + $parts[1]))))]))) === null,
+                Generators::tuple(new SelectExpressionGenerator($release, $depth - 1), Generators::choose(0, 9))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredQuery $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Query> $query Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredQuery>
      */
-    public function __construct(ErisGenerator $query, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery(query: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple(
-            $query,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredQuery> $element The generated counterexample
+     * @return GeneratedValue<DeferredQuery>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

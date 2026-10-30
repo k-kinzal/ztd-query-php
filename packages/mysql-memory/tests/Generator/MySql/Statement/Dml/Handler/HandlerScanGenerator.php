@@ -5,108 +5,88 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Handler;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes HandlerScan values and preserves their operand generators when shrinking.
+ * Generates HandlerScan values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan>
+ * @implements ErisGenerator<HandlerScan>
  */
 final class HandlerScanGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan> */
-    use Composition;
+    /** @var ErisGenerator<HandlerScan> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete HandlerScan values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No HandlerScan forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan) {
-                throw new LogicException('Publishing HandlerScan must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler> $handler Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection> $direction Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $where Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Limit|null>|null $limit Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan>
-     */
-    public static function operands(ErisGenerator $handler, ErisGenerator $direction, ?ErisGenerator $where = null, ?ErisGenerator $limit = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan(handler: $parts[0], direction: $parts[1], where: $parts[2], limit: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple($handler, $direction, $where ?? Generators::constant(null), $limit ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'HandlerScan/351' => HandlerScanGenerator::operands(
-            handler: new OpenHandlerGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): HandlerScan => new HandlerScan(handler: $parts[0], direction: $parts[1], where: $parts[2], limit: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[2]) === null || (new HandlerOperands())->problem(($parts[2])) === null,
+                Generators::tuple(
+                    new OpenHandlerGenerator($release),
+                    new ScanDirectionGenerator($release),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null)
                 )
-            ),
-            direction: ScanDirectionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::First]),
-            where: Generators::constant(null),
-            limit: new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator(
-                count: new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                ),
-                offset: Generators::constant(null),
-                spelling: Generators::constant(null)
             )
         );
-        yield 'HandlerScan/352' => HandlerScanGenerator::operands(
-            handler: new OpenHandlerGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                )
-            ),
-            direction: ScanDirectionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::First]),
-            where: Generators::constant(null),
-            limit: new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator(
-                count: new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                ),
-                offset: new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                ),
-                spelling: \Tests\Generator\MySql\Statement\Query\Clause\OffsetSpellingGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma])
-            )
+        $this->delegate = Generators::suchThat(
+            static function (HandlerScan $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (HandlerScan $statement): HandlerScan => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (HandlerScan $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<HandlerScan>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<HandlerScan> $element The generated counterexample
+     * @return GeneratedValue<HandlerScan>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

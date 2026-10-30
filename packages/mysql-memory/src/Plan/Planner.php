@@ -221,6 +221,9 @@ final class Planner
             (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation, $this, $outer);
         }
         \SqlSemantics\Diagnostic\Check::invariant(!$operation instanceof LeadingUnion || $settled !== null, 'A leading union receives the enclosing result domains.');
+        if ($settled === null && !$this->typed($operation)) {
+            $this->missingRelations($operation, $outer);
+        }
         $domains = $settled ?? $this->outputs($operation);
         $left = $this->operand($operation->left, $outer, $domains);
         $right = $this->operand($operation->right, $outer, $domains);
@@ -241,6 +244,44 @@ final class Planner
             $origins = array_map(static fn (?ColumnOrigin $origin, string $name): ColumnOrigin => new ColumnOrigin('', '', '', $name, $origin->flags ?? 0), $origins, $left->names);
         }
         return new QueryPlan(new SetPath($kind, $distinct, $this->settled($left, $domains), $this->settled($right, $domains), $domains, $retain), $domains, $left->names, $origins);
+    }
+
+    /**
+     * Answers whether SQL Semantics resolved the type of every column of the operation.
+     */
+    public function typed(Query $query): bool
+    {
+        foreach ($query->queryInformation()->shape->slots as $slot) {
+            if (!$slot->type instanceof \SqlSemantics\Statement\Type\Known || !$slot->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Plans the operands of an operation whose column types depend on relations the analysis did not know.
+     *
+     * A column keeps a dependent type when its relation was not declared to the analysis; at execution such a
+     * relation does not exist, and the server reports it before typing the combined result
+     * (verified on a live 8.4 server). Each operand is planned on its own so its missing relation is raised.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an operand reads a relation that does not exist
+     */
+    public function missingRelations(SetOperation|OrderedSetOperation|LeadingUnion $operation, ?Scope $outer): void
+    {
+        foreach ([$operation->left, $operation->right] as $operand) {
+            $inner = $operand;
+            while ($inner instanceof ParenthesizedQuery) {
+                $inner = $inner->query;
+            }
+            if ($inner instanceof SetOperation || $inner instanceof OrderedSetOperation || $inner instanceof LeadingUnion) {
+                $this->missingRelations($inner, $outer);
+            } elseif ($inner instanceof Query) {
+                $this->query($inner, $outer);
+            }
+        }
     }
 
     /**

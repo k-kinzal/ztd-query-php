@@ -5,76 +5,79 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Query\Problem\Operand;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody;
+use Tests\Generator\MySql\Statement\Query\SelectGenerator;
+use Tests\Generator\MySql\Statement\Query\With\DeferredBodyGenerator;
 
 /**
- * Composes RefusedSetClause values and preserves their operand generators when shrinking.
+ * Generates RefusedSetClause values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause>
+ * @implements ErisGenerator<RefusedSetClause>
  */
 final class RefusedSetClauseGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause> */
-    use Composition;
+    /** @var ErisGenerator<RefusedSetClause> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Select|\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody> $operand Generated constructor operand
-     */
-    public function __construct(ErisGenerator $operand)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause {
-            return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause(operand: $parts[0]);
-        }, Generators::tuple(
-            $operand
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSetClause>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Query\\Problem\\Operand\\RefusedSetClause' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, new RefusedSetClauseGenerator(
-            operand: new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
-                options: Generators::constant([]),
-                items: Generators::tuple(
-                    new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                            text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                        )]),
-                        alias: Generators::constant(null),
-                        layout: Generators::constant(null),
-                        mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
-                        spellingProfile: Generators::constant(null)
-                    )])
-                ),
-                from: Generators::constant(null),
-                where: Generators::constant(null),
-                groupBy: Generators::constant(null),
-                having: Generators::constant(null),
-                windows: Generators::constant([]),
-                qualify: Generators::constant(null),
-                orderBy: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\Query\OrderItemGenerator(
-                        expression: new \Tests\Generator\MySql\Statement\Query\Clause\OutputOrdinalGenerator(
-                            expression: new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                                text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                            )
-                        ),
-                        direction: Generators::constant(null)
-                    )
-                ),
-                limit: Generators::constant(null),
-                procedure: Generators::constant(null),
-                locking: Generators::constant([]),
-                into: Generators::constant(null),
-                intoPosition: Generators::constant(null),
-                late: Generators::constant(null),
-                hints: Generators::constant([])
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedSetClause => new RefusedSetClause(operand: $parts[0]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (static function (Select|DeferredBody $operand): bool {
+                    $block = $operand instanceof Select ? $operand : $operand->selection;
+                    return $block->orderBy !== [] || $block->limit !== null || $block->procedure !== null;
+                })(($parts[0])),
+                Generators::tuple(
+                    Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new SelectGenerator($release),
+                        1 => new DeferredBodyGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })
+                )
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedSetClause $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedSetClause>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedSetClause> $element The generated counterexample
+     * @return GeneratedValue<RefusedSetClause>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -33,6 +33,15 @@ final class SubqueryOptions
      */
     public function check(Query $query): void
     {
+        $problem = $this->problem($query);
+        Check::input($problem === null, $problem ?? '');
+    }
+
+    /**
+     * Describes the first option of the subquery that belongs to a statement query only, in the words of the invariant it breaks, or null when the subquery carries none.
+     */
+    public function problem(Query $query): ?string
+    {
         $pending = [$query];
         $seen = new SplObjectStorage();
         while ($pending !== []) {
@@ -41,14 +50,20 @@ final class SubqueryOptions
                 array_push($pending, ...array_values($value));
             } elseif (($value instanceof Query || $value instanceof LeadingUnion) && !isset($seen[$value])) {
                 $seen[$value] = true;
-                Check::input(!$value instanceof Select || !in_array(SelectOption::Cache, $value->options, true), 'SQL_CACHE is not an option of a subquery.');
-                Check::input(!$value instanceof Select || $value->procedure === null, 'An expression subquery cannot invoke PROCEDURE ANALYSE.');
-                Check::input(!($value instanceof QueryStatement || $value instanceof Select) || $value->into === null, 'An expression subquery cannot have an INTO destination.');
+                if ($value instanceof Select && in_array(SelectOption::Cache, $value->options, true)) {
+                    return 'SQL_CACHE is not an option of a subquery.';
+                }
+                if ($value instanceof Select && $value->procedure !== null) {
+                    return 'An expression subquery cannot invoke PROCEDURE ANALYSE.';
+                }
+                if (($value instanceof QueryStatement || $value instanceof Select) && $value->into !== null) {
+                    return 'An expression subquery cannot have an INTO destination.';
+                }
                 if (!$value instanceof Select) {
                     array_push($pending, ...array_values(get_object_vars($value)));
                 }
             }
         }
-        Check::input((new DerivedOptions())->problem($query) === null, 'An expression subquery cannot carry statement-level SELECT modifiers.');
+        return (new DerivedOptions())->problem($query) === null ? null : 'An expression subquery cannot carry statement-level SELECT modifiers.';
     }
 }

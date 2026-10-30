@@ -5,32 +5,68 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Option;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption;
+use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
+use Tests\Generator\MySql\Statement\Table\Option\Kind\RowFormatGenerator;
 
 /**
- * Composes RowFormatOption values and preserves their operand generators when shrinking.
+ * Generates RowFormatOption values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption>
+ * @implements ErisGenerator<RowFormatOption>
  */
 final class RowFormatOptionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption> */
-    use Composition;
+    /** @var ErisGenerator<RowFormatOption> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): RowFormatOption => new RowFormatOption(format: $parts[0], inputSource: $parts[1], operator: $parts[2]),
+            Generators::tuple(
+                new RowFormatGenerator($release),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RowFormatOption $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\RowFormat> $format Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $operator Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RowFormatOption>
      */
-    public function __construct(ErisGenerator $format, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption(format: $parts[0], inputSource: $parts[1], operator: $parts[2]);
-        }, Generators::tuple(
-            $format,
-            $inputSource ?? Generators::constant(null),
-            $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RowFormatOption> $element The generated counterexample
+     * @return GeneratedValue<RowFormatOption>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

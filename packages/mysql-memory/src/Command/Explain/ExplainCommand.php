@@ -184,7 +184,7 @@ final class ExplainCommand implements Command
 
             return (new Listing($headings))->sent($rows, $context);
         }
-        $text = (new MeasuredTable())->report($operation, $session, $context, $connection) ?? ($format === 'JSON' ? $this->document($tables, $session->settings()->release()) : $this->tree($tables));
+        $text = ($statement->analyze ? $this->unplanned($statement->statement, $session->instance->version) : null) ?? (new MeasuredTable())->report($operation, $session, $context, $connection) ?? ($format === 'JSON' ? $this->document($tables, $session->settings()->release()) : $this->tree($tables));
 
         return (new Listing([Heading::text('EXPLAIN', Field::VarString, 78, ColumnFlag::NotNull->value, 31)]))->sent([[$text]], $context);
     }
@@ -356,6 +356,31 @@ final class ExplainCommand implements Command
         $targets = array_map(static fn (QualifiedName $target): string => $names[strtolower($target->name->value)] ?? $qualified($target), $statement->targets);
 
         return $prefix . ' ' . implode(',', $targets) . ' from ' . implode(',', $sources) . ' where false';
+    }
+
+    /**
+     * Answers the EXPLAIN ANALYZE report of a write the iterator executor does not run, or null for a planned statement.
+     *
+     * A single-table UPDATE or DELETE and an INSERT of rows or assignments are not executed by the
+     * iterator executor; the report says so without a plan. From 8.3 the message starts with an arrow,
+     * and an INSERT reports the rows it fetches before execution instead (verified on live 8.0.44,
+     * 8.1.0, 8.2.0, 8.3.0, 8.4.7 and 9.1.0 servers).
+     */
+    public function unplanned(Node $statement, string $version): ?string
+    {
+        $write = $statement instanceof Delete || ($statement instanceof Update && count($statement->tables) === 1 && $statement->tables[0] instanceof TableReference);
+        $insert = $statement instanceof InsertRows || $statement instanceof InsertSet;
+        if (!$write && !$insert) {
+            return null;
+        }
+        if (version_compare($version, '8.3.0', '<')) {
+            return "<not executable by iterator executor>\n";
+        }
+        if ($insert) {
+            return '-> ' . ($statement->into->replace ? 'Replace' : 'Insert') . ' into ' . $statement->into->table->name->name->value . "\n    -> Rows fetched before execution\n";
+        }
+
+        return "-> <not executable by iterator executor>\n";
     }
 
     /**

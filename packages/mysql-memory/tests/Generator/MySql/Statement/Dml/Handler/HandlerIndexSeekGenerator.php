@@ -5,93 +5,98 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Handler;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
+use Eris\Random\RandomRange;
 use LogicException;
-use Tests\Generator\Composition;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Node;
+use Tests\Generator\MySql\Statement\Dml\DefaultRequestGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes HandlerIndexSeek values and preserves their operand generators when shrinking.
+ * Generates HandlerIndexSeek values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek>
+ * @implements ErisGenerator<HandlerIndexSeek>
  */
 final class HandlerIndexSeekGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek> */
-    use Composition;
+    /** @var ErisGenerator<HandlerIndexSeek> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete HandlerIndexSeek values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No HandlerIndexSeek forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek) {
-                throw new LogicException('Publishing HandlerIndexSeek must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler> $handler Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $index Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison> $comparison Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest>> $values Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $where Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Limit|null>|null $limit Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek>
-     */
-    public static function operands(ErisGenerator $handler, ErisGenerator $index, ErisGenerator $comparison, ErisGenerator $values, ?ErisGenerator $where = null, ?ErisGenerator $limit = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek(handler: $parts[0], index: $parts[1], comparison: $parts[2], values: $parts[3], where: $parts[4], limit: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]);
-        }, Generators::tuple($handler, $index, $comparison, $values, $where ?? Generators::constant(null), $limit ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'HandlerIndexSeek/361' => HandlerIndexSeekGenerator::operands(
-            handler: new OpenHandlerGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): HandlerIndexSeek => new HandlerIndexSeek(handler: $parts[0], index: $parts[1], comparison: $parts[2], values: $parts[3], where: $parts[4], limit: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
+            Generators::suchThat(
+                static fn (array $parts): bool => array_filter([...($parts[3]), ($parts[4])], static fn ($operand): bool => $operand instanceof Node && (new HandlerOperands())->problem($operand) !== null) === [],
+                Generators::tuple(
+                    new OpenHandlerGenerator($release),
+                    new NameGenerator($release),
+                    new KeyComparisonGenerator($release),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new DefaultRequestGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null)
                 )
-            ),
-            index: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            comparison: KeyComparisonGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison::Equal]),
-            values: Generators::tuple(
-                new \Tests\Generator\MySql\Statement\Dml\DefaultRequestGenerator(),
-                new \Tests\Generator\MySql\Statement\Dml\DefaultRequestGenerator()
-            ),
-            where: Generators::constant(null),
-            limit: Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (HandlerIndexSeek $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (HandlerIndexSeek $statement): HandlerIndexSeek => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (HandlerIndexSeek $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<HandlerIndexSeek>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<HandlerIndexSeek> $element The generated counterexample
+     * @return GeneratedValue<HandlerIndexSeek>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

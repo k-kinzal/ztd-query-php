@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -19,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
 use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowKeysGenerator;
 
 /**
- * Searches for ShowKeys values that post-analysis execution cannot consume.
+ * Generates ShowKeys analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,55 +29,28 @@ final class ShowKeysProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * The server errors that report only runtime state the generated statement depends on, such as objects it names that do not exist yet.
+     */
+    private const MISSING_STATE = [QueryError::BadDatabase, QueryError::NoSuchTable];
+
+    /**
+     * Execution raises no error, except an error that depends on database state.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(new ShowKeysGenerator($release))->withMaxSize(10)->then(static function (ShowKeys $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
+        $this->forAll(new ShowKeysGenerator($release))->then(static function (ShowKeys $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
+                (new Execution($session))->statement($statement);
+            } catch (SqlError $error) {
+                if (!in_array($error->error, self::MISSING_STATE, true)) {
+                    throw $error;
+                }
             }
         });
-    }
-
-    /**
-     * Index inspection completes after its generated schema and table are installed.
-     */
-    #[Test]
-    #[DataProvider('providerDependentReleases')]
-    #[DoesNotPerformAssertions]
-    public function satisfiesIndexInspectionCompletesWithItsTable(GrammarRelease $release): void
-    {
-        $this->forAll(ShowKeysGenerator::withTable($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
-            [$schema, $create, $show] = $sequence;
-            $execution->statement($schema);
-            $execution->statement($create);
-            $execution->statement($show);
-        });
-    }
-
-    /**
-     * @return iterable<string, array{GrammarRelease}>
-     */
-    public static function providerDependentReleases(): iterable
-    {
-        foreach (GrammarRelease::cases() as $release) {
-            if ($release->database() === 'mysql') {
-                yield $release->value => [$release];
-            }
-        }
     }
 
     /**

@@ -5,40 +5,64 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Name;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName;
 
 /**
- * Composes EmptyObjectName values and preserves their operand generators when shrinking.
+ * Generates EmptyObjectName values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName>
+ * @implements ErisGenerator<EmptyObjectName>
  */
 final class EmptyObjectNameGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName> */
-    use Composition;
+    /** @var ErisGenerator<EmptyObjectName> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): EmptyObjectName => new EmptyObjectName(kind: $parts[0]),
+            Generators::tuple(
+                new ObjectNameKindGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (EmptyObjectName $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind> $kind Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<EmptyObjectName>
      */
-    public function __construct(ErisGenerator $kind)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName {
-            return new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(kind: $parts[0]);
-        }, Generators::tuple(
-            $kind
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Name\\EmptyObjectName' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new EmptyObjectNameGenerator(
-            kind: ObjectNameKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Table])
-        )];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<EmptyObjectName> $element The generated counterexample
+     * @return GeneratedValue<EmptyObjectName>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

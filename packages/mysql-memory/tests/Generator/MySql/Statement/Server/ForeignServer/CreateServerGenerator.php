@@ -5,111 +5,82 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\ForeignServer;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes CreateServer values and preserves their operand generators when shrinking.
+ * Generates CreateServer values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer>
+ * @implements ErisGenerator<CreateServer>
  */
 final class CreateServerGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer> */
-    use Composition;
+    /** @var ErisGenerator<CreateServer> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete CreateServer values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When the release belongs to another database.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($release->database() !== 'mysql') {
-            throw new InvalidArgumentException('Foreign servers require a MySQL grammar release.');
-        }
-        if ($operands === null) {
-            $forms = [self::requests()];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer) {
-                throw new LogicException('Publishing CreateServer must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Generates names, wrappers and repeated options, retaining empty-name conditions.
-     *
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer>
-     */
-    public static function requests(): ErisGenerator
-    {
-        $names = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-            Generators::oneOf(Generators::constant(''), Generators::map(static fn (int $length): string => str_repeat('s', $length), Generators::choose(1, 80))),
-            Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::SingleQuote, \SqlSemantics\Statement\Identifier\NameQuote::Backtick))
-        );
-        $wrappers = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::elements('', 'mysql', 'unknown', '😀'), Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::SingleQuote, \SqlSemantics\Statement\Identifier\NameQuote::Backtick)));
-        $options = Generators::bind(new ServerOptionKindGenerator(), static fn (\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind $kind): ErisGenerator => new ServerOptionGenerator(
-            Generators::constant($kind),
-            $kind === \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port
-                ? new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::oneOf(Generators::map(static fn (int $port): string => (string) $port, Generators::choose(0, 70000)), Generators::elements('1.5', '18446744073709551616')))
-                : new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::elements('', 'text', "a'b", '😀'))
-        ));
-        return Generators::bind(Generators::choose(1, 5), static fn (int $count): ErisGenerator => self::operands($names, $wrappers, Generators::vector($count, $options)));
-    }
-
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $wrapper Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption>> $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer>
-     */
-    public static function operands(ErisGenerator $name, ErisGenerator $wrapper, ErisGenerator $options, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer(name: $parts[0], wrapper: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple($name, $wrapper, $options, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'CreateServer/143' => CreateServerGenerator::operands(
-            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            wrapper: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            options: Generators::tuple(
-                new ServerOptionGenerator(
-                    kind: ServerOptionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::User]),
-                    value: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                        value: Generators::constant('text'),
-                        radix: Generators::constant(null)
-                    )
-                )
+        $this->delegate = Generators::map(
+            static fn (array $parts): CreateServer => new CreateServer(name: $parts[0], wrapper: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]),
+            Generators::tuple(
+                new NameGenerator($release),
+                new NameGenerator($release),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ServerOptionGenerator($release))),
+                Generators::constant(null),
+                Generators::constant(null)
             )
         );
+        $this->delegate = Generators::suchThat(
+            static function (CreateServer $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (CreateServer $statement): CreateServer => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateServer $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<CreateServer>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<CreateServer> $element The generated counterexample
+     * @return GeneratedValue<CreateServer>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

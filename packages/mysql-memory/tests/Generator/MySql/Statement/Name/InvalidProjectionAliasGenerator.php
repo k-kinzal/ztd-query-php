@@ -5,53 +5,68 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Name;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes InvalidProjectionAlias values and preserves their operand generators when shrinking.
+ * Generates InvalidProjectionAlias values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias>
+ * @implements ErisGenerator<InvalidProjectionAlias>
  */
 final class InvalidProjectionAliasGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias> */
-    use Composition;
+    /** @var ErisGenerator<InvalidProjectionAlias> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\AliasRule> $rule Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Scalar>>|null $candidates Generated constructor operand
-     */
-    public function __construct(ErisGenerator $name, ErisGenerator $rule, ?ErisGenerator $candidates = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias {
-            return new \SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias(name: $parts[0], rule: $parts[1], candidates: $parts[2]);
-        }, Generators::tuple(
-            $name,
-            $rule,
-            $candidates ?? Generators::constant([])
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Name\\InvalidProjectionAlias' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new InvalidProjectionAliasGenerator(
-            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $suffix): string => 'x' . $suffix, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            rule: AliasRuleGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasRule::Forward]),
-            candidates: Generators::tuple(
-                new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                )])
+        $this->delegate = Generators::map(
+            static fn (array $parts): InvalidProjectionAlias => new InvalidProjectionAlias(name: $parts[0], rule: $parts[1], candidates: $parts[2]),
+            Generators::tuple(
+                new NameGenerator($release),
+                new AliasRuleGenerator($release),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ScalarGenerator($release)))
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (InvalidProjectionAlias $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<InvalidProjectionAlias>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<InvalidProjectionAlias> $element The generated counterexample
+     * @return GeneratedValue<InvalidProjectionAlias>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

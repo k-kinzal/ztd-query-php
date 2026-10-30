@@ -25,8 +25,8 @@ use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(InternalCommand::class)]
 #[Medium]

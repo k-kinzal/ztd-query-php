@@ -5,111 +5,84 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Database;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes CreateDatabase values and preserves their operand generators when shrinking.
+ * Generates CreateDatabase values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase>
+ * @implements ErisGenerator<CreateDatabase>
  */
 final class CreateDatabaseGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase> */
-    use Composition;
+    /** @var ErisGenerator<CreateDatabase> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Composes database creation, inspection, alteration and removal with one generated name.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement}>
-     */
-    public static function lifecycle(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __construct(GrammarRelease $release)
     {
-        $names = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $value): string => 'database_' . $value, Generators::choose(0, 10000)));
-        $created = new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, self::operands(Generators::bool(), $names));
-        return Generators::bind($created, static function (\SqlSemantics\Statement\AnalyzedStatement $create) use ($release): ErisGenerator {
-            \SqlSemantics\Diagnostic\Check::invariant($create instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase, 'Dependent database requests retain their creation.');
-            $name = Generators::constant($create->name);
-            $collations = new DatabaseCollationGenerator(new \Tests\Generator\MySql\Statement\Name\CollationNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements(['utf8mb4_bin', 'utf8mb4_unicode_ci']))));
-            return Generators::tuple(
-                Generators::constant($create),
-                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, \Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowCreateDatabaseGenerator::operands($name, Generators::bool())),
-                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, AlterDatabaseGenerator::operands($name, Generators::vector(1, $collations))),
-                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, DropDatabaseGenerator::operands(Generators::bool(), $name)),
-            );
-        });
-    }
+        $this->delegate = Generators::map(
+            static fn (array $parts): CreateDatabase => new CreateDatabase(ifNotExists: $parts[0], name: $parts[1], options: array_values(array_filter($parts[2], static fn ($option): bool => !$option instanceof DatabaseReadOnly)), statementInformation: $parts[3], inputSource: $parts[4], databaseWord: $parts[5]),
+            Generators::tuple(
+                Generators::bool(),
+                new NameGenerator($release),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DatabaseOptionGenerator($release))),
+                Generators::constant(null),
+                Generators::constant(null),
+                new DatabaseWordGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CreateDatabase $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-    /**
-     * Generates complete CreateDatabase values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
-    {
-        if ($operands === null) {
-            $forms = [];
-            if ($release->database() === 'mysql') {
-                $names = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::oneOf(
-                    Generators::elements(['pbt', 'information_schema', 'performance_schema', '', 'db space', '名']),
-                    Generators::map(static fn (int $length): string => str_repeat('d', $length), Generators::choose(1, 70)),
-                    Generators::map(static fn (int $value): string => 'database_' . $value, Generators::choose(0, 10000))
-                ), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::Backtick));
-                $forms[] = self::operands(Generators::bool(), $names, DatabaseOptionGenerator::sequence($release, false));
-            }
-
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateDatabase forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase) {
-                throw new LogicException('Publishing CreateDatabase must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<bool> $ifNotExists Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption>>|null $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord>|null $databaseWord Generated database keyword
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase>
-     */
-    public static function operands(ErisGenerator $ifNotExists, ErisGenerator $name, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $databaseWord = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase(ifNotExists: $parts[0], name: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], databaseWord: $parts[5]);
-        }, Generators::tuple($ifNotExists, $name, $options ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $databaseWord ?? new DatabaseWordGenerator()));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'CreateDatabase/22' => CreateDatabaseGenerator::operands(
-            ifNotExists: Generators::constant(false),
-            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            options: Generators::constant([])
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (CreateDatabase $statement): CreateDatabase => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateDatabase $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<CreateDatabase>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<CreateDatabase> $element The generated counterexample
+     * @return GeneratedValue<CreateDatabase>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -45,8 +45,8 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(DebugRequest::class)]
 #[Medium]

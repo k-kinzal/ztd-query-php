@@ -5,32 +5,68 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Key\Option;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize;
+use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
+use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
 
 /**
- * Composes KeyBlockSize values and preserves their operand generators when shrinking.
+ * Generates KeyBlockSize values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize>
+ * @implements ErisGenerator<KeyBlockSize>
  */
 final class KeyBlockSizeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize> */
-    use Composition;
+    /** @var ErisGenerator<KeyBlockSize> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): KeyBlockSize => new KeyBlockSize(size: $parts[0], inputSource: $parts[1], operator: $parts[2]),
+            Generators::tuple(
+                new NumeralGenerator($release),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (KeyBlockSize $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral> $size Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $operator Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<KeyBlockSize>
      */
-    public function __construct(ErisGenerator $size, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\KeyBlockSize(size: $parts[0], inputSource: $parts[1], operator: $parts[2]);
-        }, Generators::tuple(
-            $size,
-            $inputSource ?? Generators::constant(null),
-            $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<KeyBlockSize> $element The generated counterexample
+     * @return GeneratedValue<KeyBlockSize>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

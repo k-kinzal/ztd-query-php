@@ -5,36 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Variable;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
- * Composes SystemVariable values and preserves their operand generators when shrinking.
+ * Generates SystemVariable values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable>
+ * @implements ErisGenerator<SystemVariable>
  */
 final class SystemVariableGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable> */
-    use Composition;
+    /** @var ErisGenerator<SystemVariable> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): SystemVariable => new SystemVariable(name: $parts[0], scope: in_array($parts[1], [VariableScope::Global, VariableScope::Session, VariableScope::Local], true) ? $parts[1] : null, instance: $parts[2], scalarInformation: null, inputSource: null),
+            Generators::tuple(
+                Generators::map(static fn (string $name): Name => new Name($name), Generators::elements(array_keys(SystemVariables::of($release)->definitions))),
+                Generators::elements([null, VariableScope::Global, VariableScope::Session, VariableScope::Local]),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (string $name): Name => new Name($name), Generators::elements(array_keys(SystemVariables::of($release)->definitions))))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (SystemVariable $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope|null>|null $scope Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $instance Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<SystemVariable>
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $scope = null, ?ErisGenerator $instance = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable {
-            return new \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable(name: $parts[0], scope: $parts[1], instance: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple(
-            $name,
-            $scope ?? Generators::constant(null),
-            $instance ?? Generators::constant(null),
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<SystemVariable> $element The generated counterexample
+     * @return GeneratedValue<SystemVariable>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

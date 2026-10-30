@@ -5,69 +5,78 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Utility\Show\Server;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Support\Analysis;
 
 /**
- * Composes ShowPlugins values and preserves their operand generators when shrinking.
+ * Generates ShowPlugins values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins>
+ * @implements ErisGenerator<ShowPlugins>
  */
 final class ShowPluginsGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins> */
-    use Composition;
+    /** @var ErisGenerator<ShowPlugins> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete ShowPlugins values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): ShowPlugins => new ShowPlugins(statementInformation: $parts[0], inputSource: $parts[1]),
+            Generators::tuple(
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ShowPlugins $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No ShowPlugins forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins) {
-                throw new LogicException('Publishing ShowPlugins must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins>
-     */
-    public static function operands(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins(statementInformation: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple($statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPlugins>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'ShowPlugins/104' => ShowPluginsGenerator::operands();
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (ShowPlugins $statement): ShowPlugins => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ShowPlugins $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ShowPlugins>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ShowPlugins> $element The generated counterexample
+     * @return GeneratedValue<ShowPlugins>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

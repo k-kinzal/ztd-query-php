@@ -26,6 +26,15 @@ final class LogMoment
      */
     public function check(Node $moment): void
     {
+        $problem = $this->problem($moment);
+        Check::input($problem === null, $problem ?? '');
+    }
+
+    /**
+     * Describes the operand a PURGE moment cannot hold, or null when the moment holds none.
+     */
+    public function problem(Node $moment): ?string
+    {
         $pending = [$moment];
         $seen = new SplObjectStorage();
         while ($pending !== []) {
@@ -34,9 +43,13 @@ final class LogMoment
                 array_push($pending, ...array_values($value));
             } elseif ($value instanceof Node && !isset($seen[$value])) {
                 $seen[$value] = true;
-                Check::input(!$value instanceof Query, 'A PURGE moment cannot contain a subquery.');
+                if ($value instanceof Query) {
+                    return 'A PURGE moment cannot contain a subquery.';
+                }
                 array_push($pending, ...array_values(get_object_vars($value)));
             }
         }
+
+        return null;
     }
 }

@@ -1,6 +1,67 @@
 # SQL Semantics and MySQL Memory
 
-Updated: 2026-10-30, after the user's latest correction in this conversation.
+Updated: 2026-10-30, after the user's corrections of the generator shape and the PBT goal.
+
+## Mandatory rules from the user's review (must be followed, no exceptions)
+
+These rules override every other note in this memo and every existing piece of code.
+The user had to correct the agent repeatedly on these points; the corrections are
+recorded here so that they are not lost and not reinterpreted.
+
+1. **What PBT is.** Eris generators generate the types of SQL Semantics analysis
+   results. Those generated values run MemoryDB's phases after analysis. The property
+   is that no error occurs. The only allowed exception is an error that depends on
+   database state, such as a table definition that does not exist. That is the whole
+   property. Write it plainly; the user does not want a clever formulation.
+2. **What a generator is.** Every class under `tests/Generator` is a final
+   `XxxGenerator` that implements `Eris\Generator`. Its constructor composes one
+   delegate generator from the generators of the type's operands, following the
+   type's structure and invariants, and nothing else. `__invoke` and `shrink` forward
+   to the delegate. There is no other method. The canonical shape is:
+
+   ```php
+   final class OrderItemGenerator implements ErisGenerator
+   {
+       private ErisGenerator $delegate;
+
+       public function __construct()
+       {
+           $this->delegate = Generators::map(
+               static fn (array $data): OrderItem => new OrderItem(sku: $data['sku'], quantity: $data['quantity'], unitPriceYen: $data['unitPriceYen']),
+               Generators::associative([
+                   'sku' => Generators::elements('SKU-A', 'SKU-B', 'SKU-C'),
+                   'quantity' => Generators::choose(1, 100),
+                   'unitPriceYen' => Generators::choose(0, 10000),
+               ])
+           );
+       }
+
+       public function __invoke($size, RandomRange $rand) { return ($this->delegate)($size, $rand); }
+
+       public function shrink(GeneratedValue $element) { return $this->delegate->shrink($element); }
+   }
+   ```
+
+3. **What must not exist.** `forms()`, `additionalForms()`, `executionForms()`,
+   `operands()`, `fromOperands()`, `selecting()`, `withPrerequisites()`,
+   `refused*()` and every other method beyond the three above are not part of a
+   generator. Enumerated fixed statement forms such as `'AlterTable/253'` are not
+   derived from the type's structure and break the generator. Narrowing the
+   candidates of an enum and substituting component generators have no place
+   either, not even through constructor arguments: they distort the property that
+   is to be established. The agent's proposal to allow narrowing and substitution
+   through constructor arguments was wrong.
+4. **Enforcement.** A PHPStan rule checks the shape: under `Tests\Generator` every
+   class is a final `XxxGenerator`, implements `Eris\Generator`, declares `__invoke`
+   and `shrink`, and declares no other method. The rule is added first, every
+   generator is made to pass it, and only then is the rest of the goal pursued.
+5. **No invented roles.** The agent's remark that fixed statement forms belong to
+   sql-faker was unrelated and wrong. sql-faker is the grammar-based SQL generator of
+   the fuzz comparison; it has no role in the Eris generators of semantic types.
+6. **Plain work.** The user is not asking for the property to be done well; the user
+   is asking for it to be done plainly. Attempts to do it cleverly produced the
+   errors above and cost the user time.
+
 
 ## Goal and authority
 
@@ -147,80 +208,57 @@ requirement. Report actual PBT trials and duration without inventing a new gate.
 
 ## Current implementation state
 
-Implementation snapshot before this memo update: branch `feat/mysql-memory`,
-pushed implementation commit `c06767f26a2`, with the uncommitted CHECKSUM work
-listed below. Delivery remains through
-[PR #665](https://github.com/k-kinzal/ztd-query-php/pull/665), which is a draft.
-This snapshot is **not** an acceptance claim.
+Snapshot after the generator, property and fuzz work of 2026-10-30/31 on branch
+`feat/mysql-memory` (delivery through [PR #665](https://github.com/k-kinzal/ztd-query-php/pull/665),
+still a draft). This snapshot is **not** an acceptance claim; the open decisions below
+need the user's answer.
 
 | Area | Observed state | What remains unproved or incorrect |
 | --- | --- | --- |
-| Property layout | 185 `*Properties.php` classes directly under `tests/Property`; no subdirectories; `tests/Eris` is absent. | Correct layout does not establish the correct property. |
-| Generator inventory | 1,162 `*Generator.php` files; the recorded semantic inventory also contains 1,162 types and 185 concrete MySQL analysis-result types. | The inventory selector and actual generated domains still need review against all semantic model types. These counts are observations, not fixed targets. |
-| PHPStan enforcement | `SemanticGeneratorCoverageRule`, `SemanticCatalogue` and `UnusedClassRule` are registered. The coverage rule checks instantiable `Eris\Generator<ModelType>` implementations; class usage is configured in NEON. | The current catalogue selects public model types by namespace, visibility and value-shape rules. Confirm that this selection omits no required semantic type. Static use does not prove downstream execution coverage. |
-| PBT entry boundary | Concrete generators publish typed structures without SQL rendering/parsing. Properties call `Execution::statement()`; dependent sequences are composed in generators. | Review all paths and nested/conditional values, not only the demonstrated statements. |
-| PBT error policy | **All 185 property classes contain an unqualified `catch (SqlError)`; there are 187 such catch blocks.** They accept SQL refusals without checking their cause. | **This violates the clarified requirement. PBT is not complete, and prior passes do not establish the required property.** |
-| Native fuzz path | `fuzz_mysql_execution.php` uses SQL Faker, one Testcontainers MySQL and one MemoryDB. `ExecutionTarget` compares returned rows, metadata, completion fields and SQL errors, and checks MemoryDB's internal-failure channel. | Existing status/engine/latch exceptions permit some unequal values using domain checks. Their scope and real-database evidence require review under the clarified exception rule. The comparison is not universally exact. |
-| Native grammar replay | The current replay corpus has 2,180 files. The MySQL 8.4.7 default manifest reports 3,113/3,113 reached productions. Replay passes the latest FLUSH counterexample but stops at CHECKSUM. | A complete successful execution comparison of the 100%-coverage seeds is missing. Corpus coverage metadata is not execution-success evidence. |
-| Seedless native fuzz | No passing 15-minute empty-corpus native comparison has been established. | The required run remains outstanding. Prior SQL-reconstruction fuzz results do not count. |
-| Ordinary checks | Full static checks passed for the pushed FLUSH change. The last full MemoryDB test run still failed. | The current dirty tree has not passed those checks; ordinary failures must be resolved. |
+| Generator shape | `rules/GeneratorShapeRule.php` is registered: every class under `tests/Generator` is a final `XxxGenerator` implementing `Eris\Generator` with `__construct`, `__invoke` and `shrink` only. All generator files pass it. | None known. |
+| Generator inventory | `SemanticCatalogue` now requires a generator for every public model type reachable from the statements through constructor parameters (analysis information and source spans excluded): 1,092 types. 1,103 generator files remain (11 outside the inventory are used by tests); 59 unreachable generators (facts, notices, shapes, contracts, catalogs, prepared-statement internals) were removed. | The reachability follows typed parameters and `@param` docblocks; a type referenced only through an untyped array is not required. |
+| Generator smoke (8 values per generator) | 8.4.7: 1,084 of 1,086 generators pass; 5.7.44: 1,033 of 1,036; 5.6.51: 1,023 of 1,027; 8.0.44, 8.1.0, 8.2.0, 8.3.0, 9.0.1 and 9.1.0 passed before the last two batches. | Residual: `Update`, `WindowRefinement` (release mixing at 8.4.7), `Update`, `CreateFunction`, `CreateTrigger` (5.7.44 acceptance), `InsertQuery`, `QuantifiedComparison`, `CreateFunction`, `OrderedSetOperation` (5.6.51). |
+| PBT policy | Each property allows only the `SqlError` codes listed in its `MISSING_STATE` (database objects, declarations, credentials, installed components, replication state, server capabilities); every other error fails. Statement generators keep only statements whose analysis records no parse-level refusal and no structural problem (`Tests\Support\Analysis`). | Whether analysis-level refusals may be excluded from generation, and whether server capabilities count as database state, are open decisions (below). |
+| Property suite | 482 cases (185 statements across the releases their forms support). Errors fell from 288 to 99 over six runs. The 99 split into MemoryDB defects (26: "No executable type" for operands typed only at run time such as parameters and user variables, one `intdiv()` float `TypeError` in KILL, "retained generation marker" invariant violations in ALTER TABLE, SHOW PARSE_TREE rendering), generator defects (13: release mixing in UPDATE, LOAD DATA, INSERT at 5.x; an impossible native call in CREATE INDEX), and 60 server refusals that do not depend on database state (listed in `build/property-nonstate.txt`). | Not green. The run uses `paratest --processes=3` without Xdebug; `--log-junit` output is kept in the scratchpad per run. |
+| Native fuzz path | `ExecutionTarget` compares every reply exactly except: SHOW STATUS counters observed to differ between two fresh servers started one after the other (`build/native-twins`), the startup counters of the image, SHOW VARIABLES instance identity (host name, derived file names, server UUID) and connection/statement identifiers, SHOW ENGINE INNODB STATUS logical sections, and SHOW ENGINE INNODB MUTEX record form. | The connection/statement identifiers (`pseudo_thread_id`, `statement_id`) and the startup counters follow the image's readiness connections, not server variability; keeping them is a decision for the user. The 5.6/5.7 InnoDB monitor is not parsed (`InnoDbStatus::logical` returns null), so those releases cannot pass that comparison. |
+| Native grammar replay (8.4.7) | 2,180 seeds (the 100 % production manifest): 2,161 pass. 19 fail and are set aside under `build/native-replay-847-failing` with one log per run (`build/native-replay-847-run*.txt`). | Failing seeds: SHOW [GLOBAL\|SESSION\|LOCAL] STATUS (counters MemoryDB does not model: handler, binlog cache, connection and InnoDB internals), SHOW ENGINE ALL STATUS/MUTEX, SHOW RELAYLOG EVENTS (relay log named after the host), CREATE FULLTEXT INDEX (duplicate-name check order), SHOW INDEX/KEYS (index comment lost), REPAIR TABLE USE_FRM on a temporary table, DESC ANALYZE (plan text), SHOW PROCESSLIST (connection ids), SHOW OPEN TABLES, CREATE AGGREGATE FUNCTION under LOCK TABLES (fixed after the run, not re-verified), XA BEGIN after work outside the transaction, SHOW PROCEDURE/FUNCTION STATUS (creation time). |
+| Seedless native fuzz (8.4.7) | 15-minute empty-corpus run: 300 generated inputs verified, no failing case (`build/native-seedless-847.txt`). | The run used the SHOW VARIABLES exception above; without the connection/statement identifier part it would stop at the first SHOW VARIABLES. |
+| Ordinary checks | Unit suite: 14,380 tests, 38 failures: 9 `SystemSchemasTest` (104–184 declared system tables without row providers per release, a known gap) and 29 one-second small-test timeouts while the smokes, PHPStan and the fuzz ran in parallel. The `sql-semantics-mysql` tests of the refactored rules pass. | The timed-out tests must be rerun on an idle machine; PHPStan over the whole package was still running when this snapshot was written (see PR #665 for the result). |
+
+### Decisions needed from the user
+
+1. Statements whose analysis records a parse-level refusal (`ParseFailure`) or a structural problem other than a missing object are not generated for execution (`Tests\Support\Analysis::accepted`). MemoryDB turns those problems into errors that do not depend on database state, so the property cannot hold for them. The alternative is a second property that checks the mapped error.
+2. Server capabilities are treated as database state: debug-only statements (SHOW PROCEDURE CODE, SHOW PARSE_TREE), XA START/END options the server never supports, components and plugins that are not installed, replication that is not configured.
+3. Server refusals that depend on the value written, not on state, remain failures: for example `Incorrect usage/placement of 'SQL_CACHE'`, `Variable 'MYSQL_ERRNO' can't be set to the value of 'NULL'`, invalid SRS definitions. Many were removed by generating valid values (temporal literals, SQLSTATEs, charsets, collations, system variables, EXPLAIN formats, JSON attributes, JSON paths, replication filter patterns, component URNs, password hashes); the remaining 60 are listed in `build/property-nonstate.txt`.
+4. Operands typed only at run time (parameter markers, user variables) reach MemoryDB's compiler with no resolved type and raise a `LogicException` instead of executing or failing as the server would. This is a MemoryDB defect class, not a generator issue.
+5. `Tests\Support` is a namespace prefix the toolkit lint forbids; the helpers (`Analysis`, `Operands`, `Embedding`, `Bindings`, `Columns`) live there because the rename was declined. A permitted name is needed.
+6. Exact comparison of SHOW STATUS cannot pass without modelling InnoDB handler statistics and the image's provisioning connections; the memo's rule leaves only the two options above.
 
 ### Existing verification evidence and its limits
 
-Local logs under `packages/mysql-memory/build/` are evidence for particular runs,
-not portable completion gates or a replacement for the requirements:
+Local logs under `packages/mysql-memory/build/` are evidence for particular runs, not
+portable completion gates:
 
-- `remaining-property-shape-audit.json` records the 1,162/185 inventory.
-- `remaining-rename-full-property.txt` reports 683 PBT data cases passing in
-  11 minutes 58 seconds. It predates later additions and uses the incorrect
-  broad SQL-error allowance. It does **not** prove the corrected PBT property.
-- `remaining-flush-lock-tests-final.txt` reports 443 focused cases passing;
-  `remaining-flush-legacy-tests.txt` reports 373 cases after the legacy follow-up.
-  FLUSH comparisons matched 678 replies per release across nine releases.
-  These are focused regression results, not full-corpus acceptance.
-- `remaining-flush-lock-lint-verified.txt` records the static checks before the
-  uncommitted CHECKSUM changes.
-- `remaining-flush-lock-native-corpus.txt` stops at
-  `opt_checksum_type-2.txt`: `CHECKSUM TABLE _sqlfaker_identifier EXTENDED`
-  returns `3539857293` on native MySQL and `2587194292` on the then-current
-  MemoryDB implementation.
-- `remaining-tablespace-full-suite.txt` reports 11,809 tests, 140,371 assertions,
-  nine missing-system-provider failures and one one-second PreparedCache test
-  timeout. A separate passing cache test does not turn this full run green.
+- `native-replay-847-loop.txt` and `native-replay-847-run*.txt`: the iterative replay of the 2,180 seeds.
+- `native-seedless-847.txt`: the 15-minute seedless campaign.
+- `native-twins/twinseq-*.txt`: SHOW STATUS, SHOW VARIABLES and SHOW ENGINE replies of two fresh servers started one after the other (8.4.7 with and without a write history, 5.7.44).
+- `property-nonstate.txt`: the server refusals of the last property run that do not depend on database state.
 
-### Work currently in progress
-
-The last pushed changes corrected table-flush metadata locks, temporary-table
-lookup, and legacy diagnostics. Earlier focused fixes covered LOAD destinations,
-replication commands, renames and other counterexamples.
-
-The current uncommitted work replaces CHECKSUM's PHP-serialized-row CRC with
-column-type-specific record bytes. The changed files are:
-
-- `packages/mysql-memory/src/Command/Maintenance/ChecksumCommand.php`
-- `packages/mysql-memory/src/Storage/Checksum.php` (new)
-- `packages/mysql-memory/src/Storage/ChecksumField.php` (new)
-- `packages/mysql-memory/tests/Unit/Command/Maintenance/ChecksumCommandTest.php`
-
-These changes have not been validated, committed or pushed. They must not be
-counted as a resolved counterexample. Correcting the overall PBT error policy and
-fuzz exception policy takes priority over continuing isolated SQL fixes.
+An earlier set of "two-server" logs measured one reused container twice and was discarded; `Testcontainers::run()` returns the running container of the same class, so the experiments stop the first server before starting the second.
 
 ### Known implementation gaps
 
-Recorded unresolved findings include missing system-table row providers,
-prepared execution after its default database is dropped, implicit base-table
-locks for views, global read locks, UPDATE target-table subquery restrictions,
-and CHECKSUM record encoding. Other recorded differences concern connection
-identities in KILL, SHOW OPEN TABLES cache behavior, legacy performance_schema
-removal, partial KEY partition routing, legacy temporary-table IMPORT, oversized
-VARCHAR conversion, and nondeterministic ALTER defaults. Replication receiver
-state and general EXPLAIN plan/cost behavior are also incomplete.
-
-Reproduce and resolve these findings through the corrected checks. They are
-implementation findings, not an exhaustive specification or permission to add
-comparison exceptions. In particular, classify any alleged native variability
-under the user's rule instead of assuming it from the feature's name.
+Missing system-table row providers (9 unit failures), the unknown-type compiler
+failures above, SHOW STATUS/PROCESSLIST/OPEN TABLES counters and identities, the
+5.x InnoDB monitor parser of the fuzz target, EXPLAIN ANALYZE plan text, the index
+comment of CREATE INDEX in SHOW INDEX, REPAIR TABLE USE_FRM on temporary tables,
+the duplicate-key-name check order of CREATE FULLTEXT INDEX, XA START after work
+outside a global transaction, and the earlier recorded findings (prepared execution
+after its default database is dropped, implicit base-table locks for views, global
+read locks, UPDATE target-table subquery restrictions, KILL connection identities,
+legacy performance_schema removal, partial KEY partition routing, legacy temporary-table
+IMPORT, oversized VARCHAR conversion, nondeterministic ALTER defaults, replication
+receiver state).
 
 ## Work required to reach the goal
 

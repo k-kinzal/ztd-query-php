@@ -10,7 +10,8 @@ use SqlSemantics\Contract\GrammarRelease;
  * The accounts and roles of a server, the roles granted to each, and the default roles of each.
  *
  * A server starts with the accounts of a new installation: root at `localhost` and at `%` with
- * every privilege and GRANT OPTION, root at `localhost` also with PROXY on ''@'', and the locked
+ * every privilege and GRANT OPTION, root at `localhost` also with PROXY on ''@'' (root at `%` too from
+ * 8.4, as the official images grant it; verified on 5.6.51 to 9.1.0 images), and the locked
  * system accounts mysql.infoschema, mysql.session and mysql.sys with their privileges (verified
  * on a live 8.4 server). MySQL 5.6 starts with the two root accounts only, and 5.7 with them and the
  * locked accounts mysql.session and mysql.sys; their accounts use mysql_native_password
@@ -45,7 +46,7 @@ final class Accounts
             $root->grants->global->add($catalog->statics());
             $root->grants->global->grantOption = true;
             $root->grants->dynamic = array_fill_keys($catalog->dynamics(), true);
-            if ($host === 'localhost') {
+            if ($host === 'localhost' || in_array($release, [GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910], true)) {
                 $root->grants->proxies[(new Identity('', ''))->key()] = [new Identity('', ''), true];
             }
             $accounts->add($root);

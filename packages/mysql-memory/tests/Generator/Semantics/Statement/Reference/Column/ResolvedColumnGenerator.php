@@ -5,57 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\Semantics\Statement\Reference\Column;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use Tests\Generator\Semantics\Statement\RelationGenerator;
+use Tests\Generator\Semantics\Statement\Shape\OutputSlotGenerator;
 
 /**
- * Composes ResolvedColumn values and preserves their operand generators when shrinking.
+ * Generates ResolvedColumn values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Statement\Reference\Column\ResolvedColumn>
+ * @implements ErisGenerator<ResolvedColumn>
  */
 final class ResolvedColumnGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Statement\Reference\Column\ResolvedColumn> */
-    use Composition;
+    /** @var ErisGenerator<ResolvedColumn> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Relation> $relation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Shape\OutputSlot> $slot Generated constructor operand
-     * @param ErisGenerator<int>|null $depth Generated constructor operand
-     * @param ErisGenerator<bool>|null $resultReference Generated constructor operand
-     */
-    public function __construct(ErisGenerator $relation, ErisGenerator $slot, ?ErisGenerator $depth = null, ?ErisGenerator $resultReference = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Reference\Column\ResolvedColumn {
-            return new \SqlSemantics\Statement\Reference\Column\ResolvedColumn(relation: $parts[0], slot: $parts[1], depth: $parts[2], resultReference: $parts[3]);
-        }, Generators::tuple(
-            $relation,
-            $slot,
-            $depth ?? Generators::constant(0),
-            $resultReference ?? Generators::constant(false)
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): ResolvedColumn => new ResolvedColumn(relation: $parts[0], slot: $parts[1], depth: $parts[2], resultReference: $parts[3]),
+            Generators::tuple(
+                new RelationGenerator($release),
+                new OutputSlotGenerator($release, $depth - 1),
+                Generators::choose(0, 100),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ResolvedColumn $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Selects a generated position while retaining its relation and slot identity.
-     * Both the table and the selected position remain shrinkable.
-     *
-     * @param ErisGenerator<\SqlSemantics\Statement\Relation> $relations Generated relations with selectable columns
-     * @return ErisGenerator<\SqlSemantics\Statement\Reference\Column\ResolvedColumn>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ResolvedColumn>
      */
-    public static function selecting(ErisGenerator $relations): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::bind($relations, static function (\SqlSemantics\Statement\Relation $relation): ErisGenerator {
-            $fact = $relation->relationInformation();
-            $slots = $fact->shape->slots;
-            if ($fact->table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable) {
-                foreach ($fact->table->table->implicit as $hidden) {
-                    $column = $hidden->column;
-                    $slots[] = new \SqlSemantics\Statement\Shape\OutputSlot($column->name, new \SqlSemantics\Statement\Type\Known($column->type), $column->nullability, $column);
-                }
-            }
-            \SqlSemantics\Diagnostic\Check::invariant($slots !== [], 'A generated selected relation has at least one named column.');
-            return new self(Generators::constant($relation), Generators::elements($slots));
-        });
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ResolvedColumn> $element The generated counterexample
+     * @return GeneratedValue<ResolvedColumn>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

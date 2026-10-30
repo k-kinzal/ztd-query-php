@@ -5,72 +5,84 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Utility\Show\Session;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes ShowWarnings values and preserves their operand generators when shrinking.
+ * Generates ShowWarnings values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings>
+ * @implements ErisGenerator<ShowWarnings>
  */
 final class ShowWarningsGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings> */
-    use Composition;
+    /** @var ErisGenerator<ShowWarnings> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete ShowWarnings values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): ShowWarnings => new ShowWarnings(limit: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[0]) === null || (($parts[0])->count instanceof NumberLiteral && (($parts[0])->offset === null || ($parts[0])->offset instanceof NumberLiteral)),
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ShowWarnings $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No ShowWarnings forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings) {
-                throw new LogicException('Publishing ShowWarnings must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<?\SqlSemantics\Platform\MySql\Statement\Query\Limit>|null $limit Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings>
-     */
-    public static function operands(?ErisGenerator $limit = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings(limit: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple($limit ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings>>
-     */
-    public static function forms(): iterable
-    {
-        $number = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 1024)));
-        $limit = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number, $number, new \Tests\Generator\MySql\Statement\Query\Clause\OffsetSpellingGenerator()));
-        yield 'bounded diagnostic rows' => self::operands($limit);
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (ShowWarnings $statement): ShowWarnings => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ShowWarnings $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ShowWarnings>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ShowWarnings> $element The generated counterexample
+     * @return GeneratedValue<ShowWarnings>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

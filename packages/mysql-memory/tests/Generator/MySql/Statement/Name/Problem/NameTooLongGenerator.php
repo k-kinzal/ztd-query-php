@@ -5,40 +5,67 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Name\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Name\ObjectNameKindGenerator;
 
 /**
- * Composes NameTooLong values and preserves their operand generators when shrinking.
+ * Generates NameTooLong values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong>
+ * @implements ErisGenerator<NameTooLong>
  */
 final class NameTooLongGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong> */
-    use Composition;
+    /** @var ErisGenerator<NameTooLong> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): NameTooLong => new NameTooLong(name: new Name(str_repeat('x', 65 + $parts[0])), kind: $parts[1]),
+            Generators::tuple(
+                Generators::choose(0, 9),
+                Generators::oneOf(Generators::constant(null), new ObjectNameKindGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (NameTooLong $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind|null>|null $kind Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<NameTooLong>
      */
-    public function __construct(ErisGenerator $name, ?ErisGenerator $kind = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong {
-            return new \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong(name: $parts[0], kind: $parts[1]);
-        }, Generators::tuple(
-            $name,
-            $kind ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Generates the complete semantic condition consumed by input failure handling.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Name/Problem/NameTooLong' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new self(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $length): string => str_repeat('n', $length), Generators::choose(65, 96))), new \Tests\Generator\MySql\Statement\Name\ObjectNameKindGenerator())];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<NameTooLong> $element The generated counterexample
+     * @return GeneratedValue<NameTooLong>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

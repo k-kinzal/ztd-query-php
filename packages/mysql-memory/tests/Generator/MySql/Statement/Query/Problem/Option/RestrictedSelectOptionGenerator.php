@@ -5,40 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Query\Problem\Option;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption;
+use Tests\Generator\MySql\Statement\Query\SelectOptionGenerator;
 
 /**
- * Composes RestrictedSelectOption values and preserves their operand generators when shrinking.
+ * Generates RestrictedSelectOption values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption>
+ * @implements ErisGenerator<RestrictedSelectOption>
  */
 final class RestrictedSelectOptionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption> */
-    use Composition;
+    /** @var ErisGenerator<RestrictedSelectOption> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): RestrictedSelectOption => new RestrictedSelectOption(option: $parts[0]),
+            Generators::tuple(
+                new SelectOptionGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RestrictedSelectOption $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\SelectOption> $option Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RestrictedSelectOption>
      */
-    public function __construct(ErisGenerator $option)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption(option: $parts[0]);
-        }, Generators::tuple(
-            $option
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Query\\Problem\\Option\\RestrictedSelectOption' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RestrictedSelectOptionGenerator(
-            option: \Tests\Generator\MySql\Statement\Query\SelectOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority])
-        )];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<RestrictedSelectOption> $element The generated counterexample
+     * @return GeneratedValue<RestrictedSelectOption>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

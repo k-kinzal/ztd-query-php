@@ -6,73 +6,72 @@ namespace Tests\Generator\MySql\Statement\Call\Temporal;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
+use Tests\Generator\MySql\Statement\Call\Keyword\DateArithmeticAliasGenerator;
+use Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes date arithmetic operands and interval keywords through Eris.
+ * Generates DateArithmetic values from the generators of its operands.
  *
  * @implements ErisGenerator<DateArithmetic>
  */
 final class DateArithmeticGenerator implements ErisGenerator
 {
-    /**
-     * @var ErisGenerator<DateArithmetic>
-     */
+    /** @var ErisGenerator<DateArithmetic> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates bounded quantities against a fixed datetime, keeping every unit.
-     */
-    public function __construct()
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        $this->delegate = self::fromOperands(
-            Generators::bool(),
-            new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::constant('2024-06-15 12:34:56.123456')),
-            new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::map(static fn (int $number): string => (string) $number, Generators::int())),
-            new \Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator()
+        $this->delegate = Generators::map(
+            static fn (array $parts): DateArithmetic => new DateArithmetic(subtract: $parts[0], date: $parts[1], quantity: $parts[2], unit: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5], alias: $parts[6] !== null && $parts[6]->subtracts() === $parts[0] ? $parts[6] : null),
+            Generators::tuple(
+                Generators::bool(),
+                new ScalarGenerator($release, $depth - 1),
+                new ScalarGenerator($release, $depth - 1),
+                new IntervalUnitGenerator($release),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), new DateArithmeticAliasGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DateArithmetic $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<DateArithmetic>
+     * @return GeneratedValue<DateArithmetic>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<DateArithmetic> $element The generated counterexample
      * @return GeneratedValue<DateArithmetic>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<bool> $subtract The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $date The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $quantity The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit> $unit The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\DateArithmeticAlias|null>|null $alias The generated matching synonym
-     * @return ErisGenerator<DateArithmetic>
-     */
-    public static function fromOperands(ErisGenerator $subtract, ErisGenerator $date, ErisGenerator $quantity, ErisGenerator $unit, ?ErisGenerator $alias = null): ErisGenerator
-    {
-        return Generators::bind($subtract, static function (bool $selected) use ($date, $quantity, $unit, $alias): ErisGenerator {
-            return Generators::map(static fn (array $parts): DateArithmetic => new DateArithmetic(subtract: $selected, date: $parts[0], quantity: $parts[1], unit: $parts[2], alias: $parts[3]), Generators::tuple(
-                $date,
-                $quantity,
-                $unit,
-                $alias ?? \Tests\Generator\MySql\Statement\Call\Keyword\DateArithmeticAliasGenerator::forOperation($selected)
-            ));
-        });
-    }
-
 }

@@ -5,38 +5,71 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Lock;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes TableLock values and preserves their operand generators when shrinking.
+ * Generates TableLock values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock>
+ * @implements ErisGenerator<TableLock>
  */
 final class TableLockGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock> */
-    use Composition;
+    /** @var ErisGenerator<TableLock> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): TableLock => new TableLock(table: $parts[0], alias: $parts[1], mode: $parts[2], mark: $parts[3], inputSource: $parts[4], relationInformation: $parts[5]),
+            Generators::tuple(
+                new QualifiedNameGenerator($release),
+                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                new LockModeGenerator($release),
+                Generators::constant(\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (TableLock $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $table Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $alias Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode> $mode Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\AliasMark>|null $mark Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<TableLock>
      */
-    public function __construct(ErisGenerator $table, ErisGenerator $alias, ErisGenerator $mode, ?ErisGenerator $mark = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock(table: $parts[0], alias: $parts[1], mode: $parts[2], mark: $parts[3], inputSource: $parts[4], relationInformation: $parts[5]);
-        }, Generators::tuple(
-            $table,
-            $alias,
-            $mode,
-            $mark ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As),
-            $inputSource ?? Generators::constant(null),
-            $relationInformation ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<TableLock> $element The generated counterexample
+     * @return GeneratedValue<TableLock>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

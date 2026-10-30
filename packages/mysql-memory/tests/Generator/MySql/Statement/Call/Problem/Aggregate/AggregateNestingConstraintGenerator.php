@@ -5,46 +5,76 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Call\Problem\Aggregate;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint;
+use Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator;
+use Tests\Generator\MySql\Statement\Call\Aggregate\GroupConcatGenerator;
+use Tests\Generator\MySql\Statement\Call\Aggregate\JsonObjectAggregateGenerator;
+use Tests\Generator\MySql\Statement\Call\Window\WindowFunctionGenerator;
 
 /**
- * Composes AggregateNestingConstraint values and preserves their operand generators when shrinking.
+ * Generates AggregateNestingConstraint values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint>
+ * @implements ErisGenerator<AggregateNestingConstraint>
  */
 final class AggregateNestingConstraintGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint> */
-    use Composition;
+    /** @var ErisGenerator<AggregateNestingConstraint> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate|\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat|\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate|\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction> $call Generated constructor operand
-     */
-    public function __construct(ErisGenerator $call)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint {
-            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint(call: $parts[0]);
-        }, Generators::tuple(
-            $call
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Problem\Aggregate\AggregateNestingConstraint>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Call\\Problem\\Aggregate\\AggregateNestingConstraint' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new AggregateNestingConstraintGenerator(
-            call: new \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator(
-                function: \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count]),
-                arguments: Generators::constant([]),
-                distinct: Generators::constant(false),
-                all: Generators::constant(false),
-                over: Generators::constant(null)
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): AggregateNestingConstraint => new AggregateNestingConstraint(call: $parts[0]),
+            Generators::tuple(
+                Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 508], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new AggregateGenerator($release),
+                    1 => new GroupConcatGenerator($release),
+                    2 => new JsonObjectAggregateGenerator($release),
+                    3 => new WindowFunctionGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (AggregateNestingConstraint $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AggregateNestingConstraint>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AggregateNestingConstraint> $element The generated counterexample
+     * @return GeneratedValue<AggregateNestingConstraint>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,84 +5,79 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Catalog;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn;
+use Tests\Generator\MySql\Statement\Type\Resolved\DomainGenerator;
 
 /**
- * Composes SystemColumn values and preserves their operand generators when shrinking.
+ * Generates SystemColumn values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn>
+ * @implements ErisGenerator<SystemColumn>
  */
 final class SystemColumnGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn> */
-    use Composition;
+    /** @var ErisGenerator<SystemColumn> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<string> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain> $domain Generated constructor operand
-     * @param ErisGenerator<bool> $nullable Generated constructor operand
-     * @param ErisGenerator<int> $flags Generated constructor operand
-     * @param ErisGenerator<string> $originalName Generated constructor operand
-     * @param ErisGenerator<string> $originalTable Generated constructor operand
-     * @param ErisGenerator<string> $database Generated constructor operand
-     * @param ErisGenerator<string> $columnType Generated constructor operand
-     * @param ErisGenerator<string|null> $default Generated constructor operand
-     * @param ErisGenerator<string> $key Generated constructor operand
-     * @param ErisGenerator<string> $extra Generated constructor operand
-     * @param ErisGenerator<string> $comment Generated constructor operand
-     * @param ErisGenerator<string|null> $collation Generated constructor operand
-     * @param ErisGenerator<bool> $listedNullable Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\ColumnDimensions> $dimensions Generated declared type dimensions
-     */
-    public function __construct(ErisGenerator $name, ErisGenerator $domain, ErisGenerator $nullable, ErisGenerator $flags, ErisGenerator $originalName, ErisGenerator $originalTable, ErisGenerator $database, ErisGenerator $columnType, ErisGenerator $default, ErisGenerator $key, ErisGenerator $extra, ErisGenerator $comment, ErisGenerator $collation, ErisGenerator $listedNullable, ErisGenerator $dimensions)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn(name: $parts[0], domain: $parts[1], nullable: $parts[2], flags: $parts[3], originalName: $parts[4], originalTable: $parts[5], database: $parts[6], columnType: $parts[7], default: $parts[8], key: $parts[9], extra: $parts[10], comment: $parts[11], collation: $parts[12], listedNullable: $parts[13], dimensions: $parts[14]);
-        }, Generators::tuple(
-            $name,
-            $domain,
-            $nullable,
-            $flags,
-            $originalName,
-            $originalTable,
-            $database,
-            $columnType,
-            $default,
-            $key,
-            $extra,
-            $comment,
-            $collation,
-            $listedNullable,
-            $dimensions
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): SystemColumn => new SystemColumn(name: $parts[0], domain: $parts[1], nullable: $parts[2], flags: $parts[3], originalName: $parts[4], originalTable: $parts[5], database: $parts[6], columnType: $parts[7], default: $parts[8], key: $parts[9], extra: $parts[10], comment: $parts[11], collation: $parts[12], listedNullable: $parts[13], dimensions: $parts[14]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                new DomainGenerator($release),
+                Generators::bool(),
+                Generators::choose(0, 100),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99))),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99))),
+                Generators::bool(),
+                new ColumnDimensionsGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (SystemColumn $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Preserves the coupled metadata of one selected catalog column.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn> $columns Columns selected by the enclosing table
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<SystemColumn>
      */
-    public static function catalog(ErisGenerator $columns): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::bind($columns, static fn (\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn $column): self => new self(
-            Generators::constant($column->name),
-            Generators::constant($column->domain),
-            Generators::constant($column->nullable),
-            Generators::constant($column->flags),
-            Generators::constant($column->originalName),
-            Generators::constant($column->originalTable),
-            Generators::constant($column->database),
-            Generators::constant($column->columnType),
-            Generators::constant($column->default),
-            Generators::constant($column->key),
-            Generators::constant($column->extra),
-            Generators::map(static fn (int $value): string => 'generated comment ' . $value, Generators::choose(0, 1000)),
-            Generators::constant($column->collation),
-            Generators::constant($column->listedNullable),
-            ColumnDimensionsGenerator::catalog(Generators::constant($column->dimensions)),
-        ));
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<SystemColumn> $element The generated counterexample
+     * @return GeneratedValue<SystemColumn>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

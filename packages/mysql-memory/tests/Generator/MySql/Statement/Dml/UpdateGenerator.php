@@ -6,20 +6,38 @@ namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
 use LogicException;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement as M;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
+use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
+use SqlSemantics\Statement\Node;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
+use Tests\Generator\MySql\Statement\Query\DirectionGenerator;
+use Tests\Generator\MySql\Statement\Query\With\WithGenerator;
+use Tests\Generator\MySql\Statement\Relation\TableSourceGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredOrderItemGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Generates scalar and row-valued UPDATE assignments without a catalog.
+ * Generates Update values from the generators of its operands.
  *
  * @implements ErisGenerator<Update>
  */
@@ -28,190 +46,88 @@ final class UpdateGenerator implements ErisGenerator
     /** @var ErisGenerator<Update> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete Update values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<Update>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When the release belongs to another database.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($release->database() !== 'mysql') {
-            throw new InvalidArgumentException('UPDATE generation requires a MySQL grammar.');
-        }
-        if ($operands === null) {
-            $forms = [self::operands($release), self::references(), self::derivedTargets()];
-            if ($release === GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): Update => new Update(with: $parts[0], lowPriority: $parts[1], ignore: $parts[2], tables: $parts[3], assignments: $parts[4], where: $parts[5], orderBy: $parts[6], limit: $parts[7] instanceof RowLimit && $parts[7]->offset !== null ? new RowLimit($parts[7]->count) : $parts[7], hints: $parts[8], statementInformation: $parts[9], inputSource: $parts[10]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (static function (array $parts): bool {
+                    foreach ($parts as $part) {
+                        foreach (is_array($part) ? $part : [$part] as $node) {
+                            if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {
+                                return false;
+                            }
+                        }
+                    }
 
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): Update {
-            if (!$statement instanceof Update) {
-                throw new LogicException('Publishing Update must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Composes the written operands through Eris generation and shrinking.
-     * @return ErisGenerator<Update>
-     */
-    public static function operands(GrammarRelease $release): ErisGenerator
-    {
-        $operands = Generators::associative(['column' => new ColumnNameGenerator($release), 'number' => Generators::choose(0, 10000), 'row' => Generators::bool()]);
-        return Generators::map(static function (array $data): Update {
-            if (!$data['column'] instanceof M\Name\ColumnName || !is_int($data['number']) || !is_bool($data['row'])) {
-                throw new LogicException('UPDATE operands require a column name, integer value and row flag.');
-            }
-            $column = new M\Name\ColumnUse($data['column']->column);
-            $number = new M\Literal\NumberLiteral((string) $data['number']);
-            $assignment = $data['row'] ? new M\Routine\Program\Write\DeferredColumnAssignment($column, new M\Expression\Row([$number, new M\Literal\NumberLiteral('2')])) : new M\Dml\Assignment($column, $number);
-            return new Update(null, false, false, [new M\Relation\TableReference(new QualifiedName(new Name('target')))], [$assignment]);
-        }, $operands);
-    }
-
-    /**
-     * Varies input names, aliases and namespaces, including repeated occurrences.
-     *
-     * @return ErisGenerator<Update>
-     */
-    public static function references(): ErisGenerator
-    {
-        $tables = new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('t', 'u', 'v')),
-                schema: Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('pbt', 'other')))
-            ),
-            alias: Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('x', 'y')))
+                    return true;
+                })($parts),
+                Generators::tuple(
+                    $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
+                    Generators::bool(),
+                    Generators::bool(),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TableSourceGenerator($release, $depth - 1))),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new AssignmentGenerator($release, $depth - 1),
+                        1 => new DeferredColumnAssignmentGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new RowOperandGenerator($release, $depth - 1),
+                        2 => new DeferredOperandGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })) : Generators::constant(null),
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => Generators::map(static fn (array $item): OrderItem => new OrderItem($item[0], $item[1]), Generators::tuple(new ScalarGenerator($release, $depth - 1), Generators::oneOf(Generators::constant(null), new DirectionGenerator($release)))),
+                        1 => new DeferredOrderItemGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))) : Generators::constant([]),
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                    ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
         );
-        return self::fromOperands(
-            Generators::constant(null),
-            Generators::bool(),
-            Generators::bool(),
-            Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $tables)),
-            Generators::tuple(new AssignmentGenerator(
-                new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('a', 'b'))),
-                new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 10)))
-            )),
-            Generators::constant(null),
-            Generators::constant([]),
-            Generators::constant(null),
-            Generators::constant([])
-        );
-    }
+        $this->delegate = Generators::suchThat(
+            static function (Update $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-    /**
-     * Composes derived destinations, alone or beside a writable table reference.
-     * @return ErisGenerator<Update>
-     */
-    public static function derivedTargets(): ErisGenerator
-    {
-        $names = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('a', 'b', 'c'));
-        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 65535)));
-        $items = Generators::oneOf(Generators::tuple(new \Tests\Generator\MySql\Statement\Query\StarGenerator()), Generators::tuple(new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($numbers, $names)));
-        $derived = new \Tests\Generator\MySql\Statement\Relation\DerivedTableGenerator(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), $items), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $id): string => 'd_' . $id, Generators::choose(0, 8))));
-        $table = new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('t', 'u'))));
-        return self::fromOperands(
-            Generators::constant(null),
-            Generators::bool(),
-            Generators::bool(),
-            Generators::oneOf(Generators::tuple($derived), Generators::tuple($derived, $table)),
-            Generators::tuple(new AssignmentGenerator(new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator($names), $numbers)),
-            Generators::constant(null),
-            Generators::constant([]),
-            Generators::constant(null),
-            Generators::constant([])
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (Update $statement): Update => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Update $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<Update>
+     * @return GeneratedValue<Update>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<Update> $element The generated counterexample
      * @return GeneratedValue<Update>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<M\Query\WithClause|null> $with The generated semantic operand
-     * @param ErisGenerator<bool> $lowPriority The generated semantic operand
-     * @param ErisGenerator<bool> $ignore The generated semantic operand
-     * @param ErisGenerator<list<M\Relation\TableSource>> $tables The generated semantic operand
-     * @param ErisGenerator<list<M\Dml\Assignment|M\Routine\Program\Write\DeferredColumnAssignment>> $assignments The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|M\Expression\RowOperand|M\Routine\Program\Expression\DeferredOperand|null> $where The generated semantic operand
-     * @param ErisGenerator<list<M\Query\OrderItem|M\Routine\Program\Selection\DeferredOrderItem>> $orderBy The generated semantic operand
-     * @param ErisGenerator<M\Query\Limit|null> $limit The generated semantic operand
-     * @param ErisGenerator<list<M\Hint\OptimizerHint>> $hints The generated semantic operand
-     * @return ErisGenerator<Update>
-     */
-    public static function fromOperands(ErisGenerator $with, ErisGenerator $lowPriority, ErisGenerator $ignore, ErisGenerator $tables, ErisGenerator $assignments, ErisGenerator $where, ErisGenerator $orderBy, ErisGenerator $limit, ErisGenerator $hints): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): Update => new Update(with: $parts[0], lowPriority: $parts[1], ignore: $parts[2], tables: $parts[3], assignments: $parts[4], where: $parts[5], orderBy: $parts[6], limit: $parts[7], hints: $parts[8]), Generators::tuple($with, $lowPriority, $ignore, $tables, $assignments, $where, $orderBy, $limit, $hints));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<Update>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'Update/128' => UpdateGenerator::fromOperands(
-            with: Generators::constant(null),
-            lowPriority: Generators::constant(false),
-            ignore: Generators::constant(false),
-            tables: Generators::tuple(
-                new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
-                    name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    ),
-                    alias: Generators::constant(null),
-                    partitions: Generators::constant([]),
-                    indexHints: Generators::constant([]),
-                    sample: Generators::constant(null),
-                    mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([M\Name\AliasMark::As]),
-                    dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
-                )])
-            ),
-            assignments: Generators::tuple(
-                new AssignmentGenerator(
-                    column: new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        qualifier: Generators::constant(null),
-                        dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
-                    ),
-                    value: new DefaultRequestGenerator()
-                )
-            ),
-            where: Generators::constant(null),
-            orderBy: Generators::constant([]),
-            limit: Generators::constant(null),
-            hints: Generators::constant([])
-        );
-    }
-
 }

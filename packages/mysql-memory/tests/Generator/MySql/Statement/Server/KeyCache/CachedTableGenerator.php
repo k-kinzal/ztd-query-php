@@ -5,37 +5,84 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\KeyCache;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable;
+use Tests\Generator\MySql\Statement\Partition\AllPartitionsGenerator;
+use Tests\Generator\MySql\Statement\Partition\NamedPartitionsGenerator;
+use Tests\Generator\MySql\Statement\Relation\Hint\PrimaryIndexGenerator;
+use Tests\Generator\MySql\Statement\Table\IndexWordGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes CachedTable values and preserves their operand generators when shrinking.
+ * Generates CachedTable values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable>
+ * @implements ErisGenerator<CachedTable>
  */
 final class CachedTableGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable> */
-    use Composition;
+    /** @var ErisGenerator<CachedTable> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): CachedTable => new CachedTable(table: $parts[0], partitions: $parts[1], indexes: $parts[2], inputSource: $parts[3], relationInformation: $parts[4], keyword: $parts[5]),
+            Generators::tuple(
+                new QualifiedNameGenerator($release),
+                Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new AllPartitionsGenerator($release),
+                    1 => new NamedPartitionsGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new NameGenerator($release),
+                    1 => new PrimaryIndexGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }))),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), new IndexWordGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CachedTable $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $table Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection|null>|null $partitions Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex>|null>|null $indexes Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\IndexWord|null>|null $keyword Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<CachedTable>
      */
-    public function __construct(ErisGenerator $table, ?ErisGenerator $partitions = null, ?ErisGenerator $indexes = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $keyword = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::bind(Generators::tuple(
-            $table,
-            $partitions ?? Generators::constant(null),
-            $indexes ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $relationInformation ?? Generators::constant(null)
-        ), static function (array $parts) use ($keyword): ErisGenerator {
-            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable => new \SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable(table: $parts[0], partitions: $parts[1], indexes: $parts[2], inputSource: $parts[3], relationInformation: $parts[4], keyword: $selected), $keyword ?? ($parts[2] !== null ? new \Tests\Generator\MySql\Statement\Table\IndexWordGenerator() : Generators::constant(null)));
-        });
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<CachedTable> $element The generated counterexample
+     * @return GeneratedValue<CachedTable>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

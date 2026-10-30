@@ -5,86 +5,94 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Expression\Subquery;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use SqlSemantics\Platform\MySql\Statement as M;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions;
+use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
+use SqlSemantics\Statement\Query;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\Semantics\Statement\QueryGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes QuantifiedComparison values and preserves their operand generators when shrinking.
+ * Generates QuantifiedComparison values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison>
+ * @implements ErisGenerator<QuantifiedComparison>
  */
 final class QuantifiedComparisonGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison> */
-    use Composition;
+    /** @var ErisGenerator<QuantifiedComparison> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Composes row membership against generated two-row or empty subqueries.
-     * The shared row shape, comparison operator and expected result survive shrinking together.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, string|null}>
-     */
-    public static function rowQueries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        return Generators::bind(Generators::tuple(
-            Generators::choose(0, 10),
-            Generators::choose(0, 10),
-            Generators::choose(0, 10),
-            Generators::bool(),
-            Generators::bool(),
-            new QuantifierGenerator()
-        ), static function (array $parts) use ($release): ErisGenerator {
-            [$first, $second, $chosen, $empty, $nullable, $quantifier] = $parts;
-            $all = $quantifier === M\Expression\Subquery\Quantifier::All;
-            $matched = $chosen === $second || $chosen === $second + 1;
-            $expected = $empty ? ($all ? '1' : '0') : ($nullable && $matched ? null : (($all !== $matched) ? '1' : '0'));
-            $operand = new M\Expression\Row([
-                $nullable ? new M\Literal\NullLiteral() : new M\Literal\NumberLiteral((string) $first),
-                new M\Literal\NumberLiteral((string) $chosen),
-            ]);
-            $query = new M\Query\Set\SetOperation(
-                new M\Query\Select([], [
-                    new M\Query\SelectExpression(new M\Literal\NumberLiteral((string) $first)),
-                    new M\Query\SelectExpression(new M\Literal\NumberLiteral((string) $second)),
-                ], where: $empty ? new M\Literal\NumberLiteral('0') : null),
-                M\Query\Set\SetOperator::Union,
-                M\Query\Set\SetQuantifier::All,
-                new M\Query\Select([], [
-                    new M\Query\SelectExpression(new M\Literal\NumberLiteral((string) $first)),
-                    new M\Query\SelectExpression(new M\Literal\NumberLiteral((string) ($second + 1))),
-                ], where: $empty ? new M\Literal\NumberLiteral('0') : null),
-            );
-            $comparisons = new self(
-                Generators::constant($operand),
-                Generators::constant($all ? M\Expression\ComparisonOperator::NotEqual : M\Expression\ComparisonOperator::Equal),
-                Generators::constant($quantifier),
-                Generators::constant($query),
-            );
-            $queries = Generators::map(static fn (M\Expression\Subquery\QuantifiedComparison $comparison): M\QueryRoot => new M\QueryRoot(new M\Query\Select([], [new M\Query\SelectExpression($comparison, new \SqlSemantics\Statement\Identifier\Name('chosen'))])), $comparisons);
-            return Generators::tuple(new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries), Generators::constant($expected));
-        });
+        $this->delegate = Generators::map(
+            static function (array $parts): QuantifiedComparison {
+                [$operator, $quantifier, $scalar, $row, $query] = $parts;
+                $operand = $quantifier->comparesRows($operator) && $row !== null ? $row : $scalar;
+                if (!(new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI)) {
+                    $operand = new Grouped($operand);
+                }
+
+                return new QuantifiedComparison(operand: $operand, operator: $operator, quantifier: $quantifier, query: $query, scalarInformation: null, inputSource: null);
+            },
+            Generators::suchThat(
+                static function (array $parts): bool {
+                    [$operator, $quantifier, $scalar, $row, $query] = $parts;
+                    $operand = $quantifier->comparesRows($operator) && $row !== null ? $row : $scalar;
+
+                    return (new RowShapes())->query($operand, $query) === null && (new ReadColumns())->problem($query) === null;
+                },
+                Generators::tuple(
+                    Generators::elements(array_values(array_filter(ComparisonOperator::cases(), static fn (ComparisonOperator $operator): bool => $operator !== ComparisonOperator::NullSafeEqual))),
+                    new QuantifierGenerator($release),
+                    new ScalarGenerator($release, $depth - 1),
+                    Generators::oneOf(Generators::constant(null), new RowOperandGenerator($release, $depth - 1)),
+                    Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null, new QueryGenerator($release, $depth - 1))
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (QuantifiedComparison $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|M\Expression\RowOperand> $operand Generated constructor operand
-     * @param ErisGenerator<M\Expression\ComparisonOperator> $operator Generated constructor operand
-     * @param ErisGenerator<M\Expression\Subquery\Quantifier> $quantifier Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Query> $query Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<QuantifiedComparison>
      */
-    public function __construct(ErisGenerator $operand, ErisGenerator $operator, ErisGenerator $quantifier, ErisGenerator $query, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): M\Expression\Subquery\QuantifiedComparison {
-            return new M\Expression\Subquery\QuantifiedComparison(operand: $parts[0], operator: $parts[1], quantifier: $parts[2], query: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple(
-            $operand,
-            $operator,
-            $quantifier,
-            $query,
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<QuantifiedComparison> $element The generated counterexample
+     * @return GeneratedValue<QuantifiedComparison>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

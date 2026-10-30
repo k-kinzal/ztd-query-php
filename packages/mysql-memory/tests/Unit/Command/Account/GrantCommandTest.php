@@ -78,15 +78,14 @@ final class GrantCommandTest extends TestCase
         self::assertArrayHasKey((new Identity('nobody', '%'))->key(), $account->grants->proxies);
     }
 
-    public function testExecuteRefusesAProxyGrant(): void
+    public function testExecuteGrantsAProxyUnderTheRootProxyAuthority(): void
     {
-        $session = (new Instance())->connect('root', '192.168.65.1');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1698);
-        $this->expectExceptionMessage("Access denied for user 'root'@'192.168.65.1'");
-
+        $instance = new Instance();
+        $session = $instance->connect('root', '192.168.65.1');
         $session->query('GRANT PROXY ON nobody TO root');
+
+        self::assertSame([], $session->diagnostics->conditions);
+        self::assertArrayHasKey((new \MySqlMemory\Account\Identity('nobody', '%'))->key(), $instance->accounts->find(new \MySqlMemory\Account\Identity('root', '%'))?->grants->proxies ?? []);
     }
 
     public function testApplyRefusesAnUnregisteredDynamicPrivilege(): void

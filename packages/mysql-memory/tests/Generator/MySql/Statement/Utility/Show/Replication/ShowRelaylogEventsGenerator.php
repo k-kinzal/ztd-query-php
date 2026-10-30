@@ -5,77 +5,89 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Utility\Show\Replication;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes ShowRelaylogEvents values and preserves their operand generators when shrinking.
+ * Generates ShowRelaylogEvents values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents>
+ * @implements ErisGenerator<ShowRelaylogEvents>
  */
 final class ShowRelaylogEventsGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents> */
-    use Composition;
+    /** @var ErisGenerator<ShowRelaylogEvents> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete ShowRelaylogEvents values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): ShowRelaylogEvents => new ShowRelaylogEvents(file: $parts[0], position: $parts[1] === null ? null : new Numeral((string) $parts[1]), limit: $parts[2], channel: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[2]) === null || (($parts[2])->count instanceof NumberLiteral && (($parts[2])->offset === null || ($parts[2])->offset instanceof NumberLiteral)),
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), Generators::choose(4, 9999)),
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ShowRelaylogEvents $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No ShowRelaylogEvents forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents) {
-                throw new LogicException('Publishing ShowRelaylogEvents must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<?\SqlSemantics\Platform\MySql\Statement\Literal\Text>|null $file Generated constructor operand
-     * @param ErisGenerator<?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral>|null $position Generated constructor operand
-     * @param ErisGenerator<?\SqlSemantics\Platform\MySql\Statement\Query\Limit>|null $limit Generated constructor operand
-     * @param ErisGenerator<?\SqlSemantics\Platform\MySql\Statement\Literal\Text>|null $channel Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents>
-     */
-    public static function operands(?ErisGenerator $file = null, ?ErisGenerator $position = null, ?ErisGenerator $limit = null, ?ErisGenerator $channel = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents(file: $parts[0], position: $parts[1], limit: $parts[2], channel: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple($file ?? Generators::constant(null), $position ?? Generators::constant(null), $limit ?? Generators::constant(null), $channel ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogEvents>>
-     */
-    public static function forms(): iterable
-    {
-        $number = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 1024)));
-        $limit = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number, $number, new \Tests\Generator\MySql\Statement\Query\Clause\OffsetSpellingGenerator()));
-        $file = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $number): string => 'mysql-bin.' . $number, Generators::choose(0, 999))));
-        $position = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 1024))));
-        yield 'log file, position, row limits and channel' => self::operands($file, $position, $limit, Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::elements('', 'channel', 'group_replication_applier'))));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (ShowRelaylogEvents $statement): ShowRelaylogEvents => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ShowRelaylogEvents $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ShowRelaylogEvents>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ShowRelaylogEvents> $element The generated counterexample
+     * @return GeneratedValue<ShowRelaylogEvents>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

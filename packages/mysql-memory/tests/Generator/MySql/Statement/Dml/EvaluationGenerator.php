@@ -5,80 +5,100 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use LogicException;
-use SqlSemantics\Platform\MySql\Statement as M;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
+use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Node;
+use Tests\Generator\MySql\Statement\Name\TableWildcardGenerator;
+use Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator;
+use Tests\Support\Analysis;
+use Tests\Support\Operands;
 
 /**
- * Composes Evaluation values and preserves their operand generators when shrinking.
+ * Generates Evaluation values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Evaluation>
+ * @implements ErisGenerator<Evaluation>
  */
 final class EvaluationGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Evaluation> */
-    use Composition;
+    /** @var ErisGenerator<Evaluation> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete DO requests whose fixed condition follows a dependent table lookup.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, int}>
-     */
-    public static function dependent(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        return Generators::bind(\Tests\Generator\MySql\Statement\Table\Key\IndexDefinitionGenerator::tables($release), static function (\SqlSemantics\Statement\AnalyzedStatement $definition) use ($release): ErisGenerator {
-            \SqlSemantics\Diagnostic\Check::invariant($definition instanceof M\Table\CreateTable, 'A dependent DO names its generated table.');
-            $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
-            $rows = new \Tests\Generator\MySql\Statement\Routine\Program\DeferredProjectionGenerator(new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector(2, $numbers)));
-            $conditions = $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $rows : Generators::oneOf(...[$rows, new \Tests\Generator\MySql\Statement\Query\StarGenerator()]);
-            $items = Generators::map(static function (M\Routine\Program\DeferredProjection|M\Query\Star $condition) use ($definition): array {
-                $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], new M\Relation\TableReference($definition->name));
-                return [$condition, new M\Query\SelectExpression(new M\Expression\Subquery\ScalarSubquery($query))];
-            }, $conditions);
-            $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value);
-            $search = new \SqlSemantics\Contract\SearchPath($definition->name->schema->value ?? 'pbt');
-            $absent = $semantics->context([], true, $search);
-            $present = $semantics->context($definition->declarations(), true, $search);
-            return Generators::bind(self::operands($items), static fn (M\Dml\Evaluation $request): ErisGenerator => Generators::tuple(
-                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, Generators::constant($request), Generators::constant($absent)),
-                Generators::constant($definition),
-                new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, Generators::constant($request), Generators::constant($present)),
-                Generators::constant($request->items[0] instanceof M\Query\Star ? 1096 : 1241),
-            ));
-        });
+        $this->delegate = Generators::map(
+            static fn (array $parts): Evaluation => new Evaluation(items: [...($parts[3] ? [new Star()] : []), ...$parts[0]], statementInformation: $parts[1], inputSource: $parts[2]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (static function (array $parts): bool {
+                    foreach ($parts as $part) {
+                        foreach (is_array($part) ? $part : [$part] as $node) {
+                            if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
+                })($parts)
+                && (Operands::aggregateFree($parts[0])),
+                Generators::tuple(
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::bool(), static fn (bool $wildcard): ErisGenerator => $wildcard ? new TableWildcardGenerator($release) : new SelectExpressionGenerator($release, $depth - 1)))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::bool()
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Evaluation $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (Evaluation $statement): Evaluation => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Evaluation $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
-     * Generates complete Evaluation values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<M\Dml\Evaluation>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Evaluation>
      */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        if ($operands === null) {
-            $forms = [];
-            $forms[] = self::operands(Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(\Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::nat()))]))));
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): M\Dml\Evaluation {
-            if (!$statement instanceof M\Dml\Evaluation) {
-                throw new LogicException('Publishing Evaluation must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+        return ($this->delegate)($size, $rand);
     }
+
     /**
-     * @param ErisGenerator<list<M\Query\SelectExpression|M\Routine\Program\DeferredProjection|M\Query\Star|M\Name\TableWildcard>> $items Generated constructor operand
-     * @param ErisGenerator<M\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<M\Dml\Evaluation>
+     * @param GeneratedValue<Evaluation> $element The generated counterexample
+     * @return GeneratedValue<Evaluation>
      */
-    public static function operands(ErisGenerator $items, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public function shrink(GeneratedValue $element): GeneratedValue
     {
-        return Generators::map(static function (array $parts): M\Dml\Evaluation {
-            return new M\Dml\Evaluation(items: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple($items, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+        return $this->delegate->shrink($element);
     }
 }

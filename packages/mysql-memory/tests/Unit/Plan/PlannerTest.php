@@ -44,6 +44,62 @@ final class PlannerTest extends TestCase
         self::assertSame([['1.250000000000000000000000000000']], $result->rows);
     }
 
+    public function testTypedTellsWhetherEveryResultColumnHasADomain(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $typed = $session->analyze('SELECT a FROM t UNION SELECT 1');
+        $dependent = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('d')))->analyze('SELECT a FROM u UNION SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $typed);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $dependent);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($typed->query, $typed->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+
+        self::assertTrue($planner->typed($typed->query));
+        self::assertFalse($planner->typed($dependent->query));
+    }
+
+    public function testMissingRelationsReportsTheTableOfANestedOperand(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $operation = $session->analyze('SELECT 1 UNION (SELECT 2 UNION SELECT a FROM nowhere)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $statement = $operation->query;
+        self::assertInstanceOf(SetOperation::class, $statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Table 'd.nowhere' doesn't exist");
+
+        $planner->missingRelations($statement, null);
+    }
+
+    public function testSetReportsTheMissingRelationOfAnOperandBeforeTypingTheResult(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $operation = $session->analyze('SELECT 8 UNION ALL SELECT a FROM t');
+        $statement = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $statement = $statement->query;
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+
+        try {
+            $planner->query($statement, null);
+            self::fail('The missing relation is reported.');
+        } catch (SqlError $error) {
+            self::assertSame(1146, $error->getCode());
+            self::assertSame("Table 'd.t' doesn't exist", $error->getMessage());
+        }
+    }
+
     public function testQueryPlansASelectIntoItsRowsNamesAndTypes(): void
     {
         $session = (new Instance())->connect();

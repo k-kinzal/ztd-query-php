@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Generator;
+namespace Tests\Support;
 
 use SqlSemantics\Platform\MySql\Rules\Query\WindowReferences;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
@@ -39,6 +39,6 @@ final class Embedding
         foreach ((new WindowReferences())->names([$node]) as $name) {
             $windows[strtolower($name->value)] ??= new WindowDefinition($name, new WindowSpec());
         }
-        return new QueryRoot(new Select([], [new SelectExpression($node)], from: (new Context\Columns())->input($node), windows: array_values($windows)));
+        return new QueryRoot(new Select([], [new SelectExpression($node)], from: (new Columns())->input($node), windows: array_values($windows)));
     }
 }

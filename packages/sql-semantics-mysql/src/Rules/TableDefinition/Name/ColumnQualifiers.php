@@ -33,17 +33,31 @@ final class ColumnQualifiers
      */
     public function check(QualifiedName $target, array $parts): void
     {
+        Check::input($this->accepts($target, $parts), 'A definition name qualifier must identify the table of its statement.');
+    }
+
+    /**
+     * Tells whether every column-name qualifier among the parts identifies the table of the statement.
+     *
+     * @param list<mixed> $parts
+     */
+    public function accepts(QualifiedName $target, array $parts): bool
+    {
         $pending = $parts;
         while ($pending !== []) {
             $value = array_pop($pending);
             if ($value instanceof ColumnName) {
-                Check::input($this->problem($value, $target) === null, 'A definition name qualifier must identify the table of its statement.');
+                if ($this->problem($value, $target) !== null) {
+                    return false;
+                }
             } elseif ($value instanceof Node) {
                 array_push($pending, ...array_values(get_object_vars($value)));
             } elseif (is_array($value)) {
                 array_push($pending, ...array_values($value));
             }
         }
+
+        return true;
     }
 
     /**

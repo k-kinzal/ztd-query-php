@@ -5,87 +5,96 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Alter;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
+use Eris\Random\RandomRange;
 use LogicException;
-use Tests\Generator\Composition;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex;
+use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption;
+use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Alter\Modifier\AlgorithmOptionGenerator;
+use Tests\Generator\MySql\Statement\Alter\Modifier\LockOptionGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes DropIndex values and preserves their operand generators when shrinking.
+ * Generates DropIndex values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropIndex>
+ * @implements ErisGenerator<DropIndex>
  */
 final class DropIndexGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Alter\DropIndex> */
-    use Composition;
+    /** @var ErisGenerator<DropIndex> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete DropIndex values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropIndex>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): DropIndex => new DropIndex(index: $parts[0], table: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], relationInformation: $parts[5]),
+            Generators::suchThat(
+                static fn (array $parts): bool => count(array_filter(($parts[2]), static fn ($option): bool => $option instanceof AlgorithmOption)) <= 1 && count(array_filter(($parts[2]), static fn ($option): bool => $option instanceof LockOption)) <= 1,
+                Generators::tuple(
+                    new NameGenerator($release),
+                    new QualifiedNameGenerator($release),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new AlgorithmOptionGenerator($release),
+                        1 => new LockOptionGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DropIndex $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No DropIndex forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Alter\DropIndex {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\DropIndex) {
-                throw new LogicException('Publishing DropIndex must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $index Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $table Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Alter\AlterOption>>|null $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropIndex>
-     */
-    public static function operands(ErisGenerator $index, ErisGenerator $table, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\DropIndex {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\DropIndex(index: $parts[0], table: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], relationInformation: $parts[5]);
-        }, Generators::tuple($index, $table, $options ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $relationInformation ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\DropIndex>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'DropIndex/33' => DropIndexGenerator::operands(
-            index: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            options: Generators::constant([])
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (DropIndex $statement): DropIndex => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (DropIndex $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DropIndex>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DropIndex> $element The generated counterexample
+     * @return GeneratedValue<DropIndex>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

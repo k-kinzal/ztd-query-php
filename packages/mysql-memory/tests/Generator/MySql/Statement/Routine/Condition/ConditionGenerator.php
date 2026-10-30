@@ -5,73 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Condition;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
+use Eris\Random\RandomRange;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement as M;
-use Tests\Generator\Composition;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
 
 /**
- * Composes Condition values and preserves their operand generators when shrinking.
+ * Generates Condition values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition>
+ * @implements ErisGenerator<Condition>
  */
 final class ConditionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition> */
-    use Composition;
+    /** @var ErisGenerator<Condition> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param non-empty-list<ErisGenerator<M\Routine\Condition\Condition>> $alternatives Concrete SQL forms satisfying this role
-     */
-    public function __construct(array $alternatives)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::oneOf(...$alternatives);
+        $this->delegate = Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => match ($choice) {
+            0 => new ConditionNameGenerator($release),
+            1 => new ErrorCodeGenerator($release),
+            2 => new GeneralConditionGenerator($release),
+            3 => new SqlStateGenerator($release),
+            default => throw new LogicException('Unreachable alternative.'),
+        });
+        $this->delegate = Generators::suchThat(
+            static function (Condition $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Composes invalid literal conditions with their declaration and handler owners.
-     *
-     * @return ErisGenerator<array{M\Statement, int, string}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Condition>
      */
-    public static function definitions(GrammarRelease $release, int $owner): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(self::definition(...), Generators::tuple(
-            Generators::constant($release),
-            new self([
-                new SqlStateGenerator(new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'bad' . $value, Generators::choose(0, 1000)))),
-                new ErrorCodeGenerator(new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => '0.' . $value, Generators::choose(0, 9)))),
-            ]),
-            new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
-            Generators::bool(),
-            Generators::constant($owner)
-        ));
+        return ($this->delegate)($size, $rand);
     }
 
     /**
-     * Preserves a generated condition inside each supported stored-program owner.
-     *
-     * @param array{GrammarRelease, M\Routine\Condition\Condition, \SqlSemantics\Statement\Identifier\Name, bool, int} $parts
-     * @return array{M\Statement, int, string}
-     * @throws LogicException When the supplied condition is not a literal operand
+     * @param GeneratedValue<Condition> $element The generated counterexample
+     * @return GeneratedValue<Condition>
      */
-    public static function definition(array $parts): array
+    public function shrink(GeneratedValue $element): GeneratedValue
     {
-        [$release, $condition, $name, $handler, $owner] = $parts;
-        if (!$condition instanceof M\Routine\Condition\SqlState && !$condition instanceof M\Routine\Condition\ErrorCode) {
-            throw new LogicException('The generator supplies literal condition operands.');
-        }
-        $declaration = $handler ? new M\Routine\Program\HandlerDeclaration(M\Routine\Program\HandlerAction::Continue, [$condition], new M\Routine\Program\Block()) : new M\Routine\Program\ConditionDeclaration($name, $condition);
-        $body = new M\Routine\Program\Block([$declaration]);
-        $qualified = new \SqlSemantics\Statement\Identifier\QualifiedName($name);
-        $request = match ($owner) {
-            0 => new M\Routine\CreateProcedure($qualified, new M\Routine\ParameterList([]), $body),
-            1 => new M\Routine\CreateFunction($qualified, new M\Routine\ParameterList([]), new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Routine\Definition\FunctionImplementation($body)),
-            2 => new M\Routine\CreateTrigger($qualified, M\Routine\Trigger\TriggerTime::Before, M\Routine\Trigger\TriggerEvent::Insert, new M\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('target'))), $body),
-            3 => new M\Routine\CreateEvent($qualified, new M\Routine\Event\OnceSchedule(new M\Literal\StringLiteral(['2030-01-01 00:00:00'])), $body),
-            default => new M\Routine\AlterEvent($qualified, body: $body),
-        };
-        $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
-        return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $request), $condition instanceof M\Routine\Condition\SqlState ? 1407 : 1525, $condition instanceof M\Routine\Condition\SqlState ? "Bad SQLSTATE: '" . $condition->state->value . "'" : "Incorrect CONDITION value: '0'"];
+        return $this->delegate->shrink($element);
     }
 }

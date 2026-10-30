@@ -40,6 +40,21 @@ final class SamplingTest extends TestCase
         $session->query('UPDATE t SET zz = (SELECT 1 FROM t AS x TABLESAMPLE SYSTEM (5))');
     }
 
+    public function testBaseReportsAnUndeclaredTableThatDoesNotExist(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('d'));
+        $operation = $semantics->analyze('SELECT 1 FROM t x TABLESAMPLE SYSTEM (50)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+        $this->expectExceptionMessage("Table 'd.t' doesn't exist");
+
+        (new \MySqlMemory\Session\Execution($session))->statement($operation);
+    }
+
     public function testOpenedRefusesSamplingAViewBeforeThePercentage(): void
     {
         $session = (new Instance())->connect();

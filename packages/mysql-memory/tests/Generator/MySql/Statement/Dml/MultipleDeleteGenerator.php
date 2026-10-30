@@ -5,168 +5,105 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
+use SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Node;
+use Tests\Generator\MySql\Statement\Dml\Target\DeletionInputGenerator;
+use Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator;
+use Tests\Generator\MySql\Statement\Query\With\WithGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes MultipleDelete values and preserves their operand generators when shrinking.
+ * Generates MultipleDelete values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete>
+ * @implements ErisGenerator<MultipleDelete>
  */
 final class MultipleDeleteGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete> */
-    use Composition;
+    /** @var ErisGenerator<MultipleDelete> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete MultipleDelete values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($operands === null) {
-            $forms = [];
-            foreach (self::additionalForms() as [$grammar, $form]) {
-                if ($grammar === $release) {
-                    $forms[] = $form;
-                }
-            }
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): MultipleDelete => new MultipleDelete(with: $parts[0], options: $parts[1], input: $parts[2]->targets === [] ? new DeletionInput($parts[2]->tables, null, null, null) : $parts[2], form: $parts[3], where: $parts[4], hints: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (static function (array $parts): bool {
+                    foreach ($parts as $part) {
+                        foreach (is_array($part) ? $part : [$part] as $node) {
+                            if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {
+                                return false;
+                            }
+                        }
+                    }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No MultipleDelete forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete) {
-                throw new LogicException('Publishing MultipleDelete must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\WithClause|null> $with Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption>> $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput> $input Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm> $form Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $where Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint>>|null $hints Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete>
-     */
-    public static function operands(ErisGenerator $with, ErisGenerator $options, ErisGenerator $input, ErisGenerator $form, ?ErisGenerator $where = null, ?ErisGenerator $hints = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(with: $parts[0], options: $parts[1], input: $parts[2], form: $parts[3], where: $parts[4], hints: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]);
-        }, Generators::tuple($with, $options, $input, $form, $where ?? Generators::constant(null), $hints ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes further SQL roles and version-specific forms from typed operands.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete>}>
-     */
-    public static function additionalForms(): iterable
-    {
-        yield 'MultipleDelete/additional/13' => [\SqlSemantics\Contract\GrammarRelease::MySql847, MultipleDeleteGenerator::operands(
-            with: Generators::constant(null),
-            options: Generators::constant([]),
-            input: new Target\DeletionInputGenerator(
-                tables: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\JoinedTableGenerator(
-                        left: new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
-                            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('t'),
-                                    quote: Generators::constant(null)
-                                ),
-                                schema: Generators::constant(null),
-                                catalog: Generators::constant(null)
-                            ),
-                            alias: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::constant('x'),
-                                quote: Generators::constant(null)
-                            ),
-                            partitions: Generators::constant([]),
-                            indexHints: Generators::constant([]),
-                            sample: Generators::constant(null),
-                            mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
-                            dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                        )]),
-                        operator: \Tests\Generator\MySql\Statement\Relation\Join\JoinOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Join]),
-                        right: new \Tests\Generator\MySql\Statement\Relation\TableSourceGenerator([new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(
-                            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('u'),
-                                    quote: Generators::constant(null)
-                                ),
-                                schema: Generators::constant(null),
-                                catalog: Generators::constant(null)
-                            ),
-                            alias: Generators::constant(null),
-                            partitions: Generators::constant([]),
-                            indexHints: Generators::constant([]),
-                            sample: Generators::constant(null),
-                            mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
-                            dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                        )]),
-                        on: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\ComparisonGenerator(
-                            operator: \Tests\Generator\MySql\Statement\Expression\ComparisonOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal]),
-                            left: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
-                                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('a'),
-                                    quote: Generators::constant(null)
-                                ),
-                                qualifier: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                        value: Generators::constant('x'),
-                                        quote: Generators::constant(null)
-                                    ),
-                                    schema: Generators::constant(null),
-                                    catalog: Generators::constant(null)
-                                ),
-                                dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                            )]),
-                            right: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
-                                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('x'),
-                                    quote: Generators::constant(null)
-                                ),
-                                qualifier: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                        value: Generators::constant('u'),
-                                        quote: Generators::constant(null)
-                                    ),
-                                    schema: Generators::constant(null),
-                                    catalog: Generators::constant(null)
-                                ),
-                                dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                            )])
-                        )]),
-                        using: Generators::constant([])
-                    )])
-                ),
-                targets: Generators::tuple(
-                    new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::constant('x'),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    )
-                ),
-                resolutions: Generators::constant(null)
-            ),
-            form: MultipleDeleteFormGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::Using]),
-            where: Generators::constant(null),
-            hints: Generators::constant([])
-        )];
+                    return true;
+                })($parts),
+                Generators::tuple(
+                    $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DeleteOptionGenerator($release))),
+                    new DeletionInputGenerator($release, $depth - 1),
+                    new MultipleDeleteFormGenerator($release),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                    ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (MultipleDelete $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (MultipleDelete $statement): MultipleDelete => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (MultipleDelete $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<MultipleDelete>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<MultipleDelete> $element The generated counterexample
+     * @return GeneratedValue<MultipleDelete>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

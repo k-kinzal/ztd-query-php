@@ -5,28 +5,64 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Hint\Form;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint;
 
 /**
- * Composes BlockNameHint values and preserves their operand generators when shrinking.
+ * Generates BlockNameHint values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint>
+ * @implements ErisGenerator<BlockNameHint>
  */
 final class BlockNameHintGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint> */
-    use Composition;
+    /** @var ErisGenerator<BlockNameHint> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): BlockNameHint => new BlockNameHint(block: $parts[0]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (BlockNameHint $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<string> $block Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<BlockNameHint>
      */
-    public function __construct(ErisGenerator $block)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint {
-            return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint(block: $parts[0]);
-        }, Generators::tuple(
-            $block
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<BlockNameHint> $element The generated counterexample
+     * @return GeneratedValue<BlockNameHint>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

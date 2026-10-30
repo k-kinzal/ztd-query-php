@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Generator;
+namespace Tests\Support;
 
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Contract\ParameterStyle;

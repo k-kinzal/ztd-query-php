@@ -53,6 +53,7 @@ final class Proxies
         $legacy = (new Catalog($session->settings()->release()))->legacy();
         foreach ($identities as $index => $identity) {
             try {
+                $this->systemUser($identity, $session);
                 $found[] = $this->grantee($statement, $index, $identity, $session);
             } catch (SqlError $error) {
                 if (!in_array($error->error, [AccountError::PasswordNoMatch, AccountError::CantCreateUserWithGrant], true)) {
@@ -113,6 +114,7 @@ final class Proxies
                 $unknown = !$session->settings()->legacy() && $accounts->stored($identity->stored()) !== null ? AccountError::PasswordNoMatch->error() : null;
                 $found = (new RevokeCommand())->found([$user], $statement->ignoreUnknownUser, $session, false, $unknown);
                 foreach ($found as $account) {
+                    $this->systemUser($account->identity, $session);
                     $names->ascii($account->identity, 1, $session->diagnostics);
                     $this->withdraw($account, $proxied, $statement->ifExists, $session);
                 }
@@ -141,6 +143,29 @@ final class Proxies
             $session->diagnostics->warning($error->error, $error->getMessage());
         }
         unset($account->grants->proxies[$proxied->key()]);
+    }
+
+    /**
+     * Refuses a proxy change of an account that holds SYSTEM_USER to a session without it.
+     *
+     * MySQL protects the accounts holding SYSTEM_USER from sessions that lack the privilege
+     * (ER_SPECIFIC_ACCESS_DENIED_ERROR, verified on an 8.4.7 image: `GRANT PROXY ON root TO root`
+     * by an account with PROXY ON root WITH GRANT OPTION but without SYSTEM_USER).
+     *
+     * @throws SqlError When the account holds SYSTEM_USER and the session does not
+     */
+    public function systemUser(Identity $identity, Session $session): void
+    {
+        $account = $session->instance->accounts->find($identity);
+        if ($account === null || !isset($account->grants->dynamic['SYSTEM_USER'])) {
+            return;
+        }
+        $current = $session->instance->accounts->find($session->variables->definer);
+        if ($current !== null && isset($current->grants->dynamic['SYSTEM_USER'])) {
+            return;
+        }
+
+        throw AccountError::SpecificAccessDenied->error('SYSTEM_USER');
     }
 
     /**

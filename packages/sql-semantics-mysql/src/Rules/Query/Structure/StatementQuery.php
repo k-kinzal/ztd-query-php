@@ -32,14 +32,31 @@ final class StatementQuery
      */
     public function check(Query $query): void
     {
-        Check::input($this->problem($query) === null, 'A statement query cannot combine ALL and DISTINCT in one query block.');
+        $refusal = $this->refusal($query);
+        Check::input($refusal === null, $refusal ?? '');
+    }
+
+    /**
+     * Describes the first form of the query that exists in a query operand position only, or null when the query stands alone.
+     */
+    public function refusal(Query $query): ?string
+    {
+        if ($this->problem($query) !== null) {
+            return 'A statement query cannot combine ALL and DISTINCT in one query block.';
+        }
         foreach ($this->blocks($query) as $block) {
-            Check::input(!$block instanceof OrderedSetOperation, 'An ordered legacy set operation belongs to a subquery only.');
-            if ($block instanceof Select || $block instanceof DeferredSelection) {
-                Check::input(!$block instanceof Select || $block->late === null, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
-                Check::input($block->procedure === null || $block->from !== null, 'A standalone PROCEDURE ANALYSE query requires a FROM clause.');
+            if ($block instanceof OrderedSetOperation) {
+                return 'An ordered legacy set operation belongs to a subquery only.';
+            }
+            if ($block instanceof Select && $block->late !== null) {
+                return 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.';
+            }
+            if (($block instanceof Select || $block instanceof DeferredSelection) && $block->procedure !== null && $block->from === null) {
+                return 'A standalone PROCEDURE ANALYSE query requires a FROM clause.';
             }
         }
+
+        return null;
     }
 
     /**

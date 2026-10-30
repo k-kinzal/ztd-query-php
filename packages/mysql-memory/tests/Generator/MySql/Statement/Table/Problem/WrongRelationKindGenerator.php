@@ -5,53 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes WrongRelationKind values and preserves their operand generators when shrinking.
+ * Generates WrongRelationKind values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind>
+ * @implements ErisGenerator<WrongRelationKind>
  */
 final class WrongRelationKindGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind> */
-    use Composition;
+    /** @var ErisGenerator<WrongRelationKind> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal> $refusal Generated constructor operand
-     */
-    public function __construct(ErisGenerator $name, ErisGenerator $refusal)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind(name: $parts[0], refusal: $parts[1]);
-        }, Generators::tuple(
-            $name,
-            $refusal
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Table\\Problem\\WrongRelationKind' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new WrongRelationKindGenerator(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 't' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'shop' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                catalog: Generators::constant(null)
-            ),
-            refusal: KindRefusalGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal::NotView])
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): WrongRelationKind => new WrongRelationKind(name: $parts[0], refusal: $parts[1]),
+            Generators::tuple(
+                new QualifiedNameGenerator($release),
+                new KindRefusalGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (WrongRelationKind $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<WrongRelationKind>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<WrongRelationKind> $element The generated counterexample
+     * @return GeneratedValue<WrongRelationKind>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

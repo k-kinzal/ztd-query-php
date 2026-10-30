@@ -5,44 +5,109 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Server;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\ExplainableGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\DeferredSelectionGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredQueryGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredDeleteGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredInsertQueryGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredInsertRowsGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredInsertSetGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredMultipleDeleteGenerator;
+use Tests\Generator\MySql\Statement\Utility\Explain\ExplainModifierGenerator;
+use Tests\Generator\MySql\Statement\Utility\Explain\ExplainVerbGenerator;
+use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes DeferredExplain values and preserves their operand generators when shrinking.
+ * Generates DeferredExplain values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain>
+ * @implements ErisGenerator<DeferredExplain>
  */
 final class DeferredExplainGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain> */
-    use Composition;
+    /** @var ErisGenerator<DeferredExplain> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static function (array $parts): DeferredExplain {
+                [$statement, $format, $into, $database, $analyze, $modifier, $emptyInto, $verb] = $parts;
+                if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Explainable) {
+                    return new DeferredExplain(statement: $statement, format: new Name('TRADITIONAL'), into: $into, database: $database, analyze: true, modifier: null, emptyInto: false, inputSource: null, verb: $verb);
+                }
+                if ($modifier !== null) {
+                    return new DeferredExplain(statement: $statement, format: null, into: null, database: null, analyze: false, modifier: $modifier, emptyInto: false, inputSource: null, verb: $verb);
+                }
+                if ($emptyInto) {
+                    return new DeferredExplain(statement: $statement, format: $format, into: null, database: $database, analyze: false, modifier: null, emptyInto: true, inputSource: null, verb: $verb);
+                }
+
+                return new DeferredExplain(statement: $statement, format: $format, into: $into, database: $database, analyze: $analyze, modifier: null, emptyInto: false, inputSource: null, verb: $verb);
+            },
+            Generators::tuple(
+                Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 508, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ExplainableGenerator($release, $depth - 1),
+                    1 => new DeferredSelectionGenerator($release, $depth - 1),
+                    2 => new DeferredQueryGenerator($release, $depth - 1),
+                    3 => new DeferredInsertRowsGenerator($release, $depth - 1),
+                    4 => new DeferredInsertSetGenerator($release, $depth - 1),
+                    5 => new DeferredInsertQueryGenerator($release, $depth - 1),
+                    6 => new DeferredDeleteGenerator($release, $depth - 1),
+                    7 => new DeferredMultipleDeleteGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }),
+                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new UserVariableGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                Generators::bool(),
+                ($bit & 3) !== 0 ? ((new ReleaseDomain())->bit($release) & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ExplainModifierGenerator($release)) : Generators::constant(null) : Generators::constant(null),
+                Generators::bool(),
+                new ExplainVerbGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredExplain $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Explainable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete> $statement Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $format Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable|null>|null $into Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $database Generated constructor operand
-     * @param ErisGenerator<bool>|null $analyze Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier|null>|null $modifier Generated constructor operand
-     * @param ErisGenerator<bool>|null $emptyInto Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb>|null $verb Generated command choice
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredExplain>
      */
-    public function __construct(ErisGenerator $statement, ?ErisGenerator $format = null, ?ErisGenerator $into = null, ?ErisGenerator $database = null, ?ErisGenerator $analyze = null, ?ErisGenerator $modifier = null, ?ErisGenerator $emptyInto = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $verb = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain(statement: $parts[0], format: $parts[1], into: $parts[2], database: $parts[3], analyze: $parts[4], modifier: $parts[5], emptyInto: $parts[6], inputSource: $parts[7], verb: $parts[8]);
-        }, Generators::tuple(
-            $statement,
-            $format ?? Generators::constant(null),
-            $into ?? Generators::constant(null),
-            $database ?? Generators::constant(null),
-            $analyze ?? Generators::constant(false),
-            $modifier ?? Generators::constant(null),
-            $emptyInto ?? Generators::constant(false),
-            $inputSource ?? Generators::constant(null),
-            $verb ?? new \Tests\Generator\MySql\Statement\Utility\Explain\ExplainVerbGenerator()
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredExplain> $element The generated counterexample
+     * @return GeneratedValue<DeferredExplain>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

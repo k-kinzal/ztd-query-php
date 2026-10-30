@@ -23,8 +23,8 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(UpgradeDatabaseCommand::class)]
 #[Medium]

@@ -5,40 +5,76 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Partition;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption;
+use SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind;
+use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
+use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes PartitionOption values and preserves their operand generators when shrinking.
+ * Generates PartitionOption values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption>
+ * @implements ErisGenerator<PartitionOption>
  */
 final class PartitionOptionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption> */
-    use Composition;
+    /** @var ErisGenerator<PartitionOption> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::bind(
+            new PartitionOptionKindGenerator($release),
+            static fn (PartitionOptionKind $kind): ErisGenerator => Generators::map(
+                static fn (array $parts): PartitionOption => new PartitionOption(kind: $kind, name: $kind->named() ? $parts[0] : null, number: $kind->numbered() ? $parts[1] : null, text: !$kind->named() && !$kind->numbered() ? $parts[2] : null, inputSource: null, operator: $parts[3], storageKeyword: $kind === PartitionOptionKind::Engine && $parts[4]),
+                Generators::tuple(
+                    new NameGenerator($release),
+                    new NumeralGenerator($release),
+                    new TextGenerator($release),
+                    Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release)),
+                    Generators::bool()
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (PartitionOption $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind> $kind Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $number Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $text Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<bool>|null $storageKeyword Generated STORAGE keyword when the kind is ENGINE
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $operator Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<PartitionOption>
      */
-    public function __construct(ErisGenerator $kind, ?ErisGenerator $name = null, ?ErisGenerator $number = null, ?ErisGenerator $text = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null, ?ErisGenerator $storageKeyword = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption(kind: $parts[0], name: $parts[1], number: $parts[2], text: $parts[3], inputSource: $parts[4], operator: $parts[5], storageKeyword: $parts[0] === \SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind::Engine && $parts[6]);
-        }, Generators::tuple(
-            $kind,
-            $name ?? Generators::constant(null),
-            $number ?? Generators::constant(null),
-            $text ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(),
-            $storageKeyword ?? Generators::bool()
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<PartitionOption> $element The generated counterexample
+     * @return GeneratedValue<PartitionOption>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

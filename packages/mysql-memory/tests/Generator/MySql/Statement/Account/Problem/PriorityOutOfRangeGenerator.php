@@ -5,57 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange;
+use Tests\Generator\MySql\Statement\Account\ResourceGroup\ResourceGroupKindGenerator;
+use Tests\Generator\MySql\Statement\Account\ResourceGroup\ResourceGroupNameGenerator;
+use Tests\Generator\MySql\Statement\Account\ResourceGroup\ThreadPriorityGenerator;
 
 /**
- * Composes PriorityOutOfRange values and preserves their operand generators when shrinking.
+ * Generates PriorityOutOfRange values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange>
+ * @implements ErisGenerator<PriorityOutOfRange>
  */
 final class PriorityOutOfRangeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange> */
-    use Composition;
+    /** @var ErisGenerator<PriorityOutOfRange> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind> $kind Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority> $priority Generated constructor operand
-     */
-    public function __construct(ErisGenerator $name, ErisGenerator $kind, ErisGenerator $priority)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange(name: $parts[0], kind: $parts[1], priority: $parts[2]);
-        }, Generators::tuple(
-            $name,
-            $kind,
-            $priority
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Account\\Problem\\PriorityOutOfRange' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new PriorityOutOfRangeGenerator(
-            name: new \Tests\Generator\MySql\Statement\Account\ResourceGroup\ResourceGroupNameGenerator(
-                spelling: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'g' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                )
-            ),
-            kind: \Tests\Generator\MySql\Statement\Account\ResourceGroup\ResourceGroupKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind::System]),
-            priority: new \Tests\Generator\MySql\Statement\Account\ResourceGroup\ThreadPriorityGenerator(
-                negative: Generators::constant(false),
-                number: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
-                    text: Generators::constant('3'),
-                    hexadecimal: Generators::constant(false)
-                )
+        $this->delegate = Generators::map(
+            static fn (array $parts): PriorityOutOfRange => new PriorityOutOfRange(name: $parts[0], kind: $parts[1], priority: $parts[2]),
+            Generators::tuple(
+                new ResourceGroupNameGenerator($release),
+                new ResourceGroupKindGenerator($release),
+                new ThreadPriorityGenerator($release)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (PriorityOutOfRange $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<PriorityOutOfRange>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<PriorityOutOfRange> $element The generated counterexample
+     * @return GeneratedValue<PriorityOutOfRange>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

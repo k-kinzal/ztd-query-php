@@ -5,83 +5,80 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes ExpireUserPasswords values and preserves their operand generators when shrinking.
+ * Generates ExpireUserPasswords values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords>
+ * @implements ErisGenerator<ExpireUserPasswords>
  */
 final class ExpireUserPasswordsGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords> */
-    use Composition;
+    /** @var ErisGenerator<ExpireUserPasswords> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete ExpireUserPasswords values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            foreach (self::additionalForms() as [$grammar, $form]) {
-                if ($grammar === $release) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No ExpireUserPasswords forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords) {
-                throw new LogicException('Publishing ExpireUserPasswords must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\Account>> $users Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords>
-     */
-    public static function operands(ErisGenerator $users, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords(users: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple($users, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes further SQL roles and version-specific forms from typed operands.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords>}>
-     */
-    public static function additionalForms(): iterable
-    {
-        yield 'ExpireUserPasswords/additional/77' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, ExpireUserPasswordsGenerator::operands(
-            users: Generators::tuple(
-                new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                    user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::constant('a'),
-                        quote: Generators::constant(null)
-                    ),
-                    host: Generators::constant(null)
-                )]),
-                new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                    parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                )])
+        $this->delegate = Generators::map(
+            static fn (array $parts): ExpireUserPasswords => new ExpireUserPasswords(users: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]),
+            Generators::tuple(
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new AccountGenerator($release))),
+                Generators::constant(null),
+                Generators::constant(null)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ExpireUserPasswords $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (ExpireUserPasswords $statement): ExpireUserPasswords => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ExpireUserPasswords $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ExpireUserPasswords>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ExpireUserPasswords> $element The generated counterexample
+     * @return GeneratedValue<ExpireUserPasswords>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

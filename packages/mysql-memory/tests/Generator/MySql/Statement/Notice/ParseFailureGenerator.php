@@ -5,55 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Notice;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use Tests\Generator\Semantics\Statement\Fact\DiagnosticGenerator;
 
 /**
- * Composes ParseFailure values and preserves their operand generators when shrinking.
+ * Generates ParseFailure values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure>
+ * @implements ErisGenerator<ParseFailure>
  */
 final class ParseFailureGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure> */
-    use Composition;
+    /** @var ErisGenerator<ParseFailure> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\Diagnostic> $problem Generated constructor operand
-     * @param ErisGenerator<bool>|null $aborts Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase>|null $phase Generated constructor operand
-     * @param ErisGenerator<bool>|null $endsProgramStatement Generated constructor operand
-     */
-    public function __construct(ErisGenerator $problem, ?ErisGenerator $aborts = null, ?ErisGenerator $phase = null, ?ErisGenerator $endsProgramStatement = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure {
-            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(problem: $parts[0], aborts: $parts[1], phase: $parts[2], endsProgramStatement: $parts[3]);
-        }, Generators::tuple(
-            $problem,
-            $aborts ?? Generators::constant(false),
-            $phase ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax),
-            $endsProgramStatement ?? Generators::constant(true)
-        ));
-    }
-
-    /**
-     * Composes completed-production notices through the refused stored statement's boundary.
-     * Nothing after its generated stop can contribute to the failure response.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion|\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod, \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure, \SqlSemantics\Platform\MySql\Statement\Notice\ParseStop, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated}>
-     */
-    public static function completedConditions(): ErisGenerator
-    {
-        $warnings = Generators::oneOf(...[
-            new NameConversionGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::map(static fn (int $suffix): string => '😀' . $suffix, Generators::choose(0, 100)), Generators::constant(null)), Generators::bool()),
-            new HeartbeatPeriodGenerator(new HeartbeatConditionGenerator()),
-        ]);
-        $failures = new self(
-            new \Tests\Generator\MySql\Statement\Expression\Problem\UnknownCollationGenerator(Generators::map(static fn (int $suffix): string => 'absent_collation_' . $suffix, Generators::choose(0, 100))),
-            Generators::bool(),
-            NoticePhaseGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization]),
+        $this->delegate = Generators::map(
+            static fn (array $parts): ParseFailure => new ParseFailure(problem: $parts[0], aborts: $parts[1], phase: $parts[2] === NoticePhase::Resolution ? NoticePhase::Syntax : $parts[2], endsProgramStatement: $parts[3]),
+            Generators::tuple(
+                new DiagnosticGenerator($release),
+                Generators::bool(),
+                new NoticePhaseGenerator($release),
+                Generators::bool()
+            )
         );
-        return Generators::tuple($warnings, $failures, new ParseStopGenerator(), DeprecatedGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot]));
+        $this->delegate = Generators::suchThat(
+            static function (ParseFailure $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ParseFailure>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ParseFailure> $element The generated counterexample
+     * @return GeneratedValue<ParseFailure>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

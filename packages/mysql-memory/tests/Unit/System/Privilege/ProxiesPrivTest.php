@@ -21,6 +21,6 @@ final class ProxiesPrivTest extends TestCase
 
         $result1 = $s->query('SELECT Host, User, Proxied_host, Proxied_user, With_grant FROM mysql.proxies_priv')[0];
         self::assertInstanceOf(ResultSet::class, $result1);
-        self::assertSame([['localhost', 'root', '', '', '1']], $result1->rows);
+        self::assertSame([['%', 'root', '', '', '1'], ['localhost', 'root', '', '', '1']], $result1->rows);
     }
 }

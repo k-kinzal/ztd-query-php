@@ -6,64 +6,65 @@ namespace Tests\Generator\Semantics\Statement\Identifier;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\NameQuote;
 
 /**
- * Composes decoded names and their delimiter choice through Eris.
+ * Generates Name values from the generators of its operands.
  *
  * @implements ErisGenerator<Name>
  */
 final class NameGenerator implements ErisGenerator
 {
-    /**
-     * @var ErisGenerator<Name>
-     */
+    /** @var ErisGenerator<Name> */
     private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<string>|null $values Decoded names valid for the consuming SQL role
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\NameQuote|null>|null $quotes Delimiters valid for the language profile
-     */
-    public function __construct(?ErisGenerator $values = null, ?ErisGenerator $quotes = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): Name {
-            return new Name($parts[0], $parts[1]);
-        }, Generators::tuple(
-            $values ?? Generators::map(static fn (int $number): string => 'name_' . abs($number), Generators::int()),
-            $quotes ?? new NameQuoteGenerator(),
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): Name => new Name(value: $parts[0], quote: $parts[1]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'name_' . $number, Generators::choose(0, 9)),
+                Generators::oneOf(Generators::constant(null), Generators::elements([NameQuote::Bare, NameQuote::Keyword, NameQuote::Backtick]))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Name $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<Name>
+     * @return GeneratedValue<Name>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<Name> $element The generated counterexample
      * @return GeneratedValue<Name>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<string> $value The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\NameQuote|null> $quote The generated semantic operand
-     * @return ErisGenerator<Name>
-     */
-    public static function fromOperands(ErisGenerator $value, ErisGenerator $quote): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): Name => new Name(value: $parts[0], quote: $parts[1]), Generators::tuple($value, $quote));
-    }
-
 }

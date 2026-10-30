@@ -5,94 +5,85 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes CreateTableLike values and preserves their operand generators when shrinking.
+ * Generates CreateTableLike values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike>
+ * @implements ErisGenerator<CreateTableLike>
  */
 final class CreateTableLikeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike> */
-    use Composition;
+    /** @var ErisGenerator<CreateTableLike> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete CreateTableLike values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): CreateTableLike => new CreateTableLike(name: $parts[0], source: $parts[1], temporaryWords: $parts[2], ifNotExists: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], relationInformation: $parts[6], enclosed: $parts[7]),
+            Generators::tuple(
+                new QualifiedNameGenerator($release),
+                new QualifiedNameGenerator($release),
+                Generators::choose(0, 100),
+                Generators::bool(),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CreateTableLike $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateTableLike forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike) {
-                throw new LogicException('Publishing CreateTableLike must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $source Generated constructor operand
-     * @param ErisGenerator<int>|null $temporaryWords Generated constructor operand
-     * @param ErisGenerator<bool>|null $ifNotExists Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
-     * @param ErisGenerator<bool>|null $enclosed Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike>
-     */
-    public static function operands(ErisGenerator $name, ErisGenerator $source, ?ErisGenerator $temporaryWords = null, ?ErisGenerator $ifNotExists = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null, ?ErisGenerator $enclosed = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike(name: $parts[0], source: $parts[1], temporaryWords: $parts[2], ifNotExists: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], relationInformation: $parts[6], enclosed: $parts[7]);
-        }, Generators::tuple($name, $source, $temporaryWords ?? Generators::constant(0), $ifNotExists ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $enclosed ?? Generators::bool()));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'CreateTableLike/137' => CreateTableLikeGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            source: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            temporaryWords: Generators::constant(0),
-            ifNotExists: Generators::constant(false)
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (CreateTableLike $statement): CreateTableLike => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateTableLike $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<CreateTableLike>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<CreateTableLike> $element The generated counterexample
+     * @return GeneratedValue<CreateTableLike>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

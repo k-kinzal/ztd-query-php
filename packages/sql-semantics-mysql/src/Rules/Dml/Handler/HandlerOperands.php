@@ -29,17 +29,28 @@ final class HandlerOperands
      */
     public function check(Node $root): void
     {
+        $problem = $this->problem($root);
+        Check::input($problem === null, $problem ?? '');
+    }
+
+    /**
+     * Describes what a HANDLER read cannot contain, or null when the read is accepted.
+     */
+    public function problem(Node $root): ?string
+    {
         $pending = [$root];
         while ($pending !== []) {
             $value = array_pop($pending);
             if (is_array($value)) {
                 array_push($pending, ...array_values($value));
             } elseif ($value instanceof Node) {
-                Check::input(!$value instanceof Query, 'A HANDLER read cannot contain a subquery.');
+                if ($value instanceof Query) {
+                    return 'A HANDLER read cannot contain a subquery.';
+                }
                 array_push($pending, ...array_values(get_object_vars($value)));
             }
         }
-        Check::input($this->releases([$root]) !== 0, 'A HANDLER read requires a native interpretation of every function call.');
+        return $this->releases([$root]) !== 0 ? null : 'A HANDLER read requires a native interpretation of every function call.';
     }
 
     /**

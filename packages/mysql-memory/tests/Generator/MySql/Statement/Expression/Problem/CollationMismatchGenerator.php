@@ -5,46 +5,67 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Expression\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes CollationMismatch values and preserves their operand generators when shrinking.
+ * Generates CollationMismatch values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch>
+ * @implements ErisGenerator<CollationMismatch>
  */
 final class CollationMismatchGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch> */
-    use Composition;
+    /** @var ErisGenerator<CollationMismatch> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<string> $collation Generated constructor operand
-     * @param ErisGenerator<string> $charset Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $expression Generated constructor operand
-     */
-    public function __construct(ErisGenerator $collation, ErisGenerator $charset, ?ErisGenerator $expression = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch {
-            return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch(collation: $parts[0], charset: $parts[1], expression: $parts[2]);
-        }, Generators::tuple(
-            $collation,
-            $charset,
-            $expression ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Expression\\Problem\\CollationMismatch' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new CollationMismatchGenerator(
-            collation: Generators::constant('latin1_bin'),
-            charset: Generators::constant('utf8mb4'),
-            expression: Generators::constant(null)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): CollationMismatch => new CollationMismatch(collation: $parts[0], charset: $parts[1], expression: $parts[2]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::oneOf(Generators::constant(null), new ScalarGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CollationMismatch $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<CollationMismatch>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<CollationMismatch> $element The generated counterexample
+     * @return GeneratedValue<CollationMismatch>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

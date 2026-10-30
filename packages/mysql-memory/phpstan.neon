@@ -16,6 +16,8 @@ parameters:
             - src/Session/Session.php
     phpVersion: 80100
     level: max
+    parallel:
+        processTimeout: 14400.0
     paths: [src, tests, fuzz, rules]
 
 services:
@@ -38,6 +40,9 @@ services:
         tags: [phpstan.rules.rule]
     -
         class: Rules\PropertyRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Rules\GeneratorShapeRule
         tags: [phpstan.rules.rule]
     -
         class: Rules\SemanticCache

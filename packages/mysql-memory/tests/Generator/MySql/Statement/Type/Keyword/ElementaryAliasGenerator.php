@@ -5,40 +5,59 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Type\Keyword;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Type\Keyword\ElementaryAlias;
 
 /**
- * Generates ElementaryAlias alternatives with Eris shrinking.
+ * Generates ElementaryAlias values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Keyword\ElementaryAlias>
+ * @implements ErisGenerator<ElementaryAlias>
  */
 final class ElementaryAliasGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Type\Keyword\ElementaryAlias> */
-    use Composition;
+    /** @var ErisGenerator<ElementaryAlias> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Selects a keyword alternative.
-     */
-    public function __construct()
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Keyword\ElementaryAlias::cases());
+        $this->delegate = Generators::elements(ElementaryAlias::cases());
+        $this->delegate = Generators::suchThat(
+            static function (ElementaryAlias $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Selects only synonyms of the already generated type role.
-     *
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Keyword\ElementaryAlias|null>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ElementaryAlias>
      */
-    public static function forKind(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind $kind): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $cases = [null];
-        foreach (\SqlSemantics\Platform\MySql\Statement\Type\Keyword\ElementaryAlias::cases() as $alias) {
-            if ($alias->kind() === $kind) {
-                $cases[] = $alias;
-            }
-        }
-        return Generators::elements($cases);
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ElementaryAlias> $element The generated counterexample
+     * @return GeneratedValue<ElementaryAlias>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -5,40 +5,100 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Call\Window;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments;
+use SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
+use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use Tests\Generator\MySql\Statement\Call\WindowSpecificationGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes WindowFunction values and preserves their operand generators when shrinking.
+ * Generates WindowFunction values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction>
+ * @implements ErisGenerator<WindowFunction>
  */
 final class WindowFunctionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction> */
-    use Composition;
+    /** @var ErisGenerator<WindowFunction> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::bind(
+            new WindowFunctionKindGenerator($release),
+            static function (WindowFunctionKind $kind) use ($release, $depth): ErisGenerator {
+                [$minimum, $maximum] = $kind->arity();
+
+                return Generators::map(
+                    static function (array $parts) use ($kind): WindowFunction {
+                        [$arguments, $count, $over, $nulls, $edge] = $parts;
+                        if ($kind->counted() !== null) {
+                            $arguments[$kind->counted()] = $count;
+                        }
+                        if ($kind === WindowFunctionKind::NthValue) {
+                            $arguments[1] = $count;
+                        }
+                        if ($kind === WindowFunctionKind::NthValue && !(new Precedence())->admits($arguments[1], Precedence::SIMPLE_EXPR)) {
+                            $arguments[1] = new Grouped($arguments[1]);
+                        }
+
+                        return new WindowFunction(kind: $kind, arguments: $arguments, over: $over, nulls: $kind->treatsNulls() ? $nulls : null, edge: $kind === WindowFunctionKind::NthValue ? $edge : null, scalarInformation: null, inputSource: null);
+                    },
+                    Generators::tuple(
+                        Generators::bind(Generators::choose($minimum, $maximum), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ScalarGenerator($release, $depth - 1))),
+                        Generators::map(static fn (int $number): NumberLiteral => new NumberLiteral((string) $number), Generators::choose(1, 9)),
+                        Generators::bind(Generators::bool(), static fn (bool $named): ErisGenerator => $named ? new NameGenerator($release) : Generators::suchThat(static fn (WindowSpecification $window): bool => (new Constraints())->problem($window) === null, new WindowSpecificationGenerator($release, $depth - 1))),
+                        Generators::suchThat(static fn (?NullTreatment $nulls): bool => (new Arguments())->limitation($nulls, null) === null, Generators::oneOf(Generators::constant(null), new NullTreatmentGenerator($release))),
+                        Generators::suchThat(static fn (?CountingEdge $edge): bool => (new Arguments())->limitation(null, $edge) === null, Generators::oneOf(Generators::constant(null), new CountingEdgeGenerator($release)))
+                    )
+                );
+            }
+        );
+        $this->delegate = Generators::suchThat(
+            static function (WindowFunction $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind> $kind Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable>> $arguments Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification> $over Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment|null>|null $nulls Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge|null>|null $edge Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<WindowFunction>
      */
-    public function __construct(ErisGenerator $kind, ErisGenerator $arguments, ErisGenerator $over, ?ErisGenerator $nulls = null, ?ErisGenerator $edge = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction {
-            return new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(kind: $parts[0], arguments: $parts[1], over: $parts[2], nulls: $parts[3], edge: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, Generators::tuple(
-            $kind,
-            $arguments,
-            $over,
-            $nulls ?? Generators::constant(null),
-            $edge ?? Generators::constant(null),
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<WindowFunction> $element The generated counterexample
+     * @return GeneratedValue<WindowFunction>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

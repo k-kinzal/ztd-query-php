@@ -5,96 +5,81 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Flush;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
-use Tests\Generator\Composition;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes Flush values and preserves their operand generators when shrinking.
+ * Generates Flush values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush>
+ * @implements ErisGenerator<Flush>
  */
 final class FlushGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush> */
-    use Composition;
+    /** @var ErisGenerator<Flush> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete Flush values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release->database() === 'mysql') {
-                foreach (self::forms($release) as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): Flush => new Flush(binlog: $parts[0], items: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]),
+            Generators::tuple(
+                Generators::oneOf(Generators::constant(null), new BinlogOptionGenerator($release)),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new FlushItemGenerator($release))),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Flush $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No Flush forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush) {
-                throw new LogicException('Publishing Flush must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem>> $items Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush>
-     */
-    public static function operands(ErisGenerator $binlog, ErisGenerator $items, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush(binlog: $parts[0], items: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, Generators::tuple($binlog, $items, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes nonempty option lists, including repeated options and independent relay channels.
-     * Only options and channel syntax available in the selected grammar are generated.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush>>
-     */
-    public static function forms(GrammarRelease $release = GrammarRelease::MySql847): iterable
-    {
-        $options = [FlushOption::ErrorLogs, FlushOption::EngineLogs, FlushOption::GeneralLogs, FlushOption::SlowLogs, FlushOption::BinaryLogs, FlushOption::Privileges, FlushOption::Logs, FlushOption::Status, FlushOption::Resources];
-        if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {
-            array_push($options, FlushOption::QueryCache, FlushOption::DesKeyFile);
-        }
-        if ($release !== GrammarRelease::MySql5651) {
-            $options[] = FlushOption::OptimizerCosts;
-        }
-        if (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820], true)) {
-            $options[] = FlushOption::Hosts;
-        }
-        $channel = $release === GrammarRelease::MySql5651 ? Generators::constant(null) : Generators::oneOf(
-            Generators::constant(null),
-            new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::constant('')),
-            new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'channel_' . $value, Generators::choose(0, 20)))
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
-        $item = Generators::oneOf(
-            new FlushItemGenerator(FlushOptionGenerator::selecting($options)),
-            new FlushItemGenerator(FlushOptionGenerator::selecting([FlushOption::RelayLogs]), $channel)
+        $this->delegate = Generators::map(
+            static fn (Flush $statement): Flush => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
         );
-        yield 'option lists' => FlushGenerator::operands(
-            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
-            items: Generators::bind(Generators::choose(1, 6), static fn (int $count): ErisGenerator => Generators::vector($count, $item))
+        $this->delegate = Generators::suchThat(
+            static fn (Flush $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Flush>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Flush> $element The generated counterexample
+     * @return GeneratedValue<Flush>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

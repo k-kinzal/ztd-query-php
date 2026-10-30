@@ -5,89 +5,86 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\ResourceGroup;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes CreateResourceGroup values and preserves their operand generators when shrinking.
+ * Generates CreateResourceGroup values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup>
+ * @implements ErisGenerator<CreateResourceGroup>
  */
 final class CreateResourceGroupGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup> */
-    use Composition;
+    /** @var ErisGenerator<CreateResourceGroup> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete CreateResourceGroup values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): CreateResourceGroup => new CreateResourceGroup(name: $parts[0], kind: $parts[1], cpus: $parts[2], priority: $parts[3], enabled: $parts[4], statementInformation: null, inputSource: null, cpusCommas: $parts[5] === null ? null : array_slice($parts[5], 0, max(0, count($parts[2]) - 1)), typeOperator: $parts[6], cpusOperator: $parts[7], priorityOperator: $parts[8]),
+            Generators::tuple(
+                new ResourceGroupNameGenerator($release),
+                new ResourceGroupKindGenerator($release),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CpuRangeGenerator($release))),
+                Generators::oneOf(Generators::constant(null), new ThreadPriorityGenerator($release)),
+                Generators::oneOf(Generators::constant(null), Generators::bool()),
+                Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool())),
+                Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CreateResourceGroup $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateResourceGroup forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup) {
-                throw new LogicException('Publishing CreateResourceGroup must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind> $kind Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange>>|null $cpus Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority|null>|null $priority Generated constructor operand
-     * @param ErisGenerator<bool|null>|null $enabled Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<list<bool>>|null $cpusCommas Generated list boundaries
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $typeOperator Generated clause notation
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $cpusOperator Generated clause notation
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $priorityOperator Generated clause notation
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup>
-     */
-    public static function operands(ErisGenerator $name, ErisGenerator $kind, ?ErisGenerator $cpus = null, ?ErisGenerator $priority = null, ?ErisGenerator $enabled = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $cpusCommas = null, ?ErisGenerator $typeOperator = null, ?ErisGenerator $cpusOperator = null, ?ErisGenerator $priorityOperator = null): ErisGenerator
-    {
-        return Generators::bind(Generators::tuple($name, $kind, $cpus ?? Generators::constant([]), $priority ?? Generators::constant(null), $enabled ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $typeOperator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(), $cpusOperator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(), $priorityOperator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional()), static function (array $parts) use ($cpusCommas): ErisGenerator {
-            return Generators::map(static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup => new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup(name: $parts[0], kind: $parts[1], cpus: $parts[2], priority: $parts[3], enabled: $parts[4], statementInformation: $parts[5], inputSource: $parts[6], typeOperator: $parts[7], cpusOperator: $parts[8], priorityOperator: $parts[9], cpusCommas: $commas), $cpusCommas ?? Generators::vector(max(0, count($parts[2]) - 1), Generators::bool()));
-        });
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'CreateResourceGroup/24' => CreateResourceGroupGenerator::operands(
-            name: new ResourceGroupNameGenerator(
-                spelling: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                )
-            ),
-            kind: ResourceGroupKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind::User]),
-            cpus: Generators::constant([]),
-            priority: Generators::constant(null),
-            enabled: Generators::constant(null)
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (CreateResourceGroup $statement): CreateResourceGroup => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateResourceGroup $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<CreateResourceGroup>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<CreateResourceGroup> $element The generated counterexample
+     * @return GeneratedValue<CreateResourceGroup>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

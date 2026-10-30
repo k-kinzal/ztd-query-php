@@ -5,36 +5,73 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Database;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption;
+use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 
 /**
- * Composes DatabaseEncryption values and preserves their operand generators when shrinking.
+ * Generates DatabaseEncryption values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption>
+ * @implements ErisGenerator<DatabaseEncryption>
  */
 final class DatabaseEncryptionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption> */
-    use Composition;
+    /** @var ErisGenerator<DatabaseEncryption> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DatabaseEncryption => $parts[0] instanceof Encryption
+                ? new DatabaseEncryption(encryption: $parts[0], spelling: $parts[1] ? new Text(strtolower($parts[0]->value)) : null, inputSource: null, operator: $parts[2], defaultKeyword: $parts[3])
+                : new DatabaseEncryption(encryption: $parts[0], spelling: null, inputSource: null, operator: $parts[2], defaultKeyword: $parts[3]),
+            Generators::tuple(
+                Generators::bind(Generators::bool(), static fn (bool $setting): ErisGenerator => $setting ? new EncryptionGenerator($release) : Generators::suchThat(static fn (Text $text): bool => Encryption::fromOperand($text->value) === null, new TextGenerator($release))),
+                Generators::bool(),
+                Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release)),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DatabaseEncryption $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption|\SqlSemantics\Platform\MySql\Statement\Literal\Text> $encryption Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $spelling Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null>|null $operator Generated constructor operand
-     * @param ErisGenerator<bool>|null $defaultKeyword Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DatabaseEncryption>
      */
-    public function __construct(ErisGenerator $encryption, ?ErisGenerator $spelling = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null, ?ErisGenerator $defaultKeyword = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption(encryption: $parts[0], spelling: $parts[1], inputSource: $parts[2], operator: $parts[3], defaultKeyword: $parts[4]);
-        }, Generators::tuple(
-            $encryption,
-            $spelling ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $operator ?? \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator::optional(),
-            $defaultKeyword ?? Generators::bool()
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DatabaseEncryption> $element The generated counterexample
+     * @return GeneratedValue<DatabaseEncryption>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

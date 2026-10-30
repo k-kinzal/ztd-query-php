@@ -5,28 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\Semantics\Statement\Type;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Statement\Type\Invalid;
+use Tests\Generator\Semantics\Statement\Fact\DiagnosticGenerator;
 
 /**
- * Composes Invalid values and preserves their operand generators when shrinking.
+ * Generates Invalid values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Statement\Type\Invalid>
+ * @implements ErisGenerator<Invalid>
  */
 final class InvalidGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Statement\Type\Invalid> */
-    use Composition;
+    /** @var ErisGenerator<Invalid> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): Invalid => new Invalid(cause: $parts[0]),
+            Generators::tuple(
+                new DiagnosticGenerator($release, $depth - 1)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Invalid $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\Diagnostic> $cause Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Invalid>
      */
-    public function __construct(ErisGenerator $cause)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Type\Invalid {
-            return new \SqlSemantics\Statement\Type\Invalid(cause: $parts[0]);
-        }, Generators::tuple(
-            $cause
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Invalid> $element The generated counterexample
+     * @return GeneratedValue<Invalid>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

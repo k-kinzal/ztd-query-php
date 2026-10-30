@@ -55,8 +55,13 @@ final class SystemCatalogExecutionTest extends TestCase
     {
         $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
         $random->seed(1983);
-        $generator = \Tests\Generator\MySql\Statement\Table\Catalog\SystemTablesGenerator::inspections();
-        [$catalog, $statement] = $generator(8, $random)->unbox();
-        yield [$catalog, $statement];
+        $generator = new \Tests\Generator\MySql\Statement\Table\Catalog\SystemTablesGenerator(\SqlSemantics\Contract\GrammarRelease::MySql847);
+        do {
+            $catalog = $generator(8, $random)->unbox();
+        } while ($catalog->tables === []);
+        $table = $catalog->tables[0];
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($table->name), new \SqlSemantics\Statement\Identifier\Name($table->schema))));
+        $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
+        yield [$catalog, (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement)];
     }
 }

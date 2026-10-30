@@ -5,62 +5,102 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder;
+use Tests\Generator\MySql\Statement\Query\DirectionGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\CheckConstraintGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\ForeignKeyGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\IndexAlgorithmGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\IndexDefinitionGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\IndexKindGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\Option\IndexCommentGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\Option\IndexEngineAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\Option\IndexParserGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\Option\IndexUsingGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\Option\IndexVisibilityGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\Option\KeyBlockSizeGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes ExplicitIndexOrder values and preserves their operand generators when shrinking.
+ * Generates ExplicitIndexOrder values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder>
+ * @implements ErisGenerator<ExplicitIndexOrder>
  */
 final class ExplicitIndexOrderGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder> */
-    use Composition;
+    /** @var ErisGenerator<ExplicitIndexOrder> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): ExplicitIndexOrder => new ExplicitIndexOrder(kind: $parts[0], direction: $parts[1], table: $parts[2], algorithm: $parts[3], options: $parts[4], elements: $parts[5]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (new IndexOrdering())->unordered(($parts[0]), ($parts[3]), ($parts[4])),
+                Generators::tuple(
+                    new IndexKindGenerator($release),
+                    new DirectionGenerator($release),
+                    new QualifiedNameGenerator($release),
+                    Generators::oneOf(Generators::constant(null), new IndexAlgorithmGenerator($release)),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 5), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new IndexCommentGenerator($release),
+                        1 => new IndexEngineAttributeGenerator($release),
+                        2 => new IndexParserGenerator($release),
+                        3 => new IndexUsingGenerator($release),
+                        4 => new IndexVisibilityGenerator($release),
+                        5 => new KeyBlockSizeGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ColumnDefinitionGenerator($release),
+                        1 => new CheckConstraintGenerator($release),
+                        2 => new ForeignKeyGenerator($release),
+                        3 => new IndexDefinitionGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })))
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ExplicitIndexOrder $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind> $kind Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Direction> $direction Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $table Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm|null>|null $algorithm Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption>>|null $options Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Table\TableElement>>|null $elements Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ExplicitIndexOrder>
      */
-    public function __construct(ErisGenerator $kind, ErisGenerator $direction, ErisGenerator $table, ?ErisGenerator $algorithm = null, ?ErisGenerator $options = null, ?ErisGenerator $elements = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder(kind: $parts[0], direction: $parts[1], table: $parts[2], algorithm: $parts[3], options: $parts[4], elements: $parts[5]);
-        }, Generators::tuple(
-            $kind,
-            $direction,
-            $table,
-            $algorithm ?? Generators::constant(null),
-            $options ?? Generators::constant([]),
-            $elements ?? Generators::constant([])
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\ExplicitIndexOrder>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Table\\Problem\\ExplicitIndexOrder' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new ExplicitIndexOrderGenerator(
-            kind: \Tests\Generator\MySql\Statement\Table\Key\IndexKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::FullText]),
-            direction: \Tests\Generator\MySql\Statement\Query\DirectionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending]),
-            table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'p' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            algorithm: Generators::constant(null),
-            options: Generators::constant([]),
-            elements: Generators::constant([])
-        )];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<ExplicitIndexOrder> $element The generated counterexample
+     * @return GeneratedValue<ExplicitIndexOrder>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

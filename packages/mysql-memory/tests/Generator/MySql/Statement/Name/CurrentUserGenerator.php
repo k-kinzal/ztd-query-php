@@ -6,14 +6,19 @@ namespace Tests\Generator\MySql\Statement\Name;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Name\CurrentUser;
+use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
 
 /**
- * Generates both written forms of the current account reference.
+ * Generates CurrentUser values from the generators of its operands.
  *
  * @implements ErisGenerator<CurrentUser>
  */
@@ -22,40 +27,44 @@ final class CurrentUserGenerator implements ErisGenerator
     /** @var ErisGenerator<CurrentUser> */
     private ErisGenerator $delegate;
 
-    /**
-     * Composes the optional parentheses through Eris.
-     */
-    public function __construct()
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static fn (OptionalWords $words): CurrentUser => new CurrentUser($words), Generators::elements(OptionalWords::cases()));
+        $this->delegate = Generators::map(
+            static fn (array $parts): CurrentUser => new CurrentUser(parentheses: $parts[0], inputSource: $parts[1]),
+            Generators::tuple(
+                new OptionalWordsGenerator($release),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CurrentUser $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<CurrentUser>
+     * @return GeneratedValue<CurrentUser>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<CurrentUser> $element The generated counterexample
      * @return GeneratedValue<CurrentUser>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<OptionalWords> $parentheses The generated semantic operand
-     * @return ErisGenerator<CurrentUser>
-     */
-    public static function fromOperands(ErisGenerator $parentheses): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): CurrentUser => new CurrentUser(parentheses: $parts[0]), Generators::tuple($parentheses));
-    }
-
 }

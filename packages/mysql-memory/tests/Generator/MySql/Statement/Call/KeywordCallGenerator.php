@@ -5,74 +5,82 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Call;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias;
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use Tests\Generator\MySql\Statement\Call\Keyword\ArgumentSyntaxGenerator;
-use Tests\Generator\MySql\Statement\Call\Keyword\KeywordAliasGenerator;
+use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes KeywordCall values and preserves their operand generators when shrinking.
+ * Generates KeywordCall values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\KeywordCall>
+ * @implements ErisGenerator<KeywordCall>
  */
 final class KeywordCallGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Call\KeywordCall> */
-    use Composition;
+    /** @var ErisGenerator<KeywordCall> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias|null>|null $alias Generated keyword synonym
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax>|null $syntax Generated argument separators
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction> $function Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Scalar>> $arguments Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $parentheses Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     */
-    public function __construct(ErisGenerator $function, ErisGenerator $arguments, ?ErisGenerator $parentheses = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null, ?ErisGenerator $syntax = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        $this->delegate = Generators::bind($function, static function (\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction $selected) use ($arguments, $parentheses, $scalarInformation, $inputSource, $alias, $syntax): ErisGenerator {
-            return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall {
-                return new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(function: $parts[0], arguments: $parts[1], parentheses: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], alias: $parts[5], syntax: $parts[6]);
-            }, Generators::tuple(
-                Generators::constant($selected),
-                $arguments,
-                $parentheses ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written),
-                $scalarInformation ?? Generators::constant(null),
-                $inputSource ?? Generators::constant(null),
-                $alias ?? KeywordAliasGenerator::forFunction($selected),
-                $syntax ?? ($selected === \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Substring ? new ArgumentSyntaxGenerator() : Generators::constant(\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax::Commas))
-            ));
-        });
+        $this->delegate = Generators::bind(
+            new KeywordFunctionGenerator($release),
+            static function (KeywordFunction $function) use ($release, $depth): ErisGenerator {
+                [$minimum, $maximum] = $function->arity();
+                $aliases = array_values(array_filter(KeywordAlias::cases(), static fn (KeywordAlias $alias): bool => $alias->function() === $function));
+
+                return Generators::map(
+                    static fn (array $parts): KeywordCall => new KeywordCall(function: $function, arguments: $parts[0], parentheses: $parts[1], scalarInformation: null, inputSource: null, alias: $parts[2], syntax: $parts[3]),
+                    Generators::tuple(
+                        Generators::bind(Generators::choose($minimum, $maximum === -1 ? 3 : $maximum), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ScalarGenerator($release, $depth - 1))),
+                        $function === KeywordFunction::CurrentUser ? new OptionalWordsGenerator($release) : Generators::constant(OptionalWords::Written),
+                        $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases)),
+                        $function === KeywordFunction::Substring ? new ArgumentSyntaxGenerator($release) : Generators::constant(ArgumentSyntax::Commas)
+                    )
+                );
+            }
+        );
+        $this->delegate = Generators::suchThat(
+            static function (KeywordCall $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Composes projections of a synonym and its canonical function with shared operands.
-     *
-     * @return ErisGenerator<\SqlSemantics\Statement\AnalyzedStatement>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<KeywordCall>
      */
-    public static function queries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $calls = Generators::bind(new KeywordAliasGenerator(), static function (\SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias $alias): ErisGenerator {
-            $arguments = $alias->function() === \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Substring
-                ? Generators::oneOf(...[
-                    Generators::tuple(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 5)))),
-                    Generators::tuple(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 5))), new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 5)))),
-                ]) : (in_array($alias->function(), [\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Year, \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Week], true) ? Generators::tuple(new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::map(static fn (int $year): string => (string) $year . '-01-01', Generators::choose(2000, 2100)))) : Generators::constant([]));
-            return new self(Generators::constant($alias->function()), $arguments, alias: Generators::constant($alias));
-        });
-        $queries = Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Call\KeywordCall $call): \SqlSemantics\Platform\MySql\Statement\QueryRoot {
-            $canonical = new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall($call->function, array_map(static fn (\SqlSemantics\Statement\Scalar $literal): \SqlSemantics\Statement\Scalar => match (true) {
-                $literal instanceof \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral => new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([$literal->value()]),
-                $literal instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral => new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral($literal->text),
-                default => throw new LogicException('Generated synonym comparisons use literal operands.'),
-            }, $call->arguments));
-            return new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [
-                new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($call, new \SqlSemantics\Statement\Identifier\Name('selected')),
-                new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($canonical, new \SqlSemantics\Statement\Identifier\Name('canonical')),
-            ]));
-        }, $calls);
-        return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries);
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<KeywordCall> $element The generated counterexample
+     * @return GeneratedValue<KeywordCall>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

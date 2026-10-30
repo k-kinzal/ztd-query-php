@@ -6,59 +6,65 @@ namespace Tests\Generator\MySql\Statement\Account\Privilege\Item;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;
 
 /**
- * Generates a named or anonymous role operand without requiring an account catalog.
+ * Generates GrantedRole values from the generators of its operands.
  *
  * @implements ErisGenerator<GrantedRole>
  */
 final class GrantedRoleGenerator implements ErisGenerator
 {
-    /**
-     * @var ErisGenerator<GrantedRole>
-     */
+    /** @var ErisGenerator<GrantedRole> */
     private ErisGenerator $delegate;
 
-    /**
-     * Composes operands with Eris, retaining their relationships during shrinking.
-     */
-    public function __construct()
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static fn (AccountName $role): GrantedRole => new GrantedRole($role), Generators::oneOf(new AccountNameGenerator(), new AccountNameGenerator(Generators::elements('', ' ', "\t"))));
+        $this->delegate = Generators::map(
+            static fn (array $parts): GrantedRole => new GrantedRole(role: $parts[0], inputSource: $parts[1]),
+            Generators::tuple(
+                new AccountNameGenerator($release),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (GrantedRole $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<GrantedRole>
+     * @return GeneratedValue<GrantedRole>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<GrantedRole> $element The generated counterexample
      * @return GeneratedValue<GrantedRole>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<AccountName> $role The generated semantic operand
-     * @return ErisGenerator<GrantedRole>
-     */
-    public static function fromOperands(ErisGenerator $role): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): GrantedRole => new GrantedRole(role: $parts[0]), Generators::tuple($role));
-    }
-
 }

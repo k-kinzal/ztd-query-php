@@ -5,34 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Target;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput;
+use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
+use Tests\Generator\MySql\Statement\Relation\TableSourceGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes DeletionInput values and preserves their operand generators when shrinking.
+ * Generates DeletionInput values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput>
+ * @implements ErisGenerator<DeletionInput>
  */
 final class DeletionInputGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput> */
-    use Composition;
+    /** @var ErisGenerator<DeletionInput> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeletionInput => new DeletionInput(tables: $parts[0], targets: $parts[1], resolutions: null, wildcards: $parts[1] === null || $parts[2] === null ? null : array_slice($parts[2], 0, count($parts[1]))),
+            Generators::tuple(
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TableSourceGenerator($release, $depth - 1))),
+                Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new QualifiedNameGenerator($release)))),
+                Generators::oneOf(Generators::constant(null), Generators::vector(3, new OptionalWordsGenerator($release)))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeletionInput $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource>> $tables Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\QualifiedName>|null>|null $targets Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource|null>|null>|null $resolutions Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null>|null $wildcards Generated target suffixes
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeletionInput>
      */
-    public function __construct(ErisGenerator $tables, ?ErisGenerator $targets = null, ?ErisGenerator $resolutions = null, ?ErisGenerator $wildcards = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput(tables: $parts[0], targets: $parts[1], resolutions: $parts[2], wildcards: $parts[3]);
-        }, Generators::tuple(
-            $tables,
-            $targets ?? Generators::constant(null),
-            $resolutions ?? Generators::constant(null),
-            $wildcards ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeletionInput> $element The generated counterexample
+     * @return GeneratedValue<DeletionInput>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -5,123 +5,131 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\GroupingGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\ProcedureAnalyseGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\WindowDefinitionGenerator;
+use Tests\Generator\MySql\Statement\Query\Into\IntoDumpfileGenerator;
+use Tests\Generator\MySql\Statement\Query\Into\IntoOutfileGenerator;
+use Tests\Generator\MySql\Statement\Query\Into\IntoVariablesGenerator;
+use Tests\Generator\MySql\Statement\Query\OrderItemGenerator;
+use Tests\Generator\MySql\Statement\Query\SelectOptionGenerator;
+use Tests\Generator\MySql\Statement\Relation\DualGenerator;
+use Tests\Generator\MySql\Statement\Relation\TableSourceGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredGroupingGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredOrderItemGenerator;
+use Tests\Generator\Semantics\Statement\NodeGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes DeferredSelection values and preserves their operand generators when shrinking.
+ * Generates DeferredSelection values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection>
+ * @implements ErisGenerator<DeferredSelection>
  */
 final class DeferredSelectionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection> */
-    use Composition;
+    /** @var ErisGenerator<DeferredSelection> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Node>> $items Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource|\SqlSemantics\Platform\MySql\Statement\Relation\Dual|null>|null $from Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null>|null $where Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Query\SelectOption>>|null $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping|null>|null $groupBy Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null>|null $having Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Query\OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem>>|null $orderBy Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Limit|null>|null $limit Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition>>|null $windows Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse|null>|null $procedure Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null>|null $qualify Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination|null>|null $into Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     */
-    public function __construct(ErisGenerator $items, ?ErisGenerator $from = null, ?ErisGenerator $where = null, ?ErisGenerator $options = null, ?ErisGenerator $groupBy = null, ?ErisGenerator $having = null, ?ErisGenerator $orderBy = null, ?ErisGenerator $limit = null, ?ErisGenerator $windows = null, ?ErisGenerator $procedure = null, ?ErisGenerator $qualify = null, ?ErisGenerator $into = null, ?ErisGenerator $inputSource = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection(items: $parts[0], from: $parts[1], where: $parts[2], options: $parts[3], groupBy: $parts[4], having: $parts[5], orderBy: $parts[6], limit: $parts[7], windows: $parts[8], procedure: $parts[9], qualify: $parts[10], into: $parts[11], inputSource: $parts[12]);
-        }, Generators::tuple(
-            $items,
-            $from ?? Generators::constant(null),
-            $where ?? Generators::constant(null),
-            $options ?? Generators::constant([]),
-            $groupBy ?? Generators::constant(null),
-            $having ?? Generators::constant(null),
-            $orderBy ?? Generators::constant([]),
-            $limit ?? Generators::constant(null),
-            $windows ?? Generators::constant([]),
-            $procedure ?? Generators::constant(null),
-            $qualify ?? Generators::constant(null),
-            $into ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes invocation-time expression roles into complete stored selections.
-     * Every varying operand is generated before execution and retains its shrinker.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection>>
-     */
-    public static function operandForms(): iterable
-    {
-        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
-        $rows = new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::vector(2, $numbers));
-        $deferred = new Expression\DeferredArithmeticGenerator(
-            \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
-            $rows,
-            $numbers,
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredSelection => new DeferredSelection(items: [$parts[13], ...array_values(array_filter($parts[0], static fn ($item): bool => $item instanceof SelectExpression || $item instanceof DeferredProjection || $item instanceof TableWildcard))], from: $parts[1], where: $parts[2], options: $parts[3], groupBy: $parts[4], having: $parts[5], orderBy: $parts[6], limit: $parts[7], windows: $parts[8], procedure: $parts[1] === null ? null : $parts[9], qualify: ($bit & 480) !== 0 ? $parts[10] : null, into: $parts[11], inputSource: $parts[12]),
+            Generators::tuple(
+                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NodeGenerator($release, $depth - 1))) : Generators::constant([]),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new TableSourceGenerator($release, $depth - 1),
+                    1 => new DualGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release, $depth - 1),
+                    1 => new RowOperandGenerator($release, $depth - 1),
+                    2 => new DeferredOperandGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SelectOptionGenerator($release))),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new GroupingGenerator($release, $depth - 1),
+                    1 => new DeferredGroupingGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release, $depth - 1),
+                    1 => new RowOperandGenerator($release, $depth - 1),
+                    2 => new DeferredOperandGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new OrderItemGenerator($release, $depth - 1),
+                    1 => new DeferredOrderItemGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }))) : Generators::constant([]),
+                Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                $depth > 0 && ($bit & 508) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new WindowDefinitionGenerator($release, $depth - 1))) : Generators::constant([]),
+                ($bit & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ProcedureAnalyseGenerator($release)) : Generators::constant(null),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release, $depth - 1),
+                    1 => new RowOperandGenerator($release, $depth - 1),
+                    2 => new DeferredOperandGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new IntoDumpfileGenerator($release),
+                    1 => new IntoOutfileGenerator($release),
+                    2 => new IntoVariablesGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })) : Generators::constant(null),
+                Generators::constant(null),
+                new DeferredProjectionGenerator($release, $depth - 1)
+            )
         );
-        $units = new \Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator();
-        $numerals = new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(1, 32)));
-        $frames = new \Tests\Generator\MySql\Statement\Call\Window\FrameGenerator(
-            \Tests\Generator\MySql\Statement\Call\Window\FrameUnitGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows]),
-            new \Tests\Generator\MySql\Statement\Call\Window\FrameBoundGenerator(\Tests\Generator\MySql\Statement\Call\Window\FrameBoundKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow])),
-            exclusion: new \Tests\Generator\MySql\Statement\Call\Window\FrameExclusionGenerator(),
+        $this->delegate = Generators::suchThat(
+            static function (DeferredSelection $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
-        $deferredFrames = new Selection\Frame\DeferredFrameGenerator(
-            \Tests\Generator\MySql\Statement\Call\Window\FrameUnitGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Range]),
-            new Selection\Frame\DeferredFrameBoundGenerator(
-                \Tests\Generator\MySql\Statement\Call\Window\FrameBoundKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::Preceding]),
-                $rows,
-                $units,
-            ),
-        );
-        $windowAggregates = static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind $selected): ErisGenerator => Generators::bind(Expression\Call\DeferredAggregateKindGenerator::selecting([$selected]), static function (\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind $kind) use ($numbers, $frames): ErisGenerator {
-            $aggregate = $kind === \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind::GroupConcat
-                ? new \Tests\Generator\MySql\Statement\Call\Aggregate\GroupConcatGenerator(Generators::vector(1, $numbers))
-                : new \Tests\Generator\MySql\Statement\Call\Aggregate\JsonObjectAggregateGenerator($numbers, $numbers);
-            return new Expression\Call\DeferredWindowAggregateGenerator($aggregate, new \Tests\Generator\MySql\Statement\Call\Window\WindowSpecGenerator(frame: $frames));
-        });
-        $expressions = [
-            'group concat window' => $windowAggregates(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind::GroupConcat),
-            'json object window' => $windowAggregates(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregateKind::JsonObject),
-            'frame interval' => new Expression\Call\DeferredWindowAggregateGenerator(
-                new \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator(\Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count]), Generators::constant([])),
-                new Selection\DeferredWindowSpecGenerator(frame: $deferredFrames),
-            ),
-            'full text dependency' => new Expression\Access\DeferredFullTextSearchGenerator(
-                Generators::vector(1, new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
-                $rows,
-            ),
-            'window exclusion' => new Expression\Call\DeferredWindowAggregateGenerator(
-                new \Tests\Generator\MySql\Statement\Call\Aggregate\AggregateGenerator(\Tests\Generator\MySql\Statement\Call\Aggregate\AggregateFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Count]), Generators::constant([])),
-                new \Tests\Generator\MySql\Statement\Call\Window\WindowSpecGenerator(frame: $frames),
-            ),
-            'not' => new Expression\Operator\DeferredNotGenerator($deferred),
-            'null test' => new Expression\Operator\DeferredNullTestGenerator($deferred, Generators::bool()),
-            'unary' => new Expression\Operator\DeferredUnaryGenerator(\Tests\Generator\MySql\Statement\Expression\Operator\UnaryOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus]), new Expression\DeferredOperandGenerator([new Expression\DeferredGroupedGenerator($deferred)])),
-            'extract' => new Expression\Call\DeferredExtractGenerator($units, $rows),
-            'get format' => new Expression\Call\DeferredGetFormatGenerator(new \Tests\Generator\MySql\Statement\Call\Temporal\TemporalFormatGenerator(), $rows),
-            'substring separators' => new Expression\Call\DeferredKeywordCallGenerator(\Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Substring]), Generators::tuple($rows, $numbers)),
-            'keyword call' => new Expression\Call\DeferredKeywordCallGenerator(\Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Coalesce]), Generators::vector(2, $rows)),
-            'timestamp' => new Expression\Call\DeferredTimestampGenerator(new \Tests\Generator\MySql\Statement\Call\Temporal\TimestampOperationGenerator(), \Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Second, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Day, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Month]), $rows, $numbers),
-            'trim' => new Expression\Call\DeferredTrimGenerator($rows, new \Tests\Generator\MySql\Statement\Call\TrimSideGenerator(), $numbers),
-            'date arithmetic' => new Expression\Call\DeferredDateArithmeticGenerator(Generators::bool(), $rows, $numbers, $units),
-            'weight parameters' => new Expression\Call\DeferredWeightParametersGenerator($rows, $numerals, $numerals, $numerals),
-            'json value' => new Expression\Call\Json\DeferredJsonValueCallGenerator($rows, new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::constant('$.value'))),
-            'cast' => new Expression\Conversion\DeferredCastGenerator($rows, new \Tests\Generator\MySql\Statement\Type\CastTargetGenerator(\Tests\Generator\MySql\Statement\Type\Kind\CastKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed]))),
-            'clock' => new Expression\Time\DeferredClockGenerator(\Tests\Generator\MySql\Statement\Call\ClockGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now]), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(7, 32)))),
-        ];
-        foreach ($expressions as $name => $expression) {
-            yield $name => new self(Generators::vector(1, new DeferredProjectionGenerator($expression)));
-        }
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredSelection>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredSelection> $element The generated counterexample
+     * @return GeneratedValue<DeferredSelection>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

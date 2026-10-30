@@ -38,34 +38,61 @@ final class ItemLayouts
      */
     public function check(Scalar $expression, Layout $layout, LanguageProfile $profile): void
     {
-        Check::input($profile->grammar->database() === 'mysql', 'A MySQL select-item layout uses a MySQL language profile.');
+        $problem = $this->problem($expression, $layout, $profile);
+        Check::input($problem === null, $problem ?? '');
+    }
+
+    /**
+     * Describes why a layout cannot spell the expression, or null when the layout preserves it.
+     */
+    public function problem(Scalar $expression, Layout $layout, LanguageProfile $profile): ?string
+    {
+        if ($profile->grammar->database() !== 'mysql') {
+            return 'A MySQL select-item layout uses a MySQL language profile.';
+        }
         $naming = new ItemNaming($profile);
         $own = $naming->own($expression);
-        Check::input($layout->tokens[0]->gap === '' || ($profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $own instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse && $own->qualifier === null), 'A select-item layout starts at its first token and keeps no leading trivia.');
+        if ($layout->tokens[0]->gap !== '' && !($profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $own instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse && $own->qualifier === null)) {
+            return 'A select-item layout starts at its first token and keeps no leading trivia.';
+        }
         $platform = Platforms::of('mysql');
         $output = new Output($platform->codec($profile));
         $expression->render($output);
-        Check::input(count($layout->tokens) === count($output->canonical()), 'A select-item layout has one token per expression token.');
+        if (count($layout->tokens) !== count($output->canonical())) {
+            return 'A select-item layout has one token per expression token.';
+        }
         $text = $layout->tokens[0]->gap . $layout->text();
-        Check::input($naming->keeps($expression) && $text !== $naming->canonical($expression), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
+        if (!$naming->keeps($expression) || $text === $naming->canonical($expression)) {
+            return 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.';
+        }
         $parser = $platform->parser($profile);
         try {
             $tokens = array_values(array_filter($parser->tokenize($text), static fn (Token $part): bool => $part->text !== ''));
-            Check::input(count($tokens) === count($layout->tokens), 'Each select-item spelling slot contains exactly one complete token and must preserve the expression.');
+            if (count($tokens) !== count($layout->tokens)) {
+                return 'Each select-item spelling slot contains exactly one complete token and must preserve the expression.';
+            }
             foreach ($layout->tokens as $index => $token) {
-                Check::input($tokens[$index]->text === $token->text, 'Each select-item spelling slot contains exactly one complete token and must preserve the expression.');
+                if ($tokens[$index]->text !== $token->text) {
+                    return 'Each select-item spelling slot contains exactly one complete token and must preserve the expression.';
+                }
             }
             $canonical = (new Lexical())->join($output->canonical());
-            Check::input($this->pairs($parser->tokenize($canonical)) === $this->pairs($parser->tokenize($layout->text())), 'A select-item layout preserves contiguous negation pairs and their warnings.');
+            if ($this->pairs($parser->tokenize($canonical)) !== $this->pairs($parser->tokenize($layout->text()))) {
+                return 'A select-item layout preserves contiguous negation pairs and their warnings.';
+            }
             $correspondence = new TokenCorrespondence();
             $productions = $platform->productions($profile);
             $keys = $platform->leafKeys($profile);
             $rendered = $correspondence->keys($parser->parse('SELECT ' . $canonical), $productions, $keys);
             $written = $correspondence->keys($parser->parse('SELECT ' . $text), $productions, $keys);
-            Check::input($correspondence->difference($rendered, $written) === null, 'A select-item layout must preserve the expression under its spelling profile.');
-        } catch (SourceException $error) {
-            throw new InvalidConstruction('A select-item layout must preserve the expression under its spelling profile.', 0, $error);
+            if ($correspondence->difference($rendered, $written) !== null) {
+                return 'A select-item layout must preserve the expression under its spelling profile.';
+            }
+        } catch (SourceException) {
+            return 'A select-item layout must preserve the expression under its spelling profile.';
         }
+
+        return null;
     }
 
     /**

@@ -5,92 +5,83 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Event\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand;
+use Tests\Generator\MySql\Statement\Expression\Problem\NotSupportedYetGenerator;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Generator\MySql\Statement\Query\Problem\MisuseGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
+use Tests\Generator\Semantics\Statement\OperandGenerator;
 
 /**
- * Composes RefusedOperand values and preserves their operand generators when shrinking.
+ * Generates RefusedOperand values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand>
+ * @implements ErisGenerator<RefusedOperand>
  */
 final class RefusedOperandGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand> */
-    use Composition;
+    /** @var ErisGenerator<RefusedOperand> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth|\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet|\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse> $problem Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account|null>|null $definer Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Operand>>|null $operands Generated constructor operand
-     */
-    public function __construct(ErisGenerator $name, ErisGenerator $problem, ?ErisGenerator $definer = null, ?ErisGenerator $operands = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand(name: $parts[0], problem: $parts[1], definer: $parts[2], operands: $parts[3]);
-        }, Generators::tuple(
-            $name,
-            $problem,
-            $definer ?? Generators::constant(null),
-            $operands ?? Generators::constant([])
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\RefusedOperand>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Routine\\Event\\Problem\\RefusedOperand' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedOperandGenerator(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'e' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            problem: new OperandWidthGenerator(
-                problem: new \Tests\Generator\MySql\Statement\Expression\Problem\OperandColumnsGenerator(
-                    expected: Generators::constant(1),
-                    actual: Generators::constant(2),
-                    expression: Generators::constant(null)
-                ),
-                clause: \Tests\Generator\MySql\Statement\Routine\Event\ClauseGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Event\Clause::Starts]),
-                rowValue: Generators::constant(false)
-            ),
-            definer: Generators::constant(null),
-            operands: Generators::tuple(
-                new \Tests\Generator\Semantics\Statement\OperandGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                )]),
-                new \Tests\Generator\Semantics\Statement\OperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredCallGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::constant('ABS'),
-                        quote: Generators::constant(null)
-                    ),
-                    arguments: Generators::tuple(
-                        new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredCallArgumentGenerator(
-                            expression: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                                elements: Generators::tuple(
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                                        text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                                    )]),
-                                    new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                                        text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                                    )])
-                                ),
-                                keyword: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                            )]),
-                            alias: Generators::constant(null),
-                            mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As])
-                        )
-                    ),
-                    schema: Generators::constant(null)
-                )])
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedOperand => new RefusedOperand(name: $parts[0], problem: $parts[1], definer: $parts[2], operands: $parts[3]),
+            Generators::suchThat(
+                static fn (array $parts): bool => !($parts[1]) instanceof Misuse || ($parts[1])->rule === MisuseRule::RecursiveReferencePosition,
+                Generators::tuple(
+                    new QualifiedNameGenerator($release),
+                    Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new OperandWidthGenerator($release),
+                        1 => new NotSupportedYetGenerator($release),
+                        2 => new MisuseGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OperandGenerator($release)))
+                )
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedOperand $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedOperand>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedOperand> $element The generated counterexample
+     * @return GeneratedValue<RefusedOperand>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

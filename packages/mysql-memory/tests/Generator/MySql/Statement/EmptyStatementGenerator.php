@@ -5,53 +5,78 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\EmptyStatement;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Support\Analysis;
 
 /**
- * Composes EmptyStatement values and preserves their operand generators when shrinking.
+ * Generates EmptyStatement values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\EmptyStatement>
+ * @implements ErisGenerator<EmptyStatement>
  */
 final class EmptyStatementGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\EmptyStatement> */
-    use Composition;
+    /** @var ErisGenerator<EmptyStatement> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): EmptyStatement => new EmptyStatement(statementInformation: $parts[0], inputSource: $parts[1]),
+            Generators::tuple(
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (EmptyStatement $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (EmptyStatement $statement): EmptyStatement => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (EmptyStatement $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
+    }
 
     /**
-     * Generates complete EmptyStatement values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\EmptyStatement>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<EmptyStatement>
      */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        if ($operands === null) {
-            $forms = [];
-            $forms[] = self::operands();
-            $forms[] = Generators::map(
-                static fn (\SqlSemantics\Statement\Script $script): \SqlSemantics\Platform\MySql\Statement\EmptyStatement => new \SqlSemantics\Platform\MySql\Statement\EmptyStatement(inputSource: $script->inputSource),
-                new \Tests\Generator\Semantics\Statement\ScriptGenerator(Generators::constant([])),
-            );
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\EmptyStatement {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\EmptyStatement) {
-                throw new LogicException('Publishing EmptyStatement must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+        return ($this->delegate)($size, $rand);
     }
+
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\EmptyStatement>
+     * @param GeneratedValue<EmptyStatement> $element The generated counterexample
+     * @return GeneratedValue<EmptyStatement>
      */
-    public static function operands(?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
+    public function shrink(GeneratedValue $element): GeneratedValue
     {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\EmptyStatement {
-            return new \SqlSemantics\Platform\MySql\Statement\EmptyStatement(statementInformation: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple($statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
+        return $this->delegate->shrink($element);
     }
 }

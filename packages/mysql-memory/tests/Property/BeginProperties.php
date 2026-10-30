@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
-use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -19,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 use Tests\Generator\MySql\Statement\Server\Transaction\BeginGenerator;
 
 /**
- * Searches for Begin values that post-analysis execution cannot consume.
+ * Generates Begin analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,23 +27,16 @@ final class BeginProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * Execution raises no error.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(new BeginGenerator($release))->withMaxSize(10)->then(static function (Begin $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
-            try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
-            }
+        $this->forAll(new BeginGenerator($release))->then(static function (Begin $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            (new Execution($session))->statement($statement);
         });
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
+use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -19,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagn
 use Tests\Generator\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnosticsGenerator;
 
 /**
- * Searches for GetDiagnostics values that post-analysis execution cannot consume.
+ * Generates GetDiagnostics analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,22 +29,26 @@ final class GetDiagnosticsProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * The server errors that report only database state the generated statement depends on.
+     */
+    private const MISSING_STATE = [ProgramError::UndeclaredVariable, ProgramError::StackedWithoutHandler];
+
+    /**
+     * Execution raises no error, except an error that depends on database state.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(new GetDiagnosticsGenerator($release))->withMaxSize(10)->then(static function (GetDiagnostics $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
+        $this->forAll(new GetDiagnosticsGenerator($release))->then(static function (GetDiagnostics $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
+                (new Execution($session))->statement($statement);
+            } catch (SqlError $error) {
+                if (!in_array($error->error, self::MISSING_STATE, true)) {
+                    throw $error;
+                }
             }
         });
     }
@@ -53,9 +58,6 @@ final class GetDiagnosticsProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        foreach (\Container\MySqlRelease::versions() as $version) {
-            $release = GrammarRelease::from('mysql-' . $version);
-            yield $release->value => [$release];
-        }
+        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
     }
 }

@@ -5,85 +5,85 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Storage;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
+use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace;
+use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Server\Storage\Option\StorageOptionGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes AlterTablespace values and preserves their operand generators when shrinking.
+ * Generates AlterTablespace values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace>
+ * @implements ErisGenerator<AlterTablespace>
  */
 final class AlterTablespaceGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace> */
-    use Composition;
+    /** @var ErisGenerator<AlterTablespace> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete AlterTablespace values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No AlterTablespace forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace) {
-                throw new LogicException('Publishing AlterTablespace must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption>> $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<list<bool>>|null $optionsCommas Generated list boundaries
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace>
-     */
-    public static function operands(ErisGenerator $name, ErisGenerator $options, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null): ErisGenerator
-    {
-        return Generators::bind(Generators::tuple($name, $options, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)), static function (array $parts) use ($optionsCommas): ErisGenerator {
-            return Generators::map(static fn (array $commas): \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $commas), $optionsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool()));
-        });
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'AlterTablespace/179' => AlterTablespaceGenerator::operands(
-            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            options: Generators::tuple(
-                new Option\StorageOptionGenerator([new Option\WaitOptionGenerator(
-                    wait: Generators::constant(true)
-                )]),
-                new Option\StorageOptionGenerator([new Option\WaitOptionGenerator(
-                    wait: Generators::constant(true)
-                )])
+        $this->delegate = Generators::map(
+            static fn (array $parts): AlterTablespace => new AlterTablespace(name: $parts[0], options: array_values(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::ALTER_TABLESPACE, true))), statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $parts[4] === null ? null : array_slice($parts[4], 0, max(0, count(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::ALTER_TABLESPACE, true))) - 1))),
+            Generators::tuple(
+                new NameGenerator($release),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, Generators::suchThat(static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::ALTER_TABLESPACE, true), new StorageOptionGenerator($release)))),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
             )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (AlterTablespace $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (AlterTablespace $statement): AlterTablespace => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (AlterTablespace $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AlterTablespace>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AlterTablespace> $element The generated counterexample
+     * @return GeneratedValue<AlterTablespace>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

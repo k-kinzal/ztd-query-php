@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
+use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -19,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFi
 use Tests\Generator\MySql\Statement\Replication\Filter\ChangeReplicationFilterGenerator;
 
 /**
- * Searches for ChangeReplicationFilter values that post-analysis execution cannot consume.
+ * Generates ChangeReplicationFilter analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,42 +29,27 @@ final class ChangeReplicationFilterProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * The server errors that report only runtime state the generated statement depends on, such as objects it names that do not exist yet.
      */
-    #[Test]
-    #[DataProvider('providerReleases')]
-    #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
-    {
-        $this->forAll(new ChangeReplicationFilterGenerator($release))->withMaxSize(10)->then(static function (ChangeReplicationFilter $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
-            try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
-            }
-        });
-    }
+    private const MISSING_STATE = [AdministrationError::ReplicaNotInitialized];
 
     /**
-     * A generated source and stopped applier satisfy the filter change's prerequisites.
+     * Execution raises no error, except an error that depends on database state.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesFilterChangeCompletesWithItsPrerequisites(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(ChangeReplicationFilterGenerator::sequences($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
-            $session = (new Instance(substr($release->value, 6), globals: ['server_id' => 1], databases: ['pbt']))->connect(database: 'pbt');
-            $execution = new Execution($session);
-            [$configure, $start, $stop, $filter] = $sequence;
-            $execution->statement($configure);
-            $execution->statement($start);
-            $execution->statement($stop);
-            $execution->statement($filter);
+        $this->forAll(new ChangeReplicationFilterGenerator($release))->then(static function (ChangeReplicationFilter $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            try {
+                (new Execution($session))->statement($statement);
+            } catch (SqlError $error) {
+                if (!in_array($error->error, self::MISSING_STATE, true)) {
+                    throw $error;
+                }
+            }
         });
     }
 

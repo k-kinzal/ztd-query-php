@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Generator\Context;
+namespace Tests\Support;
 
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;

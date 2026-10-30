@@ -5,38 +5,89 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Expression\Call;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp;
+use SqlSemantics\Statement\Scalar;
+use Tests\Generator\MySql\Statement\Call\Temporal\TimestampOperationGenerator;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes DeferredTimestamp values and preserves their operand generators when shrinking.
+ * Generates DeferredTimestamp values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp>
+ * @implements ErisGenerator<DeferredTimestamp>
  */
 final class DeferredTimestampGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp> */
-    use Composition;
+    /** @var ErisGenerator<DeferredTimestamp> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredTimestamp => new DeferredTimestamp(operation: $parts[0], unit: $parts[1], first: $parts[2], second: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]),
+            Generators::suchThat(
+                static fn (array $parts): bool => !($parts[2]) instanceof Scalar || !($parts[3]) instanceof Scalar,
+                Generators::tuple(
+                    new TimestampOperationGenerator($release),
+                    Generators::elements(array_values(array_filter(IntervalUnit::cases(), static fn (IntervalUnit $unit): bool => in_array($unit->canonical(), [IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true)))),
+                    Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new RowOperandGenerator($release, $depth - 1),
+                        2 => new DeferredOperandGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new RowOperandGenerator($release, $depth - 1),
+                        2 => new DeferredOperandGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredTimestamp $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampOperation> $operation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit> $unit Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $first Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $second Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredTimestamp>
      */
-    public function __construct(ErisGenerator $operation, ErisGenerator $unit, ErisGenerator $first, ErisGenerator $second, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp(operation: $parts[0], unit: $parts[1], first: $parts[2], second: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple(
-            $operation,
-            $unit,
-            $first,
-            $second,
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredTimestamp> $element The generated counterexample
+     * @return GeneratedValue<DeferredTimestamp>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

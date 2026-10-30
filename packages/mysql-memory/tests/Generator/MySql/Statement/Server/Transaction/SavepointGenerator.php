@@ -6,17 +6,26 @@ namespace Tests\Generator\MySql\Statement\Server\Transaction;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
-use LogicException;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
+use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes Savepoint operands through Eris; shrinking reconstructs the same SQL alternative.
+ * Generates Savepoint values from the generators of its operands.
  *
  * @implements ErisGenerator<Savepoint>
  */
@@ -25,95 +34,56 @@ final class SavepointGenerator implements ErisGenerator
     /** @var ErisGenerator<Savepoint> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete Savepoint values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<Savepoint>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): Savepoint => new Savepoint(savepoint: $parts[0], profile: $parts[1], client: $parts[2], source: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]),
+            Generators::tuple(
+                new NameGenerator($release),
+                new LanguageProfileGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CharsetGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Savepoint $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No Savepoint forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): Savepoint {
-            if (!$statement instanceof Savepoint) {
-                throw new LogicException('Publishing Savepoint must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Selects the grammar before generating operands.
-     * @return ErisGenerator<Savepoint>
-     */
-    public static function operands(GrammarRelease $release): ErisGenerator
-    {
-        return Generators::map(static fn (\SqlSemantics\Statement\Identifier\Name $name): Savepoint => new Savepoint($name, profile: new LanguageProfile($release)), Generators::oneOf(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(quotes: Generators::constant(\SqlSemantics\Statement\Identifier\NameQuote::Backtick)), Generators::map(static fn (string $value): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($value, \SqlSemantics\Statement\Identifier\NameQuote::Bare), Generators::elements('FULL', 'full', 'fUlL'))));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (Savepoint $statement): Savepoint => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Savepoint $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<Savepoint>
+     * @return GeneratedValue<Savepoint>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<Savepoint> $element The generated counterexample
      * @return GeneratedValue<Savepoint>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $savepoint The generated semantic operand
-     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
-     * @return ErisGenerator<Savepoint>
-     */
-    public static function fromOperands(ErisGenerator $savepoint, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): Savepoint => new Savepoint(savepoint: $parts[0], profile: $parts[1], client: $parts[2]), Generators::tuple($savepoint, $profile, $client));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<Savepoint>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'Savepoint/70' => SavepointGenerator::fromOperands(
-            savepoint: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
-                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                    settings: Generators::constant('')
-                ),
-                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-            ),
-            client: Generators::constant(null)
-        );
-    }
-
 }

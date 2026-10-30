@@ -6,14 +6,19 @@ namespace Tests\Generator\MySql\Statement\Account\User;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
 
 /**
- * Generates independently written source and destination account operands.
+ * Generates UserRenaming values from the generators of its operands.
  *
  * @implements ErisGenerator<UserRenaming>
  */
@@ -22,41 +27,45 @@ final class UserRenamingGenerator implements ErisGenerator
     /** @var ErisGenerator<UserRenaming> */
     private ErisGenerator $delegate;
 
-    /**
-     * Composes both operands without requiring the runtime accounts to exist.
-     */
-    public function __construct()
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static fn (array $parts): UserRenaming => new UserRenaming($parts[0], $parts[1]), Generators::tuple(new AccountGenerator(), new AccountGenerator()));
+        $this->delegate = Generators::map(
+            static fn (array $parts): UserRenaming => new UserRenaming(from: $parts[0], to: $parts[1], inputSource: $parts[2]),
+            Generators::tuple(
+                new AccountGenerator($release),
+                new AccountGenerator($release),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (UserRenaming $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<UserRenaming>
+     * @return GeneratedValue<UserRenaming>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<UserRenaming> $element The generated counterexample
      * @return GeneratedValue<UserRenaming>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account> $from The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account> $to The generated semantic operand
-     * @return ErisGenerator<UserRenaming>
-     */
-    public static function fromOperands(ErisGenerator $from, ErisGenerator $to): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): UserRenaming => new UserRenaming(from: $parts[0], to: $parts[1]), Generators::tuple($from, $to));
-    }
-
 }

@@ -63,6 +63,7 @@ final class PluginCommand implements Command
         $session->transaction->commit();
         $directory = (string) $session->variables->read('plugin_dir');
         if ($statement instanceof CreateLoadableFunction) {
+            $this->locks($session, false, 'func');
             $this->loadable($statement, $session);
         }
         if ($statement instanceof InstallPlugin || $statement instanceof UninstallPlugin) {
@@ -113,12 +114,12 @@ final class PluginCommand implements Command
      *
      * @throws SqlError When the catalog table lacks its explicit write lock
      */
-    public function locks(Session $session, bool $component): void
+    public function locks(Session $session, bool $component, ?string $table = null): void
     {
         if ($session->locks === []) {
             return;
         }
-        $table = $component ? 'component' : 'plugin';
+        $table ??= $component ? 'component' : 'plugin';
         try {
             (new \MySqlMemory\Command\Access\Locks())->allowed($session, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($table), new \SqlSemantics\Statement\Identifier\Name('mysql')), $table, [], true);
         } catch (SqlError $error) {

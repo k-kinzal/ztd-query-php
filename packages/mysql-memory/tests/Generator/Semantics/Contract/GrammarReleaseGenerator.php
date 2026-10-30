@@ -5,35 +5,58 @@ declare(strict_types=1);
 namespace Tests\Generator\Semantics\Contract;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 
 /**
- * Composes GrammarRelease values and preserves their operand generators when shrinking.
+ * Generates GrammarRelease values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Contract\GrammarRelease>
+ * @implements ErisGenerator<GrammarRelease>
  */
 final class GrammarReleaseGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Contract\GrammarRelease> */
-    use Composition;
+    /** @var ErisGenerator<GrammarRelease> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::elements(GrammarRelease::cases());
+        $this->delegate = Generators::suchThat(
+            static function (GrammarRelease $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * Selects an enum alternative through Eris.
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<GrammarRelease>
      */
-    public function __construct()
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::elements(\SqlSemantics\Contract\GrammarRelease::cases());
-    }
-    /**
-     * Selects the alternatives valid in a particular SQL role.
-     *
-     * @param non-empty-list<\SqlSemantics\Contract\GrammarRelease> $cases The alternatives allowed by the parent structure
-     * @return ErisGenerator<\SqlSemantics\Contract\GrammarRelease>
-     */
-    public static function selecting(array $cases): ErisGenerator
-    {
-        return Generators::elements($cases);
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<GrammarRelease> $element The generated counterexample
+     * @return GeneratedValue<GrammarRelease>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

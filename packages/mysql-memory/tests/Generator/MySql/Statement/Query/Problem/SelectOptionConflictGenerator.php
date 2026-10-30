@@ -5,43 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Query\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict;
+use Tests\Generator\MySql\Statement\Query\SelectOptionGenerator;
 
 /**
- * Composes SelectOptionConflict values and preserves their operand generators when shrinking.
+ * Generates SelectOptionConflict values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict>
+ * @implements ErisGenerator<SelectOptionConflict>
  */
 final class SelectOptionConflictGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict> */
-    use Composition;
+    /** @var ErisGenerator<SelectOptionConflict> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\SelectOption> $first Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\SelectOption> $second Generated constructor operand
-     */
-    public function __construct(ErisGenerator $first, ErisGenerator $second)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict {
-            return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict(first: $parts[0], second: $parts[1]);
-        }, Generators::tuple(
-            $first,
-            $second
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Query\\Problem\\SelectOptionConflict' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new SelectOptionConflictGenerator(
-            first: \Tests\Generator\MySql\Statement\Query\SelectOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All]),
-            second: \Tests\Generator\MySql\Statement\Query\SelectOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct])
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): SelectOptionConflict => new SelectOptionConflict(first: $parts[0], second: $parts[1]),
+            Generators::tuple(
+                new SelectOptionGenerator($release),
+                new SelectOptionGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (SelectOptionConflict $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<SelectOptionConflict>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<SelectOptionConflict> $element The generated counterexample
+     * @return GeneratedValue<SelectOptionConflict>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -22,8 +22,8 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSo
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(SourceChange::class)]
 #[Small]

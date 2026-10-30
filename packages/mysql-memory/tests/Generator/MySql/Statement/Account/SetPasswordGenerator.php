@@ -5,117 +5,86 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes SetPassword values and preserves their operand generators when shrinking.
+ * Generates SetPassword values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\SetPassword>
+ * @implements ErisGenerator<SetPassword>
  */
 final class SetPasswordGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\SetPassword> */
-    use Composition;
+    /** @var ErisGenerator<SetPassword> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete SetPassword values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\SetPassword>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-            foreach (self::additionalForms() as [$grammar, $form]) {
-                if ($grammar === $release) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): SetPassword => new SetPassword(user: $parts[0], password: $parts[1], replace: $parts[1]?->function === null ? $parts[2] : null, retainCurrent: $parts[1]?->function === null && $parts[3], statementInformation: $parts[4], inputSource: $parts[5], operator: $parts[6]),
+            Generators::tuple(
+                Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new PasswordGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                Generators::bool(),
+                Generators::constant(null),
+                Generators::constant(null),
+                new AssignmentOperatorGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (SetPassword $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No SetPassword forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Account\SetPassword {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\SetPassword) {
-                throw new LogicException('Publishing SetPassword must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account|null> $user Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Password|null> $password Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $replace Generated constructor operand
-     * @param ErisGenerator<bool>|null $retainCurrent Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator>|null $operator Generated assignment sign
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\SetPassword>
-     */
-    public static function operands(ErisGenerator $user, ErisGenerator $password, ?ErisGenerator $replace = null, ?ErisGenerator $retainCurrent = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\SetPassword {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\SetPassword(user: $parts[0], password: $parts[1], replace: $parts[2], retainCurrent: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], operator: $parts[6]);
-        }, Generators::tuple($user, $password, $replace ?? Generators::constant(null), $retainCurrent ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $operator ?? new \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator()));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\SetPassword>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'SetPassword/384' => SetPasswordGenerator::operands(
-            user: Generators::constant(null),
-            password: new PasswordGenerator(
-                text: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                    value: Generators::constant('text'),
-                    radix: Generators::constant(null)
-                ),
-                function: Generators::constant(null)
-            ),
-            replace: Generators::constant(null),
-            retainCurrent: Generators::constant(false)
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (SetPassword $statement): SetPassword => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (SetPassword $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
     /**
-     * Composes further SQL roles and version-specific forms from typed operands.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\SetPassword>}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<SetPassword>
      */
-    public static function additionalForms(): iterable
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        yield 'SetPassword/additional/76' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, SetPasswordGenerator::operands(
-            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::constant('u'),
-                    quote: Generators::constant(null)
-                ),
-                host: Generators::constant(null)
-            )]),
-            password: new PasswordGenerator(
-                text: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                    value: Generators::constant('x'),
-                    radix: Generators::constant(null)
-                ),
-                function: PasswordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::OldPassword])
-            ),
-            replace: Generators::constant(null),
-            retainCurrent: Generators::constant(false)
-        )];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<SetPassword> $element The generated counterexample
+     * @return GeneratedValue<SetPassword>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

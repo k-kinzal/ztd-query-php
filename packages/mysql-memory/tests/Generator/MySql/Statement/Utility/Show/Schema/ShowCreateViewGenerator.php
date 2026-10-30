@@ -5,81 +5,80 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Utility\Show\Schema;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Utility\Show\InspectedTableGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes ShowCreateView values and preserves their operand generators when shrinking.
+ * Generates ShowCreateView values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView>
+ * @implements ErisGenerator<ShowCreateView>
  */
 final class ShowCreateViewGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView> */
-    use Composition;
+    /** @var ErisGenerator<ShowCreateView> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete ShowCreateView values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No ShowCreateView forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView) {
-                throw new LogicException('Publishing ShowCreateView must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable> $view Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView>
-     */
-    public static function operands(ErisGenerator $view, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView(view: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple($view, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateView>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'ShowCreateView/90' => ShowCreateViewGenerator::operands(
-            view: new \Tests\Generator\MySql\Statement\Utility\Show\InspectedTableGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                )
+        $this->delegate = Generators::map(
+            static fn (array $parts): ShowCreateView => new ShowCreateView(view: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]),
+            Generators::tuple(
+                new InspectedTableGenerator($release),
+                Generators::constant(null),
+                Generators::constant(null)
             )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ShowCreateView $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (ShowCreateView $statement): ShowCreateView => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ShowCreateView $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ShowCreateView>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ShowCreateView> $element The generated counterexample
+     * @return GeneratedValue<ShowCreateView>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

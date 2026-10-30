@@ -5,80 +5,88 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Prepared;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
+use Eris\Random\RandomRange;
 use LogicException;
-use Tests\Generator\Composition;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes Prepare values and preserves their operand generators when shrinking.
+ * Generates Prepare values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare>
+ * @implements ErisGenerator<Prepare>
  */
 final class PrepareGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare> */
-    use Composition;
+    /** @var ErisGenerator<Prepare> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete Prepare values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No Prepare forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare) {
-                throw new LogicException('Publishing Prepare must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable> $source Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare>
-     */
-    public static function operands(ErisGenerator $name, ErisGenerator $source, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare(name: $parts[0], source: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, Generators::tuple($name, $source, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'Prepare/60' => PrepareGenerator::operands(
-            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            source: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                value: Generators::elements(['text', "SELECT '🦄' AS value", "SELECT 'é' AS value", 'SELECT 1 AS `🦄`']),
-                radix: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): Prepare => new Prepare(name: $parts[0], source: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]),
+            Generators::tuple(
+                new NameGenerator($release),
+                Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new TextGenerator($release),
+                    1 => new UserVariableGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }),
+                Generators::constant(null),
+                Generators::constant(null)
             )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Prepare $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (Prepare $statement): Prepare => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Prepare $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Prepare>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Prepare> $element The generated counterexample
+     * @return GeneratedValue<Prepare>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,46 +5,75 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Replication\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
+use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
+use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 
 /**
- * Composes RefusedSetting values and preserves their operand generators when shrinking.
+ * Generates RefusedSetting values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting>
+ * @implements ErisGenerator<RefusedSetting>
  */
 final class RefusedSettingGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting> */
-    use Composition;
+    /** @var ErisGenerator<RefusedSetting> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedSetting => new RefusedSetting(error: $parts[0], number: match ($parts[0]) {
+                ReplicationError::FileNumberOutOfRange => $parts[1] ?? new Numeral('0'), ReplicationError::DelayOutOfRange => $parts[1], default => null
+            }, text: match ($parts[0]) {
+                ReplicationError::LineFeed => new Text("line\nfeed"), ReplicationError::InvalidUuid => new Text('not-a-uuid'), default => null
+            }),
+            Generators::tuple(
+                new ReplicationErrorGenerator($release),
+                Generators::oneOf(Generators::constant(null), new NumeralGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedSetting $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError> $error Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $number Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $text Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedSetting>
      */
-    public function __construct(ErisGenerator $error, ?ErisGenerator $number = null, ?ErisGenerator $text = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(error: $parts[0], number: $parts[1], text: $parts[2]);
-        }, Generators::tuple(
-            $error,
-            $number ?? Generators::constant(null),
-            $text ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Replication\\Problem\\RefusedSetting' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedSettingGenerator(
-            error: ReplicationErrorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::PasswordTooLong]),
-            number: Generators::constant(null),
-            text: Generators::constant(null)
-        )];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<RefusedSetting> $element The generated counterexample
+     * @return GeneratedValue<RefusedSetting>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,40 +5,64 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Call\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant;
 
 /**
- * Composes InvalidNamedConstant values and preserves their operand generators when shrinking.
+ * Generates InvalidNamedConstant values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant>
+ * @implements ErisGenerator<InvalidNamedConstant>
  */
 final class InvalidNamedConstantGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant> */
-    use Composition;
+    /** @var ErisGenerator<InvalidNamedConstant> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): InvalidNamedConstant => new InvalidNamedConstant(nullName: $parts[0]),
+            Generators::tuple(
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (InvalidNamedConstant $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<bool>|null $nullName Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<InvalidNamedConstant>
      */
-    public function __construct(?ErisGenerator $nullName = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant {
-            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant(nullName: $parts[0]);
-        }, Generators::tuple(
-            $nullName ?? Generators::constant(false)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Call\\Problem\\InvalidNamedConstant' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new InvalidNamedConstantGenerator(
-            nullName: Generators::constant(true)
-        )];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<InvalidNamedConstant> $element The generated counterexample
+     * @return GeneratedValue<InvalidNamedConstant>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

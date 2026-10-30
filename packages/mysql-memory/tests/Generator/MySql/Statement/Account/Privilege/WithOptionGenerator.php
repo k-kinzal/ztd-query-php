@@ -5,24 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Privilege;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption;
+use Tests\Generator\MySql\Statement\Account\Option\ResourceLimitGenerator;
 
 /**
- * Composes WithOption values and preserves their operand generators when shrinking.
+ * Generates WithOption values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption>
+ * @implements ErisGenerator<WithOption>
  */
 final class WithOptionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption> */
-    use Composition;
+    /** @var ErisGenerator<WithOption> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+            0 => new ResourceLimitGenerator($release),
+            1 => new GrantOptionRightGenerator($release),
+            default => throw new LogicException('Unreachable alternative.'),
+        });
+        $this->delegate = Generators::suchThat(
+            static function (WithOption $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param non-empty-list<ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption>> $alternatives Concrete SQL forms satisfying this role
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<WithOption>
      */
-    public function __construct(array $alternatives)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::oneOf(...$alternatives);
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<WithOption> $element The generated counterexample
+     * @return GeneratedValue<WithOption>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

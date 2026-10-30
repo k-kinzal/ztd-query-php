@@ -5,43 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment;
 
 /**
- * Composes ScopedLocalAssignment values and preserves their operand generators when shrinking.
+ * Generates ScopedLocalAssignment values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment>
+ * @implements ErisGenerator<ScopedLocalAssignment>
  */
 final class ScopedLocalAssignmentGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment> */
-    use Composition;
+    /** @var ErisGenerator<ScopedLocalAssignment> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<int|null>|null $offset Generated constructor operand
-     * @param ErisGenerator<int|null>|null $end Generated constructor operand
-     */
-    public function __construct(?ErisGenerator $offset = null, ?ErisGenerator $end = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment(offset: $parts[0], end: $parts[1]);
-        }, Generators::tuple(
-            $offset ?? Generators::constant(null),
-            $end ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Routine\\Problem\\ScopedLocalAssignment' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new ScopedLocalAssignmentGenerator(
-            offset: Generators::constant(17),
-            end: Generators::constant(null)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): ScopedLocalAssignment => new ScopedLocalAssignment(offset: $parts[0], end: $parts[0] === null ? null : ($parts[1] === null ? null : $parts[0] + $parts[1])),
+            Generators::tuple(
+                Generators::oneOf(Generators::constant(null), Generators::choose(0, 100)),
+                Generators::oneOf(Generators::constant(null), Generators::choose(0, 100))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ScopedLocalAssignment $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ScopedLocalAssignment>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ScopedLocalAssignment> $element The generated counterexample
+     * @return GeneratedValue<ScopedLocalAssignment>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

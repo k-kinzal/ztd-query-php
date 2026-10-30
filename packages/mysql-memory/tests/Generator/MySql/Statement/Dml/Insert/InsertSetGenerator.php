@@ -5,110 +5,109 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Insert;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
+use Eris\Random\RandomRange;
 use LogicException;
-use Tests\Generator\Composition;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Node;
+use Tests\Generator\MySql\Statement\Dml\AssignmentGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes InsertSet values and preserves their operand generators when shrinking.
+ * Generates InsertSet values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet>
+ * @implements ErisGenerator<InsertSet>
  */
 final class InsertSetGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet> */
-    use Composition;
+    /** @var ErisGenerator<InsertSet> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete InsertSet values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): InsertSet => new InsertSet(into: $parts[0], assignments: $parts[1], alias: $parts[0]->replace ? null : $parts[2], onDuplicate: $parts[0]->replace ? [] : $parts[3], statementInformation: $parts[4], inputSource: $parts[5]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (static function (array $parts): bool {
+                    foreach ($parts as $part) {
+                        foreach (is_array($part) ? $part : [$part] as $node) {
+                            if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {
+                                return false;
+                            }
+                        }
+                    }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No InsertSet forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet) {
-                throw new LogicException('Publishing InsertSet must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto> $into Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment>> $assignments Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias|null>|null $alias Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment>>|null $onDuplicate Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet>
-     */
-    public static function operands(ErisGenerator $into, ErisGenerator $assignments, ?ErisGenerator $alias = null, ?ErisGenerator $onDuplicate = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet(into: $parts[0], assignments: $parts[1], alias: $parts[2], onDuplicate: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple($into, $assignments, $alias ?? Generators::constant(null), $onDuplicate ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'InsertSet/358' => InsertSetGenerator::operands(
-            into: new InsertIntoGenerator(
-                replace: Generators::constant(false),
-                priority: Generators::constant(null),
-                ignore: Generators::constant(false),
-                table: new \Tests\Generator\MySql\Statement\Dml\WriteTargetGenerator(
-                    name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    ),
-                    alias: Generators::constant(null),
-                    partitions: Generators::constant([]),
-                    mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As])
-                ),
-                columns: Generators::constant(null),
-                hints: Generators::constant([]),
-                intoWritten: Generators::constant(false)
-            ),
-            assignments: Generators::tuple(
-                new \Tests\Generator\MySql\Statement\Dml\AssignmentGenerator(
-                    column: new \Tests\Generator\MySql\Statement\Name\ColumnUseGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        qualifier: Generators::constant(null),
-                        dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    ),
-                    value: new \Tests\Generator\MySql\Statement\Dml\DefaultRequestGenerator()
+                    return true;
+                })($parts),
+                Generators::tuple(
+                    Generators::suchThat(static fn (InsertInto $into): bool => $into->columns === null, new InsertIntoGenerator($release)),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new AssignmentGenerator($release, $depth - 1),
+                        1 => new DeferredColumnAssignmentGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))),
+                    Generators::oneOf(Generators::constant(null), new RowAliasGenerator($release)),
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new AssignmentGenerator($release, $depth - 1),
+                        1 => new DeferredColumnAssignmentGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))) : Generators::constant([]),
+                    Generators::constant(null),
+                    Generators::constant(null)
                 )
-            ),
-            alias: Generators::constant(null),
-            onDuplicate: Generators::constant([])
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (InsertSet $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (InsertSet $statement): InsertSet => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (InsertSet $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<InsertSet>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<InsertSet> $element The generated counterexample
+     * @return GeneratedValue<InsertSet>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

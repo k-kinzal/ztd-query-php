@@ -5,46 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule;
+use Tests\Generator\MySql\Statement\Server\Spatial\SpatialAttributeKindGenerator;
 
 /**
- * Composes SpatialProblem values and preserves their operand generators when shrinking.
+ * Generates SpatialProblem values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem>
+ * @implements ErisGenerator<SpatialProblem>
  */
 final class SpatialProblemGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem> */
-    use Composition;
+    /** @var ErisGenerator<SpatialProblem> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule> $rule Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind|null>|null $attribute Generated constructor operand
-     * @param ErisGenerator<string|null>|null $value Generated constructor operand
-     */
-    public function __construct(ErisGenerator $rule, ?ErisGenerator $attribute = null, ?ErisGenerator $value = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(rule: $parts[0], attribute: $parts[1], value: $parts[2]);
-        }, Generators::tuple(
-            $rule,
-            $attribute ?? Generators::constant(null),
-            $value ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Server\\Problem\\SpatialProblem' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new SpatialProblemGenerator(
-            rule: SpatialRuleGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::MissingAttribute]),
-            attribute: \Tests\Generator\MySql\Statement\Server\Spatial\SpatialAttributeKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Definition]),
-            value: Generators::constant(null)
-        )];
+        $this->delegate = Generators::bind(
+            new SpatialRuleGenerator($release),
+            static fn (SpatialRule $rule): ErisGenerator => Generators::map(
+                static fn (array $parts): SpatialProblem => $rule === SpatialRule::LineFeed
+                    ? new SpatialProblem(rule: $rule, attribute: $parts[0], value: "line\n" . $parts[1])
+                    : new SpatialProblem(rule: $rule, attribute: $parts[2], value: null),
+                Generators::tuple(new SpatialAttributeKindGenerator($release), Generators::choose(0, 9), Generators::oneOf(Generators::constant(null), new SpatialAttributeKindGenerator($release)))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (SpatialProblem $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<SpatialProblem>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<SpatialProblem> $element The generated counterexample
+     * @return GeneratedValue<SpatialProblem>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

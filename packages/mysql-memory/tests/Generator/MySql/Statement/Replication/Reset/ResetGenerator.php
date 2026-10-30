@@ -5,117 +5,104 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Replication\Reset;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
+use Eris\Random\RandomRange;
 use LogicException;
-use Tests\Generator\Composition;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Support\Analysis;
 
 /**
- * Composes Reset values and preserves their operand generators when shrinking.
+ * Generates Reset values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset>
+ * @implements ErisGenerator<Reset>
  */
 final class ResetGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset> */
-    use Composition;
+    /** @var ErisGenerator<Reset> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete Reset values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-            foreach (self::additionalForms() as [$grammar, $form]) {
-                if ($grammar === $release) {
-                    $forms[] = $form;
-                }
-            }
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): Reset => new Reset(targets: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (static function (array $targets): bool {
+                    $terms = [];
+                    foreach ($targets as $target) {
+                        if (!$target instanceof ResetBinaryLogs && !$target instanceof ResetReplica) {
+                            continue;
+                        }
+                        if (isset($terms[$target::class]) && $terms[$target::class] !== $target->terminology) {
+                            return false;
+                        }
+                        $terms[$target::class] = $target->terminology;
+                    }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No Reset forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset) {
-                throw new LogicException('Publishing Reset must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetTarget>> $targets Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset>
-     */
-    public static function operands(ErisGenerator $targets, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset(targets: $parts[0], statementInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple($targets, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'Reset/372' => ResetGenerator::operands(
-            targets: Generators::tuple(
-                new ResetBinaryLogsGenerator(
-                    terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-                    first: Generators::constant(null),
-                    synonym: Generators::constant(false)
+                    return true;
+                })(($parts[0])),
+                Generators::tuple(
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::elements(array_keys(array_filter([511, 3, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ResetBinaryLogsGenerator($release),
+                        1 => new ResetQueryCacheGenerator($release),
+                        2 => new ResetReplicaGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))),
+                    Generators::constant(null),
+                    Generators::constant(null)
                 )
             )
         );
-        yield 'Reset/373' => ResetGenerator::operands(
-            targets: Generators::tuple(
-                new ResetBinaryLogsGenerator(
-                    terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-                    first: Generators::constant(null),
-                    synonym: Generators::constant(false)
-                ),
-                new ResetReplicaGenerator(
-                    terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-                    all: Generators::constant(false),
-                    channel: Generators::constant(null),
-                    synonym: Generators::constant(false)
-                )
-            )
+        $this->delegate = Generators::suchThat(
+            static function (Reset $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (Reset $statement): Reset => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Reset $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
     /**
-     * Composes further SQL roles and version-specific forms from typed operands.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset>}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Reset>
      */
-    public static function additionalForms(): iterable
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        yield 'Reset/additional/72' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, ResetGenerator::operands(
-            targets: Generators::tuple(
-                new ResetQueryCacheGenerator(),
-                new ResetBinaryLogsGenerator(
-                    terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy]),
-                    first: Generators::constant(null),
-                    synonym: Generators::constant(false)
-                )
-            )
-        )];
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<Reset> $element The generated counterexample
+     * @return GeneratedValue<Reset>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

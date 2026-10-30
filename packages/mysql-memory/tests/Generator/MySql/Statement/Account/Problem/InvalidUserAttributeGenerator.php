@@ -5,44 +5,64 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
 
 /**
- * Composes InvalidUserAttribute values and preserves their operand generators when shrinking.
+ * Generates InvalidUserAttribute values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute>
+ * @implements ErisGenerator<InvalidUserAttribute>
  */
 final class InvalidUserAttributeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute> */
-    use Composition;
+    /** @var ErisGenerator<InvalidUserAttribute> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<string> $text Generated constructor operand
-     */
-    public function __construct(ErisGenerator $text)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute(text: $parts[0]);
-        }, Generators::tuple(
-            $text
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): InvalidUserAttribute => new InvalidUserAttribute(text: $parts[0]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (InvalidUserAttribute $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Generates the complete dependency sequence that owns this command condition.
-     *
-     * @return ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Statement>>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<InvalidUserAttribute>
      */
-    public static function statements(): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute $problem): array {
-            $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('pbt'));
-            $comment = new \SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment(\SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Attribute, new \SqlSemantics\Platform\MySql\Statement\Literal\Text($problem->text));
-            $user = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('generated_user')));
-            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\Account\CreateUser(false, [$user], comment: $comment))];
-        }, new self(Generators::map(static fn (int $number): string => '[' . $number . ']', Generators::choose(0, 32))));
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<InvalidUserAttribute> $element The generated counterexample
+     * @return GeneratedValue<InvalidUserAttribute>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -6,13 +6,19 @@ namespace Tests\Generator\MySql\Statement\Name;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 
 /**
- * Selects a written account identity or the current account reference.
+ * Generates Account values from the generators of its operands.
  *
  * @implements ErisGenerator<Account>
  */
@@ -21,27 +27,38 @@ final class AccountGenerator implements ErisGenerator
     /** @var ErisGenerator<Account> */
     private ErisGenerator $delegate;
 
-    /**
-     * Composes each account alternative through Eris.
-     *
-     * @param non-empty-list<ErisGenerator<Account>>|null $alternatives Account spellings valid for the consuming SQL role
-     */
-    public function __construct(?array $alternatives = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::oneOf(...($alternatives ?? [new AccountNameGenerator(), new CurrentUserGenerator()]));
+        $this->delegate = Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+            0 => new AccountNameGenerator($release),
+            1 => new CurrentUserGenerator($release),
+            default => throw new LogicException('Unreachable alternative.'),
+        });
+        $this->delegate = Generators::suchThat(
+            static function (Account $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<Account>
+     * @return GeneratedValue<Account>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<Account> $element The generated counterexample
      * @return GeneratedValue<Account>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -5,66 +5,78 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel;
+use Tests\Generator\MySql\Statement\Account\Privilege\Item\StaticPrivilegeGenerator;
+use Tests\Generator\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevelGenerator;
+use Tests\Generator\MySql\Statement\Account\Privilege\Level\DatabaseLevelGenerator;
+use Tests\Generator\MySql\Statement\Account\Privilege\Level\GlobalLevelGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes RefusedColumnLevel values and preserves their operand generators when shrinking.
+ * Generates RefusedColumnLevel values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel>
+ * @implements ErisGenerator<RefusedColumnLevel>
  */
 final class RefusedColumnLevelGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel> */
-    use Composition;
+    /** @var ErisGenerator<RefusedColumnLevel> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege> $privilege Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\CurrentDatabaseLevel|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel> $level Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName|null>|null $program Generated constructor operand
-     */
-    public function __construct(ErisGenerator $privilege, ErisGenerator $level, ?ErisGenerator $program = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel(privilege: $parts[0], level: $parts[1], program: $parts[2]);
-        }, Generators::tuple(
-            $privilege,
-            $level,
-            $program ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Account\\Problem\\RefusedColumnLevel' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, new RefusedColumnLevelGenerator(
-            privilege: new \Tests\Generator\MySql\Statement\Account\Privilege\Item\StaticPrivilegeGenerator(
-                kind: \Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select]),
-                columns: Generators::tuple(
-                    \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $suffix): string => 'a' . $suffix, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    )
-                )
-            ),
-            level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\DatabaseLevelGenerator(
-                database: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'd' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                )
-            ),
-            program: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'p' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedColumnLevel => new RefusedColumnLevel(privilege: $parts[0], level: $parts[1], program: $parts[2]),
+            Generators::tuple(
+                Generators::suchThat(static fn (StaticPrivilege $privilege): bool => $privilege->columns !== [], new StaticPrivilegeGenerator($release)),
+                Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new CurrentDatabaseLevelGenerator($release),
+                    1 => new DatabaseLevelGenerator($release),
+                    2 => new GlobalLevelGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }),
+                Generators::oneOf(Generators::constant(null), new QualifiedNameGenerator($release))
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedColumnLevel $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedColumnLevel>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedColumnLevel> $element The generated counterexample
+     * @return GeneratedValue<RefusedColumnLevel>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

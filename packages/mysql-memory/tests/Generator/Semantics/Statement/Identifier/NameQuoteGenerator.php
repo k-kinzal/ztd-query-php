@@ -6,57 +6,58 @@ namespace Tests\Generator\Semantics\Statement\Identifier;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Statement\Identifier\NameQuote;
 
 /**
- * Selects an identifier delimiter through Eris.
+ * Generates NameQuote values from the generators of its operands.
  *
  * @implements ErisGenerator<NameQuote>
  */
 final class NameQuoteGenerator implements ErisGenerator
 {
-    /**
-     * @var ErisGenerator<NameQuote>
-     */
+    /** @var ErisGenerator<NameQuote> */
     private ErisGenerator $delegate;
 
-    /**
-     * Chooses among the delimiter forms allowed by the consuming language profile.
-     */
-    public function __construct(NameQuote ...$allowed)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::elements($allowed === [] ? NameQuote::cases() : $allowed);
+        $this->delegate = Generators::elements(NameQuote::cases());
+        $this->delegate = Generators::suchThat(
+            static function (NameQuote $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<NameQuote>
+     * @return GeneratedValue<NameQuote>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<NameQuote> $element The generated counterexample
      * @return GeneratedValue<NameQuote>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Selects the alternatives valid in a particular SQL role.
-     *
-     * @param non-empty-list<NameQuote> $cases The alternatives allowed by the parent structure
-     * @return ErisGenerator<NameQuote>
-     */
-    public static function selecting(array $cases): ErisGenerator
-    {
-        return Generators::elements($cases);
-    }
-
 }

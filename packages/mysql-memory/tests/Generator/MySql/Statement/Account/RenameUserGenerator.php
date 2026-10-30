@@ -6,21 +6,26 @@ namespace Tests\Generator\MySql\Statement\Account;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
-use LogicException;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\RenameUser;
-use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
-use Tests\Generator\MySql\Statement\Account\Problem\User\RefusedRenameUserGenerator;
+use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\User\UserRenamingGenerator;
+use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
+use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Generates complete requests, including intrinsically contradictory ordered lists.
+ * Generates RenameUser values from the generators of its operands.
  *
  * @implements ErisGenerator<RenameUser>
  */
@@ -29,84 +34,56 @@ final class RenameUserGenerator implements ErisGenerator
     /** @var ErisGenerator<RenameUser> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete RenameUser values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<RenameUser>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): RenameUser => new RenameUser(renamings: $parts[0], profile: $parts[1], client: $parts[2], source: $parts[3], statementInformation: $parts[4], inputSource: $parts[5]),
+            Generators::tuple(
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new UserRenamingGenerator($release))),
+                new LanguageProfileGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CharsetGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RenameUser $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No RenameUser forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): RenameUser {
-            if (!$statement instanceof RenameUser) {
-                throw new LogicException('Publishing RenameUser must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Selects the grammar and composes each request through Eris.
-     * @return ErisGenerator<RenameUser>
-     */
-    public static function operands(GrammarRelease $release): ErisGenerator
-    {
-        $profile = new LanguageProfile($release);
-        $requests = Generators::bind(new UserRenamingGenerator(), static fn (UserRenaming $first): ErisGenerator => Generators::map(static fn (array $rest): RenameUser => new RenameUser([$first, ...$rest], $profile), Generators::seq(new UserRenamingGenerator())));
-        return Generators::oneOf($requests, Generators::map(static fn (RefusedRenameUser $condition): RenameUser => new RenameUser($condition->renamings, $profile), new RefusedRenameUserGenerator()));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (RenameUser $statement): RenameUser => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (RenameUser $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<RenameUser>
+     * @return GeneratedValue<RenameUser>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<RenameUser> $element The generated counterexample
      * @return GeneratedValue<RenameUser>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<list<UserRenaming>> $renamings The generated semantic operand
-     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
-     * @return ErisGenerator<RenameUser>
-     */
-    public static function fromOperands(ErisGenerator $renamings, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): RenameUser => new RenameUser(renamings: $parts[0], profile: $parts[1], client: $parts[2]), Generators::tuple($renamings, $profile, $client));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<RenameUser>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'account operands' => self::operands(GrammarRelease::MySql847);
-    }
-
 }

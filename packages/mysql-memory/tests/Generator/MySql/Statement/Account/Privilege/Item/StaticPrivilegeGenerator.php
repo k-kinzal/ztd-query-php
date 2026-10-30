@@ -5,34 +5,70 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Privilege\Item;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes StaticPrivilege values and preserves their operand generators when shrinking.
+ * Generates StaticPrivilege values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege>
+ * @implements ErisGenerator<StaticPrivilege>
  */
 final class StaticPrivilegeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege> */
-    use Composition;
+    /** @var ErisGenerator<StaticPrivilege> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::bind(
+            new PrivilegeKindGenerator($release),
+            static fn (PrivilegeKind $kind): ErisGenerator => Generators::map(
+                static fn (array $parts): StaticPrivilege => new StaticPrivilege(kind: $kind, columns: $parts[0], inputSource: null, schemas: $parts[1]),
+                Generators::tuple(
+                    $kind->columns() ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NameGenerator($release))) : Generators::constant([]),
+                    $kind === PrivilegeKind::ShowDatabases ? Generators::bool() : Generators::constant(false)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (StaticPrivilege $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind> $kind Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\Name>>|null $columns Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<bool>|null $schemas Generated SHOW SCHEMAS spelling
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<StaticPrivilege>
      */
-    public function __construct(ErisGenerator $kind, ?ErisGenerator $columns = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $schemas = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(kind: $parts[0], columns: $parts[1], inputSource: $parts[2], schemas: $parts[0] === \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::ShowDatabases && $parts[3]);
-        }, Generators::tuple(
-            $kind,
-            $columns ?? Generators::constant([]),
-            $inputSource ?? Generators::constant(null),
-            $schemas ?? Generators::bool()
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<StaticPrivilege> $element The generated counterexample
+     * @return GeneratedValue<StaticPrivilege>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

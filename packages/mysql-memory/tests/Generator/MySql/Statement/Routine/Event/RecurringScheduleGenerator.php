@@ -5,36 +5,70 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Event;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule;
+use Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes RecurringSchedule values and preserves their operand generators when shrinking.
+ * Generates RecurringSchedule values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule>
+ * @implements ErisGenerator<RecurringSchedule>
  */
 final class RecurringScheduleGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule> */
-    use Composition;
+    /** @var ErisGenerator<RecurringSchedule> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): RecurringSchedule => new RecurringSchedule(quantity: $parts[0], unit: $parts[1], starts: $parts[2], ends: $parts[3], inputSource: $parts[4]),
+            Generators::tuple(
+                new ScalarGenerator($release, $depth - 1),
+                new IntervalUnitGenerator($release),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RecurringSchedule $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $quantity Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit> $unit Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $starts Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $ends Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RecurringSchedule>
      */
-    public function __construct(ErisGenerator $quantity, ErisGenerator $unit, ?ErisGenerator $starts = null, ?ErisGenerator $ends = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Event\RecurringSchedule(quantity: $parts[0], unit: $parts[1], starts: $parts[2], ends: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple(
-            $quantity,
-            $unit,
-            $starts ?? Generators::constant(null),
-            $ends ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RecurringSchedule> $element The generated counterexample
+     * @return GeneratedValue<RecurringSchedule>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

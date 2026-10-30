@@ -10,6 +10,7 @@ use MySqlMemory\Account\Identity;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 
 #[CoversClass(Accounts::class)]
 #[Small]
@@ -52,6 +53,15 @@ final class AccountsTest extends TestCase
     public function testInstalledHoldsTheAccountsOfANewServer(): void
     {
         self::assertSame(["root\0localhost", "root\0%", "mysql.infoschema\0localhost", "mysql.session\0localhost", "mysql.sys\0localhost"], array_keys(Accounts::installed()->accounts));
+    }
+
+    public function testInstalledGrantsRemoteRootProxyOnlyFromEightFour(): void
+    {
+        $key = (new Identity('', ''))->key();
+        self::assertArrayHasKey($key, Accounts::installed(GrammarRelease::MySql847)->find(new Identity('root', '%'))?->grants->proxies ?? []);
+        self::assertArrayHasKey($key, Accounts::installed(GrammarRelease::MySql910)->find(new Identity('root', '%'))?->grants->proxies ?? []);
+        self::assertArrayNotHasKey($key, Accounts::installed(GrammarRelease::MySql8044)->find(new Identity('root', '%'))?->grants->proxies ?? []);
+        self::assertArrayHasKey($key, Accounts::installed(GrammarRelease::MySql8044)->find(new Identity('root', 'localhost'))?->grants->proxies ?? []);
     }
 
     public function testFindAnswersNullForAMissingAccount(): void
@@ -205,7 +215,7 @@ final class AccountsTest extends TestCase
 
     public function testInstalledHoldsTheRootAccountsOnlyInMySql56(): void
     {
-        $accounts = Accounts::installed(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $accounts = Accounts::installed(GrammarRelease::MySql5651);
 
         self::assertSame(["root\0localhost", "root\0%"], array_keys($accounts->accounts));
         self::assertSame('mysql_native_password', $accounts->accounts["root\0%"]->plugin);

@@ -20,8 +20,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(PluginCommand::class)]
 #[Small]

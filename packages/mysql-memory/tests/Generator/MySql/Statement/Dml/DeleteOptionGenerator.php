@@ -5,35 +5,59 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption;
 
 /**
- * Composes DeleteOption values and preserves their operand generators when shrinking.
+ * Generates DeleteOption values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption>
+ * @implements ErisGenerator<DeleteOption>
  */
 final class DeleteOptionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption> */
-    use Composition;
+    /** @var ErisGenerator<DeleteOption> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::elements(DeleteOption::cases());
+        $this->delegate = Generators::suchThat(
+            static function (DeleteOption $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * Selects an enum alternative through Eris.
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeleteOption>
      */
-    public function __construct()
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::elements(\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::cases());
-    }
-    /**
-     * Selects the alternatives valid in a particular SQL role.
-     *
-     * @param non-empty-list<\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption> $cases The alternatives allowed by the parent structure
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption>
-     */
-    public static function selecting(array $cases): ErisGenerator
-    {
-        return Generators::elements($cases);
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<DeleteOption> $element The generated counterexample
+     * @return GeneratedValue<DeleteOption>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

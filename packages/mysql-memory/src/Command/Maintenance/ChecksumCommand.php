@@ -26,9 +26,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
  *
  * A table that does not exist, whose database does not exist, or that is a view, has a NULL
  * checksum and adds its error to the warnings. QUICK answers NULL for an InnoDB table, which
- * keeps no live checksum. An empty table checksums to 0. The checksum of rows depends on the storage format of
- * the server; the emulator answers a CRC-32 based value of the stored rows, which is stable but
- * not the server's (verified on a live 8.4 server).
+ * keeps no live checksum. An empty table checksums to 0. Extended scans sum the
+ * CRC-32 of each row's NULL preamble and type-specific field bytes modulo 2^32.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/checksum-table.html.
  *
  * @visibility MySqlMemory
@@ -76,7 +75,7 @@ final class ChecksumCommand implements Command
 
                 continue;
             }
-            $rows[] = [$label, $statement->mode === ChecksumMode::Quick ? null : $this->checksum($stored->data->rows)];
+            $rows[] = [$label, $statement->mode === ChecksumMode::Quick ? null : $this->checksum($stored)];
         }
         $results = $session->variables->read('character_set_results');
         $charset = (is_string($results) ? Charset::named($results) : null) ?? Charset::known('utf8mb3');
@@ -89,17 +88,11 @@ final class ChecksumCommand implements Command
     }
 
     /**
-     * Answers the checksum of rows: the sum of the CRC-32 of each row, 0 for no rows.
-     *
-     * @param array<int, list<int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null>> $rows
+     * Answers the sum of the CRC-32 of each typed row, or zero for an empty table.
      */
-    public function checksum(array $rows): string
+    public function checksum(\MySqlMemory\Dictionary\StoredTable $table): string
     {
-        $sum = 0;
-        foreach ($rows as $row) {
-            $sum = ($sum + crc32(serialize($row))) % 4294967296;
-        }
-
-        return (string) $sum;
+        $table->materialize();
+        return (new \MySqlMemory\Storage\Checksum())->rows($table->definition, $table->data->rows);
     }
 }

@@ -5,116 +5,82 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Replication\Filter;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
+use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Construction\Publication;
-use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFilter;
-use SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind;
-use SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread;
-use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica;
-use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StopReplica;
-use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
-use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
-use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
-use Tests\Generator\Composition;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes ChangeReplicationFilter values and preserves their operand generators when shrinking.
+ * Generates ChangeReplicationFilter values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFilter>
+ * @implements ErisGenerator<ChangeReplicationFilter>
  */
 final class ChangeReplicationFilterGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFilter> */
-    use Composition;
+    /** @var ErisGenerator<ChangeReplicationFilter> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete ChangeReplicationFilter values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<ChangeReplicationFilter>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($release->database() !== 'mysql' || $release === GrammarRelease::MySql5651) {
-            throw new InvalidArgumentException('CHANGE REPLICATION FILTER needs MySQL 5.7 or later.');
-        }
-        $operands ??= self::operands(self::filters(), self::channels($release));
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): ChangeReplicationFilter {
-            if (!$statement instanceof ChangeReplicationFilter) {
-                throw new LogicException('Publishing ChangeReplicationFilter must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter>> $filters Generated constructor operand
-     * @param ErisGenerator<Text|null>|null $channel Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<ChangeReplicationFilter>
-     */
-    public static function operands(ErisGenerator $filters, ?ErisGenerator $channel = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): ChangeReplicationFilter {
-            return new ChangeReplicationFilter(filters: $parts[0], channel: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]);
-        }, Generators::tuple($filters, $channel ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Generates every filter kind, including empty and repeated replacement lists.
-     *
-     * @return ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter>>
-     */
-    public static function filters(): ErisGenerator
-    {
-        $name = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator();
-        $values = Generators::oneOf(
-            new ReplicationFilterGenerator(FilterKindGenerator::selecting([FilterKind::DoDb, FilterKind::IgnoreDb]), Generators::seq($name)),
-            new ReplicationFilterGenerator(FilterKindGenerator::selecting([FilterKind::DoTable, FilterKind::IgnoreTable]), Generators::seq(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator($name, $name))),
-            new ReplicationFilterGenerator(FilterKindGenerator::selecting([FilterKind::WildDoTable, FilterKind::WildIgnoreTable]), Generators::seq(new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (array $parts): string => $parts[0]->value . '.' . $parts[1], Generators::tuple($name, Generators::elements(['%', '_', 'table%'])))))),
-            new ReplicationFilterGenerator(FilterKindGenerator::selecting([FilterKind::RewriteDb]), Generators::seq(new DatabaseRewriteGenerator($name, $name))),
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): ChangeReplicationFilter => new ChangeReplicationFilter(filters: $parts[0], channel: ($bit & 508) !== 0 ? $parts[1] : null, statementInformation: $parts[2], inputSource: $parts[3]),
+            Generators::tuple(
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ReplicationFilterGenerator($release))),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
         );
-        return Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $values));
-    }
+        $this->delegate = Generators::suchThat(
+            static function (ChangeReplicationFilter $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-    /**
-     * Generates unqualified requests, the explicit default channel, and named channels.
-     *
-     * @return ErisGenerator<Text|null>
-     */
-    public static function channels(GrammarRelease $release): ErisGenerator
-    {
-        return $release === GrammarRelease::MySql5744 ? Generators::constant(null) : Generators::oneOf(
-            Generators::constant(null),
-            new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::constant('')),
-            new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'channel_' . $value, Generators::choose(0, 20))),
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (ChangeReplicationFilter $statement): ChangeReplicationFilter => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ChangeReplicationFilter $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
     /**
-     * Composes source configuration, applier start/stop, and the dependent filter change.
-     * Channel and filter shrinking rebuilds every dependent statement together.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ChangeReplicationFilter>
      */
-    public static function sequences(GrammarRelease $release): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(static function (array $parts) use ($release): array {
-            [$channel, $filters] = $parts;
-            $terminology = (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($release);
-            $source = new ChangeReplicationSource($terminology, [new SourceOption($terminology, SourceOptionKind::Host, new Text('127.0.0.1'))], $channel);
-            $start = new StartReplica($terminology, [ReplicaThread::Applier], channel: $channel);
-            $stop = new StopReplica($terminology, [ReplicaThread::Applier], channel: $channel);
-            $filter = new ChangeReplicationFilter($filters, $channel);
-            $context = new AnalysisContext(new LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
-            $publication = new Publication();
-            return [$publication->publish($context, $source), $publication->publish($context, $start), $publication->publish($context, $stop), $publication->publish($context, $filter)];
-        }, Generators::tuple(self::channels($release), self::filters()));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ChangeReplicationFilter> $element The generated counterexample
+     * @return GeneratedValue<ChangeReplicationFilter>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

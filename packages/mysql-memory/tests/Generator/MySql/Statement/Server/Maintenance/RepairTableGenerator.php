@@ -5,106 +5,85 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Maintenance;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator;
+use Tests\Generator\MySql\Statement\Server\RepairOptionGenerator;
+use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes RepairTable values and preserves their operand generators when shrinking.
+ * Generates RepairTable values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable>
+ * @implements ErisGenerator<RepairTable>
  */
 final class RepairTableGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable> */
-    use Composition;
+    /** @var ErisGenerator<RepairTable> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete RepairTable values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No RepairTable forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable) {
-                throw new LogicException('Publishing RepairTable must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null> $binlog Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable>> $tables Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\RepairOption>>|null $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\TableWord>|null $tableWord The generated table-list keyword
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable>
-     */
-    public static function operands(ErisGenerator $binlog, ErisGenerator $tables, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $tableWord = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable(binlog: $parts[0], tables: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], tableWord: $parts[5]);
-        }, Generators::tuple($binlog, $tables, $options ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'RepairTable/64' => RepairTableGenerator::operands(
-            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
-            tables: Generators::tuple(
-                new MaintainedTableGenerator(
-                    name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    )
-                )
-            ),
-            options: Generators::constant([])
-        );
-        yield 'RepairTable/284' => RepairTableGenerator::operands(
-            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
-            tables: Generators::tuple(
-                new MaintainedTableGenerator(
-                    name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    )
-                )
-            ),
-            options: Generators::tuple(
-                \Tests\Generator\MySql\Statement\Server\RepairOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\RepairOption::Quick])
+        $this->delegate = Generators::map(
+            static fn (array $parts): RepairTable => new RepairTable(binlog: $parts[0], tables: $parts[1], options: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], tableWord: $parts[5]),
+            Generators::tuple(
+                Generators::oneOf(Generators::constant(null), new BinlogOptionGenerator($release)),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new RepairOptionGenerator($release))),
+                Generators::constant(null),
+                Generators::constant(null),
+                new TableWordGenerator($release)
             )
         );
+        $this->delegate = Generators::suchThat(
+            static function (RepairTable $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (RepairTable $statement): RepairTable => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (RepairTable $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RepairTable>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RepairTable> $element The generated counterexample
+     * @return GeneratedValue<RepairTable>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

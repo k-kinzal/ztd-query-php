@@ -6,66 +6,70 @@ namespace Tests\Generator\MySql\Statement\Account\Problem\Role;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Account\Privilege\RoleGrants;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use SqlSemantics\Platform\MySql\Statement\Name\CurrentUser;
-use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;
+use Tests\Generator\MySql\Statement\Account\Privilege\Item\GrantedRoleGenerator;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
 
 /**
- * Generates anonymous grants and explicit self-grants with their intrinsic condition.
+ * Generates RefusedGrantRoles values from the generators of its operands.
  *
  * @implements ErisGenerator<RefusedGrantRoles>
  */
 final class RefusedGrantRolesGenerator implements ErisGenerator
 {
-    /**
-     * @var ErisGenerator<RefusedGrantRoles>
-     */
+    /** @var ErisGenerator<RefusedGrantRoles> */
     private ErisGenerator $delegate;
 
-    /**
-     * Composes operands with Eris, retaining their relationships during shrinking.
-     */
-    public function __construct()
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::oneOf(
-            Generators::map(static fn (AccountName $role): RefusedGrantRoles => new RefusedGrantRoles([new GrantedRole($role)], [new CurrentUser()]), new AccountNameGenerator(Generators::elements('', ' ', "\t"))),
-            Generators::map(static fn (AccountName $role): RefusedGrantRoles => new RefusedGrantRoles([new GrantedRole($role)], [new AccountName($role->user, $role->host)]), new AccountNameGenerator()),
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedGrantRoles => new RefusedGrantRoles(roles: $parts[0], users: $parts[1]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (new RoleGrants())->contradictory(($parts[0]), ($parts[1])),
+                Generators::tuple(
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new GrantedRoleGenerator($release))),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new AccountGenerator($release)))
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedGrantRoles $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<RefusedGrantRoles>
+     * @return GeneratedValue<RefusedGrantRoles>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<RefusedGrantRoles> $element The generated counterexample
      * @return GeneratedValue<RefusedGrantRoles>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<list<GrantedRole>> $roles The generated semantic operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Name\Account>> $users The generated semantic operand
-     * @return ErisGenerator<RefusedGrantRoles>
-     */
-    public static function fromOperands(ErisGenerator $roles, ErisGenerator $users): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): RefusedGrantRoles => new RefusedGrantRoles(roles: $parts[0], users: $parts[1]), Generators::tuple($roles, $users));
-    }
-
-
 }

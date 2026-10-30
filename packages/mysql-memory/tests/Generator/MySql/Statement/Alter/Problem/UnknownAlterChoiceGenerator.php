@@ -5,46 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Alter\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes UnknownAlterChoice values and preserves their operand generators when shrinking.
+ * Generates UnknownAlterChoice values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice>
+ * @implements ErisGenerator<UnknownAlterChoice>
  */
 final class UnknownAlterChoiceGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice> */
-    use Composition;
+    /** @var ErisGenerator<UnknownAlterChoice> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<bool> $lock Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     */
-    public function __construct(ErisGenerator $lock, ErisGenerator $name)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice(lock: $parts[0], name: $parts[1]);
-        }, Generators::tuple(
-            $lock,
-            $name
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Alter\\Problem\\UnknownAlterChoice' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new UnknownAlterChoiceGenerator(
-            lock: Generators::constant(false),
-            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::constant('FAST'),
-                quote: \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator::selecting([\SqlSemantics\Statement\Identifier\NameQuote::Bare])
+        $this->delegate = Generators::map(
+            static fn (array $parts): UnknownAlterChoice => new UnknownAlterChoice(lock: $parts[0], name: $parts[1]),
+            Generators::tuple(
+                Generators::bool(),
+                new NameGenerator($release)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (UnknownAlterChoice $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<UnknownAlterChoice>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<UnknownAlterChoice> $element The generated counterexample
+     * @return GeneratedValue<UnknownAlterChoice>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

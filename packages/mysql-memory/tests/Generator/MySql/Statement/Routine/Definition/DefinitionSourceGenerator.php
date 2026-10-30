@@ -5,31 +5,62 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Definition;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource;
-use Tests\Generator\Composition;
 
 /**
- * Composes optional definition boundaries without supplying SQL meaning.
+ * Generates DefinitionSource values from the generators of its operands.
  *
  * @implements ErisGenerator<DefinitionSource>
  */
 final class DefinitionSourceGenerator implements ErisGenerator
 {
-    /** @use Composition<DefinitionSource> */
-    use Composition;
+    /** @var ErisGenerator<DefinitionSource> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (int $nameEnd): DefinitionSource => new DefinitionSource(nameEnd: $nameEnd, typeEnds: [], bodyRefusalOffset: null),
+            Generators::choose(0, 99)
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DefinitionSource $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<int>|null $nameEnd Generated name completion
-     * @param ErisGenerator<list<int>>|null $typeEnds Generated parameter and return completions
-     * @param ErisGenerator<int|null>|null $bodyRefusalOffset Generated language refusal boundary
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DefinitionSource>
      */
-    public function __construct(?ErisGenerator $nameEnd = null, ?ErisGenerator $typeEnds = null, ?ErisGenerator $bodyRefusalOffset = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static fn (array $parts): DefinitionSource => new DefinitionSource($parts[0], $parts[1], $parts[2]), Generators::tuple(
-            $nameEnd ?? Generators::choose(0, 1000),
-            $typeEnds ?? Generators::seq(Generators::choose(0, 1000)),
-            $bodyRefusalOffset ?? Generators::oneOf(Generators::constant(null), Generators::choose(0, 1000)),
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DefinitionSource> $element The generated counterexample
+     * @return GeneratedValue<DefinitionSource>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

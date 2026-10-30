@@ -5,35 +5,59 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Handler;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection;
 
 /**
- * Composes ScanDirection values and preserves their operand generators when shrinking.
+ * Generates ScanDirection values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection>
+ * @implements ErisGenerator<ScanDirection>
  */
 final class ScanDirectionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection> */
-    use Composition;
+    /** @var ErisGenerator<ScanDirection> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::elements(ScanDirection::cases());
+        $this->delegate = Generators::suchThat(
+            static function (ScanDirection $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * Selects an enum alternative through Eris.
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ScanDirection>
      */
-    public function __construct()
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::elements(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection::cases());
-    }
-    /**
-     * Selects the alternatives valid in a particular SQL role.
-     *
-     * @param non-empty-list<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection> $cases The alternatives allowed by the parent structure
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection>
-     */
-    public static function selecting(array $cases): ErisGenerator
-    {
-        return Generators::elements($cases);
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<ScanDirection> $element The generated counterexample
+     * @return GeneratedValue<ScanDirection>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

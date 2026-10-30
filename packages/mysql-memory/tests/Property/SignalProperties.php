@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -19,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use Tests\Generator\MySql\Statement\Routine\Condition\SignalGenerator;
 
 /**
- * Searches for Signal values that post-analysis execution cannot consume.
+ * Generates Signal analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,22 +30,27 @@ final class SignalProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * The server errors that report only database state the generated statement depends on.
+     */
+    private const MISSING_STATE = [ProgramError::UndefinedCondition, QueryError::UnknownTable, QueryError::BadField];
+
+    /**
+     * Execution raises no error, except the condition the statement itself signals and an error
+     * that depends on database state.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(new SignalGenerator($release))->withMaxSize(10)->then(static function (Signal $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
+        $this->forAll(new SignalGenerator($release))->then(static function (Signal $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
+                (new Execution($session))->statement($statement);
+            } catch (SqlError $error) {
+                if ($error->signalled === null && !in_array($error->error, self::MISSING_STATE, true)) {
+                    throw $error;
+                }
             }
         });
     }

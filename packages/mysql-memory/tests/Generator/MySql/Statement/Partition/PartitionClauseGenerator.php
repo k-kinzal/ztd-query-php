@@ -5,36 +5,85 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Partition;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
+use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
+use Tests\Generator\MySql\Statement\Partition\Method\ColumnsMethodGenerator;
+use Tests\Generator\MySql\Statement\Partition\Method\DeferredMethodGenerator;
+use Tests\Generator\MySql\Statement\Partition\Method\ExpressionMethodGenerator;
+use Tests\Generator\MySql\Statement\Partition\Method\HashMethodGenerator;
+use Tests\Generator\MySql\Statement\Partition\Method\KeyMethodGenerator;
 
 /**
- * Composes PartitionClause values and preserves their operand generators when shrinking.
+ * Generates PartitionClause values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause>
+ * @implements ErisGenerator<PartitionClause>
  */
 final class PartitionClauseGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause> */
-    use Composition;
+    /** @var ErisGenerator<PartitionClause> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): PartitionClause => new PartitionClause(method: $parts[0], partitions: $parts[1], subpartitioning: $parts[2], definitions: $parts[3], inputSource: $parts[4]),
+            Generators::suchThat(
+                static fn (array $parts): bool => count(array_unique(array_map(static fn ($definition): int => count($definition->subpartitions), ($parts[3])))) <= 1 && (($parts[2])?->count === null || ($parts[3]) === [] || in_array(count(($parts[3])[0]->subpartitions), [0, (int) ($parts[2])->count->text], true)),
+                Generators::tuple(
+                    Generators::bind(Generators::choose(0, 4), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ColumnsMethodGenerator($release),
+                        1 => new DeferredMethodGenerator($release, $depth - 1),
+                        2 => new ExpressionMethodGenerator($release, $depth - 1),
+                        3 => new HashMethodGenerator($release, $depth - 1),
+                        4 => new KeyMethodGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    Generators::oneOf(Generators::constant(null), new NumeralGenerator($release)),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new SubpartitioningGenerator($release, $depth - 1)) : Generators::constant(null),
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new PartitionDefinitionGenerator($release, $depth - 1))) : Generators::constant([]),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (PartitionClause $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod> $method Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null> $partitions Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning|null> $subpartitioning Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition>> $definitions Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<PartitionClause>
      */
-    public function __construct(ErisGenerator $method, ErisGenerator $partitions, ErisGenerator $subpartitioning, ErisGenerator $definitions, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause {
-            return new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause(method: $parts[0], partitions: $parts[1], subpartitioning: $parts[2], definitions: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple(
-            $method,
-            $partitions,
-            $subpartitioning,
-            $definitions,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<PartitionClause> $element The generated counterexample
+     * @return GeneratedValue<PartitionClause>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -5,250 +5,111 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
+use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
+use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Account\Option\AccountOptionGenerator;
+use Tests\Generator\MySql\Statement\Account\Option\ResourceLimitGenerator;
+use Tests\Generator\MySql\Statement\Account\Option\TlsRequirementGenerator;
+use Tests\Generator\MySql\Statement\Account\Option\UserCommentGenerator;
+use Tests\Generator\MySql\Statement\Account\User\UserAlterationGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes AlterUser values and preserves their operand generators when shrinking.
+ * Generates AlterUser values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterUser>
+ * @implements ErisGenerator<AlterUser>
  */
 final class AlterUserGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\AlterUser> */
-    use Composition;
+    /** @var ErisGenerator<AlterUser> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete AlterUser values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterUser>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): AlterUser => new AlterUser(ifExists: $parts[0], users: $parts[1], tls: $parts[2], resources: $parts[3], options: $parts[4], comment: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (static function (array $users, $tls, array $resources, array $options, $comment): bool {
+                    foreach ($users as $user) {
+                        if ($user instanceof UserSpecification && $user->user instanceof SessionUser && !(count($users) === 1 && $tls === null && $resources === [] && $options === [] && $comment === null)) {
+                            return false;
+                        }
+                    }
 
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-                $user = new User\UserSpecificationGenerator(
-                    new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(),
-                    new User\IdentificationGenerator(Generators::constant(null), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::string())),
-                );
-                $forms[] = self::operands(Generators::bool(), Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $user)));
-            }
+                    return true;
+                })(($parts[1]), ($parts[2]), ($parts[3]), ($parts[4]), ($parts[5]))
+                && ((static function (array $users): bool {
+                    foreach ($users as $user) {
+                        if ($user instanceof UserSpecification && !$user->altered()) {
+                            return false;
+                        }
+                    }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No AlterUser forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Account\AlterUser {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\AlterUser) {
-                throw new LogicException('Publishing AlterUser must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<bool> $ifExists Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration>> $users Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement|null>|null $tls Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit>>|null $resources Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption>>|null $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment|null>|null $comment Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterUser>
-     */
-    public static function operands(ErisGenerator $ifExists, ErisGenerator $users, ?ErisGenerator $tls = null, ?ErisGenerator $resources = null, ?ErisGenerator $options = null, ?ErisGenerator $comment = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\AlterUser {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\AlterUser(ifExists: $parts[0], users: $parts[1], tls: $parts[2], resources: $parts[3], options: $parts[4], comment: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]);
-        }, Generators::tuple($ifExists, $users, $tls ?? Generators::constant(null), $resources ?? Generators::constant([]), $options ?? Generators::constant([]), $comment ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterUser>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'AlterUser/12' => AlterUserGenerator::operands(
-            ifExists: Generators::bool(),
-            users: Generators::tuple(
-                new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new User\SessionUserGenerator(),
-                    identification: Generators::constant(null),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(true)
-                )])
-            ),
-            tls: Generators::constant(null),
-            resources: Generators::constant([]),
-            options: Generators::constant([]),
-            comment: Generators::constant(null)
-        );
-        yield 'AlterUser/247' => AlterUserGenerator::operands(
-            ifExists: Generators::bool(),
-            users: Generators::tuple(
-                new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new User\SessionUserGenerator(),
-                    identification: new User\IdentificationGenerator(
-                        plugin: Generators::constant(null),
-                        credential: User\CredentialGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\Credential::RandomPassword]),
-                        secret: Generators::constant(null)
-                    ),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(false)
-                )])
-            ),
-            tls: Generators::constant(null),
-            resources: Generators::constant([]),
-            options: Generators::constant([]),
-            comment: Generators::constant(null)
-        );
-        yield 'AlterUser/250' => AlterUserGenerator::operands(
-            ifExists: Generators::bool(),
-            users: Generators::tuple(
-                new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
-                    identification: Generators::constant(null),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(false)
-                )])
-            ),
-            tls: Generators::constant(null),
-            resources: Generators::constant([]),
-            options: Generators::constant([]),
-            comment: new Option\UserCommentGenerator(
-                kind: Option\CommentKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind::Attribute]),
-                text: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                    value: Generators::constant('text'),
-                    radix: Generators::constant(null)
+                    return true;
+                })(($parts[1]))),
+                Generators::tuple(
+                    Generators::bool(),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new UserAlterationGenerator($release))),
+                    Generators::oneOf(Generators::constant(null), new TlsRequirementGenerator($release)),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ResourceLimitGenerator($release))),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new AccountOptionGenerator($release))),
+                    Generators::oneOf(Generators::constant(null), new UserCommentGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null)
                 )
             )
         );
-        yield 'AlterUser/251' => AlterUserGenerator::operands(
-            ifExists: Generators::bool(),
-            users: Generators::tuple(
-                new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
-                    identification: Generators::constant(null),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(false)
-                )])
-            ),
-            tls: Generators::constant(null),
-            resources: Generators::constant([]),
-            options: Generators::tuple(
-                new Option\AccountOptionGenerator(
-                    kind: Option\AccountOptionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind::AccountUnlock]),
-                    number: Generators::constant(null)
-                )
-            ),
-            comment: Generators::constant(null)
+        $this->delegate = Generators::suchThat(
+            static function (AlterUser $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
-        yield 'AlterUser/252' => AlterUserGenerator::operands(
-            ifExists: Generators::bool(),
-            users: Generators::tuple(
-                new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
-                    identification: Generators::constant(null),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(false)
-                )])
-            ),
-            tls: Generators::constant(null),
-            resources: Generators::tuple(
-                new Option\ResourceLimitGenerator(
-                    kind: Option\ResourceKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceKind::QueriesPerHour]),
-                    number: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
-                        text: Generators::constant('1'),
-                        hexadecimal: Generators::constant(false)
-                    )
-                )
-            ),
-            options: Generators::constant([]),
-            comment: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (AlterUser $statement): AlterUser => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
         );
-        yield 'AlterUser/401' => AlterUserGenerator::operands(
-            ifExists: Generators::bool(),
-            users: Generators::tuple(
-                new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
-                    identification: Generators::constant(null),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(false)
-                )])
-            ),
-            tls: new Option\TlsRequirementGenerator(
-                kind: Option\TlsKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind::Specified]),
-                conditions: Generators::tuple(
-                    new Option\TlsConditionGenerator(
-                        attribute: Option\TlsAttributeGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\Option\TlsAttribute::Subject]),
-                        value: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                            value: Generators::constant('text'),
-                            radix: Generators::constant(null)
-                        )
-                    )
-                )
-            ),
-            resources: Generators::constant([]),
-            options: Generators::constant([]),
-            comment: Generators::constant(null)
-        );
-        yield 'AlterUser/405' => AlterUserGenerator::operands(
-            ifExists: Generators::bool(),
-            users: Generators::tuple(
-                new User\UserAlterationGenerator([new User\FactorChangeGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
-                    action: User\FactorActionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction::Add]),
-                    steps: Generators::tuple(
-                        new User\FactorStepGenerator(
-                            factor: User\FactorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\Factor::Second]),
-                            identification: new User\IdentificationGenerator(
-                                plugin: Generators::constant(null),
-                                credential: User\CredentialGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\Credential::Password]),
-                                secret: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                                    value: Generators::constant('text'),
-                                    radix: Generators::constant(null)
-                                )
-                            )
-                        )
-                    )
-                )])
-            ),
-            tls: Generators::constant(null),
-            resources: Generators::constant([]),
-            options: Generators::constant([]),
-            comment: Generators::constant(null)
+        $this->delegate = Generators::suchThat(
+            static fn (AlterUser $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AlterUser>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AlterUser> $element The generated counterexample
+     * @return GeneratedValue<AlterUser>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

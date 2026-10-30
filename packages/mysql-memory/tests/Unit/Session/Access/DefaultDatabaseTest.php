@@ -27,8 +27,8 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(DefaultDatabase::class)]
 #[Small]

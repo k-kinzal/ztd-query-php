@@ -5,58 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Call\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument;
+use Tests\Generator\MySql\Statement\Call\Json\JsonValueCallGenerator;
 
 /**
- * Composes InvalidJsonDocument values and preserves their operand generators when shrinking.
+ * Generates InvalidJsonDocument values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument>
+ * @implements ErisGenerator<InvalidJsonDocument>
  */
 final class InvalidJsonDocumentGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument> */
-    use Composition;
+    /** @var ErisGenerator<InvalidJsonDocument> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall> $expression Generated constructor operand
-     */
-    public function __construct(ErisGenerator $expression)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument {
-            return new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument(expression: $parts[0]);
-        }, Generators::tuple(
-            $expression
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Call\\Problem\\InvalidJsonDocument' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new InvalidJsonDocumentGenerator(
-            expression: new \Tests\Generator\MySql\Statement\Call\Json\JsonValueCallGenerator(
-                document: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                )]),
-                path: \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator::fromOperands(
-                    segments: Generators::tuple(
-                        Generators::constant('$')
-                    ),
-                    introducer: Generators::constant(null),
-                    national: Generators::constant(false),
-                    collation: Generators::constant(null)
-                ),
-                returning: Generators::constant(null),
-                onEmpty: Generators::constant(null),
-                onError: Generators::constant(null),
-                pathValue: new \Tests\Generator\MySql\Statement\Call\Json\PathGenerator(
-                    legs: Generators::constant([])
-                )
+        $this->delegate = Generators::map(
+            static fn (array $parts): InvalidJsonDocument => new InvalidJsonDocument(expression: $parts[0]),
+            Generators::tuple(
+                new JsonValueCallGenerator($release)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (InvalidJsonDocument $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<InvalidJsonDocument>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<InvalidJsonDocument> $element The generated counterexample
+     * @return GeneratedValue<InvalidJsonDocument>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -19,8 +19,8 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(AttributeInput::class)]
 #[Medium]

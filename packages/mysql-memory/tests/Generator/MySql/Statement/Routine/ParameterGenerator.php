@@ -5,36 +5,73 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation;
+use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
+use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
+use Tests\Generator\MySql\Statement\Name\CollationNameGenerator;
+use Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes Parameter values and preserves their operand generators when shrinking.
+ * Generates Parameter values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Parameter>
+ * @implements ErisGenerator<Parameter>
  */
 final class ParameterGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Parameter> */
-    use Composition;
+    /** @var ErisGenerator<Parameter> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): Parameter => new Parameter(name: $parts[0], type: $parts[1], collation: (static fn (?CollationName $collation): ?CollationName => $collation === null || ($collation->name === null && ($bit & 3) === 0) ? null : $collation)((new DeclaredCollation())->problem($parts[1], $parts[2]) === null ? $parts[2] : null), mode: $parts[3], inputSource: null),
+            Generators::tuple(
+                new NameGenerator($release),
+                new DeclaredNameGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CollationNameGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new ParameterModeGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Parameter $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName> $type Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\CollationName|null>|null $collation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode|null>|null $mode Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Parameter>
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $type, ?ErisGenerator $collation = null, ?ErisGenerator $mode = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Parameter {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(name: $parts[0], type: $parts[1], collation: $parts[2], mode: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple(
-            $name,
-            $type,
-            $collation ?? Generators::constant(null),
-            $mode ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Parameter> $element The generated counterexample
+     * @return GeneratedValue<Parameter>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

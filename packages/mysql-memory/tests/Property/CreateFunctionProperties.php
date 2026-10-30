@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -19,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use Tests\Generator\MySql\Statement\Routine\CreateFunctionGenerator;
 
 /**
- * Searches for CreateFunction values that post-analysis execution cannot consume.
+ * Generates CreateFunction analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,22 +30,26 @@ final class CreateFunctionProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * The server errors that report only runtime state the generated statement depends on, such as objects it names that do not exist yet. Binary logging is enabled and log_bin_trust_function_creators is off, so a function declared without DETERMINISTIC, NO SQL or READS SQL DATA is refused.
+     */
+    private const MISSING_STATE = [ProgramError::UnsafeRoutine, QueryError::BadDatabase];
+
+    /**
+     * Execution raises no error, except an error that depends on database state.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(new CreateFunctionGenerator($release))->withMaxSize(10)->then(static function (CreateFunction $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
+        $this->forAll(new CreateFunctionGenerator($release))->then(static function (CreateFunction $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
+                (new Execution($session))->statement($statement);
+            } catch (SqlError $error) {
+                if (!in_array($error->error, self::MISSING_STATE, true)) {
+                    throw $error;
+                }
             }
         });
     }

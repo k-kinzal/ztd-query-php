@@ -5,32 +5,63 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\ResourceGroup;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 
 /**
- * Composes ThreadPriority values and preserves their operand generators when shrinking.
+ * Generates ThreadPriority values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority>
+ * @implements ErisGenerator<ThreadPriority>
  */
 final class ThreadPriorityGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority> */
-    use Composition;
+    /** @var ErisGenerator<ThreadPriority> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): ThreadPriority => new ThreadPriority(negative: $parts[0], number: new Numeral((string) $parts[1]), inputSource: null),
+            Generators::tuple(Generators::bool(), Generators::choose(0, 19))
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ThreadPriority $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<bool> $negative Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral> $number Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ThreadPriority>
      */
-    public function __construct(ErisGenerator $negative, ErisGenerator $number, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority(negative: $parts[0], number: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple(
-            $negative,
-            $number,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ThreadPriority> $element The generated counterexample
+     * @return GeneratedValue<ThreadPriority>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

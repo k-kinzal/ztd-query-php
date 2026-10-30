@@ -5,32 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Notice;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 
 /**
- * Composes Deprecation values and preserves their operand generators when shrinking.
+ * Generates Deprecation values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation>
+ * @implements ErisGenerator<Deprecation>
  */
 final class DeprecationGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation> */
-    use Composition;
+    /** @var ErisGenerator<Deprecation> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): Deprecation => new Deprecation(construct: $parts[0], text: $parts[1], aborts: $parts[2]),
+            Generators::tuple(
+                new DeprecatedGenerator($release),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Deprecation $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated> $construct Generated constructor operand
-     * @param ErisGenerator<string>|null $text Generated constructor operand
-     * @param ErisGenerator<bool>|null $aborts Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Deprecation>
      */
-    public function __construct(ErisGenerator $construct, ?ErisGenerator $text = null, ?ErisGenerator $aborts = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation {
-            return new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(construct: $parts[0], text: $parts[1], aborts: $parts[2]);
-        }, Generators::tuple(
-            $construct,
-            $text ?? Generators::constant(''),
-            $aborts ?? Generators::constant(false)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Deprecation> $element The generated counterexample
+     * @return GeneratedValue<Deprecation>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -6,14 +6,26 @@ namespace Tests\Generator\MySql\Statement\Server\Transaction;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
+use Tests\Generator\MySql\Statement\Server\Transaction\Xa\XaCommitGenerator;
+use Tests\Generator\MySql\Statement\Server\Transaction\Xa\XaEndGenerator;
+use Tests\Generator\MySql\Statement\Server\Transaction\Xa\XaPrepareGenerator;
+use Tests\Generator\MySql\Statement\Server\Transaction\Xa\XaRecoverGenerator;
+use Tests\Generator\MySql\Statement\Server\Transaction\Xa\XaRollbackGenerator;
+use Tests\Generator\MySql\Statement\Server\Transaction\Xa\XaStartGenerator;
+use Tests\Generator\MySql\Statement\Utility\Set\SetTransactionGenerator;
 
 /**
- * Composes TransactionStatement operands through Eris; shrinking reconstructs the same SQL alternative.
+ * Generates TransactionStatement values from the generators of its operands.
  *
  * @implements ErisGenerator<TransactionStatement>
  */
@@ -22,71 +34,50 @@ final class TransactionStatementGenerator implements ErisGenerator
     /** @var ErisGenerator<TransactionStatement> */
     private ErisGenerator $delegate;
 
-    /**
-     * Selects the grammar and enclosing SQL context before generating operands.
-     * BEGIN has no stored-program statement form; START TRANSACTION does.
-     */
-    public function __construct(GrammarRelease $release, bool $stored = false)
+    public function __construct(GrammarRelease $release)
     {
-        $forms = [
-            StartTransactionGenerator::operands($release),
-            CommitGenerator::operands($release),
-            RollbackGenerator::operands($release),
-            SavepointGenerator::operands($release),
-            RollbackToSavepointGenerator::operands($release),
-            ReleaseSavepointGenerator::operands($release),
-            \Tests\Generator\MySql\Statement\Utility\Set\SetTransactionGenerator::operands($release),
-            Xa\XaStartGenerator::operands($release),
-            Xa\XaEndGenerator::operands($release),
-            Xa\XaPrepareGenerator::operands($release),
-            Xa\XaCommitGenerator::operands($release),
-            Xa\XaRollbackGenerator::operands($release),
-            Xa\XaRecoverGenerator::operands($release),
-        ];
-        if (!$stored) {
-            $forms[] = BeginGenerator::operands($release);
-        }
-        $this->delegate = Generators::oneOf(...$forms);
-    }
+        $this->delegate = Generators::bind(Generators::choose(0, 13), static fn (int $choice): ErisGenerator => match ($choice) {
+            0 => new BeginGenerator($release),
+            1 => new CommitGenerator($release),
+            2 => new ReleaseSavepointGenerator($release),
+            3 => new RollbackGenerator($release),
+            4 => new RollbackToSavepointGenerator($release),
+            5 => new SavepointGenerator($release),
+            6 => new StartTransactionGenerator($release),
+            7 => new XaCommitGenerator($release),
+            8 => new XaEndGenerator($release),
+            9 => new XaPrepareGenerator($release),
+            10 => new XaRecoverGenerator($release),
+            11 => new XaRollbackGenerator($release),
+            12 => new XaStartGenerator($release),
+            13 => new SetTransactionGenerator($release),
+            default => throw new LogicException('Unreachable alternative.'),
+        });
+        $this->delegate = Generators::suchThat(
+            static function (TransactionStatement $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-    /**
-     * Couples each command to its outcome in a fresh session, before execution.
-     * Missing savepoints and XIDs are explicit failures, while BEGIN, COMMIT,
-     * ROLLBACK, SAVEPOINT and characteristic assignments must succeed.
-     * Sources: https://dev.mysql.com/doc/refman/8.4/en/savepoint.html and
-     * https://dev.mysql.com/doc/refman/8.4/en/xa-states.html.
-     *
-     * @param ErisGenerator<TransactionStatement> $statements The concrete transaction result to explore
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int}>
-     */
-    public static function freshSession(GrammarRelease $release, ErisGenerator $statements): ErisGenerator
-    {
-        return Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): array {
-            $code = match (true) {
-                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint,
-                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\ReleaseSavepoint => 1305,
-                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaStart => $statement->option === null ? 0 : 1398,
-                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd => $statement->option === null ? 1399 : 1398,
-                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare => 1399,
-                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaCommit,
-                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRollback => 1397,
-                default => 0,
-            };
-            return [$statement, $code];
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $statements));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<TransactionStatement>
+     * @return GeneratedValue<TransactionStatement>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<TransactionStatement> $element The generated counterexample
      * @return GeneratedValue<TransactionStatement>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

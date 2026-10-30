@@ -5,53 +5,67 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes UnknownGrantColumn values and preserves their operand generators when shrinking.
+ * Generates UnknownGrantColumn values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn>
+ * @implements ErisGenerator<UnknownGrantColumn>
  */
 final class UnknownGrantColumnGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn> */
-    use Composition;
+    /** @var ErisGenerator<UnknownGrantColumn> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $column Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $table Generated constructor operand
-     */
-    public function __construct(ErisGenerator $column, ErisGenerator $table)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn(column: $parts[0], table: $parts[1]);
-        }, Generators::tuple(
-            $column,
-            $table
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): UnknownGrantColumn => new UnknownGrantColumn(column: $parts[0], table: $parts[1]),
+            Generators::tuple(
+                new NameGenerator($release),
+                new QualifiedNameGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (UnknownGrantColumn $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Generates the complete dependency sequence that owns this command condition.
-     *
-     * @return ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Statement>>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<UnknownGrantColumn>
      */
-    public static function statements(): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn $problem): array {
-            $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('pbt'));
-            $table = $problem->table;
-            $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('present_' . $problem->column->value)), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
-            $command = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges(
-                [new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, [$problem->column])],
-                \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table,
-                new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel($table),
-                [new \SqlSemantics\Platform\MySql\Statement\Account\User\Grantee(new \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser())],
-            );
-            $create = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable($table, [$column]));
-            return [$create, (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([$create]), $command)];
-        }, new self(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())));
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<UnknownGrantColumn> $element The generated counterexample
+     * @return GeneratedValue<UnknownGrantColumn>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

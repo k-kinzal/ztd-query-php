@@ -5,30 +5,74 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Query\With;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow;
+use Tests\Generator\MySql\Statement\Dml\DefaultRequestGenerator;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes DeferredValueRow values and preserves their operand generators when shrinking.
+ * Generates DeferredValueRow values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow>
+ * @implements ErisGenerator<DeferredValueRow>
  */
 final class DeferredValueRowGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow> */
-    use Composition;
+    /** @var ErisGenerator<DeferredValueRow> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredValueRow => new DeferredValueRow(values: [$parts[0], ...$parts[1]], inputSource: null),
+            Generators::tuple(
+                new DeferredOperandGenerator($release, $depth - 1),
+                Generators::bind(Generators::choose(0, 2), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release, $depth - 1),
+                    1 => new DefaultRequestGenerator($release),
+                    2 => new RowOperandGenerator($release, $depth - 1),
+                    default => new DeferredOperandGenerator($release, $depth - 1),
+                })))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredValueRow $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand>> $values Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredValueRow>
      */
-    public function __construct(ErisGenerator $values, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow {
-            return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValueRow(values: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple(
-            $values,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredValueRow> $element The generated counterexample
+     * @return GeneratedValue<DeferredValueRow>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

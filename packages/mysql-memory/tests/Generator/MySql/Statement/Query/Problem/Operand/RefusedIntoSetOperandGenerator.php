@@ -5,48 +5,70 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Query\Problem\Operand;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand;
+use Tests\Generator\MySql\Statement\Query\SelectGenerator;
+use Tests\Generator\MySql\Statement\Query\Set\SetOperatorGenerator;
 
 /**
- * Composes RefusedIntoSetOperand values and preserves their operand generators when shrinking.
+ * Generates RefusedIntoSetOperand values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand>
+ * @implements ErisGenerator<RefusedIntoSetOperand>
  */
 final class RefusedIntoSetOperandGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand> */
-    use Composition;
+    /** @var ErisGenerator<RefusedIntoSetOperand> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Select> $operand Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator> $operator Generated constructor operand
-     */
-    public function __construct(ErisGenerator $operand, ErisGenerator $operator)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand {
-            return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand(operand: $parts[0], operator: $parts[1]);
-        }, Generators::tuple(
-            $operand,
-            $operator
-        ));
-    }
-    /**
-     * Generates an input refusal with all of its retained operand dependencies.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Query/Problem/Operand/RefusedIntoSetOperand' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new self(
-            new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
-                Generators::constant([]),
-                Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))))),
-                intoPosition: \Tests\Generator\MySql\Statement\Query\Into\IntoPositionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterItems]),
-                into: new \Tests\Generator\MySql\Statement\Query\Into\IntoVariablesGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()))),
-            ),
-            new \Tests\Generator\MySql\Statement\Query\Set\SetOperatorGenerator(),
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedIntoSetOperand => new RefusedIntoSetOperand(operand: $parts[0], operator: $parts[1]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[0])->into !== null,
+                Generators::tuple(
+                    new SelectGenerator($release),
+                    new SetOperatorGenerator($release)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedIntoSetOperand $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedIntoSetOperand>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedIntoSetOperand> $element The generated counterexample
+     * @return GeneratedValue<RefusedIntoSetOperand>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

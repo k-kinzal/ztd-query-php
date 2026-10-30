@@ -5,40 +5,86 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Expression;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions;
+use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate;
+use SqlSemantics\Statement\Query;
+use Tests\Generator\MySql\Statement\Expression\Subquery\QuantifierGenerator;
+use Tests\Generator\Semantics\Statement\QueryGenerator;
 
 /**
- * Composes DeferredSubqueryPredicate values and preserves their operand generators when shrinking.
+ * Generates DeferredSubqueryPredicate values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate>
+ * @implements ErisGenerator<DeferredSubqueryPredicate>
  */
 final class DeferredSubqueryPredicateGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate> */
-    use Composition;
+    /** @var ErisGenerator<DeferredSubqueryPredicate> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static function (array $parts): DeferredSubqueryPredicate {
+                [$operand, $query, $operator, $quantifier, $negated] = $parts;
+                $quantified = $operator !== null && $quantifier !== null;
+                $operator = $quantified ? $operator : null;
+                $quantifier = $quantified ? $quantifier : null;
+                $precedence = new Precedence();
+                if (!$precedence->fits($operand, $quantified ? Precedence::BOOL_PRI : Precedence::PREDICATE, $quantified ? Precedence::BOOL_PRI : Precedence::BIT_EXPR)) {
+                    $operand = new DeferredGrouped($operand);
+                }
+
+                return new DeferredSubqueryPredicate(operand: $operand, query: $query, operator: $operator, quantifier: $quantifier, negated: !$quantified && $negated, scalarInformation: null, inputSource: null);
+            },
+            Generators::tuple(
+                new DeferredOperandGenerator($release, $depth - 1),
+                Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null, new QueryGenerator($release, $depth - 1)),
+                Generators::oneOf(Generators::constant(null), Generators::elements(array_values(array_filter(ComparisonOperator::cases(), static fn (ComparisonOperator $operator): bool => $operator !== ComparisonOperator::NullSafeEqual)))),
+                Generators::oneOf(Generators::constant(null), new QuantifierGenerator($release)),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredSubqueryPredicate $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $operand Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Query> $query Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator|null>|null $operator Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier|null>|null $quantifier Generated constructor operand
-     * @param ErisGenerator<bool>|null $negated Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredSubqueryPredicate>
      */
-    public function __construct(ErisGenerator $operand, ErisGenerator $query, ?ErisGenerator $operator = null, ?ErisGenerator $quantifier = null, ?ErisGenerator $negated = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate(operand: $parts[0], query: $parts[1], operator: $parts[2], quantifier: $parts[3], negated: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]);
-        }, Generators::tuple(
-            $operand,
-            $query,
-            $operator ?? Generators::constant(null),
-            $quantifier ?? Generators::constant(null),
-            $negated ?? Generators::constant(false),
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredSubqueryPredicate> $element The generated counterexample
+     * @return GeneratedValue<DeferredSubqueryPredicate>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

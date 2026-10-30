@@ -5,637 +5,102 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
+use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
+use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Generator\MySql\Statement\Routine\Definition\DefinitionSourceGenerator;
+use Tests\Generator\MySql\Statement\Routine\Event\CompletionGenerator;
+use Tests\Generator\MySql\Statement\Routine\Event\EventStatusGenerator;
+use Tests\Generator\MySql\Statement\Routine\Event\ScheduleGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\ProgramStatementGenerator;
+use Tests\Generator\MySql\Statement\StatementGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes AlterEvent values and preserves their operand generators when shrinking.
+ * Generates AlterEvent values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent>
+ * @implements ErisGenerator<AlterEvent>
  */
 final class AlterEventGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent> */
-    use Composition;
+    /** @var ErisGenerator<AlterEvent> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete AlterEvent values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-
-            if ($forms === []) {
-                throw new InvalidArgumentException('No AlterEvent forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent) {
-                throw new LogicException('Publishing AlterEvent must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Event\Schedule|null>|null $schedule Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion|null>|null $completion Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName|null>|null $newName Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus|null>|null $status Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $comment Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Node|null>|null $body Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account|null>|null $definer Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent>
-     */
-    public static function operands(ErisGenerator $name, ?ErisGenerator $schedule = null, ?ErisGenerator $completion = null, ?ErisGenerator $newName = null, ?ErisGenerator $status = null, ?ErisGenerator $comment = null, ?ErisGenerator $body = null, ?ErisGenerator $definer = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $definitionSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent(name: $parts[0], schedule: $parts[1], completion: $parts[2], newName: $parts[3], status: $parts[4], comment: $parts[5], body: $parts[6], definer: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]);
-        }, Generators::tuple($name, $schedule ?? Generators::constant(null), $completion ?? Generators::constant(null), $newName ?? Generators::constant(null), $status ?? Generators::constant(null), $comment ?? Generators::constant(null), $body ?? Generators::constant(null), $definer ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'AlterEvent/3' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Event\EventStatusGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable]),
-            comment: Generators::constant(null),
-            body: Generators::constant(null),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/146' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: new Event\ScheduleGenerator([new Event\RecurringScheduleGenerator(
-                quantity: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                    function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                    arguments: Generators::constant([]),
-                                    parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                )])
-                            )])
-                        )])
-                    )])
-                )]),
-                unit: \Tests\Generator\MySql\Statement\Expression\IntervalUnitGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::DayHour]),
-                starts: Generators::constant(null),
-                ends: Generators::constant(null)
-            )]),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: Generators::constant(null),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/148' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
-                items: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                        operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                            function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                            arguments: Generators::constant([]),
-                                            parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                        )])
-                                    )])
-                                )])
-                            )])
-                        )]),
-                        alias: Generators::constant(null),
-                        layout: new \Tests\Generator\Semantics\Statement\Spelling\LayoutGenerator(
-                            tokens: Generators::tuple(
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(''),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('USER')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                )
-                            ),
-                            trail: Generators::constant('')
-                        ),
-                        mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
-                        spellingProfile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                            grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([\SqlSemantics\Contract\GrammarRelease::MySql847]),
-                            lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                                settings: Generators::constant('')
-                            ),
-                            parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-                        )
-                    )
+        $this->delegate = Generators::map(
+            static fn (array $parts): AlterEvent => new AlterEvent(name: $parts[0], schedule: $parts[1], completion: $parts[2], newName: $parts[3], status: $parts[4], comment: $parts[5], body: $parts[6], definer: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[1]) !== null || ($parts[2]) !== null || ($parts[3]) !== null || ($parts[4]) !== null || ($parts[5]) !== null || ($parts[6]) !== null,
+                Generators::tuple(
+                    new QualifiedNameGenerator($release),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScheduleGenerator($release, $depth - 1)) : Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new CompletionGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new QualifiedNameGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new EventStatusGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1)))) : Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
                 )
-            )]),
-            definer: Generators::constant(null)
+            )
         );
-        yield 'AlterEvent/149' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\IfStatementGenerator(
-                branches: Generators::tuple(
-                    new Program\Flow\ConditionalBranchGenerator(
-                        condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                            function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                            arguments: Generators::constant([]),
-                                            parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                        )])
-                                    )])
-                                )])
-                            )])
-                        )]),
-                        statements: Generators::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()])
-                        )
-                    )
-                ),
-                otherwise: Generators::constant([])
-            )]),
-            definer: Generators::constant(null)
+        $this->delegate = Generators::suchThat(
+            static function (AlterEvent $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
-        yield 'AlterEvent/150' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\SearchedCaseGenerator(
-                branches: Generators::tuple(
-                    new Program\Flow\ConditionalBranchGenerator(
-                        condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                            function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                            arguments: Generators::constant([]),
-                                            parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                        )])
-                                    )])
-                                )])
-                            )])
-                        )]),
-                        statements: Generators::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()])
-                        )
-                    )
-                ),
-                otherwise: Generators::constant([])
-            )]),
-            definer: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (AlterEvent $statement): AlterEvent => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
         );
-        yield 'AlterEvent/151' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: Generators::constant([]),
-                statements: Generators::constant([]),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/152' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\LoopGenerator(
-                statements: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()])
-                ),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/161' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: Generators::tuple(
-                    new Program\DeclarationGenerator([new Program\ConditionDeclarationGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        value: new Condition\ErrorCodeGenerator(
-                            code: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
-                                text: Generators::constant('1'),
-                                hexadecimal: Generators::constant(false)
-                            )
-                        )
-                    )])
-                ),
-                statements: Generators::constant([]),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/162' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: Generators::tuple(
-                    new Program\DeclarationGenerator([new Program\VariableDeclarationGenerator(
-                        names: Generators::tuple(
-                            \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                                quote: Generators::constant(null)
-                            )
-                        ),
-                        type: new \Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator([new \Tests\Generator\MySql\Statement\Type\ElementaryGenerator(
-                            kind: \Tests\Generator\MySql\Statement\Type\Kind\ElementaryKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit]),
-                            length: Generators::constant(null)
-                        )]),
-                        collation: Generators::constant(null),
-                        default: Generators::constant(null)
-                    )])
-                ),
-                statements: Generators::constant([]),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/163' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: Generators::tuple(
-                    new Program\DeclarationGenerator([new Program\HandlerDeclarationGenerator(
-                        action: Program\HandlerActionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction::Exit]),
-                        conditions: Generators::tuple(
-                            new Condition\ConditionGenerator([new Condition\GeneralConditionGenerator(
-                                class: Condition\ConditionClassGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass::SqlWarning])
-                            )])
-                        ),
-                        statement: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()])
-                    )])
-                ),
-                statements: Generators::constant([]),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/164' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\BlockGenerator(
-                declarations: Generators::tuple(
-                    new Program\DeclarationGenerator([new Program\Cursor\CursorDeclarationGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        query: \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
-                            query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
-                                table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                                        quote: Generators::constant(null)
-                                    ),
-                                    schema: Generators::constant(null),
-                                    catalog: Generators::constant(null)
-                                )
-                            )])
-                        )
-                    )])
-                ),
-                statements: Generators::constant([]),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/169' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\SimpleCaseGenerator(
-                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                    function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                    arguments: Generators::constant([]),
-                                    parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                )])
-                            )])
-                        )])
-                    )])
-                )]),
-                branches: Generators::tuple(
-                    new Program\Flow\ConditionalBranchGenerator(
-                        condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                            function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                            arguments: Generators::constant([]),
-                                            parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                        )])
-                                    )])
-                                )])
-                            )])
-                        )]),
-                        statements: Generators::tuple(
-                            new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()])
-                        )
-                    )
-                ),
-                otherwise: Generators::constant([])
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/170' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\WhileLoopGenerator(
-                condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                    function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                    arguments: Generators::constant([]),
-                                    parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                )])
-                            )])
-                        )])
-                    )])
-                )]),
-                statements: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()])
-                ),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
-        );
-        yield 'AlterEvent/171' => AlterEventGenerator::operands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            schedule: Generators::constant(null),
-            completion: Generators::constant(null),
-            newName: Generators::constant(null),
-            status: Generators::constant(null),
-            comment: Generators::constant(null),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([new Program\Flow\RepeatLoopGenerator(
-                condition: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                    operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                        operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: \Tests\Generator\Semantics\Statement\ScalarGenerator::composed([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                    function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User]),
-                                    arguments: Generators::constant([]),
-                                    parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                                )])
-                            )])
-                        )])
-                    )])
-                )]),
-                statements: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\StatementGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()])
-                ),
-                label: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                endLabel: Generators::constant(null)
-            )]),
-            definer: Generators::constant(null)
+        $this->delegate = Generators::suchThat(
+            static fn (AlterEvent $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AlterEvent>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AlterEvent> $element The generated counterexample
+     * @return GeneratedValue<AlterEvent>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

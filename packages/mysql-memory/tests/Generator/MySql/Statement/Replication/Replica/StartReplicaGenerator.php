@@ -5,112 +5,90 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Replication\Replica;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
+use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Replication\TerminologyGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes StartReplica values and preserves their operand generators when shrinking.
+ * Generates StartReplica values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica>
+ * @implements ErisGenerator<StartReplica>
  */
 final class StartReplicaGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica> */
-    use Composition;
+    /** @var ErisGenerator<StartReplica> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete StartReplica values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): StartReplica => new StartReplica(terminology: (new Releases())->replica($release, Terminology::Current) ? Terminology::Current : Terminology::Legacy, threads: $parts[1], until: $parts[2], user: $parts[3], password: $parts[4], defaultAuth: $parts[5], pluginDir: $parts[6], channel: $release === GrammarRelease::MySql5651 ? null : $parts[7], statementInformation: $parts[8], inputSource: $parts[9]),
+            Generators::tuple(
+                new TerminologyGenerator($release),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ReplicaThreadGenerator($release))),
+                Generators::oneOf(Generators::constant(null), new ReplicaUntilGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (StartReplica $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No StartReplica forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica) {
-                throw new LogicException('Publishing StartReplica must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Terminology> $terminology Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread>>|null $threads Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaUntil|null>|null $until Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $user Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $password Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $defaultAuth Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $pluginDir Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $channel Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica>
-     */
-    public static function operands(ErisGenerator $terminology, ?ErisGenerator $threads = null, ?ErisGenerator $until = null, ?ErisGenerator $user = null, ?ErisGenerator $password = null, ?ErisGenerator $defaultAuth = null, ?ErisGenerator $pluginDir = null, ?ErisGenerator $channel = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica(terminology: $parts[0], threads: $parts[1], until: $parts[2], user: $parts[3], password: $parts[4], defaultAuth: $parts[5], pluginDir: $parts[6], channel: $parts[7], statementInformation: $parts[8], inputSource: $parts[9]);
-        }, Generators::tuple($terminology, $threads ?? Generators::constant([]), $until ?? Generators::constant(null), $user ?? Generators::constant(null), $password ?? Generators::constant(null), $defaultAuth ?? Generators::constant(null), $pluginDir ?? Generators::constant(null), $channel ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'StartReplica/123' => StartReplicaGenerator::operands(
-            terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-            threads: Generators::seq(new ReplicaThreadGenerator()),
-            until: Generators::constant(null),
-            user: Generators::constant(null),
-            password: Generators::constant(null),
-            defaultAuth: Generators::constant(null),
-            pluginDir: Generators::constant(null),
-            channel: Generators::constant(null)
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
-        yield 'StartReplica/281' => StartReplicaGenerator::operands(
-            terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-            threads: Generators::tuple(
-                ReplicaThreadGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread::Applier])
-            ),
-            until: Generators::constant(null),
-            user: Generators::constant(null),
-            password: Generators::constant(null),
-            defaultAuth: Generators::constant(null),
-            pluginDir: Generators::constant(null),
-            channel: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (StartReplica $statement): StartReplica => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
         );
-        yield 'StartReplica/282' => StartReplicaGenerator::operands(
-            terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-            threads: Generators::constant([]),
-            until: new ReplicaUntilGenerator(
-                point: UntilPointGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Replica\UntilPoint::AfterGaps]),
-                gtids: Generators::constant(null),
-                positions: Generators::constant([])
-            ),
-            user: Generators::constant(null),
-            password: Generators::constant(null),
-            defaultAuth: Generators::constant(null),
-            pluginDir: Generators::constant(null),
-            channel: Generators::constant(null)
+        $this->delegate = Generators::suchThat(
+            static fn (StartReplica $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<StartReplica>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<StartReplica> $element The generated counterexample
+     * @return GeneratedValue<StartReplica>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

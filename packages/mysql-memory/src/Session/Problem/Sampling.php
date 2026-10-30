@@ -128,10 +128,23 @@ final class Sampling
 
     /**
      * Tells whether a table reference names a base table: not a common table expression, a view or a table of INFORMATION_SCHEMA.
+     * A relation the analysis did not declare is looked up in the dictionary; one that does not exist fails as the server opens it.
+     *
+     * @throws SqlError When an undeclared relation names a table that does not exist
      */
     public function base(TableReference $reference, StatementSemantics $facts, Settings $settings, Dictionary $dictionary): bool
     {
         $resolution = $reference->relationInformation()->table;
+        if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\UndeclaredTable) {
+            $name = $reference->name;
+            $schema = $name->schema->value ?? $settings->database;
+            $views = $dictionary->schema($schema)->views ?? [];
+            if ($dictionary->table($schema, $name->name->value) === null && !isset($views[$name->name->value])) {
+                throw \MySqlMemory\Error\Family\QueryError::NoSuchTable->error($schema, $name->name->value);
+            }
+
+            return !isset($views[$name->name->value]) && strtolower($schema) !== 'information_schema';
+        }
         if (!$resolution instanceof DeclaredTable) {
             return false;
         }

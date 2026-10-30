@@ -5,34 +5,68 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Load;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use Tests\Generator\MySql\Statement\Literal\ByteSizeGenerator;
 
 /**
- * Composes BulkOptions values and preserves their operand generators when shrinking.
+ * Generates BulkOptions values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions>
+ * @implements ErisGenerator<BulkOptions>
  */
 final class BulkOptionsGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions> */
-    use Composition;
+    /** @var ErisGenerator<BulkOptions> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): BulkOptions => new BulkOptions(parallel: $parts[0] === null ? null : new Numeral((string) $parts[0]), memory: $parts[1], bulk: $parts[2] || ($parts[0] === null && $parts[1] === null), inputSource: null),
+            Generators::tuple(
+                Generators::oneOf(Generators::constant(null), Generators::choose(1, 64)),
+                Generators::oneOf(Generators::constant(null), new ByteSizeGenerator($release)),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (BulkOptions $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $parallel Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\ByteSize|null>|null $memory Generated constructor operand
-     * @param ErisGenerator<bool>|null $bulk Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<BulkOptions>
      */
-    public function __construct(?ErisGenerator $parallel = null, ?ErisGenerator $memory = null, ?ErisGenerator $bulk = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Load\BulkOptions(parallel: $parts[0], memory: $parts[1], bulk: $parts[2], inputSource: $parts[3]);
-        }, Generators::tuple(
-            $parallel ?? Generators::constant(null),
-            $memory ?? Generators::constant(null),
-            $bulk ?? Generators::constant(false),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<BulkOptions> $element The generated counterexample
+     * @return GeneratedValue<BulkOptions>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

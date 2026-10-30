@@ -5,43 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Expression\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral;
+use Tests\Generator\MySql\Statement\Literal\TemporalFormGenerator;
 
 /**
- * Composes RefusedTemporalLiteral values and preserves their operand generators when shrinking.
+ * Generates RefusedTemporalLiteral values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral>
+ * @implements ErisGenerator<RefusedTemporalLiteral>
  */
 final class RefusedTemporalLiteralGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral> */
-    use Composition;
+    /** @var ErisGenerator<RefusedTemporalLiteral> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<string> $text Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm>|null $form Generated constructor operand
-     */
-    public function __construct(ErisGenerator $text, ?ErisGenerator $form = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral {
-            return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral(text: $parts[0], form: $parts[1]);
-        }, Generators::tuple(
-            $text,
-            $form ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Expression\\Problem\\RefusedTemporalLiteral' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedTemporalLiteralGenerator(
-            text: Generators::constant('not a date'),
-            form: \Tests\Generator\MySql\Statement\Literal\TemporalFormGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date])
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedTemporalLiteral => new RefusedTemporalLiteral(text: $parts[0], form: $parts[1]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                new TemporalFormGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedTemporalLiteral $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedTemporalLiteral>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedTemporalLiteral> $element The generated counterexample
+     * @return GeneratedValue<RefusedTemporalLiteral>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

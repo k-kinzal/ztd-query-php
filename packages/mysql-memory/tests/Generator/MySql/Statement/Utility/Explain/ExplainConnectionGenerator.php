@@ -5,128 +5,93 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Utility\Explain;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
+use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes ExplainConnection values and preserves their operand generators when shrinking.
+ * Generates ExplainConnection values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection>
+ * @implements ErisGenerator<ExplainConnection>
  */
 final class ExplainConnectionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection> */
-    use Composition;
+    /** @var ErisGenerator<ExplainConnection> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete ExplainConnection values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static function (array $parts): ExplainConnection {
+                [$connection, $format, $modifier, $verb, $analyze, $into, $emptyInto] = $parts;
+                if ($modifier !== null) {
+                    return new ExplainConnection(connection: $connection, format: null, modifier: $modifier, statementInformation: null, inputSource: null, verb: $verb, analyze: false, into: null, emptyInto: false);
                 }
-            }
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No ExplainConnection forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
-                throw new LogicException('Publishing ExplainConnection must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral> $connection Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $format Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier|null>|null $modifier Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<bool>|null $analyze Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable|null>|null $into Generated constructor operand
-     * @param ErisGenerator<bool>|null $emptyInto Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb>|null $verb Generated command choice
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection>
-     */
-    public static function operands(ErisGenerator $connection, ?ErisGenerator $format = null, ?ErisGenerator $modifier = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $analyze = null, ?ErisGenerator $into = null, ?ErisGenerator $emptyInto = null, ?ErisGenerator $verb = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(connection: $parts[0], format: $parts[1], modifier: $parts[2], statementInformation: $parts[3], inputSource: $parts[4], analyze: $parts[5], into: $parts[6], emptyInto: $parts[7], verb: $parts[8]);
-        }, Generators::tuple($connection, $format ?? Generators::constant(null), $modifier ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $analyze ?? Generators::constant(false), $into ?? Generators::constant(null), $emptyInto ?? Generators::constant(false), $verb ?? new ExplainVerbGenerator()));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'ExplainConnection/369' => ExplainConnectionGenerator::operands(
-            connection: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
-                text: Generators::constant('1'),
-                hexadecimal: Generators::constant(false)
-            ),
-            format: Generators::constant(null),
-            modifier: Generators::constant(null)
+                return new ExplainConnection(connection: $connection, format: $format, modifier: null, statementInformation: null, inputSource: null, verb: $verb, analyze: $analyze, into: $emptyInto ? null : $into, emptyInto: $emptyInto);
+            },
+            Generators::tuple(
+                new NumeralGenerator($release),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (string $name): Name => new Name($name), Generators::elements(($bit & 3) !== 0 ? ['TRADITIONAL', 'JSON'] : ['TRADITIONAL', 'JSON', 'TREE']))),
+                ((new ReleaseDomain())->bit($release) & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ExplainModifierGenerator($release)) : Generators::constant(null),
+                new ExplainVerbGenerator($release),
+                Generators::bool(),
+                Generators::oneOf(Generators::constant(null), new UserVariableGenerator($release)),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ExplainConnection $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (ExplainConnection $statement): ExplainConnection => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ExplainConnection $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
     /**
-     * Generates incompatible options with independent connection and variable names.
-     * Each published request reaches execution directly, including during shrinking.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int, int}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ExplainConnection>
      */
-    public static function refusedOptions(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $options = [['XML', false, false, 1791, false]];
-        if ($release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            $options[] = ['TREE', false, false, 1791, false];
-        } else {
-            $options[] = [null, true, false, 1235, false];
-            $options[] = ['TRADITIONAL', true, false, 1235, false];
-        }
-        if (!in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044], true)) {
-            $options[] = ['JSON', false, true, 6009, false];
-            $options[] = [null, false, true, 6006, false];
-            $options[] = ['TREE', false, true, 6007, false];
-        }
-        if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830], true)) {
-            $options[] = [null, false, false, 1094, true];
-        }
-        return Generators::bind(Generators::elements($options), static fn (array $option): ErisGenerator => self::refusal($release, $option));
+        return ($this->delegate)($size, $rand);
     }
 
     /**
-     * Composes a selected option case while retaining typed shrinking operands.
-     *
-     * @param array{string|null, bool, bool, int, bool} $option The report format, flags and expected error
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, int, int}>
+     * @param GeneratedValue<ExplainConnection> $element The generated counterexample
+     * @return GeneratedValue<ExplainConnection>
      */
-    public static function refusal(\SqlSemantics\Contract\GrammarRelease $release, array $option): ErisGenerator
+    public function shrink(GeneratedValue $element): GeneratedValue
     {
-        [$format, $analyze, $into, $code, $empty] = $option;
-        $request = self::operands(
-            new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $id): string => (string) $id, Generators::choose(1000000, 1100000))),
-            format: $format === null ? Generators::constant(null) : \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::elements($format, strtolower($format)), Generators::constant(null)),
-            analyze: Generators::constant($analyze),
-            into: $into ? new \Tests\Generator\MySql\Statement\Variable\UserVariableGenerator(\Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 'plan_' . $id, Generators::choose(0, 32)), Generators::constant(null))) : Generators::constant(null),
-            emptyInto: Generators::constant($empty)
-        );
-        return Generators::map(static fn (\SqlSemantics\Statement\AnalyzedStatement $statement): array => [$statement, $code, $code === 1094 ? 1295 : $code], new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $request));
+        return $this->delegate->shrink($element);
     }
-
 }

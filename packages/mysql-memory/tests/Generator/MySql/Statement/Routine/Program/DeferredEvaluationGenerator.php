@@ -5,30 +5,71 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation;
+use Tests\Generator\MySql\Statement\Name\TableWildcardGenerator;
+use Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator;
 
 /**
- * Composes DeferredEvaluation values and preserves their operand generators when shrinking.
+ * Generates DeferredEvaluation values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation>
+ * @implements ErisGenerator<DeferredEvaluation>
  */
 final class DeferredEvaluationGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation> */
-    use Composition;
+    /** @var ErisGenerator<DeferredEvaluation> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredEvaluation => new DeferredEvaluation(items: [...($parts[0] ? [new Star()] : []), $parts[1], ...$parts[2]], inputSource: null),
+            Generators::tuple(
+                Generators::bool(),
+                new DeferredProjectionGenerator($release, $depth - 1),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new SelectExpressionGenerator($release, $depth - 1), 1 => new DeferredProjectionGenerator($release, $depth - 1), default => new TableWildcardGenerator($release)
+                })))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredEvaluation $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection|\SqlSemantics\Platform\MySql\Statement\Query\Star|\SqlSemantics\Platform\MySql\Statement\Name\TableWildcard>> $items Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredEvaluation>
      */
-    public function __construct(ErisGenerator $items, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation(items: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple(
-            $items,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredEvaluation> $element The generated counterexample
+     * @return GeneratedValue<DeferredEvaluation>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

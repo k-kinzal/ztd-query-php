@@ -5,68 +5,86 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Replication\Source;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;
 
 /**
- * Composes SourceOption values and preserves their operand generators when shrinking.
+ * Generates SourceOption values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption>
+ * @implements ErisGenerator<SourceOption>
  */
 final class SourceOptionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption> */
-    use Composition;
+    /** @var ErisGenerator<SourceOption> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Terminology> $terminology Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind> $kind Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral|\SqlSemantics\Platform\MySql\Statement\Replication\Source\ServerIds|\SqlSemantics\Platform\MySql\Statement\Name\AccountName|\SqlSemantics\Platform\MySql\Statement\Replication\Source\PrimaryKeyCheck|\SqlSemantics\Platform\MySql\Statement\Replication\Source\AnonymousGtids|null> $value Generated constructor operand
-     * @param ErisGenerator<bool>|null $synonym Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     */
-    public function __construct(ErisGenerator $terminology, ErisGenerator $kind, ErisGenerator $value, ?ErisGenerator $synonym = null, ?ErisGenerator $inputSource = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(terminology: $parts[0], kind: $parts[1], value: $parts[2], synonym: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple(
-            $terminology,
-            $kind,
-            $value,
-            $synonym ?? Generators::constant(false),
-            $inputSource ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes complete options whose values violate a server constraint.
-     *
-     * @return non-empty-list<ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption, int}>>
-     */
-    public static function conditions(\SqlSemantics\Contract\GrammarRelease $release): array
-    {
-        $vocabulary = Generators::constant((new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($release));
-        $choices = [self::condition(new self($vocabulary, Generators::constant(\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Delay), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(2147483648, 2147493648)))), 1729)];
-        if ($release !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            $choices[] = self::condition(new self($vocabulary, Generators::constant(\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Password), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $length): string => str_repeat('p', $length), Generators::choose(33, 64)))), 3056);
-        }
-        if (!(new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->legacy($release)) {
-            $choices[] = self::condition(new self($vocabulary, Generators::constant(\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::AssignGtidsToAnonymousTransactions), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'invalid-' . $value, Generators::choose(0, 1000)))), 1525);
-            foreach ([\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::RequireRowFormat, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::ConnectionAutoFailover, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::GtidOnly] as $kind) {
-                $choices[] = self::condition(new self($vocabulary, Generators::constant($kind), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(2, 1000)))), $kind === \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::RequireRowFormat ? 3945 : 1064);
-            }
-        }
-        return $choices;
+        $releases = new Releases();
+        $terminology = $releases->source($release);
+        $this->delegate = Generators::bind(
+            Generators::elements(array_values(array_filter(SourceOptionKind::cases(), static fn (SourceOptionKind $kind): bool => $releases->option($release, $kind)))),
+            static fn (SourceOptionKind $kind): ErisGenerator => Generators::map(
+                static fn (array $parts): SourceOption => new SourceOption(terminology: $terminology, kind: $kind, value: $parts[0], synonym: $terminology === Terminology::Current && $kind->renamed() && $parts[1], inputSource: null),
+                Generators::tuple(
+                    Generators::suchThat(static fn ($value): bool => $kind->accepts($value), Generators::bind(Generators::choose(0, 7), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new TextGenerator($release),
+                        1 => Generators::map(static fn (int $number): Numeral => new Numeral((string) $number), Generators::choose(0, 65535)),
+                        2 => new NumberLiteralGenerator($release),
+                        3 => new ServerIdsGenerator($release),
+                        4 => new AccountNameGenerator($release),
+                        5 => new PrimaryKeyCheckGenerator($release),
+                        6 => new AnonymousGtidsGenerator($release),
+                        default => Generators::constant(null),
+                    })),
+                    Generators::bool()
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (SourceOption $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Keeps the expected condition attached while an option's operands shrink.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption> $option The composed option
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption, int}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<SourceOption>
      */
-    public static function condition(ErisGenerator $option, int $code): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption $value): array => [$value, $code], $option);
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<SourceOption> $element The generated counterexample
+     * @return GeneratedValue<SourceOption>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

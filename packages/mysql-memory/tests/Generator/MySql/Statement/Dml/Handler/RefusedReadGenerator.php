@@ -5,85 +5,96 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Handler;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Dml\DefaultRequestGenerator;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes RefusedRead values and preserves their operand generators when shrinking.
+ * Generates RefusedRead values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead>
+ * @implements ErisGenerator<RefusedRead>
  */
 final class RefusedReadGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead> */
-    use Composition;
+    /** @var ErisGenerator<RefusedRead> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler> $handler Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection|\SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection|\SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison> $mode Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $index Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand>>|null $values Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null>|null $where Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Limit|null>|null $limit Generated constructor operand
-     */
-    public function __construct(ErisGenerator $handler, ErisGenerator $mode, ?ErisGenerator $index = null, ?ErisGenerator $values = null, ?ErisGenerator $where = null, ?ErisGenerator $limit = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead(handler: $parts[0], mode: $parts[1], index: $parts[2], values: $parts[3], where: $parts[4], limit: $parts[5]);
-        }, Generators::tuple(
-            $handler,
-            $mode,
-            $index ?? Generators::constant(null),
-            $values ?? Generators::constant([]),
-            $where ?? Generators::constant(null),
-            $limit ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Dml\\Handler\\RefusedRead' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedReadGenerator(
-            handler: new OpenHandlerGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'h' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                )
-            ),
-            mode: IndexDirectionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection::Last]),
-            index: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $suffix): string => 'i' . $suffix, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            values: Generators::constant([]),
-            where: new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredArithmeticGenerator(
-                operator: \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
-                left: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                    elements: Generators::tuple(
-                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                            text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                        )]),
-                        new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                            text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                        )])
-                    ),
-                    keyword: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                )]),
-                right: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                )])
-            )]),
-            limit: new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator(
-                count: new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                ),
-                offset: Generators::constant(null),
-                spelling: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedRead => new RefusedRead(handler: $parts[0], mode: $parts[1], index: $parts[1] instanceof ScanDirection ? null : $parts[2] ?? new Name('i'), values: $parts[1] instanceof KeyComparison ? [$parts[6], ...$parts[3]] : [], where: $parts[1] instanceof KeyComparison ? $parts[4] : $parts[6], limit: $parts[5]),
+            Generators::tuple(
+                new OpenHandlerGenerator($release),
+                Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScanDirectionGenerator($release),
+                    1 => new IndexDirectionGenerator($release),
+                    2 => new KeyComparisonGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }),
+                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release),
+                    1 => new DefaultRequestGenerator($release),
+                    2 => new RowOperandGenerator($release),
+                    3 => new DeferredOperandGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }))),
+                Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release),
+                    1 => new RowOperandGenerator($release),
+                    2 => new DeferredOperandGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                })),
+                Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                new DeferredOperandGenerator($release)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedRead $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedRead>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedRead> $element The generated counterexample
+     * @return GeneratedValue<RefusedRead>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,46 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege;
 
 /**
- * Composes MisplacedPrivilege values and preserves their operand generators when shrinking.
+ * Generates MisplacedPrivilege values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege>
+ * @implements ErisGenerator<MisplacedPrivilege>
  */
 final class MisplacedPrivilegeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege> */
-    use Composition;
+    /** @var ErisGenerator<MisplacedPrivilege> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<string> $privilege Generated constructor operand
-     * @param ErisGenerator<string> $level Generated constructor operand
-     * @param ErisGenerator<string> $error Generated constructor operand
-     */
-    public function __construct(ErisGenerator $privilege, ErisGenerator $level, ErisGenerator $error)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege(privilege: $parts[0], level: $parts[1], error: $parts[2]);
-        }, Generators::tuple(
-            $privilege,
-            $level,
-            $error
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Account\\Problem\\MisplacedPrivilege' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new MisplacedPrivilegeGenerator(
-            privilege: Generators::constant('AS clause'),
-            level: Generators::constant('database db'),
-            error: Generators::constant('ER_UNSUPPORTED_USE_OF_GRANT_AS')
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): MisplacedPrivilege => new MisplacedPrivilege(privilege: $parts[0], level: $parts[1], error: $parts[2]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (MisplacedPrivilege $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<MisplacedPrivilege>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<MisplacedPrivilege> $element The generated counterexample
+     * @return GeneratedValue<MisplacedPrivilege>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

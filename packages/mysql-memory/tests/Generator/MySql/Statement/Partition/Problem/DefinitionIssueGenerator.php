@@ -5,45 +5,59 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Partition\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue;
 
 /**
- * Composes DefinitionIssue values and preserves their operand generators when shrinking.
+ * Generates DefinitionIssue values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue>
+ * @implements ErisGenerator<DefinitionIssue>
  */
 final class DefinitionIssueGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue> */
-    use Composition;
+    /** @var ErisGenerator<DefinitionIssue> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Selects an enum alternative through Eris.
-     */
-    public function __construct()
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::elements(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::cases());
-    }
-    /**
-     * Selects the alternatives valid in a particular SQL role.
-     *
-     * @param non-empty-list<\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue> $cases The alternatives allowed by the parent structure
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue>
-     */
-    public static function selecting(array $cases): ErisGenerator
-    {
-        return Generators::elements($cases);
-    }
+        $this->delegate = Generators::elements(DefinitionIssue::cases());
+        $this->delegate = Generators::suchThat(
+            static function (DefinitionIssue $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-    /**
-     * Generates the complete semantic condition consumed by input failure handling.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Partition/Problem/DefinitionIssue' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new self()];
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DefinitionIssue>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DefinitionIssue> $element The generated counterexample
+     * @return GeneratedValue<DefinitionIssue>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

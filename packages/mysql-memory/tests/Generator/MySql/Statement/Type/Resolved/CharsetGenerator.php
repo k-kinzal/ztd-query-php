@@ -5,30 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Type\Resolved;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 
 /**
- * Composes Charset values and preserves their operand generators when shrinking.
+ * Generates Charset values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset>
+ * @implements ErisGenerator<Charset>
  */
 final class CharsetGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset> */
-    use Composition;
+    /** @var ErisGenerator<Charset> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): Charset => new Charset(name: $parts[0], maxLength: $parts[1]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::choose(0, 100)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Charset $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<string> $name Generated constructor operand
-     * @param ErisGenerator<int> $maxLength Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Charset>
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $maxLength)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset {
-            return new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset(name: $parts[0], maxLength: $parts[1]);
-        }, Generators::tuple(
-            $name,
-            $maxLength
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Charset> $element The generated counterexample
+     * @return GeneratedValue<Charset>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

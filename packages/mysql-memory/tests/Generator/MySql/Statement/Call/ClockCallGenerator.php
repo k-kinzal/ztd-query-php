@@ -5,70 +5,78 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Call;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use SqlSemantics\Platform\MySql\Statement as M;
-use SqlSemantics\Statement\Identifier\Name;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Clock;
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
 
 /**
- * Composes ClockCall values and preserves their operand generators when shrinking.
+ * Generates ClockCall values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\ClockCall>
+ * @implements ErisGenerator<ClockCall>
  */
 final class ClockCallGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Call\ClockCall> */
-    use Composition;
+    /** @var ErisGenerator<ClockCall> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Composes synonym and canonical projections of the same statement clock.
-     *
-     * @return ErisGenerator<\SqlSemantics\Statement\AnalyzedStatement>
-     */
-    public static function queries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __construct(GrammarRelease $release)
     {
-        $calls = Generators::bind(new Keyword\ClockAliasGenerator(), static function (M\Call\Keyword\ClockAlias $alias): ErisGenerator {
-            $precisions = $alias->clock()->precise()
-                ? Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 6))))
-                : Generators::constant(null);
-            return Generators::bind($precisions, static fn (?M\Literal\Numeral $precision): ErisGenerator => new self(
-                Generators::constant($alias->clock()),
-                Generators::constant($precision),
-                $precision === null ? new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator() : Generators::constant(M\Expression\OptionalWords::Written),
-                alias: Generators::constant($alias),
-            ));
-        });
-        $queries = Generators::map(static function (M\Call\ClockCall $call): M\QueryRoot {
-            $canonical = new M\Call\ClockCall($call->clock, $call->precision === null ? null : new M\Literal\Numeral($call->precision->text));
-            return new M\QueryRoot(new M\Query\Select([], [
-                new M\Query\SelectExpression($call, new Name('selected')),
-                new M\Query\SelectExpression($canonical, new Name('canonical')),
-            ]));
-        }, $calls);
-        return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $queries);
+        $this->delegate = Generators::bind(
+            new ClockGenerator($release),
+            static function (Clock $clock) use ($release): ErisGenerator {
+                $aliases = array_values(array_filter(ClockAlias::cases(), static fn (ClockAlias $alias): bool => $alias->clock() === $clock));
+
+                return Generators::map(
+                    static fn (array $parts): ClockCall => new ClockCall(clock: $clock, precision: $parts[0], parentheses: $parts[0] === null && $clock->bare() !== null ? $parts[1] : OptionalWords::Written, scalarInformation: null, inputSource: null, alias: $parts[2]),
+                    Generators::tuple(
+                        $clock->precise() ? Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $digits): Numeral => new Numeral((string) $digits), Generators::choose(0, 6))) : Generators::constant(null),
+                        new OptionalWordsGenerator($release),
+                        $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                    )
+                );
+            }
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ClockCall $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * @param ErisGenerator<M\Call\Clock> $clock Generated constructor operand
-     * @param ErisGenerator<M\Literal\Numeral|null>|null $precision Generated constructor operand
-     * @param ErisGenerator<M\Expression\OptionalWords>|null $parentheses Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<M\Call\Keyword\ClockAlias|null>|null $alias Generated keyword synonym
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ClockCall>
      */
-    public function __construct(ErisGenerator $clock, ?ErisGenerator $precision = null, ?ErisGenerator $parentheses = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::bind($clock, static function (M\Call\Clock $selected) use ($precision, $parentheses, $scalarInformation, $inputSource, $alias): ErisGenerator {
-            return Generators::map(static function (array $parts): M\Call\ClockCall {
-                return new M\Call\ClockCall(clock: $parts[0], precision: $parts[1], parentheses: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], alias: $parts[5]);
-            }, Generators::tuple(
-                Generators::constant($selected),
-                $precision ?? Generators::constant(null),
-                $parentheses ?? Generators::constant(M\Expression\OptionalWords::Written),
-                $scalarInformation ?? Generators::constant(null),
-                $inputSource ?? Generators::constant(null),
-                $alias ?? Keyword\ClockAliasGenerator::forClock($selected)
-            ));
-        });
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ClockCall> $element The generated counterexample
+     * @return GeneratedValue<ClockCall>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

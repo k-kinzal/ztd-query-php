@@ -5,43 +5,64 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
 
 /**
- * Composes HistogramTables values and preserves their operand generators when shrinking.
+ * Generates HistogramTables values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables>
+ * @implements ErisGenerator<HistogramTables>
  */
 final class HistogramTablesGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables> */
-    use Composition;
+    /** @var ErisGenerator<HistogramTables> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<int> $count Generated constructor operand
-     */
-    public function __construct(ErisGenerator $count)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables(count: $parts[0]);
-        }, Generators::tuple(
-            $count
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): HistogramTables => new HistogramTables(count: $parts[0]),
+            Generators::tuple(
+                Generators::choose(0, 100)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (HistogramTables $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Generates the complete dependency sequence that owns this command condition.
-     *
-     * @return ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Statement>>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<HistogramTables>
      */
-    public static function statements(): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables $problem): array {
-            $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('pbt'));
-            $tables = array_map(static fn (int $index): \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable => new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('target_' . $index))), range(1, $problem->count));
-            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable(null, $tables, new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram([new \SqlSemantics\Statement\Identifier\Name('column')])))];
-        }, new self(Generators::choose(2, 4)));
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<HistogramTables> $element The generated counterexample
+     * @return GeneratedValue<HistogramTables>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

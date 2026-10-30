@@ -35,8 +35,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(Execution::class)]
 #[Small]

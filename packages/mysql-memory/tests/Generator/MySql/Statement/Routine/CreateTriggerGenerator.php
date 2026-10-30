@@ -6,18 +6,35 @@ namespace Tests\Generator\MySql\Statement\Routine;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
-use LogicException;
-use SqlSemantics\Platform\MySql\Statement as M;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
+use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Generator\MySql\Statement\Routine\Definition\DefinitionSourceGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\ProgramStatementGenerator;
+use Tests\Generator\MySql\Statement\Routine\Trigger\TriggerEventGenerator;
+use Tests\Generator\MySql\Statement\Routine\Trigger\TriggerOrderGenerator;
+use Tests\Generator\MySql\Statement\Routine\Trigger\TriggerTableGenerator;
+use Tests\Generator\MySql\Statement\Routine\Trigger\TriggerTimeGenerator;
+use Tests\Generator\MySql\Statement\StatementGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Generates trigger headers, preserving explicit matching or distinct schemas.
+ * Generates CreateTrigger values from the generators of its operands.
  *
  * @implements ErisGenerator<CreateTrigger>
  */
@@ -26,326 +43,61 @@ final class CreateTriggerGenerator implements ErisGenerator
     /** @var ErisGenerator<CreateTrigger> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete CreateTrigger values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<CreateTrigger>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release->database() === 'mysql') {
-                $forms[] = self::operands();
-            }
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
-            foreach (self::additionalForms() as [$grammar, $form]) {
-                if ($grammar === $release) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]),
+            Generators::tuple(
+                new QualifiedNameGenerator($release),
+                new TriggerTimeGenerator($release),
+                new TriggerEventGenerator($release),
+                new TriggerTableGenerator($release),
+                Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1))),
+                Generators::oneOf(Generators::constant(null), new TriggerOrderGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                Generators::bool(),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CreateTrigger $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateTrigger forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): CreateTrigger {
-            if (!$statement instanceof CreateTrigger) {
-                throw new LogicException('Publishing CreateTrigger must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Composes the written operands through Eris generation and shrinking.
-     * @return ErisGenerator<CreateTrigger>
-     */
-    public static function operands(): ErisGenerator
-    {
-        $operands = Generators::associative(['number' => Generators::choose(0, 10000), 'mismatch' => Generators::bool(), 'time' => Generators::elements(...M\Routine\Trigger\TriggerTime::cases()), 'event' => Generators::elements(...M\Routine\Trigger\TriggerEvent::cases())]);
-        return Generators::map(static function (array $data): CreateTrigger {
-            if (!is_int($data['number']) || !is_bool($data['mismatch']) || !$data['time'] instanceof M\Routine\Trigger\TriggerTime || !$data['event'] instanceof M\Routine\Trigger\TriggerEvent) {
-                throw new LogicException('Trigger operands require a name suffix, schema flag, time and event.');
-            }
-            return new CreateTrigger(new QualifiedName(new Name('tr' . $data['number']), new Name($data['mismatch'] ? 'other' : 'pbt')), $data['time'], $data['event'], new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('target'), new Name('pbt'))), new M\Routine\Program\Block([], []));
-        }, $operands);
-    }
-
-    /**
-     * Composes a table, its WRITE lock and a trigger using the same declaration.
-     * Aliases, names, action times and events shrink with their prerequisites.
-     *
-     * @return ErisGenerator<array{M\Table\CreateTable, M\Server\Lock\LockTables, CreateTrigger}>
-     */
-    public static function withLockedPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
-    {
-        $tables = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator($release, \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::integers());
-        return Generators::bind($tables, static function (M\Table\CreateTable $table) use ($release): ErisGenerator {
-            $contexts = Generators::constant(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')], $table->declarations()));
-            $names = new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(null), Generators::constant(null));
-            $aliases = Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
-            $locks = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(Generators::constant($table->name), $aliases, \Tests\Generator\MySql\Statement\Server\Lock\LockModeGenerator::selecting([M\Server\Lock\LockMode::Write]));
-            return Generators::tuple(
-                Generators::constant($table),
-                new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($locks)), $contexts),
-                new self($release, self::fromOperands($names, new Trigger\TriggerTimeGenerator(), new Trigger\TriggerEventGenerator(), new Trigger\TriggerTableGenerator(Generators::constant($table->name)), new Program\BlockGenerator(), Generators::constant(null), Generators::constant(null), Generators::constant(false)), $contexts),
-            );
-        });
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (CreateTrigger $statement): CreateTrigger => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateTrigger $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<CreateTrigger>
+     * @return GeneratedValue<CreateTrigger>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<CreateTrigger> $element The generated counterexample
      * @return GeneratedValue<CreateTrigger>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<QualifiedName> $name The generated semantic operand
-     * @param ErisGenerator<M\Routine\Trigger\TriggerTime> $time The generated semantic operand
-     * @param ErisGenerator<M\Routine\Trigger\TriggerEvent> $event The generated semantic operand
-     * @param ErisGenerator<M\Routine\Trigger\TriggerTable> $table The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Node> $body The generated semantic operand
-     * @param ErisGenerator<M\Routine\Trigger\TriggerOrder|null> $order The generated semantic operand
-     * @param ErisGenerator<M\Name\Account|null> $definer The generated semantic operand
-     * @param ErisGenerator<bool> $ifNotExists The generated semantic operand
-     * @param ErisGenerator<M\Routine\Definition\DefinitionSource|null>|null $definitionSource Generated input boundaries
-     * @return ErisGenerator<CreateTrigger>
-     */
-    public static function fromOperands(ErisGenerator $name, ErisGenerator $time, ErisGenerator $event, ErisGenerator $table, ErisGenerator $body, ErisGenerator $order, ErisGenerator $definer, ErisGenerator $ifNotExists, ?ErisGenerator $definitionSource = null): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7], definitionSource: $parts[8]), Generators::tuple($name, $time, $event, $table, $body, $order, $definer, $ifNotExists, $definitionSource ?? Generators::oneOf(Generators::constant(null), new Definition\DefinitionSourceGenerator())));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<CreateTrigger>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'CreateTrigger/168' => CreateTriggerGenerator::fromOperands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            time: Trigger\TriggerTimeGenerator::selecting([M\Routine\Trigger\TriggerTime::Before]),
-            event: Trigger\TriggerEventGenerator::selecting([M\Routine\Trigger\TriggerEvent::Insert]),
-            table: new Trigger\TriggerTableGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                )
-            ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Dml\EvaluationGenerator::operands(
-                items: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                        expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                            operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                    operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(
-                                        operand: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Call\KeywordCallGenerator(
-                                            function: \Tests\Generator\MySql\Statement\Call\KeywordFunctionGenerator::selecting([M\Call\KeywordFunction::User]),
-                                            arguments: Generators::constant([]),
-                                            parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Written])
-                                        )])
-                                    )])
-                                )])
-                            )])
-                        )]),
-                        alias: Generators::constant(null),
-                        layout: new \Tests\Generator\Semantics\Statement\Spelling\LayoutGenerator(
-                            tokens: Generators::tuple(
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(''),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('USER')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant('(')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                ),
-                                new \Tests\Generator\Semantics\Statement\Spelling\SpelledGenerator(
-                                    gap: Generators::constant(' '),
-                                    text: Generators::constant(')')
-                                )
-                            ),
-                            trail: Generators::constant('')
-                        ),
-                        mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([M\Name\AliasMark::As]),
-                        spellingProfile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                            grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([\SqlSemantics\Contract\GrammarRelease::MySql847]),
-                            lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                                settings: Generators::constant('')
-                            ),
-                            parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-                        )
-                    )
-                )
-            )]),
-            order: Generators::constant(null),
-            definer: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
-            )]),
-            ifNotExists: Generators::constant(false)
-        );
-        yield 'CreateTrigger/412' => CreateTriggerGenerator::fromOperands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            time: Trigger\TriggerTimeGenerator::selecting([M\Routine\Trigger\TriggerTime::Before]),
-            event: Trigger\TriggerEventGenerator::selecting([M\Routine\Trigger\TriggerEvent::Insert]),
-            table: new Trigger\TriggerTableGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                )
-            ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Server\Instance\RestartGenerator::operands()]),
-            order: new Trigger\TriggerOrderGenerator(
-                placement: Trigger\OrderPlacementGenerator::selecting([M\Routine\Trigger\OrderPlacement::Follows]),
-                other: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                )
-            ),
-            definer: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([M\Expression\OptionalWords::Omitted])
-            )]),
-            ifNotExists: Generators::constant(false)
-        );
-    }
-
-    /**
-     * Composes further SQL roles and version-specific forms from typed operands.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<CreateTrigger>}>
-     */
-    public static function additionalForms(): iterable
-    {
-        yield 'CreateTrigger/additional/17' => [\SqlSemantics\Contract\GrammarRelease::MySql847, CreateTriggerGenerator::fromOperands(
-            name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::constant('tr'),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
-            ),
-            time: Trigger\TriggerTimeGenerator::selecting([M\Routine\Trigger\TriggerTime::Before]),
-            event: Trigger\TriggerEventGenerator::selecting([M\Routine\Trigger\TriggerEvent::Insert]),
-            table: new Trigger\TriggerTableGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::constant('t'),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                )
-            ),
-            body: new \Tests\Generator\Semantics\Statement\NodeGenerator([\Tests\Generator\MySql\Statement\Utility\Set\SetVariablesGenerator::operands(
-                items: Generators::tuple(
-                    new \Tests\Generator\MySql\Statement\Utility\Set\SetItemGenerator([new \Tests\Generator\MySql\Statement\Utility\Set\NameAssignmentGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::constant('a'),
-                            quote: Generators::constant(null)
-                        ),
-                        value: new \Tests\Generator\MySql\Statement\Utility\Set\BareNameGenerator(
-                            word: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                value: Generators::constant('b'),
-                                quote: Generators::constant(null)
-                            ),
-                            qualifier: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                                    value: Generators::constant('NEW'),
-                                    quote: \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator::selecting([\SqlSemantics\Statement\Identifier\NameQuote::Bare])
-                                ),
-                                schema: Generators::constant(null),
-                                catalog: Generators::constant(null)
-                            ),
-                            system: Generators::constant(false),
-                            parentheses: Generators::constant(0)
-                        ),
-                        scope: Generators::constant(null),
-                        qualifier: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::constant('NEW'),
-                            quote: \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator::selecting([\SqlSemantics\Statement\Identifier\NameQuote::Bare])
-                        )
-                    )])
-                )
-            )]),
-            order: Generators::constant(null),
-            definer: Generators::constant(null),
-            ifNotExists: Generators::constant(false)
-        )];
-    }
-
 }

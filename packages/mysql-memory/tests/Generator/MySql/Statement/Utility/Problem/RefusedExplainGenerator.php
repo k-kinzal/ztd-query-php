@@ -5,80 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Utility\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain;
+use Tests\Generator\MySql\Statement\Routine\Program\Server\DeferredExplainGenerator;
 
 /**
- * Composes RefusedExplain values and preserves their operand generators when shrinking.
+ * Generates RefusedExplain values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain>
+ * @implements ErisGenerator<RefusedExplain>
  */
 final class RefusedExplainGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain> */
-    use Composition;
+    /** @var ErisGenerator<RefusedExplain> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain> $explanation Generated constructor operand
-     */
-    public function __construct(ErisGenerator $explanation)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain(explanation: $parts[0]);
-        }, Generators::tuple(
-            $explanation
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Utility\\Problem\\RefusedExplain' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedExplainGenerator(
-            explanation: new \Tests\Generator\MySql\Statement\Routine\Program\Server\DeferredExplainGenerator(
-                statement: new \Tests\Generator\MySql\Statement\ExplainableGenerator([\Tests\Generator\MySql\Statement\QueryRootGenerator::operands(
-                    query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
-                        options: Generators::constant([]),
-                        items: Generators::tuple(
-                            new \Tests\Generator\Semantics\Statement\NodeGenerator([new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(
-                                expression: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                                    text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                                )]),
-                                alias: Generators::constant(null),
-                                layout: Generators::constant(null),
-                                mark: \Tests\Generator\MySql\Statement\Name\AliasMarkGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As]),
-                                spellingProfile: Generators::constant(null)
-                            )])
-                        ),
-                        from: Generators::constant(null),
-                        where: Generators::constant(null),
-                        groupBy: Generators::constant(null),
-                        having: Generators::constant(null),
-                        windows: Generators::constant([]),
-                        qualify: Generators::constant(null),
-                        orderBy: Generators::constant([]),
-                        limit: Generators::constant(null),
-                        procedure: Generators::constant(null),
-                        locking: Generators::constant([]),
-                        into: Generators::constant(null),
-                        intoPosition: Generators::constant(null),
-                        late: Generators::constant(null),
-                        hints: Generators::constant([])
-                    )])
-                )]),
-                format: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::constant('traditional'),
-                    quote: Generators::constant(null)
-                ),
-                into: Generators::constant(null),
-                database: Generators::constant(null),
-                analyze: Generators::constant(true),
-                modifier: Generators::constant(null),
-                emptyInto: Generators::constant(false)
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedExplain => new RefusedExplain(explanation: $parts[0]),
+            Generators::tuple(
+                new DeferredExplainGenerator($release)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedExplain $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedExplain>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedExplain> $element The generated counterexample
+     * @return GeneratedValue<RefusedExplain>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

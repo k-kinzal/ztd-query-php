@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -19,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 use Tests\Generator\MySql\Statement\Server\Database\CreateDatabaseGenerator;
 
 /**
- * Searches for CreateDatabase values that post-analysis execution cannot consume.
+ * Generates CreateDatabase analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,56 +29,28 @@ final class CreateDatabaseProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * The server errors that report only runtime state the generated statement depends on, such as objects it names that do not exist yet.
+     */
+    private const MISSING_STATE = [SchemaError::DatabaseExists];
+
+    /**
+     * Execution raises no error, except an error that depends on database state.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(new CreateDatabaseGenerator($release))->withMaxSize(10)->then(static function (CreateDatabase $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
+        $this->forAll(new CreateDatabaseGenerator($release))->then(static function (CreateDatabase $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
+                (new Execution($session))->statement($statement);
+            } catch (SqlError $error) {
+                if (!in_array($error->error, self::MISSING_STATE, true)) {
+                    throw $error;
+                }
             }
         });
-    }
-
-    /**
-     * Database creation, inspection, alteration and removal complete in sequence.
-     */
-    #[Test]
-    #[DataProvider('providerDependentReleases')]
-    #[DoesNotPerformAssertions]
-    public function satisfiesDatabaseLifecycleCompletes(GrammarRelease $release): void
-    {
-        $this->forAll(CreateDatabaseGenerator::lifecycle($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
-            [$create, $show, $alter, $drop] = $sequence;
-            $execution->statement($create);
-            $execution->statement($show);
-            $execution->statement($alter);
-            $execution->statement($drop);
-        });
-    }
-
-    /**
-     * @return iterable<string, array{GrammarRelease}>
-     */
-    public static function providerDependentReleases(): iterable
-    {
-        foreach (GrammarRelease::cases() as $release) {
-            if ($release->database() === 'mysql') {
-                yield $release->value => [$release];
-            }
-        }
     }
 
     /**

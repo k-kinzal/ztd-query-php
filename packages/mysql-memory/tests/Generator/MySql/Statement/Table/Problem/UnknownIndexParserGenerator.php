@@ -5,43 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes UnknownIndexParser values and preserves their operand generators when shrinking.
+ * Generates UnknownIndexParser values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser>
+ * @implements ErisGenerator<UnknownIndexParser>
  */
 final class UnknownIndexParserGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser> */
-    use Composition;
+    /** @var ErisGenerator<UnknownIndexParser> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $parser Generated constructor operand
-     */
-    public function __construct(ErisGenerator $parser)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser(parser: $parts[0]);
-        }, Generators::tuple(
-            $parser
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Table\\Problem\\UnknownIndexParser' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new UnknownIndexParserGenerator(
-            parser: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::constant('CustomParser'),
-                quote: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): UnknownIndexParser => new UnknownIndexParser(parser: $parts[0]),
+            Generators::tuple(
+                new NameGenerator($release)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (UnknownIndexParser $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<UnknownIndexParser>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<UnknownIndexParser> $element The generated counterexample
+     * @return GeneratedValue<UnknownIndexParser>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

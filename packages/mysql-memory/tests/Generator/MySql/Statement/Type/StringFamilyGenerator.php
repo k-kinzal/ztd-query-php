@@ -5,32 +5,73 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Type;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\StringFamily;
 
 /**
- * Composes StringFamily values and preserves their operand generators when shrinking.
+ * Generates StringFamily values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\StringFamily>
+ * @implements ErisGenerator<StringFamily>
  */
 final class StringFamilyGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Type\StringFamily> */
-    use Composition;
+    /** @var ErisGenerator<StringFamily> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): StringFamily => match (true) {
+                $parts[0] => new StringFamily(binary: true, national: false, charset: null),
+                $parts[1] => new StringFamily(binary: false, national: true, charset: $parts[3] ? new CharsetAttribute(CharsetForm::Binary) : null),
+                default => new StringFamily(binary: false, national: false, charset: $parts[2]),
+            },
+            Generators::tuple(
+                Generators::bool(),
+                Generators::bool(),
+                Generators::oneOf(Generators::constant(null), new CharsetAttributeGenerator($release)),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (StringFamily $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<bool>|null $binary Generated constructor operand
-     * @param ErisGenerator<bool>|null $national Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute|null>|null $charset Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<StringFamily>
      */
-    public function __construct(?ErisGenerator $binary = null, ?ErisGenerator $national = null, ?ErisGenerator $charset = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\StringFamily {
-            return new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(binary: $parts[0], national: $parts[1], charset: $parts[2]);
-        }, Generators::tuple(
-            $binary ?? Generators::constant(false),
-            $national ?? Generators::constant(false),
-            $charset ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<StringFamily> $element The generated counterexample
+     * @return GeneratedValue<StringFamily>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

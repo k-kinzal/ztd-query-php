@@ -5,42 +5,121 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Column\Generation;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
+use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn;
+use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\CollateAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\CommentAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\DefaultExpressionGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\DefaultLiteralGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\EnforcementAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\EngineAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\FormatAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\KeywordAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\Kind\GeneratedStorageGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\OnUpdateGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\SridAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\StorageAttributeGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\CheckConstraintGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\ReferencesGenerator;
+use Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes DeferredGeneratedColumn values and preserves their operand generators when shrinking.
+ * Generates DeferredGeneratedColumn values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn>
+ * @implements ErisGenerator<DeferredGeneratedColumn>
  */
 final class DeferredGeneratedColumnGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn> */
-    use Composition;
+    /** @var ErisGenerator<DeferredGeneratedColumn> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredGeneratedColumn => new DeferredGeneratedColumn(type: $parts[0], expression: ($bit & 3) !== 0 || (new GroupedOperands())->deferred($parts[1]) ? $parts[1] : new Aggregate(AggregateFunction::Count, []), collation: $parts[2] === null ? null : new CollationName($parts[2]), storage: $parts[3], attributes: $parts[4], references: $parts[5], inputSource: $parts[6], generatedAlways: $parts[7]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (new ColumnAttributes())->enforcement(($parts[4])) === null && (($bit & 3) === 0 || (new LegacyExpressions())->contains(($parts[1])) || (new GroupedOperands())->deferred(($parts[1]))),
+                Generators::tuple(
+                    new DeclaredNameGenerator($release),
+                    Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new RowOperandGenerator($release, $depth - 1),
+                        2 => new DeferredOperandGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new GeneratedStorageGenerator($release)),
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 508, 511, 508, 511, 511, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new CollateAttributeGenerator($release),
+                        1 => new CommentAttributeGenerator($release),
+                        2 => new DefaultExpressionGenerator($release, $depth - 1),
+                        3 => new DefaultLiteralGenerator($release),
+                        4 => new EnforcementAttributeGenerator($release),
+                        5 => new EngineAttributeGenerator($release),
+                        6 => new FormatAttributeGenerator($release),
+                        7 => new KeywordAttributeGenerator($release),
+                        8 => new OnUpdateGenerator($release),
+                        9 => new SridAttributeGenerator($release),
+                        10 => new StorageAttributeGenerator($release),
+                        11 => new CheckConstraintGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))) : Generators::constant([]),
+                    Generators::oneOf(Generators::constant(null), new ReferencesGenerator($release)),
+                    Generators::constant(null),
+                    new OptionalWordsGenerator($release)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredGeneratedColumn $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName> $type Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $expression Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\CollationName|null>|null $collation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage|null>|null $storage Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute>>|null $attributes Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Key\References|null>|null $references Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $generatedAlways Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredGeneratedColumn>
      */
-    public function __construct(ErisGenerator $type, ErisGenerator $expression, ?ErisGenerator $collation = null, ?ErisGenerator $storage = null, ?ErisGenerator $attributes = null, ?ErisGenerator $references = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $generatedAlways = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn(type: $parts[0], expression: $parts[1], collation: $parts[2], storage: $parts[3], attributes: $parts[4], references: $parts[5], inputSource: $parts[6], generatedAlways: $parts[7]);
-        }, Generators::tuple(
-            $type,
-            $expression,
-            $collation ?? Generators::constant(null),
-            $storage ?? Generators::constant(null),
-            $attributes ?? Generators::constant([]),
-            $references ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $generatedAlways ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredGeneratedColumn> $element The generated counterexample
+     * @return GeneratedValue<DeferredGeneratedColumn>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

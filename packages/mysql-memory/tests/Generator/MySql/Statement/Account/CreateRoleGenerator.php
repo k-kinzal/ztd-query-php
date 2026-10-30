@@ -6,110 +6,85 @@ namespace Tests\Generator\MySql\Statement\Account;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
-use LogicException;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateRole;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
-use Tests\Generator\MySql\Statement\Account\Problem\Role\RefusedCreateRoleGenerator;
+use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;
+use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
+use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Generates complete role creation requests, including conditional and refused batches.
+ * Generates CreateRole values from the generators of its operands.
  *
  * @implements ErisGenerator<CreateRole>
  */
 final class CreateRoleGenerator implements ErisGenerator
 {
-    /**
-     * @var ErisGenerator<CreateRole>
-     */
+    /** @var ErisGenerator<CreateRole> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete CreateRole values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<CreateRole>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): CreateRole => new CreateRole(ifNotExists: $parts[0], roles: $parts[1], profile: $parts[2], client: $parts[3], source: $parts[4], statementInformation: $parts[5], inputSource: $parts[6]),
+            Generators::tuple(
+                Generators::bool(),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new AccountNameGenerator($release))),
+                new LanguageProfileGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CharsetGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CreateRole $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No CreateRole forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): CreateRole {
-            if (!$statement instanceof CreateRole) {
-                throw new LogicException('Publishing CreateRole must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Composes operands with Eris, retaining their relationships during shrinking.
-     * @return ErisGenerator<CreateRole>
-     */
-    public static function operands(GrammarRelease $release): ErisGenerator
-    {
-        $profile = new LanguageProfile($release);
-        $requests = Generators::bind(Generators::bool(), static fn (bool $conditional): ErisGenerator => Generators::bind(new AccountNameGenerator(), static fn (AccountName $first): ErisGenerator => Generators::map(static fn (array $rest): CreateRole => new CreateRole($conditional, [$first, ...$rest], $profile), Generators::seq(new AccountNameGenerator()))));
-        return Generators::oneOf($requests, Generators::bind(new RefusedCreateRoleGenerator(), static fn (RefusedCreateRole $condition): ErisGenerator => Generators::map(static fn (bool $conditional): CreateRole => new CreateRole($conditional, $condition->roles, $profile), Generators::bool())));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (CreateRole $statement): CreateRole => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateRole $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<CreateRole>
+     * @return GeneratedValue<CreateRole>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<CreateRole> $element The generated counterexample
      * @return GeneratedValue<CreateRole>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<bool> $ifNotExists The generated semantic operand
-     * @param ErisGenerator<list<AccountName>> $roles The generated semantic operand
-     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
-     * @return ErisGenerator<CreateRole>
-     */
-    public static function fromOperands(ErisGenerator $ifNotExists, ErisGenerator $roles, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): CreateRole => new CreateRole(ifNotExists: $parts[0], roles: $parts[1], profile: $parts[2], client: $parts[3]), Generators::tuple($ifNotExists, $roles, $profile, $client));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<CreateRole>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'account operands' => self::operands(GrammarRelease::MySql847);
-    }
-
 }

@@ -5,30 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\Semantics\Statement\Spelling;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Statement\Spelling\Spelled;
 
 /**
- * Composes Spelled values and preserves their operand generators when shrinking.
+ * Generates Spelled values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Statement\Spelling\Spelled>
+ * @implements ErisGenerator<Spelled>
  */
 final class SpelledGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Statement\Spelling\Spelled> */
-    use Composition;
+    /** @var ErisGenerator<Spelled> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): Spelled => new Spelled(gap: $parts[0], text: $parts[1]),
+            Generators::tuple(
+                Generators::elements(['', ' ']),
+                Generators::map(static fn (int $number): string => 'token_' . $number, Generators::choose(0, 99))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Spelled $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<string> $gap Generated constructor operand
-     * @param ErisGenerator<string> $text Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Spelled>
      */
-    public function __construct(ErisGenerator $gap, ErisGenerator $text)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Statement\Spelling\Spelled {
-            return new \SqlSemantics\Statement\Spelling\Spelled(gap: $parts[0], text: $parts[1]);
-        }, Generators::tuple(
-            $gap,
-            $text
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Spelled> $element The generated counterexample
+     * @return GeneratedValue<Spelled>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -5,67 +5,67 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Name\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName;
+use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes MismatchedDefinitionName values and preserves their operand generators when shrinking.
+ * Generates MismatchedDefinitionName values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName>
+ * @implements ErisGenerator<MismatchedDefinitionName>
  */
 final class MismatchedDefinitionNameGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName> */
-    use Composition;
+    /** @var ErisGenerator<MismatchedDefinitionName> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\ColumnName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName> $target Generated constructor operand
-     */
-    public function __construct(ErisGenerator $name, ErisGenerator $target)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName {
-            return new \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName(name: $parts[0], target: $parts[1]);
-        }, Generators::tuple(
-            $name,
-            $target
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Name\\Problem\\MismatchedDefinitionName' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new MismatchedDefinitionNameGenerator(
-            name: \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands(
-                column: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'a' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $suffix): string => 'other' . $suffix, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $suffix): string => 'x' . $suffix, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    catalog: Generators::constant(null)
-                ),
-                dot: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-            ),
-            target: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 't' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                schema: Generators::constant(null),
-                catalog: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): MismatchedDefinitionName => new MismatchedDefinitionName(name: $parts[0], target: $parts[1]),
+            Generators::tuple(
+                new ColumnNameGenerator($release),
+                new QualifiedNameGenerator($release)
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (MismatchedDefinitionName $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<MismatchedDefinitionName>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<MismatchedDefinitionName> $element The generated counterexample
+     * @return GeneratedValue<MismatchedDefinitionName>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

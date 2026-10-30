@@ -21,8 +21,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(LockNames::class)]
 #[Medium]

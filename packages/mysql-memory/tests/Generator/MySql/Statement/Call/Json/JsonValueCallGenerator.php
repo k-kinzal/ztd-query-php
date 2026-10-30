@@ -5,42 +5,73 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Call\Json;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator;
+use Tests\Generator\MySql\Statement\Type\CastTargetGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes JsonValueCall values and preserves their operand generators when shrinking.
+ * Generates JsonValueCall values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall>
+ * @implements ErisGenerator<JsonValueCall>
  */
 final class JsonValueCallGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall> */
-    use Composition;
+    /** @var ErisGenerator<JsonValueCall> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): JsonValueCall => new JsonValueCall(document: (new Precedence())->admits($parts[0], Precedence::SIMPLE_EXPR) ? $parts[0] : new Grouped($parts[0]), path: $parts[1], returning: $parts[2], onEmpty: $parts[3], onError: $parts[4], scalarInformation: null, inputSource: null, pathValue: null),
+            Generators::tuple(
+                new ScalarGenerator($release, $depth - 1),
+                new StringLiteralGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CastTargetGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new JsonResponseGenerator($release)),
+                Generators::oneOf(Generators::constant(null), new JsonResponseGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (JsonValueCall $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $document Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral> $path Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\CastTarget|null>|null $returning Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse|null>|null $onEmpty Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse|null>|null $onError Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Json\Path|\SqlSemantics\Platform\MySql\Statement\Call\Json\Path\Invalid|null>|null $pathValue Generated selection steps
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<JsonValueCall>
      */
-    public function __construct(ErisGenerator $document, ErisGenerator $path, ?ErisGenerator $returning = null, ?ErisGenerator $onEmpty = null, ?ErisGenerator $onError = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $pathValue = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall {
-            return new \SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall(document: $parts[0], path: $parts[1], returning: $parts[2], onEmpty: $parts[3], onError: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6], pathValue: $parts[7]);
-        }, Generators::tuple(
-            $document,
-            $path,
-            $returning ?? Generators::constant(null),
-            $onEmpty ?? Generators::constant(null),
-            $onError ?? Generators::constant(null),
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null),
-            $pathValue ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<JsonValueCall> $element The generated counterexample
+     * @return GeneratedValue<JsonValueCall>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

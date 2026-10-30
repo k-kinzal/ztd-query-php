@@ -5,40 +5,80 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Write;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete;
+use Tests\Generator\MySql\Statement\Dml\DeleteOptionGenerator;
+use Tests\Generator\MySql\Statement\Dml\MultipleDeleteFormGenerator;
+use Tests\Generator\MySql\Statement\Dml\Target\DeletionInputGenerator;
+use Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator;
+use Tests\Generator\MySql\Statement\Query\With\WithGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes DeferredMultipleDelete values and preserves their operand generators when shrinking.
+ * Generates DeferredMultipleDelete values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete>
+ * @implements ErisGenerator<DeferredMultipleDelete>
  */
 final class DeferredMultipleDeleteGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete> */
-    use Composition;
+    /** @var ErisGenerator<DeferredMultipleDelete> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): DeferredMultipleDelete => new DeferredMultipleDelete(with: $parts[0], options: $parts[1], input: new DeletionInput($parts[2]->tables, [$parts[7], $parts[7]], null, null), form: $parts[3], where: $parts[4], hints: $parts[5], inputSource: $parts[6]),
+            Generators::tuple(
+                $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DeleteOptionGenerator($release))),
+                new DeletionInputGenerator($release, $depth - 1),
+                new MultipleDeleteFormGenerator($release),
+                $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
+                Generators::constant(null),
+                new QualifiedNameGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DeferredMultipleDelete $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\WithClause|null> $with Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption>> $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput> $input Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm> $form Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|null>|null $where Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint>>|null $hints Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DeferredMultipleDelete>
      */
-    public function __construct(ErisGenerator $with, ErisGenerator $options, ErisGenerator $input, ErisGenerator $form, ?ErisGenerator $where = null, ?ErisGenerator $hints = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete(with: $parts[0], options: $parts[1], input: $parts[2], form: $parts[3], where: $parts[4], hints: $parts[5], inputSource: $parts[6]);
-        }, Generators::tuple(
-            $with,
-            $options,
-            $input,
-            $form,
-            $where ?? Generators::constant(null),
-            $hints ?? Generators::constant([]),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DeferredMultipleDelete> $element The generated counterexample
+     * @return GeneratedValue<DeferredMultipleDelete>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

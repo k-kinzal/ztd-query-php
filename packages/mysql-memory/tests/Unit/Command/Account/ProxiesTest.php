@@ -102,14 +102,12 @@ final class ProxiesTest extends TestCase
         self::assertSame([['Warning', 1141, "There is no such grant defined for user 'u' on host '%'"]], $session->diagnostics->conditions);
     }
 
-    public function testRevokeChecksAuthorityBeforeIgnoringUnknownUsers(): void
+    public function testRevokeIgnoresAnUnknownUserWithAWarning(): void
     {
         $session = (new Instance())->connect();
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1698);
-
         $session->query('REVOKE PROXY ON nobody FROM nobody IGNORE UNKNOWN USER');
+
+        self::assertSame([['Warning', 3162, 'Authorization ID nobody does not exist.']], $session->diagnostics->conditions);
     }
 
     public function testGrantStoresCurrentUserAsTheEmptyMappingAndRevokeFindsIt(): void
@@ -126,7 +124,7 @@ final class ProxiesTest extends TestCase
         self::assertSame([], $session->instance->accounts->find(new Identity('u', '%'))?->grants->proxies);
     }
 
-    public function testCheckAllowsDelegatedAuthority(): void
+    public function testDelegatedAuthorityCannotGrantToASystemUserAccount(): void
     {
         $instance = new Instance();
         $root = $instance->connect();
@@ -134,22 +132,25 @@ final class ProxiesTest extends TestCase
         $root->query('GRANT PROXY ON root TO u WITH GRANT OPTION');
         $user = $instance->connect('u');
         (new Proxies())->check(new Identity('root', '%'), $user);
-        $user->query('GRANT PROXY ON root TO root');
 
-        self::assertCount(1, $instance->accounts->find(new Identity('root', '%'))?->grants->proxies ?? []);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1227);
+        $this->expectExceptionMessage('SYSTEM_USER');
+
+        $user->query('GRANT PROXY ON root TO root');
     }
-    public function testGrantStopsBeforeGranteeHostWarningsWhenAuthorityIsMissing(): void
+    public function testGrantReportsHostWarningsThenRefusesCreatingEachGrantee(): void
     {
         $session = (new Instance())->connect();
         $session->run('GRANT PROXY ON missing@remote TO u@localhost, v@anotherhost');
-        self::assertSame([1285, 1698], array_column($session->diagnostics->conditions, 1));
+        self::assertSame([1285, 1285, 1285, 1410, 1410], array_column($session->diagnostics->conditions, 1));
     }
 
-    public function testRevokeStopsBeforeGranteeHostWarningsWhenAuthorityIsMissing(): void
+    public function testRevokeReportsHostWarningsThenEachMissingGrant(): void
     {
         $session = (new Instance())->connect();
         $session->run("REVOKE IF EXISTS PROXY ON _sqlfaker_identifier @GLOBAL FROM _sfOK1KT @localhost , _sqlfaker_identifier @'a''b'");
-        self::assertSame([1285, 1698], array_column($session->diagnostics->conditions, 1));
+        self::assertSame([1285, 1285, 1285, 1141, 1141], array_column($session->diagnostics->conditions, 1));
     }
 
     public function testGrantReportsEveryMissingGranteeAndKeepsModernGrantsAtomic(): void

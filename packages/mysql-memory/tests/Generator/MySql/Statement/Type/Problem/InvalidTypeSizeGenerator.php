@@ -5,52 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Type\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes InvalidTypeSize values and preserves their operand generators when shrinking.
+ * Generates InvalidTypeSize values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize>
+ * @implements ErisGenerator<InvalidTypeSize>
  */
 final class InvalidTypeSizeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize> */
-    use Composition;
+    /** @var ErisGenerator<InvalidTypeSize> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit> $rule Generated constructor operand
-     * @param ErisGenerator<string> $name Generated constructor operand
-     * @param ErisGenerator<int>|null $actual Generated constructor operand
-     * @param ErisGenerator<int>|null $maximum Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName|null>|null $scope Generated constructor operand
-     */
-    public function __construct(ErisGenerator $rule, ErisGenerator $name, ?ErisGenerator $actual = null, ?ErisGenerator $maximum = null, ?ErisGenerator $scope = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize {
-            return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(rule: $parts[0], name: $parts[1], actual: $parts[2], maximum: $parts[3], scope: $parts[4]);
-        }, Generators::tuple(
-            $rule,
-            $name,
-            $actual ?? Generators::constant(0),
-            $maximum ?? Generators::constant(0),
-            $scope ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Type\\Problem\\InvalidTypeSize' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new InvalidTypeSizeGenerator(
-            rule: TypeLimitGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Empty]),
-            name: Generators::constant(''),
-            actual: Generators::constant(0),
-            maximum: Generators::constant(0),
-            scope: Generators::constant(null)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): InvalidTypeSize => new InvalidTypeSize(rule: $parts[0], name: $parts[1], actual: $parts[2], maximum: $parts[3], scope: $parts[4]),
+            Generators::tuple(
+                new TypeLimitGenerator($release),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::choose(0, 100),
+                Generators::choose(0, 100),
+                Generators::oneOf(Generators::constant(null), new QualifiedNameGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (InvalidTypeSize $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<InvalidTypeSize>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<InvalidTypeSize> $element The generated counterexample
+     * @return GeneratedValue<InvalidTypeSize>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,60 +5,70 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Dml\TargetNames;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes RepeatedDeleteTarget values and preserves their operand generators when shrinking.
+ * Generates RepeatedDeleteTarget values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget>
+ * @implements ErisGenerator<RepeatedDeleteTarget>
  */
 final class RepeatedDeleteTargetGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget> */
-    use Composition;
+    /** @var ErisGenerator<RepeatedDeleteTarget> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\QualifiedName>> $targets Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\QualifiedName|null>|null $program Generated constructor operand
-     */
-    public function __construct(ErisGenerator $targets, ?ErisGenerator $program = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget(targets: $parts[0], program: $parts[1]);
-        }, Generators::tuple(
-            $targets,
-            $program ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Dml\\Problem\\RepeatedDeleteTarget' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RepeatedDeleteTargetGenerator(
-            targets: Generators::tuple(
-                new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::constant('a'),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                ),
-                new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::constant('a'),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
+        $this->delegate = Generators::map(
+            static fn (array $parts): RepeatedDeleteTarget => new RepeatedDeleteTarget(targets: [...$parts[0], $parts[0][0]], program: $parts[1]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (new TargetNames())->duplicate(([...$parts[0], $parts[0][0]])) === count(([...$parts[0], $parts[0][0]])) - 1,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new QualifiedNameGenerator($release))),
+                    Generators::oneOf(Generators::constant(null), new QualifiedNameGenerator($release))
                 )
-            ),
-            program: Generators::constant(null)
-        )];
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RepeatedDeleteTarget $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RepeatedDeleteTarget>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RepeatedDeleteTarget> $element The generated counterexample
+     * @return GeneratedValue<RepeatedDeleteTarget>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

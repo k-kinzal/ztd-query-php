@@ -5,83 +5,86 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Storage;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Rules\Server\StorageOptions;
+use SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace;
+use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Server\Storage\Option\StorageOptionGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes DropTablespace values and preserves their operand generators when shrinking.
+ * Generates DropTablespace values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace>
+ * @implements ErisGenerator<DropTablespace>
  */
 final class DropTablespaceGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace> */
-    use Composition;
+    /** @var ErisGenerator<DropTablespace> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete DropTablespace values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When the release belongs to another database.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($release->database() !== 'mysql') {
-            throw new InvalidArgumentException('Storage statements require a MySQL grammar release.');
-        }
-        if ($operands === null) {
-            $forms = [self::operands(
-                new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(),
-                Generators::bind(Generators::choose(0, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new Option\WaitOptionGenerator(Generators::bool()))),
-                leadingComma: in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? Generators::bool() : Generators::constant(false)
-            )];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): DropTablespace => new DropTablespace(name: $parts[0], options: array_values(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::DROP, true))), statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $parts[4] === null ? null : array_slice($parts[4], 0, max(0, count(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::DROP, true))) - 1)), leadingComma: $parts[5] && array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::DROP, true)) !== []),
+            Generators::tuple(
+                new NameGenerator($release),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool())),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (DropTablespace $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace) {
-                throw new LogicException('Publishing DropTablespace must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $name Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption>>|null $options Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<list<bool>>|null $optionsCommas Generated list boundaries
-     * @param ErisGenerator<bool>|null $leadingComma The optional comma before the first option
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace>
-     */
-    public static function operands(ErisGenerator $name, ?ErisGenerator $options = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $optionsCommas = null, ?ErisGenerator $leadingComma = null): ErisGenerator
-    {
-        return Generators::bind(Generators::tuple($name, $options ?? Generators::constant([]), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)), static function (array $parts) use ($optionsCommas, $leadingComma): ErisGenerator {
-            return Generators::map(static fn (array $boundaries): \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace => new \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace(name: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $boundaries[0], leadingComma: $parts[1] !== [] && $boundaries[1]), Generators::tuple($optionsCommas ?? Generators::vector(max(0, count($parts[1]) - 1), Generators::bool()), $leadingComma ?? Generators::constant(false)));
-        });
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'DropTablespace/39' => DropTablespaceGenerator::operands(
-            name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                quote: Generators::constant(null)
-            ),
-            options: Generators::constant([])
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (DropTablespace $statement): DropTablespace => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (DropTablespace $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<DropTablespace>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<DropTablespace> $element The generated counterexample
+     * @return GeneratedValue<DropTablespace>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

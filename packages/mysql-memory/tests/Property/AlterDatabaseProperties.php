@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tests\Property;
 
 use Eris\TestTrait;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Execution;
@@ -19,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase;
 use Tests\Generator\MySql\Statement\Server\Database\AlterDatabaseGenerator;
 
 /**
- * Searches for AlterDatabase values that post-analysis execution cannot consume.
+ * Generates AlterDatabase analysis results and executes them after analysis.
  */
 #[CoversNothing]
 #[Large]
@@ -28,22 +31,26 @@ final class AlterDatabaseProperties extends TestCase
     use TestTrait;
 
     /**
-     * With no generated prerequisite state, execution may complete or refuse the
-     * statement as SQL. Any representation or implementation failure escapes.
+     * The server errors that report only runtime state the generated statement depends on: the database does not exist, which 5.6 and 5.7 report as its missing directory.
+     */
+    private const MISSING_STATE = [SchemaError::SchemaMissing, QueryError::BadDatabase, AdministrationError::FileCreate];
+
+    /**
+     * Execution raises no error, except an error that depends on database state.
      */
     #[Test]
     #[DataProvider('providerReleases')]
     #[DoesNotPerformAssertions]
-    public function satisfiesExecutionConsumesTheAnalyzedValue(GrammarRelease $release): void
+    public function satisfiesExecutionRaisesNoErrorExceptForDatabaseState(GrammarRelease $release): void
     {
-        $this->forAll(new AlterDatabaseGenerator($release))->withMaxSize(10)->then(static function (AlterDatabase $statement) use ($release): void {
-            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
-            $session = $instance->connect(database: 'pbt');
-            $execution = new Execution($session);
+        $this->forAll(new AlterDatabaseGenerator($release))->then(static function (AlterDatabase $statement) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             try {
-                $execution->statement($statement);
-            } catch (SqlError) {
-                // SQL refusal is an allowed outcome without prerequisite state.
+                (new Execution($session))->statement($statement);
+            } catch (SqlError $error) {
+                if (!in_array($error->error, self::MISSING_STATE, true)) {
+                    throw $error;
+                }
             }
         });
     }

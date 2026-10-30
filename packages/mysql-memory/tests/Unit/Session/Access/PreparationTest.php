@@ -313,13 +313,13 @@ final class PreparationTest extends TestCase
         $session->text = 'unrelated invalid input';
         $this->expectExceptionCode(1295);
         $this->expectExceptionMessage('This command is not supported in the prepared statement protocol yet');
-        $statement1 = (new \Tests\Generator\Embedding())->statement($node);
+        $statement1 = (new \Tests\Support\Embedding())->statement($node);
         $parameters1 = [[2, $domain], [5, $domain], [1, $domain], [1, $domain]];
         $session->activity->begin();
         \MySqlMemory\Session\State\StatementCounters::received($session);
 
         $session->dots = [];
-        $operation1 = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement1, $parameters1, new \SqlSemantics\Contract\LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new \Tests\Generator\Bindings())->parameters($statement1)));
+        $operation1 = (new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement1, $parameters1, new \SqlSemantics\Contract\LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new \Tests\Support\Bindings())->parameters($statement1)));
         (new Preparation())->check($operation1, $session);
     }
 }

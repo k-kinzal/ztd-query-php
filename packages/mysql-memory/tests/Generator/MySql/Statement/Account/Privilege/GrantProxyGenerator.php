@@ -5,73 +5,92 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Privilege;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
+use Eris\Random\RandomRange;
 use LogicException;
-use Tests\Generator\Composition;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
+use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Account\User\GranteeGenerator;
+use Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes GrantProxy values and preserves their operand generators when shrinking.
+ * Generates GrantProxy values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy>
+ * @implements ErisGenerator<GrantProxy>
  */
 final class GrantProxyGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy> */
-    use Composition;
+    /** @var ErisGenerator<GrantProxy> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete GrantProxy values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): GrantProxy => new GrantProxy(proxied: $parts[0], grantees: $parts[1], withGrantOption: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]),
+            Generators::suchThat(static fn (array $parts): bool => ($bit & 3) !== 0 || (array_filter($parts[1], static fn ($grantee): bool => $grantee->identification !== null) === []), Generators::tuple(
+                new AccountGenerator($release),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new GranteeGenerator($release),
+                    1 => Generators::suchThat(static fn (UserSpecification $user): bool => $user->granted() && $user->identification?->credential !== Credential::RandomPassword, new UserSpecificationGenerator($release)),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }))),
+                Generators::bool(),
+                Generators::constant(null),
+                Generators::constant(null)
+            ))
+        );
+        $this->delegate = Generators::suchThat(
+            static function (GrantProxy $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No GrantProxy forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy) {
-                throw new LogicException('Publishing GrantProxy must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account> $proxied Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Account\User\Grantee|\SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification>> $grantees Generated constructor operand
-     * @param ErisGenerator<bool>|null $withGrantOption Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy>
-     */
-    public static function operands(ErisGenerator $proxied, ErisGenerator $grantees, ?ErisGenerator $withGrantOption = null, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy(proxied: $parts[0], grantees: $parts[1], withGrantOption: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple($proxied, $grantees, $withGrantOption ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy>>
-     */
-    public static function forms(): iterable
-    {
-        $grantees = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(new \Tests\Generator\MySql\Statement\Name\AccountGenerator())));
-        yield 'proxy accounts and grant option' => self::operands(new \Tests\Generator\MySql\Statement\Name\AccountGenerator(), $grantees, Generators::bool());
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (GrantProxy $statement): GrantProxy => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (GrantProxy $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<GrantProxy>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<GrantProxy> $element The generated counterexample
+     * @return GeneratedValue<GrantProxy>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

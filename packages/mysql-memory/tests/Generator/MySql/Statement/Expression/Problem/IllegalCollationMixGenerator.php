@@ -5,52 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Expression\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
 
 /**
- * Composes IllegalCollationMix values and preserves their operand generators when shrinking.
+ * Generates IllegalCollationMix values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix>
+ * @implements ErisGenerator<IllegalCollationMix>
  */
 final class IllegalCollationMixGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix> */
-    use Composition;
+    /** @var ErisGenerator<IllegalCollationMix> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<list<array{string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility}>> $operands Generated constructor operand
-     * @param ErisGenerator<string> $operation Generated constructor operand
-     */
-    public function __construct(ErisGenerator $operands, ErisGenerator $operation)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix {
-            return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix(operands: $parts[0], operation: $parts[1]);
-        }, Generators::tuple(
-            $operands,
-            $operation
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Expression\\Problem\\IllegalCollationMix' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new IllegalCollationMixGenerator(
-            operands: Generators::tuple(
-                Generators::tuple(
-                    Generators::constant('latin1_bin'),
-                    \Tests\Generator\MySql\Statement\Type\Resolved\CoercibilityGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Explicit])
-                ),
-                Generators::tuple(
-                    Generators::constant('latin1_general_ci'),
-                    \Tests\Generator\MySql\Statement\Type\Resolved\CoercibilityGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Explicit])
-                )
-            ),
-            operation: Generators::constant('=')
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): IllegalCollationMix => new IllegalCollationMix(operands: $parts[0], operation: $parts[1]),
+            Generators::tuple(
+                Generators::constant([]),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (IllegalCollationMix $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<IllegalCollationMix>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<IllegalCollationMix> $element The generated counterexample
+     * @return GeneratedValue<IllegalCollationMix>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

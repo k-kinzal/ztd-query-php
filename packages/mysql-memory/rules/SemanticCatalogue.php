@@ -31,6 +31,9 @@ final class SemanticCatalogue
      */
     private array $locations = [];
 
+    /** @var array<string, array{implements: list<string>, extends: string|null, parameters: list<string>}> */
+    private array $structure = [];
+
     /**
      * @param array<string, array{string, string}>|null $sources Source directories with their model and generator namespace prefixes; null selects the installed semantic packages
      */
@@ -61,15 +64,20 @@ final class SemanticCatalogue
                 if ($text === false) {
                     throw new RuntimeException('Cannot read ' . $file->getPathname());
                 }
-                if (!str_contains($text, '@visibility public')) {
-                    continue;
-                }
                 $nodes = (new NodeTraverser(new NameResolver()))->traverse((new ParserFactory())->createForNewestSupportedVersion()->parse($text) ?? []);
                 $value = (new NodeFinder())->findFirstInstanceOf($nodes, Node\Stmt\ClassLike::class);
-                if ($value === null || $value->namespacedName === null || !str_contains($value->getDocComment()?->getText() ?? '', '@visibility public') || !$this->isValue($value)) {
+                if ($value === null || $value->namespacedName === null) {
                     continue;
                 }
+                $imports = [];
+                foreach ((new NodeFinder())->findInstanceOf($nodes, Node\Stmt\UseUse::class) as $use) {
+                    $imports[$use->getAlias()->toString()] = $use->name->toString();
+                }
                 $class = $value->namespacedName->toString();
+                $this->structure[$class] = $this->structure($value, $imports, substr($class, 0, strrpos($class, '\\') ?: 0));
+                if (!str_contains($value->getDocComment()?->getText() ?? '', '@visibility public') || !$this->isValue($value)) {
+                    continue;
+                }
                 if (!str_starts_with($class, $source)) {
                     throw new RuntimeException('Semantic source declares a type outside its namespace: ' . $class);
                 }
@@ -78,8 +86,119 @@ final class SemanticCatalogue
                 $this->locations[$class] = ['file' => $file->getPathname(), 'line' => $value->getStartLine()];
             }
         }
+        $generators = array_intersect_key($generators, array_flip($this->reachable(array_keys($generators))));
         ksort($generators);
         return $this->values = $generators;
+    }
+
+    /**
+     * The types a generated statement can hold: the statements and, transitively, the types of
+     * their constructor parameters other than the analysis information the publication derives,
+     * with the implementors of every reachable interface and the subclasses of every reachable parent.
+     *
+     * @param list<string> $classes
+     * @return list<string>
+     */
+    public function reachable(array $classes): array
+    {
+        $implementors = [];
+        foreach ($this->structure as $class => $structure) {
+            foreach ([...$structure['implements'], ...($structure['extends'] === null ? [] : [$structure['extends']])] as $parent) {
+                $implementors[$parent][] = $class;
+            }
+        }
+        $reached = [];
+        $pending = array_values(array_filter($classes, fn (string $class): bool => $this->isRoot($class)));
+        while ($pending !== []) {
+            $class = array_pop($pending);
+            if (isset($reached[$class])) {
+                continue;
+            }
+            $reached[$class] = true;
+            array_push($pending, ...($this->structure[$class]['parameters'] ?? []), ...($implementors[$class] ?? []));
+        }
+
+        return array_values(array_filter(array_keys($reached), static fn (string $class): bool => in_array($class, $classes, true)));
+    }
+
+    /**
+     * Tells whether a type is an analysis result in its own right: a statement.
+     */
+    private function isRoot(string $class): bool
+    {
+        $pending = [$class];
+        while ($pending !== []) {
+            $current = array_pop($pending);
+            if (!isset($this->structure[$current])) {
+                return $current === 'SqlSemantics\\Statement\\AnalyzedStatement';
+            }
+            if (in_array('SqlSemantics\\Statement\\AnalyzedStatement', $this->structure[$current]['implements'], true)) {
+                return true;
+            }
+            array_push($pending, ...$this->structure[$current]['implements'], ...($this->structure[$current]['extends'] === null ? [] : [$this->structure[$current]['extends']]));
+        }
+
+        return false;
+    }
+
+    /**
+     * The parents and the constructor parameter types of a declaration.
+     *
+     * @param array<string, string> $imports The imported names of the file, by alias
+     * @param string $namespace The namespace of the declaration
+     * @return array{implements: list<string>, extends: string|null, parameters: list<string>}
+     */
+    private function structure(Node\Stmt\ClassLike $node, array $imports, string $namespace): array
+    {
+        $implements = [];
+        $extends = null;
+        if ($node instanceof Node\Stmt\Class_) {
+            $implements = array_map(static fn (Node\Name $name): string => $name->toString(), $node->implements);
+            $extends = $node->extends?->toString();
+        } elseif ($node instanceof Node\Stmt\Interface_) {
+            $implements = array_map(static fn (Node\Name $name): string => $name->toString(), $node->extends);
+        } elseif ($node instanceof Node\Stmt\Enum_) {
+            $implements = array_map(static fn (Node\Name $name): string => $name->toString(), $node->implements);
+        }
+        $parameters = [];
+        $constructor = $node->getMethod('__construct');
+        foreach ($constructor?->params ?? [] as $parameter) {
+            $name = $parameter->var instanceof Node\Expr\Variable && is_string($parameter->var->name) ? $parameter->var->name : '';
+            if ($name === 'inputSource' || str_ends_with($name, 'Information')) {
+                continue;
+            }
+            array_push($parameters, ...$this->typeNames($parameter->type));
+            if (preg_match('/@param\s+(\S+)\s+\$' . preg_quote($name, '/') . '\b/', $constructor?->getDocComment()?->getText() ?? '', $match) === 1) {
+                foreach (preg_split('/[^A-Za-z0-9_\\\\]+/', $match[1]) ?: [] as $token) {
+                    if ($token === '' || preg_match('/^[a-z]/', $token) === 1) {
+                        continue;
+                    }
+                    [$head, $rest] = explode('\\', ltrim($token, '\\'), 2) + [1 => null];
+                    $parameters[] = match (true) {
+                        str_starts_with($token, '\\') => ltrim($token, '\\'),
+                        isset($imports[$head]) => $imports[$head] . ($rest === null ? '' : '\\' . $rest),
+                        default => $namespace . '\\' . $token,
+                    };
+                }
+            }
+        }
+
+        return ['implements' => $implements, 'extends' => $extends, 'parameters' => array_values(array_unique($parameters))];
+    }
+
+    /**
+     * The class names of a declared type.
+     *
+     * @return list<string>
+     */
+    private function typeNames(Node\Identifier|Node\Name|Node\ComplexType|null $type): array
+    {
+        return match (true) {
+            $type instanceof Node\Name => [$type->toString()],
+            $type instanceof Node\NullableType => $this->typeNames($type->type),
+            $type instanceof Node\UnionType, $type instanceof Node\IntersectionType => array_merge(...array_map(fn (Node\Identifier|Node\Name|Node\ComplexType $part): array => $this->typeNames($part), $type->types)),
+            default => [],
+        };
     }
 
     /**

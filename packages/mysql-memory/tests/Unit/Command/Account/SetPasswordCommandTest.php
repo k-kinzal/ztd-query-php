@@ -23,8 +23,8 @@ use SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction;
 use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
-use Tests\Generator\Bindings;
-use Tests\Generator\Embedding;
+use Tests\Support\Bindings;
+use Tests\Support\Embedding;
 
 #[CoversClass(SetPasswordCommand::class)]
 #[Small]

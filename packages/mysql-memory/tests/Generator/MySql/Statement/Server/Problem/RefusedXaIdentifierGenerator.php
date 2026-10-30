@@ -5,43 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier;
 
 /**
- * Composes RefusedXaIdentifier values and preserves their operand generators when shrinking.
+ * Generates RefusedXaIdentifier values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier>
+ * @implements ErisGenerator<RefusedXaIdentifier>
  */
 final class RefusedXaIdentifierGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier> */
-    use Composition;
+    /** @var ErisGenerator<RefusedXaIdentifier> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<int> $offset Generated constructor operand
-     * @param ErisGenerator<bool>|null $following Generated constructor operand
-     */
-    public function __construct(ErisGenerator $offset, ?ErisGenerator $following = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier(offset: $parts[0], following: $parts[1]);
-        }, Generators::tuple(
-            $offset,
-            $following ?? Generators::constant(false)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Problem\RefusedXaIdentifier>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Server\\Problem\\RefusedXaIdentifier' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedXaIdentifierGenerator(
-            offset: Generators::constant(20),
-            following: Generators::constant(false)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedXaIdentifier => new RefusedXaIdentifier(offset: $parts[0], following: $parts[1]),
+            Generators::tuple(
+                Generators::choose(0, 100),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedXaIdentifier $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedXaIdentifier>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedXaIdentifier> $element The generated counterexample
+     * @return GeneratedValue<RefusedXaIdentifier>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

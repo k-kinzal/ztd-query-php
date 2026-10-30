@@ -5,32 +5,72 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Hint\Form;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Hint\Form\StrategyHint;
+use SqlSemantics\Platform\MySql\Statement\Hint\HintForm;
+use SqlSemantics\Platform\MySql\Statement\Hint\HintName;
 
 /**
- * Composes StrategyHint values and preserves their operand generators when shrinking.
+ * Generates StrategyHint values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\Form\StrategyHint>
+ * @implements ErisGenerator<StrategyHint>
  */
 final class StrategyHintGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Hint\Form\StrategyHint> */
-    use Composition;
+    /** @var ErisGenerator<StrategyHint> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::bind(
+            Generators::elements(array_values(array_filter(HintName::cases(), static fn (HintName $hint): bool => ($hint->form() === HintForm::Semijoin || $hint->form() === HintForm::Subquery) && $hint->available($release)))),
+            static fn (HintName $hint): ErisGenerator => Generators::map(
+                static fn (array $parts): StrategyHint => new StrategyHint(hint: $hint, block: $parts[0], strategies: $parts[1]),
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => 'block_' . $number, Generators::choose(0, 9))),
+                    $hint->form() === HintForm::Subquery
+                        ? Generators::map(static fn (string $strategy): array => [$strategy], Generators::elements(StrategyHint::SUBQUERY))
+                        : Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::elements(StrategyHint::SEMIJOIN)))
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (StrategyHint $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\HintName> $hint Generated constructor operand
-     * @param ErisGenerator<string|null> $block Generated constructor operand
-     * @param ErisGenerator<list<string>> $strategies Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<StrategyHint>
      */
-    public function __construct(ErisGenerator $hint, ErisGenerator $block, ErisGenerator $strategies)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\StrategyHint {
-            return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\StrategyHint(hint: $parts[0], block: $parts[1], strategies: $parts[2]);
-        }, Generators::tuple(
-            $hint,
-            $block,
-            $strategies
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<StrategyHint> $element The generated counterexample
+     * @return GeneratedValue<StrategyHint>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -5,58 +5,73 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Literal;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation;
 
 /**
- * Composes RadixLiteral values and preserves their operand generators when shrinking.
+ * Generates RadixLiteral values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral>
+ * @implements ErisGenerator<RadixLiteral>
  */
 final class RadixLiteralGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral> */
-    use Composition;
+    /** @var ErisGenerator<RadixLiteral> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Radix> $radix Generated constructor operand
-     * @param ErisGenerator<string> $digits Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null>|null $introducer Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation|null>|null $notation Generated constructor operand
-     */
-    public function __construct(ErisGenerator $radix, ErisGenerator $digits, ?ErisGenerator $introducer = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $notation = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::bind(Generators::tuple(
-            $radix,
-            $digits,
-            $introducer ?? Generators::constant(null),
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ), static function (array $parts) use ($notation): ErisGenerator {
-            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Literal\RadixNotation $selected): \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral => new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(radix: $parts[0], digits: $parts[1], introducer: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4], notation: $selected), $notation ?? RadixNotationGenerator::forDigits($parts[0], $parts[1]));
-        });
+        $this->delegate = Generators::bind(
+            Generators::tuple(new RadixGenerator($release), Generators::oneOf(Generators::constant(null), new RadixNotationGenerator($release))),
+            static function (array $head): ErisGenerator {
+                [$radix, $notation] = $head;
+                $digit = $radix === Radix::Hexadecimal ? Generators::elements(str_split('0123456789abcdefABCDEF')) : Generators::elements(['0', '1']);
+                $pairs = $radix === Radix::Hexadecimal && $notation !== RadixNotation::Prefixed;
+
+                return Generators::map(
+                    static fn (array $digits): RadixLiteral => new RadixLiteral(radix: $radix, digits: implode('', $digits), introducer: null, scalarInformation: null, inputSource: null, notation: $notation),
+                    Generators::bind(Generators::choose($notation === RadixNotation::Prefixed ? 1 : 0, 4), static fn (int $count): ErisGenerator => Generators::vector($pairs ? $count * 2 : $count, $digit))
+                );
+            }
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RadixLiteral $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Composes arbitrary binary values and valid notations into executable projections.
-     *
-     * @return ErisGenerator<\SqlSemantics\Statement\AnalyzedStatement>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RadixLiteral>
      */
-    public static function queries(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $literals = Generators::bind(new RadixGenerator(), static function (\SqlSemantics\Platform\MySql\Statement\Literal\Radix $radix): ErisGenerator {
-            $digits = Generators::map(static function (array $parts) use ($radix): string {
-                [$number, $zeros, $empty] = $parts;
-                return $empty ? '' : str_repeat('0', $zeros) . ($radix === \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal ? dechex($number) : decbin($number));
-            }, Generators::tuple(Generators::choose(0, 65535), Generators::choose(0, 3), Generators::bool()));
-            return new self(Generators::constant($radix), $digits);
-        });
-        $statements = \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
-            Generators::constant([]),
-            Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($literals, new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
-        ));
-        return new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $statements);
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RadixLiteral> $element The generated counterexample
+     * @return GeneratedValue<RadixLiteral>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

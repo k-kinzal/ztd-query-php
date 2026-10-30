@@ -5,30 +5,71 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Hint\Form;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral;
+use SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteralKind;
 
 /**
- * Composes HintLiteral values and preserves their operand generators when shrinking.
+ * Generates HintLiteral values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral>
+ * @implements ErisGenerator<HintLiteral>
  */
 final class HintLiteralGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral> */
-    use Composition;
+    /** @var ErisGenerator<HintLiteral> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::bind(
+            new HintLiteralKindGenerator($release),
+            static fn (HintLiteralKind $kind): ErisGenerator => Generators::map(
+                static fn (int $number): HintLiteral => new HintLiteral(kind: $kind, value: match ($kind) {
+                    HintLiteralKind::Integer => (string) $number,
+                    HintLiteralKind::Decimal => $number . '.5',
+                    HintLiteralKind::Word => 'word_' . $number,
+                    HintLiteralKind::Text => 'text ' . $number,
+                }),
+                Generators::choose(0, 99)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (HintLiteral $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteralKind> $kind Generated constructor operand
-     * @param ErisGenerator<string> $value Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<HintLiteral>
      */
-    public function __construct(ErisGenerator $kind, ErisGenerator $value)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral {
-            return new \SqlSemantics\Platform\MySql\Statement\Hint\Form\HintLiteral(kind: $parts[0], value: $parts[1]);
-        }, Generators::tuple(
-            $kind,
-            $value
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<HintLiteral> $element The generated counterexample
+     * @return GeneratedValue<HintLiteral>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -5,46 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure;
 
 /**
- * Composes AccountNameFailure values and preserves their operand generators when shrinking.
+ * Generates AccountNameFailure values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure>
+ * @implements ErisGenerator<AccountNameFailure>
  */
 final class AccountNameFailureGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure> */
-    use Composition;
+    /** @var ErisGenerator<AccountNameFailure> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<string> $operand Generated constructor operand
-     * @param ErisGenerator<bool> $host Generated constructor operand
-     * @param ErisGenerator<int|null>|null $limit Generated constructor operand
-     */
-    public function __construct(ErisGenerator $operand, ErisGenerator $host, ?ErisGenerator $limit = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure(operand: $parts[0], host: $parts[1], limit: $parts[2]);
-        }, Generators::tuple(
-            $operand,
-            $host,
-            $limit ?? Generators::constant(null)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\AccountNameFailure>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Account\\Problem\\AccountNameFailure' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new AccountNameFailureGenerator(
-            operand: Generators::constant('bad@host'),
-            host: Generators::constant(true),
-            limit: Generators::constant(null)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): AccountNameFailure => new AccountNameFailure(operand: $parts[0], host: $parts[1], limit: $parts[2]),
+            Generators::tuple(
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::bool(),
+                Generators::oneOf(Generators::constant(null), Generators::choose(0, 100))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (AccountNameFailure $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AccountNameFailure>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AccountNameFailure> $element The generated counterexample
+     * @return GeneratedValue<AccountNameFailure>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,116 +5,87 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole;
+use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Account\User\RoleSelectionGenerator;
+use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes AlterDefaultRole values and preserves their operand generators when shrinking.
+ * Generates AlterDefaultRole values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole>
+ * @implements ErisGenerator<AlterDefaultRole>
  */
 final class AlterDefaultRoleGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole> */
-    use Composition;
+    /** @var ErisGenerator<AlterDefaultRole> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete AlterDefaultRole values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if (in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830, \SqlSemantics\Contract\GrammarRelease::MySql847, \SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): AlterDefaultRole => new AlterDefaultRole(ifExists: $parts[0], user: $parts[1], roles: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[2])->set !== RoleSet::Default && (($parts[2])->set !== RoleSet::All || ($parts[2])->roles === []),
+                Generators::tuple(
+                    Generators::bool(),
+                    new AccountGenerator($release),
+                    new RoleSelectionGenerator($release),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (AlterDefaultRole $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No AlterDefaultRole forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole) {
-                throw new LogicException('Publishing AlterDefaultRole must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<bool> $ifExists Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\Account> $user Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection> $roles Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole>
-     */
-    public static function operands(ErisGenerator $ifExists, ErisGenerator $user, ErisGenerator $roles, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole(ifExists: $parts[0], user: $parts[1], roles: $parts[2], statementInformation: $parts[3], inputSource: $parts[4]);
-        }, Generators::tuple($ifExists, $user, $roles, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.0 and later forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'target and role selection' => self::operands(Generators::bool(), new \Tests\Generator\MySql\Statement\Name\AccountGenerator(), User\RoleSelectionGenerator::defaultRoles());
-    }
-
-
-    /**
-     * Generates the user, roles, grant and default selection as one dependent input.
-     * Eris shrinking rebuilds the same dependency graph before execution.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Account\CreateUser, \SqlSemantics\Platform\MySql\Statement\Account\CreateRole, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles, \SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole}>
-     */
-    public static function withPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
-    {
-        $users = new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(Generators::map(static fn (int $number): string => 'user_' . $number, Generators::choose(0, 999)), Generators::constant(null));
-        $roles = self::roleNames();
-        return Generators::bind(Generators::tuple($users, $roles), static function (array $parts) use ($release): ErisGenerator {
-            [$user, $roles] = $parts;
-            $profile = Generators::constant(new \SqlSemantics\Contract\LanguageProfile($release));
-            $granted = Generators::tuple(...array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Name\AccountName $role): ErisGenerator => Privilege\Item\GrantedRoleGenerator::fromOperands(Generators::constant($role)), $roles));
-            return Generators::tuple(
-                new CreateUserGenerator($release, CreateUserGenerator::operands(Generators::bool(), Generators::tuple(new User\UserSpecificationGenerator(Generators::constant($user))))),
-                new CreateRoleGenerator($release, CreateRoleGenerator::fromOperands(Generators::bool(), Generators::constant($roles), $profile, Generators::constant(null))),
-                new Privilege\GrantRolesGenerator($release, Privilege\GrantRolesGenerator::fromOperands($granted, Generators::constant([$user]), Generators::bool(), $profile, Generators::constant(null))),
-                new self($release, self::operands(Generators::bool(), Generators::constant($user), User\RoleSelectionGenerator::defaultRoles(Generators::constant($roles))))
-            );
-        });
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (AlterDefaultRole $statement): AlterDefaultRole => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (AlterDefaultRole $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
-     * Generates distinct role identities with a mandatory first role.
-     *
-     * @return ErisGenerator<non-empty-list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName>>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AlterDefaultRole>
      */
-    public static function roleNames(): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $first = new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(Generators::map(static fn (int $number): string => 'role_0_' . $number, Generators::choose(0, 999)), Generators::constant(null));
-        $remaining = Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => Generators::tuple(...array_map(static fn (int $index): \Tests\Generator\MySql\Statement\Name\AccountNameGenerator => new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(Generators::map(static fn (int $number): string => 'role_' . ($index + 1) . '_' . $number, Generators::choose(0, 999)), Generators::constant(null)), array_keys(array_fill(0, $count, true)))));
-        return Generators::bind($first, static fn (\SqlSemantics\Platform\MySql\Statement\Name\AccountName $role): ErisGenerator => Generators::map(static fn (array $roles): array => self::prependRole($role, $roles), $remaining));
+        return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName> $remaining Additional roles generated under distinct prefixes
-     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName>
+     * @param GeneratedValue<AlterDefaultRole> $element The generated counterexample
+     * @return GeneratedValue<AlterDefaultRole>
      */
-    public static function prependRole(\SqlSemantics\Platform\MySql\Statement\Name\AccountName $first, array $remaining): array
+    public function shrink(GeneratedValue $element): GeneratedValue
     {
-        return [$first, ...$remaining];
+        return $this->delegate->shrink($element);
     }
 }

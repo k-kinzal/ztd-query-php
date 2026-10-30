@@ -5,198 +5,83 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\View;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use InvalidArgumentException;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\View\AlterView;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Support\Analysis;
 
 /**
- * Composes AlterView values and preserves their operand generators when shrinking.
+ * Generates AlterView values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\View\AlterView>
+ * @implements ErisGenerator<AlterView>
  */
 final class AlterViewGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\View\AlterView> */
-    use Composition;
+    /** @var ErisGenerator<AlterView> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Generates complete AlterView values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\View\AlterView>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): AlterView => new AlterView(definition: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], relationInformation: $parts[3]),
+            Generators::suchThat(
+                static fn (array $parts): bool => !($parts[0])->ifNotExists,
+                Generators::tuple(
+                    new ViewDefinitionGenerator($release, $depth - 1),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (AlterView $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No AlterView forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): \SqlSemantics\Platform\MySql\Statement\View\AlterView {
-            if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\View\AlterView) {
-                throw new LogicException('Publishing AlterView must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\View\ViewDefinition> $definition Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\StatementSemantics|null>|null $statementInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\View\AlterView>
-     */
-    public static function operands(ErisGenerator $definition, ?ErisGenerator $statementInformation = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $relationInformation = null): ErisGenerator
-    {
-        return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\View\AlterView {
-            return new \SqlSemantics\Platform\MySql\Statement\View\AlterView(definition: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], relationInformation: $parts[3]);
-        }, Generators::tuple($definition, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $relationInformation ?? Generators::constant(null)));
-    }
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\View\AlterView>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'AlterView/tableless-star' => AlterViewGenerator::operands(
-            definition: new ViewDefinitionGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'view_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    )
-                ),
-                query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\SelectGenerator(
-                    options: Generators::constant([]),
-                    items: Generators::tuple(new \Tests\Generator\MySql\Statement\Query\StarGenerator())
-                )]),
-                algorithm: ViewAlgorithmGenerator::selecting(\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::cases()),
-                ifNotExists: Generators::constant(false)
-            )
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
         );
-        yield 'AlterView/13' => AlterViewGenerator::operands(
-            definition: new ViewDefinitionGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                ),
-                query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
-                    table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    )
-                )]),
-                columns: Generators::constant(null),
-                algorithm: Generators::constant(null),
-                definer: Generators::constant(null),
-                security: Generators::constant(null),
-                check: Generators::constant(null),
-                ifNotExists: Generators::constant(false)
-            )
+        $this->delegate = Generators::map(
+            static fn (AlterView $statement): AlterView => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
         );
-        yield 'AlterView/246' => AlterViewGenerator::operands(
-            definition: new ViewDefinitionGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                ),
-                query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
-                    table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    )
-                )]),
-                columns: Generators::constant(null),
-                algorithm: ViewAlgorithmGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::Undefined]),
-                definer: Generators::constant(null),
-                security: Generators::constant(null),
-                check: Generators::constant(null),
-                ifNotExists: Generators::constant(false)
-            )
-        );
-        yield 'AlterView/410' => AlterViewGenerator::operands(
-            definition: new ViewDefinitionGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                ),
-                query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
-                    table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    )
-                )]),
-                columns: Generators::constant(null),
-                algorithm: ViewAlgorithmGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::Undefined]),
-                definer: Generators::constant(null),
-                security: ViewSecurityGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer]),
-                check: Generators::constant(null),
-                ifNotExists: Generators::constant(false)
-            )
-        );
-        yield 'AlterView/411' => AlterViewGenerator::operands(
-            definition: new ViewDefinitionGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                ),
-                query: new \Tests\Generator\Semantics\Statement\QueryGenerator([new \Tests\Generator\MySql\Statement\Query\ExplicitTableGenerator(
-                    table: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                        name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        schema: Generators::constant(null),
-                        catalog: Generators::constant(null)
-                    )
-                )]),
-                columns: Generators::constant(null),
-                algorithm: ViewAlgorithmGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::Undefined]),
-                definer: Generators::constant(null),
-                security: Generators::constant(null),
-                check: ViewCheckOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption::Unqualified]),
-                ifNotExists: Generators::constant(false)
-            )
+        $this->delegate = Generators::suchThat(
+            static fn (AlterView $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AlterView>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AlterView> $element The generated counterexample
+     * @return GeneratedValue<AlterView>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

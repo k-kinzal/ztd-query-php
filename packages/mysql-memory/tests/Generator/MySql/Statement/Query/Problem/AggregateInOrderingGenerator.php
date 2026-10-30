@@ -5,43 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Query\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
 
 /**
- * Composes AggregateInOrdering values and preserves their operand generators when shrinking.
+ * Generates AggregateInOrdering values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering>
+ * @implements ErisGenerator<AggregateInOrdering>
  */
 final class AggregateInOrderingGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering> */
-    use Composition;
+    /** @var ErisGenerator<AggregateInOrdering> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<int> $position Generated constructor operand
-     * @param ErisGenerator<bool>|null $distinct Generated constructor operand
-     */
-    public function __construct(ErisGenerator $position, ?ErisGenerator $distinct = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering {
-            return new \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering(position: $parts[0], distinct: $parts[1]);
-        }, Generators::tuple(
-            $position,
-            $distinct ?? Generators::constant(false)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Query\\Problem\\AggregateInOrdering' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new AggregateInOrderingGenerator(
-            position: Generators::constant(1),
-            distinct: Generators::constant(false)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): AggregateInOrdering => new AggregateInOrdering(position: $parts[0], distinct: $parts[1]),
+            Generators::tuple(
+                Generators::choose(0, 100),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (AggregateInOrdering $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AggregateInOrdering>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AggregateInOrdering> $element The generated counterexample
+     * @return GeneratedValue<AggregateInOrdering>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

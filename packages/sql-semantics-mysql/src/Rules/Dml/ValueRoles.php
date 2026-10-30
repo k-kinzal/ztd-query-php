@@ -45,8 +45,19 @@ final class ValueRoles
      */
     public function check(Node $root): void
     {
+        $problem = $this->problem($root);
+        Check::input($problem === null, $problem ?? '');
+    }
+
+    /**
+     * Describes the first value whose role the statement refuses, or null when every value fits its role.
+     */
+    public function problem(Node $root): ?string
+    {
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($root);
-        Check::input($problem === null, $problem?->message() ?? 'Contextualized calls have valid identities and signatures.');
+        if ($problem !== null) {
+            return $problem->message();
+        }
         /**
  * @var list<array{Node, bool, array<int, true>}> $pending
  */
@@ -56,7 +67,9 @@ final class ValueRoles
             if ($node instanceof InsertQuery) {
                 $wrappers = array_fill_keys(array_map(spl_object_id(...), $node->wrappers()), true);
             }
-            Check::input(!$node instanceof ValuesClauses || isset($wrappers[spl_object_id($node)]) || $inactive, 'Retained VALUES ordering belongs to a VALUES write.');
+            if ($node instanceof ValuesClauses && !isset($wrappers[spl_object_id($node)]) && !$inactive) {
+                return 'Retained VALUES ordering belongs to a VALUES write.';
+            }
             foreach (get_object_vars($node) as $property => $value) {
                 $body = $node instanceof QueryExpression || $node instanceof ValuesClauses ? 'body' : 'query';
                 $unused = $inactive || (isset($wrappers[spl_object_id($node)]) && $property !== $body);
@@ -67,5 +80,7 @@ final class ValueRoles
                 }
             }
         }
+
+        return null;
     }
 }

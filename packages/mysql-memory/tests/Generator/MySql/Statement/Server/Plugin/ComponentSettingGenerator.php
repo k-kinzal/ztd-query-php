@@ -5,34 +5,80 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Plugin;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting;
+use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
+use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
+use Tests\Generator\MySql\Statement\Utility\Set\BareNameGenerator;
+use Tests\Generator\MySql\Statement\Variable\SystemTargetGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes ComponentSetting values and preserves their operand generators when shrinking.
+ * Generates ComponentSetting values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting>
+ * @implements ErisGenerator<ComponentSetting>
  */
 final class ComponentSettingGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting> */
-    use Composition;
+    /** @var ErisGenerator<ComponentSetting> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): ComponentSetting => new ComponentSetting(variable: new SystemTarget($parts[0]->name, in_array($parts[0]->scope, [null, VariableScope::Global, VariableScope::Persist], true) ? $parts[0]->scope : null, $parts[0]->instance), value: $parts[1] instanceof BareName && !$parts[1]->system ? new BareName($parts[1]->word, $parts[1]->qualifier, true) : $parts[1], inputSource: $parts[2], operator: $parts[3]),
+            Generators::tuple(
+                new SystemTargetGenerator($release),
+                Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new ScalarGenerator($release, $depth - 1),
+                    1 => new BareNameGenerator($release),
+                    2 => new OnWordGenerator($release),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }),
+                Generators::constant(null),
+                new AssignmentOperatorGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ComponentSetting $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget> $variable Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName|\SqlSemantics\Platform\MySql\Statement\Server\Plugin\OnWord> $value Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\AssignmentOperator>|null $operator Generated assignment sign
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ComponentSetting>
      */
-    public function __construct(ErisGenerator $variable, ErisGenerator $value, ?ErisGenerator $inputSource = null, ?ErisGenerator $operator = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Plugin\ComponentSetting(variable: $parts[0], value: $parts[1], inputSource: $parts[2], operator: $parts[3]);
-        }, Generators::tuple(
-            $variable,
-            $value,
-            $inputSource ?? Generators::constant(null),
-            $operator ?? new \Tests\Generator\MySql\Statement\AssignmentOperatorGenerator()
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ComponentSetting> $element The generated counterexample
+     * @return GeneratedValue<ComponentSetting>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

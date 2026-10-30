@@ -385,4 +385,38 @@ final class ExplainCommandTest extends TestCase
         $session->query('EXPLAIN ANALYZE FORMAT=JSON SELECT missing');
     }
 
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function providerUnplanned(): iterable
+    {
+        yield 'update before 8.3' => ['8.2.0', 'UPDATE t SET a = 1', "<not executable by iterator executor>\n"];
+        yield 'insert before 8.3' => ['8.0.44', 'INSERT INTO t VALUES (1)', "<not executable by iterator executor>\n"];
+        yield 'update from 8.3' => ['8.4.7', 'UPDATE t SET a = DEFAULT', "-> <not executable by iterator executor>\n"];
+        yield 'delete from 8.3' => ['9.1.0', 'DELETE FROM t WHERE a = 1', "-> <not executable by iterator executor>\n"];
+        yield 'insert from 8.3' => ['8.4.7', 'INSERT INTO t VALUES (1)', "-> Insert into t\n    -> Rows fetched before execution\n"];
+        yield 'replace from 8.3' => ['8.4.7', 'REPLACE INTO t SET a = 1', "-> Replace into t\n    -> Rows fetched before execution\n"];
+    }
+
+    #[DataProvider('providerUnplanned')]
+    public function testUnplannedReportsWritesTheIteratorExecutorDoesNotRun(string $version, string $sql, string $expected): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $result = $session->query('EXPLAIN ANALYZE ' . $sql)[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[$expected]], $result->rows);
+    }
+
+    public function testUnplannedAnswersNullForAMultipleTableUpdate(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('d'));
+        $operation = $semantics->analyze('UPDATE t, u SET t.a = 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $operation);
+
+        self::assertNull((new ExplainCommand())->unplanned($operation, '8.4.7'));
+    }
 }

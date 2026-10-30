@@ -5,37 +5,77 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Hint;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
+use Tests\Generator\MySql\Statement\Hint\Form\BlockNameHintGenerator;
+use Tests\Generator\MySql\Statement\Hint\Form\ExecutionTimeHintGenerator;
+use Tests\Generator\MySql\Statement\Hint\Form\KeyHintGenerator;
+use Tests\Generator\MySql\Statement\Hint\Form\ResourceGroupHintGenerator;
+use Tests\Generator\MySql\Statement\Hint\Form\StrategyHintGenerator;
+use Tests\Generator\MySql\Statement\Hint\Form\TableHintGenerator;
+use Tests\Generator\MySql\Statement\Hint\Form\VariableHintGenerator;
 
 /**
- * Composes OptimizerHint values and preserves their operand generators when shrinking.
+ * Generates OptimizerHint values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint>
+ * @implements ErisGenerator<OptimizerHint>
  */
 final class OptimizerHintGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> */
-    use Composition;
+    /** @var ErisGenerator<OptimizerHint> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param non-empty-list<ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint>> $alternatives Concrete SQL forms satisfying this role
-     */
-    public function __construct(array $alternatives)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::oneOf(...$alternatives);
-    }
-    /**
-     * Generates the two name-only hint forms with their distinct meanings.
-     *
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint>
-     */
-    public static function namedForms(): ErisGenerator
-    {
-        return Generators::bind(HintFormGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Hint\HintForm::ResourceGroup, \SqlSemantics\Platform\MySql\Statement\Hint\HintForm::BlockName]), static function (\SqlSemantics\Platform\MySql\Statement\Hint\HintForm $form): ErisGenerator {
-            $names = Generators::map(static fn (int $suffix): string => 'generated_' . $suffix, Generators::choose(0, 32));
-            return $form === \SqlSemantics\Platform\MySql\Statement\Hint\HintForm::ResourceGroup ? new Form\ResourceGroupHintGenerator($names) : new Form\BlockNameHintGenerator($names);
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::bind(Generators::elements(array_keys(array_filter([510, 510, 510, 508, 510, 510, 508], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+            0 => new BlockNameHintGenerator($release),
+            1 => new ExecutionTimeHintGenerator($release),
+            2 => new KeyHintGenerator($release),
+            3 => new ResourceGroupHintGenerator($release),
+            4 => new StrategyHintGenerator($release),
+            5 => new TableHintGenerator($release),
+            6 => new VariableHintGenerator($release),
+            default => throw new LogicException('Unreachable alternative.'),
         });
+        $this->delegate = Generators::suchThat(
+            static function (OptimizerHint $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<OptimizerHint>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<OptimizerHint> $element The generated counterexample
+     * @return GeneratedValue<OptimizerHint>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

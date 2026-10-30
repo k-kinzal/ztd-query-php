@@ -48,7 +48,11 @@ final class ChecksumCommandTest extends TestCase
 
     public function testChecksumAnswersZeroForNoRows(): void
     {
-        self::assertSame('0', (new ChecksumCommand())->checksum([]));
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        self::assertSame('0', (new ChecksumCommand())->checksum($table));
     }
 
     public function testExecuteSendsAChecksumOf21CharactersIn57(): void

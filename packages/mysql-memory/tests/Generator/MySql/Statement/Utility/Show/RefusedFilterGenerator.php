@@ -5,68 +5,100 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Utility\Show;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter;
+use Tests\Generator\MySql\Statement\Expression\Problem\RefusedScalarGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Program\ShowFunctionStatusGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Program\ShowProcedureStatusGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowColumnsGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowDatabasesGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowEventsGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowKeysGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowOpenTablesGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowTablesGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowTableStatusGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Schema\ShowTriggersGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Server\ShowCharacterSetGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Server\ShowCollationGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Server\ShowStatusGenerator;
+use Tests\Generator\MySql\Statement\Utility\Show\Server\ShowVariablesGenerator;
 
 /**
- * Composes RefusedFilter values and preserves their operand generators when shrinking.
+ * Generates RefusedFilter values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter>
+ * @implements ErisGenerator<RefusedFilter>
  */
 final class RefusedFilterGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter> */
-    use Composition;
+    /** @var ErisGenerator<RefusedFilter> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation> $header Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar> $condition Generated constructor operand
-     */
-    public function __construct(ErisGenerator $header, ErisGenerator $condition)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter {
-            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter(header: $parts[0], condition: $parts[1]);
-        }, Generators::tuple(
-            $header,
-            $condition
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Utility\\Show\\RefusedFilter' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedFilterGenerator(
-            header: Schema\ShowTableStatusGenerator::operands(
-                database: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                    value: Generators::map(static fn (int $suffix): string => 'd' . $suffix, Generators::choose(0, 8)),
-                    quote: Generators::constant(null)
-                ),
-                filter: Generators::constant(null)
-            ),
-            condition: new \Tests\Generator\MySql\Statement\Expression\Problem\RefusedScalarGenerator(
-                operand: new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator([new \Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredLikeGenerator(
-                    operand: new \Tests\Generator\MySql\Statement\Expression\RowOperandGenerator([new \Tests\Generator\MySql\Statement\Expression\RowGenerator(
-                        elements: Generators::tuple(
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                                text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                            )]),
-                            new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                                text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                            )])
-                        ),
-                        keyword: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written])
-                    )]),
-                    pattern: new \Tests\Generator\Semantics\Statement\ScalarGenerator([new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(
-                        text: Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 32))
-                    )]),
-                    escape: Generators::constant(null),
-                    negated: Generators::constant(false)
-                )])
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedFilter => new RefusedFilter(header: $parts[0], condition: $parts[1]),
+            Generators::suchThat(
+                static fn (array $parts): bool => ($parts[0])->filter === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(0, 13), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ShowTablesGenerator($release),
+                        1 => new ShowTableStatusGenerator($release),
+                        2 => new ShowTriggersGenerator($release),
+                        3 => new ShowColumnsGenerator($release),
+                        4 => new ShowKeysGenerator($release),
+                        5 => new ShowEventsGenerator($release),
+                        6 => new ShowProcedureStatusGenerator($release),
+                        7 => new ShowFunctionStatusGenerator($release),
+                        8 => new ShowDatabasesGenerator($release),
+                        9 => new ShowOpenTablesGenerator($release),
+                        10 => new ShowStatusGenerator($release),
+                        11 => new ShowVariablesGenerator($release),
+                        12 => new ShowCharacterSetGenerator($release),
+                        13 => new ShowCollationGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    new RefusedScalarGenerator($release)
+                )
             )
-        )];
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedFilter $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedFilter>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedFilter> $element The generated counterexample
+     * @return GeneratedValue<RefusedFilter>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

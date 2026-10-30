@@ -5,46 +5,65 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Server\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes UnknownHistogramColumn values and preserves their operand generators when shrinking.
+ * Generates UnknownHistogramColumn values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn>
+ * @implements ErisGenerator<UnknownHistogramColumn>
  */
 final class UnknownHistogramColumnGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn> */
-    use Composition;
+    /** @var ErisGenerator<UnknownHistogramColumn> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $column Generated constructor operand
-     */
-    public function __construct(ErisGenerator $column)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn {
-            return new \SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn(column: $parts[0]);
-        }, Generators::tuple(
-            $column
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): UnknownHistogramColumn => new UnknownHistogramColumn(column: $parts[0]),
+            Generators::tuple(
+                new NameGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (UnknownHistogramColumn $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Generates the complete dependency sequence that owns this command condition.
-     *
-     * @return ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Statement>>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<UnknownHistogramColumn>
      */
-    public static function statements(): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(static function (\SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn $problem): array {
-            $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7', searchPath: new \SqlSemantics\Contract\SearchPath('pbt'));
-            $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('histogram_target'));
-            $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('present_' . $problem->column->value)), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
-            $command = new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable(null, [new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable($table)], new \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram([$problem->column]));
-            $create = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable($table, [$column]));
-            return [$create, (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([$create]), $command)];
-        }, new self(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()));
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<UnknownHistogramColumn> $element The generated counterexample
+     * @return GeneratedValue<UnknownHistogramColumn>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

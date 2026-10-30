@@ -5,38 +5,72 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Expression\Predicate;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
- * Composes Between values and preserves their operand generators when shrinking.
+ * Generates Between values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between>
+ * @implements ErisGenerator<Between>
  */
 final class BetweenGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between> */
-    use Composition;
+    /** @var ErisGenerator<Between> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): Between => new Between(operand: (new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : new Grouped($parts[0]), low: (new Precedence())->admits($parts[1], Precedence::BIT_EXPR) && !(new Precedence())->absorbs($parts[1], Precedence::CONJUNCTION, Precedence::CONJUNCTION) ? $parts[1] : new Grouped($parts[1]), high: (new Precedence())->admits($parts[2], Precedence::PREDICATE) ? $parts[2] : new Grouped($parts[2]), negated: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]),
+            Generators::tuple(
+                new ScalarGenerator($release, $depth - 1),
+                new ScalarGenerator($release, $depth - 1),
+                new ScalarGenerator($release, $depth - 1),
+                Generators::bool(),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Between $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $operand Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $low Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $high Generated constructor operand
-     * @param ErisGenerator<bool>|null $negated Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\ScalarFact|null>|null $scalarInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Between>
      */
-    public function __construct(ErisGenerator $operand, ErisGenerator $low, ErisGenerator $high, ?ErisGenerator $negated = null, ?ErisGenerator $scalarInformation = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between {
-            return new \SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between(operand: $parts[0], low: $parts[1], high: $parts[2], negated: $parts[3], scalarInformation: $parts[4], inputSource: $parts[5]);
-        }, Generators::tuple(
-            $operand,
-            $low,
-            $high,
-            $negated ?? Generators::constant(false),
-            $scalarInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Between> $element The generated counterexample
+     * @return GeneratedValue<Between>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

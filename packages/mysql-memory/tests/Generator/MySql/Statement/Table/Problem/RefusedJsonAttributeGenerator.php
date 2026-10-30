@@ -5,52 +5,68 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 
 /**
- * Composes RefusedJsonAttribute values and preserves their operand generators when shrinking.
+ * Generates RefusedJsonAttribute values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute>
+ * @implements ErisGenerator<RefusedJsonAttribute>
  */
 final class RefusedJsonAttributeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute> */
-    use Composition;
+    /** @var ErisGenerator<RefusedJsonAttribute> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text> $attribute Generated constructor operand
-     * @param ErisGenerator<string> $reason Generated constructor operand
-     * @param ErisGenerator<int> $position Generated constructor operand
-     * @param ErisGenerator<bool>|null $deep Generated constructor operand
-     */
-    public function __construct(ErisGenerator $attribute, ErisGenerator $reason, ErisGenerator $position, ?ErisGenerator $deep = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute(attribute: $parts[0], reason: $parts[1], position: $parts[2], deep: $parts[3]);
-        }, Generators::tuple(
-            $attribute,
-            $reason,
-            $position,
-            $deep ?? Generators::constant(false)
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Problem\RefusedJsonAttribute>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Table\\Problem\\RefusedJsonAttribute' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedJsonAttributeGenerator(
-            attribute: new \Tests\Generator\MySql\Statement\Literal\TextGenerator(
-                value: Generators::constant('bad'),
-                radix: Generators::constant(null)
-            ),
-            reason: Generators::constant('Invalid value.'),
-            position: Generators::constant(0),
-            deep: Generators::constant(false)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedJsonAttribute => new RefusedJsonAttribute(attribute: $parts[0], reason: $parts[1], position: $parts[2] % (strlen($parts[0]->value) + 1), deep: $parts[3]),
+            Generators::tuple(
+                new TextGenerator($release),
+                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::choose(0, 100),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedJsonAttribute $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedJsonAttribute>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedJsonAttribute> $element The generated counterexample
+     * @return GeneratedValue<RefusedJsonAttribute>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

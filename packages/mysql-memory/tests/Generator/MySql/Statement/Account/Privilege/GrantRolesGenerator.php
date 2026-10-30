@@ -6,113 +6,87 @@ namespace Tests\Generator\MySql\Statement\Account\Privilege;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
-use LogicException;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles;
-use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\Privilege\Item\GrantedRoleGenerator;
-use Tests\Generator\MySql\Statement\Account\Problem\Role\RefusedGrantRolesGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
+use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
+use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Generates ordered role grants independently of account and role-edge state.
+ * Generates GrantRoles values from the generators of its operands.
  *
  * @implements ErisGenerator<GrantRoles>
  */
 final class GrantRolesGenerator implements ErisGenerator
 {
-    /**
-     * @var ErisGenerator<GrantRoles>
-     */
+    /** @var ErisGenerator<GrantRoles> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete GrantRoles values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<GrantRoles>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): GrantRoles => new GrantRoles(roles: $parts[0], users: $parts[1], withAdminOption: $parts[2], profile: $parts[3], client: $parts[4], source: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
+            Generators::tuple(
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new GrantedRoleGenerator($release))),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new AccountGenerator($release))),
+                Generators::bool(),
+                new LanguageProfileGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CharsetGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (GrantRoles $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No GrantRoles forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): GrantRoles {
-            if (!$statement instanceof GrantRoles) {
-                throw new LogicException('Publishing GrantRoles must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Composes operands with Eris, retaining their relationships during shrinking.
-     * @return ErisGenerator<GrantRoles>
-     */
-    public static function operands(GrammarRelease $release): ErisGenerator
-    {
-        $profile = new LanguageProfile($release);
-        $requests = Generators::bind(Generators::bool(), static fn (bool $admin): ErisGenerator => Generators::bind(new GrantedRoleGenerator(), static fn (GrantedRole $firstRole): ErisGenerator => Generators::bind(new AccountGenerator(), static fn (Account $firstUser): ErisGenerator => Generators::bind(Generators::seq(new GrantedRoleGenerator()), static fn (array $roles): ErisGenerator => Generators::map(static fn (array $users): GrantRoles => new GrantRoles([$firstRole, ...$roles], [$firstUser, ...$users], $admin, $profile), Generators::seq(new AccountGenerator()))))));
-        return Generators::oneOf($requests, Generators::bind(new RefusedGrantRolesGenerator(), static fn (RefusedGrantRoles $condition): ErisGenerator => Generators::map(static fn (bool $admin): GrantRoles => new GrantRoles($condition->roles, $condition->users, $admin, $profile), Generators::bool())));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (GrantRoles $statement): GrantRoles => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (GrantRoles $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<GrantRoles>
+     * @return GeneratedValue<GrantRoles>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<GrantRoles> $element The generated counterexample
      * @return GeneratedValue<GrantRoles>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<list<GrantedRole>> $roles The generated semantic operand
-     * @param ErisGenerator<list<Account>> $users The generated semantic operand
-     * @param ErisGenerator<bool> $withAdminOption The generated semantic operand
-     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
-     * @return ErisGenerator<GrantRoles>
-     */
-    public static function fromOperands(ErisGenerator $roles, ErisGenerator $users, ErisGenerator $withAdminOption, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): GrantRoles => new GrantRoles(roles: $parts[0], users: $parts[1], withAdminOption: $parts[2], profile: $parts[3], client: $parts[4]), Generators::tuple($roles, $users, $withAdminOption, $profile, $client));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<GrantRoles>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'account operands' => self::operands(GrammarRelease::MySql847);
-    }
-
 }

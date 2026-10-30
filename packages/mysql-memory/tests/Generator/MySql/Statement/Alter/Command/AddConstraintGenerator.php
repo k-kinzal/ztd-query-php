@@ -5,30 +5,74 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Alter\Command;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint;
+use Tests\Generator\MySql\Statement\Table\Key\CheckConstraintGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\ForeignKeyGenerator;
+use Tests\Generator\MySql\Statement\Table\Key\IndexDefinitionGenerator;
 
 /**
- * Composes AddConstraint values and preserves their operand generators when shrinking.
+ * Generates AddConstraint values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint>
+ * @implements ErisGenerator<AddConstraint>
  */
 final class AddConstraintGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint> */
-    use Composition;
+    /** @var ErisGenerator<AddConstraint> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release, int $depth = 3)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): AddConstraint => new AddConstraint(element: $parts[0], inputSource: $parts[1]),
+            Generators::tuple(
+                Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new IndexDefinitionGenerator($release, $depth - 1),
+                    1 => new ForeignKeyGenerator($release),
+                    2 => new CheckConstraintGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (AddConstraint $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition|\SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey|\SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint> $element Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<AddConstraint>
      */
-    public function __construct(ErisGenerator $element, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint {
-            return new \SqlSemantics\Platform\MySql\Statement\Alter\Command\AddConstraint(element: $parts[0], inputSource: $parts[1]);
-        }, Generators::tuple(
-            $element,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<AddConstraint> $element The generated counterexample
+     * @return GeneratedValue<AddConstraint>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

@@ -5,53 +5,75 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Column;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
+use Tests\Generator\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumnGenerator;
 
 /**
- * Composes ColumnDefinition values and preserves their operand generators when shrinking.
+ * Generates ColumnDefinition values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition>
+ * @implements ErisGenerator<ColumnDefinition>
  */
 final class ColumnDefinitionGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition> */
-    use Composition;
+    /** @var ErisGenerator<ColumnDefinition> */
+    private ErisGenerator $delegate;
 
-    /**
-     * Composes declared sizes on both sides of MySQL's type-specific bounds.
-     * The statement owns their SQL conditions; every written size remains shrinkable.
-     *
-     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition>
-     */
-    public static function sized(): ErisGenerator
+    public function __construct(GrammarRelease $release, int $depth = 3)
     {
-        $sizes = Generators::oneOf(Generators::map(static fn (int $size): string => (string) $size, Generators::choose(0, 300)), Generators::elements('0', '1', '30', '31', '53', '54', '64', '65', '255', '256', '4294967295', '4294967296'));
-        $types = new \Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator([
-            new \Tests\Generator\MySql\Statement\Type\FloatingGenerator(new \Tests\Generator\MySql\Statement\Type\Kind\FloatingKindGenerator(), $sizes, $sizes),
-            new \Tests\Generator\MySql\Statement\Type\DecimalGenerator($sizes, $sizes),
-            new \Tests\Generator\MySql\Statement\Type\IntegralGenerator(new \Tests\Generator\MySql\Statement\Type\Kind\IntegralKindGenerator(), $sizes),
-            new \Tests\Generator\MySql\Statement\Type\ElementaryGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit), $sizes),
-            new \Tests\Generator\MySql\Statement\Type\CharacterGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::VarChar), $sizes),
-            new \Tests\Generator\MySql\Statement\Type\TemporalGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Time), Generators::map(static fn (int $size): string => (string) $size, Generators::choose(0, 9))),
-        ]);
-        $names = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 'c_' . $id, Generators::choose(0, 8)), Generators::constant(null));
-        return new self(\Tests\Generator\MySql\Statement\Name\ColumnNameGenerator::fromOperands($names, Generators::constant(null), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted)), new OrdinaryColumnGenerator($types));
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): ColumnDefinition => new ColumnDefinition(name: $parts[0], specification: $parts[1], inputSource: $parts[2]),
+            Generators::tuple(
+                new ColumnNameGenerator($release),
+                Generators::bind(Generators::elements(array_keys(array_filter([510, 510, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+                    0 => new GeneratedColumnGenerator($release, $depth - 1),
+                    1 => new DeferredGeneratedColumnGenerator($release, $depth - 1),
+                    2 => new OrdinaryColumnGenerator($release, $depth - 1),
+                    default => throw new LogicException('Unreachable alternative.'),
+                }),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ColumnDefinition $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\ColumnName> $name Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\ColumnSpecification> $specification Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ColumnDefinition>
      */
-    public function __construct(ErisGenerator $name, ErisGenerator $specification, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition {
-            return new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(name: $parts[0], specification: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple(
-            $name,
-            $specification,
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<ColumnDefinition> $element The generated counterexample
+     * @return GeneratedValue<ColumnDefinition>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

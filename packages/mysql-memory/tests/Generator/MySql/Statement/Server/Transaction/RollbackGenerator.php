@@ -6,17 +6,25 @@ namespace Tests\Generator\MySql\Statement\Server\Transaction;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
-use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use InvalidArgumentException;
-use LogicException;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Construction\Publication;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
+use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
+use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
+use Tests\Support\Analysis;
 
 /**
- * Composes Rollback operands through Eris; shrinking reconstructs the same SQL alternative.
+ * Generates Rollback values from the generators of its operands.
  *
  * @implements ErisGenerator<Rollback>
  */
@@ -25,87 +33,58 @@ final class RollbackGenerator implements ErisGenerator
     /** @var ErisGenerator<Rollback> */
     private ErisGenerator $delegate;
 
-    /**
-     * Generates complete Rollback values for the post-analysis execution boundary.
-     *
-     * @param ErisGenerator<Rollback>|null $operands A constrained form of this concrete result
-     * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
-     * @throws InvalidArgumentException When no form is available for the release.
-     */
-    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release)
     {
-        if ($operands === null) {
-            $forms = [];
-            if ($release === GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
-                    $forms[] = $form;
-                }
-            }
+        $this->delegate = Generators::map(
+            static fn (array $parts): Rollback => new Rollback(chain: $parts[0], release: $parts[0] === true ? false : $parts[1], work: $parts[2], profile: $parts[3], client: $parts[4], source: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
+            Generators::tuple(
+                Generators::oneOf(Generators::constant(null), Generators::bool()),
+                Generators::oneOf(Generators::constant(null), Generators::bool()),
+                Generators::bool(),
+                new LanguageProfileGenerator($release),
+                Generators::oneOf(Generators::constant(null), new CharsetGenerator($release)),
+                Generators::constant(null),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Rollback $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
 
-            if ($forms === []) {
-                throw new InvalidArgumentException('No Rollback forms are defined for the selected grammar.');
-            }
-            $operands = Generators::oneOf(...$forms);
-        }
-        $this->delegate = Generators::map(static function (\SqlSemantics\Statement\AnalyzedStatement $statement): Rollback {
-            if (!$statement instanceof Rollback) {
-                throw new LogicException('Publishing Rollback must preserve its concrete result type.');
-            }
-            return $statement;
-        }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
-    }
-    /**
-     * Selects the grammar before generating operands.
-     * @return ErisGenerator<Rollback>
-     */
-    public static function operands(GrammarRelease $release): ErisGenerator
-    {
-        return Generators::map(static function (array $data) use ($release): Rollback {
-            [$choices, $work] = $data;
-            return new Rollback($choices[0], $choices[1], $work, profile: new LanguageProfile($release));
-        }, Generators::tuple(Generators::elements([null, null], [null, false], [null, true], [false, null], [false, false], [false, true], [true, null], [true, false]), Generators::bool()));
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::map(
+            static fn (Rollback $statement): Rollback => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Rollback $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValueSingle<Rollback>
+     * @return GeneratedValue<Rollback>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @param GeneratedValue<Rollback> $element The generated counterexample
      * @return GeneratedValue<Rollback>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {
         return $this->delegate->shrink($element);
     }
-    /**
-     * Composes all semantic operands, including spellings outside the convenience defaults.
-     *
-     * @param ErisGenerator<bool|null> $chain The generated semantic operand
-     * @param ErisGenerator<bool|null> $release The generated semantic operand
-     * @param ErisGenerator<bool> $work The generated semantic operand
-     * @param ErisGenerator<LanguageProfile> $profile The generated semantic operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset|null> $client The generated semantic operand
-     * @return ErisGenerator<Rollback>
-     */
-    public static function fromOperands(ErisGenerator $chain, ErisGenerator $release, ErisGenerator $work, ErisGenerator $profile, ErisGenerator $client): ErisGenerator
-    {
-        return Generators::map(static fn (array $parts): Rollback => new Rollback(chain: $parts[0], release: $parts[1], work: $parts[2], profile: $parts[3], client: $parts[4]), Generators::tuple($chain, $release, $work, $profile, $client));
-    }
-
-    /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
-     *
-     * @return iterable<string, ErisGenerator<Rollback>>
-     */
-    public static function forms(): iterable
-    {
-        yield 'transaction characteristics' => self::operands(GrammarRelease::MySql847);
-    }
-
 }

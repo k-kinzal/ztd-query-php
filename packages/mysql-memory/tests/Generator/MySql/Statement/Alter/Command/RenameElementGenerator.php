@@ -5,35 +5,71 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Alter\Command;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind;
+use SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement;
+use Tests\Generator\MySql\Statement\Name\ColumnNameGenerator;
+use Tests\Generator\MySql\Statement\Table\IndexWordGenerator;
 
 /**
- * Composes RenameElement values and preserves their operand generators when shrinking.
+ * Generates RenameElement values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement>
+ * @implements ErisGenerator<RenameElement>
  */
 final class RenameElementGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement> */
-    use Composition;
+    /** @var ErisGenerator<RenameElement> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): RenameElement => new RenameElement(kind: $parts[0], from: $parts[1], to: $parts[2], inputSource: $parts[3], keyword: $parts[0] === ElementKind::Index ? $parts[4] : null),
+            Generators::tuple(
+                Generators::elements([ElementKind::Column, ElementKind::Index]),
+                new ColumnNameGenerator($release),
+                new ColumnNameGenerator($release),
+                Generators::constant(null),
+                Generators::oneOf(Generators::constant(null), new IndexWordGenerator($release))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RenameElement $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind> $kind Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\ColumnName> $from Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Name\ColumnName> $to Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\IndexWord|null>|null $keyword Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RenameElement>
      */
-    public function __construct(ErisGenerator $kind, ErisGenerator $from, ErisGenerator $to, ?ErisGenerator $inputSource = null, ?ErisGenerator $keyword = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::bind(Generators::tuple(
-            $kind,
-            $from,
-            $to,
-            $inputSource ?? Generators::constant(null)
-        ), static function (array $parts) use ($keyword): ErisGenerator {
-            return Generators::map(static fn (?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $selected): \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement => new \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement(kind: $parts[0], from: $parts[1], to: $parts[2], inputSource: $parts[3], keyword: $selected), $keyword ?? ($parts[0] === \SqlSemantics\Platform\MySql\Statement\Alter\Command\ElementKind::Index ? new \Tests\Generator\MySql\Statement\Table\IndexWordGenerator() : Generators::constant(null)));
-        });
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RenameElement> $element The generated counterexample
+     * @return GeneratedValue<RenameElement>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

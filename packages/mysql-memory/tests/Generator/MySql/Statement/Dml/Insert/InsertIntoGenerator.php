@@ -5,105 +5,77 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Dml\Insert;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use LogicException;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority;
+use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 
 /**
- * Composes InsertInto values and preserves their operand generators when shrinking.
+ * Generates InsertInto values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto>
+ * @implements ErisGenerator<InsertInto>
  */
 final class InsertIntoGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto> */
-    use Composition;
+    /** @var ErisGenerator<InsertInto> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<bool> $replace Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority|null> $priority Generated constructor operand
-     * @param ErisGenerator<bool> $ignore Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget> $table Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList|null>|null $columns Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint>>|null $hints Generated constructor operand
-     * @param ErisGenerator<bool>|null $intoWritten Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     */
-    public function __construct(ErisGenerator $replace, ErisGenerator $priority, ErisGenerator $ignore, ErisGenerator $table, ?ErisGenerator $columns = null, ?ErisGenerator $hints = null, ?ErisGenerator $intoWritten = null, ?ErisGenerator $inputSource = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto {
-            return new \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto(replace: $parts[0], priority: $parts[1], ignore: $parts[2], table: $parts[3], columns: $parts[4], hints: $parts[5], intoWritten: $parts[6], inputSource: $parts[7]);
-        }, Generators::tuple(
-            $replace,
-            $priority,
-            $ignore,
-            $table,
-            $columns ?? Generators::constant(null),
-            $hints ?? Generators::constant([]),
-            $intoWritten ?? Generators::constant(true),
-            $inputSource ?? Generators::constant(null)
-        ));
+        $bit = (new ReleaseDomain())->bit($release);
+        $this->delegate = Generators::map(
+            static fn (array $parts): InsertInto => new InsertInto(replace: $parts[0], priority: $parts[0] && $parts[1] === InsertPriority::High ? null : $parts[1], ignore: !$parts[0] && $parts[2], table: new WriteTarget($parts[3], null, $parts[4]), columns: $parts[5], hints: $parts[6], intoWritten: $parts[7], inputSource: null),
+            Generators::tuple(
+                Generators::bool(),
+                Generators::oneOf(Generators::constant(null), new InsertPriorityGenerator($release)),
+                Generators::bool(),
+                new QualifiedNameGenerator($release),
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NameGenerator($release))),
+                Generators::oneOf(Generators::constant(null), new ColumnListGenerator($release)),
+                ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (InsertInto $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Composes immediate write constraints with the declaration they depend on.
-     *
-     * @param 'rows'|'set'|'query' $form The concrete insertion form
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement, int, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\AnalyzedStatement}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<InsertInto>
      */
-    public static function constraints(\SqlSemantics\Contract\GrammarRelease $release, string $form): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $definitions = \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::operands(new \Tests\Generator\MySql\Statement\Name\ColumnNameGenerator($release));
-        return Generators::bind($definitions, static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release, $form): ErisGenerator {
-            $database = $create->name->schema ?? new \SqlSemantics\Statement\Identifier\Name('pbt');
-            $profile = new \SqlSemantics\Contract\LanguageProfile($release);
-            $missing = new \SqlSemantics\Contract\AnalysisContext($profile, [$database], [], true);
-            $definition = \SqlSemantics\Facade\Semantics::fromStatement($missing, $create);
-            $declared = new \SqlSemantics\Contract\AnalysisContext($profile, [$database], $definition->declarations(), true);
-            $column = $definition->declarations()[0]->columns[0]->name;
-            $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
-            $head = new self(Generators::constant(false), Generators::constant(null), Generators::constant(false), new \Tests\Generator\MySql\Statement\Dml\WriteTargetGenerator(Generators::constant($create->name)), intoWritten: Generators::bool());
-            $row = new \Tests\Generator\MySql\Statement\Expression\RowGenerator(Generators::tuple(Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)), $numbers));
-            $assignments = Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator(Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column)), $row));
-            $scalar = new InsertedRowGenerator(Generators::vector(1, $numbers));
-            $selection = new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator($numbers)));
-            $choices = [
-                Generators::tuple(InsertRowsGenerator::operands($head, Generators::tuple($scalar, new InsertedRowGenerator(Generators::vector(2, $numbers))), keyword: new ValuesKeywordGenerator()), Generators::constant(1136)),
-                Generators::tuple(InsertRowsGenerator::operands($head, Generators::vector(1, new \Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredInsertedRowGenerator(Generators::vector(1, $row))), keyword: new ValuesKeywordGenerator()), Generators::constant(1241)),
-                Generators::tuple(InsertRowsGenerator::operands($head, Generators::vector(1, $scalar), onDuplicate: $assignments, keyword: new ValuesKeywordGenerator()), Generators::constant(1241)),
-                Generators::tuple(InsertSetGenerator::operands($head, $assignments), Generators::constant(1241)),
-                Generators::tuple(InsertQueryGenerator::operands($head, new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\StarGenerator()))), Generators::constant(1096)),
-                Generators::tuple(InsertQueryGenerator::operands($head, $selection, $assignments), Generators::constant(1241)),
-            ];
-            $choices = match ($form) {
-                'rows' => [$choices[0], $choices[1], $choices[2]], 'set' => [$choices[3]], 'query' => [$choices[4], $choices[5]]
-            };
-            if ($form === 'query' && !in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
-                $choices[] = Generators::tuple(InsertQueryGenerator::operands($head, new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(Generators::vector(1, Generators::oneOf(...[$numbers, Generators::constant(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse($column))]))))), $assignments), Generators::constant(1241));
-                $choices[] = Generators::tuple(InsertQueryGenerator::operands($head, new \Tests\Generator\MySql\Statement\Query\ValuesQueryGenerator(Generators::vector(1, new \Tests\Generator\MySql\Statement\Query\ValueRowGenerator(Generators::vector(2, $numbers)))), $assignments), Generators::constant(1136));
-
-            }
-            return Generators::map(
-                static function (array $parts) use ($definition, $missing, $declared): array {
-                    [$write, $code] = $parts;
-                    $expected = match ($code) {
-                        1096 => \MySqlMemory\Error\Family\QueryError::NoTablesUsed,
-                        1136 => \MySqlMemory\Error\Family\QueryError::WrongValueCountOnRow,
-                        1241 => \MySqlMemory\Error\Family\QueryError::OperandColumns,
-                        default => throw new LogicException('A generated write constraint declares a supported SQL outcome.'),
-                    };
-                    return [
-                        $definition,
-                        \SqlSemantics\Facade\Semantics::fromStatement($missing, $write),
-                        \SqlSemantics\Facade\Semantics::fromStatement($declared, $write),
-                        $expected->value,
-                        \SqlSemantics\Facade\Semantics::fromStatement($missing, new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($write)),
-                        \SqlSemantics\Facade\Semantics::fromStatement($declared, new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($write)),
-                    ];
-                },
-                Generators::oneOf(...$choices)
-            );
-        });
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<InsertInto> $element The generated counterexample
+     * @return GeneratedValue<InsertInto>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

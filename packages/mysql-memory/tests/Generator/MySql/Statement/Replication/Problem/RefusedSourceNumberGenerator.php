@@ -5,49 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Replication\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
+use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
 
 /**
- * Composes RefusedSourceNumber values and preserves their operand generators when shrinking.
+ * Generates RefusedSourceNumber values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber>
+ * @implements ErisGenerator<RefusedSourceNumber>
  */
 final class RefusedSourceNumberGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber> */
-    use Composition;
+    /** @var ErisGenerator<RefusedSourceNumber> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind> $kind Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral> $number Generated constructor operand
-     * @param ErisGenerator<int> $offset Generated constructor operand
-     */
-    public function __construct(ErisGenerator $kind, ErisGenerator $number, ErisGenerator $offset)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber {
-            return new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber(kind: $parts[0], number: $parts[1], offset: $parts[2]);
-        }, Generators::tuple(
-            $kind,
-            $number,
-            $offset
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Replication\\Problem\\RefusedSourceNumber' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RefusedSourceNumberGenerator(
-            kind: \Tests\Generator\MySql\Statement\Replication\Source\SourceOptionKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::RequireRowFormat]),
-            number: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
-                text: Generators::constant('100000000'),
-                hexadecimal: Generators::constant(true)
-            ),
-            offset: Generators::constant(0)
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): RefusedSourceNumber => new RefusedSourceNumber(kind: $parts[0], number: new Numeral('2'), offset: $parts[2]),
+            Generators::tuple(
+                Generators::elements([SourceOptionKind::ConnectionAutoFailover, SourceOptionKind::GtidOnly, SourceOptionKind::RequireRowFormat]),
+                new NumeralGenerator($release),
+                Generators::choose(0, 100)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RefusedSourceNumber $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RefusedSourceNumber>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RefusedSourceNumber> $element The generated counterexample
+     * @return GeneratedValue<RefusedSourceNumber>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,36 +5,71 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Table\Column\Value;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Call\Clock;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp;
+use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
 
 /**
- * Composes CurrentTimestamp values and preserves their operand generators when shrinking.
+ * Generates CurrentTimestamp values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp>
+ * @implements ErisGenerator<CurrentTimestamp>
  */
 final class CurrentTimestampGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp> */
-    use Composition;
+    /** @var ErisGenerator<CurrentTimestamp> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::map(
+            static fn (array $parts): CurrentTimestamp => new CurrentTimestamp(precision: $parts[0] === null ? null : new Numeral((string) $parts[0]), parentheses: $parts[2] === null || $parts[0] !== null ? OptionalWords::Written : $parts[1], inputSource: null, alias: $parts[2]),
+            Generators::tuple(
+                Generators::oneOf(Generators::constant(null), Generators::choose(0, 6)),
+                new OptionalWordsGenerator($release),
+                Generators::oneOf(Generators::constant(null), Generators::elements(array_values(array_filter(ClockAlias::cases(), static fn (ClockAlias $alias): bool => $alias->clock() === Clock::Now))))
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (CurrentTimestamp $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null>|null $precision Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $parentheses Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias|null>|null $alias Generated timestamp keyword
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<CurrentTimestamp>
      */
-    public function __construct(?ErisGenerator $precision = null, ?ErisGenerator $parentheses = null, ?ErisGenerator $inputSource = null, ?ErisGenerator $alias = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::bind($parentheses ?? Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written), static function (\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $words) use ($precision, $inputSource, $alias): ErisGenerator {
-            return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp {
-                return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp(precision: $parts[0], parentheses: $parts[1], inputSource: $parts[2], alias: $parts[3]);
-            }, Generators::tuple(
-                $precision ?? Generators::constant(null),
-                Generators::constant($words),
-                $inputSource ?? Generators::constant(null),
-                $alias ?? ($words === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written ? \Tests\Generator\MySql\Statement\Call\Keyword\ClockAliasGenerator::forClock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now) : \Tests\Generator\MySql\Statement\Call\Keyword\ClockAliasGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::CurrentTimestamp, \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::LocalTime, \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::LocalTimestamp]))
-            ));
-        });
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<CurrentTimestamp> $element The generated counterexample
+     * @return GeneratedValue<CurrentTimestamp>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

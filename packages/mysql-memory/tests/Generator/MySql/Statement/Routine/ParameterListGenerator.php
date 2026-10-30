@@ -5,73 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
+use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement as M;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use Tests\Generator\Composition;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 
 /**
- * Composes ParameterList values and preserves their operand generators when shrinking.
+ * Generates ParameterList values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList>
+ * @implements ErisGenerator<ParameterList>
  */
 final class ParameterListGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList> */
-    use Composition;
+    /** @var ErisGenerator<ParameterList> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<list<M\Routine\Parameter>> $parameters Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Fact\RelationFact|null>|null $relationInformation Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     */
-    public function __construct(ErisGenerator $parameters, ?ErisGenerator $relationInformation = null, ?ErisGenerator $inputSource = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): M\Routine\ParameterList {
-            return new M\Routine\ParameterList(parameters: $parts[0], relationInformation: $parts[1], inputSource: $parts[2]);
-        }, Generators::tuple(
-            $parameters,
-            $relationInformation ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): ParameterList => new ParameterList(parameters: $parts[0], relationInformation: $parts[1], inputSource: $parts[2]),
+            Generators::tuple(
+                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ParameterGenerator($release))),
+                Generators::constant(null),
+                Generators::constant(null)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (ParameterList $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Composes complete SQL and external definitions with retained parameter conditions.
-     *
-     * @return ErisGenerator<array{M\Statement, int, string}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<ParameterList>
      */
-    public static function definitions(GrammarRelease $release, bool $function): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
-        $external = !$legacy && $release !== GrammarRelease::MySql8044;
-        $forms = $function ? ($external ? [1, 6, 7] : [1]) : ($legacy ? [0, 2] : ($external ? [0, 2, 3, 4, 5, 8, 9] : [0, 2, 3, 4, 5]));
-        return Generators::map(static function (array $parts) use ($release): array {
-            [$form, $name] = $parts;
-            $invalidName = match ($form) {
-                3, 7, 9 => '',
-                4 => $name->value . ' ',
-                5 => str_repeat('n', 65),
-                default => null,
-            };
-            $second = new Name(strtoupper($name->value));
-            $parameters = new M\Routine\ParameterList([
-                new M\Routine\Parameter($invalidName === null ? $name : new Name($invalidName), new M\Type\Integral(M\Type\Kind\IntegralKind::Int)),
-                new M\Routine\Parameter($second, $form === 2 ? new M\Type\Temporal(M\Type\Kind\TemporalKind::Timestamp, '9') : new M\Type\Integral(M\Type\Kind\IntegralKind::Int), mode: $form >= 8 ? M\Routine\ParameterMode::Out : null),
-                new M\Routine\Parameter(new Name('later'), new M\Type\Integral(M\Type\Kind\IntegralKind::BigInt)),
-            ]);
-            $routine = new QualifiedName(new Name('routine_' . $name->value));
-            $definition = in_array($form, [1, 6, 7], true)
-                ? new M\Routine\CreateFunction($routine, $parameters, new M\Type\Integral(M\Type\Kind\IntegralKind::Int), new M\Routine\Definition\FunctionImplementation(
-                    $form >= 6 ? new M\Routine\ExternalBody(new M\Literal\Text('return 1;')) : new M\Routine\Program\Flow\ReturnStatement(new M\Literal\NumberLiteral('1')),
-                    $form >= 6 ? [new M\Routine\Characteristic\RoutineLanguage(new Name('JAVASCRIPT'))] : []
-                ))
-                : new M\Routine\CreateProcedure($routine, $parameters, $form >= 8 ? new M\Routine\ExternalBody(new M\Literal\Text('return 1;')) : new M\Routine\Program\Block(), characteristics: $form >= 8 ? [new M\Routine\Characteristic\RoutineLanguage(new Name('JAVASCRIPT'))] : []);
-            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')]);
-            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $definition), $form === 5 ? 1059 : ($invalidName === null ? 1330 : 1458), $form === 5 ? "Identifier name '" . $invalidName . "' is too long" : ($invalidName === null ? 'Duplicate parameter: ' . $second->value : "Incorrect routine name '" . $invalidName . "'")];
-        }, Generators::tuple(Generators::elements($forms), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $value): string => 'arg_' . $value, Generators::choose(0, 1000)), Generators::constant(null))));
+        return ($this->delegate)($size, $rand);
     }
 
+    /**
+     * @param GeneratedValue<ParameterList> $element The generated counterexample
+     * @return GeneratedValue<ParameterList>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

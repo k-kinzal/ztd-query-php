@@ -5,52 +5,66 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege;
+use Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator;
 
 /**
- * Composes RoutineColumnPrivilege values and preserves their operand generators when shrinking.
+ * Generates RoutineColumnPrivilege values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege>
+ * @implements ErisGenerator<RoutineColumnPrivilege>
  */
 final class RoutineColumnPrivilegeGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege> */
-    use Composition;
+    /** @var ErisGenerator<RoutineColumnPrivilege> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<int> $offset Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel> $level Generated constructor operand
-     */
-    public function __construct(ErisGenerator $offset, ErisGenerator $level)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege(offset: $parts[0], level: $parts[1]);
-        }, Generators::tuple(
-            $offset,
-            $level
-        ));
-    }
-    /**
-     * Composes a semantic condition for the executor's input-error path.
-     *
-     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege>}>
-     */
-    public static function executionForms(): iterable
-    {
-        yield 'Account\\Problem\\RoutineColumnPrivilege' => [\SqlSemantics\Contract\GrammarRelease::MySql847, new RoutineColumnPrivilegeGenerator(
-            offset: Generators::constant(38),
-            level: new \Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator([new \Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectLevelGenerator(
-                name: new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(
-                    name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $suffix): string => 'p' . $suffix, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    schema: Generators::constant(null),
-                    catalog: Generators::constant(null)
-                )
-            )])
-        )];
+        $this->delegate = Generators::map(
+            static fn (array $parts): RoutineColumnPrivilege => new RoutineColumnPrivilege(offset: $parts[0], level: $parts[1]),
+            Generators::tuple(
+                Generators::choose(0, 100),
+                new PrivilegeLevelGenerator($release)
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (RoutineColumnPrivilege $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
+    /**
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<RoutineColumnPrivilege>
+     */
+    public function __invoke($size, RandomRange $rand): GeneratedValue
+    {
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<RoutineColumnPrivilege> $element The generated counterexample
+     * @return GeneratedValue<RoutineColumnPrivilege>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
+    }
 }

@@ -5,34 +5,76 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Account\User;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Identification;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use Tests\Generator\MySql\Statement\Literal\TextGenerator;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes Identification values and preserves their operand generators when shrinking.
+ * Generates Identification values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\User\Identification>
+ * @implements ErisGenerator<Identification>
  */
 final class IdentificationGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Account\User\Identification> */
-    use Composition;
+    /** @var ErisGenerator<Identification> */
+    private ErisGenerator $delegate;
+
+    public function __construct(GrammarRelease $release)
+    {
+        $this->delegate = Generators::bind(
+            new CredentialGenerator($release),
+            static fn (Credential $credential): ErisGenerator => Generators::map(
+                static fn (array $parts): Identification => new Identification(plugin: $parts[0], credential: $credential, secret: $credential->written() ? ($credential === Credential::PasswordHash ? new Text('*' . strtoupper(sha1($parts[1]->value))) : $parts[1]) : null, inputSource: null),
+                Generators::tuple(
+                    match ($credential) {
+                        Credential::None, Credential::Hash => new NameGenerator($release),
+                        Credential::PasswordHash => Generators::constant(null),
+                        default => Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                    },
+                    new TextGenerator($release)
+                )
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (Identification $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
+    }
 
     /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name|null> $plugin Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\User\Credential> $credential Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Literal\Text|null>|null $secret Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<Identification>
      */
-    public function __construct(ErisGenerator $plugin, ErisGenerator $credential, ?ErisGenerator $secret = null, ?ErisGenerator $inputSource = null)
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Account\User\Identification {
-            return new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(plugin: $parts[0], credential: $parts[1], secret: $parts[2], inputSource: $parts[3]);
-        }, Generators::tuple(
-            $plugin,
-            $credential,
-            $secret ?? Generators::constant(null),
-            $inputSource ?? Generators::constant(null)
-        ));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<Identification> $element The generated counterexample
+     * @return GeneratedValue<Identification>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }

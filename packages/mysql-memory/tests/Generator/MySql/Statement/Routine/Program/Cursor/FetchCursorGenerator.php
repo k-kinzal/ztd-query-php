@@ -5,72 +5,69 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Program\Cursor;
 
 use Eris\Generator as ErisGenerator;
+use Eris\Generator\GeneratedValue;
 use Eris\Generators;
-use Tests\Generator\Composition;
+use Eris\Random\RandomRange;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
+use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor;
+use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
- * Composes FetchCursor values and preserves their operand generators when shrinking.
+ * Generates FetchCursor values from the generators of its operands.
  *
- * @implements ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor>
+ * @implements ErisGenerator<FetchCursor>
  */
 final class FetchCursorGenerator implements ErisGenerator
 {
-    /** @use Composition<\SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor> */
-    use Composition;
+    /** @var ErisGenerator<FetchCursor> */
+    private ErisGenerator $delegate;
 
-    /**
-     * @param ErisGenerator<\SqlSemantics\Statement\Identifier\Name> $cursor Generated constructor operand
-     * @param ErisGenerator<list<\SqlSemantics\Statement\Identifier\Name>> $targets Generated constructor operand
-     * @param ErisGenerator<\SqlSemantics\Statement\Source\Span|null>|null $inputSource Generated constructor operand
-     * @param ErisGenerator<bool>|null $from The generated written alternative
-     * @param ErisGenerator<bool>|null $next The generated written alternative
-     */
-    public function __construct(ErisGenerator $cursor, ErisGenerator $targets, ?ErisGenerator $inputSource = null, ?ErisGenerator $from = null, ?ErisGenerator $next = null)
+    public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor {
-            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor(cursor: $parts[0], targets: $parts[1], inputSource: $parts[2], from: $parts[3], next: $parts[4] && $parts[3]);
-        }, Generators::tuple(
-            $cursor,
-            $targets,
-            $inputSource ?? Generators::constant(null),
-            $from ?? Generators::bool(),
-            $next ?? Generators::bool()
-        ));
+        $this->delegate = Generators::map(
+            static fn (array $parts): FetchCursor => new FetchCursor(cursor: $parts[0], targets: $parts[1], inputSource: $parts[2], from: $parts[3], next: $parts[3] && $parts[4]),
+            Generators::tuple(
+                new NameGenerator($release),
+                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NameGenerator($release))),
+                Generators::constant(null),
+                Generators::bool(),
+                Generators::bool()
+            )
+        );
+        $this->delegate = Generators::suchThat(
+            static function (FetchCursor $value) use ($release): bool {
+                $domain = new ReleaseDomain();
+                $transition = (new Generations())->transition($value);
+
+                return ($domain->of($value) & $domain->bit($release)) !== 0
+                    && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
+                    && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
+                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+            },
+            $this->delegate
+        );
     }
 
     /**
-     * Composes an unbound FETCH and its declaration, with notices before and after it.
-     * Names, declaration kind and prefix length shrink together before execution.
-     *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\AnalyzedStatement, string, list<int>}>
+     * @param int $size The size selected by Eris
+     * @return GeneratedValue<FetchCursor>
      */
-    public static function definitions(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    public function __invoke($size, RandomRange $rand): GeneratedValue
     {
-        return Generators::map(static function (array $parts) use ($release): array {
-            [$name, $cursor, $target, $kind, $count, $duplicates] = $parts;
-            $query = static fn (\SqlSemantics\Platform\MySql\Statement\Query\SelectOption $option): \SqlSemantics\Platform\MySql\Statement\QueryRoot => new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([$option], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
-            $instructions = [];
-            for ($index = 0; $index < $count; ++$index) {
-                $instructions[] = $query(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache);
-            }
-            $instructions[] = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\FetchCursor($cursor, [$target]);
-            $instructions[] = $query(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::CalcFoundRows);
-            $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block(statements: $instructions);
-            $qualified = new \SqlSemantics\Statement\Identifier\QualifiedName($name);
-            $members = [];
-            for ($index = 0; $index <= $duplicates; ++$index) {
-                $members[] = new \SqlSemantics\Platform\MySql\Statement\Literal\Text('value');
-            }
-            $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new \SqlSemantics\Statement\Identifier\Name('argument'), new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, $members))]);
-            $statement = match ($kind) {
-                0 => new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure($qualified, $parameters, $body),
-                1 => new \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction($qualified, $parameters, new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body)),
-                2 => new \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger($qualified, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime::Before, \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent::Insert, new \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('target'))), $body),
-                3 => new \SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent($qualified, new \SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule(new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['2030-01-01 00:00:00'])), $body),
-                default => new \SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent($qualified, body: $body),
-            };
-            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
-            return [(new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement), 'Undefined CURSOR: ' . $cursor->value, [...array_fill(0, $kind < 2 ? count($members) - 1 : 0, 1291), ...array_fill(0, $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? 0 : count($instructions) - 2, 1681), 1324]];
-        }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::choose(0, 4), Generators::choose(0, 3), Generators::choose(0, 2)));
+        return ($this->delegate)($size, $rand);
+    }
+
+    /**
+     * @param GeneratedValue<FetchCursor> $element The generated counterexample
+     * @return GeneratedValue<FetchCursor>
+     */
+    public function shrink(GeneratedValue $element): GeneratedValue
+    {
+        return $this->delegate->shrink($element);
     }
 }
