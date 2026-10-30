@@ -407,4 +407,40 @@ final class TablespaceCommandTest extends TestCase
         self::assertInstanceOf(SqlError::class, $missing);
         self::assertSame([[1286, "Unknown storage engine 'nope'"], [1478, "Table storage engine 'MyISAM' does not support the create option 'ALTER UNDO TABLESPACE'"], [3510, "Tablespace nope doesn't exist."]], [[$unknown->getCode(), $unknown->getMessage()], [$other->getCode(), $other->getMessage()], [$missing->getCode(), $missing->getMessage()]]);
     }
+
+    /**
+     * @param list<int> $codes
+     */
+    #[DataProvider('providerSubstitutedEngines')]
+    public function testEngineSubstitutionPrecedesTableLocks(string $version, string $mode, string $default, string $sql, array $codes): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query("SET sql_mode='" . $mode . "'; SET default_storage_engine='" . $default . "'; CREATE TABLE t(id INT); LOCK TABLE t WRITE");
+        $error = $session->run($sql)[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
+        self::assertSame($codes[count($codes) - 1], $error->getCode());
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, string, list<int>}>
+     */
+    public static function providerSubstitutedEngines(): iterable
+    {
+        foreach (['8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['', 'NO_ENGINE_SUBSTITUTION'] as $mode) {
+                foreach (['InnoDB', 'MyISAM'] as $default) {
+                    foreach (['', ' ENGINE=unknown_engine', ' ENGINE=InnoDB'] as $engine) {
+                        $unknown = $engine === ' ENGINE=unknown_engine';
+                        $failure = $default === 'InnoDB' || $engine === ' ENGINE=InnoDB' ? 1192 : 1478;
+                        $codes = $unknown ? ($mode === '' ? [1286, 1266, $failure] : [1286]) : [$failure];
+                        foreach (["CREATE TABLESPACE ts ADD DATAFILE 'datafile'", "CREATE UNDO TABLESPACE ts ADD DATAFILE 'datafile'", 'ALTER UNDO TABLESPACE ts SET INACTIVE', 'DROP UNDO TABLESPACE ts'] as $command) {
+                            yield $version . ':' . $mode . ':' . $default . ':' . $command . $engine => [$version, $mode, $default, $command . $engine, $codes];
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

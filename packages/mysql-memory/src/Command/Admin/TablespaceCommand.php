@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Admin;
 
+use LogicException;
 use MySqlMemory\Command\Admin\Storage\DatafileChecks;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Server\ServerCatalog;
@@ -91,26 +92,20 @@ final class TablespaceCommand implements Command
         if ((new Storage\LegacyTablespaces())->execute($statement, $session, $context)) {
             return new Completion(0, 0, $context->diagnostics->raised());
         }
-        if ($session->locks !== []) {
-            match (true) {
-                $statement instanceof CreateTablespace => $this->engine($statement->options, 'CREATE TABLESPACE'),
-                $statement instanceof CreateUndoTablespace => $this->engine($statement->options, 'CREATE UNDO TABLESPACE'),
-                $statement instanceof AlterUndoTablespace => $this->engine($statement->options, 'ALTER UNDO TABLESPACE'),
-                $statement instanceof DropUndoTablespace => $this->engine($statement->options, 'DROP UNDO TABLESPACE'),
-                default => null,
-            };
+        $locked = $session->locks !== [];
+        if ($locked && !$statement instanceof CreateTablespace && !$statement instanceof CreateUndoTablespace && !$statement instanceof AlterUndoTablespace && !$statement instanceof DropUndoTablespace) {
             throw StatementError::LockedOrActiveTransaction->error();
         }
         match (true) {
-            $statement instanceof CreateTablespace => $this->create($statement, $registry, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known((string) $session->variables->read('character_set_client'))),
-            $statement instanceof CreateUndoTablespace => $this->createUndo($statement, $registry),
+            $statement instanceof CreateTablespace => $this->create($statement, $registry, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known((string) $session->variables->read('character_set_client')), context: $context, locked: $locked),
+            $statement instanceof CreateUndoTablespace => $this->createUndo($statement, $registry, $context, $locked),
             $statement instanceof RenameTablespace => $this->rename($statement, $registry),
             $statement instanceof AlterTablespace => $this->alter($statement->name->value, $statement->options, $registry, $context),
             $statement instanceof AlterTablespaceDatafile => $this->datafile($statement, $registry),
             $statement instanceof AlterTablespaceAccess => throw StatementError::SyntaxError->error(),
-            $statement instanceof AlterUndoTablespace => $this->activate($statement, $registry),
+            $statement instanceof AlterUndoTablespace => $this->activate($statement, $registry, $context, $locked),
             $statement instanceof DropTablespace => $this->drop($statement, $registry, $context),
-            $statement instanceof DropUndoTablespace => $this->dropUndo($statement, $registry),
+            $statement instanceof DropUndoTablespace => $this->dropUndo($statement, $registry, $context, $locked),
             default => throw StatementError::NotSupportedYet->error('this tablespace statement'),
         };
 
@@ -122,10 +117,13 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When the engine, the name, the file or an option is refused
      */
-    public function create(CreateTablespace $statement, Registry $registry, bool $legacy = false, ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null): void
+    public function create(CreateTablespace $statement, Registry $registry, bool $legacy = false, ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $client = null, ?Context $context = null, bool $locked = false): void
     {
         $name = $statement->name->value;
-        $this->engine($statement->options, 'CREATE TABLESPACE');
+        $this->engine($statement->options, 'CREATE TABLESPACE', $context, $name);
+        if ($locked) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         $this->reserved($name);
         if ($this->exists($name, $registry)) {
             if ($legacy) {
@@ -151,10 +149,13 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When the engine, the name or the file is refused
      */
-    public function createUndo(CreateUndoTablespace $statement, Registry $registry): void
+    public function createUndo(CreateUndoTablespace $statement, Registry $registry, ?Context $context = null, bool $locked = false): void
     {
         $name = $statement->name->value;
-        $this->engine($statement->options, 'CREATE UNDO TABLESPACE');
+        $this->engine($statement->options, 'CREATE UNDO TABLESPACE', $context, $name);
+        if ($locked) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         $this->reserved($name);
         if ($this->exists($name, $registry)) {
             throw SchemaError::TablespaceExists->error($name);
@@ -226,10 +227,13 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When the engine is refused, or the tablespace is missing or a general one
      */
-    public function activate(AlterUndoTablespace $statement, Registry $registry): void
+    public function activate(AlterUndoTablespace $statement, Registry $registry, ?Context $context = null, bool $locked = false): void
     {
         $name = $statement->name->value;
-        $this->engine($statement->options, 'ALTER UNDO TABLESPACE');
+        $this->engine($statement->options, 'ALTER UNDO TABLESPACE', $context, $name);
+        if ($locked) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         if (isset(self::SYSTEM[$name]) && self::SYSTEM[$name]) {
             return;
         }
@@ -262,10 +266,13 @@ final class TablespaceCommand implements Command
      *
      * @throws SqlError When the engine or the name is refused, the tablespace is missing, a general one or active
      */
-    public function dropUndo(DropUndoTablespace $statement, Registry $registry): void
+    public function dropUndo(DropUndoTablespace $statement, Registry $registry, ?Context $context = null, bool $locked = false): void
     {
         $name = $statement->name->value;
-        $this->engine($statement->options, 'DROP UNDO TABLESPACE');
+        $this->engine($statement->options, 'DROP UNDO TABLESPACE', $context, $name);
+        if ($locked) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         $this->reserved($name);
         $tablespace = $this->find($name, $registry);
         if (!$tablespace->undo) {
@@ -278,13 +285,15 @@ final class TablespaceCommand implements Command
     }
 
     /**
-     * Checks the ENGINE option: the last one written must name an enabled engine, and that engine must be InnoDB.
+     * Resolves the last ENGINE option or the session default, then requires InnoDB.
+     * Unknown names may substitute the default with warnings unless NO_ENGINE_SUBSTITUTION is set.
      *
      * @param list<StorageOption> $options
      *
      * @throws SqlError When the engine is unknown or not InnoDB
+     * @throws LogicException When the configured default is not a name
      */
-    public function engine(array $options, string $operation): void
+    public function engine(array $options, string $operation, ?Context $context = null, string $name = ''): void
     {
         $named = null;
         foreach ($options as $option) {
@@ -292,10 +301,19 @@ final class TablespaceCommand implements Command
                 $named = $option->engine->value;
             }
         }
-        if ($named === null) {
-            return;
+        $default = $context?->variables->read('default_storage_engine') ?? 'InnoDB';
+        if (!is_string($default)) {
+            throw new LogicException('The default storage engine must be a name.');
         }
-        $engine = ServerCatalog::shared()->engine($named) ?? throw SchemaError::UnknownStorageEngine->error($named);
+        $engine = $named === null ? $default : ServerCatalog::shared()->engine($named);
+        if ($engine === null) {
+            if ($context === null || $context->modes->has('NO_ENGINE_SUBSTITUTION')) {
+                throw SchemaError::UnknownStorageEngine->error($named);
+            }
+            $context->warning(SchemaError::UnknownStorageEngine, $named);
+            $engine = $default;
+            $context->warning(SchemaError::UsingOtherEngine, $engine, $name);
+        }
         if ($engine !== 'InnoDB') {
             throw SchemaError::IllegalCreateOption->error($engine, $operation);
         }

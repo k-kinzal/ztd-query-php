@@ -66,7 +66,7 @@ final class LogfileGroupCommand implements Command
             throw SchemaError::EngineUnsupportedOperation->error($verb . ' LOGFILE GROUP');
         }
         if ($statement instanceof CreateLogfileGroup || $statement instanceof AlterLogfileGroup || $statement instanceof DropLogfileGroup) {
-            (new TablespaceCommand())->engine($statement->options, $operationName);
+            (new TablespaceCommand())->engine($statement->options, $operationName, $context, $statement->name->value);
         }
         if ($session->locks !== []) {
             throw StatementError::LockedOrActiveTransaction->error();

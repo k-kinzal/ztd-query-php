@@ -100,4 +100,15 @@ final class LogfileGroupCommandTest extends TestCase
         self::assertSame([['Error', 1178, "The storage engine for the table doesn't support ALTER LOGFILE GROUP"]], $session->diagnostics->conditions);
     }
 
+
+    public function testSubstitutionKeepsBothWarningsBeforeTheLockFailure(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $session->query("SET sql_mode=''; CREATE TABLE t(id INT); LOCK TABLE t WRITE");
+        $error = $session->run("CREATE LOGFILE GROUP lg ADD UNDOFILE 'undo' ENGINE=unknown_engine")[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1192, $error->getCode());
+        self::assertSame([['Warning', 1286, "Unknown storage engine 'unknown_engine'"], ['Warning', 1266, "Using storage engine InnoDB for table 'lg'"], ['Error', 1192, "Can't execute the given command because you have active locked tables or an active transaction"]], $session->diagnostics->conditions);
+    }
 }

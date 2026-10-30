@@ -66,6 +66,7 @@ final class ForeignServerCommand implements Command
         $cached = array_key_first(array_filter($registry->servers, static fn (ForeignServer $server): bool => $server->lookupName !== null && Registry::key($session->settings()->legacy() ? $server->lookupName : rtrim($server->lookupName, ' ')) === Registry::key($session->settings()->legacy() ? $original : rtrim($original, ' '))));
         $text = new \MySqlMemory\Error\DiagnosticText();
         $missing = $text->bytes(explode("\0", $original, 2)[0], 64, $session->settings()->legacy());
+        (new Foreign\ServerLocks())->check($statement, $session, $name, $cached);
         if ($statement instanceof CreateServer) {
             if (isset($registry->servers[Registry::key($name)])) {
                 throw new \MySqlMemory\Error\SqlError(AdministrationError::ForeignServerExists, $text->bytes(AdministrationError::ForeignServerExists->error(explode("\0", $original, 2)[0])->getMessage(), 511, $session->settings()->legacy()));
