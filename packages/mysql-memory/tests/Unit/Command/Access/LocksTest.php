@@ -61,6 +61,15 @@ final class LocksTest extends TestCase
         self::assertCount(1, (new Locks())->written($statement));
     }
 
+    public function testRequiredOpensEveryNameBeforeCheckingWriteLocks(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('LOCK TABLE mysql.user READ');
+        $this->expectExceptionCode(1100);
+        $this->expectExceptionMessage("Table 'db' was not locked with LOCK TABLES");
+        (new Locks())->required($session, [new QualifiedName(new Name('user'), new Name('mysql')), new QualifiedName(new Name('db'), new Name('mysql'))], true);
+    }
+
     public function testAllowedRefusesATableUnderAnotherName(): void
     {
         $session = (new Instance())->connect();

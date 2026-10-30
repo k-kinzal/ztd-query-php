@@ -67,7 +67,7 @@ final class LockTablesCommand implements Command
             if ($session->instance->dictionary->schema($schema) === null) {
                 throw \MySqlMemory\Session\Problem\Errors::unknown($schema, $lock->table->name->value, $session->settings()->release());
             }
-            if ($session->instance->dictionary->table($schema, $lock->table->name->value, $session->temporaries) === null && !isset($session->instance->dictionary->schema($schema)?->views[$lock->table->name->value])) {
+            if ($session->instance->dictionary->table($schema, $lock->table->name->value, $session->temporaries) === null && !isset($session->instance->dictionary->schema($schema)?->views[$lock->table->name->value]) && $session->instance->dictionary->system?->find($schema, $lock->table->name->value) === null) {
                 throw QueryError::NoSuchTable->error($schema, $lock->table->name->value);
             }
             $locks[] = [$schema, $lock->table->name->value, $lock->alias->value ?? $lock->table->name->value, $lock->mode === LockMode::Write || $lock->mode === LockMode::LowPriorityWrite];

@@ -127,6 +127,7 @@ final class RevokeCommand implements Command
             $levels->dynamic($statement->privileges, $target, $session, $statement->ifExists);
         }
         $levels->parsed($operation, $session);
+        (new \MySqlMemory\Command\Access\AccountTables())->privileges($statement, $session);
         (new Recipients())->run($statement, $operation, $target, $session);
     }
 

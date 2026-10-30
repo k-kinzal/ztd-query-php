@@ -88,6 +88,7 @@ final class GrantCommand implements Command
         $grantees = $this->identities($statement, $target[0], $session);
         $levels->parsed($operation, $session);
         $levels->objects($operation, $session, $statement->privileges, $target);
+        (new \MySqlMemory\Command\Access\AccountTables())->privileges($statement, $session);
         if ($statement->as !== null) {
             $this->as($statement->as, $session);
         }

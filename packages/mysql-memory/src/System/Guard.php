@@ -69,6 +69,9 @@ final class Guard
         }
         foreach ($defined as $name) {
             $table = $system->find($this->schema($name, $session), $name->name->value);
+            if ($table !== null && $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables && $table->schema === 'mysql' && in_array($table->name, [...\MySqlMemory\Command\Access\AccountTables::LEGACY, ...\MySqlMemory\Command\Access\AccountTables::MODERN], true)) {
+                continue;
+            }
             if ($table !== null) {
                 throw new LogicException('No system table definition or lock implementation for ' . $table->schema . '.' . $table->name . ' on mysql-' . $session->instance->version . '.');
             }

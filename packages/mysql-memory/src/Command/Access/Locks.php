@@ -41,6 +41,7 @@ final class Locks
      */
     public function check(MySqlStatement $operation, Session $session): void
     {
+        (new AccountTables())->check($operation, $session);
         $statement = $operation;
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && !$statement instanceof InsertRows && !$statement instanceof InsertSet && !$statement instanceof InsertQuery
             && !$statement instanceof Update && !$statement instanceof Delete && !$statement instanceof MultipleDelete) {
@@ -73,6 +74,24 @@ final class Locks
         $targets = array_map($statement->input->relation(...), $statement->targets);
 
         return array_values(array_filter($targets, static fn ($reference): bool => $reference instanceof TableReference));
+    }
+
+    /**
+     * Opens every required name before checking write permissions.
+     *
+     * Account commands use this order for their implicitly opened grant tables.
+     *
+     * @param list<QualifiedName> $tables The tables in opening order
+     * @throws \MySqlMemory\Error\SqlError When a required name or write lock is missing
+     */
+    public function required(Session $session, array $tables, bool $write): void
+    {
+        foreach ($tables as $table) {
+            $this->allowed($session, $table, $table->name->value, [], false);
+        }
+        foreach ($write ? $tables : [] as $table) {
+            $this->allowed($session, $table, $table->name->value, [], true);
+        }
     }
 
     /**
