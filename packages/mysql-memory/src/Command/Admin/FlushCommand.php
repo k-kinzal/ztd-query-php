@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Admin;
 
+use MySqlMemory\Command\Access\AccountTables;
+use MySqlMemory\Command\Access\Locks;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -15,18 +18,22 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
  * Executes FLUSH and FLUSH TABLES.
  *
  * Every form commits the open transaction. FLUSH TABLES closes cached handles while retaining
- * definitions and rows. Most other forms only succeed. FLUSH BINARY LOGS and FLUSH LOGS close the
- * active binary log file and open the next. FLUSH RELAY LOGS FOR CHANNEL fails for a channel other
- * than the default one, which is the only channel of the server. FLUSH TABLES ... WITH READ LOCK
+ * definitions and rows. FLUSH PRIVILEGES reads the grant tables under explicit locks. Options
+ * execute once in server order, continuing log and status work after a privilege reload fails.
+ * FLUSH BINARY LOGS and FLUSH LOGS close the active binary log file and open the next.
+ * FLUSH RELAY LOGS FOR CHANNEL requires an existing channel. FLUSH TABLES ... WITH READ LOCK
  * and FLUSH TABLES ... FOR EXPORT need each table they name to exist, and lock the tables for
  * reading as LOCK TABLES ... READ does, until UNLOCK TABLES; the global read lock of FLUSH TABLES
  * WITH READ LOCK is not modelled, the session being alone on the server (verified on a live 8.4
@@ -93,31 +100,99 @@ final class FlushCommand implements Command
     }
 
     /**
-     * Applies status resets and log flushes in written order.
+     * Applies the option flags once in server order, preserving the first failure and later conditions.
+     * The last RELAY LOGS item selects the channel, even when it omits FOR CHANNEL.
      * MySQL 5.6 clears only the requesting session; newer releases clear all active sessions.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/performance-schema-status-variable-tables.html.
+     * https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_reload.cc.
      *
-     * @throws \MySqlMemory\Error\SqlError When the requested relay channel does not exist
+     * @throws SqlError When a privilege reload or relay flush fails
      */
     public function options(Flush $statement, Session $session): void
     {
+        $items = [];
         foreach ($statement->items as $item) {
-            if ($item->option === FlushOption::Privileges) {
-                $session->instance->accounts->reload(!$session->settings()->legacy());
+            $items[$item->option->value] = $item;
+        }
+        $failure = null;
+        $following = [];
+        foreach ([FlushOption::Privileges, FlushOption::BinaryLogs, FlushOption::RelayLogs, FlushOption::Status] as $option) {
+            if (!isset($items[$option->value]) && !(isset($items[FlushOption::Logs->value]) && ($option === FlushOption::BinaryLogs || $option === FlushOption::RelayLogs))) {
+                continue;
             }
-            if ($item->option === FlushOption::Status) {
-                $this->status($session);
-            }
-            $channel = $item->channel === null ? '' : (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($item->channel);
-            if ($item->option === FlushOption::RelayLogs && $item->channel !== null) {
-                (new \MySqlMemory\Command\Replication\ReplicaCommand())->channel($item->channel, $session->settings()->legacy());
-                if ($session->settings()->legacy() && (int) $session->variables->read('server_id') === 0) {
-                    throw new \MySqlMemory\Error\SqlError(AdministrationError::ReplicaChannelMissing, "Slave channel '" . $channel . "' does not exist.");
+            try {
+                match ($option) {
+                    FlushOption::Privileges => $this->privileges($session),
+                    FlushOption::BinaryLogs => $session->instance->registry->binaryLog->rotate(),
+                    FlushOption::RelayLogs => $this->relay($items[$option->value]->channel ?? null, $session),
+                    FlushOption::Status => $this->status($session),
+                };
+            } catch (SqlError $error) {
+                if ($failure === null) {
+                    $failure = $error;
+                } else {
+                    $following[] = [$error->getCode(), $error->getMessage()];
                 }
+                array_push($following, ...$error->following);
             }
-            if ($item->option === FlushOption::BinaryLogs || $item->option === FlushOption::Logs) {
-                $session->instance->registry->binaryLog->rotate();
+        }
+        if ($failure !== null) {
+            throw new SqlError($failure->error, $failure->getMessage(), $failure, $following);
+        }
+    }
+
+    /**
+     * Reloads the privilege caches after their required read locks have been checked.
+     * Legacy releases load account and object grants separately; 5.6 also reads mysql.servers
+     * in the caller's lock context. Each failed load contributes a condition, followed by
+     * ER_UNKNOWN_ERROR when an account or object-grant load failed. Observed on MySQL 5.6–9.1.
+     *
+     * @throws SqlError When a required grant or server table is not locked
+     */
+    public function privileges(Session $session): void
+    {
+        $legacy = $session->settings()->legacy();
+        $groups = $legacy ? [['user', 'db', 'proxies_priv'], ['tables_priv', 'columns_priv', 'procs_priv']] : [[...AccountTables::LEGACY, ...AccountTables::MODERN]];
+        if ($session->settings()->release() === GrammarRelease::MySql5651) {
+            $groups[] = ['servers'];
+        }
+        $errors = [];
+        $failedGrants = false;
+        foreach ($groups as $index => $tables) {
+            try {
+                if ($session->locks !== []) {
+                    (new Locks())->required($session, array_map(static fn (string $table): QualifiedName => new QualifiedName(new Name($table), new Name('mysql')), $tables), false);
+                }
+                if ($index === 0) {
+                    $session->instance->accounts->reload(!$legacy);
+                }
+            } catch (SqlError $error) {
+                $errors[] = $error;
+                $failedGrants = $failedGrants || $tables !== ['servers'];
             }
+        }
+        if ($errors !== []) {
+            if ($failedGrants) {
+                $errors[] = StatementError::UnknownError->error();
+            }
+            $first = array_shift($errors);
+            throw new SqlError($first->error, $first->getMessage(), $first, array_map(static fn (SqlError $error): array => [$error->getCode(), $error->getMessage()], $errors));
+        }
+    }
+
+    /**
+     * Flushes the selected relay channel, or all channels when FOR CHANNEL is absent.
+     *
+     * @throws SqlError When the selected channel does not exist
+     */
+    public function relay(?Text $channel, Session $session): void
+    {
+        if ($channel === null) {
+            return;
+        }
+        $name = (new \MySqlMemory\Command\Replication\ReplicaCommand())->channel($channel, $session->settings()->legacy(), $session->instance->registry);
+        if ($session->settings()->legacy() && !$session->instance->registry->replicationAvailableAtStartup) {
+            throw new SqlError(AdministrationError::ReplicaChannelMissing, "Slave channel '" . $name . "' does not exist.");
         }
     }
 

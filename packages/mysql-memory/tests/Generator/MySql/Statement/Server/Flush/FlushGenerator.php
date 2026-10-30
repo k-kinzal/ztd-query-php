@@ -8,6 +8,8 @@ use Eris\Generator as ErisGenerator;
 use Eris\Generators;
 use InvalidArgumentException;
 use LogicException;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use Tests\Generator\Composition;
 
 /**
@@ -27,12 +29,12 @@ final class FlushGenerator implements ErisGenerator
      * @param ErisGenerator<\SqlSemantics\Contract\AnalysisContext>|null $contexts Related declarations and session settings
      * @throws InvalidArgumentException When no form is available for the release.
      */
-    public function __construct(\SqlSemantics\Contract\GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
+    public function __construct(GrammarRelease $release, ?ErisGenerator $operands = null, ?ErisGenerator $contexts = null)
     {
         if ($operands === null) {
             $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
-                foreach (self::forms() as $form) {
+            if ($release->database() === 'mysql') {
+                foreach (self::forms($release) as $form) {
                     $forms[] = $form;
                 }
             }
@@ -63,20 +65,35 @@ final class FlushGenerator implements ErisGenerator
         }, Generators::tuple($binlog, $items, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null)));
     }
     /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
+     * Composes nonempty option lists, including repeated options and independent relay channels.
+     * Only options and channel syntax available in the selected grammar are generated.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush>>
      */
-    public static function forms(): iterable
+    public static function forms(GrammarRelease $release = GrammarRelease::MySql847): iterable
     {
-        yield 'Flush/45' => FlushGenerator::operands(
+        $options = [FlushOption::ErrorLogs, FlushOption::EngineLogs, FlushOption::GeneralLogs, FlushOption::SlowLogs, FlushOption::BinaryLogs, FlushOption::Privileges, FlushOption::Logs, FlushOption::Status, FlushOption::Resources];
+        if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {
+            array_push($options, FlushOption::QueryCache, FlushOption::DesKeyFile);
+        }
+        if ($release !== GrammarRelease::MySql5651) {
+            $options[] = FlushOption::OptimizerCosts;
+        }
+        if (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820], true)) {
+            $options[] = FlushOption::Hosts;
+        }
+        $channel = $release === GrammarRelease::MySql5651 ? Generators::constant(null) : Generators::oneOf(
+            Generators::constant(null),
+            new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::constant('')),
+            new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $value): string => 'channel_' . $value, Generators::choose(0, 20)))
+        );
+        $item = Generators::oneOf(
+            new FlushItemGenerator(FlushOptionGenerator::selecting($options)),
+            new FlushItemGenerator(FlushOptionGenerator::selecting([FlushOption::RelayLogs]), $channel)
+        );
+        yield 'option lists' => FlushGenerator::operands(
             binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
-            items: Generators::tuple(
-                new FlushItemGenerator(
-                    option: FlushOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]),
-                    channel: Generators::constant(null)
-                )
-            )
+            items: Generators::bind(Generators::choose(1, 6), static fn (int $count): ErisGenerator => Generators::vector($count, $item))
         );
     }
 

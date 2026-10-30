@@ -18,6 +18,147 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FlushCommandTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, list<array{string, int, string}>}>
+     */
+    public static function providerMissingPrivilegeLocks(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $tables = ['user', 'db', 'tables_priv', 'columns_priv', 'procs_priv', 'proxies_priv'];
+            $groups = [['user', 'db', 'proxies_priv'], ['tables_priv', 'columns_priv', 'procs_priv']];
+            if (!str_starts_with($version, '5.')) {
+                array_push($tables, 'role_edges', 'default_roles', 'global_grants', 'password_history');
+                $groups = [$tables];
+            }
+            foreach (['READ', 'WRITE'] as $mode) {
+                for ($count = 0; $count < count($tables); $count++) {
+                    $locked = array_slice($tables, 0, $count);
+                    $lock = $locked === [] ? 't WRITE' : implode(', ', array_map(static fn (string $table): string => 'mysql.' . $table . ' ' . $mode, $locked));
+                    $conditions = [];
+                    foreach ($groups as $group) {
+                        $missing = array_values(array_diff($group, $locked));
+                        if ($missing !== []) {
+                            $conditions[] = ['Error', 1100, "Table '" . $missing[0] . "' was not locked with LOCK TABLES"];
+                        }
+                    }
+                    if ($version === '5.6.51') {
+                        $conditions[] = ['Error', 1100, "Table 'servers' was not locked with LOCK TABLES"];
+                    }
+                    $conditions[] = ['Error', 1105, 'Unknown error'];
+                    yield $version . ':' . $mode . ':' . $count => [$version, $lock, $conditions];
+                }
+            }
+        }
+    }
+
+    /**
+     * @param list<array{string, int, string}> $conditions
+     */
+    #[DataProvider('providerMissingPrivilegeLocks')]
+    public function testPrivilegesReportsEachFailedLoadAndStillResetsStatus(string $version, string $lock, array $conditions): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); LOCK TABLE ' . $lock);
+        $reply = $session->run('FLUSH STATUS, PRIVILEGES, PRIVILEGES')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1100, $reply->getCode());
+        self::assertSame($conditions, $session->diagnostics->conditions);
+        self::assertSame(0, $session->instance->registry->status->read('Com_flush', $session->id));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerReadablePrivilegeTables(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $tables = ['user', 'db', 'tables_priv', 'columns_priv', 'procs_priv', 'proxies_priv'];
+            if ($version === '5.6.51') {
+                $tables[] = 'servers';
+            } elseif (!str_starts_with($version, '5.')) {
+                array_push($tables, 'role_edges', 'default_roles', 'global_grants', 'password_history');
+            }
+            foreach (['READ', 'WRITE'] as $mode) {
+                yield $version . ':' . $mode => [$version, implode(', ', array_map(static fn (string $table): string => 'mysql.' . $table . ' ' . $mode, $tables))];
+            }
+        }
+    }
+
+    #[DataProvider('providerReadablePrivilegeTables')]
+    public function testPrivilegesAcceptsReadLocksOnEveryReloadedTable(string $version, string $lock): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('LOCK TABLE ' . $lock);
+        $reply = $session->query('FLUSH PRIVILEGES')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings());
+    }
+
+    public function testPrivilegesReportsOnlyTheServerReadFailureAfterSuccessfulLegacyGrantLoads(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('LOCK TABLE mysql.user READ, mysql.db READ, mysql.proxies_priv READ, mysql.tables_priv READ, mysql.columns_priv READ, mysql.procs_priv READ');
+        $session->run('FLUSH PRIVILEGES');
+
+        self::assertSame([['Error', 1100, "Table 'servers' was not locked with LOCK TABLES"]], $session->diagnostics->conditions);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerRepeatedBinaryFlushes(): iterable
+    {
+        foreach (['BINARY LOGS, BINARY LOGS', 'BINARY LOGS, LOGS', 'LOGS, BINARY LOGS', 'LOGS, LOGS'] as $options) {
+            yield $options => [$options];
+        }
+    }
+
+    #[DataProvider('providerRepeatedBinaryFlushes')]
+    public function testOptionsRotatesTheBinaryLogOnceForRepeatedFlags(string $options): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('FLUSH ' . $options);
+
+        self::assertSame('binlog.000002', $session->instance->registry->binaryLog->active());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerFailingFlushOrders(): iterable
+    {
+        yield 'relay first' => ["RELAY LOGS FOR CHANNEL 'x', PRIVILEGES, STATUS, BINARY LOGS"];
+        yield 'status first' => ["STATUS, BINARY LOGS, PRIVILEGES, RELAY LOGS FOR CHANNEL 'x'"];
+    }
+
+    #[DataProvider('providerFailingFlushOrders')]
+    public function testOptionsPreservesErrorOrderAndContinuesBinaryAndStatusFlushes(string $options): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); LOCK TABLE t WRITE');
+        $reply = $session->run('FLUSH ' . $options)[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1100, $reply->getCode());
+        self::assertSame([['Error', 1100, "Table 'user' was not locked with LOCK TABLES"], ['Error', 1105, 'Unknown error'], ['Error', 3074, "Replica channel 'x' does not exist."]], $session->diagnostics->conditions);
+        self::assertSame('binlog.000002', $session->instance->registry->binaryLog->active());
+        self::assertSame(0, $session->instance->registry->status->read('Com_flush', $session->id));
+    }
+
+    public function testRelayUsesTheLastItemIncludingItsAbsentChannel(): void
+    {
+        $session = (new Instance())->connect();
+        $reply = $session->query("FLUSH RELAY LOGS FOR CHANNEL 'x', RELAY LOGS")[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings());
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Replica channel 'y' does not exist.");
+        $session->query("FLUSH RELAY LOGS FOR CHANNEL 'x', RELAY LOGS FOR CHANNEL 'y'");
+    }
+
     public function testExecuteDoesNotCountRetainedLegacyConditionsAsNewWarnings(): void
     {
         $session = (new Instance('5.6.51'))->connect();
