@@ -20,6 +20,72 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 #[Small]
 final class ReplicaCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedCommands')]
+    public function testExecuteRefusesExplicitTableLocksBeforeReplicationState(string $version, string $table, string $mode, string $sql): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query($table);
+        $session->query('LOCK TABLES t ' . $mode);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1192);
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, string}>
+     */
+    public static function providerLockedCommands(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $replica = str_starts_with($version, '5.') ? 'SLAVE' : 'REPLICA';
+            $commands = ['STOP ' . $replica, 'STOP ' . $replica . ' IO_THREAD', 'STOP ' . $replica . ' SQL_THREAD'];
+            if ($version !== '5.6.51') {
+                $commands[] = "STOP $replica FOR CHANNEL 'missing'";
+                $commands[] = 'START GROUP_REPLICATION';
+                $commands[] = 'STOP GROUP_REPLICATION';
+            }
+            if (!str_starts_with($version, '5.')) {
+                $commands[] = version_compare($version, '8.4.0', '<') ? 'RESET MASTER' : 'RESET BINARY LOGS AND GTIDS';
+            }
+            foreach (['persistent' => 'CREATE TABLE t(id INT)', 'temporary' => 'CREATE TEMPORARY TABLE t(id INT)'] as $kind => $table) {
+                foreach (['READ', 'WRITE'] as $mode) {
+                    foreach ($commands as $sql) {
+                        yield $version . '/' . $kind . '/' . $mode . '/' . $sql => [$version, $table, $mode, $sql];
+                    }
+                }
+            }
+        }
+    }
+
+    public function testExecuteStopsTheReplicaAfterCommittingAnOpenTransaction(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=1');
+        $session->query('START REPLICA SQL_THREAD');
+        $session->query('START TRANSACTION');
+        $session->query('STOP REPLICA');
+
+        self::assertFalse($session->transaction->open);
+        self::assertFalse($session->instance->registry->replication->applying);
+    }
+
+    public function testExecuteDoesNotStopTheApplierWhenTableLocksRefuseTheCommand(): void
+    {
+        $session = (new Instance(databases: ['test']))->connect(database: 'test');
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_CONNECT_RETRY=1');
+        $session->query('START REPLICA SQL_THREAD');
+        $session->query('CREATE TABLE t(id INT)');
+        $session->query('LOCK TABLES t WRITE');
+        try {
+            $session->query('STOP REPLICA SQL_THREAD');
+            self::fail('Explicit table locks must prevent stopping the applier.');
+        } catch (SqlError $error) {
+            self::assertSame(1192, $error->getCode());
+        }
+        self::assertTrue($session->instance->registry->replication->applying);
+    }
+
     public function testStartChannelRequiresAHostForTheReceiverSynonym(): void
     {
         $session = (new Instance())->connect();

@@ -49,10 +49,29 @@ final class StopReplicaProperties extends TestCase
     }
 
     /**
+     * Executes a generated stop request against its initialized, running channel.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(StopReplicaGenerator::withPrerequisites($release))->withMaxSize(10)->then(static function (array $statements) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), ['server_id' => 1], databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            foreach ($statements as $statement) {
+                $execution->statement($statement);
+            }
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach ([GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910] as $release) {
+            yield $release->value => [$release];
+        }
     }
 }

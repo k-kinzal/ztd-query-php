@@ -49,7 +49,10 @@ use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
  * a source host. MySQL 5.7 checks its default applier even without a host. RESET
  * BINARY LOGS AND GTIDS deletes every binary log file and starts again from the number TO names,
  * 1 by default. Group replication is not configured, and its statements refuse an open
- * transaction (verified on a live 8.4 server). MySQL 5.6 refuses RESET MASTER when log_bin is
+ * transaction or explicit table locks. STOP REPLICA also refuses explicit table locks before
+ * looking up channels or checking legacy replica configuration. Modern binary-log resets
+ * refuse those locks before changing any logs (verified on MySQL 5.6, 5.7, 8.0 and 8.4).
+ * MySQL 5.6 refuses RESET MASTER when log_bin is
  * off (ER_FLUSH_MASTER_BINLOG_CLOSED; verified on a live 5.6.51 server).
  * A successful reset with binary logging enabled contributes one Flush_commands event per statement, even
  * when RESET MASTER is repeated or a later replica reset fails (verified on MySQL 8.0.44).
@@ -81,9 +84,12 @@ final class ReplicaCommand implements Command
     {
         assert($operation instanceof MySqlStatement);
         $statement = $operation;
+        if ($statement instanceof StopReplica && $session->locks !== []) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof StartGroupReplication || $statement instanceof StopGroupReplication) {
-            throw $session->transaction->open ? StatementError::LockedOrActiveTransaction->error() : AdministrationError::GroupReplicationNotConfigured->error();
+            throw $session->transaction->open || $session->locks !== [] ? StatementError::LockedOrActiveTransaction->error() : AdministrationError::GroupReplicationNotConfigured->error();
         }
         $session->transaction->commit();
         if ($statement instanceof StartReplica) {
@@ -145,6 +151,9 @@ final class ReplicaCommand implements Command
     {
         $registry = $session->instance->registry;
         foreach ($statement->effectiveTargets() as $target) {
+            if ($target instanceof ResetBinaryLogs && !$session->settings()->legacy() && $session->locks !== []) {
+                throw StatementError::LockedOrActiveTransaction->error();
+            }
             if ($target instanceof ResetBinaryLogs && $session->settings()->release() === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 throw AdministrationError::BinlogClosed->error('RESET MASTER');
             }
