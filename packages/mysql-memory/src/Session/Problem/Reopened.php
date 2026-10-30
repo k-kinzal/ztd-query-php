@@ -41,65 +41,25 @@ final class Reopened
         }
         $seen = [];
         $walker = new Walker();
-        foreach ([...$walker->find($statement, WriteTarget::class), ...$this->reads($statement, $facts)] as $reference) {
+        foreach ([...$walker->find($statement, WriteTarget::class), ...(new \MySqlMemory\Session\Access\OpenedTables())->references($statement)] as $reference) {
             $table = $this->temporary($reference, $session);
             if ($table === null) {
                 continue;
             }
             $id = spl_object_id($table);
             if (isset($seen[$id])) {
-                $name = $session->settings()->legacy() && $session->program?->contained === true ? ($reference->alias->value ?? $reference->name->name->value) : $seen[$id];
+                $name = $session->settings()->legacy() && $session->program?->contained === true ? ($reference->alias()->value ?? $reference->name()->name->value) : $seen[$id];
                 throw SchemaError::CantReopenTable->error($name);
             }
-            $seen[$id] = $reference->alias->value ?? $reference->name->name->value;
+            $seen[$id] = $reference->alias()->value ?? $reference->name()->name->value;
         }
-    }
-
-    /**
-     * Visits FROM sources before scalar subqueries and expands each resolved CTE use.
-     * Unused definitions are skipped; recursive self references do not reopen the base input.
-     *
-     * @param array<int, true> $active The common tables already expanding on this branch
-     *
-     * @return list<TableReference>
-     */
-    public function reads(Node $statement, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, array $active = []): array
-    {
-        if ($statement instanceof TableReference) {
-            $resolution = $statement->hasBinding() ? $statement->relationInformation()->table : null;
-            if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable && $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression) {
-                $id = spl_object_id($resolution->definition);
-                return isset($active[$id]) ? [] : $this->reads($resolution->definition->query, $facts, $active + [$id => true]);
-            }
-            return [$statement];
-        }
-        $properties = get_object_vars($statement);
-        unset($properties['with']);
-        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) {
-            $properties = ['from' => $statement->from] + $properties;
-        } elseif ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
-            $properties = ['body' => $statement->body] + $properties;
-        } elseif ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
-            $properties = ['left' => $statement->left, 'right' => $statement->right] + $properties;
-        }
-        $references = [];
-        $pending = array_reverse(array_values($properties));
-        while ($pending !== []) {
-            $node = array_pop($pending);
-            if (is_array($node)) {
-                array_push($pending, ...array_reverse(array_values($node)));
-            } elseif ($node instanceof Node) {
-                array_push($references, ...$this->reads($node, $facts, $active));
-            }
-        }
-        return $references;
     }
 
     /**
      * Answers the temporary table a reference names, or null.
      */
-    public function temporary(TableReference|WriteTarget $reference, Session $session): ?StoredTable
+    public function temporary(TableReference|WriteTarget|\SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable $reference, Session $session): ?StoredTable
     {
-        return $session->temporaries->table($reference->name->schema->value ?? $session->variables->database, $reference->name->name->value);
+        return $session->temporaries->table($reference->name()->schema->value ?? $session->variables->database, $reference->name()->name->value);
     }
 }

@@ -14,12 +14,9 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
-use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Checks that a query or a data change uses only the tables LOCK TABLES locked, by the names it locked them under.
@@ -47,13 +44,40 @@ final class Locks
             && !$statement instanceof Update && !$statement instanceof Delete && !$statement instanceof MultipleDelete) {
             return;
         }
-        $common = array_map(static fn (CommonTableExpression $table): string => $table->name->value, (new Walker())->find($statement, CommonTableExpression::class));
-        $written = $this->written($operation);
-        foreach ((new Walker())->find($statement, TableReference::class) as $reference) {
-            $this->allowed($session, $reference->name, $reference->alias->value ?? $reference->name->name->value, $common, in_array($reference, $written, true));
+        foreach ($this->written($operation) as $reference) {
+            $this->allowed($session, $reference->name, $reference->alias->value ?? $reference->name->name->value, [], true);
         }
         foreach ((new Walker())->find($statement, WriteTarget::class) as $target) {
-            $this->allowed($session, $target->name, $target->alias->value ?? $target->name->name->value, $common, true);
+            $this->allowed($session, $target->name, $target->alias->value ?? $target->name->name->value, [], true);
+        }
+    }
+
+    /**
+     * Requires a separate explicit lock for every opened occurrence before name resolution.
+     * Resolved common-table uses expand their inputs; unused definitions stay unopened.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an occurrence lacks its own lock
+     */
+    public function opened(\SqlSemantics\Statement\Node $statement, Session $session): void
+    {
+        if ($session->locks === []) {
+            return;
+        }
+        $seen = [];
+        $references = [...(new Walker())->find($statement, WriteTarget::class), ...(new \MySqlMemory\Session\Access\OpenedTables())->references($statement)];
+        foreach ($references as $reference) {
+            $name = $reference->name();
+            $schema = $name->schema->value ?? $session->variables->database;
+            if ($session->temporaries->table($schema, $name->name->value) !== null) {
+                continue;
+            }
+            $used = $reference->alias()->value ?? $name->name->value;
+            $this->allowed($session, $name, $used, [], false);
+            $key = $schema . "\0" . $name->name->value . "\0" . strtolower($used);
+            if (isset($seen[$key])) {
+                throw StatementError::TableNotLocked->error($used);
+            }
+            $seen[$key] = true;
         }
     }
 

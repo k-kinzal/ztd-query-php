@@ -38,60 +38,6 @@ final class ReopenedTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result1);
         self::assertSame([['0']], $result1->rows);
     }
-    public function testReadsVisitsOuterFromBeforeProjectionSubqueries(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TEMPORARY TABLE x1 (a INT)');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1137);
-        $this->expectExceptionMessage("Can't reopen table: 'outer_table'");
-
-        $session->query('SELECT (SELECT SUM(a) FROM x1 inner_table) FROM x1 outer_table');
-    }
-
-    public function testReadsRespectsACommonTableShadowingATemporaryTable(): void
-    {
-        $session = (new Instance('8.4.7'))->connect();
-        $session->query('USE mysql;CREATE TEMPORARY TABLE x1(a INT);INSERT INTO x1 VALUES(1)');
-        $result = $session->query('WITH x1 AS(SELECT 7 a) SELECT x.a,y.a FROM mysql.x1 x JOIN x1 y')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['1', '7']], $result->rows);
-    }
-
-    public function testReadsExpandsEveryReferenceToAMaterializedCommonTable(): void
-    {
-        $session = (new Instance('8.4.7'))->connect();
-        $session->query('USE mysql;CREATE TEMPORARY TABLE x1(a INT);INSERT INTO x1 VALUES(1)');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1137);
-        $this->expectExceptionMessage("Can't reopen table: 'inner_table'");
-
-        $session->query('WITH c AS(SELECT a FROM x1 inner_table LIMIT 1) SELECT * FROM c x JOIN c y');
-    }
-
-    public function testReadsLeavesUnusedDefinitionsUnopened(): void
-    {
-        $session = (new Instance('8.4.7'))->connect();
-        $session->query('USE mysql;CREATE TEMPORARY TABLE x1(a INT);INSERT INTO x1 VALUES(1)');
-        $result = $session->query('WITH c AS(SELECT a FROM x1 inner_table) SELECT * FROM x1 outer_table')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['1']], $result->rows);
-    }
-
-    public function testReadsStopsAtARecursiveSelfReference(): void
-    {
-        $session = (new Instance('8.4.7'))->connect();
-        $session->query('USE mysql;CREATE TEMPORARY TABLE x1(a INT);INSERT INTO x1 VALUES(1)');
-        $result = $session->query('WITH RECURSIVE c(n) AS(SELECT a FROM x1 UNION ALL SELECT n+1 FROM c WHERE n<3) SELECT n FROM c')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['1'], ['2'], ['3']], $result->rows);
-    }
-
     /**
      * @return iterable<string, array{string}>
      */

@@ -48,6 +48,46 @@ final class OpenedTables
     }
 
     /**
+     * Visits FROM sources before scalar subqueries and expands each resolved CTE use.
+     * Unused definitions are skipped; recursive self references do not reopen the base input.
+     *
+     * @param array<int, true> $active The common tables already expanding on this branch
+     *
+     * @return list<TableReference|ExplicitTable>
+     */
+    public function references(Node $statement, array $active = []): array
+    {
+        if ($statement instanceof TableReference || $statement instanceof ExplicitTable) {
+            $resolution = $statement->hasBinding() ? $statement->relationInformation()->table : null;
+            if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable && $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression) {
+                $id = spl_object_id($resolution->definition);
+                return isset($active[$id]) ? [] : $this->references($resolution->definition->query, $active + [$id => true]);
+            }
+            return [$statement];
+        }
+        $properties = get_object_vars($statement);
+        unset($properties['with']);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) {
+            $properties = ['from' => $statement->from] + $properties;
+        } elseif ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
+            $properties = ['body' => $statement->body] + $properties;
+        } elseif ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
+            $properties = ['left' => $statement->left, 'right' => $statement->right] + $properties;
+        }
+        $references = [];
+        $pending = array_reverse(array_values($properties));
+        while ($pending !== []) {
+            $node = array_pop($pending);
+            if (is_array($node)) {
+                array_push($pending, ...array_reverse(array_values($node)));
+            } elseif ($node instanceof Node) {
+                array_push($references, ...$this->references($node, $active));
+            }
+        }
+        return $references;
+    }
+
+    /**
      * Opens a stored base table, leaving views and temporary tables out of the cache.
      */
     public function open(string $schema, string $name, Session $session, bool $write = false): void

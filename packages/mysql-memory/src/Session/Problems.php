@@ -282,6 +282,7 @@ final class Problems
     {
         $statement = $operation instanceof QueryPreparation || $operation instanceof Resolution\IndexPreparation ? $operation->statement : $operation;
         $information = $operation instanceof QueryPreparation || $operation instanceof Resolution\IndexPreparation ? $operation->facts : $operation->statementInformation();
+        (new \MySqlMemory\Command\Access\Locks())->opened($statement, $session);
         (new OpenedTables())->prepare($this->reached($statement), $information, $session);
         $missing = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof MissingTable));
         $read = [];
