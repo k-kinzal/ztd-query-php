@@ -57,19 +57,17 @@ final class DatabaseCommand implements Command
 
             return new Completion();
         }
-        if ($statement instanceof CreateDatabase) {
+        if ($statement instanceof CreateDatabase || $statement instanceof DropDatabase) {
             $name = $statement->name->value;
-            if ($dictionary->schema($name) !== null) {
-                if (!$statement->ifNotExists) {
-                    throw SchemaError::DatabaseExists->error($name);
-                }
-                $context->diagnostics->note(SchemaError::DatabaseExists, SchemaError::DatabaseExists->message($name));
-
-                return new Completion(1, 0, 1);
+            if (strtolower($name) === 'information_schema' || (strtolower($name) === 'performance_schema' && !$session->settings()->legacy())) {
+                throw \MySqlMemory\Error\Family\AccountError::DatabaseAccessDenied->error($session->user, $session->variables->definer->host, $name);
             }
-            $dictionary->schemas[$name] = new Schema($name, $this->collation($statement, $session), encryption: $this->encryption($statement, $session));
-
-            return new Completion(1);
+            if ($session->locks !== []) {
+                throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
+            }
+        }
+        if ($statement instanceof CreateDatabase) {
+            return $this->create($statement, $session, $context);
         }
         assert($statement instanceof DropDatabase);
         $name = $statement->name->value;
@@ -96,6 +94,26 @@ final class DatabaseCommand implements Command
         }
 
         return new Completion(count($schema->tables));
+    }
+
+    /**
+     * Creates a database after access checks, retaining conditional-existence notes.
+     */
+    public function create(CreateDatabase $statement, Session $session, Context $context): Completion
+    {
+        $dictionary = $session->instance->dictionary;
+        $name = $statement->name->value;
+        if ($dictionary->schema($name) !== null) {
+            if (!$statement->ifNotExists) {
+                throw SchemaError::DatabaseExists->error($name);
+            }
+            $context->diagnostics->note(SchemaError::DatabaseExists, SchemaError::DatabaseExists->message($name));
+
+            return new Completion(1, 0, 1);
+        }
+        $dictionary->schemas[$name] = new Schema($name, $this->collation($statement, $session), encryption: $this->encryption($statement, $session));
+
+        return new Completion(1);
     }
 
     /**

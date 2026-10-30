@@ -10,6 +10,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
@@ -18,6 +19,38 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 #[Small]
 final class DatabaseCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedDatabases')]
+    public function testExecuteChecksDatabaseLocksBeforeExistence(string $version, string $sql, int $code): void
+    {
+        $session = (new Instance($version, databases: ['test', 'existing']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); LOCK TABLES t READ');
+        $schemas = array_keys($session->instance->dictionary->schemas);
+        $replies = $session->run($sql);
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame($code, $replies[0]->getCode());
+        self::assertSame($schemas, array_keys($session->instance->dictionary->schemas));
+        self::assertSame('test', $session->variables->database);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerLockedDatabases(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['CREATE DATABASE existing', 'CREATE DATABASE IF NOT EXISTS existing', 'CREATE DATABASE absent', 'DROP DATABASE existing', 'DROP DATABASE absent', 'DROP DATABASE IF EXISTS absent'] as $sql) {
+                yield $version . '/' . $sql => [$version, $sql, 1192];
+            }
+            foreach (['CREATE DATABASE performance_schema', 'DROP DATABASE performance_schema'] as $sql) {
+                yield $version . '/' . $sql => [$version, $sql, version_compare($version, '8.0', '<') ? 1192 : 1044];
+            }
+            foreach (['CREATE DATABASE information_schema', 'DROP DATABASE information_schema'] as $sql) {
+                yield $version . '/' . $sql => [$version, $sql, 1044];
+            }
+        }
+    }
+
     public function testExecuteBoundsEncryptionDiagnosticText(): void
     {
         $session = (new Instance())->connect();
@@ -32,7 +65,7 @@ final class DatabaseCommandTest extends TestCase
         self::assertTrue((new DatabaseCommand())->clearsDiagnostics());
     }
 
-    public function testExecuteCreatesADatabaseWithOneAffectedRow(): void
+    public function testCreateAddsADatabaseWithOneAffectedRow(): void
     {
         $session = (new Instance())->connect();
 

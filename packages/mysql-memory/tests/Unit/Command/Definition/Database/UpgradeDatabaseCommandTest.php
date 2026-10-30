@@ -30,6 +30,28 @@ use Tests\Generator\Embedding;
 #[Medium]
 final class UpgradeDatabaseCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedUpgrades')]
+    public function testExecuteChecksLocksAfterTheLegacyNameCondition(string $version, string $name, int $code): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); LOCK TABLES t READ');
+
+        $this->expectExceptionCode($code);
+        $session->query('ALTER DATABASE `' . $name . '` UPGRADE DATA DIRECTORY NAME');
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerLockedUpgrades(): iterable
+    {
+        foreach (['5.6.51', '5.7.44'] as $version) {
+            foreach (['#mysql50#absent' => 1192, 'ordinary' => 1221, '#mysql50#' => 1102] as $name => $code) {
+                yield $version . '/' . $name => [$version, $name, $code];
+            }
+        }
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

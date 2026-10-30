@@ -11,6 +11,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -22,6 +23,56 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 #[Small]
 final class AlterDatabaseCommandTest extends TestCase
 {
+    public function testExecuteDoesNotCountRetainedLegacyConditionsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['test']))->connect(database: 'test');
+        $session->run('ALTER DATABASE absent COLLATE latin1_bin');
+        $previous = $session->diagnostics->conditions;
+
+        $replies = $session->query('ALTER DATABASE test COLLATE latin1_bin');
+
+        self::assertInstanceOf(Completion::class, $replies[0]);
+        self::assertSame(0, $replies[0]->warnings);
+        self::assertSame($previous, $session->diagnostics->conditions);
+    }
+
+    #[DataProvider('providerLockedDatabases')]
+    public function testSchemaChecksLocksAfterOptionsAndNames(string $version, ?string $database, string $sql, int $code): void
+    {
+        $session = (new Instance($version, databases: ['pbt', 'existing']))->connect(database: $database);
+        $session->query('CREATE TABLE pbt.t (id INT); LOCK TABLES pbt.t WRITE');
+        $schema = $session->instance->dictionary->schema('existing');
+        self::assertNotNull($schema);
+        $collation = $schema->collation;
+        $replies = $session->run($sql);
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame($code, $replies[0]->getCode());
+        self::assertSame($collation, $schema->collation);
+        self::assertSame($database ?? '', $session->variables->database);
+    }
+
+    /**
+     * @return iterable<string, array{string, string|null, string, int}>
+     */
+    public static function providerLockedDatabases(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach ([
+                ['pbt', 'ALTER DATABASE existing COLLATE latin1_bin', 1192],
+                ['pbt', 'ALTER DATABASE absent COLLATE latin1_bin', 1192],
+                ['pbt', 'ALTER DATABASE absent CHARACTER SET missing', 1115],
+                ['pbt', 'ALTER DATABASE existing CHARACTER SET latin1 COLLATE utf8mb4_bin', 1253],
+                ['pbt', 'ALTER DATABASE information_schema COLLATE latin1_bin', 1044],
+                ['pbt', 'ALTER DATABASE `` COLLATE latin1_bin', 1102],
+                [null, 'ALTER DATABASE COLLATE latin1_bin', 1046],
+                [null, 'ALTER DATABASE CHARACTER SET missing', 1115],
+            ] as [$database, $sql, $code]) {
+                yield $version . '/' . $sql => [$version, $database, $sql, $code];
+            }
+        }
+    }
+
     public function testCollationBoundsTheDiagnosticNameWithoutChangingItsValue(): void
     {
         $session = (new Instance())->connect();

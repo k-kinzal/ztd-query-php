@@ -31,6 +31,15 @@ final class AlterDatabaseGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
+            if ($release->database() === 'mysql') {
+                $names = new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::oneOf(
+                    Generators::elements(['pbt', 'information_schema', 'performance_schema', '', 'db space', '名']),
+                    Generators::map(static fn (int $length): string => str_repeat('d', $length), Generators::choose(1, 70)),
+                    Generators::map(static fn (int $value): string => 'database_' . $value, Generators::choose(0, 10000))
+                ), new \Tests\Generator\Semantics\Statement\Identifier\NameQuoteGenerator(\SqlSemantics\Statement\Identifier\NameQuote::Backtick));
+                $forms[] = self::operands(Generators::oneOf(Generators::constant(null), $names), DatabaseOptionGenerator::sequence($release, true));
+            }
+
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;

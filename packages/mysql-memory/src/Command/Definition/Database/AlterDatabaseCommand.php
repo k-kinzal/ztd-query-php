@@ -78,7 +78,7 @@ final class AlterDatabaseCommand implements Command
             }
         }
 
-        return new Completion(1, 0, $context->diagnostics->raised());
+        return new Completion(1, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
     }
 
     /**
@@ -143,6 +143,9 @@ final class AlterDatabaseCommand implements Command
         }
         if (in_array(strtolower($name), ['information_schema', 'performance_schema'], true)) {
             throw AccountError::DatabaseAccessDenied->error($session->user, $session->variables->definer->host, $name);
+        }
+        if ($session->locks !== []) {
+            throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
         }
         $schema = $session->instance->dictionary->schema($name);
         if ($schema === null) {

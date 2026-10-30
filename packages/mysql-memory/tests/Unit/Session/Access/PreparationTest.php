@@ -14,6 +14,36 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDatabasePreparations')]
+    public function testConditionalRefusesDatabaseAlterationAfterItsOptions(string $version, string $sql, int $code): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect();
+        $session->query('CREATE TABLE test.t (id INT); LOCK TABLES test.t READ');
+        $this->expectExceptionCode($code);
+
+        $session->query("PREPARE p FROM '" . $sql . "'");
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerDatabasePreparations(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach ([
+                ['ALTER DATABASE test COLLATE latin1_bin', 1295],
+                ['ALTER DATABASE absent COLLATE latin1_bin', 1295],
+                ['ALTER DATABASE test CHARACTER SET missing', 1115],
+                ['ALTER DATABASE test CHARACTER SET latin1 COLLATE utf8mb4_bin', 1253],
+                ['ALTER DATABASE `` COLLATE latin1_bin', 1295],
+                ['ALTER DATABASE COLLATE latin1_bin', 1295],
+                ['ALTER DATABASE information_schema COLLATE latin1_bin', 1295],
+            ] as [$sql, $code]) {
+                yield $version . '/' . $sql => [$version, $sql, $code];
+            }
+        }
+    }
+
     public function testConditionalPreparesIndexOperandsWithoutOpeningTheTable(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

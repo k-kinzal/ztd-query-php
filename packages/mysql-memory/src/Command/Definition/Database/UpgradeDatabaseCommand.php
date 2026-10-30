@@ -58,6 +58,9 @@ final class UpgradeDatabaseCommand implements Command
         if ($condition !== null) {
             throw (new \MySqlMemory\Session\Problem\Errors())->error($condition, $session);
         }
+        if ($session->locks !== []) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         $source = $this->source($statement->identifier()->value, $session);
         $session->transaction->commit();
         $this->move($source, $session, $context, $connection);
