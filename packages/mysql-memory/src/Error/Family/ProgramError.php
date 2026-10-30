@@ -30,6 +30,8 @@ enum ProgramError: int implements ErrorCode
     case RecursiveCreate = 1303;
     case RoutineExists = 1304;
     case RoutineMissing = 1305;
+    case RoutineDropFailed = 1306;
+    case RoutineCreateFailed = 1307;
     case LabelMissing = 1308;
     case LabelRedefined = 1309;
     case EndLabelMismatch = 1310;
@@ -49,6 +51,7 @@ enum ProgramError: int implements ErrorCode
     case DuplicateVariable = 1331;
     case DuplicateCondition = 1332;
     case DuplicateCursor = 1333;
+    case RoutineAlterFailed = 1334;
     case FunctionStatement = 1336;
     case DeclarationAfterHandler = 1337;
     case CursorAfterHandler = 1338;
@@ -59,6 +62,7 @@ enum ProgramError: int implements ErrorCode
     case TriggerOnView = 1361;
     case TriggerRowChange = 1362;
     case TriggerRowMissing = 1363;
+    case RoutineRevokeFailed = 1405;
     case BadSqlState = 1407;
     case DuplicateHandler = 1413;
     case NotVariableArgument = 1414;

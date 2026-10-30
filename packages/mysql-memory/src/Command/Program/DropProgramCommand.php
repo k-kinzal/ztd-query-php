@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Program;
 
+use MySqlMemory\Command\Access\RoutineLocks;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Error\Family\ProgramError;
@@ -58,6 +59,7 @@ final class DropProgramCommand implements Command
         if ($statement->kind === ProgramKind::Event && $session->locks !== []) {
             throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
         }
+        (new RoutineLocks())->drop($statement, $session);
         $missing = $this->drop($statement, $session);
         if ($missing === null) {
             return new Completion();

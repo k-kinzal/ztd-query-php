@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Program;
 
+use MySqlMemory\Command\Access\RoutineLocks;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\ColumnText;
 use MySqlMemory\Dictionary\Routine;
@@ -86,9 +87,13 @@ final class RoutineCommand implements Command
         $function = $statement instanceof CreateFunction;
         $kind = $function ? 'FUNCTION' : 'PROCEDURE';
         $database = ProgramSource::database($statement->name->schema, $session);
-        ProgramSource::definer($statement->definer, $session, $context);
-        $key = strtolower($statement->name->name->value);
         $schema = $session->instance->dictionary->schema($database);
+        if ($schema === null && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            throw QueryError::BadDatabase->error($database);
+        }
+        ProgramSource::definer($statement->definer, $session, $context);
+        (new RoutineLocks())->create($statement, $session);
+        $key = strtolower($statement->name->name->value);
         if ($schema !== null && isset(self::routines($schema, $function)[$key])) {
             if (!$statement->ifNotExists) {
                 throw ProgramError::RoutineExists->error($kind, $statement->name->name->value);
@@ -111,7 +116,6 @@ final class RoutineCommand implements Command
             $schema->procedures[$key] = $routine;
         }
         $session->instance->dictionary->routineGeneration++;
-
         return new Completion(0, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
     }
 
@@ -171,6 +175,7 @@ final class RoutineCommand implements Command
     public function alter(AlterRoutine $statement, Session $session, ?float $instant = null): Reply
     {
         $database = ProgramSource::database($statement->name->schema, $session);
+        (new RoutineLocks())->alter($statement, $session);
         $function = $statement->kind === ProgramKind::Function;
         $schema = $session->instance->dictionary->schema($database);
         $routine = $schema === null ? null : (self::routines($schema, $function)[strtolower($statement->name->name->value)] ?? null);

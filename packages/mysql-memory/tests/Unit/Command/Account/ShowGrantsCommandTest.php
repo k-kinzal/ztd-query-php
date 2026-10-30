@@ -31,6 +31,19 @@ final class ShowGrantsCommandTest extends TestCase
         self::assertSame(['Grants for root@localhost', 4096, 3, 'GRANT PROXY ON ``@`` TO `root`@`localhost` WITH GRANT OPTION'], [$result->columns[0]->name, $result->columns[0]->length, count($result->rows), $result->rows[2][0]]);
     }
 
+    public function testExecuteRetainsLegacyConditionsWithoutCountingThemInTheReply(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE USER u');
+        $session->run('DROP FUNCTION missing_db.f');
+        $conditions = $session->diagnostics->conditions;
+        $result = $session->query('SHOW GRANTS FOR u')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(0, $result->warnings);
+        self::assertSame($conditions, $session->diagnostics->conditions);
+    }
+
     public function testExecuteAddsTheRolesUsingNames(): void
     {
         $session = (new Instance())->connect();
