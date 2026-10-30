@@ -10,6 +10,7 @@ use MySqlMemory\Account\Privileges;
 use MySqlMemory\Command\Account\RevokeCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -210,4 +211,17 @@ final class RevokeCommandTest extends TestCase
         self::assertSame([['GRANT USAGE ON *.* TO `a`@`named.host`'], ['GRANT SELECT ON `d`.* TO `a`@`named.host`']], $grants->rows);
     }
 
+
+    public function testExecuteDoesNotCountRetainedLegacyConditionsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE USER u; GRANT SELECT ON *.* TO u');
+        self::assertInstanceOf(SqlError::class, $session->run('SELECT * FROM absent')[0]);
+        $before = $session->diagnostics->conditions;
+        $reply = $session->query('REVOKE SELECT ON *.* FROM u')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertSame($before, $session->diagnostics->conditions);
+    }
 }

@@ -9,6 +9,7 @@ use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Account\GrantCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -194,4 +195,17 @@ final class GrantCommandTest extends TestCase
         self::assertStringContainsString("column 'HOST'", $conditions[3][2]);
     }
 
+
+    public function testExecuteDoesNotCountRetainedLegacyConditionsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE USER u');
+        self::assertInstanceOf(SqlError::class, $session->run('SELECT * FROM absent')[0]);
+        $before = $session->diagnostics->conditions;
+        $reply = $session->query('GRANT SELECT ON *.* TO u')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertSame($before, $session->diagnostics->conditions);
+    }
 }

@@ -88,7 +88,7 @@ final class AccountTablesTest extends TestCase
                 "REVOKE SELECT ON d.t FROM 'u'" => "Table 'tables_priv' was not locked with LOCK TABLES",
                 "GRANT EXECUTE ON FUNCTION d.f TO 'u'" => "Table 'procs_priv' was not locked with LOCK TABLES",
                 "REVOKE EXECUTE ON FUNCTION d.f FROM 'u'" => "Table 'procs_priv' was not locked with LOCK TABLES",
-                "GRANT EXECUTE ON FUNCTION d.absent TO 'u'" => 'FUNCTION absent does not exist',
+                "GRANT EXECUTE ON FUNCTION d.absent TO 'u'" => $version === '5.6.51' ? 'FUNCTION or PROCEDURE absent does not exist' : 'FUNCTION absent does not exist',
             ] as $sql => $message) {
                 yield $version . ':' . $sql => [$version, $sql, $message];
             }
@@ -109,5 +109,37 @@ final class AccountTablesTest extends TestCase
         $session = (new Instance(databases: ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(id INT); LOCK TABLE t WRITE');
         self::assertInstanceOf(Completion::class, $session->query('SET ROLE NONE')[0]);
+    }
+
+    #[DataProvider('providerGrantObjects')]
+    public function testPrivilegesValidatesGrantObjectsBeforeGrantTableLocks(string $version, string $locks, string $sql, int $code, string $message): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); CREATE USER u; LOCK TABLE ' . $locks);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        $this->expectExceptionMessage($message);
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, int, string}>
+     */
+    public static function providerGrantObjects(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['t READ', 't WRITE', 'mysql.user WRITE'] as $locks) {
+                foreach ([
+                    'GRANT DELETE ON absent TO u' => [1146, "Table 'd.absent' doesn't exist"],
+                    'GRANT DELETE ON missing_db.t TO u' => [1146, "Table 'missing_db.t' doesn't exist"],
+                    'GRANT PROCESS ON absent TO u' => [1144, 'Illegal GRANT/REVOKE command'],
+                    'GRANT EXECUTE ON FUNCTION absent TO u' => [1305, $version === '5.6.51' ? 'FUNCTION or PROCEDURE absent does not exist' : 'FUNCTION absent does not exist'],
+                    'GRANT SELECT(id) ON absent TO u' => [1100, "Table 'absent' was not locked"],
+                    'GRANT SELECT(absent) ON t TO u' => str_starts_with($locks, 't ') ? [1054, "Unknown column 'absent'"] : [1100, "Table 't' was not locked"],
+                ] as $sql => [$code, $message]) {
+                    yield $version . ':' . $locks . ':' . $sql => [$version, $locks, $sql, $code, $message];
+                }
+            }
+        }
     }
 }

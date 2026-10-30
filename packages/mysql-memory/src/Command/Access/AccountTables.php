@@ -14,7 +14,8 @@ use SqlSemantics\Statement\Statement;
  * Checks explicit locks on the grant tables an account operation opens internally.
  *
  * Modern account changes open every grant table before checking their WRITE
- * locks or looking up identities. Legacy operations open their required subset. Modern SHOW CREATE USER only reads mysql.user;
+ * locks or looking up identities. GRANT validates its privilege object first.
+ * Legacy operations open their required subset. Modern SHOW CREATE USER only reads mysql.user;
  * its legacy form, SHOW GRANTS and SET ROLE use the privilege cache. Observed on native
  * MySQL 5.6 through 9.1, including partial and complete grant-table lock lists.
  *
@@ -52,7 +53,7 @@ final class AccountTables
         ], true)) {
             return;
         }
-        if ($session->settings()->legacy() && ($statement instanceof MySql\Account\Privilege\GrantPrivileges || $statement instanceof MySql\Account\Privilege\RevokePrivileges)) {
+        if ($statement instanceof MySql\Account\Privilege\GrantPrivileges || ($session->settings()->legacy() && $statement instanceof MySql\Account\Privilege\RevokePrivileges)) {
             return;
         }
         $tables = $inspection ? ['user'] : self::LEGACY;
@@ -70,13 +71,17 @@ final class AccountTables
     }
 
     /**
-     * Checks the legacy grant tables after privilege-object validation.
+     * Checks grant tables after privilege-object validation.
      *
      * @throws \MySqlMemory\Error\SqlError When a required grant table lacks its lock
      */
     public function privileges(MySql\Account\Privilege\GrantPrivileges|MySql\Account\Privilege\RevokePrivileges $statement, Session $session): void
     {
-        if ($session->locks === [] || !$session->settings()->legacy()) {
+        if ($session->locks === []) {
+            return;
+        }
+        if (!$session->settings()->legacy()) {
+            (new Locks())->required($session, array_map(static fn (string $table): QualifiedName => new QualifiedName(new Name($table), new Name('mysql')), [...self::LEGACY, ...self::MODERN]), true);
             return;
         }
         $tables = match (true) {

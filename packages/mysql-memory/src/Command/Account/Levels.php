@@ -138,6 +138,9 @@ final class Levels
      */
     public function objects(MySqlStatement $operation, Session $session, array $privileges, array $target): void
     {
+        if ($session->locks !== [] && $target[0] === 'TABLE' && $this->read($privileges, $target[0])[1] !== []) {
+            (new \MySqlMemory\Command\Access\Locks())->allowed($session, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($target[2]), new \SqlSemantics\Statement\Identifier\Name($target[1])), $target[2], [], false);
+        }
         foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MissingTable) {
                 $database = $diagnostic->name->schema->value ?? $session->variables->database;
@@ -151,7 +154,7 @@ final class Levels
             $schema = $session->instance->dictionary->schema($target[1]);
             $routines = $target[0] === 'PROCEDURE' ? $schema->procedures ?? [] : $schema->functions ?? [];
             if (!isset($routines[mb_strtolower($target[2], 'UTF-8')])) {
-                throw ProgramError::RoutineMissing->error($target[0], $target[2]);
+                throw ProgramError::RoutineMissing->error($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? 'FUNCTION or PROCEDURE' : $target[0], $target[2]);
             }
         }
         $this->dynamic($privileges, $target, $session, false);
