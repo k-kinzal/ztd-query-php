@@ -118,6 +118,21 @@ final class Output
     }
 
     /**
+     * Writes a name reconstructed from decoded characters and typed quotation choices.
+     * The codec converts its characters to the output profile's character set.
+     *
+     * @return $this
+     */
+    public function spelledName(string $text): self
+    {
+        Check::invariant($text !== '', 'A spelled name is not empty.');
+        $this->add(PieceKind::Name, $this->codec->spelling($text));
+        $this->keywordName = false;
+
+        return $this;
+    }
+
+    /**
      * Spells decoded string bytes under the output profile's lexical settings.
      */
     public function quote(string $value): string

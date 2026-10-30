@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -37,13 +38,15 @@ final class AccountName implements Account
     /**
      * @param Name $user The user part
      * @param Name|null $host The host part, when written
-     * @param bool $userString Whether the user operand is written as a string
-     * @param bool $hostString Whether the host operand is written as a string
+     * @param Notation|null $userQuotation The string delimiter and escape choices of the user
+     * @param Notation|null $hostQuotation The string delimiter and escape choices of the host
      */
-    public function __construct(public readonly Name $user, public readonly ?Name $host = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $userString = false, public readonly bool $hostString = false)
+    public function __construct(public readonly Name $user, public readonly ?Name $host = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?Notation $userQuotation = null, public readonly ?Notation $hostQuotation = null)
     {
-        \SqlSemantics\Diagnostic\Check::input(!$userString || in_array($user->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true), 'A string account operand has no identifier delimiter.');
-        \SqlSemantics\Diagnostic\Check::input(!$hostString || ($host !== null && in_array($host->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true)), 'A string host operand is present and has no identifier delimiter.');
+        \SqlSemantics\Diagnostic\Check::input($userQuotation === null || in_array($user->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true), 'A string account operand has no identifier delimiter.');
+        \SqlSemantics\Diagnostic\Check::input($hostQuotation === null || ($host !== null && in_array($host->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true)), 'A string host operand is present and has no identifier delimiter.');
+        $userQuotation?->validate($user->value);
+        $hostQuotation?->validate($host->value ?? '');
     }
 
     /**
@@ -88,15 +91,15 @@ final class AccountName implements Account
      */
     public function render(Output $out): void
     {
-        if ($this->userString) {
-            $out->spelled($out->quote($this->user->value));
+        if ($this->userQuotation !== null) {
+            $out->spelledName($this->userQuotation->spell($this->user->value));
         } else {
             $out->name($this->user, NameUse::Label);
         }
         if ($this->host !== null) {
             $out->glue()->symbol('@')->glue();
-            if ($this->hostString) {
-                $out->spelled($out->quote($this->host->value));
+            if ($this->hostQuotation !== null) {
+                $out->spelledName($this->hostQuotation->spell($this->host->value));
             } else {
                 $out->name($this->host, NameUse::Label);
             }

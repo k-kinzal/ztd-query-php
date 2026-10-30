@@ -9,8 +9,10 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Identifier\Name;
+use Tests\Generator\MySql\Statement\Literal\Quoted\NotationGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
@@ -31,7 +33,7 @@ final class AccountNameGenerator implements ErisGenerator
     {
         $users ??= Generators::map(static fn (int $number): string => 'u' . $number, Generators::choose(0, 999999));
         $hosts ??= Generators::oneOf(Generators::constant(null), new NameGenerator(Generators::elements('%', 'localhost', '10.0.%'), Generators::constant(null)));
-        $this->delegate = Generators::bind(new NameGenerator($users, Generators::constant(null)), static fn (Name $user): ErisGenerator => Generators::map(static fn (?Name $host): AccountName => new AccountName($user, $host), $hosts));
+        $this->delegate = self::fromOperands(new NameGenerator($users, Generators::constant(null)), $hosts);
     }
 
     /**
@@ -56,13 +58,16 @@ final class AccountNameGenerator implements ErisGenerator
      *
      * @param ErisGenerator<Name> $user The generated semantic operand
      * @param ErisGenerator<Name|null> $host The generated semantic operand
-     * @param ErisGenerator<bool>|null $userString Generated string notation for an unquoted decoded name
-     * @param ErisGenerator<bool>|null $hostString Generated string notation for an existing host
      * @return ErisGenerator<AccountName>
      */
-    public static function fromOperands(ErisGenerator $user, ErisGenerator $host, ?ErisGenerator $userString = null, ?ErisGenerator $hostString = null): ErisGenerator
+    public static function fromOperands(ErisGenerator $user, ErisGenerator $host): ErisGenerator
     {
-        return Generators::map(static fn (array $parts): AccountName => new AccountName(user: $parts[0], host: $parts[1], userString: $parts[0]->quote === null && $parts[2], hostString: $parts[1] !== null && $parts[1]->quote === null && $parts[3]), Generators::tuple($user, $host, $userString ?? Generators::bool(), $hostString ?? Generators::bool()));
+        return Generators::bind(Generators::tuple($user, $host), static function (array $parts): ErisGenerator {
+            [$user, $host] = $parts;
+            $quotation = static fn (?Name $name): ErisGenerator => $name === null || !in_array($name->quote, [null, \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote], true) ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), NotationGenerator::forValue($name->value));
+
+            return Generators::map(static fn (array $notations): AccountName => new AccountName($user, $host, userQuotation: $notations[0], hostQuotation: $notations[1]), Generators::tuple($quotation($user), $quotation($host)));
+        });
     }
 
     /**
@@ -81,7 +86,7 @@ final class AccountNameGenerator implements ErisGenerator
                 'host' => str_repeat($unit, intdiv($hosts, strlen($unit)) + $excess),
                 default => 'bad@host',
             };
-            $account = new AccountName(new Name($user), $host === null ? null : new Name($host), userString: $quoted, hostString: $host !== null && $quoted);
+            $account = new AccountName(new Name($user), $host === null ? null : new Name($host), userQuotation: $quoted ? new Notation() : null, hostQuotation: $host !== null && $quoted ? new Notation() : null);
             return [$account, $kind === 'separator' ? 1105 : 1470];
         }, Generators::tuple(Generators::elements('user', 'host', 'separator'), Generators::choose(1, 9), Generators::elements('u', '猫'), Generators::bool()));
     }

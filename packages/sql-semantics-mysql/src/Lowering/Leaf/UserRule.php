@@ -67,8 +67,8 @@ final class UserRule
         return new AccountName(
             $user,
             $host,
-            userString: $form !== null && in_array($this->lowering->names->identifierForm($form->node(0))->node->name, ['TEXT_STRING_sys', 'TEXT_STRING_validated'], true),
-            hostString: $form !== null && $host !== null && in_array($this->lowering->names->identifierForm($form->node(2))->node->name, ['TEXT_STRING_sys', 'TEXT_STRING_validated'], true),
+            userQuotation: $form === null ? null : $this->lowering->names->quotation($form->node(0)),
+            hostQuotation: $form === null || $host === null ? null : $this->lowering->names->quotation($form->node(2)),
         );
     }
 

@@ -57,6 +57,15 @@ final class OutputTest extends TestCase
         self::assertSame([], $output->pieces());
     }
 
+    public function testSpelledNameConvertsCharactersWithoutChangingStringNotation(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1')));
+        $output->spelledName("'é\\n\n'");
+
+        self::assertSame("'\xe9\\n\n'", (new Lexical())->join($output->pieces()));
+        self::assertSame(PieceKind::Name, $output->pieces()[0]->kind);
+    }
+
     public function testQuoteRequiresAStringCodec(): void
     {
         $output = new Output(new Codec());

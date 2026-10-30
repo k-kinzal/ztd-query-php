@@ -28,6 +28,19 @@ use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 #[Medium]
 final class NameRuleTest extends TestCase
 {
+    public function testQuotationDistinguishesStringEscapesFromIdentifierDelimiters(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $parser = $platform->parser($profile);
+        $quoted = $parser->parse("DROP USER 'a\n\\n'")->find('ident_or_text')[0];
+        $bare = $parser->parse('DROP USER bob')->find('ident_or_text')[0];
+
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation(escapes: [2 => \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Escape::Newline]), $lowering->names->quotation($quoted));
+        self::assertNull($lowering->names->quotation($bare));
+    }
+
     public function testQualifiedNodesKeepsEachTableOperandInOrder(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');

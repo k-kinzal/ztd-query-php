@@ -74,7 +74,7 @@ final class DropRoleGenerator implements ErisGenerator
             roles: Generators::tuple(
                 \Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
                     user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
+                        value: Generators::map(static fn (array $parts): string => $parts[0] . $parts[1], Generators::tuple(Generators::elements('name_', "\n\x01", "role'", 'role"', '猫', 'role\\'), Generators::choose(0, 8))),
                         quote: Generators::constant(null)
                     ),
                     host: Generators::constant(null)

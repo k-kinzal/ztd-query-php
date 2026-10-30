@@ -1964,10 +1964,10 @@
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AccountName": {
         "host": "?SqlSemantics\\Statement\\Identifier\\Name",
-        "hostString": "bool",
+        "hostQuotation": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Quoted\\Notation",
         "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
         "user": "SqlSemantics\\Statement\\Identifier\\Name",
-        "userString": "bool"
+        "userQuotation": "?SqlSemantics\\Platform\\MySql\\Statement\\Literal\\Quoted\\Notation"
     },
     "SqlSemantics\\Platform\\MySql\\Statement\\Name\\AliasMark": {
         "name": "string"

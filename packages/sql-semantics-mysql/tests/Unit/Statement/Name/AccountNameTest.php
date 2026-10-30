@@ -13,6 +13,7 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
@@ -61,7 +62,7 @@ final class AccountNameTest extends TestCase
     public function testRenderRetainsStringAccountOperands(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
-        (new AccountName(new Name('bob'), new Name('localhost'), userString: true, hostString: true))->render($out);
+        (new AccountName(new Name('bob'), new Name('localhost'), userQuotation: new Notation(), hostQuotation: new Notation()))->render($out);
 
         self::assertSame("'bob'@'localhost'", (new Lexical())->join($out->pieces()));
     }
@@ -69,7 +70,7 @@ final class AccountNameTest extends TestCase
     public function testAccountNameRejectsAStringHostWithoutAnOperand(): void
     {
         $this->expectExceptionMessage('A string host operand is present and has no identifier delimiter.');
-        new AccountName(new Name('bob'), hostString: true);
+        new AccountName(new Name('bob'), hostQuotation: new Notation());
     }
 
     public function testRenderQuotesAPartThatNeedsQuoting(): void
@@ -79,6 +80,13 @@ final class AccountNameTest extends TestCase
 
         self::assertSame('`bo b`@`10.0.%`', (new Lexical())->join($out->pieces()));
     }
+
+    public function testAccountNameRejectsEscapesThatDoNotDecodeToItsOperand(): void
+    {
+        $this->expectExceptionMessage('An escape must decode to the string bytes at its offset.');
+        new AccountName(new Name('bob'), userQuotation: new Notation(escapes: [0 => \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Escape::Newline]));
+    }
+
 
     public function testRenderOmitsAnAbsentHost(): void
     {

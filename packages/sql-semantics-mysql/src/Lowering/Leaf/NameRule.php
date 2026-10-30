@@ -162,6 +162,20 @@ final class NameRule
     }
 
     /**
+     * Retains string notation at decoded name offsets, including client encoding conversion.
+     */
+    public function quotation(Node $name): ?\SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation
+    {
+        $form = $this->identifierForm($name);
+        if (!in_array($form->node->name, ['TEXT_STRING_sys', 'TEXT_STRING_validated'], true)) {
+            return null;
+        }
+        $token = (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($form->node->tokens()[0]->text, $this->lowering->inputClient);
+
+        return $this->lowering->literals->quotation($token);
+    }
+
+    /**
      * Follows unit productions to the identifier's token-bearing form.
      */
     public function identifierForm(Node $name): Form
