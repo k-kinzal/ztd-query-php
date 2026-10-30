@@ -75,6 +75,7 @@ enum AdministrationError: int implements ErrorCode
     case ReplicaNotInitialized = 1794;
     case ActiveLogNotPurged = 1868;
     case ReplicaConnectionMetadata = 1871;
+    case LegacyApplierRunning = 3017;
     case SourcePasswordTooLong = 3056;
     case UserLockWrongName = 3057;
     case WildTableFilterPattern = 3067;
@@ -86,6 +87,7 @@ enum AdministrationError: int implements ErrorCode
     case ReplicaThreadsStopped = 3084;
     case ReplicaApplierRunning = 3085;
     case GroupReplicationNotConfigured = 3092;
+    case ReplicaChannelOperation = 3139;
     case KeyringMissing = 3185;
     case ComponentSchemeMissing = 3527;
     case ComponentSchemeUnserviced = 3528;

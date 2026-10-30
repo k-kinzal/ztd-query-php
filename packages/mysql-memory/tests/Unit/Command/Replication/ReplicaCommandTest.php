@@ -10,6 +10,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Registry\Registry;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -19,6 +20,71 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 #[Small]
 final class ReplicaCommandTest extends TestCase
 {
+    #[DataProvider('providerFilterRunning')]
+    public function testFilterRefusesTheRunningApplierOfAConfiguredChannel(string $version, string $setup, string $filter, int $code): void
+    {
+        $session = (new Instance($version, ['server_id' => 1]))->connect();
+        $session->query($setup);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        $session->query($filter);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, int}>
+     */
+    public static function providerFilterRunning(): iterable
+    {
+        foreach (['5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $legacy = $version === '5.7.44';
+            $setup = $legacy ? "CHANGE MASTER TO MASTER_HOST='source'; START SLAVE SQL_THREAD" : "CHANGE REPLICATION SOURCE TO SOURCE_HOST='source'; START REPLICA SQL_THREAD";
+            yield $version => [$version, $setup, 'CHANGE REPLICATION FILTER REPLICATE_IGNORE_TABLE=()', $legacy ? 3017 : 3085];
+            if (!$legacy) {
+                yield $version . ' named' => [$version, "CHANGE REPLICATION SOURCE TO SOURCE_HOST='source' FOR CHANNEL 'B'; START REPLICA SQL_THREAD FOR CHANNEL 'b'", "CHANGE REPLICATION FILTER REPLICATE_DO_DB=(a) FOR CHANNEL 'B'", 3085];
+                yield $version . ' all' => [$version, "CHANGE REPLICATION SOURCE TO SOURCE_HOST='source' FOR CHANNEL 'b'; START REPLICA SQL_THREAD FOR CHANNEL 'b'", 'CHANGE REPLICATION FILTER REPLICATE_DO_DB=(a)', 3085];
+            }
+        }
+        yield 'legacy without host' => ['5.7.44', 'CHANGE MASTER TO MASTER_HEARTBEAT_PERIOD=0; START SLAVE SQL_THREAD', 'CHANGE REPLICATION FILTER REPLICATE_DO_DB=(a)', 3017];
+    }
+
+    public function testFilterSkipsUnconfiguredAppliersForAnUnqualifiedModernRequest(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0; START REPLICA SQL_THREAD');
+        $reply = $session->query('CHANGE REPLICATION FILTER REPLICATE_IGNORE_TABLE=()')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertTrue($session->instance->registry->replication->applying);
+    }
+
+    public function testFilterOnlyChecksTheRequestedChannel(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_HOST='source'; CHANGE REPLICATION SOURCE TO SOURCE_HOST='source' FOR CHANNEL 'b'; START REPLICA SQL_THREAD FOR CHANNEL 'b'");
+        $reply = $session->query("CHANGE REPLICATION FILTER REPLICATE_IGNORE_TABLE=() FOR CHANNEL ''")[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertTrue($session->instance->registry->channels['b']->applying);
+    }
+
+    public function testFilterAcceptsAStoppedConfiguredChannel(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_HOST='source' FOR CHANNEL 'B'; START REPLICA SQL_THREAD FOR CHANNEL 'b'; STOP REPLICA SQL_THREAD FOR CHANNEL 'b'");
+        $reply = $session->query("CHANGE REPLICATION FILTER REPLICATE_IGNORE_TABLE=() FOR CHANNEL 'B'")[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+    }
+
+    public function testFilterRefusesGroupReplicationChannelsBeforeLookingUpConfiguration(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3139);
+        $session->query("CHANGE REPLICATION FILTER REPLICATE_IGNORE_TABLE=() FOR CHANNEL 'group_replication_applier'");
+    }
+
     public function testExecuteRetainsTheGtidTableOpenedByALogReset(): void
     {
         $session = (new Instance())->connect();

@@ -49,10 +49,33 @@ final class ChangeReplicationFilterProperties extends TestCase
     }
 
     /**
+     * A generated source and stopped applier satisfy the filter change's prerequisites.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesFilterChangeCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(ChangeReplicationFilterGenerator::sequences($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), globals: ['server_id' => 1], databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$configure, $start, $stop, $filter] = $sequence;
+            $execution->statement($configure);
+            $execution->statement($start);
+            $execution->statement($stop);
+            $execution->statement($filter);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql' && $release !== GrammarRelease::MySql5651) {
+                yield $release->value => [$release];
+            }
+        }
     }
 }

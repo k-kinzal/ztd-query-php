@@ -44,8 +44,9 @@ use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
  * SQL_THREAD requires an initialized connection repository before it starts the applier thread,
  * which STOP REPLICA stops and RESET REPLICA refuses to run beside (ER_REPLICA_CHANNEL_MUST_STOP).
  * STOP REPLICA notes threads that are already stopped. CHANGE REPLICATION SOURCE TO initializes
- * the connection repository; RESET closes it. CHANGE REPLICATION FILTER for a channel fails,
- * the replica not being initialized (ER_REPLICA_CONFIGURATION). RESET
+ * the connection repository; RESET closes it. CHANGE REPLICATION FILTER requires
+ * configured target channels to have stopped appliers; an explicit channel also needs
+ * a source host. MySQL 5.7 checks its default applier even without a host. RESET
  * BINARY LOGS AND GTIDS deletes every binary log file and starts again from the number TO names,
  * 1 by default. Group replication is not configured, and its statements refuse an open
  * transaction (verified on a live 8.4 server). MySQL 5.6 refuses RESET MASTER when log_bin is
@@ -90,9 +91,7 @@ final class ReplicaCommand implements Command
         } elseif ($statement instanceof StopReplica) {
             $this->stop($statement, $session);
         } elseif ($statement instanceof ChangeReplicationFilter) {
-            if ($statement->channel !== null) {
-                throw AdministrationError::ReplicaNotInitialized->error();
-            }
+            $this->filter($statement, $session);
         } elseif ($statement instanceof Reset) {
             $this->resetTargets($statement, $session);
         } elseif ($statement instanceof ChangeReplicationSource) {
@@ -100,6 +99,40 @@ final class ReplicaCommand implements Command
         }
 
         return new Completion(0, 0, $session->diagnostics->raised());
+    }
+
+    /**
+     * Requires stopped appliers for the filter's configured channels.
+     * An unqualified modern filter skips channels without a source host.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a channel is unavailable or its applier runs
+     */
+    public function filter(ChangeReplicationFilter $statement, Session $session): void
+    {
+        $registry = $session->instance->registry;
+        if ($session->settings()->legacy()) {
+            if ($registry->replication->applying) {
+                throw AdministrationError::LegacyApplierRunning->error();
+            }
+            return;
+        }
+        $channels = array_filter($this->targets(null, $registry), static fn ($state): bool => $state->host !== '');
+        if ($statement->channel !== null) {
+            $name = strtolower((new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->value($statement->channel));
+            if (in_array($name, ['group_replication_applier', 'group_replication_recovery'], true)) {
+                throw AdministrationError::ReplicaChannelOperation->error('CHANGE REPLICATION FILTER', $name);
+            }
+            $state = $channels[$name] ?? null;
+            if ($state === null) {
+                throw AdministrationError::ReplicaNotInitialized->error();
+            }
+            $channels = [$name => $state];
+        }
+        foreach ($channels as $name => $state) {
+            if ($state->applying) {
+                throw AdministrationError::ReplicaApplierRunning->error((string) $name);
+            }
+        }
     }
 
     /**
