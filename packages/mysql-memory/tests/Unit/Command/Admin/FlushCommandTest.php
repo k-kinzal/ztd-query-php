@@ -18,6 +18,67 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FlushCommandTest extends TestCase
 {
+    #[DataProvider('providerExplicitTableLocks')]
+    public function testTablesChecksMetadataBeforeClosingHandles(string $version, string $create, string $lock, string $sql, int $code, string $fragment): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query($create);
+        $session->query('CREATE TABLE u(id INT)');
+        $session->query($lock);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        $this->expectExceptionMessage($fragment);
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, string, int, string}>
+     */
+    public static function providerExplicitTableLocks(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['', 'TEMPORARY '] as $temporary) {
+                foreach (['FLUSH TABLES WITH READ LOCK', 'FLUSH TABLES missing WITH READ LOCK', 'FLUSH TABLES missing FOR EXPORT'] as $sql) {
+                    yield $version . '/' . $temporary . $sql => [$version, 'CREATE ' . $temporary . 'TABLE t(id INT)', 'LOCK TABLES t READ', $sql, 1192, 'active locked tables'];
+                }
+            }
+            foreach ([
+                ['LOCK TABLES t READ', 'FLUSH TABLES t,missing', 1099, "Table 't'"],
+                ['LOCK TABLES t READ', 'FLUSH TABLES missing,t', 1100, "Table 'missing'"],
+                ['LOCK TABLES u WRITE', 'FLUSH TABLES t', 1100, "Table 't'"],
+                ['LOCK TABLES t AS a READ', 'FLUSH TABLES t', 1099, "Table 't'"],
+                ['LOCK TABLES t READ,u READ', 'FLUSH TABLES', 1099, "Table 'u'"],
+                ['LOCK TABLES u READ,t READ', 'FLUSH TABLES', 1099, "Table 't'"],
+                ['LOCK TABLES t READ', 'FLUSH TABLES t,t WITH READ LOCK', 1066, "Not unique table/alias: 't'"],
+            ] as [$lock, $sql, $code, $fragment]) {
+                yield $version . '/' . $lock . '/' . $sql => [$version, 'CREATE TABLE t(id INT)', $lock, $sql, $code, $fragment];
+            }
+            yield $version . '/temporary handle' => [$version, 'CREATE TEMPORARY TABLE t(id INT)', 'LOCK TABLES t WRITE', 'FLUSH TABLES t', 1100, "Table 't'"];
+        }
+    }
+
+    public function testTablesUsesTheStrongestMetadataLockAcrossAliases(): void
+    {
+        $session = (new Instance(databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t(id INT)');
+        $session->query('LOCK TABLES t READ,t AS a WRITE');
+        $locks = $session->locks;
+        $session->query('FLUSH TABLES');
+        $session->query('FLUSH TABLES t');
+
+        self::assertEquals($locks, $session->locks);
+    }
+
+    public function testExecuteDoesNotLockATemporaryOnlyDestination(): void
+    {
+        $session = (new Instance(databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TEMPORARY TABLE t(id INT)');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+        $session->query('FLUSH TABLES t FOR EXPORT');
+    }
+
     public function testOptionsLeavesDisabledBinaryLogsClosed(): void
     {
         $session = (new Instance('5.7.44'))->connect();
@@ -279,6 +340,30 @@ final class FlushCommandTest extends TestCase
         $this->expectExceptionMessage("Unknown database 'nope'");
 
         $session->query('FLUSH TABLES nope.t WITH READ LOCK');
+    }
+
+    #[DataProvider('providerLegacyMissingDatabases')]
+    public function testExecuteReportsAMissingTableForAnAbsentLegacyDatabase(string $version, string $suffix): void
+    {
+        $session = (new Instance($version))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+        $this->expectExceptionMessage("Table 'nope.t' doesn't exist");
+
+        $session->query('FLUSH TABLES nope.t ' . $suffix);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLegacyMissingDatabases(): iterable
+    {
+        foreach (['5.6.51', '5.7.44'] as $version) {
+            foreach (['WITH READ LOCK', 'FOR EXPORT'] as $suffix) {
+                yield $version . '/' . $suffix => [$version, $suffix];
+            }
+        }
     }
 
     public function testExecuteLocksTheTablesForReading(): void

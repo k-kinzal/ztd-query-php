@@ -31,7 +31,7 @@ final class UnlockTablesGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+            if (str_starts_with($release->value, 'mysql-')) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
@@ -62,7 +62,7 @@ final class UnlockTablesGenerator implements ErisGenerator
         }, Generators::tuple($statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()));
     }
     /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
+     * Composes the supported releases' table-unlocking forms from typed operands.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables>>
      */

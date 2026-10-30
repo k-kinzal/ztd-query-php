@@ -36,9 +36,11 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * FLUSH RELAY LOGS FOR CHANNEL requires an existing channel. FLUSH TABLES ... WITH READ LOCK
  * and FLUSH TABLES ... FOR EXPORT need each table they name to exist, and lock the tables for
  * reading as LOCK TABLES ... READ does, until UNLOCK TABLES; the global read lock of FLUSH TABLES
- * WITH READ LOCK is not modelled, the session being alone on the server (verified on a live 8.4
- * server). FLUSH HOSTS, deprecated in MySQL 8.0.23 and removed in 8.3, warns once however often
+ * WITH READ LOCK is not modelled. FLUSH HOSTS, deprecated in MySQL 8.0.23 and removed in 8.3, warns once however often
  * the statement names it (verified on live 5.7 and 8.0 servers).
+ * A new table-flush lock is refused under LOCK TABLES. An ordinary flush requires
+ * WRITE metadata locks for its named persistent tables, or all open persistent
+ * tables when no names are given. Aliases do not change metadata lock ownership.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html,
  * https://dev.mysql.com/doc/relnotes/mysql/8.3/en/news-8-3-0.html.
  *
@@ -74,10 +76,10 @@ final class FlushCommand implements Command
                 if ($schema === '') {
                     throw QueryError::NoDatabase->error();
                 }
-                if ($session->instance->dictionary->schema($schema) === null) {
+                if (!$session->settings()->legacy() && $session->instance->dictionary->schema($schema) === null) {
                     throw QueryError::BadDatabase->error($schema);
                 }
-                if ($session->instance->dictionary->table($schema, $table->name->name->value, $session->temporaries) === null) {
+                if ($session->instance->dictionary->table($schema, $table->name->name->value) === null) {
                     throw QueryError::NoSuchTable->error($schema, $table->name->name->value);
                 }
                 $locks[] = new \MySqlMemory\Session\State\TableLock($schema, $table->name->name->value, $table->name->name->value, false);
@@ -210,10 +212,23 @@ final class FlushCommand implements Command
     /**
      * Closes cached handles while retaining definitions, rows and HANDLER cursor names.
      * Flush_commands counts a flush of all tables, including WITH READ LOCK, but not named tables.
+     * A global flush checks acquired handles in reverse opening order; a named flush
+     * checks its written list. Repeated aliases share the strongest metadata lock.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html#statvar_Flush_commands.
      */
     public function tables(FlushTables $statement, Session $session): void
     {
+        if ($session->locks !== []) {
+            if ($statement->lock !== null) {
+                throw StatementError::LockedOrActiveTransaction->error();
+            }
+            $targets = $statement->tables === []
+                ? array_map(static fn ($lock): QualifiedName => new QualifiedName(new Name($lock->table), new Name($lock->schema)), array_reverse(array_filter($session->locks, static fn ($lock): bool => !$lock->temporary)))
+                : array_map(static fn ($table): QualifiedName => $table->name, $statement->tables);
+            foreach ($targets as $target) {
+                (new Locks())->metadata($session, $target->schema->value ?? $session->variables->database, $target->name->value);
+            }
+        }
         $cache = $session->instance->dictionary->cache;
         if ($statement->tables === []) {
             $session->instance->registry->status->add('Flush_commands');

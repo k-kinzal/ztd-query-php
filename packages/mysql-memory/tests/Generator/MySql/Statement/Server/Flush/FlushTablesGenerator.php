@@ -31,7 +31,7 @@ final class FlushTablesGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+            if (str_starts_with($release->value, 'mysql-')) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
@@ -65,22 +65,45 @@ final class FlushTablesGenerator implements ErisGenerator
         }, Generators::tuple($binlog, $tables ?? Generators::constant([]), $lock ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $tableWord ?? new \Tests\Generator\MySql\Statement\Table\TableWordGenerator()));
     }
     /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
+     * Generates empty and named flushes, preserving the required table list for exports.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables>>
      */
     public static function forms(): iterable
     {
-        yield 'FlushTables/370' => FlushTablesGenerator::operands(
-            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
-            tables: Generators::constant([]),
-            lock: Generators::constant(null)
-        );
-        yield 'FlushTables/371' => FlushTablesGenerator::operands(
-            binlog: \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
-            tables: Generators::constant([]),
-            lock: FlushLockGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::WithReadLock])
-        );
+        $name = new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(\Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 'table_' . $id, Generators::choose(0, 8)), Generators::constant(null)));
+        $table = new \Tests\Generator\MySql\Statement\Server\Maintenance\MaintainedTableGenerator($name);
+        yield 'table lists and locks' => Generators::bind(Generators::choose(0, 4), static fn (int $count): ErisGenerator => self::operands(
+            \Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator::optional(),
+            Generators::vector($count, $table),
+            $count === 0 ? Generators::elements(null, \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::WithReadLock) : Generators::oneOf(Generators::constant(null), new FlushLockGenerator()),
+        ));
     }
 
+    /**
+     * Composes creation with a flush that either acquires read/export locks or uses
+     * an existing write lock. Dependent declarations and aliases shrink together.
+     *
+     * @return ErisGenerator<list<\SqlSemantics\Platform\MySql\Statement\Statement>>
+     */
+    public static function withPrerequisites(\SqlSemantics\Contract\GrammarRelease $release, bool $locked): ErisGenerator
+    {
+        $tables = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator($release, \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::integers());
+        return Generators::bind($tables, static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $create) use ($release, $locked): ErisGenerator {
+            $context = Generators::constant(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')], $create->declarations()));
+            $requests = [Generators::constant($create)];
+            if ($locked) {
+                $alias = Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
+                $lock = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(Generators::constant($create->name), $alias, Generators::constant(\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write));
+                $requests[] = new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($lock)), $context);
+            }
+            $target = new \Tests\Generator\MySql\Statement\Server\Maintenance\MaintainedTableGenerator(Generators::constant($create->name));
+            $requests[] = new self($release, self::operands(Generators::constant(null), Generators::tuple($target), $locked ? Generators::constant(null) : new FlushLockGenerator()), $context);
+            if ($locked) {
+                $requests[] = new self($release, self::operands(Generators::constant(null)), $context);
+            }
+            $requests[] = new \Tests\Generator\MySql\Statement\Server\Lock\UnlockTablesGenerator($release);
+            return Generators::tuple(...$requests);
+        });
+    }
 }

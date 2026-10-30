@@ -17,6 +17,7 @@ use MySqlMemory\Session\State\StatementCounters;
 use MySqlMemory\Session\Statement\Binding;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\LanguageProfile;
@@ -248,6 +249,50 @@ final class ExecutionTest extends TestCase
         self::assertSame(0, $reply->warnings);
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Note', '1360', 'Trigger does not exist']], $warnings->rows);
+    }
+
+    #[DataProvider('providerNamedTableFlushes')]
+    public function testRetainsClearsLegacyDiagnosticsWhenAFlushNamesTables(string $sql): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); DROP TEMPORARY TABLE IF EXISTS missing');
+        $session->query($sql);
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerNamedTableFlushes(): iterable
+    {
+        yield 'existing' => ['FLUSH TABLES t'];
+        yield 'missing' => ['FLUSH TABLES missing'];
+        yield 'read lock' => ['FLUSH TABLES t WITH READ LOCK'];
+        yield 'export' => ['FLUSH TABLES t FOR EXPORT'];
+    }
+
+    #[DataProvider('providerTablelessFlushes')]
+    public function testRetainsKeepsLegacyDiagnosticsWhenAFlushNamesNoTable(string $sql): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('DROP TEMPORARY TABLE IF EXISTS missing');
+        $session->query($sql);
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Note', '1051', "Unknown table 'd.missing'"]], $warnings->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerTablelessFlushes(): iterable
+    {
+        yield 'ordinary' => ['FLUSH TABLES'];
+        yield 'read lock' => ['FLUSH TABLES WITH READ LOCK'];
     }
 
     public function testRetainsKeepsTheDiagnosticsAcrossTheTransactionStatementsOf56(): void

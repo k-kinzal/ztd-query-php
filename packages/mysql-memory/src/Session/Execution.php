@@ -289,7 +289,7 @@ final class Execution
      * A query, SET, DO or EXPLAIN that names no table keeps them, as do the statements that start
      * or end a transaction, set its characteristics or a savepoint, the XA statements, the
      * statements about databases and USE, the account statements, GRANT and REVOKE at the global
-     * and database levels, FLUSH, HELP, PREPARE, EXECUTE and CALL (whose own statements then
+     * and database levels, FLUSH without named tables, HELP, PREPARE, EXECUTE and CALL (whose own statements then
      * decide), CREATE of a stored routine or an event, DROP of a routine, event or trigger, and the SHOW statements that read
      * no table of the information schema: SHOW CREATE DATABASE, SHOW CREATE PROCEDURE and
      * FUNCTION, SHOW GRANTS, SHOW PRIVILEGES, SHOW PROCESSLIST, SHOW ENGINE and the replication
@@ -303,6 +303,9 @@ final class Execution
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles) {
             return true;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables) {
+            return $statement->tables === [];
         }
         $kept = [
             \MySqlMemory\Command\EmptyCommand::class,
