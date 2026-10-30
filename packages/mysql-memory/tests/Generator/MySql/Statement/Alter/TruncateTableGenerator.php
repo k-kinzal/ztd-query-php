@@ -34,7 +34,7 @@ final class TruncateTableGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+            if ($release->database() === 'mysql') {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
@@ -52,6 +52,29 @@ final class TruncateTableGenerator implements ErisGenerator
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
     }
+
+    /**
+     * Composes a generated table, its WRITE lock and a dependent truncation.
+     * Modern releases also allow the lock to name the table through an alias.
+     *
+     * @return ErisGenerator<array{M\Table\CreateTable, M\Server\Lock\LockTables, M\Alter\TruncateTable}>
+     */
+    public static function withLockedPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $definitions = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator($release, \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::integers());
+        return Generators::bind($definitions, static function (M\Table\CreateTable $create) use ($release): ErisGenerator {
+            $contexts = Generators::constant(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')], $create->declarations()));
+            $aliases = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)
+                ? Generators::constant(null)
+                : Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
+            $lock = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(Generators::constant($create->name), $aliases, \Tests\Generator\MySql\Statement\Server\Lock\LockModeGenerator::selecting([M\Server\Lock\LockMode::Write]));
+            return Generators::tuple(
+                Generators::constant($create),
+                new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($lock)), $contexts),
+                new self($release, self::operands(Generators::constant($create->name)), $contexts),
+            );
+        });
+    }
     /**
      * @param ErisGenerator<QualifiedName> $table Generated constructor operand
      * @param ErisGenerator<M\StatementSemantics|null>|null $statementInformation Generated constructor operand
@@ -67,7 +90,7 @@ final class TruncateTableGenerator implements ErisGenerator
         }, Generators::tuple($table, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $relationInformation ?? Generators::constant(null), $tableWord ?? new \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator()));
     }
     /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
+     * Composes the statement's forms from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<M\Alter\TruncateTable>>
      */

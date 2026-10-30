@@ -10,6 +10,7 @@ use MySqlMemory\Error\DiagnosticText;
 use MySqlMemory\Error\Family\ConstraintError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -109,6 +110,9 @@ final class DropTableCommand implements Command
      */
     public function truncate(TruncateTable $statement, Session $session, Context $context): Reply
     {
+        if ($session->locks !== []) {
+            $this->locks($statement, $session);
+        }
         $schema = $statement->table->schema->value ?? $session->variables->database;
         $table = $session->instance->dictionary->table($schema, $statement->table->name->value, $session->temporaries);
         if ($table === null || !$table->definition->temporary) {
@@ -125,6 +129,36 @@ final class DropTableCommand implements Command
         $table->indexStatistics = null;
 
         return new Completion();
+    }
+
+    /**
+     * Requires a write metadata lock for truncation regardless of its alias.
+     * MySQL 5.6 and 5.7 additionally reopen the table under its original name.
+     * Temporary tables need neither lock. Verified on every supported release.
+     *
+     * @throws SqlError When the target has no write lock or cannot be reopened
+     */
+    public function locks(TruncateTable $statement, Session $session): void
+    {
+        $schema = $statement->table->schema->value ?? $session->variables->database;
+        $name = $statement->table->name->value;
+        if ($session->temporaries->table($schema, $name) !== null) {
+            return;
+        }
+        $found = false;
+        foreach ($session->locks as [$lockedSchema, $table, , $exclusive]) {
+            if ($lockedSchema !== $schema || $table !== $name) {
+                continue;
+            }
+            $found = true;
+            if ($exclusive) {
+                if ($session->settings()->legacy()) {
+                    (new \MySqlMemory\Command\Access\Locks())->allowed($session, $statement->table, $name, [], true);
+                }
+                return;
+            }
+        }
+        throw ($found ? StatementError::TableNotLockedForWrite : StatementError::TableNotLocked)->error($name);
     }
 
     /**

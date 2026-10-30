@@ -78,6 +78,33 @@ final class AlterTableGenerator implements ErisGenerator
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
     }
     /**
+     * Composes a generated table, its WRITE lock and a dependent column or index addition.
+     * The target and selected column remain related during Eris shrinking.
+     *
+     * @return ErisGenerator<array{MySql\Table\CreateTable, MySql\Server\Lock\LockTables, MySql\Alter\AlterTable}>
+     */
+    public static function withLockedPrerequisites(GrammarRelease $release): ErisGenerator
+    {
+        $definitions = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator($release, \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::integers());
+        return Generators::bind($definitions, static function (MySql\Table\CreateTable $create) use ($release): ErisGenerator {
+            $contexts = Generators::constant(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')], $create->declarations()));
+            $lock = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(Generators::constant($create->name), Generators::constant(null), \Tests\Generator\MySql\Statement\Server\Lock\LockModeGenerator::selecting([MySql\Server\Lock\LockMode::Write]));
+            $commands = Generators::map(static function (array $parts): array {
+                [$index, $suffix, $column] = $parts;
+                $name = new Name('added_' . $suffix);
+                return [$index
+                    ? new MySql\Alter\Command\AddConstraint(new MySql\Table\Key\IndexDefinition(MySql\Table\Key\IndexKind::Index, [new MySql\Table\Key\ColumnPart(new Name('column_' . $column))], new MySql\Name\ColumnName($name)))
+                    : new MySql\Alter\Column\AddColumn(new MySql\Table\Column\ColumnDefinition(new MySql\Name\ColumnName($name), new MySql\Table\Column\OrdinaryColumn(new MySql\Type\Integral(MySql\Type\Kind\IntegralKind::Int))))];
+            }, Generators::tuple(Generators::bool(), Generators::choose(0, 10000), Generators::choose(0, count($create->elements) - 1)));
+            return Generators::tuple(
+                Generators::constant($create),
+                new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($lock)), $contexts),
+                new self($release, self::operands(Generators::constant($create->name), $commands), $contexts),
+            );
+        });
+    }
+
+    /**
      * Varies partition methods independently from complete bound definitions.
      * Missing values and method disagreements must reach SQL execution.
      *

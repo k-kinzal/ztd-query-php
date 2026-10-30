@@ -160,6 +160,9 @@ final class AlterTableCommand implements Command
      */
     public function table(Session $session, string $schema, string $name): StoredTable
     {
+        if ($session->locks !== []) {
+            (new \MySqlMemory\Command\Access\Locks())->allowed($session, new QualifiedName(new \SqlSemantics\Statement\Identifier\Name($name), new \SqlSemantics\Statement\Identifier\Name($schema)), $name, [], true);
+        }
         $table = $session->instance->dictionary->table($schema, $name, $session->temporaries);
         if ($table === null && isset($session->instance->dictionary->schema($schema)?->views[$name])) {
             throw SchemaError::WrongObject->error($schema, $name, 'BASE TABLE');
@@ -278,6 +281,7 @@ final class AlterTableCommand implements Command
      */
     public function read(array $commands, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, bool $legacy = false): void
     {
+        (new Expression\AlterDefaults())->functions($commands, $facts->profile->grammar);
         $indexes = $this->indexes($commands);
         foreach ($facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser) {

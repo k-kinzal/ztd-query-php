@@ -49,6 +49,24 @@ final class AlterTableProperties extends TestCase
     }
 
     /**
+     * The generated target and WRITE lock satisfy the alteration's prerequisites.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesAlterationCompletesWithItsLockedPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(AlterTableGenerator::withLockedPrerequisites($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$create, $lock, $alter] = $sequence;
+            $execution->statement($create);
+            $execution->statement($lock);
+            $execution->statement($alter);
+        });
+    }
+
+    /**
      * Generated prerequisite definitions and rows make DISCARD executable.
      */
     #[Test]

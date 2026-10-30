@@ -15,6 +15,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,82 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 #[Small]
 final class AlterTableCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedChanges')]
+    public function testTableRequiresWriteAccessBeforeChangingTheDefinition(string $version, string $lock, string $sql, int $code): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT, KEY k(id)); CREATE TABLE u (id INT); LOCK TABLES ' . $lock);
+        $table = $session->instance->dictionary->table('test', 't');
+        self::assertNotNull($table);
+        $definition = $table->definition;
+
+        $replies = $session->run($sql);
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame($code, $replies[0]->getCode());
+        self::assertSame($definition, $table->definition);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, int}>
+     */
+    public static function providerLockedChanges(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['t READ' => 1099, 't READ LOCAL' => 1099, 't AS x WRITE' => 1100, 'u WRITE' => 1100] as $lock => $code) {
+                foreach (['ALTER TABLE t ADD COLUMN id INT', 'ALTER TABLE t MODIFY id VARCHAR(65536)', 'ALTER TABLE t DROP COLUMN absent', 'ALTER TABLE t ADD INDEX k(id)', 'CREATE INDEX z ON t(id)', 'DROP INDEX absent ON t', 'ALTER TABLE t RENAME TO u'] as $sql) {
+                    yield $version . '/' . $lock . '/' . $sql => [$version, $lock, $sql, $code];
+                }
+                yield $version . '/' . $lock . '/absent' => [$version, $lock, 'ALTER TABLE absent ADD COLUMN c INT', 1100];
+                yield $version . '/' . $lock . '/engine' => [$version, $lock, 'ALTER TABLE t ENGINE=missing_engine', 1286];
+                yield $version . '/' . $lock . '/charset' => [$version, $lock, 'ALTER TABLE t CONVERT TO CHARACTER SET missing', 1115];
+                if (version_compare($version, '8.0', '>=')) {
+                    yield $version . '/' . $lock . '/visibility' => [$version, $lock, 'ALTER TABLE t ALTER INDEX k VISIBLE', $code];
+                    yield $version . '/' . $lock . '/default' => [$version, $lock, 'ALTER TABLE t ADD v INT DEFAULT (missing_function())', 3770];
+                }
+            }
+        }
+    }
+
+    #[DataProvider('providerPreparations')]
+    public function testTableDefersWriteAccessUntilPreparedExecution(string $version, string $sql): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); LOCK TABLES t READ');
+        $replies = $session->query("PREPARE p FROM '" . $sql . "'");
+        self::assertInstanceOf(Completion::class, $replies[0]);
+
+        $this->expectExceptionCode(1099);
+        $session->query('EXECUTE p');
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerPreparations(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['ALTER TABLE t ADD c INT', 'CREATE INDEX z ON t(id)', 'DROP INDEX absent ON t'] as $sql) {
+                yield $version . '/' . $sql => [$version, $sql];
+            }
+        }
+    }
+
+    public function testTableAllowsAnUnlockedTemporaryShadow(): void
+    {
+        $session = (new Instance(databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); CREATE TABLE u (id INT); LOCK TABLES u WRITE; CREATE TEMPORARY TABLE t (id INT)');
+
+        $session->query('ALTER TABLE t ADD c INT; CREATE INDEX z ON t(id); DROP INDEX z ON t');
+
+        $temporary = $session->temporaries->table('test', 't');
+        $permanent = $session->instance->dictionary->table('test', 't');
+        self::assertNotNull($temporary);
+        self::assertNotNull($permanent);
+        self::assertCount(2, $temporary->definition->columns);
+        self::assertCount(1, $permanent->definition->columns);
+    }
+
     public function testChangeChecksTheNewDefinitionBeforeReadingDetachedStorage(): void
     {
         $session = (new Instance(databases: ['d']))->connect(database: 'd');

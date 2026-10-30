@@ -18,6 +18,25 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class AlterDefaultsTest extends TestCase
 {
+    public function testFunctionsRejectsTheDeclaredDefaultWithoutLookingUpItsTarget(): void
+    {
+        $call = new M\Call\FunctionCall(new Name('f'), [], new Name('other'));
+        $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('v')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int), [new M\Table\Column\DefaultExpression($call)]));
+        $this->expectExceptionCode(3770);
+        $this->expectExceptionMessage("Default value expression of column 'v' contains a disallowed function: `other`.`f`.");
+
+        (new AlterDefaults())->functions([new M\Alter\Column\AddColumn($column)], \SqlSemantics\Contract\GrammarRelease::MySql847);
+    }
+
+    public function testCallsCompletesArgumentsInTheirWrittenOrder(): void
+    {
+        $first = new M\Call\FunctionCall(new Name('first'));
+        $second = new M\Call\FunctionCall(new Name('second'));
+        $outer = new M\Call\FunctionCall(new Name('outer'), [new M\Call\CallArgument($first), new M\Call\CallArgument($second)]);
+
+        self::assertSame([$first, $second, $outer], (new AlterDefaults())->calls($outer));
+    }
+
     /**
      * @return iterable<array{M\Alter\AlterTable}>
      */

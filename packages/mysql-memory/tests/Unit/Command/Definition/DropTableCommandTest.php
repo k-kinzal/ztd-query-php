@@ -11,6 +11,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
@@ -21,6 +22,66 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class DropTableCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedTruncations')]
+    public function testLocksRequiresTheTargetWriteLock(string $version, string $lock, int $code): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); INSERT INTO t VALUES (1); CREATE TABLE u (id INT); LOCK TABLES ' . $lock);
+        $replies = $session->run('TRUNCATE TABLE t');
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame($code, $replies[0]->getCode());
+        $session->query('UNLOCK TABLES');
+        $result = $session->query('SELECT id FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerLockedTruncations(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $locks = ['t READ' => 1099, 't AS x READ' => 1099, 'u WRITE' => 1100];
+            if (str_starts_with($version, '5.')) {
+                $locks += ['t AS x WRITE' => 1100, 't AS x READ,t AS y WRITE' => 1100, 't AS x WRITE,t AS y READ' => 1100, 't READ,t AS y WRITE' => 1099];
+            }
+            foreach ($locks as $lock => $code) {
+                yield $version . '/' . $lock => [$version, $lock, $code];
+            }
+        }
+    }
+
+    #[DataProvider('providerWritableTruncations')]
+    public function testLocksAllowsTruncationWithAnExclusiveTargetLock(string $version, string $lock, string $sql): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); INSERT INTO t VALUES (1); LOCK TABLES ' . $lock);
+        $replies = $session->query($sql);
+
+        self::assertInstanceOf(Completion::class, $replies[count($replies) - 1]);
+        $session->query('UNLOCK TABLES');
+        $result = $session->query('SELECT id FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function providerWritableTruncations(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $locks = str_starts_with($version, '5.') ? ['t WRITE'] : ['t WRITE', 't AS x WRITE', 't AS x READ,t AS y WRITE', 't AS x WRITE,t AS y READ', 't READ,t AS y WRITE'];
+            foreach ($locks as $lock) {
+                foreach (['TRUNCATE TABLE t', "PREPARE p FROM 'TRUNCATE TABLE t'; EXECUTE p"] as $sql) {
+                    yield $version . '/' . $lock . '/' . $sql => [$version, $lock, $sql];
+                }
+            }
+        }
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new DropTableCommand())->clearsDiagnostics());

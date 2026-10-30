@@ -29,6 +29,49 @@ use WeakReference;
 final class AlterDefaults
 {
     /**
+     * Refuses stored calls in added column defaults before opening the ALTER target.
+     * ALTER COLUMN SET DEFAULT keeps its later operand-resolution boundary.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand> $commands The ordered alterations
+     */
+    public function functions(array $commands, \SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $walker = new \MySqlMemory\Evaluation\Compile\Walker();
+        foreach ($commands as $command) {
+            foreach ($walker->find($command, \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition::class) as $column) {
+                foreach ($column->specification->columnAttributes() as $attribute) {
+                    if (!$attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression) {
+                        continue;
+                    }
+                    foreach ($this->calls($attribute->expression) as $call) {
+                        if (!$call->native($release)) {
+                            $name = ($call->schema === null ? '' : '`' . str_replace('`', '``', $call->schema->value) . '`.') . '`' . str_replace('`', '``', $call->name->value) . '`';
+                            throw ConstraintError::DefaultFunction->error($column->name->column->value, $name);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Visits function arguments in written order before their enclosing call.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Call\FunctionCall>
+     */
+    public function calls(\SqlSemantics\Statement\Node $expression): array
+    {
+        $calls = [];
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->children($expression) as $child) {
+            array_push($calls, ...$this->calls($child));
+        }
+        if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall) {
+            $calls[] = $expression;
+        }
+        return $calls;
+    }
+
+    /**
      * Derives the complete instruction against the current dictionary.
      */
     public function bound(AlterTable $definition, Session $session, string $database): AlterTable

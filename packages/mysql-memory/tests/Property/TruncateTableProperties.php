@@ -49,6 +49,24 @@ final class TruncateTableProperties extends TestCase
     }
 
     /**
+     * Generated table and lock prerequisites make truncation executable.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesTruncationCompletesWithItsLockedPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(TruncateTableGenerator::withLockedPrerequisites($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$create, $lock, $truncate] = $sequence;
+            $execution->statement($create);
+            $execution->statement($lock);
+            $execution->statement($truncate);
+        });
+    }
+
+    /**
      * A generated table remains executable through renaming and truncation.
      */
     #[Test]
@@ -87,6 +105,6 @@ final class TruncateTableProperties extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        yield from self::providerDependentReleases();
     }
 }
