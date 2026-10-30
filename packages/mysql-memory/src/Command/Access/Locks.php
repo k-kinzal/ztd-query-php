@@ -58,18 +58,23 @@ final class Locks
 
     /**
      * Raises the error of the first table a statement uses without a lock that allows it.
+     * MySQL 5.6 explains INSERT/REPLACE VALUES and SET before acquiring write locks;
+     * from 5.7 it acquires them before publishing the plan (sql_insert.cc).
      *
      * @throws \MySqlMemory\Error\SqlError When a table is not locked, or is written under a READ lock
      */
     public function check(MySqlStatement $operation, Session $session): void
     {
         (new AccountTables())->check($operation, $session);
-        $statement = $operation;
+        $statement = $operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain ? $operation->statement : $operation;
+        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && ($statement instanceof InsertRows || $statement instanceof InsertSet)) {
+            return;
+        }
         if (!$statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && !$statement instanceof InsertRows && !$statement instanceof InsertSet && !$statement instanceof InsertQuery
             && !$statement instanceof Update && !$statement instanceof Delete && !$statement instanceof MultipleDelete) {
             return;
         }
-        foreach ($this->written($operation) as $reference) {
+        foreach ($this->written($statement) as $reference) {
             $this->allowed($session, $reference->name, $reference->alias->value ?? $reference->name->name->value, [], true);
         }
         foreach ((new Walker())->find($statement, WriteTarget::class) as $target) {

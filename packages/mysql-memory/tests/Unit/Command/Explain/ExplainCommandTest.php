@@ -179,6 +179,35 @@ final class ExplainCommandTest extends TestCase
         self::assertSame([], $warnings->rows);
     }
 
+    #[DataProvider('providerLegacyJsonPlans')]
+    public function testExecuteNestsTheLegacyNoTableMessage(string $sql): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT)');
+        $result = $session->query($sql)[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([["{\n  \"query_block\": {\n    \"select_id\": 1,\n    \"table\": {\n      \"message\": \"No tables used\"\n    }\n  }\n}"]], $result->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyJsonPlans(): iterable
+    {
+        foreach (['SELECT 1', 'INSERT INTO t VALUES()', 'REPLACE t VALUES()', 'INSERT INTO t SET id=1', 'INSERT INTO t SELECT 1'] as $body) {
+            yield $body => ['EXPLAIN FORMAT=JSON ' . $body];
+        }
+    }
+
+    public function testNoteIncludesTheMySql56JsonProjection(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('EXPLAIN FORMAT=JSON SELECT 1');
+
+        self::assertSame([['Note', 1003, '/* select#1 */ select 1 AS `1`']], $session->diagnostics->conditions);
+    }
+
     public function testExecuteStoresAJsonPlanInAVariable(): void
     {
         $session = (new Instance())->connect();

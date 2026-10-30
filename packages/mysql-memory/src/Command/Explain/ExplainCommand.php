@@ -162,7 +162,7 @@ final class ExplainCommand implements Command
         $tables = $this->tables($statement->statement, $database);
         (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement->statement, $operation->statementInformation(), $session->settings(), $session->instance->dictionary);
         if ($statement->into !== null) {
-            $session->variables->assign($statement->into->name->value, $this->document($tables), Domain::string(50331645, Collation::known('utf8mb3_general_ci'), Field::MediumBlob));
+            $session->variables->assign($statement->into->name->value, $this->document($tables, $session->settings()->release()), Domain::string(50331645, Collation::known('utf8mb3_general_ci'), Field::MediumBlob));
 
             return new Completion(0, 0, $context->diagnostics->raised());
         }
@@ -184,7 +184,7 @@ final class ExplainCommand implements Command
 
             return (new Listing($headings))->sent($rows, $context);
         }
-        $text = (new MeasuredTable())->report($operation, $session, $context, $connection) ?? ($format === 'JSON' ? $this->document($tables) : $this->tree($tables));
+        $text = (new MeasuredTable())->report($operation, $session, $context, $connection) ?? ($format === 'JSON' ? $this->document($tables, $session->settings()->release()) : $this->tree($tables));
 
         return (new Listing([Heading::text('EXPLAIN', Field::VarString, 78, ColumnFlag::NotNull->value, 31)]))->sent([[$text]], $context);
     }
@@ -198,7 +198,7 @@ final class ExplainCommand implements Command
         if (!$statement instanceof Explain) {
             return;
         }
-        if (($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || $statement->modifier === \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Extended) && $format !== 'TREE') {
+        if (($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || $statement->modifier === \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Extended || $format === 'JSON') && $format !== 'TREE') {
             $note = (new QueryNote())->projection($operation, $session, $connection, $impossible) ?? ($session->settings()->legacy() ? null : (new InsertNote())->rows($operation, $session));
             if ($note !== null) {
                 $connection->context->diagnostics->note(QueryError::RewrittenQuery, $note);
@@ -384,12 +384,16 @@ final class ExplainCommand implements Command
 
     /**
      * Writes a JSON plan.
+     * MySQL 5.6 nests the no-table message in a table object.
      *
      * @param list<array{string, string, string}> $tables
      */
-    public function document(array $tables): string
+    public function document(array $tables, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): string
     {
         if ($tables === []) {
+            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                return "{\n  \"query_block\": {\n    \"select_id\": 1,\n    \"table\": {\n      \"message\": \"No tables used\"\n    }\n  }\n}";
+            }
             return "{\n  \"query_block\": {\n    \"select_id\": 1,\n    \"message\": \"No tables used\"\n  }\n}";
         }
         $entries = array_map(static fn (array $table): string => "      {\n        \"table\": {\n          \"table_name\": " . json_encode($table[0], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ",\n          \"access_type\": \"ALL\"\n        }\n      }", $tables);

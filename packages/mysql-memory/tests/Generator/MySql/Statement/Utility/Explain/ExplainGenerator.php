@@ -93,6 +93,28 @@ final class ExplainGenerator implements ErisGenerator
             );
         });
     }
+
+    /**
+     * Composes an explanation with its generated destination and explicit lock.
+     * MySQL 5.6 also permits READ locks for these inserted-value explanations.
+     * The explained rows keep the same table declaration when shrinking.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables, \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain}>
+     */
+    public static function withLockedWrite(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $explain = static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $table, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows $write) use ($release): ErisGenerator {
+            $contexts = Generators::constant(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')], $table->declarations()));
+            $modes = $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? [\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Read, \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write] : [\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write];
+            $lock = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(Generators::constant($table->name), Generators::constant(null), \Tests\Generator\MySql\Statement\Server\Lock\LockModeGenerator::selecting($modes));
+            return Generators::tuple(
+                Generators::constant($table),
+                new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($lock)), $contexts),
+                new self($release, self::operands(Generators::constant($write)), $contexts),
+            );
+        };
+        return Generators::bind(\Tests\Generator\MySql\Statement\Dml\Insert\InsertRowsGenerator::withPrerequisites($release), static fn (array $sequence): ErisGenerator => $explain(...$sequence));
+    }
     /**
      * Generates refused report options around a complete, independent scalar query.
      *

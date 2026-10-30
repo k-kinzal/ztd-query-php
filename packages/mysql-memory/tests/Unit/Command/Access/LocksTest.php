@@ -19,6 +19,95 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class LocksTest extends TestCase
 {
+    #[DataProvider('providerExplainedWrites')]
+    public function testCheckRequiresTheExplainedWriteLockAfterResolvingItsOperands(string $version, string $sql, int $code): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); LOCK TABLES t READ');
+
+        $this->expectExceptionCode($code);
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerExplainedWrites(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $prefixes = ['EXPLAIN ', 'EXPLAIN FORMAT=JSON '];
+            if (!str_starts_with($version, '5.')) {
+                $prefixes = [...$prefixes, 'EXPLAIN ANALYZE ', 'EXPLAIN ANALYZE FORMAT=JSON '];
+            }
+            foreach ($prefixes as $prefix) {
+                foreach (['INSERT INTO t VALUES()' => 1099, 'REPLACE DELAYED t VALUES()' => 1099, 'INSERT INTO t SELECT 1' => 1099, 'INSERT INTO t SET id=1' => 1099, 'UPDATE t SET id=1' => 1099, 'DELETE FROM t' => 1099, 'DELETE t FROM t' => 1099, 'INSERT INTO t(missing) VALUES(1)' => 1054, 'INSERT INTO t VALUES(1,2)' => 1136, 'UPDATE t SET missing=1' => 1054] as $body => $code) {
+                    if ($version === '5.6.51' && in_array($body, ['INSERT INTO t VALUES()', 'REPLACE DELAYED t VALUES()', 'INSERT INTO t SET id=1'], true)) {
+                        continue;
+                    }
+                    yield $version . '/' . $prefix . $body => [$version, $prefix . $body, $code];
+                }
+            }
+            yield $version . '/format priority' => [$version, 'EXPLAIN FORMAT=UNKNOWN INSERT INTO t VALUES(1)', 1791];
+        }
+    }
+
+    #[DataProvider('providerPreparedExplanations')]
+    public function testCheckAllowsPreparingAnExplainedWriteButRequiresItsLockOnExecution(string $version, string $body): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); LOCK TABLES t READ');
+        $session->query("PREPARE p FROM 'EXPLAIN " . $body . "'");
+
+        $this->expectExceptionCode(1099);
+        $session->query('EXECUTE p');
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerPreparedExplanations(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['INSERT INTO t VALUES(1)', 'UPDATE t SET id=1', 'DELETE FROM t'] as $body) {
+                if ($version === '5.6.51' && $body === 'INSERT INTO t VALUES(1)') {
+                    continue;
+                }
+                yield $version . '/' . $body => [$version, $body];
+            }
+        }
+    }
+
+    #[DataProvider('providerLegacyExplainedInserts')]
+    public function testCheckAllowsExplainingLegacyInsertedValuesUnderAReadLock(string $sql): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); LOCK TABLES t READ');
+
+        self::assertInstanceOf(ResultSet::class, $session->query($sql)[0]);
+    }
+
+    #[DataProvider('providerLegacyExplainedInserts')]
+    public function testCheckAllowsExecutingPreparedLegacyInsertExplanationsUnderAReadLock(string $sql): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); LOCK TABLES t READ');
+        $session->query("PREPARE p FROM '" . $sql . "'");
+
+        self::assertInstanceOf(ResultSet::class, $session->query('EXECUTE p')[0]);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyExplainedInserts(): iterable
+    {
+        foreach (['EXPLAIN ', 'EXPLAIN FORMAT=JSON '] as $prefix) {
+            foreach (['INSERT INTO t VALUES()', 'INSERT INTO t VALUES(1)', 'REPLACE DELAYED t VALUES()', 'INSERT INTO t SET id=1'] as $body) {
+                yield $prefix . $body => [$prefix . $body];
+            }
+        }
+    }
+
     public function testMetadataFindsAWriteLockAfterAReadAlias(): void
     {
         $session = (new Instance(databases: ['d']))->connect(database: 'd');

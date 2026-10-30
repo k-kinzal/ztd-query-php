@@ -67,6 +67,24 @@ final class ExplainProperties extends TestCase
     }
 
     /**
+     * Explains a generated write after creating and locking its destination.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionExplainsItsGeneratedLockedWrite(GrammarRelease $release): void
+    {
+        $this->forAll(ExplainGenerator::withLockedWrite($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            [$table, $lock, $explain] = $sequence;
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            $execution->statement($table);
+            $execution->statement($lock);
+            $execution->statement($explain);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerDatabaseReleases(): iterable
