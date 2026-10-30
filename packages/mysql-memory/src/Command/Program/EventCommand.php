@@ -44,7 +44,11 @@ use SqlSemantics\Statement\Scalar;
  * no disabling note. ALTER refuses an expired replacement without PRESERVE. An event of the
  * same name is ER_EVENT_ALREADY_EXISTS, a note with IF NOT EXISTS; ALTER EVENT of a missing
  * event is ER_EVENT_DOES_NOT_EXIST, found after the note of a DEFINER that does not exist and
- * the database of RENAME TO (verified on live 8.0 and 8.4 servers). The emulator keeps events
+ * the database of RENAME TO (verified on live 8.0 and 8.4 servers). Explicit table locks refuse
+ * event changes after definer and schedule checks but before event lookup. MySQL 5.6
+ * checks the creation database and rename operands before locks; later releases check locks first.
+ * An ordinary transaction is implicitly committed (verified on all nine releases).
+ * The emulator keeps events
  * but never runs them.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-event.html.
@@ -82,6 +86,9 @@ final class EventCommand implements Command
         ProgramSource::definer($statement->definer, $session, $context);
         $planner = new Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
         $schedule = $statement->schedule === null ? null : $this->schedule($statement->schedule, $planner, $context);
+        if ($session->locks !== [] && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            throw StatementError::LockedOrActiveTransaction->error();
+        }
         $database = ProgramSource::database($statement->name->schema, $session);
         $dictionary = $session->instance->dictionary;
         $schema = $dictionary->schema($database);
@@ -90,16 +97,19 @@ final class EventCommand implements Command
             $event = $this->found($statement, $database, $session, $context, true);
             $this->alter($statement, $event, $session, $schedule, $context, ProgramText::of($operation, $session));
         } else {
-            if ($schema !== null && isset($schema->events[$key])) {
+            if ($schema === null) {
+                throw QueryError::BadDatabase->error($database);
+            }
+            if ($session->locks !== []) {
+                throw StatementError::LockedOrActiveTransaction->error();
+            }
+            if (isset($schema->events[$key])) {
                 if (!$statement->ifNotExists) {
                     throw ProgramError::EventExists->error($statement->name->name->value);
                 }
                 $context->note(ProgramError::EventExists, $statement->name->name->value);
 
                 return new Completion(0, 0, $context->diagnostics->raised());
-            }
-            if ($schema === null) {
-                throw QueryError::BadDatabase->error($database);
             }
             assert($schedule !== null);
             $now = ProgramSource::now();
@@ -128,6 +138,9 @@ final class EventCommand implements Command
             ProgramSource::definer($statement->definer, $session, $context);
         }
         $dictionary = $session->instance->dictionary;
+        if ($dictionary->schema($database) === null && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            throw QueryError::BadDatabase->error($database);
+        }
         $renamed = $statement->newName === null ? null : $statement->newName->schema->value ?? $session->variables->database;
         if ($renamed !== null && $dictionary->schema($renamed) === null && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
             throw QueryError::BadDatabase->error($renamed);
@@ -137,6 +150,9 @@ final class EventCommand implements Command
         }
         if ($renamed !== null && $dictionary->schema($renamed) === null) {
             throw QueryError::BadDatabase->error($renamed);
+        }
+        if ($session->locks !== []) {
+            throw StatementError::LockedOrActiveTransaction->error();
         }
         $event = $dictionary->schema($database)?->events[strtolower($statement->name->name->value)] ?? null;
         if ($event === null) {

@@ -25,6 +25,69 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class EventCommandTest extends TestCase
 {
+    /**
+     * @param non-empty-list<int> $codes
+     */
+    #[DataProvider('providerLockedEvents')]
+    public function testExecuteChecksTableLocksAfterTheDefinerAndSchedule(string $version, string $lock, string $sql, array $codes): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x=1; LOCK TABLE t ' . $lock . '; ROLLBACK');
+        try {
+            $session->query($sql);
+            self::fail('Event changes require unlocking the tables.');
+        } catch (SqlError $error) {
+            self::assertSame($codes[array_key_last($codes)], $error->getCode());
+        }
+        self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
+        self::assertCount(1, $session->locks);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, non-empty-list<int>}>
+     */
+    public static function providerLockedEvents(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['READ', 'WRITE'] as $lock) {
+                foreach ([
+                    'CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x=1' => [1192],
+                    'CREATE EVENT absent ON SCHEDULE EVERY 1 DAY DO SET @x=1' => [1192],
+                    'CREATE EVENT missing_db.e ON SCHEDULE EVERY 1 DAY DO SET @x=1' => [$version === '5.6.51' ? 1049 : 1192],
+                    "ALTER EVENT e COMMENT 'changed'" => [1192],
+                    "ALTER EVENT absent COMMENT 'changed'" => [1192],
+                    "ALTER EVENT missing_db.e COMMENT 'changed'" => [1192],
+                    'ALTER EVENT absent ON SCHEDULE EVERY 0 DAY' => [1542],
+                    "ALTER DEFINER=absent@localhost EVENT absent COMMENT 'changed'" => [1449, 1192],
+                    'ALTER EVENT e RENAME TO missing_db.e' => [$version === '5.6.51' ? 1049 : 1192],
+                    'ALTER EVENT e RENAME TO e' => [$version === '5.6.51' ? 1551 : 1192],
+                    'ALTER EVENT absent RENAME TO absent' => [$version === '5.6.51' ? 1551 : 1192],
+                ] as $sql => $codes) {
+                    yield $version . ':' . $lock . ':' . $sql => [$version, $lock, $sql, $codes];
+                }
+            }
+        }
+    }
+
+    #[DataProvider('providerMissingEventDatabases')]
+    public function testFoundChecksMySql57DatabaseBeforeRenameOperands(string $sql): void
+    {
+        $session = (new Instance('5.7.44', databases: ['d']))->connect(database: 'd');
+        $this->expectExceptionCode(1049);
+        $this->expectExceptionMessage("Unknown database 'missing_db'");
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerMissingEventDatabases(): iterable
+    {
+        foreach (["ALTER EVENT missing_db.e COMMENT 'changed'", 'ALTER EVENT missing_db.e RENAME TO other_db.f', 'ALTER EVENT missing_db.e RENAME TO d.e', 'ALTER EVENT missing_db.e RENAME TO missing_db.e'] as $sql) {
+            yield $sql => [$sql];
+        }
+    }
+
     public function testExecuteKeepsLegacyConditionsWithoutCountingThemInTheCompletion(): void
     {
         $session = (new Instance('5.6.51', databases: ['pbt']))->connect(database: 'pbt');

@@ -8,6 +8,7 @@ use MySqlMemory\Command\Program\DropProgramCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\DropProgram;
@@ -19,6 +20,27 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class DropProgramCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedEvents')]
+    public function testExecuteChecksEventLocksBeforeExistence(string $version, string $sql): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x=1; LOCK TABLE t WRITE; ROLLBACK');
+        $this->expectExceptionCode(1192);
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLockedEvents(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['DROP EVENT e', 'DROP EVENT absent', 'DROP EVENT IF EXISTS absent', 'DROP EVENT missing_db.e'] as $sql) {
+                yield $version . ':' . $sql => [$version, $sql];
+            }
+        }
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new DropProgramCommand())->clearsDiagnostics());

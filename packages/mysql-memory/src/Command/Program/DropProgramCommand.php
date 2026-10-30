@@ -55,6 +55,9 @@ final class DropProgramCommand implements Command
         $statement = $operation;
         assert($statement instanceof DropProgram);
         $session->transaction->commit();
+        if ($statement->kind === ProgramKind::Event && $session->locks !== []) {
+            throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
+        }
         $missing = $this->drop($statement, $session);
         if ($missing === null) {
             return new Completion();
