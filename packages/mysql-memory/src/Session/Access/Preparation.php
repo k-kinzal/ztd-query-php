@@ -216,11 +216,15 @@ final class Preparation
         $statement = $operation;
         $this->storage($statement, $session);
         $this->resources($statement);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike) {
+            (new \MySqlMemory\Command\Definition\CreateTableLikeCommand())->prepare($statement, $session);
+        }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) {
             $storage = new \MySqlMemory\Command\Definition\StorageOptions();
             $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
             $storage->resolve($statement, $session, $context);
             (new \MySqlMemory\Command\Prepared\GenerationParameters())->defaults($statement);
+            (new TableCreation())->locks($statement, $session);
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex) {
             $this->alterParameters($statement, $session);

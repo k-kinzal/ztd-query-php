@@ -1767,4 +1767,27 @@ final class CreateTableGenerator implements ErisGenerator
             return new CreateTable(new QualifiedName($name, new Name('pbt')), $columns);
         }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::choose(1, 4)));
     }
+
+    /**
+     * Creates and locks a generated table before a temporary shadow or IF NOT EXISTS creation.
+     * Every request shares the shrinking table name and column definitions.
+     *
+     * @return ErisGenerator<array{CreateTable, \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables, CreateTable}>
+     */
+    public static function withLockedPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        return Generators::bind(self::integers(), static function (CreateTable $definition) use ($release): ErisGenerator {
+            $lock = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(
+                Generators::constant($definition->name),
+                Generators::constant(null),
+                \Tests\Generator\MySql\Statement\Server\Lock\LockModeGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Read, \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write]),
+            );
+            $target = Generators::map(static fn (bool $temporary): CreateTable => new CreateTable($definition->name, $definition->elements, temporaryWords: $temporary ? 1 : 0, ifNotExists: !$temporary), Generators::bool());
+            return Generators::tuple(
+                new self($release, Generators::constant($definition)),
+                new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($lock))),
+                new self($release, $target),
+            );
+        });
+    }
 }

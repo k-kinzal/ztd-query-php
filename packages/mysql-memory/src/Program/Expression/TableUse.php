@@ -38,6 +38,7 @@ final class TableUse
         if (!$session->replayed) {
             $this->header($definition, $session);
         }
+        (new \MySqlMemory\Session\Access\TableCreation())->locks($definition, $session);
         if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($definition->partitioning)) {
             return $this->partition($definition, $session);
         }
@@ -148,6 +149,7 @@ final class TableUse
     public function prepare(CreateTable $definition, Session $session): ?MySqlStatement
     {
         $this->header($definition, $session, true);
+        (new \MySqlMemory\Session\Access\TableCreation())->locks($definition, $session);
         $query = $definition->query;
         if ((new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->deferred($definition->partitioning)) {
             return null;

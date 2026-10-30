@@ -73,6 +73,26 @@ final class CreateTableProperties extends TestCase
     }
 
     /**
+     * Creates a temporary shadow or accepts an existing table under generated explicit locks.
+     * All prerequisites and the final creation must execute successfully.
+     */
+    #[Test]
+    #[DataProvider('providerDependentReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionCompletesWithItsLockedPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(CreateTableGenerator::withLockedPrerequisites($release))->withMaxSize(10)->then(static function (array $statements) use ($release): void {
+            [$create, $lock, $target] = $statements;
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            $execution->statement($create);
+            $execution->statement($lock);
+            $execution->statement($target);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerDependentReleases(): iterable

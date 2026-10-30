@@ -131,6 +131,10 @@ final class CreateTableLikeCommand implements Command
         if ($schema === $sourceSchema && $create->name->name->value === $create->source->name->value) {
             throw QueryError::NonUniqueTable->error($create->name->name->value);
         }
+        (new \MySqlMemory\Session\Access\TableCreation())->locks($create, $session);
+        if ($session->locks !== []) {
+            (new \MySqlMemory\Command\Access\Locks())->allowed($session, $create->source, $create->source->name->value, [], false);
+        }
     }
 
     /**

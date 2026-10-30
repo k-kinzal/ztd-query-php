@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction;
 use SqlSemantics\Statement\Statement;
@@ -28,6 +29,29 @@ use SqlSemantics\Statement\Statement;
  */
 final class TableCreation
 {
+    /**
+     * Opens a permanent creation target under its own explicit lock before its definition.
+     * A READ lock suffices because an existing destination cannot be created again.
+     * Temporary creation is exempt; an existing temporary table does not satisfy the
+     * lock of a permanent creation with the same name. Verified on MySQL 5.6, 5.7 and 8.4.
+     *
+     * @throws SqlError When the permanent target has no matching explicit lock
+     */
+    public function locks(Statement $statement, Session $session): void
+    {
+        if ((!$statement instanceof CreateTable && !$statement instanceof CreateTableLike) || $statement->temporaryWords > 0 || $session->locks === []) {
+            return;
+        }
+        $name = $statement->name;
+        $schema = $name->schema->value ?? $session->variables->database;
+        foreach ($session->locks as [$lockedSchema, $table, $alias]) {
+            if ($schema === $lockedSchema && $name->name->value === $table && strcasecmp($alias, $table) === 0) {
+                return;
+            }
+        }
+        throw \MySqlMemory\Error\Family\StatementError::TableNotLocked->error($name->name->value);
+    }
+
     /**
      * Checks the legacy default database before conditions from later definition clauses.
      *

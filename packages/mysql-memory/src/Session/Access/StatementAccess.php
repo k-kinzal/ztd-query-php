@@ -44,6 +44,7 @@ final class StatementAccess
         (new PasswordAccess())->check($statement, $session);
         (new TableCreation())->check($statement, $session);
         (new TableCreation())->validate($statement, $session);
+        (new TableCreation())->locks($statement, $session);
         (new \MySqlMemory\Command\Definition\Constraint\SpatialColumns())->prepare($statement, $session);
         (new \MySqlMemory\Command\Definition\Constraint\IndexOptions())->prepare($statement, $session, $context);
     }
