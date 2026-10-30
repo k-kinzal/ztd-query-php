@@ -28,6 +28,10 @@ final class StatementAccess
             (new PasswordAccess())->check($statement, $session);
             return;
         }
+        if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\View\CreateView || $statement instanceof \SqlSemantics\Platform\MySql\Statement\View\AlterView) && $session->locks !== []) {
+            (new PasswordAccess())->check($statement, $session);
+            throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
+        }
         if (Stages::definitionCondition($statement)) {
             (new PasswordAccess())->check($statement, $session);
             (new TableCreation())->check($statement, $session);

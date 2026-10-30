@@ -243,6 +243,9 @@ final class HandlerCommand implements Command
      */
     public function open(HandlerOpen $statement, Session $session): Completion
     {
+        if ($session->locks !== []) {
+            throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
+        }
         $schema = $statement->table->schema->value ?? $session->variables->database;
         if ($schema === '') {
             throw QueryError::NoDatabase->error();
@@ -273,6 +276,9 @@ final class HandlerCommand implements Command
      */
     public function handler(Session $session, string $name): Handler
     {
+        if ($session->locks !== []) {
+            throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
+        }
         $handler = $session->handlers[mb_strtolower($name)] ?? null;
         if ($handler !== null && $session->instance->dictionary->table($handler->schema, $handler->table, $session->temporaries) === null) {
             unset($session->handlers[mb_strtolower($name)]);

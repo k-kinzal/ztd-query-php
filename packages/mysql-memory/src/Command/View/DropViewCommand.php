@@ -61,6 +61,9 @@ final class DropViewCommand implements Command
             $seen[$key] = true;
             $targets[] = [$schema, $view->name->value];
         }
+        if ($session->locks !== []) {
+            throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
+        }
         $missing = [];
         $found = [];
         foreach ($targets as [$schema, $name]) {
