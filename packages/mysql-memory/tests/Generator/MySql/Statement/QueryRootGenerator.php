@@ -130,7 +130,7 @@ final class QueryRootGenerator implements ErisGenerator
         $operands = Generators::bind(Generators::choose(1, 6), static function (int $width): ErisGenerator {
             return Generators::map(static function (array $values): QueryRoot {
                 $items = [];
-                foreach ($values as $position => [$expression]) {
+                foreach ($values as $position => $expression) {
                     $items[] = new SelectExpression($expression, new \SqlSemantics\Statement\Identifier\Name('value_' . $position));
                 }
                 return new QueryRoot(new Select([], $items));
@@ -146,7 +146,53 @@ final class QueryRootGenerator implements ErisGenerator
      */
     public static function completeProjections(): ErisGenerator
     {
-        return Generators::oneOf(self::projection(), self::nullProjection(), self::warnedProjection(), self::spellingNotice(), self::trimmedAlias(), \Tests\Generator\Semantics\Statement\Type\ChoiceGenerator::realCasts(), Variable\UserVariableGenerator::missingState());
+        return Generators::oneOf(self::projection(), self::nullProjection(), self::warnedProjection(), self::spellingNotice(), self::trimmedAlias(), \Tests\Generator\Semantics\Statement\Type\ChoiceGenerator::realCasts(), Variable\UserVariableGenerator::missingState(), self::jsonRows());
+    }
+
+    /**
+     * Generates complete projections of scalar families with nested operands.
+     *
+     * @return ErisGenerator<QueryRoot>
+     */
+    public static function expressionProjections(): ErisGenerator
+    {
+        $forms = [];
+        foreach (\Tests\Generator\Semantics\Statement\ScalarGenerator::expressionForms() as $expression) {
+            $forms[] = Generators::map(static fn (\SqlSemantics\Statement\Scalar $scalar): QueryRoot => new QueryRoot(new Select([], [new SelectExpression($scalar)])), $expression);
+        }
+        $contexts = \Tests\Generator\Semantics\Contract\AnalysisContextGenerator::mysql(GrammarRelease::MySql847, new \Tests\Generator\Semantics\Contract\ModeGenerator([new \Tests\Generator\MySql\ModeGenerator(pipesAsConcat: Generators::constant(true))]));
+        return new self(GrammarRelease::MySql847, Generators::oneOf(...$forms), $contexts);
+    }
+
+    /**
+     * Generates numeric queries with their runtime parameter values and slot order.
+     *
+     * @return ErisGenerator<array{QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>}>
+     */
+    public static function boundParameters(GrammarRelease $release): ErisGenerator
+    {
+        return Generators::oneOf(Literal\ParameterGenerator::preparedDivision($release), Literal\ParameterGenerator::arithmetic($release));
+    }
+
+    /**
+     * Generates nested JSON rows with ordinality in their nested scope.
+     *
+     * @return ErisGenerator<QueryRoot>
+     */
+    public static function jsonRows(): ErisGenerator
+    {
+        $queries = Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Relation\JsonTable $table): QueryRoot => new QueryRoot(new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], $table)), Relation\JsonTableGenerator::nestedOrdinals());
+        return new self(GrammarRelease::MySql847, $queries);
+    }
+
+    /**
+     * Generates a parameterized query together with changed session prerequisites.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables, QueryRoot, list<array{int|string, \MySqlMemory\Typing\Domain}>}>
+     */
+    public static function changedParameterState(GrammarRelease $release): ErisGenerator
+    {
+        return Literal\ParameterGenerator::lifetime($release);
     }
 
     /**

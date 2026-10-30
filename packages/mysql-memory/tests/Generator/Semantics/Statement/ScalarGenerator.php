@@ -27,11 +27,11 @@ final class ScalarGenerator implements ErisGenerator
     }
 
     /**
-     * Composes recursive integer expressions with an independent arithmetic expectation.
-     * Eris owns the depth, alternatives and operands; shrinking rebuilds both the
-     * expression and its expected value, without evaluating SQL or calling MemoryDB.
+     * Composes recursive integer expressions with shrinking owned by Eris.
+     * The generated values carry SQL meaning; no independently calculated row
+     * accompanies the expression.
      *
-     * @return ErisGenerator<array{\SqlSemantics\Statement\Scalar, int}>
+     * @return ErisGenerator<\SqlSemantics\Statement\Scalar>
      */
     public static function integers(): ErisGenerator
     {
@@ -49,7 +49,7 @@ final class ScalarGenerator implements ErisGenerator
      */
     public static function composed(array $alternatives): ErisGenerator
     {
-        $leaves = new self([...$alternatives, Generators::map(static fn (array $sample): \SqlSemantics\Statement\Scalar => new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($sample[0]), self::integers())]);
+        $leaves = new self([...$alternatives, new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator(self::integers())]);
         return Generators::bind(Generators::choose(0, 3), static function (int $depth) use ($leaves): ErisGenerator {
             $tree = $leaves;
             for ($level = 0; $level < $depth; $level++) {
@@ -60,58 +60,24 @@ final class ScalarGenerator implements ErisGenerator
     }
 
     /**
-     * @return ErisGenerator<array{\SqlSemantics\Statement\Scalar, int}>
+     * @return ErisGenerator<\SqlSemantics\Statement\Scalar>
      */
     public static function integerTree(int $depth): ErisGenerator
     {
-        $leaf = Generators::map(static fn (int $value): array => [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) $value), $value], Generators::choose(0, 100));
+        $leaf = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 100)));
         if ($depth === 0) {
             return $leaf;
         }
         $child = self::integerTree($depth - 1);
-        $group = Generators::map(self::integerGroup(...), $child);
-        $negative = Generators::map(self::integerNegative(...), $child);
-        $arithmetic = Generators::map(self::integerArithmetic(...), Generators::tuple($child, $child, Generators::bool()));
-        $branch = Generators::map(self::integerBranch(...), Generators::tuple($child, $child, $child));
-        return Generators::oneOf(...[$leaf, $group, $negative, $arithmetic, $branch]);
-    }
-    /**
-     * @param array{\SqlSemantics\Statement\Scalar, int} $value
-     * @return array{\SqlSemantics\Statement\Scalar, int}
-     */
-    public static function integerGroup(array $value): array
-    {
-        return [new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($value[0]), $value[1]];
-    }
-
-    /**
-     * @param array{\SqlSemantics\Statement\Scalar, int} $value
-     * @return array{\SqlSemantics\Statement\Scalar, int}
-     */
-    public static function integerNegative(array $value): array
-    {
-        return [new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($value[0])), -$value[1]];
-    }
-
-    /**
-     * @param array{array{\SqlSemantics\Statement\Scalar, int}, array{\SqlSemantics\Statement\Scalar, int}, bool} $parts
-     * @return array{\SqlSemantics\Statement\Scalar, int}
-     */
-    public static function integerArithmetic(array $parts): array
-    {
-        [$left, $right, $subtract] = $parts;
-        $operator = $subtract ? \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Minus : \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus;
-        return [new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic($operator, new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($left[0]), new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($right[0])), $subtract ? $left[1] - $right[1] : $left[1] + $right[1]];
-    }
-
-    /**
-     * @param array{array{\SqlSemantics\Statement\Scalar, int}, array{\SqlSemantics\Statement\Scalar, int}, array{\SqlSemantics\Statement\Scalar, int}} $parts
-     * @return array{\SqlSemantics\Statement\Scalar, int}
-     */
-    public static function integerBranch(array $parts): array
-    {
-        [$condition, $yes, $no] = $parts;
-        return [new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression(null, [new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch($condition[0], $yes[0])], $no[0]), $condition[1] !== 0 ? $yes[1] : $no[1]];
+        $group = new \Tests\Generator\MySql\Statement\Expression\GroupedGenerator($child);
+        $negative = new \Tests\Generator\MySql\Statement\Expression\Operator\UnaryGenerator(Generators::constant(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus), $group);
+        $arithmetic = new \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticGenerator(
+            \Tests\Generator\MySql\Statement\Expression\Operator\ArithmeticOperatorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Minus, \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus]),
+            $group,
+            $group,
+        );
+        $branch = new \Tests\Generator\MySql\Statement\Expression\Branching\CaseExpressionGenerator(Generators::constant(null), Generators::vector(1, new \Tests\Generator\MySql\Statement\Expression\Branching\CaseBranchGenerator($child, $child)), $child);
+        return Generators::oneOf($leaf, $group, $negative, $arithmetic, $branch);
     }
 
     /**

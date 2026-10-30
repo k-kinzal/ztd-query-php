@@ -144,6 +144,60 @@ final class QueryRootProperties extends TestCase
     }
 
     /**
+     * Generated parameter values provide every slot needed by the numeric query.
+     */
+    #[Test]
+    #[DataProvider('providerDependentReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesBoundParametersComplete(GrammarRelease $release): void
+    {
+        $this->forAll(QueryRootGenerator::boundParameters($release))->withMaxSize(10)->then(static function (array $input) use ($release): void {
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$statement, $parameters] = $input;
+            $execution->statement($statement, $parameters);
+        });
+    }
+
+    /**
+     * Nested scalar operands execute or produce a SQL refusal.
+     */
+    #[Test]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionConsumesNestedScalarOperands(): void
+    {
+        $this->forAll(QueryRootGenerator::expressionProjections())->withMaxSize(10)->then(static function (QueryRoot $statement): void {
+            $instance = new Instance('8.4.7', databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            try {
+                $execution->statement($statement);
+            } catch (SqlError) {
+                // SQL refusal is an allowed outcome without prerequisite state.
+            }
+        });
+    }
+
+    /**
+     * Captured parameterized queries consume values after generated session changes.
+     */
+    #[Test]
+    #[DataProvider('providerDependentReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesParametersCompleteAfterSessionChanges(GrammarRelease $release): void
+    {
+        $this->forAll(QueryRootGenerator::changedParameterState($release))->withMaxSize(10)->then(static function (array $input) use ($release): void {
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$setup, $statement, $parameters] = $input;
+            $execution->statement($setup);
+            $execution->statement($statement, $parameters);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerDependentReleases(): iterable

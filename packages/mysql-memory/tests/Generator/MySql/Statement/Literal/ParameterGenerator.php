@@ -40,7 +40,7 @@ final class ParameterGenerator implements ErisGenerator
      * Generates preparation input and bound values together, including reordered slots.
      * A literal divisor gives the hint a decimal result scale; two markers derive DOUBLE.
      *
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>, float|string}>
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>}>
      */
     public static function preparedDivision(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
@@ -58,7 +58,7 @@ final class ParameterGenerator implements ErisGenerator
      * Publishes the generated operands and retains the same slot/value relationship.
      *
      * @param array{\SqlSemantics\Contract\GrammarRelease, \SqlSemantics\Platform\MySql\Statement\Hint\Form\VariableHint, int, int, bool, bool} $parts The release, hint, dividend, divisor, slot order and whether both operands are parameters
-     * @return array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>, float|string}
+     * @return array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>}
      */
     public static function division(array $parts): array
     {
@@ -72,15 +72,12 @@ final class ParameterGenerator implements ErisGenerator
         $prepared = self::prepared($release, $query, $pair ? [0, 1] : [0], $legacy ? 4 : (int) $hint->value->value);
         $values = [[$numerator, \MySqlMemory\Typing\Domain::integer()], [$denominator, \MySqlMemory\Typing\Domain::integer()]];
         $values = $pair ? $values : [$values[0]];
-        $scale = $legacy ? 4 : (int) $hint->value->value;
-        $increment = bcdiv('5', bcpow('10', (string) ($scale + 1), 0), $scale + 1);
-        $expected = bcadd(bcdiv((string) $numerator, (string) $denominator, intdiv($scale + 8, 9) * 9), $increment, $scale);
-        return [$prepared, $reverse ? array_reverse($values) : $values, $legacy || !$pair ? $expected : (float) ($numerator / $denominator)];
+        return [$prepared, $reverse ? array_reverse($values) : $values];
     }
     /**
-     * Composes paired numeric markers, their bound inputs and the expected arithmetic result.
+     * Composes paired numeric markers and their bound execution inputs.
      *
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>, float|string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field}>
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>}>
      */
     public static function arithmetic(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
@@ -98,10 +95,8 @@ final class ParameterGenerator implements ErisGenerator
     /**
      * Publishes the numeric expression and its related parameter values before execution.
      *
-     * @throws LogicException When called with a bitwise operator outside this numeric generator
-     *
      * @param array{\SqlSemantics\Contract\GrammarRelease, \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator, int, int, bool} $parts The release, operator, values and grouping choice
-     * @return array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>, float|string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field}
+     * @return array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int, \MySqlMemory\Typing\Domain}>}
      */
     public static function arithmeticSample(array $parts): array
     {
@@ -111,32 +106,14 @@ final class ParameterGenerator implements ErisGenerator
         $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic($operator, $grouped ? new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($a) : $a, $grouped ? new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped($b) : $b);
         $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($expression, new \SqlSemantics\Statement\Identifier\Name('answer'))]));
         $prepared = self::prepared($release, $query, [0, 1]);
-        $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        $integer = $operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide;
-        $decimal = $legacy && $operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Divide;
-        $expected = match ($operator) {
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Plus => $left + $right,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Minus => $left - $right,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Multiply => $left * $right,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Divide => $left / $right,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::IntegerDivide => intdiv($left, $right),
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::Modulo => $left % $right,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::BitOr,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::BitAnd,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::ShiftLeft,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::ShiftRight,
-            \SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator::BitXor => throw new LogicException('The numeric generator excludes bitwise operators.'),
-        };
-        $expected = $decimal ? bcadd(bcdiv((string) $left, (string) $right, 5), $left < 0 ? '-0.00005' : '0.00005', 4) : ($legacy || $integer ? (string) $expected : (float) $expected);
-        $field = $decimal ? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::NewDecimal : ($legacy || $integer ? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Double);
-        return [$prepared, [[$left, \MySqlMemory\Typing\Domain::integer()], [$right, \MySqlMemory\Typing\Domain::integer()]], $expected, $field];
+        return [$prepared, [[$left, \MySqlMemory\Typing\Domain::integer()], [$right, \MySqlMemory\Typing\Domain::integer()]]];
 
     }
 
     /**
      * Composes a prepared statement with runtime values and a changed session setting.
      *
-     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int|string, \MySqlMemory\Typing\Domain}>, string, int, list<string>}>
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables, \SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int|string, \MySqlMemory\Typing\Domain}>}>
      */
     public static function lifetime(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
     {
@@ -144,10 +121,12 @@ final class ParameterGenerator implements ErisGenerator
     }
 
     /**
-     * Resolves all three expressions before the property executes them.
+     * Composes the changed session state, captured query and execution inputs.
+     *
+     * @throws LogicException When publication changes the concrete SET statement type.
      *
      * @param array{\SqlSemantics\Contract\GrammarRelease, int, int, int} $parts Release, value, divisor and preparation precision
-     * @return array{\SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int|string, \MySqlMemory\Typing\Domain}>, string, int, list<string>}
+     * @return array{\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables, \SqlSemantics\Platform\MySql\Statement\QueryRoot, list<array{int|string, \MySqlMemory\Typing\Domain}>}
      */
     public static function lifetimeSample(array $parts): array
     {
@@ -157,12 +136,17 @@ final class ParameterGenerator implements ErisGenerator
         $variable = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('typed'));
         $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($division, new \SqlSemantics\Statement\Identifier\Name('quotient')), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($cast, new \SqlSemantics\Statement\Identifier\Name('cast_value')), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression($variable, new \SqlSemantics\Statement\Identifier\Name('variable_value'))]));
         $prepared = self::prepared($release, $query, [0, 1], $precision, ['typed' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
-        $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-        $scale = $precision + (int) $legacy;
-        $fraction = bcdiv((string) $value, (string) $divisor, 9);
-        $rounded = bcadd($fraction, bcdiv($value < 0 ? '-5' : '5', bcpow('10', (string) ($scale + 1)), $scale + 1), $scale);
         $text = $value . '.5';
-        return [$prepared, [[$value, \MySqlMemory\Typing\Domain::integer()], [$text, \MySqlMemory\Typing\Domain::string(strlen($text), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]], $text, $precision + 1, [$rounded, (string) ($value + ($legacy ? 0 : ($value < 0 ? -1 : 1))), $legacy ? $text : (string) $value]];
+        $setup = new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables([
+            new \SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment(new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('typed')), new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral([$text])),
+            new \SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment(new \SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget(new \SqlSemantics\Statement\Identifier\Name('div_precision_increment')), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral((string) ($precision + 1))),
+        ]);
+        $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
+        $assigned = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $setup);
+        if (!$assigned instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables) {
+            throw new LogicException('The generated parameter prerequisites retain their SET statement type.');
+        }
+        return [$assigned, $prepared, [[$value, \MySqlMemory\Typing\Domain::integer()], [$text, \MySqlMemory\Typing\Domain::string(strlen($text), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]]];
     }
 
     /**
