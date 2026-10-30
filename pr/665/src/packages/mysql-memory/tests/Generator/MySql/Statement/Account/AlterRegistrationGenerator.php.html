@@ -113,18 +113,16 @@
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">forms</span>(): <span class="tok-id">iterable</span></span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    {</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;AlterRegistration/249&#039;</span> =&gt; <span class="tok-id">AlterRegistrationGenerator</span>::<span class="tok-id">operands</span>(</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            <span class="tok-id">ifExists</span>: <span class="tok-id">Generators</span>::<span class="tok-id">constant</span>(<span class="tok-id">false</span>),</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            <span class="tok-id">user</span>: <span class="tok-kw">new</span> <span class="tok-id">\Tests\Generator\MySql\Statement\Name\AccountGenerator</span>([<span class="tok-id">\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator</span>::<span class="tok-id">fromOperands</span>(</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>                <span class="tok-id">parentheses</span>: <span class="tok-id">\Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator</span>::<span class="tok-id">selecting</span>([<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords</span>::<span class="tok-id">Omitted</span>])</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>            )]),</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>            <span class="tok-id">factor</span>: <span class="tok-id">User\FactorGenerator</span>::<span class="tok-id">selecting</span>([<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\User\Factor</span>::<span class="tok-id">Second</span>]),</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>            <span class="tok-id">step</span>: <span class="tok-id">User\RegistrationStepGenerator</span>::<span class="tok-id">selecting</span>([<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\User\RegistrationStep</span>::<span class="tok-id">Unregister</span>]),</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>            <span class="tok-id">challengeResponse</span>: <span class="tok-id">Generators</span>::<span class="tok-id">constant</span>(<span class="tok-id">null</span>)</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        );</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    }</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            <span class="tok-id">ifExists</span>: <span class="tok-id">Generators</span>::<span class="tok-id">bool</span>(),</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            <span class="tok-id">user</span>: <span class="tok-kw">new</span> <span class="tok-id">\Tests\Generator\MySql\Statement\Name\AccountGenerator</span>(),</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>            <span class="tok-id">factor</span>: <span class="tok-id">User\FactorGenerator</span>::<span class="tok-id">selecting</span>([<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\User\Factor</span>::<span class="tok-id">Second</span>]),</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>            <span class="tok-id">step</span>: <span class="tok-id">User\RegistrationStepGenerator</span>::<span class="tok-id">selecting</span>([<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Account\User\RegistrationStep</span>::<span class="tok-id">Unregister</span>]),</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>            <span class="tok-id">challengeResponse</span>: <span class="tok-id">Generators</span>::<span class="tok-id">constant</span>(<span class="tok-id">null</span>)</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        );</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    }</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>}</span>
 <span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a></span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>}</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
