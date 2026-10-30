@@ -130,7 +130,7 @@
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>            <span class="tok-kw">throw</span> <span class="tok-var">$error</span>;</span>
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        }</span>
 <span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Completion</span>(<span class="tok-num">0</span>, <span class="tok-num">0</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">raised</span>());</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Completion</span>(<span class="tok-num">0</span>, <span class="tok-num">0</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">stale</span> ? <span class="tok-num">0</span> : <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">raised</span>());</span>
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    }</span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a></span>
 <span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    <span class="tok-com">/**</span></span>
