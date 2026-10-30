@@ -96,48 +96,49 @@
 <span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>                <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">refused</span>(<span class="tok-var">$error</span>, <span class="tok-var">$ignore</span>);</span>
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            }</span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        }</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-var">$conflict</span> = <span class="tok-var">$writer</span>-&gt;<span class="tok-id">conflict</span>(<span class="tok-var">$row</span>, <span class="tok-var">$number</span>);</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-kw">if</span> (<span class="tok-var">$conflict</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-kw">if</span> (<span class="tok-var">$ignore</span>) {</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>                <span class="tok-var">$writer</span>-&gt;<span class="tok-id">ignored</span>(<span class="tok-var">$row</span>, <span class="tok-var">$conflict</span>[<span class="tok-num">1</span>]);</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a></span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>                <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>            }</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>            <span class="tok-kw">throw</span> <span class="tok-var">$writer</span>-&gt;<span class="tok-id">duplicate</span>(<span class="tok-var">$row</span>, <span class="tok-var">$conflict</span>[<span class="tok-num">1</span>]);</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        }</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-var">$orphan</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>-&gt;<span class="tok-id">orphan</span>(<span class="tok-var">$writer</span>-&gt;<span class="tok-id">table</span>, <span class="tok-var">$row</span>, <span class="tok-var">$old</span>);</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-kw">if</span> (<span class="tok-var">$orphan</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">refused</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>-&gt;<span class="tok-id">violation</span>(<span class="tok-var">$writer</span>-&gt;<span class="tok-id">table</span>, <span class="tok-var">$orphan</span>, <span class="tok-id">false</span>), <span class="tok-var">$ignore</span>);</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        }</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-kw">try</span> {</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>-&gt;<span class="tok-id">updating</span>(<span class="tok-var">$writer</span>-&gt;<span class="tok-id">table</span>, <span class="tok-var">$old</span>, <span class="tok-var">$row</span>);</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SqlError</span> <span class="tok-var">$error</span>) {</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>            <span class="tok-kw">if</span> (<span class="tok-var">$error</span>-&gt;<span class="tok-id">error</span> !== <span class="tok-id">ConstraintError</span>::<span class="tok-id">RowIsReferenced</span>) {</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>                <span class="tok-kw">throw</span> <span class="tok-var">$error</span>;</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            }</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">refused</span>(<span class="tok-var">$error</span>, <span class="tok-var">$ignore</span>);</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        }</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a></span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    }</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a></span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a><span class="tok-com">     * Refuses a row: raises the error, or with IGNORE records it as a warning and answers false.</span></span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a><span class="tok-com">     * @throws SqlError Without IGNORE</span></span>
-<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">refused</span>(<span class="tok-id">SqlError</span> <span class="tok-var">$error</span>, <span class="tok-id">bool</span> <span class="tok-var">$ignore</span>): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>    {</span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$ignore</span>) {</span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>            <span class="tok-kw">throw</span> <span class="tok-var">$error</span>;</span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        }</span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">writer</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">warning</span>(<span class="tok-var">$error</span>-&gt;<span class="tok-id">error</span>, <span class="tok-var">$error</span>-&gt;<span class="tok-id">getMessage</span>());</span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a></span>
-<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
-<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>    }</span>
-<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>}</span>
-<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        (<span class="tok-kw">new</span> <span class="tok-id">Tablespaces</span>())-&gt;<span class="tok-id">write</span>(<span class="tok-var">$writer</span>-&gt;<span class="tok-id">table</span>, <span class="tok-var">$row</span>, <span class="tok-var">$writer</span>-&gt;<span class="tok-id">context</span>);</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-var">$conflict</span> = <span class="tok-var">$writer</span>-&gt;<span class="tok-id">conflict</span>(<span class="tok-var">$row</span>, <span class="tok-var">$number</span>);</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-kw">if</span> (<span class="tok-var">$conflict</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-kw">if</span> (<span class="tok-var">$ignore</span>) {</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>                <span class="tok-var">$writer</span>-&gt;<span class="tok-id">ignored</span>(<span class="tok-var">$row</span>, <span class="tok-var">$conflict</span>[<span class="tok-num">1</span>]);</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>                <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>            }</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>            <span class="tok-kw">throw</span> <span class="tok-var">$writer</span>-&gt;<span class="tok-id">duplicate</span>(<span class="tok-var">$row</span>, <span class="tok-var">$conflict</span>[<span class="tok-num">1</span>]);</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        }</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-var">$orphan</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>-&gt;<span class="tok-id">orphan</span>(<span class="tok-var">$writer</span>-&gt;<span class="tok-id">table</span>, <span class="tok-var">$row</span>, <span class="tok-var">$old</span>);</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">if</span> (<span class="tok-var">$orphan</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">refused</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>-&gt;<span class="tok-id">violation</span>(<span class="tok-var">$writer</span>-&gt;<span class="tok-id">table</span>, <span class="tok-var">$orphan</span>, <span class="tok-id">false</span>), <span class="tok-var">$ignore</span>);</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        }</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">try</span> {</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">references</span>-&gt;<span class="tok-id">updating</span>(<span class="tok-var">$writer</span>-&gt;<span class="tok-id">table</span>, <span class="tok-var">$old</span>, <span class="tok-var">$row</span>);</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SqlError</span> <span class="tok-var">$error</span>) {</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            <span class="tok-kw">if</span> (<span class="tok-var">$error</span>-&gt;<span class="tok-id">error</span> !== <span class="tok-id">ConstraintError</span>::<span class="tok-id">RowIsReferenced</span>) {</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>                <span class="tok-kw">throw</span> <span class="tok-var">$error</span>;</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>            }</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">refused</span>(<span class="tok-var">$error</span>, <span class="tok-var">$ignore</span>);</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        }</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    }</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     * Refuses a row: raises the error, or with IGNORE records it as a warning and answers false.</span></span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a><span class="tok-com">     * @throws SqlError Without IGNORE</span></span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">refused</span>(<span class="tok-id">SqlError</span> <span class="tok-var">$error</span>, <span class="tok-id">bool</span> <span class="tok-var">$ignore</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    {</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$ignore</span>) {</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>            <span class="tok-kw">throw</span> <span class="tok-var">$error</span>;</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        }</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">writer</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">warning</span>(<span class="tok-var">$error</span>-&gt;<span class="tok-id">error</span>, <span class="tok-var">$error</span>-&gt;<span class="tok-id">getMessage</span>());</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a></span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>    }</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>}</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
