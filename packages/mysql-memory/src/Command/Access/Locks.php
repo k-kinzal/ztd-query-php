@@ -32,6 +32,31 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 final class Locks
 {
     /**
+     * Requires a persistent table's WRITE metadata lock, regardless of its alias.
+     * Temporary tables cannot supply this lock. CREATE/DROP TRIGGER and TRUNCATE
+     * use MySQL's find_table_for_mdl_upgrade before opening the table.
+     *
+     * @throws \MySqlMemory\Error\SqlError When explicit locks contain no matching WRITE lock
+     */
+    public function metadata(Session $session, string $schema, string $name): void
+    {
+        if ($session->locks === []) {
+            return;
+        }
+        $found = false;
+        foreach ($session->locks as [$lockedSchema, $table, , $exclusive]) {
+            if ($lockedSchema !== $schema || $table !== $name) {
+                continue;
+            }
+            $found = true;
+            if ($exclusive) {
+                return;
+            }
+        }
+        throw ($found ? StatementError::TableNotLockedForWrite : StatementError::TableNotLocked)->error($name);
+    }
+
+    /**
      * Raises the error of the first table a statement uses without a lock that allows it.
      *
      * @throws \MySqlMemory\Error\SqlError When a table is not locked, or is written under a READ lock

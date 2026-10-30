@@ -49,10 +49,33 @@ final class DropProgramProperties extends TestCase
     }
 
     /**
+     * The generated definition and lock remain related throughout shrinking.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionDropsItsGeneratedLockedTrigger(GrammarRelease $release): void
+    {
+        $this->forAll(DropProgramGenerator::withLockedTrigger($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$table, $lock, $trigger, $drop] = $sequence;
+            $execution->statement($table);
+            $execution->statement($lock);
+            $execution->statement($trigger);
+            $execution->statement($drop);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
     }
 }

@@ -34,6 +34,44 @@ use Tests\Generator\Embedding;
 #[Small]
 final class TriggerCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedTargets')]
+    public function testExecuteChecksPersistentTargetLocksBeforeExistingTriggers(string $version, string $locks, string $target, int $code): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT); CREATE VIEW v AS SELECT a FROM t; CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a=1; LOCK TABLES ' . $locks);
+        $reply = $session->run('CREATE TRIGGER tr AFTER INSERT ON ' . $target . ' FOR EACH ROW SET @a=1')[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame($code, $reply->getCode());
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, int}>
+     */
+    public static function providerLockedTargets(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['t READ' => 1099, 't AS x READ' => 1099, 't WRITE' => 1359, 't AS x WRITE' => 1359, 't AS x READ,t AS y WRITE' => 1359, 't READ,t AS y WRITE' => 1359, 'u WRITE' => 1100] as $locks => $code) {
+                yield $version . '/' . $locks => [$version, $locks, 't', $code];
+            }
+            foreach (['absent', 'v', 'absent_db.t'] as $target) {
+                yield $version . '/' . $target => [$version, 't WRITE', $target, 1100];
+            }
+            yield $version . '/system table' => [$version, 't WRITE', 'mysql.user', 1465];
+            yield $version . '/missing system table' => [$version, 't WRITE', 'mysql.absent', 1465];
+        }
+    }
+
+    public function testRelationRejectsATemporaryShadowBeforeCheckingThePersistentLock(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); LOCK TABLES t READ; CREATE TEMPORARY TABLE t(a INT)');
+
+        $this->expectExceptionCode(1361);
+        $this->expectExceptionMessage("Trigger's 't' is view or temporary table");
+        (new TriggerCommand())->relation(new QualifiedName(new Name('tr')), new TriggerTable(new QualifiedName(new Name('t'))), $session);
+    }
+
     #[TestWith(['5.6.51', 1146])]
     #[TestWith(['5.7.44', 1146])]
     #[TestWith(['8.4.7', 1049])]

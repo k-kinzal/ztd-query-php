@@ -237,6 +237,19 @@ final class ExecutionTest extends TestCase
         self::assertFalse((new Execution($modern))->retains($modernQuery, new QueryCommand()));
     }
 
+    public function testRetainsKeepsEarlierDiagnosticsAfterDroppingATriggerIn56(): void
+    {
+        $session = (new Instance('5.6.51', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a=1; DROP TRIGGER IF EXISTS absent');
+        $reply = $session->query('DROP TRIGGER tr')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Note', '1360', 'Trigger does not exist']], $warnings->rows);
+    }
+
     public function testRetainsKeepsTheDiagnosticsAcrossTheTransactionStatementsOf56(): void
     {
         $session = (new Instance('5.6.51'))->connect();

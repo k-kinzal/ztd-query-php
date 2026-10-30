@@ -37,6 +37,9 @@ final class CreateTriggerGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
+            if ($release->database() === 'mysql') {
+                $forms[] = self::operands();
+            }
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -73,6 +76,28 @@ final class CreateTriggerGenerator implements ErisGenerator
             }
             return new CreateTrigger(new QualifiedName(new Name('tr' . $data['number']), new Name($data['mismatch'] ? 'other' : 'pbt')), $data['time'], $data['event'], new M\Routine\Trigger\TriggerTable(new QualifiedName(new Name('target'), new Name('pbt'))), new M\Routine\Program\Block([], []));
         }, $operands);
+    }
+
+    /**
+     * Composes a table, its WRITE lock and a trigger using the same declaration.
+     * Aliases, names, action times and events shrink with their prerequisites.
+     *
+     * @return ErisGenerator<array{M\Table\CreateTable, M\Server\Lock\LockTables, CreateTrigger}>
+     */
+    public static function withLockedPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $tables = new \Tests\Generator\MySql\Statement\Table\CreateTableGenerator($release, \Tests\Generator\MySql\Statement\Table\CreateTableGenerator::integers());
+        return Generators::bind($tables, static function (M\Table\CreateTable $table) use ($release): ErisGenerator {
+            $contexts = Generators::constant(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new Name('pbt')], $table->declarations()));
+            $names = new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), Generators::constant(null), Generators::constant(null));
+            $aliases = Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator());
+            $locks = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(Generators::constant($table->name), $aliases, \Tests\Generator\MySql\Statement\Server\Lock\LockModeGenerator::selecting([M\Server\Lock\LockMode::Write]));
+            return Generators::tuple(
+                Generators::constant($table),
+                new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($locks)), $contexts),
+                new self($release, self::fromOperands($names, new Trigger\TriggerTimeGenerator(), new Trigger\TriggerEventGenerator(), new Trigger\TriggerTableGenerator(Generators::constant($table->name)), new Program\BlockGenerator(), Generators::constant(null), Generators::constant(null), Generators::constant(false)), $contexts),
+            );
+        });
     }
 
     /**

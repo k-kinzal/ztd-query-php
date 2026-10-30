@@ -10,7 +10,6 @@ use MySqlMemory\Error\DiagnosticText;
 use MySqlMemory\Error\Family\ConstraintError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -145,20 +144,11 @@ final class DropTableCommand implements Command
         if ($session->temporaries->table($schema, $name) !== null) {
             return;
         }
-        $found = false;
-        foreach ($session->locks as [$lockedSchema, $table, , $exclusive]) {
-            if ($lockedSchema !== $schema || $table !== $name) {
-                continue;
-            }
-            $found = true;
-            if ($exclusive) {
-                if ($session->settings()->legacy()) {
-                    (new \MySqlMemory\Command\Access\Locks())->allowed($session, $statement->table, $name, [], true);
-                }
-                return;
-            }
+        $locks = new \MySqlMemory\Command\Access\Locks();
+        $locks->metadata($session, $schema, $name);
+        if ($session->settings()->legacy()) {
+            $locks->allowed($session, $statement->table, $name, [], true);
         }
-        throw ($found ? StatementError::TableNotLockedForWrite : StatementError::TableNotLocked)->error($name);
     }
 
     /**

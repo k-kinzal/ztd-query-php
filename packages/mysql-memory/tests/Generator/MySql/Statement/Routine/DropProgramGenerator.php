@@ -31,6 +31,9 @@ final class DropProgramGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
+            if ($release->database() === 'mysql') {
+                $forms[] = self::operands(new ProgramKindGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), Generators::bool());
+            }
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -48,6 +51,24 @@ final class DropProgramGenerator implements ErisGenerator
             }
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+
+    /**
+     * Composes the complete trigger definition and its dependent removal under a lock.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Table\CreateTable, \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables, \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger, \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram}>
+     */
+    public static function withLockedTrigger(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $drop = static function (\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $table, \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables $lock, \SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger $trigger) use ($release): ErisGenerator {
+            return Generators::tuple(
+                Generators::constant($table),
+                Generators::constant($lock),
+                Generators::constant($trigger),
+                new self($release, self::operands(ProgramKindGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger]), Generators::constant($trigger->name), Generators::bool())),
+            );
+        };
+        return Generators::bind(CreateTriggerGenerator::withLockedPrerequisites($release), static fn (array $sequence): ErisGenerator => $drop(...$sequence));
     }
     /**
      * @param ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind> $kind Generated constructor operand

@@ -115,6 +115,13 @@ final class TriggerCommand implements Command
         $database = ProgramSource::database($name->schema, $session);
         $located = $target->name->schema->value ?? $database;
         $table = $target->name->name->value;
+        if (strcasecmp($located, 'mysql') === 0) {
+            throw ProgramError::TriggersOnSystemSchema->error();
+        }
+        if ($session->temporaries->table($located, $table) !== null) {
+            throw ProgramError::TriggerOnView->error($table);
+        }
+        (new \MySqlMemory\Command\Access\Locks())->metadata($session, $located, $table);
         $schema = $session->instance->dictionary->schema($located);
         if ($schema === null) {
             throw $session->settings()->legacy() ? QueryError::NoSuchTable->error($located, $table) : QueryError::BadDatabase->error($located);

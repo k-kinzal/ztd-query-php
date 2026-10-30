@@ -20,6 +20,30 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class DropProgramCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedTriggers')]
+    public function testDropChecksTheExistingTriggerTableLockDespiteATemporaryShadow(string $version, string $locks, string $name, int $code): void
+    {
+        $session = (new Instance($version, databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TABLE u(a INT); CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a=1; LOCK TABLES ' . $locks . '; CREATE TEMPORARY TABLE t(a INT)');
+        $reply = $session->run('DROP TRIGGER ' . $name)[0];
+
+        self::assertSame($code, $reply instanceof SqlError ? $reply->getCode() : 0);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, int}>
+     */
+    public static function providerLockedTriggers(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['t READ' => 1099, 't AS x READ' => 1099, 't WRITE' => 0, 't AS x WRITE' => 0, 't AS x READ,t AS y WRITE' => 0, 't READ,t AS y WRITE' => 0, 'u WRITE' => 1100] as $locks => $code) {
+                yield $version . '/' . $locks => [$version, $locks, 'tr', $code];
+            }
+            yield $version . '/missing' => [$version, 't READ', 'absent', 1360];
+            yield $version . '/missing if exists' => [$version, 't READ', 'IF EXISTS absent', 0];
+        }
+    }
+
     #[DataProvider('providerLockedEvents')]
     public function testExecuteChecksEventLocksBeforeExistence(string $version, string $sql): void
     {

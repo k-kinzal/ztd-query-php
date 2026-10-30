@@ -290,7 +290,7 @@ final class Execution
      * or end a transaction, set its characteristics or a savepoint, the XA statements, the
      * statements about databases and USE, the account statements, GRANT and REVOKE at the global
      * and database levels, FLUSH, HELP, PREPARE, EXECUTE and CALL (whose own statements then
-     * decide), CREATE and DROP of a stored routine or an event, and the SHOW statements that read
+     * decide), CREATE of a stored routine or an event, DROP of a routine, event or trigger, and the SHOW statements that read
      * no table of the information schema: SHOW CREATE DATABASE, SHOW CREATE PROCEDURE and
      * FUNCTION, SHOW GRANTS, SHOW PRIVILEGES, SHOW PROCESSLIST, SHOW ENGINE and the replication
      * SHOW statements, KILL, PURGE BINARY LOGS and UNLOCK TABLES (verified on a live 5.6.51 server).
@@ -311,7 +311,7 @@ final class Execution
             \MySqlMemory\Command\Account\DropUserCommand::class, \MySqlMemory\Command\Account\AlterUserCommand::class, \MySqlMemory\Command\Account\RenameUserCommand::class,
             \MySqlMemory\Command\Account\SetPasswordCommand::class, \MySqlMemory\Command\Account\ShowGrantsCommand::class, \MySqlMemory\Command\Admin\FlushCommand::class,
             \MySqlMemory\Command\Show\Server\HelpCommand::class, \MySqlMemory\Command\Prepared\PreparedCommand::class, \MySqlMemory\Command\Program\CallCommand::class,
-            \MySqlMemory\Command\Program\RoutineCommand::class, \MySqlMemory\Command\Program\EventCommand::class, \MySqlMemory\Command\Program\ShowCreateProgramCommand::class,
+            \MySqlMemory\Command\Program\RoutineCommand::class, \MySqlMemory\Command\Program\EventCommand::class, \MySqlMemory\Command\Program\DropProgramCommand::class, \MySqlMemory\Command\Program\ShowCreateProgramCommand::class,
             \MySqlMemory\Command\Show\ShowCreateDatabaseCommand::class, \MySqlMemory\Command\Show\Server\ShowPrivilegesCommand::class,
             \MySqlMemory\Command\Show\Server\ShowProcesslistCommand::class, \MySqlMemory\Command\Replication\ReplicationShowCommand::class,
             \MySqlMemory\Command\Replication\BinaryLogCommand::class, \MySqlMemory\Command\Replication\ReplicaCommand::class, \MySqlMemory\Command\Admin\ForeignServerCommand::class,
@@ -323,9 +323,6 @@ final class Execution
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables) {
             return true;
-        }
-        if ($command instanceof \MySqlMemory\Command\Program\DropProgramCommand) {
-            return !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram || $statement->kind !== \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger;
         }
         if ($command instanceof \MySqlMemory\Command\Show\Server\ShowEnginesCommand) {
             return !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowEngineCatalog;

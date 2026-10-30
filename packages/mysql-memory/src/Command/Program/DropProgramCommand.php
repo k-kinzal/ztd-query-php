@@ -93,6 +93,7 @@ final class DropProgramCommand implements Command
         if ($statement->kind === ProgramKind::Trigger) {
             foreach ($schema->triggers ?? [] as $trigger) {
                 if (strcasecmp($trigger->name, $name) === 0) {
+                    (new \MySqlMemory\Command\Access\Locks())->metadata($session, $database, $trigger->table);
                     (new \MySqlMemory\Hint\TriggerNotices())->load($database, $trigger->table, $session, true);
                     break;
                 }

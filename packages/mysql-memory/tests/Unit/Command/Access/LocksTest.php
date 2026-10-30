@@ -19,6 +19,24 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class LocksTest extends TestCase
 {
+    public function testMetadataFindsAWriteLockAfterAReadAlias(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); LOCK TABLES t AS x READ, t AS y WRITE');
+        (new Locks())->metadata($session, 'd', 't');
+
+        self::assertCount(2, $session->locks);
+    }
+
+    public function testMetadataDoesNotTreatATemporaryShadowAsAPersistentLock(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); LOCK TABLES t AS x READ; CREATE TEMPORARY TABLE t(a INT)');
+
+        $this->expectExceptionCode(1099);
+        (new Locks())->metadata($session, 'd', 't');
+    }
+
     public function testCheckRefusesATableThatIsNotLocked(): void
     {
         $session = (new Instance())->connect();
