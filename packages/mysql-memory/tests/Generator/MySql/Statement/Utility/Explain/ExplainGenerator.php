@@ -34,7 +34,8 @@ final class ExplainGenerator implements ErisGenerator
             $from = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Relation\TableReferenceGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator($name)));
             $query = \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), $items, $from));
             $formats = Generators::oneOf(Generators::constant(null), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::elements('JSON', 'TRADITIONAL', 'XML'), Generators::constant(null)));
-            $forms = [self::operands($query, format: $formats)];
+            $database = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true) ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 'explain_' . $id, Generators::choose(0, 20)), Generators::constant(null)));
+            $forms = [self::operands($query, format: $formats, database: $database)];
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -73,6 +74,24 @@ final class ExplainGenerator implements ErisGenerator
         return Generators::map(static function (array $parts): \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain {
             return new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain(statement: $parts[0], format: $parts[1], analyze: $parts[2], modifier: $parts[3], into: $parts[4], database: $parts[5], emptyInto: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], verb: $parts[9]);
         }, Generators::tuple($statement, $format ?? Generators::constant(null), $analyze ?? Generators::constant(false), $modifier ?? Generators::constant(null), $into ?? Generators::constant(null), $database ?? Generators::constant(null), $emptyInto ?? Generators::constant(false), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $verb ?? new ExplainVerbGenerator()));
+    }
+
+    /**
+     * Creates the generated database before explaining a scalar query in it.
+     * Shrinking the name rebuilds both requests with the same database operand.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase, \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain}>
+     */
+    public static function withPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $names = \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(Generators::map(static fn (int $id): string => 'explain_' . $id, Generators::choose(0, 20)), Generators::constant(null));
+        return Generators::bind($names, static function (\SqlSemantics\Statement\Identifier\Name $name) use ($release): ErisGenerator {
+            $query = \Tests\Generator\MySql\Statement\QueryRootGenerator::operands(new \Tests\Generator\MySql\Statement\Query\SelectGenerator(Generators::constant([]), Generators::tuple(new \Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator(new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 65535)))))));
+            return Generators::tuple(
+                new \Tests\Generator\MySql\Statement\Server\Database\CreateDatabaseGenerator($release, \Tests\Generator\MySql\Statement\Server\Database\CreateDatabaseGenerator::operands(Generators::bool(), Generators::constant($name))),
+                new self($release, self::operands($query, analyze: Generators::bool(), database: Generators::constant($name)))
+            );
+        });
     }
     /**
      * Generates refused report options around a complete, independent scalar query.

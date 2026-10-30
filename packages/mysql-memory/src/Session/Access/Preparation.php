@@ -32,34 +32,38 @@ final class Preparation
      */
     public function check(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session): void
     {
-
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
-            (new \MySqlMemory\Session\Statement\Reading())->read($operation, $session);
+        $database = $session->variables->database;
+        try {
+            if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\RenameUser || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\CreateRole || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles) {
+                (new \MySqlMemory\Session\Statement\Reading())->read($operation, $session);
+                $this->protocol($operation);
+                return;
+            }
+            if (!$operation instanceof MySqlStatement) {
+                throw new LogicException('No preparation implementation for ' . $operation::class);
+            }
+            if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges) {
+                (new DefaultDatabase())->check($operation, $session);
+            }
+            (new TableCreation())->database($operation, $session);
+            (new Execution($session))->parsing($operation, $operation->statementInformation()->warnings);
+            if ($this->conditional($operation, $session)) {
+                return;
+            }
             $this->protocol($operation);
-            return;
-        }
-        if (!$operation instanceof MySqlStatement) {
-            throw new LogicException('No preparation implementation for ' . $operation::class);
-        }
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges || $operation instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges) {
+            $this->program($operation, $session);
+            (new Reading())->read($operation, $session);
+            (new \MySqlMemory\Command\Show\Inspection())->check($operation, $session, true);
             (new DefaultDatabase())->check($operation, $session);
+            $this->definitions($operation, $session);
+            if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall) {
+                (new \MySqlMemory\Program\Routine\LoadNotices())->prepare($operation, $session);
+            }
+            (new DefaultDatabase())->referenced($operation, $session);
+            $this->hints($operation, $session);
+        } finally {
+            (new \MySqlMemory\Command\Explain\ExplainCommand())->restoreDatabase($operation, $session, $database);
         }
-        (new TableCreation())->database($operation, $session);
-        (new Execution($session))->parsing($operation, $operation->statementInformation()->warnings);
-        if ($this->conditional($operation, $session)) {
-            return;
-        }
-        $this->protocol($operation);
-        $this->program($operation, $session);
-        (new Reading())->read($operation, $session);
-        (new \MySqlMemory\Command\Show\Inspection())->check($operation, $session, true);
-        (new DefaultDatabase())->check($operation, $session);
-        $this->definitions($operation, $session);
-        if ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall) {
-            (new \MySqlMemory\Program\Routine\LoadNotices())->prepare($operation, $session);
-        }
-        (new DefaultDatabase())->referenced($operation, $session);
-        $this->hints($operation, $session);
     }
 
     /**

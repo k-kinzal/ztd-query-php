@@ -88,7 +88,9 @@ final class ExplainCommand implements Command
     }
 
     /**
-     * Raises the error of the format and options of an EXPLAIN, before the server prepares the statement it explains.
+     * Checks the format and options before preparing the explained statement.
+     * A concrete explanation then selects its explicit database for dependency lookup.
+     * The preparation or execution boundary restores the caller's database on every outcome.
      *
      * Connection explanations retain refused options for the same versioned checks.
      *
@@ -106,6 +108,24 @@ final class ExplainCommand implements Command
         if ($statement->database !== null && $session->instance->dictionary->schema($statement->database->value) === null) {
             throw QueryError::BadDatabase->error($statement->database->value);
         }
+        if ($statement instanceof Explain && $statement->database !== null && $statement->database->value !== $session->variables->database) {
+            $session->use($statement->database->value);
+        }
+    }
+
+    /**
+     * Restores the database after an explanation switched it during preparation or execution.
+     * MySQL reloads the original schema's default collation; without a current database it
+     * uses the server default. An unchanged database keeps its session overrides.
+     */
+    public function restoreDatabase(\SqlSemantics\Statement\AnalyzedStatement $statement, Session $session, string $database): void
+    {
+        if (!$statement instanceof Explain || $statement->database === null || $session->variables->database === $database) {
+            return;
+        }
+        $session->variables->database = $database;
+        $collation = $session->instance->dictionary->schema($database)->collation ?? (string) $session->variables->read('collation_server');
+        $session->variables->databaseCollation(Collation::known($collation));
     }
 
     /**

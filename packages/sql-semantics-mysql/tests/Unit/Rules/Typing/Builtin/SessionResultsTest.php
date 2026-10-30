@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing\Builtin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
@@ -22,6 +23,25 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class SessionResultsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerDatabaseWidths(): iterable
+    {
+        foreach (['5.6.51' => 34, '5.7.44' => 34, '8.0.44' => 64, '8.1.0' => 34, '8.2.0' => 34, '8.3.0' => 34, '8.4.7' => 64, '9.0.1' => 34, '9.1.0' => 64] as $version => $width) {
+            yield $version => [$version, $width];
+        }
+    }
+
+    #[DataProvider('providerDatabaseWidths')]
+    public function testRulesPreserveReleaseSpecificDatabaseMetadataWidths(string $version, int $width): void
+    {
+        $rules = (new SessionResults())->rules();
+        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-' . $version))->context([])));
+
+        self::assertSame([$width, $width], [$rules['DATABASE']($call)?->length, $rules['SCHEMA']($call)?->length]);
+    }
+
     public function testRulesAreSystemConstantNames(): void
     {
         $rules = (new SessionResults())->rules();

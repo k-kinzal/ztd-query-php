@@ -41,6 +41,23 @@ use Tests\Generator\Embedding;
 #[Small]
 final class ExecutionTest extends TestCase
 {
+    public function testPerformUsesTheExplainedDatabaseAndRestoresItAfterRefusal(): void
+    {
+        $session = (new Instance(databases: ['current_db', 'target_db']))->connect(database: 'current_db');
+        $session->query('CREATE TABLE current_db.t(id INT); CREATE TABLE target_db.t(id INT); LOCK TABLE current_db.t READ');
+        $request = $session->analyze('EXPLAIN FOR DATABASE target_db SELECT * FROM t');
+        $failure = null;
+        try {
+            (new Execution($session))->statement($request);
+        } catch (SqlError $error) {
+            $failure = $error;
+        }
+
+        self::assertInstanceOf(SqlError::class, $failure);
+        self::assertSame(1100, $failure->getCode());
+        self::assertSame('current_db', $session->variables->database);
+    }
+
     public function testStatementRollsBackEarlierRowsWhenAConcreteInsertFailsConversion(): void
     {
         $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');

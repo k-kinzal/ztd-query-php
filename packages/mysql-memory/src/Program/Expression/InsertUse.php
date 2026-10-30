@@ -90,13 +90,12 @@ final class InsertUse
         if (!($write instanceof InsertRows || $write instanceof InsertSet || $write instanceof InsertQuery) || !$write->hasExecutionCondition()) {
             return;
         }
-        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($explain, $session);
         $database = $session->variables->database;
-        $session->variables->database = $explain->database->value ?? $database;
         try {
+            (new \MySqlMemory\Command\Explain\ExplainCommand())->check($explain, $session);
             $this->check($write, $explain->statementInformation(), $session);
         } finally {
-            $session->variables->database = $database;
+            (new \MySqlMemory\Command\Explain\ExplainCommand())->restoreDatabase($explain, $session, $database);
         }
     }
 

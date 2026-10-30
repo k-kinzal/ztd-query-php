@@ -18,10 +18,13 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
  * hold like system constants, and the character set and collation names CHARSET() and
  * COLLATION() answer are coercible, all in utf8mb3_general_ci. The list of active roles
  * CURRENT_ROLE() answers is a LONGTEXT of 50331648 characters (verified on a live 8.4 server).
- * MySQL 5.6 and 5.7 answer a database name of 34 characters and an account of 77 and 93
- * characters, as their user names are shorter (verified on live 5.6.51 and 5.7.44 servers).
+ * Database metadata allows 34 characters in 5.6, 5.7, 8.1–8.3 and 9.0; the supported
+ * 8.0.44, 8.4.7 and 9.1.0 releases allow 64. This is a metadata width, not a truncation
+ * of the returned database name. Legacy accounts allow 77 and 93 characters because
+ * their user names are shorter (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/charset-metadata.html.
+ * https://github.com/mysql/mysql-server/blob/mysql-9.0.1/sql/item_strfunc.h.
  *
  * @visibility SqlSemantics\Platform\MySql\Rules\Typing
  */
@@ -41,10 +44,11 @@ final class SessionResults
             GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910,
             GrammarRelease::PostgreSql166, GrammarRelease::PostgreSql172, GrammarRelease::Sqlite3472 => $modern,
         })($call);
+        $database = static fn (Invocation $call): Domain => $name(in_array($call->derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql901], true) ? 34 : 64)($call);
 
         return [
-            'DATABASE' => $released(64, 34, 34),
-            'SCHEMA' => $released(64, 34, 34),
+            'DATABASE' => $database,
+            'SCHEMA' => $database,
             'USER' => $released(288, 77, 93),
             'SESSION_USER' => $released(288, 77, 93),
             'SYSTEM_USER' => $released(288, 77, 93),

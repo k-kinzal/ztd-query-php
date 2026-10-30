@@ -86,13 +86,12 @@ final class DeleteUse
         if (!($write instanceof Delete || $write instanceof MultipleDelete) || !$write->hasExecutionCondition()) {
             return;
         }
-        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($explain, $session);
         $database = $session->variables->database;
-        $session->variables->database = $explain->database->value ?? $database;
         try {
+            (new \MySqlMemory\Command\Explain\ExplainCommand())->check($explain, $session);
             $this->check($write, $explain->statementInformation(), $session);
         } finally {
-            $session->variables->database = $database;
+            (new \MySqlMemory\Command\Explain\ExplainCommand())->restoreDatabase($explain, $session, $database);
         }
     }
 

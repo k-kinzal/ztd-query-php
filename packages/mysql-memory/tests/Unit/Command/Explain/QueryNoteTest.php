@@ -14,6 +14,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class QueryNoteTest extends TestCase
 {
+    public function testItemRetainsTheDatabaseFunctionInTheRewrittenQuery(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect();
+        $session->query('EXPLAIN FOR DATABASE d SELECT DATABASE()');
+
+        self::assertSame([['Note', 1003, '/* select#1 */ select database() AS `DATABASE()`']], $session->diagnostics->conditions);
+        self::assertSame('', $session->variables->database);
+    }
+
     public function testItemUsesResolvedAliasesAndReturnsTheRewriteNotice(): void
     {
         $session = (new Instance())->connect();

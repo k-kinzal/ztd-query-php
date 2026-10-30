@@ -13,6 +13,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\SqlModes;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
@@ -24,6 +25,77 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class ExplainCommandTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, string, string, int, string}>
+     */
+    public static function providerDatabaseScopes(): iterable
+    {
+        $cases = [
+            ['LOCK TABLE current_db.t READ', 'EXPLAIN FOR DATABASE target_db SELECT missing FROM t', 1100, "Table 't' was not locked with LOCK TABLES"],
+            ['LOCK TABLE target_db.t READ', 'EXPLAIN FOR DATABASE target_db SELECT missing FROM t', 1054, "Unknown column 'missing' in 'field list'"],
+            ['LOCK TABLE target_db.t AS x READ', 'EXPLAIN FOR DATABASE target_db SELECT missing FROM t x', 1054, "Unknown column 'missing' in 'field list'"],
+            ['LOCK TABLE target_db.t READ', 'EXPLAIN FOR DATABASE target_db SELECT missing FROM current_db.t', 1100, "Table 't' was not locked with LOCK TABLES"],
+            ['', 'EXPLAIN FOR DATABASE target_db TABLE missing', 1146, "Table 'target_db.missing' doesn't exist"],
+            ['', 'EXPLAIN FOR DATABASE absent TABLE missing', 1049, "Unknown database 'absent'"],
+            ['', 'EXPLAIN FORMAT=wrong FOR DATABASE absent TABLE missing', 1791, "Unknown EXPLAIN format name: 'wrong'"],
+        ];
+        foreach (['8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['current_db', ''] as $database) {
+                foreach ($cases as [$lock, $sql, $code, $message]) {
+                    foreach ([false, true] as $prepared) {
+                        yield $version . ':' . $database . ':' . $lock . ':' . $sql . ':' . ($prepared ? 'prepared' : 'direct') => [$version, $database, $lock, $prepared ? "PREPARE p FROM '" . $sql . "'" : $sql, $code, $message];
+                    }
+                }
+            }
+        }
+    }
+
+    #[DataProvider('providerDatabaseScopes')]
+    public function testRestoreDatabaseFollowsPreparationAndExecutionRefusals(string $version, string $database, string $lock, string $sql, int $code, string $message): void
+    {
+        $session = (new Instance($version, databases: ['current_db', 'target_db']))->connect(database: $database === '' ? null : $database);
+        $session->query('CREATE TABLE current_db.t(id INT); CREATE TABLE target_db.t(id INT); ' . $lock);
+        $reply = $session->run($sql)[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame($code, $reply->getCode());
+        self::assertSame($message, $reply->getMessage());
+        self::assertSame($database, $session->variables->database);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDatabaseCollationRestoration(): iterable
+    {
+        yield 'same schema' => ['EXPLAIN FOR DATABASE current_db SELECT 1', 'latin1_bin'];
+        yield 'different schema' => ['EXPLAIN FOR DATABASE target_db SELECT 1', 'utf8mb4_0900_ai_ci'];
+        yield 'missing table' => ['EXPLAIN FOR DATABASE target_db TABLE missing', 'utf8mb4_0900_ai_ci'];
+        yield 'missing database' => ['EXPLAIN FOR DATABASE absent TABLE missing', 'latin1_bin'];
+        yield 'unknown format' => ['EXPLAIN FORMAT=wrong FOR DATABASE target_db TABLE missing', 'latin1_bin'];
+        yield 'prepared schema' => ["PREPARE p FROM 'EXPLAIN FOR DATABASE target_db SELECT 1'", 'utf8mb4_0900_ai_ci'];
+    }
+
+    #[DataProvider('providerDatabaseCollationRestoration')]
+    public function testRestoreDatabaseReloadsCollationOnlyAfterARealDatabaseChange(string $sql, string $collation): void
+    {
+        $session = (new Instance(databases: ['current_db', 'target_db']))->connect(database: 'current_db');
+        $session->query("SET collation_database='latin1_bin'");
+        $session->run($sql);
+
+        self::assertSame('current_db', $session->variables->database);
+        self::assertSame($collation, $session->variables->read('collation_database'));
+    }
+
+    public function testRestoreDatabaseUsesTheServerCollationWithoutACurrentDatabase(): void
+    {
+        $session = (new Instance(databases: ['target_db']))->connect();
+        $session->query("SET collation_database='latin1_bin'; EXPLAIN FOR DATABASE target_db SELECT 1");
+
+        self::assertSame('', $session->variables->database);
+        self::assertSame('utf8mb4_0900_ai_ci', $session->variables->read('collation_database'));
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ExplainCommand())->clearsDiagnostics());

@@ -78,6 +78,7 @@ final class Execution
         }
         $node = $operation;
         $hints = (new \MySqlMemory\Hint\Hints())->apply($node, $this->session);
+        $database = $this->session->variables->database;
         $previous = $this->session->preparation->resolution;
         $this->session->preparation->resolution = $this->session->resolution();
         try {
@@ -85,6 +86,7 @@ final class Execution
         } catch (SqlError $error) {
             throw (new Problem\Precision())->legacy($error, $this->session->settings()->release());
         } finally {
+            (new \MySqlMemory\Command\Explain\ExplainCommand())->restoreDatabase($operation, $this->session, $database);
             $this->session->preparation->resolution = $previous;
             $hints->restore($this->session);
         }

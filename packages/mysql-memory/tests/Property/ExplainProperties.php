@@ -49,6 +49,34 @@ final class ExplainProperties extends TestCase
     }
 
     /**
+     * Executes an explanation in its generated prerequisite database.
+     */
+    #[Test]
+    #[DataProvider('providerDatabaseReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(ExplainGenerator::withPrerequisites($release))->withMaxSize(10)->then(static function (array $statements) use ($release): void {
+            [$create, $explain] = $statements;
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            $execution->statement($create);
+            $execution->statement($explain);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerDatabaseReleases(): iterable
+    {
+        foreach ([GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910] as $release) {
+            yield $release->value => [$release];
+        }
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

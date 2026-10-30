@@ -66,6 +66,9 @@ final class QueryNote
     {
         $expression = $field->expression;
         $text = $field->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn ? $this->column($field->resolution, $writer) : ($expression === null ? null : $writer->expressions->scalar($expression));
+        if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall && $expression->function === \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Database) {
+            $text = 'database()';
+        }
         if ($expression instanceof Parameter) {
             $compiled = $compiler->compile($expression, new Scope());
             $value = $compiled->evaluate(new Frame($compiler->connection->context));

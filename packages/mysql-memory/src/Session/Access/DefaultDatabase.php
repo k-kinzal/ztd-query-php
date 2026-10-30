@@ -172,7 +172,7 @@ final class DefaultDatabase
      */
     public function referenced(\SqlSemantics\Platform\MySql\Statement\Statement|\MySqlMemory\Session\Resolution\QueryPreparation $operation, Session $session): void
     {
-        if ($session->variables->database !== '' || \MySqlMemory\Command\Dispatcher::program($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation : $operation->statement)) {
+        if ($session->variables->database !== '' || ($operation instanceof Explain && $operation->database !== null) || \MySqlMemory\Command\Dispatcher::program($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation : $operation->statement)) {
             return;
         }
         $this->calls($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation : $operation->statement, $session);
@@ -198,7 +198,7 @@ final class DefaultDatabase
      */
     public function calls(\SqlSemantics\Statement\Node $statement, Session $session): void
     {
-        if ($session->variables->database !== '' || ($statement instanceof Statement && \MySqlMemory\Command\Dispatcher::program($statement))) {
+        if ($session->variables->database !== '' || ($statement instanceof Explain && $statement->database !== null) || ($statement instanceof Statement && \MySqlMemory\Command\Dispatcher::program($statement))) {
             return;
         }
         foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($statement, childrenFirst: $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) as $node) {
