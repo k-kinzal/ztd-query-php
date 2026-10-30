@@ -1,282 +1,296 @@
 # SQL Semantics and MySQL Memory
 
-## Purpose
+Updated: 2026-10-30, after the user's latest correction in this conversation.
 
-The main objective is to validate the types and invariants of `sql-semantics` by
-building an executable in-memory MySQL implementation that consumes them. MySQL
-Memory must support the project's MySQL versions, but it is also the means of
-exposing an insufficient semantic model. [S1:10; S2:23]
+## Goal and authority
 
-This memo distinguishes the user's requirements from design hypotheses and past
-AI work. The previous memo mixed them and turned implementation choices into
-additional acceptance conditions. Its detailed architecture, work checkpoints
-and test counts are not a set of user-approved requirements. This audit makes no
-new claim that implementation or acceptance is complete.
+Build MySQL Memory so that it correctly executes SQL Semantics' meaning-bearing,
+structured values after analysis, and verify its behavior against real MySQL.
+The required verification consists of **two mechanisms**:
 
-## The three requested checks
+1. PHP-Fuzzer generates SQL through SQL Faker and compares execution on MemoryDB
+   with execution on real MySQL started through Testcontainers.
+2. PHPUnit/Eris generates SQL Semantics values and executes MemoryDB's phases
+   after SQL Semantics analysis. PHPStan rules guarantee corresponding generators
+   exist for all semantic model types.
 
-### 1. Reconstruct SQL from semantic values
+The user's latest clarification governs this memo. It supersedes the previous
+"three checks" description and the previous blanket permission to accept SQL
+errors in PBT. SQL -> semantic model -> SQL reconstruction is **not required**.
+Its earlier test results do not satisfy either mechanism above and must not be
+reported as progress toward their acceptance conditions.
 
-```text
-sql-faker SQL -> sql-semantics analysis -> semantic values -> rendered SQL
-Compact(original SQL) == Compact(rendered SQL)
-```
+This memo records requirements, observed implementation state, and remaining
+work separately. Existing code, previous agent plans, test counts and old goal
+labels do not create requirements. Historical notes remain in Git history rather
+than being repeated here as competing instructions.
 
-Use PHPFuzzer to search for counterexamples, with `sql-formatter`'s Compact
-format for the comparison. Reconstruct from the meaning-bearing structure.
-Keeping the original SQL and replaying it does not check that property. The
-renderer must not fill gaps with retained SQL fragments or parser information.
-[S2:23, 69]
+## Required verification
 
-### 2. Execute directly generated semantic values
-
-```text
-Eris semantic-type generators -> composed semantic values -> MemoryDB execution
-```
-
-Use PHPUnit and Eris to search for values that the downstream MemoryDB execution
-phase cannot correctly consume. Planning and execution must obtain the SQL
-meaning they need from those values. Filling missing meaning from an AST or SQL
-text, or rendering and analyzing the generated input again, bypasses the boundary
-being checked. Merely constructing an object or checking its PHP class is not the
-requested execution property. [S1:6820, 6852; S2:23, 69]
-
-Generate both values without prerequisite database state and dependent inputs:
-for example, a generated CREATE TABLE followed by an INSERT generated for that
-definition. Missing-state SQL errors are distinct from invalid representations
-or implementation failures. Construct dependent values through generator
-composition, preserving the relationship during shrinking. `then()` executes
-and asserts; it does not build the semantic input that should have been generated.
-[S1:7254, 7496, 7641, 7740]
-
-### 3. Compare execution with real MySQL
+### PHP-Fuzzer: compare execution with real MySQL
 
 ```text
-                           -> MemoryDB ----------------> execution result
-sql-faker SQL ------------|
-                           -> MySQL via Testcontainers -> execution result
-Compare the two results.
+PHP-Fuzzer input -> SQL Faker -> the same generated SQL
+                                  |              |
+                                  v              v
+                              MemoryDB       real MySQL
+                                             via Testcontainers
+                                  |              |
+                                  +-- compare ---+
+                                   execution results
 ```
 
-Use PHPFuzzer. Send the same generated SQL to both databases and compare the
-execution results. Keep the check direct: `fuzz/` contains `Target/` and PHP
-entrypoint files, using the existing SQL Faker, database and Testcontainers APIs.
-It does not need a separate observation, fixture, lifecycle or generation
-framework. Do not add a dedicated Diff test suite. [S1:186; S2:23; S4:217, 311]
+The normal fuzz path uses MemoryDB and **one** real database. The rule about
+real-database differences does not require three databases, two native servers
+per trial, or a second native execution for every generated input.
 
-For values inherently dependent on the execution environment, check output
-content and value types. This exception is limited to those values; it does not
-permit removing output or ignoring other differences. The comparison must still
-exercise the actual execution results. [S1:6472]
+Only differences that also occur between real database executions under
+comparable versions, settings and input histories may be accepted as differences.
+A MemoryDB limitation, a plausible "environmental"
+explanation, or two values having the same PHP type is not sufficient. Any
+exception needs evidence for the particular real-database variability and must
+remain limited to that variability. Deterministic result content must still
+match. Do not delete rows, columns, diagnostics or other mismatches to obtain a
+passing comparison.
 
-## Model and generator requirements
+SQL errors in this differential check are observable execution results: compare
+the actual errors and any partial results. Matching native and MemoryDB SQL
+errors are distinct from PBT's success property below. MemoryDB implementation
+failures must fail the fuzz run even if a transport presents them as SQL errors.
 
-- `analyze()` declares an interface and returns a concrete SQL statement type
-  implementing it. Semantic types express SQL concepts and enforce their
-  invariants. Do not gather the meaning into a generic `Operation` aggregate
-  containing `Statement`, `AnalysisContext`, `Facts` and `SourceMap`.
-  Information and source information belong to the relevant SQL structure.
-  Avoid common abstractions that erase distinctions in SQL merely to reduce
-  code duplication. [S1:9131]
-- The model must expose the information needed by its consumers, including the
-  types and sources discussed for INSERT values. The earlier INSERT and
-  Expression sketches were incomplete examples, not a finalized model or API.
-  [S1:9218; S2:7, 23]
-- `tests/Generator/` contains an Eris-based generator corresponding to every
-  semantic model type in `sql-semantics` and `sql-semantics-mysql`, including
-  nested types. Placement and namespaces consistently correspond to those
-  types. Use Eris generation, composition and shrinking, rather than a private
-  sampler behind a generator-shaped interface. [S1:5063, 7496, 7973; S2:69; S4:217]
-- Generator coverage and property granularity are separate. Check the model-to-
-  generator mapping with a PHPStan custom rule under `rules/`. Generators must
-  actually be used; implement the requested configurable class-unused rule,
-  selecting the checked classes in NEON. [S1:2271, 7961, 7973, 8578]
+The two required fuzz acceptance results are:
 
-## Current property structure and execution property
+- A successful **15-minute run without supplied corpus seeds**, starting with an
+  empty corpus and still generating SQL through SQL Faker.
+- Successful execution comparison for **all SQL Faker seeds establishing 100%
+  grammar coverage** of the applicable grammar. Verify the corpus against SQL
+  Faker's coverage contract; neither a file count nor a partial replay proves
+  success. Do not omit failing productions or narrow the grammar to pass.
 
-The subsequent user clarification selects concrete analysis-result types as the
-property units. Keep one `<ConcreteType>Properties` class directly under
-`tests/Property`, with no `MySql` or `Statement` subdirectory. Start each search
-with that concrete type's generator. A generic feature factory selected by a
-class-string is not the intended entry point.
+Record the source revision, database release, grammar/profile, commands,
+completed inputs, elapsed time and failures. A recorded mutation RNG seed is
+useful for reproduction and is not a supplied corpus seed. Supported-version
+obligations remain; a separate 900-second run for every conceivable combination
+of release, mode and driver was an agent-created matrix, not a user requirement.
 
-The property is consumption of a generated analysis result by MemoryDB's
-post-analysis execution phase. Without prerequisite state, execution may complete
-or refuse the statement as SQL; representation and implementation failures must
-escape. With generated prerequisites, the execution must complete. Local checks
-of error numbers, account mutations, warning counts, source-text markers and scope
-cleanup do not define this property and must not substitute for it.
+Keep the comparison direct, using the existing SQL Faker, database and
+Testcontainers APIs. Do not restore the rejected observation/fixture/lifecycle
+framework, a dedicated Diff suite, or per-input catalog/state synchronization.
+Keep the generated history available for reproducing state-dependent failures.
 
-Use standard Eris composition and shrinking. The user explicitly rejected the
-`tests/Eris` directory and the custom execution/shrinking machinery it contained;
-do not relocate that machinery under another name. Dependencies must be built in
-the generators, not reconstructed by the execution callback.
+### Eris: execute generated semantic values after analysis
 
-All semantic types still need generators, including nested types that do not
-have standalone execution properties. Generator coverage and behavior coverage
-remain distinct. This clarification supersedes the earlier grouping hypothesis
-recorded in the historical audit below.
+```text
+Eris generators for all semantic types
+    -> composed, meaning-bearing concrete analysis results
+    -> MemoryDB's post-analysis phases
+    -> successful operation
+```
 
-## Work order and completion evidence
+Every meaning-bearing, structured model type in `sql-semantics` and
+`sql-semantics-mysql` needs a corresponding real Eris generator, including nested
+values, interfaces and enums in the model. Generators must be used in executable
+compositions. Merely constructing objects, checking their PHP classes, or
+referencing generator classes does not establish correct execution.
 
-First establish the overall verification structure and a model/executor design
-that can run it. Implement that structure across the relevant scope before
-returning to individual SQL corrections. The user explicitly replaced the earlier
-single-example-first approach with this order. A design document or one working
-INSERT path does not establish the overall structure. [S2:105; S3:2621, 2635]
+PHPStan must guarantee the model-to-generator mapping. Discover the model
+inventory independently of the generator inventory so that a missing generator
+cannot disappear from the checked set. Keep the requested configurable
+class-unused rule, with its selected classes configured in NEON. Static existence
+and reachability checks do not prove that all value domains are exercised.
 
-The work therefore needs to change the semantic model, its consumers, genuine
-Eris generation and the three checks together. Once those checks operate at the
-intended boundaries, use their counterexamples to correct the implementation.
-Use the conventions and ordinary quality checks of the other `sql-*` packages;
-the user requested these three special verification mechanisms, not an additional
-private assurance framework. [S1:186; S2:23, 69, 105]
+Start execution with a complete concrete result of SQL Semantics analysis.
+MemoryDB must consume its semantic information through the phases after analysis.
+Do not reconstruct SQL and analyze it again, or recover missing meaning from
+retained SQL text or parser ASTs. Typed construction/publication in generators
+must produce the complete semantic input needed by those phases.
 
-Fuzz must accept SQL Faker's grammar-coverage seeds, pass the seeds representing
-the applicable 100% grammar coverage, and run without supplied seeds for 15
-minutes without a failing case. These are counterexample searches. Report the
-scope actually exercised. The supported-version obligations still apply; the
-previous memo's particular release/profile/driver matrix was an AI choice, not a
-separately specified user condition. [S1:186, 2271, 4858, 4904]
+**SQL errors are not generally acceptable in PBT.** An error caused by runtime
+state, such as a referenced table not existing, may be allowed. This is not a
+permission to catch every `SqlError`: non-state-dependent SQL errors must fail,
+as must representation errors and implementation failures. If generated
+prerequisites satisfy the statement's state dependencies, the generated sequence
+must complete successfully.
 
-Work stays in this worktree and branch and is delivered through PR #665.
-Repository rules, including English artifacts, supported versions and protected
-files, continue to apply. This memo does not invent an exception to those rules.
-[S3:12; repository `AGENTS.md`]
+Generate dependent inputs through Eris composition, for example a table
+definition followed by an insertion for that definition. Preserve those
+relationships during standard Eris shrinking. The `then()` callback executes the
+generated inputs; it must not reconstruct their dependencies. Fixed expected
+error codes, account snapshots, source-text markers and scope-cleanup assertions
+can belong to other tests, but they do not define this execution property.
 
-## Other explicitly requested conventions
+Property units are the **concrete types returned by `analyze()`**, not each small
+nested type and not one aggregate search for all statements. Use this structure:
 
-- Public library usage is through PDO or mysqli, with database startup explicitly
-  selecting the MySQL version. `Database::start()` and `MemoryDatabase::start()`
-  were the proposed public names. [S1:2271]
-- Remove the rejected `mysql-memory/docs`, `resources` and `bin` organization.
-  The user allowed considering genuinely necessary resources, but did not accept
-  their mere existence as a justification. Renaming or relocating rejected
-  helpers is not a resolution. [S1:2271, 2666, 3109, 4932]
-- Put properties in `tests/Property`, use `<Name>Properties` classes and
-  `satisfies<Property>` methods, and give every property class at least one such
-  method. No traits or helpers there, and no references from properties into
-  `fuzz/`. [S1:2271, 6740]
-- Follow the other packages' test categories and name Integration/E2E tests for
-  their actual behavior or scenario. The rejected `tests/Connection`,
-  `tests/Result`, `tests/Support` and introduced `tests/Fake` structures must not
-  be retained as workarounds. The user did not prohibit processes or PDO in
-  `tests/Unit` simply because of that directory name. [S1:2271, 4932, 5079]
+```text
+packages/mysql-memory/tests/
+├── Generator/
+│   ├── Semantics/   # Mirrors the core semantic model types
+│   └── MySql/       # Mirrors the MySQL semantic model types
+└── Property/
+    ├── AlterDefaultRoleProperties.php
+    ├── ChecksumTableProperties.php
+    ├── FlushTablesProperties.php
+    └── <ConcreteAnalysisResult>Properties.php
+```
 
-## Audit: conditions that the AI added
+There are no `MySql` or `Statement` subdirectories under `Property`, and no
+`tests/Eris` directory. Each property class has a runnable `satisfies*` method
+and starts from its concrete generator, such as
+`new AlterDefaultRoleGenerator($release)`, rather than a generic factory selected
+by a class-string. Nested generators compose into executable roots. Use Eris's
+own generation and shrinking; do not relocate rejected custom machinery.
 
-The following were presented as requirements or fixed completion gates without
-support in the user's requests. Their appearance in an earlier memo, implementation
-or test does not establish approval. Some are possible engineering choices;
-that does not make them mandatory, correct, or necessary for this task.
+Concrete-type separation allows independent counterexample searches and budgets.
+The 15-minute requirement belongs to PHP-Fuzzer; it is not a per-property Eris
+requirement. Report actual PBT trials and duration without inventing a new gate.
 
-| Previous memo condition | Correction |
+## Current implementation state
+
+Implementation snapshot before this memo update: branch `feat/mysql-memory`,
+pushed implementation commit `c06767f26a2`, with the uncommitted CHECKSUM work
+listed below. Delivery remains through
+[PR #665](https://github.com/k-kinzal/ztd-query-php/pull/665), which is a draft.
+This snapshot is **not** an acceptance claim.
+
+| Area | Observed state | What remains unproved or incorrect |
+| --- | --- | --- |
+| Property layout | 185 `*Properties.php` classes directly under `tests/Property`; no subdirectories; `tests/Eris` is absent. | Correct layout does not establish the correct property. |
+| Generator inventory | 1,162 `*Generator.php` files; the recorded semantic inventory also contains 1,162 types and 185 concrete MySQL analysis-result types. | The inventory selector and actual generated domains still need review against all semantic model types. These counts are observations, not fixed targets. |
+| PHPStan enforcement | `SemanticGeneratorCoverageRule`, `SemanticCatalogue` and `UnusedClassRule` are registered. The coverage rule checks instantiable `Eris\Generator<ModelType>` implementations; class usage is configured in NEON. | The current catalogue selects public model types by namespace, visibility and value-shape rules. Confirm that this selection omits no required semantic type. Static use does not prove downstream execution coverage. |
+| PBT entry boundary | Concrete generators publish typed structures without SQL rendering/parsing. Properties call `Execution::statement()`; dependent sequences are composed in generators. | Review all paths and nested/conditional values, not only the demonstrated statements. |
+| PBT error policy | **All 185 property classes contain an unqualified `catch (SqlError)`; there are 187 such catch blocks.** They accept SQL refusals without checking their cause. | **This violates the clarified requirement. PBT is not complete, and prior passes do not establish the required property.** |
+| Native fuzz path | `fuzz_mysql_execution.php` uses SQL Faker, one Testcontainers MySQL and one MemoryDB. `ExecutionTarget` compares returned rows, metadata, completion fields and SQL errors, and checks MemoryDB's internal-failure channel. | Existing status/engine/latch exceptions permit some unequal values using domain checks. Their scope and real-database evidence require review under the clarified exception rule. The comparison is not universally exact. |
+| Native grammar replay | The current replay corpus has 2,180 files. The MySQL 8.4.7 default manifest reports 3,113/3,113 reached productions. Replay passes the latest FLUSH counterexample but stops at CHECKSUM. | A complete successful execution comparison of the 100%-coverage seeds is missing. Corpus coverage metadata is not execution-success evidence. |
+| Seedless native fuzz | No passing 15-minute empty-corpus native comparison has been established. | The required run remains outstanding. Prior SQL-reconstruction fuzz results do not count. |
+| Ordinary checks | Full static checks passed for the pushed FLUSH change. The last full MemoryDB test run still failed. | The current dirty tree has not passed those checks; ordinary failures must be resolved. |
+
+### Existing verification evidence and its limits
+
+Local logs under `packages/mysql-memory/build/` are evidence for particular runs,
+not portable completion gates or a replacement for the requirements:
+
+- `remaining-property-shape-audit.json` records the 1,162/185 inventory.
+- `remaining-rename-full-property.txt` reports 683 PBT data cases passing in
+  11 minutes 58 seconds. It predates later additions and uses the incorrect
+  broad SQL-error allowance. It does **not** prove the corrected PBT property.
+- `remaining-flush-lock-tests-final.txt` reports 443 focused cases passing;
+  `remaining-flush-legacy-tests.txt` reports 373 cases after the legacy follow-up.
+  FLUSH comparisons matched 678 replies per release across nine releases.
+  These are focused regression results, not full-corpus acceptance.
+- `remaining-flush-lock-lint-verified.txt` records the static checks before the
+  uncommitted CHECKSUM changes.
+- `remaining-flush-lock-native-corpus.txt` stops at
+  `opt_checksum_type-2.txt`: `CHECKSUM TABLE _sqlfaker_identifier EXTENDED`
+  returns `3539857293` on native MySQL and `2587194292` on the then-current
+  MemoryDB implementation.
+- `remaining-tablespace-full-suite.txt` reports 11,809 tests, 140,371 assertions,
+  nine missing-system-provider failures and one one-second PreparedCache test
+  timeout. A separate passing cache test does not turn this full run green.
+
+### Work currently in progress
+
+The last pushed changes corrected table-flush metadata locks, temporary-table
+lookup, and legacy diagnostics. Earlier focused fixes covered LOAD destinations,
+replication commands, renames and other counterexamples.
+
+The current uncommitted work replaces CHECKSUM's PHP-serialized-row CRC with
+column-type-specific record bytes. The changed files are:
+
+- `packages/mysql-memory/src/Command/Maintenance/ChecksumCommand.php`
+- `packages/mysql-memory/src/Storage/Checksum.php` (new)
+- `packages/mysql-memory/src/Storage/ChecksumField.php` (new)
+- `packages/mysql-memory/tests/Unit/Command/Maintenance/ChecksumCommandTest.php`
+
+These changes have not been validated, committed or pushed. They must not be
+counted as a resolved counterexample. Correcting the overall PBT error policy and
+fuzz exception policy takes priority over continuing isolated SQL fixes.
+
+### Known implementation gaps
+
+Recorded unresolved findings include missing system-table row providers,
+prepared execution after its default database is dropped, implicit base-table
+locks for views, global read locks, UPDATE target-table subquery restrictions,
+and CHECKSUM record encoding. Other recorded differences concern connection
+identities in KILL, SHOW OPEN TABLES cache behavior, legacy performance_schema
+removal, partial KEY partition routing, legacy temporary-table IMPORT, oversized
+VARCHAR conversion, and nondeterministic ALTER defaults. Replication receiver
+state and general EXPLAIN plan/cost behavior are also incomplete.
+
+Reproduce and resolve these findings through the corrected checks. They are
+implementation findings, not an exhaustive specification or permission to add
+comparison exceptions. In particular, classify any alleged native variability
+under the user's rule instead of assuming it from the feature's name.
+
+## Work required to reach the goal
+
+Work on the verification design across the relevant scope **before** returning
+to one-counterexample-at-a-time fixes. The next work is:
+
+1. **Correct PBT's success criterion across all properties.** Replace the blanket
+   `SqlError` acceptance with handling limited to errors actually caused by
+   runtime state. Other SQL errors and implementation failures must fail. Ensure
+   generated prerequisites lead to successful execution and that a test can
+   expose a non-state SQL error instead of swallowing it.
+2. **Audit generator completeness and composition.** Check the independently
+   discovered semantic inventory, the corresponding generators, their use in
+   executable roots, valid combinations, dependent state and shrinking. Include
+   nested, conditional and diagnostic-bearing values. Their mere appearance in
+   separate error-code tests does not establish this PBT property. Correct the
+   generators or semantic model where the required property reveals a gap;
+   do not suppress failures or omit difficult types. Run the complete PHPStan
+   coverage/unused checks and the corrected concrete-type PBT suite.
+3. **Audit fuzz comparison exceptions.** Review `ExecutionTarget::status()`,
+   `environment()`, `engines()` and `latches()`. Retain only differences supported
+   by real-database variability, with the exception limited to what the evidence
+   establishes. Remove unsupported relaxations. Keep one real database in the
+   normal comparison path; this audit does not authorize a three-database design.
+4. **Resolve exposed implementation defects.** Resume CHECKSUM and the other
+   reproduced findings after the verification mechanisms enforce the intended
+   contracts. Add relevant regression tests and compare actual native replies.
+   Implement missing behavior rather than empty providers or output masking.
+5. **Run ordinary checks on the resulting revision.** Resolve the full-suite
+   failures and run the relevant repository quality checks. Distinguish focused
+   passes, a full-suite pass and checks that predate later edits.
+6. **Meet both native fuzz conditions.** Verify the SQL Faker 100%-coverage seed
+   inventory and successfully compare all its inputs; separately run the same
+   differential target from an empty corpus for 15 minutes without a failing
+   case. Fix discovered counterexamples and repeat the affected verification.
+   State the releases/profiles actually tested and remaining version coverage.
+7. **Deliver and report accurately through PR #665.** Report the two required
+   mechanisms, corrected PBT results, PHPStan coverage, ordinary checks and the
+   native fuzz evidence. Remove reconstruction from the PR/goal completion
+   narrative. Do not declare completion while these requirements remain unmet.
+
+SQL reconstruction work is outside this task's acceptance scope. This memo does
+not require deleting unrelated renderer functionality or existing package tests;
+it removes reconstruction as a requested workstream and completion condition.
+
+## Corrections the user has repeatedly had to make
+
+| User instruction or correction | Mistake that must not recur |
 | --- | --- |
-| Inspect all catalogs, session/global state, accounts, replication and locks after each generated SQL; restore all of them before continuing. | Remove from the fuzz requirement. The requested property compares the results of the generated SQL. This added audit task created the auxiliary framework the user rejects. |
-| Execute real MySQL twice, require the two native observations to agree, and operate a separate two-server lifecycle path. | An AI-added verification design, not part of the requested two-database comparison. |
-| Enable metadata-lock instrumentation, use administrator probes, enforce probe ordering, capture lossless observation records and measure protocol traffic for every trial. | Consequences of the added observation framework, not additional user acceptance conditions. |
-| Import native catalogs/settings through a bespoke startup synchronization and restoration layer. | Not required by the user's simple fuzz comparison. Existing execution APIs and ordinary configuration do not justify this extra framework. |
-| Precompute and retain all 32 lexical-mode combinations and client-encoding alternatives for prepared statements. | An AI-selected model/execution solution. The requirement is to preserve SQL meaning without downstream AST/text supplementation; this particular algorithm was not specified or accepted as the only solution. |
-| Use a particular immutable graph, identity scheme, binding API, lifecycle signature, namespace dependency graph and named exception/channel design. | Implementation proposals. Keep the actual semantic information and invariants requirements; do not freeze these proposals as user instructions. |
-| Run a separate 900-second search for each item in a fixed nine-release, mode and text/prepared-driver matrix. | The user specified grammar seeds, 15-minute seedless fuzzing and multi-version behavior. The expanded matrix is an AI execution-plan choice, not the wording of the requirement. |
-| Preserve every existing timeout and make prepared-test performance fixes a prerequisite for the structural work. | Not a user condition. Existing repository/toolkit requirements still apply, but the memo cannot promote a local test problem into a new work-order requirement. |
-| Require one Property class per principal concrete analysis result and enforce removal of the rest. | Withdrawn. Concrete-result grouping is a hypothesis; behavior granularity remains unresolved. Complete generator coverage is the settled requirement. |
-| Treat goals A–D, “A complete,” focused test counts and historical checkpoints as the accepted plan and remaining obligations. | These were AI bookkeeping and reports. Reassess progress against the sourced requirements above; do not inherit additional conditions from those records. |
+| First refresh the overall verification system and structure, then refine individual behavior. | Continuing local fixes while the verification design remains incorrect, or treating a plan/one working path as the completed refresh. |
+| Use the concrete values returned by SQL Semantics `analyze()` as executable PBT roots. | Testing small leaf types alone even though they must compose into a complete request to execute MemoryDB. |
+| Put property classes directly under `tests/Property`; show the intended tree clearly. | Retaining unnecessary `MySql`/`Statement` nesting or answering about file contents when the objection is the directory structure. |
+| Separate searches by concrete analysis-result type for counterexample efficiency. | Putting every statement into one aggregate property/factory, or confusing generator coverage with property granularity. |
+| Use a concrete generator such as `new AlterDefaultRoleGenerator($release)`. | Hiding the root behind `StatementGenerator::accountRequests($release, SomeType::class)` and similar generic selectors. |
+| Use standard Eris generation, composition and shrinking. Delete `tests/Eris`. | Building custom sampling/execution/shrinking machinery or relocating the rejected machinery under a different directory. |
+| Test successful consumption by the phases after analysis. | Substituting `assertInstanceOf`, expected error codes, account snapshots, source markers and cleanup assertions for the requested execution property. |
+| Generate dependencies inside generators. | Building the semantic input or its prerequisite sequence in `then()` and losing coherent shrinking. |
+| Provide generators for all meaning-bearing, structured semantic types and enforce their existence with PHPStan rules. | Covering only selected statements, counting files as behavior coverage, or allowing unused generators to give the appearance of completeness. |
+| Only state-dependent SQL errors may be allowed in PBT; other SQL errors are failures. | The agent's broad interpretation that any SQL refusal is acceptable without generated prerequisites. The current catches still embody this mistake. |
+| PHP-Fuzzer must use SQL Faker and compare MemoryDB with a real DB started through Testcontainers. | Replacing that check with reconstruction, a private assurance framework, state restoration, or locally asserted expected outcomes. |
+| Accept only differences that also occur between real DB executions; this does not mean using three databases. | Arbitrary "environmental" exemptions, type-only checks without evidence, or adding a second native server to every trial. |
+| Pass SQL Faker's 100%-grammar-coverage seeds and run seedless fuzz for 15 minutes. | Reporting a partial corpus, focused native probes, a different fuzz target, or an invented version/profile/time matrix as fulfillment of the request. |
+| SQL -> semantic model -> SQL reconstruction is unnecessary; the latest clarification removes it. | Continuing to call it one of three required checks or counting its successful runs toward this goal. |
+| State current status, shortages and the actual goal accurately. | Promoting agent-generated plans into user requirements, preserving contradictory historical notes as instructions, or reporting local passes as overall completion. |
 
-The audit examined the requirements, architecture and checkpoint sections of the
-previous memo, and compared their obligations with the human messages in S1–S4.
-It is a requirements audit, not a fresh certification of the historical SQL or
-test claims. The old detailed design and run records remain in Git history and
-the session logs; they no longer form this memo's requirements.
-
-## The recurring user–AI mismatch
-
-The user asked for a small set of mechanisms that can expose defects throughout
-a large SQL domain. The AI repeatedly substituted local test success, framework
-construction and detailed work reports for establishing those mechanisms.
-
-There is direct evidence beyond a disagreement in wording. The AI reported that
-852 of 1,097 counted semantic types only received `assertInstanceOf` checks
-(S1:4995). A logged comparison probe returned `raw_equal: false` but
-`compared_equal: true` after a missing native/memory row difference was transformed
-away (S1:4996–5002). On October 27, the AI acknowledged that the required PBT and
-fuzz structure was still incomplete after repeatedly agreeing to prioritize it
-(S3:2642, 18498).
-
-The memo amplified this failure: an AI design choice became a written “must,”
-new tests enforced it, those tests produced more work, and later reports treated
-that work as an outstanding user requirement. For example, the added state audit
-can block the ordinary fuzz path on catalog restoration before the generated SQL
-reaches MemoryDB. This is visible in `ExecutionTarget::run()`/`observe()` and
-`Fixture/Baseline.php`, and was recorded in the previous memo's checkpoints.
-
-In this review, the AI repeated the same mistake by converting the user's
-Property-grouping hypothesis into a settled rule. S4:271 explicitly corrects it.
-The correction is to retain the stated property and scope, distinguish hypotheses
-from requirements, and evaluate implementation choices by whether they realize
-the simple verification paths. More conditions in a memo do not resolve the gap.
-
-## Session references
-
-References such as `S1:186` identify physical JSONL lines. Log timestamps are UTC.
-Automatically inserted goal continuations and assistant proposals are not human
-requests. A request to continue work does not turn every preceding implementation
-choice into a fixed acceptance condition.
-
-| ID | File under `~/.codex/sessions/` |
-| --- | --- |
-| S1 | `2026/10/23/rollout-2026-10-23T08-52-17-01a16607-9bd0-7c90-ab6a-9a87fe2cf1ee.jsonl` |
-| S2 | `2026/10/25/rollout-2026-10-25T14-01-21-01a16607-9bd0-7c90-ab6a-9a87fe2cf1ee_01a1716f-495c-7b63-9eb5-ae02044ff1f7.jsonl` |
-| S3 | `2026/10/25/rollout-2026-10-25T14-33-23-01a1718c-9e88-7f02-bf62-4c795489b38d.jsonl` |
-| S4 | `2026/10/27/rollout-2026-10-27T21-36-11-01a17d5c-6b98-7ce3-a9b0-82afef1490ad.jsonl` |
-
-## Existing uncommitted implementation note
-
-The following pre-existing local note is retained verbatim as historical work
-context. Its goals, proposed solutions and acceptance statements are not additional
-requirements; the audited requirements above govern this memo.
-
-<details>
-<summary>Historical local note</summary>
-
-```text
-Fixed duplicate UPDATE aliases and incomplete-input routes remain separate.
-At that checkpoint, analysis still mutated shared temporary-table selection and
-view caches. The catalog snapshot migration below removes those mutations;
-complete read-only analysis is not established. Operation/Facts, runtime derivation and
-rendered marker discovery also remain in the migrated families. Complete local
-meaning, generators, native catalog providers and state observation, full corpus
-replay and the separate 900-second matrix are still required. Goals B-D remain
-open, and PR #665 remains a draft.
-
-### Catalog snapshots and explicit session namespaces (2026-10-26)
-
-The shared dictionary now owns persistent objects only. Session table lookup,
-installation, removal, planning, hints and transaction publication receive the
-owning temporary namespace explicitly. Analysis, rebinding and lifecycle cleanup
-no longer swap a dictionary-wide session pointer; lock-wait resumption no longer
-needs a callback to restore that pointer.
-
-Stored views retain immutable definitions, creation declarations and dependencies.
-A separate dependency traversal computes view bindings before publishing a
-declaration snapshot. It resolves persistent dependencies first, propagates invalid
-dependencies, and overlays session temporary tables only for the calling scope.
-Planning, writable-view column mapping and metadata readers consume these bindings
-without installing them in the dictionary. Preparation invalidation records stored
-view identities and transitive persistent table identities, not the ephemeral
-declarations produced by rebinding. Dependency names remain typed identifiers
-instead of being recovered from concatenated strings.
-
-This closes the ambient temporary namespace and mutable view-cache defects, not
-goal C. The snapshots still bind through Operation/Facts. Read-time diagnostics,
-other retained parser state and incomplete-input paths still need migration.
-View write rewriting still uses a flat declaration context: a rewritten persistent
-base target and caller subqueries can require distinct bindings for the same
-spelling. That remaining boundary must use occurrence-specific semantic references;
-removing temporary tables from the whole rewritten statement would be incorrect.
-The full generator, corpus and 900-second acceptance requirements remain open.
-
-Verification for this migration is recorded below after the ordinary checks.
-```
-
-</details>
+Earlier project conventions continue to apply: use a dedicated worktree and PR;
+write artifacts in English; preserve protected files; follow the other `sql-*`
+packages' ordinary test organization. Keep semantic meaning in the relevant typed
+structures rather than a generic `Operation`/`Facts`/`SourceMap` aggregate or a
+parser/text fallback. The public database API uses PDO or mysqli with an explicit
+MySQL version. Do not restore the rejected `mysql-memory/docs`, `resources`, `bin`
+or auxiliary test directories as workarounds. These conventions do not add new
+verification mechanisms beyond the two specified above.
