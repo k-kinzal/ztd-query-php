@@ -8,6 +8,7 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -39,6 +40,9 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
  * table and columns before requesting the client file. A wire client can refuse the request
  * itself, sending an empty upload; this exchange preserves its own driver error and leaves
  * the next command usable. Enabled uploads decode DATA or XML records before row writes.
+ * Explicit table locks are checked after input options and separator validation:
+ * the destination must be open before partition checks, and writable before
+ * column resolution or file access. Temporary destinations need no explicit lock.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html,
  * https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_secure_file_priv.
  *
@@ -86,6 +90,9 @@ final class LoadDataCommand implements Command
             return new \MySqlMemory\Result\Completion(0, 0, $context->diagnostics->raised(), 'Records: 0  Deleted: 0  Skipped: 0  Warnings: ' . $context->diagnostics->raised());
         }
         if (str_starts_with($input->file->value, self::SECURE_DIRECTORY)) {
+            if ($session->settings()->legacy()) {
+                throw new SqlError(AdministrationError::FileStat, "Can't get stat of '" . $input->file->value . "' (Errcode: 2 - No such file or directory)");
+            }
             throw AdministrationError::FileStat->error($input->file->value, 2, 'No such file or directory');
         }
 
@@ -98,7 +105,7 @@ final class LoadDataCommand implements Command
      * Grammar conditions have already been reported. Modern disabled LOCAL
      * loading then precedes subquery resolution and scalar-width checks.
      *
-     * @throws \MySqlMemory\Error\SqlError When the input is unavailable or incompatible
+     * @throws SqlError When the input is unavailable or incompatible
      */
     public function prepare(MySqlStatement $operation, Session $session): void
     {
@@ -110,7 +117,7 @@ final class LoadDataCommand implements Command
     /**
      * Checks the same complete LOAD header for ordinary and refused assignments.
      *
-     * @throws \MySqlMemory\Error\SqlError When entry or relation conditions prevent preparation
+     * @throws SqlError When entry or relation conditions prevent preparation
      */
     public function entry(LoadTable $statement, StatementSemantics $facts, Session $session): void
     {
@@ -133,6 +140,10 @@ final class LoadDataCommand implements Command
             $error = \MySqlMemory\Error\Family\DataError::NonAsciiSeparator;
             $session->diagnostics->warning($error, $error->message());
         }
+        $target = $statement->table;
+        if ($session->locks !== []) {
+            (new Locks())->allowed($session, $target->name, $target->alias->value ?? $target->name->name->value, [], false);
+        }
         foreach ($facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition) {
                 throw (new Errors())->error($diagnostic, $session);
@@ -146,12 +157,15 @@ final class LoadDataCommand implements Command
             }
             throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
         }
+        if ($session->locks !== []) {
+            (new Locks())->allowed($session, $target->name, $target->alias->value ?? $target->name->name->value, [], true);
+        }
     }
 
     /**
      * Checks input options requiring bulk loading before opening the target table.
      *
-     * @throws \MySqlMemory\Error\SqlError When options require the bulk algorithm or bulk loading is requested
+     * @throws SqlError When options require the bulk algorithm or bulk loading is requested
      */
     public function algorithm(MySqlStatement $operation, Session $session): void
     {
@@ -163,7 +177,7 @@ final class LoadDataCommand implements Command
     /**
      * Checks algorithm support independently of assignment operand roles.
      *
-     * @throws \MySqlMemory\Error\SqlError When bulk input cannot be used
+     * @throws SqlError When bulk input cannot be used
      */
     public function options(LoadTable $statement, StatementSemantics $facts, Session $session): void
     {
@@ -177,7 +191,7 @@ final class LoadDataCommand implements Command
         }
         if ($statement->bulk->bulk ?? false) {
             $error = StatementError::NotSupportedYet->error('Bulk Load');
-            throw new \MySqlMemory\Error\SqlError($error->error, $error->getMessage(), following: $this->bulkConditions($statement, $session));
+            throw new SqlError($error->error, $error->getMessage(), following: $this->bulkConditions($statement, $session));
         }
     }
 
@@ -211,7 +225,7 @@ final class LoadDataCommand implements Command
     /**
      * Refuses an ENCLOSED BY or ESCAPED BY of more than one byte (ER_WRONG_FIELD_TERMINATORS).
      *
-     * @throws \MySqlMemory\Error\SqlError When a separator that encloses or escapes is longer than one byte
+     * @throws SqlError When a separator that encloses or escapes is longer than one byte
      */
     public function separators(LoadTable $statement): void
     {

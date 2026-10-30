@@ -31,6 +31,15 @@ final class LoadTableGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
+            if (str_starts_with($release->value, 'mysql-')) {
+                $forms[] = self::operands(
+                    new LoadFormatGenerator(),
+                    Generators::constant(null),
+                    new LoadInputGenerator(Generators::bool(), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::elements('generated-input', '/var/lib/mysql-files/missing'))),
+                    Generators::constant(null),
+                    new \Tests\Generator\MySql\Statement\Dml\WriteTargetGenerator(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator())),
+                );
+            }
             if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
@@ -156,6 +165,25 @@ final class LoadTableGenerator implements ErisGenerator
             $expected[] = [$value];
         }
         return [$definition, $publication->publish($context, $load), $expected, $contents];
+    }
+
+    /**
+     * Composes a successful local import, its database, table, write lock and matching file.
+     * Shrinking the existing import generator keeps column names and records related.
+     * The executing connection must enable local loading and supply the generated file.
+     *
+     * @return ErisGenerator<array{list<\SqlSemantics\Statement\AnalyzedStatement>, string}>
+     */
+    public static function withPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $sequence = static function (\SqlSemantics\Statement\AnalyzedStatement $create, \SqlSemantics\Statement\AnalyzedStatement $load, string $contents) use ($release): ErisGenerator {
+            $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile($release), [new \SqlSemantics\Statement\Identifier\Name('pbt')], $create->declarations());
+            $database = new \Tests\Generator\MySql\Statement\Server\Database\CreateDatabaseGenerator($release, \Tests\Generator\MySql\Statement\Server\Database\CreateDatabaseGenerator::operands(Generators::constant(true), Generators::constant($create->declarations()[0]->name->schema ?? new \SqlSemantics\Statement\Identifier\Name('pbt'))));
+            $lock = new \Tests\Generator\MySql\Statement\Server\Lock\TableLockGenerator(Generators::constant($create->declarations()[0]->name), Generators::constant(null), Generators::constant(\SqlSemantics\Platform\MySql\Statement\Server\Lock\LockMode::Write));
+            $combine = static fn (\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase $database, \SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables $locked): array => [[$database, $create, $locked, $load], $contents];
+            return Generators::map(static fn (array $prerequisites): array => $combine(...$prerequisites), Generators::tuple($database, new \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator($release, \Tests\Generator\MySql\Statement\Server\Lock\LockTablesGenerator::operands(Generators::tuple($lock)), Generators::constant($context))));
+        };
+        return Generators::bind(self::imports($release), static fn (array $input): ErisGenerator => $sequence($input[0], $input[1], $input[3]));
     }
 
     /**

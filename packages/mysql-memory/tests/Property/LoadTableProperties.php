@@ -49,10 +49,31 @@ final class LoadTableProperties extends TestCase
     }
 
     /**
+     * Executes the generated table, lock and local load with its matching input file.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(LoadTableGenerator::withPrerequisites($release))->withMaxSize(10)->then(static function (array $input) use ($release): void {
+            [$statements, $contents] = $input;
+            $session = (new Instance(substr($release->value, 6), ['local_infile' => 1], databases: ['pbt']))->connect(database: 'pbt');
+            $session->running->readFile = static fn (string $file): string => $contents;
+            $execution = new Execution($session);
+            foreach ($statements as $statement) {
+                $execution->statement($statement);
+            }
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach ([GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910] as $release) {
+            yield $release->value => [$release];
+        }
     }
 }

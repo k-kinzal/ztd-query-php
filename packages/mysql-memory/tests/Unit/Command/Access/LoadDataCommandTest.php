@@ -17,6 +17,70 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 #[Small]
 final class LoadDataCommandTest extends TestCase
 {
+    #[DataProvider('providerLockedDestinations')]
+    public function testEntryChecksTheDestinationLockBeforeColumnsAndFiles(string $version, string $create, string $lock, string $sql, int $code): void
+    {
+        $session = (new Instance($version, ['local_infile' => 0], databases: ['test']))->connect(database: 'test');
+        $session->query($create);
+        $session->query('CREATE TABLE u(id INT)');
+        $session->query($lock);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        $session->query($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string, string, int}>
+     */
+    public static function providerLockedDestinations(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $local = str_starts_with($version, '5.') ? 1148 : 3948;
+            foreach ([
+                ['LOCK TABLES t READ', "LOAD DATA INFILE 'text' INTO TABLE t", 1099],
+                ['LOCK TABLES t READ', "LOAD XML INFILE 'text' INTO TABLE t", 1099],
+                ['LOCK TABLES t READ', "LOAD DATA INFILE 'text' INTO TABLE t (missing)", 1099],
+                ['LOCK TABLES t READ', "LOAD DATA INFILE 'text' INTO TABLE t SET id=ROW(1,2)", 1099],
+                ['LOCK TABLES t READ', "LOAD DATA INFILE 'text' INTO TABLE t FIELDS ENCLOSED BY 'aa'", 1083],
+                ['LOCK TABLES t READ', "LOAD DATA INFILE 'text' INTO TABLE t CHARACTER SET missing", 1115],
+                ['LOCK TABLES t READ', "LOAD DATA LOCAL INFILE 'text' INTO TABLE t", $local],
+                ['LOCK TABLES t READ', "LOAD DATA INFILE 'text' INTO TABLE t PARTITION (missing)", 1747],
+                ['LOCK TABLES u WRITE', "LOAD DATA INFILE 'text' INTO TABLE t PARTITION (missing)", 1100],
+                ['LOCK TABLES t AS a WRITE', "LOAD DATA INFILE 'text' INTO TABLE t", 1100],
+                ['LOCK TABLES t WRITE', "LOAD DATA INFILE 'text' INTO TABLE missing.t", 1100],
+                ['LOCK TABLES t WRITE', "LOAD DATA INFILE 'text' INTO TABLE t (missing)", 1054],
+                ['LOCK TABLES t WRITE', "LOAD DATA INFILE 'text' INTO TABLE t", 1290],
+            ] as [$lock, $sql, $code]) {
+                yield $version . '/' . $lock . '/' . $sql => [$version, 'CREATE TABLE t(id INT)', $lock, $sql, $code];
+            }
+            yield $version . '/temporary destination' => [$version, 'CREATE TEMPORARY TABLE t(id INT)', 'LOCK TABLES t READ', "LOAD DATA INFILE 'text' INTO TABLE t", 1290];
+        }
+    }
+
+    #[DataProvider('providerFileErrors')]
+    public function testExecutePreservesTheReleaseSpecificFileStatMessage(string $version, string $prefix): void
+    {
+        $session = (new Instance($version, databases: ['test']))->connect(database: 'test');
+        $session->query('CREATE TABLE t(id INT)');
+        $session->query('LOCK TABLES t WRITE');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(13);
+        $this->expectExceptionMessage("Can't get stat of '/var/lib/mysql-files/missing' (" . $prefix . '2 - No such file or directory)');
+        $session->query("LOAD DATA INFILE '/var/lib/mysql-files/missing' INTO TABLE t");
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerFileErrors(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            yield $version => [$version, str_starts_with($version, '5.') ? 'Errcode: ' : 'OS errno '];
+        }
+    }
+
     public function testSeparatorBytesIncludesTheXmlRowTag(): void
     {
         $session = (new Instance())->connect();
