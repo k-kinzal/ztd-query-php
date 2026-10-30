@@ -37,6 +37,7 @@ final class PartitionMessages
         'OnlyRangeList' => ['HY000', '%s PARTITION can only be used on RANGE/LIST partitions'],
         'AddedSubpartitionCount' => ['HY000', 'Trying to Add partition(s) with wrong number of subpartitions'],
         'NoPartitionsAdded' => ['HY000', 'At least one partition must be added'],
+        'NoPartitionsCoalesced' => ['HY000', 'At least one partition must be coalesced'],
         'DuplicatePartition' => ['HY000', 'Duplicate partition name %s'],
         'ReorganizeConsecutive' => ['HY000', 'When reorganizing a set of partitions they must be in consecutive order'],
         'ReorganizeRange' => ['HY000', 'Reorganize of range partitions cannot change total ranges except for last partition where it can extend the range'],

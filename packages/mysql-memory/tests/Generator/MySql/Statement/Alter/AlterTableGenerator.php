@@ -40,6 +40,9 @@ final class AlterTableGenerator implements ErisGenerator
         if ($operands === null) {
             $forms = $release->database() === 'mysql' ? [self::partitionDefinitions()] : [];
             if ($release->database() === 'mysql') {
+                $counts = Generators::oneOf(new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::oneOf(Generators::map(static fn (int $count): string => (string) $count, Generators::choose(0, 16)), Generators::elements('4294967294', '4294967295', '18446744073709551615'))), \Tests\Generator\MySql\Statement\Literal\NumeralGenerator::refusedIntegers());
+                $partition = Generators::oneOf(new Partition\CoalescePartitionGenerator(Generators::constant(null), $counts), new Partition\AddPartitionGenerator(Generators::constant(null), Generators::constant([]), $counts));
+                $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), Generators::tuple($partition));
                 $columns = \Tests\Generator\MySql\Statement\Table\Column\ColumnDefinitionGenerator::sized();
                 $commands = Generators::oneOf(new Column\AddColumnGenerator($columns), new Column\ChangeColumnGenerator(Generators::constant(null), $columns));
                 $forms[] = self::operands(new \Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator()), Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, $commands)));

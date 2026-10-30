@@ -47,10 +47,13 @@ final class AddPartition implements StandaloneCommand
     }
 
     /**
-     * Derives the partition values as constants.
+     * Checks the integer count and derives the partition values as constants.
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
+        if ($this->count !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->count);
+        }
         foreach ($this->definitions as $definition) {
             $definition->derivePartition($derivation);
         }

@@ -99,6 +99,15 @@ final class PartitionChangeTest extends TestCase
         self::assertStringEndsWith('PARTITIONS 4 */', (string) $result2->rows[0][1]);
     }
 
+    public function testCoalescedRefusesZeroPartitions(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT) PARTITION BY HASH(a) PARTITIONS 2');
+        $this->expectExceptionCode(1515);
+        $this->expectExceptionMessage('At least one partition must be coalesced');
+        $session->query('ALTER TABLE t COALESCE PARTITION 0');
+    }
+
     public function testCoalescedRefusesRangePartitioning(): void
     {
         $session = (new Instance())->connect();

@@ -15,6 +15,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class AdditionTest extends TestCase
 {
+    public function testRewriteRefusesACombinedCountBeforeItCanWrap(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT) PARTITION BY HASH(a) PARTITIONS 2');
+        $this->expectExceptionCode(1499);
+        $this->expectExceptionMessage('Too many partitions (including subpartitions) were defined');
+        $session->query('ALTER TABLE t ADD PARTITION PARTITIONS 18446744073709551615');
+    }
+
     public function testRewritePreservesAnImplicitSubpartitionLayoutAndExistingRows(): void
     {
         $session = (new Instance())->connect();

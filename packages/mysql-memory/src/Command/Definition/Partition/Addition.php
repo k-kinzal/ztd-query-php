@@ -40,6 +40,9 @@ final class Addition
             if ($added === 0) {
                 throw PartitionError::NoPartitionsAdded->error();
             }
+            if ($count + $added > PartitionDefinitions::LIMIT) {
+                throw PartitionError::TooManyPartitions->error();
+            }
             return new PartitionClause($clause->method, new Numeral((string) ($count + $added)), $clause->subpartitioning, []);
         }
         $definitions = $clause->definitions === [] ? array_map(static fn (int $index): PartitionDefinition => new PartitionDefinition(new Name('p' . $index), null, [], []), range(0, $count - 1)) : $clause->definitions;

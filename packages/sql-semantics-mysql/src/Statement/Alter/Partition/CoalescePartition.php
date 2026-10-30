@@ -33,10 +33,11 @@ final class CoalescePartition implements StandaloneCommand
     }
 
     /**
-     * Derives nothing: the action holds no expression.
+     * Checks that the partition count is an integer token before table resolution.
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->count);
     }
 
     /**

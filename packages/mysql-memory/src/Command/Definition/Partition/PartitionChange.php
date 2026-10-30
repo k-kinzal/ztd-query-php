@@ -111,6 +111,9 @@ final class PartitionChange
         if ($ranged) {
             throw PartitionError::CoalesceOnlyHashKey->error();
         }
+        if ($count === 0) {
+            throw PartitionError::NoPartitionsCoalesced->error();
+        }
         if ($count >= $this->count($clause)) {
             throw PartitionError::DropAllPartitions->error();
         }

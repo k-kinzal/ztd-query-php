@@ -47,6 +47,7 @@ enum PartitionError: int implements ErrorCode
     case OnlyRangeList = 1512;
     case AddedSubpartitionCount = 1513;
     case NoPartitionsAdded = 1514;
+    case NoPartitionsCoalesced = 1515;
     case DuplicatePartition = 1517;
     case ReorganizeConsecutive = 1519;
     case ReorganizeRange = 1520;
