@@ -8,6 +8,7 @@ use MySqlMemory\Error\Family\SchemaError;
 use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 
 /**
@@ -31,6 +32,7 @@ final class DeclarationErrors
                 $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn && !$indexConditions => SchemaError::DuplicateFieldName->error($problem->column->value),
                 $problem instanceof DuplicateColumn => SchemaError::DuplicateFieldName->error($problem->column->value),
                 $problem instanceof UnknownKeyColumn && !$indexConditions => SchemaError::KeyColumnMissing->error($problem->column->value),
+                $problem instanceof NullablePrimaryKey => SchemaError::PrimaryCantHaveNull->error(),
                 $problem instanceof MultiplePrimaryKeys => SchemaError::MultiplePrimaryKey->error(),
                 default => null,
             };

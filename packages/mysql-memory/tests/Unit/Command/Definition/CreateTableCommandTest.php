@@ -19,6 +19,22 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CreateTableCommandTest extends TestCase
 {
+    public function testSchemaChecksLegacyDeclarationsBeforeAnAbsentSchema(): void
+    {
+        $session = (new Instance('5.7.44', databases: ['d']))->connect(database: 'd');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1171);
+        $session->query('CREATE TABLE absent.t(a INT NULL PRIMARY KEY)');
+    }
+
+    public function testSchemaChecksModernSchemaBeforeNullablePrimaryKeys(): void
+    {
+        $session = (new Instance('8.4.7', databases: ['d']))->connect(database: 'd');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1049);
+        $session->query('CREATE TABLE absent.t(a INT NULL PRIMARY KEY)');
+    }
+
     public function testCreateValidatesCheckExpressionsBeforeTheExistingTableShortcut(): void
     {
         $session = (new Instance('8.4.7', databases: ['test']))->connect(database: 'test');

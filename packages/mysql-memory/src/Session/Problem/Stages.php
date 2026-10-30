@@ -267,6 +267,9 @@ final class Stages
      */
     public static function tableDefinition(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $statement, Diagnostic $diagnostic): bool
     {
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey) {
+            return true;
+        }
         if ($statement->query !== null && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn) {
             return false;
         }

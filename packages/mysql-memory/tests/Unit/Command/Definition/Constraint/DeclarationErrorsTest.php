@@ -16,6 +16,22 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DeclarationErrorsTest extends TestCase
 {
+    public function testCheckReportsNullablePrimaryBeforeMultipleKeys(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1171);
+        $session->query('CREATE TABLE t(a INT NULL PRIMARY KEY,b INT PRIMARY KEY)');
+    }
+
+    public function testCheckReportsDuplicateColumnsBeforeNullablePrimary(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1060);
+        $session->query('CREATE TABLE t(a INT NULL PRIMARY KEY,a INT)');
+    }
+
     /**
      * @return iterable<string, array{string, int}>
      */

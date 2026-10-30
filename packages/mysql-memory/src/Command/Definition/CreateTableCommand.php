@@ -107,7 +107,9 @@ final class CreateTableCommand implements Command
 
     /**
      * Opens the destination schema after versioned definition and tablespace checks.
-     * Legacy empty definitions fail before schema lookup. Modern tablespace lookup
+     * Legacy declaration conditions precede an absent schema or an ordinary creation's
+     * existing destination. A creation query first checks an existing destination.
+     * Modern tablespace lookup
      * precedes the existing-table shortcut, including IF NOT EXISTS.
      */
     public function schema(CreateTable $create, MySqlStatement $operation, Session $session, Connection $connection): \MySqlMemory\Dictionary\Schema
@@ -116,10 +118,13 @@ final class CreateTableCommand implements Command
         if ($schemaName === '') {
             throw QueryError::NoDatabase->error();
         }
+        $schema = $session->instance->dictionary->schema($schemaName);
         if ($session->settings()->legacy()) {
             $this->columns($operation, $session, $connection);
+            if ($create->query === null || $schema === null) {
+                (new Constraint\DeclarationErrors())->check($operation->statementInformation());
+            }
         }
-        $schema = $session->instance->dictionary->schema($schemaName);
         if ($schema === null) {
             throw QueryError::BadDatabase->error($schemaName);
         }

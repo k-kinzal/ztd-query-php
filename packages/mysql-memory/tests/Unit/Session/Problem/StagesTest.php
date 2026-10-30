@@ -26,6 +26,14 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
+    public function testTableDefinitionDefersNullablePrimaryKeysEvenWithACreationQuery(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $statement = $session->analyze('CREATE TABLE t(a INT NULL PRIMARY KEY) AS SELECT 1 AS b');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);
+        self::assertTrue(Stages::tableDefinition($statement, new \SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey(new Name('a'))));
+    }
+
     public function testInstructionsKeepsSameInstructionNoticesBeforeItsContextualFailure(): void
     {
         $first = new \SqlSemantics\Platform\MySql\Statement\EmptyStatement();
