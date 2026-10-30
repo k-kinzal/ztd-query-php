@@ -122,10 +122,40 @@ final class AlterTableGenerator implements ErisGenerator
         }, Generators::tuple($table, $commands, $ignore ?? Generators::constant(false), $relationInformation ?? Generators::constant(null), $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $dot ?? Generators::constant(MySql\Expression\OptionalWords::Omitted)));
     }
     /**
+     * Composes existing InnoDB storage and a dependent DISCARD request.
+     * Shrinking a table name, partition count or row rebuilds the dependent values.
+     *
+     * @return ErisGenerator<array{AnalyzedStatement, AnalyzedStatement, AnalyzedStatement}>
+     */
+    public static function tablespaceSequences(GrammarRelease $release): ErisGenerator
+    {
+        $counts = $release === GrammarRelease::MySql5651 ? Generators::constant(0) : Generators::elements([0, 2, 3, 4]);
+        $selection = Generators::bind($counts, static fn (int $count): ErisGenerator => Generators::tuple(Generators::constant($count), Generators::choose(-1, max(-1, $count - 1))));
+        $numbers = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 20)));
+        $values = Generators::oneOf($numbers, new \Tests\Generator\MySql\Statement\Expression\Operator\UnaryGenerator(Generators::constant(MySql\Expression\Operator\UnaryOperator::Minus), $numbers));
+        $rows = Generators::bind(Generators::choose(1, 10), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Dml\Insert\InsertedRowGenerator(Generators::tuple($values))));
+        return Generators::map(static function (array $parts) use ($release): array {
+            [$name, $column, [$count, $selected], $rows] = $parts;
+            $table = new QualifiedName($name);
+            $field = new MySql\Table\Column\ColumnDefinition(new MySql\Name\ColumnName($column), new MySql\Table\Column\OrdinaryColumn(new MySql\Type\Integral(MySql\Type\Kind\IntegralKind::Int)));
+            $partitioning = $count === 0 ? null : new MySql\Partition\PartitionClause(new MySql\Partition\Method\HashMethod(false, new MySql\Name\ColumnUse($column)), new MySql\Literal\Numeral((string) $count), null, []);
+            $create = new MySql\Table\CreateTable($table, [$field], partitioning: $partitioning);
+            $context = new AnalysisContext(new LanguageProfile($release), [new Name('pbt')], session: new MySql\Type\Resolved\Settings(MySql\Type\Resolved\Collation::known('utf8mb4_unicode_ci')));
+            $publication = new Publication();
+            $definition = $publication->publish($context, $create);
+            $context = new AnalysisContext($context->profile, [new Name('pbt')], $definition->declarations(), session: $context->session);
+            $insert = new MySql\Dml\Insert\InsertRows(new MySql\Dml\Insert\InsertInto(false, null, false, new MySql\Dml\WriteTarget($table)), $rows);
+            $partitions = $selected < 0 ? null : new MySql\Partition\NamedPartitions([new Name('p' . $selected)]);
+            $alter = new MySql\Alter\AlterTable($table, [new MySql\Alter\Partition\TablespaceCommand(false, $partitions)]);
+            return [$definition, $publication->publish($context, $insert), $publication->publish($context, $alter)];
+        }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $selection, $rows));
+    }
+
+    /**
      * Generates a table, its rows and a dependent index alteration before execution.
      * Shrinking the names, engine, temporary scope or rows rebuilds all dependent values.
      *
-     * @return ErisGenerator<array{AnalyzedStatement, AnalyzedStatement, AnalyzedStatement, int}>
+     * @return ErisGenerator<array{AnalyzedStatement, AnalyzedStatement, AnalyzedStatement}>
      */
     public static function indexSequences(GrammarRelease $release): ErisGenerator
     {
@@ -167,15 +197,14 @@ final class AlterTableGenerator implements ErisGenerator
             $context = new AnalysisContext($context->profile, [new Name('pbt')], $definition->declarations(), session: $context->session);
             $insert = new MySql\Dml\Insert\InsertRows(new MySql\Dml\Insert\InsertInto(false, null, false, new MySql\Dml\WriteTarget($table)), $rows);
             $alter = new MySql\Alter\AlterTable($table, $commands);
-            $copies = $temporary > 0 || ($engine !== 'InnoDB' && in_array($action, [0, 1, 4, 5], true));
-            return [$definition, $publication->publish($context, $insert), $publication->publish($context, $alter), $copies ? count($rows) : 0];
+            return [$definition, $publication->publish($context, $insert), $publication->publish($context, $alter)];
         }, $operands);
     }
 
     /**
      * Composes functional-index and virtual-column changes with the table and rows they need.
      *
-     * @return ErisGenerator<array{AnalyzedStatement, AnalyzedStatement, AnalyzedStatement, int}>
+     * @return ErisGenerator<array{AnalyzedStatement, AnalyzedStatement, AnalyzedStatement}>
      */
     public static function functionalSequences(GrammarRelease $release): ErisGenerator
     {
@@ -203,7 +232,7 @@ final class AlterTableGenerator implements ErisGenerator
             $definition = $publication->publish($context, $create);
             $context = new AnalysisContext($context->profile, [new Name('pbt')], $definition->declarations(), session: $context->session);
             $insert = new MySql\Dml\Insert\InsertRows(new MySql\Dml\Insert\InsertInto(false, null, false, new MySql\Dml\WriteTarget($table)), $rows);
-            return [$definition, $publication->publish($context, $insert), $publication->publish($context, new MySql\Alter\AlterTable($table, $commands)), $action >= 2 ? count($rows) : 0];
+            return [$definition, $publication->publish($context, $insert), $publication->publish($context, new MySql\Alter\AlterTable($table, $commands))];
         }, Generators::tuple(new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(), $rows, Generators::choose(0, 4)));
     }
 

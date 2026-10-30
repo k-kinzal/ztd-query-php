@@ -89,7 +89,7 @@ final class FlushCommand implements Command
             $this->options($statement, $session);
         }
 
-        return new Completion(warnings: $session->diagnostics->count());
+        return new Completion(warnings: $session->diagnostics->stale ? 0 : $session->diagnostics->raised());
     }
 
     /**

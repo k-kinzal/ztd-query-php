@@ -86,7 +86,8 @@ final class ChangeCommand implements Command
         $scope->place($relation, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
         $partitioning = $definition->partitioning;
         $selected = $partitioning === null || $relation->partitions === [] ? null : (new Partitions($definition, $partitioning, $context))->selected($relation->partitions);
-        $matched = $this->matched($statement, $planner, $scope, $table, $context, $selected);
+        $read = (new \MySqlMemory\Plan\Lookup\PartitionKeys($planner))->selected($statement->where, $relation, new \MySqlMemory\Plan\Path\Source\TableScan($table, $selected), $scope);
+        $matched = $this->matched($statement, $planner, $scope, $table, $context, $read);
         $session->transaction->touch($table);
         if ($statement instanceof Delete) {
             return new Completion($this->delete($table, $matched, new References($session, $context), in_array(DeleteOption::Ignore, $statement->options, true)), 0, $context->diagnostics->raised());
@@ -149,6 +150,10 @@ final class ChangeCommand implements Command
         $frame = new Frame($context);
         $limit = $planner->blocks->limit(new \MySqlMemory\Plan\Path\Source\SingleRow(), $statement->limit, null);
         $count = $limit instanceof \MySqlMemory\Plan\Path\Transform\Limit ? $limit->count : null;
+        if ($this->empty($statement->where, $where, $planner, $frame, $count)) {
+            return [];
+        }
+        (new \MySqlMemory\Storage\Tablespaces())->read($table, $context->modes->release, $selected);
         $matched = [];
         foreach ($rows as $number => $row) {
             if ($keys === [] && $count !== null && count($matched) >= $count) {
@@ -173,7 +178,15 @@ final class ChangeCommand implements Command
         }
         $numbers = array_map(static fn (array $match): int => $match[0], $this->sorted($matched, $keys));
 
-        return $count !== null ? array_slice($numbers, 0, $count) : $numbers;
+        return array_slice($numbers, 0, $count);
+    }
+
+    /**
+     * Decides whether a constant predicate or zero limit prevents a storage read.
+     */
+    public function empty(?\SqlSemantics\Statement\Operand $condition, ?\MySqlMemory\Evaluation\Evaluable $where, Planner $planner, Frame $frame, ?int $count): bool
+    {
+        return $count === 0 || ($condition !== null && $where !== null && $planner->compiler->constancy($condition)->constant() && Convert::toBool($where->evaluate($frame), $where->domain(), $frame->context) !== true);
     }
 
     /**

@@ -70,6 +70,7 @@ final class Blocks
         $scope = new Scope($outer);
         $input = $select->from === null ? new SingleRow() : $this->planner->relations->plan($select->from, $scope);
         $input = (new JoinComparisons($this->planner))->plan($input, $select, $scope);
+        $input = (new Lookup\PartitionKeys($this->planner))->plan($select, $input, $scope);
         $input = (new Lookup\PrimaryKeys($this->planner))->plan($select, $input, $scope);
         $filter = $select->where === null ? null : $this->where($input, $select->where, $scope);
         $input = (new Locking($this->planner))->lock($select, $scope, $input, $filter);

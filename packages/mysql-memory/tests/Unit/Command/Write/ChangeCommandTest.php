@@ -17,6 +17,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ChangeCommandTest extends TestCase
 {
+    public function testEmptySkipsDetachedStorageForConstantPredicatesAndLimits(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); ALTER TABLE t DISCARD TABLESPACE');
+        $replies = $session->query('DELETE FROM t WHERE 0; UPDATE t SET id=2 WHERE 0; DELETE FROM t LIMIT 0; UPDATE t SET id=2 LIMIT 0');
+        self::assertCount(4, $replies);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ChangeCommand())->clearsDiagnostics());

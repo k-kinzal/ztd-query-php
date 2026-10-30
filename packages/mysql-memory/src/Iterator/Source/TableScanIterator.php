@@ -104,6 +104,7 @@ final class TableScanIterator implements RowIterator
     #[Override]
     public function read(): ?array
     {
+        (new \MySqlMemory\Storage\Tablespaces())->read($this->path->table, $this->frame->context->modes->release, $this->path->partitions);
         if (!$this->loaded) {
             $this->snapshot();
         }

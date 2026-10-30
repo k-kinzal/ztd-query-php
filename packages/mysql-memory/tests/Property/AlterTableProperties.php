@@ -49,6 +49,72 @@ final class AlterTableProperties extends TestCase
     }
 
     /**
+     * Generated prerequisite definitions and rows make DISCARD executable.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesTablespaceDiscardCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(AlterTableGenerator::tablespaceSequences($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$create, $insert, $alter] = $sequence;
+            $execution->statement($create);
+            $execution->statement($insert);
+            $execution->statement($alter);
+        });
+    }
+
+    /**
+     * Generated table definitions and rows satisfy index-alteration dependencies.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesIndexAlterationCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(AlterTableGenerator::indexSequences($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$create, $insert, $alter] = $sequence;
+            $execution->statement($create);
+            $execution->statement($insert);
+            $execution->statement($alter);
+        });
+    }
+
+    /**
+     * Generated columns and functional indexes execute against their generated table.
+     */
+    #[Test]
+    #[DataProvider('providerFunctionalReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesFunctionalAlterationCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(AlterTableGenerator::functionalSequences($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$create, $insert, $alter] = $sequence;
+            $execution->statement($create);
+            $execution->statement($insert);
+            $execution->statement($alter);
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerFunctionalReleases(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql' && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                yield $release->value => [$release];
+            }
+        }
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

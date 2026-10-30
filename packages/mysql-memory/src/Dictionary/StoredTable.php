@@ -15,6 +15,11 @@ use MySqlMemory\Storage\Heap;
 final class StoredTable
 {
     /**
+     * @var array<string, true> Detached InnoDB partition files; the empty name denotes an unpartitioned table
+     */
+    public array $discardedTablespaces = [];
+
+    /**
      * @var array<string, list<int|string|null>> The statistics the data dictionary cached for the table when they were first read, by kind
      *
      * INFORMATION_SCHEMA keeps the statistics of a table it reads for information_schema_stats_expiry

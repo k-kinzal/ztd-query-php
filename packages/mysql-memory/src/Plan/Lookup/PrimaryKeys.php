@@ -84,7 +84,7 @@ final class PrimaryKeys
      *
      * @return array{int, Evaluable, Comparator}|null
      */
-    public function binding(Scalar $column, Scalar $value, TableReference $table, TableScan $input, Scope $scope, bool $runtime = false): ?array
+    public function binding(Scalar $column, Scalar $value, TableReference|\SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget $table, TableScan $input, Scope $scope, bool $runtime = false): ?array
     {
         $compiler = $this->planner->compiler;
         $facts = new ConstantTables($compiler->facts);

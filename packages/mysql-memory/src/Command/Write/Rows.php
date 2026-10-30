@@ -152,6 +152,7 @@ final class Rows
         if (!$this->partitioned($row)) {
             return;
         }
+        (new \MySqlMemory\Storage\Tablespaces())->write($this->table, $row, $this->context);
         $this->place($row, $number, $single, $generated);
     }
 

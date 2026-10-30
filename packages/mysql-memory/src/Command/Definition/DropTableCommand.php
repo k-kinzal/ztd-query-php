@@ -118,6 +118,7 @@ final class DropTableCommand implements Command
             throw QueryError::NoSuchTable->error($schema, $statement->table->name->value);
         }
         $this->truncated($table, $session, $context);
+        (new \MySqlMemory\Storage\Tablespaces())->truncate($table, $session);
         $table->data = new Heap();
         $table->updated = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $table->updated : null;
         $table->statistics = array_intersect_key($table->statistics, ['table' => true]);

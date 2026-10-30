@@ -75,12 +75,12 @@ final class SetCommand implements Command
             } finally {
                 $session->instance->registry->eventScheduler->configured($session->variables->globals, $session->variables->catalog, $session->instance->dictionary);
             }
-            return new Completion(0, 0, $context->diagnostics->raised());
+            return new Completion(0, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
         }
         $this->apply($actions, $session);
         $session->instance->registry->eventScheduler->configured($session->variables->globals, $session->variables->catalog, $session->instance->dictionary);
 
-        return new Completion(0, 0, $context->diagnostics->raised());
+        return new Completion(0, 0, $context->diagnostics->stale ? 0 : $context->diagnostics->raised());
     }
 
     /**

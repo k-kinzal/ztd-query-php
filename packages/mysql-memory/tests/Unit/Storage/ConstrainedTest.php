@@ -15,6 +15,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ConstrainedTest extends TestCase
 {
+    public function testUpdatedRefusesMovingIntoADiscardedPartition(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE p(id INT) PARTITION BY HASH(id) PARTITIONS 2; INSERT INTO p VALUES(1); ALTER TABLE p DISCARD PARTITION p0 TABLESPACE');
+        $session->run('UPDATE p SET id=2 WHERE id=1');
+        self::assertSame([1814, 1812], array_column($session->diagnostics->conditions, 1));
+        $table = $session->instance->dictionary->table('d', 'p', $session->temporaries);
+        self::assertNotNull($table);
+        self::assertSame([[1]], array_values($table->data->rows));
+    }
+
     public function testUpdatedChecksTheCheckConstraintsBeforeTheUniqueKeys(): void
     {
         $session = (new Instance())->connect();

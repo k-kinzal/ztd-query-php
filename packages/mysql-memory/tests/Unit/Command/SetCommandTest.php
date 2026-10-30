@@ -19,6 +19,16 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 #[Small]
 final class SetCommandTest extends TestCase
 {
+    public function testExecuteDoesNotCountRetainedLegacyConditionsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('SELECT missing');
+        $conditions = $session->diagnostics->conditions;
+        $reply = $session->query('SET foreign_key_checks=0')[0];
+        self::assertSame(0, $reply->warnings());
+        self::assertSame($conditions, $session->diagnostics->conditions);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new SetCommand())->clearsDiagnostics());

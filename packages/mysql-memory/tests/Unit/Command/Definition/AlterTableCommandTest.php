@@ -26,6 +26,14 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 #[Small]
 final class AlterTableCommandTest extends TestCase
 {
+    public function testChangeChecksTheNewDefinitionBeforeReadingDetachedStorage(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(id INT); ALTER TABLE t DISCARD TABLESPACE');
+        $this->expectExceptionCode(1283);
+        $session->query('ALTER TABLE t ADD FULLTEXT(id)');
+    }
+
     public function testResolveChecksSpatialCatalogBeforeDuplicateDestinationColumns(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

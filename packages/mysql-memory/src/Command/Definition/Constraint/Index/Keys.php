@@ -68,6 +68,7 @@ final class Keys
         };
 
         $key = new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new \MySqlMemory\Command\Definition\Constraint\IndexOptions())->visible($index), algorithm: (new \MySqlMemory\Command\Definition\Constraint\IndexOptions())->algorithm($index, $engine, $this->planner->settings->legacy()));
+        (new \MySqlMemory\Command\Definition\Constraint\FullText\Columns())->check($key, $columns);
 
         return (new \MySqlMemory\Command\Definition\Constraint\SpatialKeys($this->planner))->resolve($index, $key, $columns, $engine);
     }

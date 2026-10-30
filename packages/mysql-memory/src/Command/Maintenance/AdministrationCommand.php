@@ -98,7 +98,7 @@ final class AdministrationCommand implements Command
             array_push($rows, ...$this->report($operation, $histogram, $name, $cached ? ($item->partitions ?? false) : $partitioned, $session, $cached ? $item->indexes : null));
         }
 
-        return new ResultSet(self::columns($session), $rows);
+        return new ResultSet(self::columns($session), $rows, $session->diagnostics->raised());
     }
 
     /**
@@ -181,6 +181,10 @@ final class AdministrationCommand implements Command
         }
 
         $failure ??= $this->keyFailure($table, $indexes);
+        $detached = $failure === null && $table !== null ? (new DetachedTables())->report($operation, $table, $session) : null;
+        if ($detached !== null) {
+            return $this->rows($label, $operation, $detached);
+        }
         \MySqlMemory\Storage\IndexStatistics::refresh($table, $operation, $failure === null);
 
         return $this->rows($label, $operation, $failure === null ? $this->outcome($operation, $partitioned instanceof PartitionSelection, $table?->definition->engine ?? 'InnoDB') : [['Error', $failure], $session->instance->dictionary->schema($schema) === null && !$session->settings()->legacy() ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);

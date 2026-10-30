@@ -109,12 +109,11 @@ final class AlterTableCommand implements Command
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->prepare($operation, $session, new \MySqlMemory\Session\Problems());
         $table = $this->table($session, $schema, $name->name->value);
         $this->resolve($operation, $session);
-        $layout = TableLayout::of($table->definition);
-        $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
-        $change->apply($commands);
-        $storage = new StorageOptions();
-        $storage->attributes($statement, $storage->engine($layout->statement(), $session->variables));
-        $change->copies = $change->copies || ($change->referencing && $session->variables->read('foreign_key_checks') !== 'OFF');
+        if ($last instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\TablespaceCommand) {
+            return (new Tablespace\Transfer())->execute($last, $table, $commands, $session, $context);
+        }
+        $change = $this->change($statement, $commands, $table, $session);
+        $layout = $change->layout;
         $target = $layout->name->schema->value ?? $schema;
         $renamed = $target !== $schema || $layout->name->name->value !== $table->definition->name;
         if ($renamed) {
@@ -137,6 +136,21 @@ final class AlterTableCommand implements Command
         }
 
         return $completion;
+    }
+
+    /**
+     * Builds the proposed layout and its storage requirements before changing the table.
+     *
+     * @param list<AlterCommand> $commands The resolved alteration operands
+     */
+    public function change(AlterTable|CreateIndex|DropIndex $statement, array $commands, StoredTable $table, Session $session): TableChange
+    {
+        $change = new TableChange(TableLayout::of($table->definition), $table->definition->name, $session->variables->database, $session->settings()->release(), (string) $session->variables->read('collation_database'));
+        $change->apply($commands);
+        $storage = new StorageOptions();
+        $storage->attributes($statement, $storage->engine($change->layout->statement(), $session->variables));
+        $change->copies = $change->copies || ($change->referencing && $session->variables->read('foreign_key_checks') !== 'OFF');
+        return $change;
     }
 
     /**
@@ -223,6 +237,7 @@ final class AlterTableCommand implements Command
         if ((new InnoDbOptions())->retained($table->definition, $definition, $origins, $change, $context->modes->release)) {
             $definition = $definition->withRowFormat($table->definition->rowFormat);
         }
+        (new \MySqlMemory\Storage\Tablespaces())->alter($table, $definition, $copies, $change->storageLayout || count($origins) !== count($table->definition->columns) || in_array(null, $origins, true), $context);
         $data = $rebuild->rows($this->emptied($table, $change->emptied, $context), $definition, $origins);
         if ($change->ordered && $definition->primaryKey() !== null) {
             $context->warning(StatementError::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');

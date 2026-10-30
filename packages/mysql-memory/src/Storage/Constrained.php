@@ -56,6 +56,7 @@ final class Constrained
                 return $this->refused($error, $ignore);
             }
         }
+        (new Tablespaces())->write($writer->table, $row, $writer->context);
         $conflict = $writer->conflict($row, $number);
         if ($conflict !== null) {
             if ($ignore) {

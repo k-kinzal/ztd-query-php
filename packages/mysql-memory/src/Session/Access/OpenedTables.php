@@ -66,6 +66,7 @@ final class OpenedTables
             $session->transaction->legacyXid = null;
         }
         if ($table !== null && !$table->definition->temporary) {
+            (new \MySqlMemory\Storage\Tablespaces())->opened($table, $session);
             ($session->preparation->triggerNotices ?? new \MySqlMemory\Hint\TriggerNotices())->load($schema, $name, $session, $write);
             $dictionary->cache->open($schema, $name);
             if (!$session->settings()->legacy() && !in_array($schema, ['mysql', 'information_schema', 'performance_schema', 'sys'], true)) {

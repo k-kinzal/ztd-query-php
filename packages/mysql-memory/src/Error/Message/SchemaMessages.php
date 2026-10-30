@@ -97,6 +97,8 @@ final class SchemaMessages
         'UnknownAlterLock' => ['HY000', 'Unknown LOCK type \'%s\''],
         'TablespaceUnavailable' => ['HY000', 'Tablespace is missing for table %s.'],
         'TablespaceExists' => ['HY000', 'Tablespace \'%s\' exists.'],
+        'TablespaceDiscarded' => ['HY000', 'Tablespace has been discarded for table \'%s\''],
+        'TemporaryTablespace' => ['HY000', 'Cannot DISCARD/IMPORT tablespace associated with temporary table'],
         'DuplicateIndex' => ['HY000', 'Duplicate index \'%s\' defined on the table \'%s\'. This is deprecated and will be disallowed in a future release.'],
         'AlterOperationNotSupported' => ['0A000', '%s is not supported for this operation. Try %s.'],
         'AlterOperationNotSupportedReason' => ['0A000', '%s is not supported. Reason: %s. Try %s.'],

@@ -108,6 +108,8 @@ enum SchemaError: int implements ErrorCode
     case UnknownAlterLock = 1801;
     case TablespaceUnavailable = 1812;
     case TablespaceExists = 1813;
+    case TablespaceDiscarded = 1814;
+    case TemporaryTablespace = 3007;
     case DuplicateIndex = 1831;
     case AlterOperationNotSupported = 1845;
     case AlterOperationNotSupportedReason = 1846;

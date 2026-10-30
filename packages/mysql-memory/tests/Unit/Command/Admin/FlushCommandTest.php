@@ -18,6 +18,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FlushCommandTest extends TestCase
 {
+    public function testExecuteDoesNotCountRetainedLegacyConditionsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('SELECT missing');
+        $conditions = $session->diagnostics->conditions;
+        $reply = $session->query('FLUSH TABLES')[0];
+        self::assertSame(0, $reply->warnings());
+        self::assertSame($conditions, $session->diagnostics->conditions);
+    }
+
     /**
      * @return iterable<string, array{string, int}>
      */
