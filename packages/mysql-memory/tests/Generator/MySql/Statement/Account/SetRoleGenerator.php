@@ -68,12 +68,7 @@ final class SetRoleGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'SetRole/74' => SetRoleGenerator::operands(
-            roles: new User\RoleSelectionGenerator(
-                set: User\RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::None]),
-                roles: Generators::constant([])
-            )
-        );
+        yield 'named, default, none and all roles' => self::operands(User\RoleSelectionGenerator::sessionRoles());
     }
 
 }

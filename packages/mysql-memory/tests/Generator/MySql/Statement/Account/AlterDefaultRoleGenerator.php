@@ -70,16 +70,51 @@ final class AlterDefaultRoleGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'AlterDefaultRole/248' => AlterDefaultRoleGenerator::operands(
-            ifExists: Generators::constant(false),
-            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-            )]),
-            roles: new User\RoleSelectionGenerator(
-                set: User\RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All]),
-                roles: Generators::constant([])
-            )
-        );
+        yield 'target and role selection' => self::operands(Generators::bool(), new \Tests\Generator\MySql\Statement\Name\AccountGenerator(), User\RoleSelectionGenerator::defaultRoles());
     }
 
+
+    /**
+     * Generates the user, roles, grant and default selection as one dependent input.
+     * Eris shrinking rebuilds the same dependency graph before execution.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Account\CreateUser, \SqlSemantics\Platform\MySql\Statement\Account\CreateRole, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles, \SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole}>
+     */
+    public static function withPrerequisites(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $users = new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(Generators::map(static fn (int $number): string => 'user_' . $number, Generators::choose(0, 999)), Generators::constant(null));
+        $roles = self::roleNames();
+        return Generators::bind(Generators::tuple($users, $roles), static function (array $parts) use ($release): ErisGenerator {
+            [$user, $roles] = $parts;
+            $profile = Generators::constant(new \SqlSemantics\Contract\LanguageProfile($release));
+            $granted = Generators::tuple(...array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Name\AccountName $role): ErisGenerator => Privilege\Item\GrantedRoleGenerator::fromOperands(Generators::constant($role)), $roles));
+            return Generators::tuple(
+                new CreateUserGenerator($release, CreateUserGenerator::operands(Generators::bool(), Generators::tuple(new User\UserSpecificationGenerator(Generators::constant($user))))),
+                new CreateRoleGenerator($release, CreateRoleGenerator::fromOperands(Generators::bool(), Generators::constant($roles), $profile, Generators::constant(null))),
+                new Privilege\GrantRolesGenerator($release, Privilege\GrantRolesGenerator::fromOperands($granted, Generators::constant([$user]), Generators::bool(), $profile, Generators::constant(null))),
+                new self($release, self::operands(Generators::bool(), Generators::constant($user), User\RoleSelectionGenerator::defaultRoles(Generators::constant($roles))))
+            );
+        });
+    }
+
+    /**
+     * Generates distinct role identities with a mandatory first role.
+     *
+     * @return ErisGenerator<non-empty-list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName>>
+     */
+    public static function roleNames(): ErisGenerator
+    {
+        $first = new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(Generators::map(static fn (int $number): string => 'role_0_' . $number, Generators::choose(0, 999)), Generators::constant(null));
+        $remaining = Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => Generators::tuple(...array_map(static fn (int $index): \Tests\Generator\MySql\Statement\Name\AccountNameGenerator => new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator(Generators::map(static fn (int $number): string => 'role_' . ($index + 1) . '_' . $number, Generators::choose(0, 999)), Generators::constant(null)), array_keys(array_fill(0, $count, true)))));
+        return Generators::bind($first, static fn (\SqlSemantics\Platform\MySql\Statement\Name\AccountName $role): ErisGenerator => Generators::map(static fn (array $roles): array => self::prependRole($role, $roles), $remaining));
+    }
+
+    /**
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName> $remaining Additional roles generated under distinct prefixes
+     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName>
+     */
+    public static function prependRole(\SqlSemantics\Platform\MySql\Statement\Name\AccountName $first, array $remaining): array
+    {
+        return [$first, ...$remaining];
+    }
 }

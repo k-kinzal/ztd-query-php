@@ -109,26 +109,7 @@ final class CreateRoleGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'CreateRole/25' => CreateRoleGenerator::fromOperands(
-            ifNotExists: Generators::constant(false),
-            roles: Generators::tuple(
-                AccountNameGenerator::fromOperands(
-                    user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    host: Generators::constant(null)
-                )
-            ),
-            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
-                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                    settings: Generators::constant('')
-                ),
-                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-            ),
-            client: Generators::constant(null)
-        );
+        yield 'account operands' => self::operands(GrammarRelease::MySql847);
     }
 
 }

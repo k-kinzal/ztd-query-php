@@ -69,13 +69,8 @@ final class DropSpatialReferenceGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'DropSpatialReference/38' => DropSpatialReferenceGenerator::operands(
-            ifExists: Generators::constant(false),
-            srid: new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(
-                text: Generators::constant('1'),
-                hexadecimal: Generators::constant(false)
-            )
-        );
+        $srid = Generators::oneOf(Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 1024)), Generators::elements('0', '4326', '4294967295', '4294967296'));
+        yield 'conditional spatial identifiers' => self::operands(Generators::bool(), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator($srid));
     }
 
 }

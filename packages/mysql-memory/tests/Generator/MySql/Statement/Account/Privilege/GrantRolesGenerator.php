@@ -112,33 +112,7 @@ final class GrantRolesGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'GrantRoles/48' => GrantRolesGenerator::fromOperands(
-            roles: Generators::tuple(
-                GrantedRoleGenerator::fromOperands(
-                    role: \Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                        user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::constant('name'),
-                            quote: Generators::constant(null)
-                        ),
-                        host: Generators::constant(null)
-                    )
-                )
-            ),
-            users: Generators::tuple(
-                new AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                    parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                )])
-            ),
-            withAdminOption: Generators::constant(false),
-            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
-                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                    settings: Generators::constant('')
-                ),
-                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-            ),
-            client: Generators::constant(null)
-        );
+        yield 'account operands' => self::operands(GrammarRelease::MySql847);
     }
 
 }

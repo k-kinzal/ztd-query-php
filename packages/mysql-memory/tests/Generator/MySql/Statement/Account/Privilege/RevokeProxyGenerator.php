@@ -71,26 +71,8 @@ final class RevokeProxyGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'RevokeProxy/398' => RevokeProxyGenerator::operands(
-            ifExists: Generators::constant(false),
-            proxied: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-            )]),
-            users: Generators::tuple(
-                new \Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
-                    identification: Generators::constant(null),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(false)
-                )
-            ),
-            ignoreUnknownUser: Generators::constant(false)
-        );
+        $users = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator(new \Tests\Generator\MySql\Statement\Name\AccountGenerator())));
+        yield 'proxy accounts and refusal options' => self::operands(Generators::bool(), new \Tests\Generator\MySql\Statement\Name\AccountGenerator(), $users, Generators::bool());
     }
 
 }

@@ -101,7 +101,7 @@ final class XaRecoverGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'XaRecover/130' => XaRecoverGenerator::fromOperands(
-            convertXid: Generators::constant(false),
+            convertXid: Generators::bool(),
             profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
                 grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
                 lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(

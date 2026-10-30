@@ -69,29 +69,8 @@ final class SetDefaultRoleGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'SetDefaultRole/385' => SetDefaultRoleGenerator::operands(
-            roles: new User\RoleSelectionGenerator(
-                set: User\RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::Named]),
-                roles: Generators::tuple(
-                    \Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                        user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                            value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                            quote: Generators::constant(null)
-                        ),
-                        host: Generators::constant(null)
-                    )
-                )
-            ),
-            users: Generators::tuple(
-                \Tests\Generator\MySql\Statement\Name\AccountNameGenerator::fromOperands(
-                    user: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                        value: Generators::map(static fn (int $value): string => 'name_' . $value, Generators::choose(0, 8)),
-                        quote: Generators::constant(null)
-                    ),
-                    host: Generators::constant(null)
-                )
-            )
-        );
+        $users = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator()));
+        yield 'targets and role selection' => self::operands(User\RoleSelectionGenerator::defaultRoles(), $users);
     }
 
 }

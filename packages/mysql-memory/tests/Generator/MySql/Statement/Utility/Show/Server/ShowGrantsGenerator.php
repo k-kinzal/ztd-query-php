@@ -69,10 +69,8 @@ final class ShowGrantsGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowGrants/100' => ShowGrantsGenerator::operands(
-            user: Generators::constant(null),
-            using: Generators::constant([])
-        );
+        yield 'current account' => self::operands();
+        yield 'account with optional roles' => self::operands(new \Tests\Generator\MySql\Statement\Name\AccountGenerator(), Generators::seq(new \Tests\Generator\MySql\Statement\Name\AccountGenerator()));
     }
 
 }

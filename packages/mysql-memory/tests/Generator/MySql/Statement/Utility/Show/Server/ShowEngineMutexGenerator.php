@@ -68,9 +68,7 @@ final class ShowEngineMutexGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowEngineMutex/93' => ShowEngineMutexGenerator::operands(
-            engine: Generators::constant(null)
-        );
+        yield 'all, known and unknown engines' => self::operands(Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('InnoDB', 'MyISAM', 'MEMORY', 'missing_engine'), Generators::constant(null))));
     }
 
 }

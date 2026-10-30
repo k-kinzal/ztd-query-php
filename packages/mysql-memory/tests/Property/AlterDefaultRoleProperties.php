@@ -49,6 +49,26 @@ final class AlterDefaultRoleProperties extends TestCase
     }
 
     /**
+     * Every request completes when the same generated input creates and grants its roles.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionCompletesWithItsPrerequisites(GrammarRelease $release): void
+    {
+        $this->forAll(AlterDefaultRoleGenerator::withPrerequisites($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $instance = new Instance(substr($release->value, 6), databases: ['pbt']);
+            $session = $instance->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$createUser, $createRoles, $grant, $alter] = $sequence;
+            $execution->statement($createUser);
+            $execution->statement($createRoles);
+            $execution->statement($grant);
+            $execution->statement($alter);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable

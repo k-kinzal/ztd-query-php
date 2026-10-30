@@ -105,19 +105,7 @@ final class CommitGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'Commit/21' => CommitGenerator::fromOperands(
-            chain: Generators::constant(null),
-            release: Generators::constant(null),
-            work: Generators::constant(false),
-            profile: new \Tests\Generator\Semantics\Contract\LanguageProfileGenerator(
-                grammar: \Tests\Generator\Semantics\Contract\GrammarReleaseGenerator::selecting([GrammarRelease::MySql847]),
-                lexical: new \Tests\Generator\Semantics\Contract\LexicalSettingsGenerator(
-                    settings: Generators::constant('')
-                ),
-                parameters: \Tests\Generator\Semantics\Contract\ParameterStyleGenerator::selecting([\SqlSemantics\Contract\ParameterStyle::Native])
-            ),
-            client: Generators::constant(null)
-        );
+        yield 'transaction characteristics' => self::operands(GrammarRelease::MySql847);
     }
 
 }

@@ -70,20 +70,8 @@ final class GrantProxyGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'GrantProxy/400' => GrantProxyGenerator::operands(
-            proxied: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-            )]),
-            grantees: Generators::tuple(
-                new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
-                    identification: Generators::constant(null)
-                )
-            ),
-            withGrantOption: Generators::constant(false)
-        );
+        $grantees = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Account\User\GranteeGenerator(new \Tests\Generator\MySql\Statement\Name\AccountGenerator())));
+        yield 'proxy accounts and grant option' => self::operands(new \Tests\Generator\MySql\Statement\Name\AccountGenerator(), $grantees, Generators::bool());
     }
 
 }

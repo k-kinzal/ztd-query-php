@@ -69,10 +69,7 @@ final class ShowReplicaStatusGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowReplicaStatus/112' => ShowReplicaStatusGenerator::operands(
-            terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-            channel: Generators::constant(null)
-        );
+        yield 'replica terminology and channels' => self::operands(\Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]), Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::elements('', 'channel', 'group_replication_applier'))));
     }
 
 }

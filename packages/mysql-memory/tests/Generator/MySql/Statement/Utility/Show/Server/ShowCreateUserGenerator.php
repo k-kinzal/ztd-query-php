@@ -68,11 +68,7 @@ final class ShowCreateUserGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowCreateUser/89' => ShowCreateUserGenerator::operands(
-            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-            )])
-        );
+        yield 'named and current accounts' => self::operands(new \Tests\Generator\MySql\Statement\Name\AccountGenerator());
     }
 
 }

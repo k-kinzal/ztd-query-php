@@ -73,10 +73,8 @@ final class AlterRegistrationGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'AlterRegistration/249' => AlterRegistrationGenerator::operands(
-            ifExists: Generators::constant(false),
-            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-            )]),
+            ifExists: Generators::bool(),
+            user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
             factor: User\FactorGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\Factor::Second]),
             step: User\RegistrationStepGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RegistrationStep::Unregister]),
             challengeResponse: Generators::constant(null)

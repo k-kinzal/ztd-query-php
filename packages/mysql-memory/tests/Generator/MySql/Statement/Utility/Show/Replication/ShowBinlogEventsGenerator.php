@@ -70,11 +70,11 @@ final class ShowBinlogEventsGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowBinlogEvents/77' => ShowBinlogEventsGenerator::operands(
-            file: Generators::constant(null),
-            position: Generators::constant(null),
-            limit: Generators::constant(null)
-        );
+        $number = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 1024)));
+        $limit = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number, $number, new \Tests\Generator\MySql\Statement\Query\Clause\OffsetSpellingGenerator()));
+        $file = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::map(static fn (int $number): string => 'mysql-bin.' . $number, Generators::choose(0, 999))));
+        $position = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Literal\NumeralGenerator(Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 1024))));
+        yield 'log file, position and row limits' => self::operands($file, $position, $limit);
     }
 
 }

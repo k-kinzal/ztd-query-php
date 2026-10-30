@@ -82,7 +82,7 @@ final class AlterUserGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'AlterUser/12' => AlterUserGenerator::operands(
-            ifExists: Generators::constant(false),
+            ifExists: Generators::bool(),
             users: Generators::tuple(
                 new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
                     user: new User\SessionUserGenerator(),
@@ -100,7 +100,7 @@ final class AlterUserGenerator implements ErisGenerator
             comment: Generators::constant(null)
         );
         yield 'AlterUser/247' => AlterUserGenerator::operands(
-            ifExists: Generators::constant(false),
+            ifExists: Generators::bool(),
             users: Generators::tuple(
                 new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
                     user: new User\SessionUserGenerator(),
@@ -122,12 +122,10 @@ final class AlterUserGenerator implements ErisGenerator
             comment: Generators::constant(null)
         );
         yield 'AlterUser/250' => AlterUserGenerator::operands(
-            ifExists: Generators::constant(false),
+            ifExists: Generators::bool(),
             users: Generators::tuple(
                 new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
                     identification: Generators::constant(null),
                     factors: Generators::constant([]),
                     initial: Generators::constant(null),
@@ -148,12 +146,10 @@ final class AlterUserGenerator implements ErisGenerator
             )
         );
         yield 'AlterUser/251' => AlterUserGenerator::operands(
-            ifExists: Generators::constant(false),
+            ifExists: Generators::bool(),
             users: Generators::tuple(
                 new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
                     identification: Generators::constant(null),
                     factors: Generators::constant([]),
                     initial: Generators::constant(null),
@@ -173,12 +169,10 @@ final class AlterUserGenerator implements ErisGenerator
             comment: Generators::constant(null)
         );
         yield 'AlterUser/252' => AlterUserGenerator::operands(
-            ifExists: Generators::constant(false),
+            ifExists: Generators::bool(),
             users: Generators::tuple(
                 new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
                     identification: Generators::constant(null),
                     factors: Generators::constant([]),
                     initial: Generators::constant(null),
@@ -201,12 +195,10 @@ final class AlterUserGenerator implements ErisGenerator
             comment: Generators::constant(null)
         );
         yield 'AlterUser/401' => AlterUserGenerator::operands(
-            ifExists: Generators::constant(false),
+            ifExists: Generators::bool(),
             users: Generators::tuple(
                 new User\UserAlterationGenerator([new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
                     identification: Generators::constant(null),
                     factors: Generators::constant([]),
                     initial: Generators::constant(null),
@@ -232,12 +224,10 @@ final class AlterUserGenerator implements ErisGenerator
             comment: Generators::constant(null)
         );
         yield 'AlterUser/405' => AlterUserGenerator::operands(
-            ifExists: Generators::constant(false),
+            ifExists: Generators::bool(),
             users: Generators::tuple(
                 new User\UserAlterationGenerator([new User\FactorChangeGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
+                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator(),
                     action: User\FactorActionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction::Add]),
                     steps: Generators::tuple(
                         new User\FactorStepGenerator(

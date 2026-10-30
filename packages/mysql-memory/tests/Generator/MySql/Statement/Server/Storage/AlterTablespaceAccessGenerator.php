@@ -71,10 +71,10 @@ final class AlterTablespaceAccessGenerator implements ErisGenerator
     {
         yield 'AlterTablespaceAccess/additional/59' => [\SqlSemantics\Contract\GrammarRelease::MySql5651, AlterTablespaceAccessGenerator::operands(
             name: \Tests\Generator\Semantics\Statement\Identifier\NameGenerator::fromOperands(
-                value: Generators::constant('ts'),
+                value: Generators::map(static fn (int $number): string => 'ts_' . $number, Generators::choose(0, 999)),
                 quote: Generators::constant(null)
             ),
-            access: Option\TablespaceAccessGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess::ReadWrite])
+            access: new Option\TablespaceAccessGenerator()
         )];
     }
 

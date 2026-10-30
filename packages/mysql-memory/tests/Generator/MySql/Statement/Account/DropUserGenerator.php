@@ -69,14 +69,8 @@ final class DropUserGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'DropUser/42' => DropUserGenerator::operands(
-            ifExists: Generators::constant(false),
-            users: Generators::tuple(
-                new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                    parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                )])
-            )
-        );
+        $users = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Name\AccountGenerator()));
+        yield 'conditional account batches' => self::operands(Generators::bool(), $users);
     }
 
 }

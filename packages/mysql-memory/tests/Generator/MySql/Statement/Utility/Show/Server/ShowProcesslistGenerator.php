@@ -69,7 +69,7 @@ final class ShowProcesslistGenerator implements ErisGenerator
     public static function forms(): iterable
     {
         yield 'ShowProcesslist/108' => ShowProcesslistGenerator::operands(
-            full: Generators::constant(false)
+            full: Generators::bool()
         );
     }
 

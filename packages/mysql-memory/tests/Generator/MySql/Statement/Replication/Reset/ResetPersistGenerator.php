@@ -70,11 +70,8 @@ final class ResetPersistGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ResetPersist/66' => ResetPersistGenerator::operands(
-            ifExists: Generators::constant(false),
-            variable: Generators::constant(null),
-            component: Generators::constant(null)
-        );
+        yield 'all persisted variables' => self::operands();
+        yield 'named persisted variables' => self::operands(Generators::bool(), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::oneOf(Generators::elements('max_connections', 'autocommit', 'sql_mode'), Generators::map(static fn (int $number): string => 'variable_' . $number, Generators::choose(0, 999))), Generators::constant(null)), Generators::oneOf(Generators::constant(null), new \Tests\Generator\Semantics\Statement\Identifier\NameGenerator(Generators::elements('default', 'component'), Generators::constant(null))));
     }
 
 }

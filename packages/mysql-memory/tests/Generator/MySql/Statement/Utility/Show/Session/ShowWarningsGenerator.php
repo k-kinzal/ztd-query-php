@@ -68,9 +68,9 @@ final class ShowWarningsGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowWarnings/119' => ShowWarningsGenerator::operands(
-            limit: Generators::constant(null)
-        );
+        $number = new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 1024)));
+        $limit = Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number), new \Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator($number, $number, new \Tests\Generator\MySql\Statement\Query\Clause\OffsetSpellingGenerator()));
+        yield 'bounded diagnostic rows' => self::operands($limit);
     }
 
 }

@@ -33,4 +33,33 @@ final class RoleSelectionGenerator implements ErisGenerator
             $inputSource ?? Generators::constant(null)
         ));
     }
+
+    /**
+     * Generates named roles or ALL/NONE without mixing incompatible operands.
+     *
+     * @param ErisGenerator<non-empty-list<\SqlSemantics\Platform\MySql\Statement\Name\AccountName>>|null $names Related role identities, when prerequisites have generated them
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection>
+     */
+    public static function defaultRoles(?ErisGenerator $names = null): ErisGenerator
+    {
+        $names ??= Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator()));
+        return Generators::oneOf(
+            new self(RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::Named]), $names),
+            new self(RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All, \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::None]))
+        );
+    }
+
+    /**
+     * Includes DEFAULT and varying ALL EXCEPT lists for session activation.
+     *
+     * @return ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection>
+     */
+    public static function sessionRoles(): ErisGenerator
+    {
+        return Generators::oneOf(
+            self::defaultRoles(),
+            new self(RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::Default])),
+            new self(RoleSetGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All]), Generators::seq(new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator()))
+        );
+    }
 }

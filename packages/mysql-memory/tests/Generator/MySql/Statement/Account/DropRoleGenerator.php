@@ -69,6 +69,8 @@ final class DropRoleGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
+        $roles = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new \Tests\Generator\MySql\Statement\Name\AccountNameGenerator()));
+        yield 'conditional role batches' => self::operands(Generators::bool(), $roles);
         yield 'DropRole/36' => DropRoleGenerator::operands(
             ifExists: Generators::constant(false),
             roles: Generators::tuple(

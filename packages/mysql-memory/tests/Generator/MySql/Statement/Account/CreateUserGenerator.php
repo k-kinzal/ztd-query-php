@@ -78,27 +78,8 @@ final class CreateUserGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'CreateUser/139' => CreateUserGenerator::operands(
-            ifNotExists: Generators::constant(false),
-            users: Generators::tuple(
-                new User\UserSpecificationGenerator(
-                    user: new \Tests\Generator\MySql\Statement\Name\AccountGenerator([\Tests\Generator\MySql\Statement\Name\CurrentUserGenerator::fromOperands(
-                        parentheses: \Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted])
-                    )]),
-                    identification: Generators::constant(null),
-                    factors: Generators::constant([]),
-                    initial: Generators::constant(null),
-                    replace: Generators::constant(null),
-                    retainCurrent: Generators::constant(false),
-                    discardOld: Generators::constant(false)
-                )
-            ),
-            defaultRoles: Generators::constant([]),
-            tls: Generators::constant(null),
-            resources: Generators::constant([]),
-            options: Generators::constant([]),
-            comment: Generators::constant(null)
-        );
+        $users = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, new User\UserSpecificationGenerator(new \Tests\Generator\MySql\Statement\Name\AccountGenerator())));
+        yield 'conditional account batches' => self::operands(Generators::bool(), $users);
     }
 
 }

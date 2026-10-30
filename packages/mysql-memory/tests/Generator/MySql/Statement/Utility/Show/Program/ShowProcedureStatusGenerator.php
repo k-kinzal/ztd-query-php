@@ -69,9 +69,8 @@ final class ShowProcedureStatusGenerator implements ErisGenerator
      */
     public static function forms(): iterable
     {
-        yield 'ShowProcedureStatus/107' => ShowProcedureStatusGenerator::operands(
-            filter: Generators::constant(null)
-        );
+        $pattern = new \Tests\Generator\MySql\Statement\Literal\TextGenerator(Generators::oneOf(Generators::elements('', '%', '_', 'utf8mb4%', 'missing%'), Generators::map(static fn (int $number): string => 'name_' . $number . '%', Generators::choose(0, 999))));
+        yield 'optional name pattern' => self::operands(Generators::oneOf(Generators::constant(null), new \Tests\Generator\MySql\Statement\Utility\Show\ShowLikeGenerator($pattern)));
     }
 
 }
