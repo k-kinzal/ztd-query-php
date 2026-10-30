@@ -85,6 +85,17 @@ ordinals to choose for successive occurrences of enclosing or sibling rules.
 These choices are encoded in the seed itself; replay needs no recipe or special
 generation settings. MySQL operator-mode supplements live under `modes/HIGH_NOT_PRECEDENCE/` and `modes/PIPES_AS_CONCAT/`; their manifests record the required mode. The builder reads their target recipes from `seeds/modes/`. Replay uses the same byte plan with the corresponding provider flag, and execution must enable that mode in the database session. Diagnostic supplements under `diagnostics/` replay the original grammar with structural rewrites disabled. Their manifests record `structuralRewrites: false`; recipes are in `seeds/diagnostics/`. These inputs retain forms the server refuses, including decimal operands at integer-only positions and `SET NAMES = expr`, so differential tests can verify the errors as well as successful statements.
 
+The MySQL 5.6 and 5.7 corpora also include these supplements. Their context
+recipes place RETURN inside a function, distinguish parenthesized CREATE TABLE
+queries with AS, and keep function keywords adjacent to the opening parenthesis
+when used as table names. The 5.6 ordering recipe parenthesizes the inner query
+so its LIMIT belongs to the outer query expression. Without these contexts, a
+selected alternative can be rewritten or parsed as a different alternative.
+
+Replay each profile separately with its recorded settings. Pass only that
+profile's `.txt` files to PHP-Fuzzer; a corpus directory also contains manifests
+and may contain subdirectories whose inputs require different settings.
+
 MySQL 5.6 and 5.7 use `statement` as the corpus root. Their normal provider
 excludes its `partition_entry` alternative: the server uses that entry to read
 `.frm` metadata and rejects every client invocation before reading its body.

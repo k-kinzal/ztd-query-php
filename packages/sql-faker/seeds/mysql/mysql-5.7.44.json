@@ -10,8 +10,8 @@
     "coverage": {
         "productions": 2586,
         "reached": 2586,
-        "emitted": 2187,
-        "seeds": 1770,
+        "emitted": 2189,
+        "seeds": 1779,
         "unreached": [],
         "failures": []
     },
@@ -5600,7 +5600,7 @@
             "file": "table_factor-1.txt",
             "target": "table_factor#1",
             "budget": 25,
-            "sql": "DELETE _sqlfaker_identifier FROM SELECT *"
+            "sql": "DELETE _sqlfaker_identifier FROM ( SELECT * ) AS `name`"
         },
         {
             "file": "table_factor-2.txt",
@@ -5612,7 +5612,7 @@
             "file": "select_derived_union-1.txt",
             "target": "select_derived_union#1",
             "budget": 44,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier UNION SELECT * )"
+            "sql": "DELETE _sqlfaker_identifier FROM ( SELECT * FROM _sqlfaker_identifier UNION SELECT * ) AS `name`"
         },
         {
             "file": "opt_outer-1.txt",
@@ -7406,7 +7406,7 @@
             "file": "keyword-8.txt",
             "target": "keyword#8",
             "budget": 4,
-            "sql": "ALTER DATABASE DEFAULT CHARSET UPGRADE DATA DIRECTORY NAME"
+            "sql": "ALTER DATABASE CHARSET UPGRADE DATA DIRECTORY NAME"
         },
         {
             "file": "keyword-9.txt",
@@ -7922,7 +7922,7 @@
             "file": "keyword_sp-38.txt",
             "target": "keyword_sp#38",
             "budget": 5,
-            "sql": "ALTER DATABASE DEFAULT ENCRYPTION UPGRADE DATA DIRECTORY NAME"
+            "sql": "ALTER DATABASE ENCRYPTION UPGRADE DATA DIRECTORY NAME"
         },
         {
             "file": "keyword_sp-39.txt",
@@ -10635,6 +10635,60 @@
             "target": "opt_suspend#2",
             "budget": 5,
             "sql": "XA END 0x0f SUSPEND FOR MIGRATE"
+        },
+        {
+            "file": "sp_proc_stmt-1-2e185712.txt",
+            "target": "sp_proc_stmt#1",
+            "budget": 24,
+            "sql": "CREATE DEFINER = _sqlfaker_identifier FUNCTION _sqlfaker_identifier ( ) RETURNS BIT RETURN ( ( ( ( USER ( ) ) ) ) )"
+        },
+        {
+            "file": "sp_proc_stmt_return-0.txt",
+            "target": "sp_proc_stmt_return#0",
+            "budget": 24,
+            "sql": "CREATE DEFINER = _sqlfaker_identifier FUNCTION _sqlfaker_identifier ( ) RETURNS BIT RETURN ( ( ( ( USER ( ) ) ) ) )"
+        },
+        {
+            "file": "create3-2-47d1f764.txt",
+            "target": "create3#2",
+            "budget": 27,
+            "sql": "CREATE TABLE _sqlfaker_identifier AS ( SELECT * )"
+        },
+        {
+            "file": "gcol_attribute-5-2f24c2ec.txt",
+            "target": "gcol_attribute#5",
+            "budget": 32,
+            "sql": "ALTER TABLE _sqlfaker_identifier MODIFY _sqlfaker_identifier BIT AS ( ( ( ( ( USER ( ) ) ) ) ) ) UNIQUE PRIMARY KEY"
+        },
+        {
+            "file": "start_transaction_option_list-1-18c1b702.txt",
+            "target": "start_transaction_option_list#1",
+            "budget": 7,
+            "sql": "START TRANSACTION WITH CONSISTENT SNAPSHOT , READ ONLY"
+        },
+        {
+            "file": "function_call_nonkeyword-16-032f499e.txt",
+            "target": "function_call_nonkeyword#16",
+            "budget": 19,
+            "sql": "KILL ( ( ( ( ( USER ( ) ) ) ) ) = ( ( ( USER ( ) ) ) LIKE ( SYSDATE( ) ) ) ) IS TRUE"
+        },
+        {
+            "file": "keyword_sp-1-b19015eb.txt",
+            "target": "keyword_sp#1",
+            "budget": 25,
+            "sql": "CREATE TABLE ADDDATE( SELECT * )"
+        },
+        {
+            "file": "keyword_sp-272-d7242ad6.txt",
+            "target": "keyword_sp#272",
+            "budget": 25,
+            "sql": "CREATE TABLE SUBDATE( SELECT * )"
+        },
+        {
+            "file": "opt_and-1-3149b9e4.txt",
+            "target": "opt_and#1",
+            "budget": 18,
+            "sql": "ALTER USER _sqlfaker_identifier REQUIRE SUBJECT 'text' AND ISSUER 'text'"
         }
     ]
 }

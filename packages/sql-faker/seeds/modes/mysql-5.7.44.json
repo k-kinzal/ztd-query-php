@@ -1,0 +1,9 @@
+{
+    "HIGH_NOT_PRECEDENCE": {
+        "not#1": {},
+        "not2#1": {}
+    },
+    "PIPES_AS_CONCAT": {
+        "simple_expr#10": {}
+    }
+}

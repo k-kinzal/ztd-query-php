@@ -53,7 +53,8 @@ final class KeywordLexemeGenerator implements LexemeGenerator
             if ($next !== '(' && $symbols !== []) {
                 continue;
             }
-            $keywordIdentifier = $input->terminal()->within('ident_keywords_unambiguous');
+            $keywordIdentifier = $input->terminal()->within('ident_keywords_unambiguous')
+                || $input->terminal()->within('keyword_sp');
             $kind = $next === '(' && (!$identifier || $keywordIdentifier) ? 'function' : 'identifier';
             $candidates[] = new LexemeSequence([
                 new Lexeme($spelling, $kind, $input->terminal(), 'sql/sql_lex.cc:find_keyword'),
