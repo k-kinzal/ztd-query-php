@@ -13,6 +13,42 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class BinaryLogTest extends TestCase
 {
+    public function testBeforeStopsAtTheFirstFileNotOlderThanTheCutoff(): void
+    {
+        $log = new BinaryLog();
+        $log->rotate(100);
+        $log->rotate(200);
+        $log->rotate(50);
+
+        self::assertFalse($log->before(200));
+        self::assertSame([2, 3, 4], $log->files);
+        self::assertSame([2 => 200, 3 => 50], $log->closed);
+    }
+
+    public function testBeforeReportsReachingTheActiveFileWithoutRemovingIt(): void
+    {
+        $log = new BinaryLog();
+        $log->rotate(100);
+        $log->rotate(200);
+
+        self::assertTrue($log->before(201));
+        self::assertSame([3], $log->files);
+        self::assertSame([], $log->closed);
+        self::assertTrue($log->before(0));
+    }
+
+    public function testResetDiscardsThePreviousFileTimes(): void
+    {
+        $log = new BinaryLog();
+        $log->rotate(100);
+        $log->reset(1);
+        $log->rotate(200);
+
+        self::assertFalse($log->before(150));
+        self::assertSame([1, 2], $log->files);
+        self::assertSame([1 => 200], $log->closed);
+    }
+
     public function testNamePadsTheNumberToSixDigits(): void
     {
         self::assertSame(['binlog.000001', 'binlog.6344632'], [BinaryLog::name(1), BinaryLog::name(6344632)]);

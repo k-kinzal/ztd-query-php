@@ -63,20 +63,11 @@ final class Epochs
         if ($arguments === []) {
             return (int) floor($frame->context->started);
         }
-        $value = $arguments[0]->evaluate($frame);
-        if ($value === null) {
+        $instant = Convert::toEpoch($arguments[0]->evaluate($frame), $arguments[0]->domain(), $frame->context);
+        if ($instant === null) {
             return null;
         }
-        $parts = (new Readings())->value($value, $arguments[0]->domain(), Zeros::Dated, $frame->context);
-        $seconds = 0;
-        $micro = 0;
-        if ($parts !== null && $parts[1] !== 0 && $parts[2] !== 0) {
-            $seconds = $frame->context->zone()->instant(Calendar::epoch($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5]));
-            $micro = $parts[6];
-            if ($seconds < 1 || $seconds > $this->latest($frame)) {
-                [$seconds, $micro] = [0, 0];
-            }
-        }
+        [$seconds, $micro] = $instant;
         if ($result->kind !== Kind::Decimal) {
             return $seconds;
         }

@@ -18,6 +18,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FlushCommandTest extends TestCase
 {
+    public function testOptionsLeavesDisabledBinaryLogsClosed(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('FLUSH BINARY LOGS; FLUSH LOGS');
+
+        self::assertSame([1], $session->instance->registry->binaryLog->files);
+        self::assertSame([], $session->instance->registry->binaryLog->closed);
+    }
+
     /**
      * @return iterable<string, array{string, string, list<array{string, int, string}>}>
      */

@@ -16,6 +16,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class EpochsTest extends TestCase
 {
+    public function testUnixAcceptsNumericZeroUnderNoZeroDate(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode='NO_ZERO_DATE'");
+        $reply = $session->query('SELECT UNIX_TIMESTAMP(0), UNIX_TIMESTAMP(0.0), UNIX_TIMESTAMP(1 IS UNKNOWN)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['0', '0.0', '0']], $reply->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

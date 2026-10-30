@@ -11,29 +11,25 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Operator\Moments;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Registry\BinaryLog;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
-use MySqlMemory\Typing\Domain;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo;
 use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Executes PURGE BINARY LOGS and BINLOG.
  *
  * PURGE BINARY LOGS TO deletes the binary log files before the one it names, which the index
  * must hold (ER_UNKNOWN_TARGET_BINLOG). PURGE BINARY LOGS BEFORE converts its moment to a
- * DATETIME, the integer 0 being the zero datetime, and warns that the active file is not purged;
- * the emulator keeps the other files. The
+ * Unix cutoff and deletes older closed files. It warns that the active file is not purged
+ * only when the scan reaches that file. The
  * BINLOG statement decodes its base64 text (ER_BASE64_DECODE_ERROR) and reads events in order:
  * fewer than 13 bytes, or an event longer than the text, is a syntax error, and only a format
  * description or row event is allowed (ER_ONLY_FD_AND_RBR_EVENTS_ALLOWED_IN_BINLOG_STATEMENT,
@@ -92,15 +88,15 @@ final class BinaryLogCommand implements Command
             } catch (\MySqlMemory\Error\SqlError $error) {
                 throw (new PurgeErrors())->prepared($error, $statement);
             }
-            $this->moment($moment, $context);
-            if ($logging) {
+            $cutoff = $this->moment($moment, $context);
+            if ($logging && $log->before($cutoff)) {
                 $session->diagnostics->warning(AdministrationError::ActiveLogNotPurged, AdministrationError::ActiveLogNotPurged->message('./' . $log->active()));
             }
         } elseif ($statement instanceof BinlogEvent) {
             $this->event((new Literals())->bytes($statement->events), $session, $context);
         }
 
-        return new Completion(0, 0, $session->diagnostics->raised());
+        return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised());
     }
 
     /**
@@ -110,24 +106,24 @@ final class BinaryLogCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When evaluating the cutoff fails
      */
-    public function moment(\MySqlMemory\Evaluation\Evaluable $moment, Context $context): void
+    public function moment(\MySqlMemory\Evaluation\Evaluable $moment, Context $context): int
     {
         $continuing = $context->continueAfterError;
         $previous = $context->deferredError;
         $context->continueAfterError = true;
         $context->deferredError = null;
+        $cutoff = 0;
         try {
             try {
                 $value = $moment->evaluate(new Frame($context));
-                if ($value !== null && !(is_int($value) && $value === 0)) {
-                    (new Moments())->convert($value, $moment->domain(), new Domain(Kind::DateTime, Field::DateTime, 19, 0, false), $context);
-                }
+                $cutoff = \MySqlMemory\Evaluation\Convert::toEpoch($value, $moment->domain(), $context)[0] ?? 0;
             } catch (\MySqlMemory\Error\SqlError $error) {
                 $context->defer($error);
             }
             if ($context->deferredError !== null) {
                 throw $context->deferredError;
             }
+            return $cutoff;
         } finally {
             $context->continueAfterError = $continuing;
             $context->deferredError = $previous;

@@ -123,7 +123,7 @@ final class FlushCommand implements Command
             try {
                 match ($option) {
                     FlushOption::Privileges => $this->privileges($session),
-                    FlushOption::BinaryLogs => $session->instance->registry->binaryLog->rotate(),
+                    FlushOption::BinaryLogs => \MySqlMemory\Registry\BinaryLog::enabled($session) ? $session->instance->registry->binaryLog->rotate() : null,
                     FlushOption::RelayLogs => $this->relay($items[$option->value]->channel ?? null, $session),
                     FlushOption::Status => $this->status($session),
                 };

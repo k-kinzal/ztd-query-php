@@ -21,6 +21,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class ConvertTest extends TestCase
 {
+    public function testToEpochPreservesFractionalSecondsAndTheSessionTimeZone(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET time_zone = '+09:00'");
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $domain = new Domain(Kind::DateTime, Field::DateTime, 26, 6);
+
+        self::assertSame([1704034800, 500000], Convert::toEpoch('2024-01-01 00:00:00.500000', $domain, $context));
+        self::assertNull(Convert::toEpoch(null, $domain, $context));
+    }
+
     public function testToPredicateReadsLegacyRootStringsAsIntegersWithoutChangingExpressionTruth(): void
     {
         $session = (new Instance('5.7.44'))->connect();

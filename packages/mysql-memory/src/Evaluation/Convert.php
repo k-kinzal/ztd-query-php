@@ -36,6 +36,36 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 final class Convert
 {
     /**
+     * Reads a datetime as Unix seconds and microseconds in the session's zone.
+     * UNIX_TIMESTAMP and PURGE BEFORE share this conversion. Invalid or
+     * out-of-range instants become zero; SQL NULL remains null.
+     *
+     * @phpstan-impure
+     * @return array{int, int}|null
+     */
+    public static function toEpoch(int|float|string|ExactDecimal|null $value, Domain $domain, Context $context): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+        $numeric = $domain->kind->numeric() ? self::toDecimal($value, $domain, $context) : null;
+        if ($numeric !== null && Decimal::compare($numeric, '0') === 0) {
+            return [0, 0];
+        }
+        $parts = (new Function\Time\Readings())->value($value, $domain, Function\Time\Zeros::Dated, $context);
+        $seconds = 0;
+        $micro = 0;
+        if ($parts !== null && $parts[1] !== 0 && $parts[2] !== 0) {
+            $seconds = $context->zone()->instant(\MySqlMemory\Value\Calendar::epoch($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5]));
+            $micro = $parts[6];
+            if ($seconds < 1 || $seconds > (new Function\Time\Epochs())->latest(new Frame($context))) {
+                [$seconds, $micro] = [0, 0];
+            }
+        }
+        return [$seconds, $micro];
+    }
+
+    /**
      * Reads a value as a double.
      */
     public static function toDouble(int|float|string|ExactDecimal|null $value, Domain $domain, Context $context): ?float

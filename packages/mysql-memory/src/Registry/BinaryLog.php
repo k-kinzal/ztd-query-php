@@ -24,6 +24,11 @@ final class BinaryLog
     public array $files = [1];
 
     /**
+     * @var array<int, int> The real modification time of each rotated file
+     */
+    public array $closed = [];
+
+    /**
      * Tells whether the session's server writes a binary log: log_bin is on.
      */
     public static function enabled(\MySqlMemory\Session\Session $session): bool
@@ -107,11 +112,14 @@ final class BinaryLog
     }
 
     /**
-     * Closes the active file and opens the next.
+     * Closes the active file and opens the next, recording its filesystem time.
+     * The session's SET timestamp does not change this clock.
      */
-    public function rotate(): void
+    public function rotate(?int $closedAt = null): void
     {
-        $this->files[] = $this->files[count($this->files) - 1] + 1;
+        $previous = $this->files[count($this->files) - 1];
+        $this->closed[$previous] = $closedAt ?? time();
+        $this->files[] = $previous + 1;
     }
 
     /**
@@ -120,6 +128,7 @@ final class BinaryLog
     public function reset(int $first = 1): void
     {
         $this->files = [$first];
+        $this->closed = [];
     }
 
     /**
@@ -128,5 +137,27 @@ final class BinaryLog
     public function purge(int $number): void
     {
         $this->files = array_values(array_filter($this->files, static fn (int $file): bool => $file >= $number));
+        $this->closed = array_intersect_key($this->closed, array_flip($this->files));
+    }
+
+    /**
+     * Purges the leading closed files older than a cutoff, stopping at the first
+     * newer file. Answers whether the scan reached the unpurgeable active file.
+     * Source: MySQL sql/binlog.cc, MYSQL_BIN_LOG::purge_logs_before_date.
+     */
+    public function before(int $cutoff): bool
+    {
+        $active = $this->files[count($this->files) - 1];
+        foreach ($this->files as $file) {
+            if ($file === $active) {
+                $this->purge($file);
+                return true;
+            }
+            if ($this->closed[$file] >= $cutoff) {
+                $this->purge($file);
+                return false;
+            }
+        }
+        return false;
     }
 }

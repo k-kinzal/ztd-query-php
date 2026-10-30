@@ -49,10 +49,31 @@ final class PurgeLogsBeforeProperties extends TestCase
     }
 
     /**
+     * Generated rotations and cutoffs remain executable after shrinking.
+     */
+    #[Test]
+    #[DataProvider('providerReleases')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesPurgeCompletesWithItsRotatedLogs(GrammarRelease $release): void
+    {
+        $this->forAll(PurgeLogsBeforeGenerator::withRotatedLogs($release))->withMaxSize(10)->then(static function (array $sequence) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            [$rotate, $purge] = $sequence;
+            $execution->statement($rotate);
+            $execution->statement($purge);
+        });
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql') {
+                yield $release->value => [$release];
+            }
+        }
     }
 }

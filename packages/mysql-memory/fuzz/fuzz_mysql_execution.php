@@ -97,6 +97,12 @@ $start = static function () use ($version, $mode): array {
             $connection->query("SET SESSION time_zone = '+00:00'");
             $connection->query('SET SESSION timestamp = 1700000000');
             $connection->query('GRANT PROXY ON CURRENT_USER TO CURRENT_USER WITH GRANT OPTION');
+            if (!str_starts_with($version, '5.')) {
+                /**
+                 * Start each generated history with empty logs, independent of container provisioning.
+                 */
+                $connection->query(in_array($version, ['8.0.44', '8.1.0', '8.2.0', '8.3.0'], true) ? 'RESET MASTER' : 'RESET BINARY LOGS AND GTIDS');
+            }
             $connection->query('FLUSH TABLES');
         }
         mysqli_report(MYSQLI_REPORT_OFF);

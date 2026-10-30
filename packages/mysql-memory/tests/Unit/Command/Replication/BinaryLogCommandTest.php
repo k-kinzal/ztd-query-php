@@ -9,6 +9,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -16,6 +17,51 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class BinaryLogCommandTest extends TestCase
 {
+    public function testExecuteDoesNotCountRetainedLegacyDiagnosticsAsNewWarnings(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('EXECUTE absent');
+        $reply = $session->query("PURGE BINARY LOGS BEFORE '2020-01-01'")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $reply);
+        self::assertSame(0, $reply->warnings);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Error', '1243', 'Unknown prepared statement handler (absent) given to EXECUTE']], $warnings->rows);
+    }
+
+    /**
+     * @param list<int> $files
+     * @param list<list<string>> $warnings
+     */
+    #[DataProvider('providerRotatedCutoffs')]
+    public function testExecutePurgesOnlyClosedFilesBeforeTheCutoff(string $version, string $cutoff, array $files, array $warnings): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("SET sql_mode='', time_zone='+00:00', timestamp=1700000000; FLUSH BINARY LOGS");
+        $session->query('PURGE BINARY LOGS BEFORE ' . $cutoff);
+        $reply = $session->query('SHOW WARNINGS')[0];
+
+        self::assertSame($files, $session->instance->registry->binaryLog->files);
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame($warnings, $reply->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, list<int>, list<list<string>>}>
+     */
+    public static function providerRotatedCutoffs(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            $logging = !str_starts_with($version, '5.');
+            $kept = $logging ? [1, 2] : [1];
+            yield $version . '/invalid' => [$version, "'garbage'", $kept, [['Warning', '1292', "Incorrect datetime value: 'garbage'"]]];
+            yield $version . '/past' => [$version, "'2020-01-01'", $kept, []];
+            yield $version . '/clock' => [$version, 'CURRENT_TIMESTAMP', $kept, []];
+            yield $version . '/future' => [$version, "'2030-01-01'", $logging ? [2] : [1], $logging ? [['Warning', '1868', 'file ./binlog.000002 was not purged because it is the active log file.']] : []];
+        }
+    }
+
     public function testMomentConvertsACompletedTruthTestAndRestoresItsErrorScope(): void
     {
         $session = (new Instance())->connect();

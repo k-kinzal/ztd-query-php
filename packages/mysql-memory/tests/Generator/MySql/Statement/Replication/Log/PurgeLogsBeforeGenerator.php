@@ -31,10 +31,11 @@ final class PurgeLogsBeforeGenerator implements ErisGenerator
     {
         if ($operands === null) {
             $forms = [];
-            if ($release === \SqlSemantics\Contract\GrammarRelease::MySql847) {
+            if ($release->database() === 'mysql') {
                 foreach (self::forms() as $form) {
                     $forms[] = $form;
                 }
+                $forms[] = self::operands(self::moments(), masterLogs: str_starts_with($release->value, 'mysql-9.') ? Generators::constant(false) : Generators::bool());
             }
 
             if ($forms === []) {
@@ -48,6 +49,36 @@ final class PurgeLogsBeforeGenerator implements ErisGenerator
             }
             return $statement;
         }, new \Tests\Generator\Semantics\Statement\AnalyzedStatementGenerator($release, $operands, $contexts));
+    }
+
+    /**
+     * Varies cutoff values, invalid dates, Unix boundaries and fractional seconds.
+     *
+     * @return ErisGenerator<\SqlSemantics\Statement\Scalar>
+     */
+    public static function moments(): ErisGenerator
+    {
+        $dates = Generators::map(static fn (array $parts): string => sprintf('%04d-%02d-%02d %02d:%02d:%02d.%06d', ...$parts), Generators::tuple(Generators::choose(1969, 3002), Generators::choose(0, 13), Generators::choose(0, 32), Generators::choose(0, 24), Generators::choose(0, 60), Generators::choose(0, 60), Generators::choose(0, 999999)));
+        return Generators::oneOf(
+            new \Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator(strings: Generators::oneOf($dates, Generators::elements('', 'garbage', '0000-00-00', '1970-01-01 00:00:01', '2038-01-19 03:14:08', '9999-12-31 23:59:59'))),
+            new \Tests\Generator\MySql\Statement\Literal\NumberLiteralGenerator(Generators::oneOf(Generators::elements('0', '1', '20240101', '20240101000000.5'), Generators::map(static fn (int $value): string => (string) $value, Generators::choose(0, 99999999)))),
+            new \Tests\Generator\MySql\Statement\Literal\NullLiteralGenerator(),
+        );
+    }
+
+    /**
+     * Composes log rotations and a complete dependent cutoff request.
+     *
+     * @return ErisGenerator<array{\SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush, \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore}>
+     */
+    public static function withRotatedLogs(\SqlSemantics\Contract\GrammarRelease $release): ErisGenerator
+    {
+        $item = new \Tests\Generator\MySql\Statement\Server\Flush\FlushItemGenerator(\Tests\Generator\MySql\Statement\Server\Flush\FlushOptionGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::BinaryLogs]));
+        $items = Generators::bind(Generators::choose(1, 4), static fn (int $count): ErisGenerator => Generators::vector($count, $item));
+        return Generators::tuple(
+            new \Tests\Generator\MySql\Statement\Server\Flush\FlushGenerator($release, \Tests\Generator\MySql\Statement\Server\Flush\FlushGenerator::operands(Generators::constant(null), $items)),
+            new self($release, self::operands(self::moments(), masterLogs: Generators::constant(false))),
+        );
     }
     /**
      * @param ErisGenerator<\SqlSemantics\Statement\Scalar> $moment Generated constructor operand
@@ -63,7 +94,7 @@ final class PurgeLogsBeforeGenerator implements ErisGenerator
         }, Generators::tuple($moment, $statementInformation ?? Generators::constant(null), $inputSource ?? Generators::constant(null), $masterLogs ?? Generators::bool()));
     }
     /**
-     * Composes the statement's MySQL 8.4 forms from typed operand generators.
+     * Composes a current-user cutoff from typed operand generators.
      *
      * @return iterable<string, ErisGenerator<\SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore>>
      */
