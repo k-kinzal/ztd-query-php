@@ -79,7 +79,7 @@ final class Session
     public readonly Transaction $transaction;
 
     /**
-     * @var list<array{string, string, string, bool}> The tables LOCK TABLES locked: the database, the table, the name the statements use and whether the lock is a WRITE lock
+     * @var list<State\TableLock> The explicit table handles, including their acquisition namespace
      */
     public array $locks = [];
 

@@ -44,12 +44,12 @@ final class Locks
             return;
         }
         $found = false;
-        foreach ($session->locks as [$lockedSchema, $table, , $exclusive]) {
-            if ($lockedSchema !== $schema || $table !== $name) {
+        foreach ($session->locks as $lock) {
+            if ($lock->temporary || $lock->schema !== $schema || $lock->table !== $name) {
                 continue;
             }
             $found = true;
-            if ($exclusive) {
+            if ($lock->write) {
                 return;
             }
         }
@@ -164,9 +164,9 @@ final class Locks
         if ($session->instance->dictionary->table($schema, $name->name->value, $session->temporaries)?->definition->temporary === true) {
             return;
         }
-        foreach ($session->locks as [$lockedSchema, $table, $alias, $exclusive]) {
-            if ($lockedSchema === $schema && $table === $name->name->value && strcasecmp($alias, $used) === 0) {
-                if ($write && !$exclusive) {
+        foreach ($session->locks as $lock) {
+            if (!$lock->temporary && $lock->schema === $schema && $lock->table === $name->name->value && strcasecmp($lock->alias, $used) === 0) {
+                if ($write && !$lock->write) {
                     throw StatementError::TableNotLockedForWrite->error($used);
                 }
 

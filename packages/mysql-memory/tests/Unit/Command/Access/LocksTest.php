@@ -19,6 +19,24 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class LocksTest extends TestCase
 {
+    public function testMetadataDistinguishesATemporaryHandleFromItsPersistentNamesake(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TEMPORARY TABLE t(a INT); LOCK TABLES t WRITE');
+
+        $this->expectExceptionCode(1100);
+        (new Locks())->metadata($session, 'd', 't');
+    }
+
+    public function testAllowedDoesNotTurnADroppedTemporaryHandleIntoAPersistentLock(): void
+    {
+        $session = (new Instance(databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT); CREATE TEMPORARY TABLE t(a INT); LOCK TABLES t WRITE; DROP TEMPORARY TABLE t');
+
+        $this->expectExceptionCode(1100);
+        $session->query('SELECT a FROM t');
+    }
+
     #[DataProvider('providerExplainedWrites')]
     public function testCheckRequiresTheExplainedWriteLockAfterResolvingItsOperands(string $version, string $sql, int $code): void
     {

@@ -49,10 +49,42 @@ final class RenameTableProperties extends TestCase
     }
 
     /**
+     * Executes the complete generated rename sequence against its prerequisite table.
+     */
+    #[Test]
+    #[DataProvider('providerPrerequisites')]
+    #[DoesNotPerformAssertions]
+    public function satisfiesExecutionCompletesWithItsPrerequisites(GrammarRelease $release, bool $locked): void
+    {
+        $this->forAll(RenameTableGenerator::withPrerequisites($release, $locked))->withMaxSize(10)->then(static function (array $statements) use ($release): void {
+            $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
+            $execution = new Execution($session);
+            foreach ($statements as $statement) {
+                $execution->statement($statement);
+            }
+        });
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease, bool}>
+     */
+    public static function providerPrerequisites(): iterable
+    {
+        foreach (self::providerReleases() as [$release]) {
+            yield $release->value . '/unlocked' => [$release, false];
+            if (!in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                yield $release->value . '/locked' => [$release, true];
+            }
+        }
+    }
+
+    /**
      * @return iterable<string, array{GrammarRelease}>
      */
     public static function providerReleases(): iterable
     {
-        yield GrammarRelease::MySql847->value => [GrammarRelease::MySql847];
+        foreach ([GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810, GrammarRelease::MySql820, GrammarRelease::MySql830, GrammarRelease::MySql847, GrammarRelease::MySql901, GrammarRelease::MySql910] as $release) {
+            yield $release->value => [$release];
+        }
     }
 }

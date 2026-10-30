@@ -187,8 +187,8 @@ final class OpenedTables
             if ($other === null) {
                 continue;
             }
-            foreach ($other->locks as [$database, $name]) {
-                $uses += $database === $schema && $name === $table ? 1 : 0;
+            foreach ($other->locks as $lock) {
+                $uses += !$lock->temporary && $lock->schema === $schema && $lock->table === $table ? 1 : 0;
             }
             foreach ($other->handlers as $handler) {
                 $uses += $handler->schema === $schema && $handler->table === $table ? 1 : 0;

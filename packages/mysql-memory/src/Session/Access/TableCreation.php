@@ -44,8 +44,8 @@ final class TableCreation
         }
         $name = $statement->name;
         $schema = $name->schema->value ?? $session->variables->database;
-        foreach ($session->locks as [$lockedSchema, $table, $alias]) {
-            if ($schema === $lockedSchema && $name->name->value === $table && strcasecmp($alias, $table) === 0) {
+        foreach ($session->locks as $lock) {
+            if (!$lock->temporary && $schema === $lock->schema && $name->name->value === $lock->table && strcasecmp($lock->alias, $lock->table) === 0) {
                 return;
             }
         }

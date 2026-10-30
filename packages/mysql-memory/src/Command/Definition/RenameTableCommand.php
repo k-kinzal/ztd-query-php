@@ -59,9 +59,10 @@ final class RenameTableCommand implements Command
         assert($statement instanceof RenameTable);
         $database = $session->variables->database;
         $this->written($statement, $database);
+        $locks = $this->locks($statement, $session);
         $session->transaction->commit();
         $dictionary = $session->instance->dictionary;
-        [$names, $moves] = $this->prepare($statement, $dictionary, $database, $session->settings()->legacy());
+        [$names, $moves] = $this->prepare($statement, $dictionary, $database, $session->instance->version);
         foreach ($moves as [$table]) {
             if ($table instanceof View) {
                 unset($dictionary->schemas[$table->schema]->views[$table->name]);
@@ -85,6 +86,7 @@ final class RenameTableCommand implements Command
             }
             $dictionary->schemas[$table->definition->schema]->tables[$table->definition->name] = $table;
         }
+        $session->locks = $locks;
 
         return new Completion();
     }
@@ -95,16 +97,25 @@ final class RenameTableCommand implements Command
      * @return array{array<string, StoredTable|View>, list<array{StoredTable|View, array{string, string}}>}
      * @throws \MySqlMemory\Error\SqlError When any source or destination cannot be renamed
      */
-    public function prepare(RenameTable $statement, Dictionary $dictionary, string $database, bool $legacy): array
+    public function prepare(RenameTable $statement, Dictionary $dictionary, string $database, string $version): array
     {
+        $legacy = str_starts_with($version, '5.');
         $names = $this->names($dictionary);
         $moves = [];
         foreach ($statement->renamings as $renaming) {
             $from = [$renaming->from->schema->value ?? $database, $renaming->from->name->value];
             $to = [$renaming->to->schema->value ?? $database, $renaming->to->name->value];
+            if ($legacy && isset($names[$to[0] . "\0" . $to[1]])) {
+                throw SchemaError::TableExists->error($to[1]);
+            }
             if ($legacy && !isset($names[$from[0] . "\0" . $from[1]])) {
                 $files = new Database\FileName();
                 throw SchemaError::FileNotFound->error('./' . $files->encoded($from[0]) . '/' . $files->encoded($from[1]) . '.frm', 2, 'No such file or directory');
+            }
+            if ($legacy && $dictionary->schema($to[0]) === null) {
+                $files = new Database\FileName();
+                $older = str_starts_with($version, '5.6.');
+                throw SchemaError::RenameFailed->error('./' . $files->encoded($from[0]) . '/' . $files->encoded($from[1]), './' . $files->encoded($to[0]) . '/' . $files->encoded($to[1]), $older ? -1 : 168, $older ? 'Unknown error -1' : 'Unknown (generic) error from engine');
             }
             foreach ([$from[0], $to[0]] as $schema) {
                 if ($dictionary->schema($schema) === null) {
@@ -126,6 +137,43 @@ final class RenameTableCommand implements Command
             $moves[] = [$table, $to];
         }
         return [$names, $moves];
+    }
+
+    /**
+     * Checks every original source's metadata lock before any rename is attempted.
+     * Earlier destinations may become later sources. The returned lock list is
+     * published only after success; explicit aliases and lock modes survive renaming.
+     * MySQL 5.x refuses RENAME TABLE while explicit table locks are held.
+     *
+     * @return list<\MySqlMemory\Session\State\TableLock>
+     * @throws \MySqlMemory\Error\SqlError When a source lacks the required WRITE lock
+     */
+    public function locks(RenameTable $statement, Session $session): array
+    {
+        if ($session->locks === []) {
+            return [];
+        }
+        if ($session->settings()->legacy()) {
+            throw \MySqlMemory\Error\Family\StatementError::LockedOrActiveTransaction->error();
+        }
+        $created = [];
+        $locks = $session->locks;
+        foreach ($statement->renamings as $renaming) {
+            $from = [$renaming->from->schema->value ?? $session->variables->database, $renaming->from->name->value];
+            $to = [$renaming->to->schema->value ?? $session->variables->database, $renaming->to->name->value];
+            $key = $from[0] . "\0" . $from[1];
+            if (!isset($created[$key])) {
+                (new \MySqlMemory\Command\Access\Locks())->metadata($session, $from[0], $from[1]);
+            }
+            unset($created[$key]);
+            $created[$to[0] . "\0" . $to[1]] = true;
+            foreach ($locks as $index => $lock) {
+                if (!$lock->temporary && $lock->schema === $from[0] && $lock->table === $from[1]) {
+                    $locks[$index] = $lock->renamed($to[0], $to[1]);
+                }
+            }
+        }
+        return $locks;
     }
 
     /**

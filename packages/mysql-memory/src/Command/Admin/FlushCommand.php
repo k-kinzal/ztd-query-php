@@ -80,7 +80,7 @@ final class FlushCommand implements Command
                 if ($session->instance->dictionary->table($schema, $table->name->name->value, $session->temporaries) === null) {
                     throw QueryError::NoSuchTable->error($schema, $table->name->name->value);
                 }
-                $locks[] = [$schema, $table->name->name->value, $table->name->name->value, false];
+                $locks[] = new \MySqlMemory\Session\State\TableLock($schema, $table->name->name->value, $table->name->name->value, false);
                 (new \MySqlMemory\Session\Access\OpenedTables())->open($schema, $table->name->name->value, $session);
             }
             if ($locks !== []) {

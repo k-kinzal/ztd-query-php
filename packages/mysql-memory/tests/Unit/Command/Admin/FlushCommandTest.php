@@ -286,7 +286,7 @@ final class FlushCommandTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); FLUSH TABLES t WITH READ LOCK');
 
-        self::assertSame([['d', 't', 't', false]], $session->locks);
+        self::assertEquals([new \MySqlMemory\Session\State\TableLock('d', 't', 't', false)], $session->locks);
     }
 
     public function testExecuteRefusesAnotherReplicationChannel(): void

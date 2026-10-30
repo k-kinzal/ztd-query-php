@@ -31,6 +31,7 @@ final class SchemaMessages
         'DatabaseExists' => ['HY000', 'Can\'t create database \'%s\'; database exists'],
         'DatabaseMissing' => ['HY000', 'Can\'t drop database \'%s\'; database doesn\'t exist'],
         'FileNotFound' => ['HY000', 'Can\'t find file: \'%s\' (errno: %d - %s)'],
+        'RenameFailed' => ['HY000', 'Error on rename of \'%s\' to \'%s\' (errno: %d - %s)'],
         'IllegalHa' => ['HY000', 'Table storage engine for \'%s\' doesn\'t have this option'],
         'TableExists' => ['42S01', 'Table \'%s\' already exists'],
         'BadTable' => ['42S02', 'Unknown table \'%s\''],

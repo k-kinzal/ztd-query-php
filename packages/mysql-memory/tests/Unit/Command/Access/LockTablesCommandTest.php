@@ -29,7 +29,7 @@ final class LockTablesCommandTest extends TestCase
         $locks = $session->locks;
         $session->query('UNLOCK TABLES');
 
-        self::assertSame([['d', 't', 't', false], ['d', 'u', 'x', true]], $locks);
+        self::assertEquals([new \MySqlMemory\Session\State\TableLock('d', 't', 't', false), new \MySqlMemory\Session\State\TableLock('d', 'u', 'x', true)], $locks);
         self::assertSame([], $session->locks);
     }
 
