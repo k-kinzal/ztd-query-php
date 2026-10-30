@@ -72,7 +72,7 @@ final class StopReplicaGenerator implements ErisGenerator
     {
         yield 'StopReplica/124' => StopReplicaGenerator::operands(
             terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-            threads: Generators::constant([]),
+            threads: Generators::seq(new ReplicaThreadGenerator()),
             channel: Generators::constant(null)
         );
     }

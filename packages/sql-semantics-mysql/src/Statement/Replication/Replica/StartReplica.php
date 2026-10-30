@@ -35,7 +35,7 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Starting the receiver thread with credentials
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA IO_THREAD USER = 'u' PASSWORD = 'p'"
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA RELAY_THREAD USER = 'u' PASSWORD = 'p'"
  */
 final class StartReplica extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {

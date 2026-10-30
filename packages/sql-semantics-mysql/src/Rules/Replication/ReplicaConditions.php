@@ -67,6 +67,6 @@ final class ReplicaConditions
      */
     public function credentialsRefused(array $threads, bool $credentials): bool
     {
-        return $credentials && in_array(ReplicaThread::Applier, $threads, true) && !in_array(ReplicaThread::Receiver, $threads, true);
+        return $credentials && in_array(ReplicaThread::Applier, $threads, true) && !in_array(ReplicaThread::Receiver, $threads, true) && !in_array(ReplicaThread::Relay, $threads, true);
     }
 }

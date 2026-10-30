@@ -211,7 +211,8 @@ final class ReplicaRule
         $threads = [];
         foreach ((new Spine($this->lowering))->items($form->node(0), $spine) as $item) {
             $thread = $this->lowering->form($item);
-            $threads[] = self::THREADS[$thread->signature] ?? throw ImplementationGap::production($thread);
+            $kind = self::THREADS[$thread->signature] ?? throw ImplementationGap::production($thread);
+            $threads[] = $kind === ReplicaThread::Receiver && strtoupper($thread->token(0)->text) === 'RELAY_THREAD' ? ReplicaThread::Relay : $kind;
         }
 
         return $threads;

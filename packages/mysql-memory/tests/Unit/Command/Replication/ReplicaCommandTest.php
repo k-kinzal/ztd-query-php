@@ -20,6 +20,27 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 #[Small]
 final class ReplicaCommandTest extends TestCase
 {
+    public function testStartChannelRequiresAHostForTheReceiverSynonym(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1200);
+        $session->query('START REPLICA RELAY_THREAD');
+    }
+
+    public function testStopRetainsTheApplierWhenOnlyTheReceiverSynonymIsSelected(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_HOST='host', SOURCE_USER='user'");
+        $session->query('START REPLICA RELAY_THREAD');
+        self::assertFalse($session->instance->registry->replication->applying);
+
+        $session->query('START REPLICA SQL_THREAD');
+        $session->query('STOP REPLICA RELAY_THREAD');
+        self::assertTrue($session->instance->registry->replication->applying);
+        $session->query('STOP REPLICA SQL_THREAD');
+        self::assertFalse($session->instance->registry->replication->applying);
+    }
+
     #[DataProvider('providerFilterRunning')]
     public function testFilterRefusesTheRunningApplierOfAConfiguredChannel(string $version, string $setup, string $filter, int $code): void
     {

@@ -39,6 +39,8 @@ final class ReplicaConditionsTest extends TestCase
 
         self::assertTrue($conditions->credentialsRefused([ReplicaThread::Applier], true));
         self::assertFalse($conditions->credentialsRefused([ReplicaThread::Applier, ReplicaThread::Receiver], true));
+        self::assertFalse($conditions->credentialsRefused([ReplicaThread::Applier, ReplicaThread::Relay], true));
+        self::assertFalse($conditions->credentialsRefused([ReplicaThread::Relay], true));
         self::assertFalse($conditions->credentialsRefused([], true));
         self::assertFalse($conditions->credentialsRefused([ReplicaThread::Applier], false));
     }

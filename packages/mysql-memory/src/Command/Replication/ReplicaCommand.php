@@ -180,7 +180,7 @@ final class ReplicaCommand implements Command
         if (($session->settings()->legacy() && (int) $session->variables->read('server_id') === 0) || ($session->settings()->release() === GrammarRelease::MySql5651 && $replication->host === '')) {
             throw AdministrationError::ReplicaNotConfigured->error(LegacyReplication::CANNOT_START);
         }
-        $receiver = $statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true);
+        $receiver = $statement->threads === [] || array_filter($statement->threads, static fn (ReplicaThread $thread): bool => $thread !== ReplicaThread::Applier) !== [];
         $applier = $statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true);
         if ($receiver) {
             $replication->initialized = true;

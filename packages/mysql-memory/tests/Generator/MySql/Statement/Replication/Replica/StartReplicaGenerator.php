@@ -77,7 +77,7 @@ final class StartReplicaGenerator implements ErisGenerator
     {
         yield 'StartReplica/123' => StartReplicaGenerator::operands(
             terminology: \Tests\Generator\MySql\Statement\Replication\TerminologyGenerator::selecting([\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current]),
-            threads: Generators::constant([]),
+            threads: Generators::seq(new ReplicaThreadGenerator()),
             until: Generators::constant(null),
             user: Generators::constant(null),
             password: Generators::constant(null),
