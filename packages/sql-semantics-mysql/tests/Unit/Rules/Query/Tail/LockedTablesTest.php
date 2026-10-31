@@ -46,18 +46,18 @@ final class LockedTablesTest extends TestCase
         self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new Name('t2'))], $operation->diagnostics());
     }
 
-    public function testCheckNamesATableOfAnOfListAsWritten(): void
+    public function testCheckNamesATableOfAQualifiedOfListAsWritten(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM t1 AS x FOR SHARE OF x FOR SHARE OF x');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM test.t1 FOR SHARE OF test.t1 FOR SHARE OF test.t1');
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new QualifiedName(new Name('x')))], $operation->diagnostics());
+        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new QualifiedName(new Name('t1'), new Name('test')))], $operation->diagnostics());
     }
 
     public function testCheckLocksTheTablesOfTheLastOperandOfASetOperation(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t2 EXCEPT TABLE t1 FOR SHARE OF t2');
+        $operation = (new Semantics(Dialect::MySql))->analyze('TABLE t2 EXCEPT TABLE t1 FOR SHARE OF test.t2');
 
-        self::assertEquals([new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t2')))], $operation->diagnostics());
+        self::assertEquals([new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t2'), new Name('test')))], $operation->diagnostics());
     }
 
     public function testCheckLeavesDistinctTablesAlone(): void
@@ -81,11 +81,11 @@ final class LockedTablesTest extends TestCase
         self::assertSame([], $operation->diagnostics());
     }
 
-    public function testCheckCountsADerivedTableNamedByOfAsLocked(): void
+    public function testCheckCountsADerivedTableNamedByAQualifiedOfAsLocked(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM (SELECT 1) AS d FOR SHARE OF d');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM (SELECT 1) AS d FOR SHARE OF test.d');
 
-        self::assertEquals([new Misuse(MisuseRule::RepeatedLockedTable, new QualifiedName(new Name('d')))], $operation->diagnostics());
+        self::assertEquals([new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('d'), new Name('test')))], $operation->diagnostics());
     }
 
     public function testCheckCountsTheTablesOfAHighPriorityQueryAsLocked(): void

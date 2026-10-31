@@ -57,6 +57,10 @@ use SqlSemantics\Statement\Selection;
  *     $query->field('a')->type instanceof \SqlSemantics\Statement\Type\Dependent // => true
  * @example Refusing a star after the first item
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\Star()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a locking clause that names no table of the block
+ *     $from = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+ *     $clause = new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update, [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], $from, locking: [$clause]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Select implements Query, Selection
 {
@@ -140,6 +144,7 @@ final class Select implements Query, Selection
         $this->windows = Check::listOf($windows, WindowDefinition::class, 'The WINDOW clause holds window definitions.');
         $this->orderBy = (new SortScopes())->items($orderBy);
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses of a selection are locking clauses.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Tail\LockedNames())->problem($from, $this->locking) === null, 'A locking clause names a table of the FROM clause by its correlation name or table name, each once, and no derived or JSON table.');
         (new SortScopes())->check([...$this->orderBy, ...($groupBy === null ? [] : $groupBy->items)]);
         Check::input(($into === null) === ($intoPosition === null), 'An INTO destination is written at exactly one position.');
         Check::input($intoPosition !== IntoPosition::AfterQuery || $this->clauses(), 'An INTO after the query clauses follows at least one of them.');

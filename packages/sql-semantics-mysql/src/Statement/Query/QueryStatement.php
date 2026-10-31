@@ -35,6 +35,11 @@ use SqlSemantics\Statement\Query;
  * @example Refusing a query statement without clauses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a locking clause after a union that names a table of an earlier operand only
+ *     $first = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+ *     $last = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u'))));
+ *     $clause = new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update, [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($first, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $last), [$clause]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class QueryStatement implements Query
 {
@@ -58,6 +63,7 @@ final class QueryStatement implements Query
             $this->initializeQueryInformation($queryInformation);
         }
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses of a query are locking clauses.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Tail\LockedNames())->statement($query, $this->locking) === null, 'A locking clause after a query names a table of the FROM clause of its last block by its correlation name or table name, each once, and no derived or JSON table.');
         Check::input($locking !== [] || $into !== null, 'A query statement holds an INTO or a locking clause.');
         Check::input(($into === null) === ($intoPosition === null), 'An INTO destination is written at exactly one position.');
         Check::input($intoPosition !== IntoPosition::AfterItems, 'An INTO after a whole query is written after the query or after its locking clauses.');

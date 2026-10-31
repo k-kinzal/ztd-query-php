@@ -39,7 +39,10 @@ final class RowSubqueryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): RowSubquery => new RowSubquery(query: new Select(options: [], items: $parts[0]), scalarInformation: null, inputSource: null),
-            Generators::tuple(Generators::bind(Generators::choose(2, 3), static fn (int $count): ErisGenerator => Generators::vector($count, new SelectExpressionGenerator($release, $depth - 1))))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem(new Select(options: [], items: $parts[0])) === null,
+                Generators::tuple(Generators::bind(Generators::choose(2, 3), static fn (int $count): ErisGenerator => Generators::vector($count, new SelectExpressionGenerator($release, $depth - 1))))
+            )
         );
         $this->delegate = Generators::suchThat(
             static function (RowSubquery $value) use ($release): bool {

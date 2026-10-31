@@ -53,24 +53,27 @@ final class QueryStatementGenerator implements ErisGenerator
 
                 return new QueryStatement(query: $query, locking: $locking, into: $into, intoPosition: $into === null ? null : ($afterLocking && $locking !== [] ? IntoPosition::AfterLocking : IntoPosition::AfterQuery), queryInformation: null, inputSource: null);
             },
-            Generators::tuple(
-                Generators::bind(Generators::elements(($bit & 508) !== 0 ? [0, 1, 2, 3, 5, 6] : [0, 3, 5]), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new SetOperationGenerator($release, $depth - 1),
-                    1 => new ValuesQueryGenerator($release, $depth - 1),
-                    2 => new ExplicitTableGenerator($release),
-                    3 => new ParenthesizedQueryGenerator($release, $depth - 1),
-                    4 => new ValuesClausesGenerator($release, $depth - 1),
-                    5 => new DeferredBodyGenerator($release, $depth - 1),
-                    default => new DeferredValuesQueryGenerator($release, $depth - 1),
-                }),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new LockingClauseGenerator($release))),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new IntoDumpfileGenerator($release),
-                    1 => new IntoOutfileGenerator($release),
-                    default => new IntoVariablesGenerator($release),
-                })) : Generators::constant(null),
-                Generators::bool(),
-                new LockingClauseGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\LockedNames())->statement($parts[0], [...$parts[1], $parts[4]]) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::elements(($bit & 508) !== 0 ? [0, 1, 2, 3, 5, 6] : [0, 3, 5]), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new SetOperationGenerator($release, $depth - 1),
+                        1 => new ValuesQueryGenerator($release, $depth - 1),
+                        2 => new ExplicitTableGenerator($release),
+                        3 => new ParenthesizedQueryGenerator($release, $depth - 1),
+                        4 => new ValuesClausesGenerator($release, $depth - 1),
+                        5 => new DeferredBodyGenerator($release, $depth - 1),
+                        default => new DeferredValuesQueryGenerator($release, $depth - 1),
+                    }),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new LockingClauseGenerator($release))),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new IntoDumpfileGenerator($release),
+                        1 => new IntoOutfileGenerator($release),
+                        default => new IntoVariablesGenerator($release),
+                    })) : Generators::constant(null),
+                    Generators::bool(),
+                    new LockingClauseGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

@@ -128,8 +128,23 @@ final class ExpressionRule
         }
         $this->reached($with, [$body], $expression);
         $query = $with === null ? $own->wrap($body) : new QueryExpression($with, $body, $own->orderBy, $own->limit);
+        $this->lockedNames($query, $later->locking, $expression);
 
         return $later->wrap($query);
+    }
+
+    /**
+     * Refuses a locking clause written after a query that names a table its last block does not hold, or a derived table or a table locked already (ER_UNRESOLVED_TABLE_LOCK, ER_DUPLICATE_TABLE_LOCK), as the server does once it has read the statement, before any table is opened.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause> $clauses The clauses written after the query
+     * @throws \SqlSemantics\Construction\RejectedInput When a clause names such a table
+     */
+    public function lockedNames(Query $query, array $clauses, Node $expression): void
+    {
+        $misuse = (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\LockedNames())->statement($query, $clauses);
+        if ($misuse !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($misuse, (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, false);
+        }
     }
 
     /**

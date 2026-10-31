@@ -156,4 +156,17 @@ final class ExpressionRuleTest extends TestCase
         self::assertSame('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT 2', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT 2')->toString());
         self::assertSame('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM C', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM C')->toString());
     }
+
+    public function testLockedNamesRefusesAClauseAfterTheQueryThatNamesNoTableOfItsLastBlock(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('(SELECT 1 FROM t) UNION (SELECT 2 FROM u) FOR UPDATE OF t');
+            self::fail('The clauses after a union lock its last block.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $failure->problem);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownLockedTable, $failure->problem->rule);
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('(SELECT 1 FROM t) UNION (SELECT 2 FROM u) FOR UPDATE OF u', (new Semantics(Dialect::MySql))->analyze('(SELECT 1 FROM t) UNION (SELECT 2 FROM u) FOR UPDATE OF u')->toString());
+    }
 }

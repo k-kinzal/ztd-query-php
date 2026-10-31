@@ -128,6 +128,7 @@ final class Block
      *
      * @param LateOrdering|null $late The ORDER BY and LIMIT a 5.6 subquery writes after the locking clauses or the LIMIT of the block
      * @throws AnalysisException When INTO is written twice, which the server rejects while parsing (ER_SYNTAX_ERROR of the 5.7 `select_part2` action, ER_MULTIPLE_INTO_CLAUSES of 8.0 `PT_select_stmt::make_cmd`, right after contextualizing; the 5.6 grammar has no such form)
+     * @throws \SqlSemantics\Construction\RejectedInput When a locking clause names a table the block does not hold, or a derived table or a table locked already (ER_UNRESOLVED_TABLE_LOCK, ER_DUPLICATE_TABLE_LOCK), which the server refuses once it has read the statement, before any table is opened (verified on 8.4.7, also inside a stored program body)
      */
     public function select(?LateOrdering $late = null): Select
     {
@@ -143,6 +144,10 @@ final class Block
             $position = IntoPosition::AfterItems;
         }
 
+        $misuse = (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\LockedNames())->problem($this->from, $trailer->locking);
+        if ($misuse !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($misuse, $this->source === null ? 0 : ((new \SqlSemantics\Construction\SourceRanges())->span($this->source)[1] ?? 0), false);
+        }
         $select = new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late, $this->hints);
 
         return $this->source === null || $this->origins === null ? $select : $this->origins->record($select, $this->source);

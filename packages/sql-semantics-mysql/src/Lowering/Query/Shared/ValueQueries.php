@@ -86,8 +86,13 @@ final class ValueQueries
         if ($node->name === 'query_expression_parens') {
             return new ParenthesizedQuery($body);
         }
-        return $node->name === 'query_expression_with_opt_locking_clauses' && count($node->children) === 2
-            ? new QueryStatement($body, (new TailRule($inactive))->locking($form->node(1))) : $body;
+        if ($node->name !== 'query_expression_with_opt_locking_clauses' || count($node->children) !== 2) {
+            return $body;
+        }
+        $locking = (new TailRule($inactive))->locking($form->node(1));
+        (new \SqlSemantics\Platform\MySql\Lowering\Query\Modern\ExpressionRule($this->lowering))->lockedNames($body, $locking, $node);
+
+        return new QueryStatement($body, $locking);
     }
 
     /**
