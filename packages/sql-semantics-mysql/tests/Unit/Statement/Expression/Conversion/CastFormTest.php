@@ -13,8 +13,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm;
 #[Small]
 final class CastFormTest extends TestCase
 {
-    public function testCasesKeepTheThreeDistinctRequestForms(): void
+    public function testCasesKeepTheTwoExecutableRequestForms(): void
     {
-        self::assertSame(['Cast', 'Convert', 'AtLocal'], array_map(static fn (CastForm $form): string => $form->name, CastForm::cases()));
+        self::assertSame(['Cast', 'Convert'], array_map(static fn (CastForm $form): string => $form->name, CastForm::cases()));
     }
 }

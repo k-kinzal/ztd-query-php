@@ -55,7 +55,7 @@ final class DeleteGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): Delete => new Delete(with: $parts[0], options: $parts[1], table: ($bit & 508) !== 0 ? $parts[2] : new WriteTarget(name: $parts[2]->name, alias: null, partitions: $parts[2]->partitions, mark: AliasMark::As, relationInformation: null, inputSource: null), where: $parts[3], orderBy: $parts[4], limit: $parts[5] instanceof RowLimit && $parts[5]->offset !== null ? new RowLimit($parts[5]->count) : $parts[5], hints: $parts[6], statementInformation: $parts[7], inputSource: $parts[8]),
             Generators::suchThat(
-                static fn (array $parts): bool => (static function (array $parts): bool {
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($parts[0], [$parts[2], $parts[3], $parts[4], $parts[5]]) === null && (static function (array $parts): bool {
                     foreach ($parts as $part) {
                         foreach (is_array($part) ? $part : [$part] as $node) {
                             if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {

@@ -58,6 +58,7 @@ final class ValuesClauses implements Query
         $this->orderBy = $items;
         Check::input(array_filter($items, static fn ($item): bool => $item instanceof DeferredOrderItem) !== [], 'An unused ordering retains a non-scalar item.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($body) !== null, 'Unused ordering clauses enclose a standalone VALUES source.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$body]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

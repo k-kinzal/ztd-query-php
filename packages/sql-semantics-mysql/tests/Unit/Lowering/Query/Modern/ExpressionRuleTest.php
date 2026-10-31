@@ -131,4 +131,29 @@ final class ExpressionRuleTest extends TestCase
         }
         self::assertSame('SELECT HIGH_PRIORITY 1 UNION SELECT SQL_NO_CACHE 2', (new Semantics(Dialect::MySql))->analyze('SELECT HIGH_PRIORITY 1 UNION SELECT SQL_NO_CACHE 2')->toString());
     }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerReachedTables(): iterable
+    {
+        yield 'read by the body' => ['WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM c, missing_t', "Incorrect usage/placement of 'HIGH_PRIORITY'"];
+        yield 'read through another definition' => ['WITH c AS (SELECT SQL_CALC_FOUND_ROWS 1), d AS (SELECT * FROM c) SELECT * FROM d', "Incorrect usage/placement of 'SQL_CALC_FOUND_ROWS'"];
+        yield 'quantifiers' => ['WITH c AS (SELECT ALL DISTINCT 1) SELECT (SELECT 1 FROM c)', 'Incorrect usage of ALL and DISTINCT'];
+        yield 'insert source' => ['INSERT INTO t WITH c AS (SELECT SQL_BUFFER_RESULT 1) SELECT * FROM c', "Incorrect usage/placement of 'SQL_BUFFER_RESULT'"];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReachedTables')]
+    public function testReachedRefusesTheModifiersOfACommonTableTheQueryReadsOnceRead(string $sql, string $message): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The read definition carries a modifier of the first block.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame($message, $failure->problem->message());
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT 2', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT 2')->toString());
+        self::assertSame('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM C', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM C')->toString());
+    }
 }

@@ -39,6 +39,10 @@ use SqlSemantics\Statement\Query;
  *     [count($query->query->orderBy), $query->query->limit !== null] // => [1, true]
  * @example Refusing a wrapper that adds nothing
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing HIGH_PRIORITY in a common table expression the query reads
+ *     $table = new \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('c'), [], new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
+ *     $body = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('c'))));
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression(new \SqlSemantics\Platform\MySql\Statement\Query\With\With(false, [$table]), $body) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class QueryExpression implements Query
 {
@@ -67,6 +71,7 @@ final class QueryExpression implements Query
         Check::input(!$body instanceof Select || ($orderBy === [] && $limit === null) || ($orderBy !== [] && ($body->orderBy !== [] || $body->limit !== null) && $body->late === null), 'The ordering and the limit of a single query block belong to the block unless an ORDER BY follows a block that orders or limits its rows.');
         Check::input(!$body instanceof self && !$body instanceof QueryStatement && !$body instanceof OrderedSetOperation, 'A query expression, a query statement or an ordered set operation as a body is written in parentheses.');
         Check::input(!$body instanceof Select || $orderBy === [] || $body->orderBy === [] || ($body->from !== null && !$body->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual), 'A second ordering after an ordered block requires an ordinary FROM relation.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$body]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

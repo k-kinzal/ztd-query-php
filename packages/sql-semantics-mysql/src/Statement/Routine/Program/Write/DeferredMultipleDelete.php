@@ -79,6 +79,7 @@ final class DeferredMultipleDelete implements ProgramStatement
         $this->targets = $input->targets;
         $this->tables = $input->tables;
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $with) !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null, 'A deferred DELETE retains a target, input-column or sampling contradiction.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$input->tables, $where]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

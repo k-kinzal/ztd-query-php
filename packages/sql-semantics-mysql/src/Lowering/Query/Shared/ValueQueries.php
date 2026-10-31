@@ -76,6 +76,7 @@ final class ValueQueries
             $with = $position === 1 ? (new PrimaryRule($inactive))->with($form->node(0)) : null;
             $order = (new StoredClauses($inactive))->ordering($form->node($position + 1));
             $limit = (new TailRule($inactive))->limit($form->node($position + 2));
+            (new \SqlSemantics\Platform\MySql\Lowering\Query\Modern\ExpressionRule($this->lowering))->reached($with, [$body], $node);
             if ($order !== [] && array_filter($order, static fn ($item): bool => $item instanceof DeferredOrderItem) !== []) {
                 return new ValuesClauses($with, $body, $order, $limit);
             }

@@ -62,14 +62,17 @@ final class DeferredMultipleDeleteGenerator implements ErisGenerator
             Generators::suchThat(static fn (DeletionInput $input): bool => $readOnly($input) !== [], new DeletionInputGenerator($release, max(2, $depth - 1))),
             static fn (DeletionInput $input): ErisGenerator => Generators::map(
                 static fn (array $parts): DeferredMultipleDelete => new DeferredMultipleDelete(with: $parts[0], options: $parts[1], input: new DeletionInput($input->tables, [$parts[6]], null, null), form: $parts[2], where: $parts[3], hints: $parts[4], inputSource: $parts[5]),
-                Generators::tuple(
-                    $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
-                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DeleteOptionGenerator($release))),
-                    new MultipleDeleteFormGenerator($release),
-                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
-                    ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
-                    Generators::constant(null),
-                    Generators::elements($readOnly($input))
+                Generators::suchThat(
+                    static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($parts[0], [$input->tables, $parts[3]]) === null,
+                    Generators::tuple(
+                        $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
+                        Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DeleteOptionGenerator($release))),
+                        new MultipleDeleteFormGenerator($release),
+                        $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                        ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
+                        Generators::constant(null),
+                        Generators::elements($readOnly($input))
+                    )
                 )
             )
         );

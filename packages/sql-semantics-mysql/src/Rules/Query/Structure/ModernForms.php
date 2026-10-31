@@ -60,7 +60,7 @@ final class ModernForms
      */
     public function conversion(object $value): bool
     {
-        return $value === \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal || (($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast) && $value->array);
+        return (($value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast) && $value->array);
     }
 
     /**

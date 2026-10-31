@@ -48,25 +48,31 @@ final class QueryExpressionGenerator implements ErisGenerator
             static fn (int $choice): ErisGenerator => match ($choice) {
                 0, 1 => Generators::map(
                     static fn (array $parts): QueryExpression => new QueryExpression(with: $parts[0], body: $parts[1], orderBy: [], limit: null, queryInformation: null, inputSource: null),
-                    Generators::tuple(new WithGenerator($release, $depth - 1), $choice === 0 ? new SelectGenerator($release, $depth - 1) : new DeferredBodyGenerator($release, $depth - 1))
+                    Generators::suchThat(
+                        static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($parts[0], [$parts[1]]) === null,
+                        Generators::tuple(new WithGenerator($release, $depth - 1), $choice === 0 ? new SelectGenerator($release, $depth - 1) : new DeferredBodyGenerator($release, $depth - 1))
+                    )
                 ),
                 default => Generators::map(
                     static fn (array $parts): QueryExpression => new QueryExpression(with: $parts[0], body: $parts[1], orderBy: $parts[0] === null && $parts[3] === null ? [$parts[2][0], ...$parts[2][1]] : $parts[2][1], limit: $parts[3], queryInformation: null, inputSource: null),
-                    Generators::tuple(
-                        ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
-                        match ($choice) {
-                            2 => new SetOperationGenerator($release, $depth - 1),
-                            3 => new ValuesQueryGenerator($release, $depth - 1),
-                            4 => new ExplicitTableGenerator($release),
-                            5 => new ParenthesizedQueryGenerator($release, $depth - 1),
-                            6 => new ValuesClausesGenerator($release, $depth - 1),
-                            default => new DeferredValuesQueryGenerator($release, $depth - 1),
-                        },
+                    Generators::suchThat(
+                        static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($parts[0], [$parts[1]]) === null,
                         Generators::tuple(
-                            Generators::bind(Generators::choose(0, 1), static fn (int $item): ErisGenerator => $item === 0 ? new OrderItemGenerator($release, $depth - 1) : new DeferredOrderItemGenerator($release, $depth - 1)),
-                            Generators::bind(Generators::choose(0, 2), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $item): ErisGenerator => $item === 0 ? new OrderItemGenerator($release, $depth - 1) : new DeferredOrderItemGenerator($release, $depth - 1))))
-                        ),
-                        Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release))
+                            ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
+                            match ($choice) {
+                                2 => new SetOperationGenerator($release, $depth - 1),
+                                3 => new ValuesQueryGenerator($release, $depth - 1),
+                                4 => new ExplicitTableGenerator($release),
+                                5 => new ParenthesizedQueryGenerator($release, $depth - 1),
+                                6 => new ValuesClausesGenerator($release, $depth - 1),
+                                default => new DeferredValuesQueryGenerator($release, $depth - 1),
+                            },
+                            Generators::tuple(
+                                Generators::bind(Generators::choose(0, 1), static fn (int $item): ErisGenerator => $item === 0 ? new OrderItemGenerator($release, $depth - 1) : new DeferredOrderItemGenerator($release, $depth - 1)),
+                                Generators::bind(Generators::choose(0, 2), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $item): ErisGenerator => $item === 0 ? new OrderItemGenerator($release, $depth - 1) : new DeferredOrderItemGenerator($release, $depth - 1))))
+                            ),
+                            Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release))
+                        )
                     )
                 ),
             }

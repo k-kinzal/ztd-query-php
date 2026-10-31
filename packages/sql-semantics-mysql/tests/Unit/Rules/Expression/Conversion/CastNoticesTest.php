@@ -90,12 +90,12 @@ final class CastNoticesTest extends TestCase
     }
 
 
-    public function testBinaryStopsAfterItsUnavailableLocalCastOperand(): void
+    public function testBinaryWarnsAfterItsOperandWithoutStopping(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
-        $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new CastTarget(CastKind::Signed), form: \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal));
+        $operand = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new CastTarget(CastKind::Signed)));
         (new CastNotices())->binary($operand, $derivation);
-        self::assertEquals([new Deprecation(Deprecated::BinaryOperator, aborts: true)], $derivation->facts()->warnings);
+        self::assertEquals([new Deprecation(Deprecated::BinaryOperator)], $derivation->facts()->warnings);
     }
 
 }

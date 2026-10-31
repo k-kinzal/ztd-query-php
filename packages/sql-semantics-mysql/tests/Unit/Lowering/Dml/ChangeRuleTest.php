@@ -165,4 +165,27 @@ final class ChangeRuleTest extends TestCase
         self::assertSame('WITH c AS (SELECT 1) DELETE FROM c', $statement->toString());
     }
 
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerReachedTables(): iterable
+    {
+        yield 'delete' => ['WITH c AS (SELECT HIGH_PRIORITY 1) DELETE FROM t WHERE a IN (SELECT * FROM c)', false];
+        yield 'update' => ['WITH c AS (SELECT HIGH_PRIORITY 1) UPDATE t SET a = (SELECT 1 FROM c)', false];
+        yield 'multiple delete' => ['WITH c AS (SELECT HIGH_PRIORITY 1) DELETE t FROM t WHERE a IN (SELECT * FROM c)', false];
+        yield 'in a body' => ['CREATE PROCEDURE p() BEGIN WITH c AS (SELECT HIGH_PRIORITY 1) DELETE FROM t WHERE a IN (SELECT * FROM c); END', true];
+    }
+
+    #[DataProvider('providerReachedTables')]
+    public function testReachedRefusesTheModifiersOfACommonTableTheStatementReadsOnceRead(string $sql, bool $aborts): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The read definition carries a modifier of the first block.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption::class, $failure->problem);
+            self::assertSame($aborts, $failure->aborts);
+        }
+        self::assertSame('WITH c AS (SELECT HIGH_PRIORITY 1) DELETE FROM t', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT HIGH_PRIORITY 1) DELETE FROM t')->toString());
+    }
 }

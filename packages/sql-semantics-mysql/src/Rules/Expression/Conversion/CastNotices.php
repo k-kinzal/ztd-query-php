@@ -39,10 +39,8 @@ final class CastNotices
     public function cast(CastTarget $target, \SqlSemantics\Statement\Node $operand, Derivation $derivation, bool $array = false, \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm $form = \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::Cast): ?\SqlSemantics\Statement\Fact\Diagnostic
     {
         $this->derive($target, $derivation);
-        $local = $form === \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal;
-        $problem = $local ? new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL')
-            : ($array && $derivation->inProgram() ? new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast) : (new CastProblems())->target($target, $array, $derivation->context->profile->grammar));
-        return $this->failure($this->label($problem, $target, $operand, $derivation), $derivation, !$local && $this->aborts($derivation));
+        $problem = ($array && $derivation->inProgram() ? new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::ArrayCast) : (new CastProblems())->target($target, $array, $derivation->context->profile->grammar));
+        return $this->failure($this->label($problem, $target, $operand, $derivation), $derivation, $this->aborts($derivation));
     }
 
     /**
@@ -88,7 +86,7 @@ final class CastNotices
     }
 
     /**
-     * Emits BINARY's notice after its operand, including an unavailable AT LOCAL result.
+     * Emits BINARY's notice after its operand.
      */
     public function binary(\SqlSemantics\Statement\Node $operand, Derivation $derivation): void
     {
@@ -99,8 +97,7 @@ final class CastNotices
         while ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped && $operand->escape === null)) {
             $operand = $operand->operand;
         }
-        $local = ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast) && $operand->form === \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal;
-        $derivation->warn(new Deprecation(Deprecated::BinaryOperator, aborts: $local && $release !== \SqlSemantics\Contract\GrammarRelease::MySql8044));
+        $derivation->warn(new Deprecation(Deprecated::BinaryOperator));
     }
 
     /**

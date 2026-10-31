@@ -77,6 +77,7 @@ final class Delete extends \SqlSemantics\Platform\MySql\Statement\SqlStatement i
         foreach ($this->orderBy as $item) {
             Check::input($item->expression instanceof Scalar, 'DELETE ordering uses expressions, not output-column positions.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$table, $where, $this->orderBy, $limit]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

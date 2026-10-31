@@ -103,6 +103,7 @@ final class ExpressionRule
      * Lowers a query expression with the clauses the statement writes after it.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a common table expression the query reads carries a modifier the server refuses there
      */
     public function expression(Node $expression, Trailer $later): Query
     {
@@ -121,12 +122,28 @@ final class ExpressionRule
         $body = $this->body($form->node($offset));
         if ($body instanceof Block) {
             $select = $body->then($own->then($later))->select();
+            $this->reached($with, [$select], $expression);
 
             return $with === null ? $select : new QueryExpression($with, $select);
         }
+        $this->reached($with, [$body], $expression);
         $query = $with === null ? $own->wrap($body) : new QueryExpression($with, $body, $own->orderBy, $own->limit);
 
         return $later->wrap($query);
+    }
+
+    /**
+     * Refuses a common table expression the query reads whose blocks carry a modifier of the first block of a statement or ALL with DISTINCT, as the server does once it has read the statement, before any table is opened (ER_CANT_USE_OPTION_HERE, ER_WRONG_USAGE); a definition nobody reads is left alone.
+     *
+     * @param list<\SqlSemantics\Statement\Node|list<\SqlSemantics\Statement\Node>|null> $parts The parts of the query other than the WITH clause
+     * @throws \SqlSemantics\Construction\RejectedInput When a reached definition carries such a modifier
+     */
+    public function reached(?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $parts, Node $expression): void
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, $parts);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($expression)[1] ?? 0, $this->lowering->stored());
+        }
     }
 
     /**

@@ -24,11 +24,11 @@ use SqlSemantics\Statement\Type\Known;
 /**
  * A cast of a value to a type: `CAST(expr AS type [ARRAY])` or `CONVERT(expr, type)` (`Item_typecast_*`).
  *
- * CAST, typed CONVERT and AT LOCAL retain their written request forms. `ARRAY` (MySQL 8.0.17 and later) casts a JSON array for
- * a multi-valued index.
+ * CAST and typed CONVERT retain their written request forms; `CAST ... AT LOCAL` is refused while reading, as no release
+ * executes it. `ARRAY` (MySQL 8.0.17 and later) casts a JSON array for a multi-valued index.
  *
  * Rule: MYSQL-CAST-001. Facts: MYSQL-CAST-RESULT-001; a cast to an array is
- * a JSON value. Unsupported element types, AT LOCAL and invalid target bounds
+ * a JSON value. Unsupported element types and invalid target bounds
  * remain complete requests with ordered SQL conditions. Invalid conversions
  * have an Invalid type fact instead of an invented result domain. The operand takes a single value. Terminates: the operand
  * is a strict part.
@@ -99,9 +99,6 @@ final class Cast implements Scalar
         if ($this->form === CastForm::Convert) {
             $out->symbol(',');
         } else {
-            if ($this->form === CastForm::AtLocal) {
-                $out->keyword('AT', 'LOCAL');
-            }
             $out->keyword('AS');
         }
         $out->node($this->target);

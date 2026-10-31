@@ -98,6 +98,8 @@ final class ChangeRule
             $this->limit($form->node($limit)),
             $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
         ];
+        $this->reached($parts[0], [$parts[3], $parts[4], $parts[5], $parts[6], $parts[7]], $form->node);
+
         return new Update(...$parts);
     }
 
@@ -171,7 +173,23 @@ final class ChangeRule
      */
     public function single(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, WriteTarget $target, ?\SqlSemantics\Statement\Scalar $where, array $orderBy, ?Limit $limit, array $hints): Delete
     {
+        $this->reached($with, [$target, $where, $orderBy, $limit], $source);
+
         return new Delete($with, $options, $target, $where, $orderBy, $limit, $hints);
+    }
+
+    /**
+     * Refuses a common table expression the statement reads whose blocks carry a modifier of the first block of a statement or ALL with DISTINCT, as the server does once it has read the statement, before any table is opened (verified on 8.4.7, also inside a stored program body).
+     *
+     * @param list<\SqlSemantics\Statement\Node|list<\SqlSemantics\Statement\Node>|null> $parts The parts of the statement other than the WITH clause
+     * @throws \SqlSemantics\Construction\RejectedInput When a reached definition carries such a modifier
+     */
+    public function reached(?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $parts, Node $source): void
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, $parts);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->stored());
+        }
     }
 
     /**
@@ -193,6 +211,8 @@ final class ChangeRule
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable($missing), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->stored());
         }
         $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets, wildcards: $wildcards);
+        $this->reached($with, [$input->tables, $where], $source);
+
         return new MultipleDelete($with, $options, $input, $form, $where, $hints);
     }
 

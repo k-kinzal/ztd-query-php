@@ -278,6 +278,7 @@ final class ProblemsTest extends TestCase
 
         self::assertCount(1, array_filter($reached, static fn (object $node): bool => $node instanceof CommonTableExpression));
         self::assertInstanceOf(ResultSet::class, $result);
+        self::assertCount(0, array_filter((new Problems())->reached($session->analyze('WITH e AS (SELECT 2) SELECT * FROM E')), static fn (object $node): bool => $node instanceof CommonTableExpression));
     }
 
     public function testRaiseRaisesATooBigClockPrecisionWhereTheServerResolvesIt(): void

@@ -59,7 +59,7 @@ final class UpdateGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): Update => new Update(with: $parts[0], lowPriority: $parts[1], ignore: $parts[2], tables: $parts[3], assignments: $parts[4], where: $parts[5], orderBy: $parts[6], limit: $parts[7] instanceof RowLimit && $parts[7]->offset !== null ? new RowLimit($parts[7]->count) : $parts[7], hints: $parts[8], statementInformation: $parts[9], inputSource: $parts[10]),
             Generators::suchThat(
-                static fn (array $parts): bool => ((static function (array $parts): bool {
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($parts[0], [$parts[3], $parts[4], $parts[5], $parts[6], $parts[7]]) === null && ((static function (array $parts): bool {
                     foreach ($parts as $part) {
                         foreach (is_array($part) ? $part : [$part] as $node) {
                             if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {

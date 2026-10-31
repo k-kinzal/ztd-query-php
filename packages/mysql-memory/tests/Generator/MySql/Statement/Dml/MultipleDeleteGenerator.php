@@ -50,7 +50,7 @@ final class MultipleDeleteGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): MultipleDelete => new MultipleDelete(with: $parts[0], options: $parts[1], input: $parts[2], form: $parts[3], where: $parts[4], hints: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
             Generators::suchThat(
-                static fn (array $parts): bool => (static function (array $parts): bool {
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($parts[0], [$parts[2]->tables, $parts[4]]) === null && (static function (array $parts): bool {
                     foreach ($parts as $part) {
                         foreach (is_array($part) ? $part : [$part] as $node) {
                             if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {

@@ -82,6 +82,7 @@ final class MultipleDelete extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->targets = $input->targets;
         $this->tables = $input->tables;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$input->tables, $where]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

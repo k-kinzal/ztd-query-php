@@ -82,9 +82,6 @@ final class DeferredCast implements DeferredOperand
         if ($this->form === CastForm::Convert) {
             $out->symbol(',');
         } else {
-            if ($this->form === CastForm::AtLocal) {
-                $out->keyword('AT', 'LOCAL');
-            }
             $out->keyword('AS');
         }
         $out->node($this->target);

@@ -119,6 +119,7 @@ final class Update extends \SqlSemantics\Platform\MySql\Statement\SqlStatement i
         }
         $this->orderBy = $ordering;
         Check::input(!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null, 'UPDATE limits rows without an offset.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$this->tables, $this->assignments, $where, $this->orderBy, $limit]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

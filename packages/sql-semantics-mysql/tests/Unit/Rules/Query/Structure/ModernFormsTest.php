@@ -20,10 +20,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ModernFormsTest extends TestCase
 {
-    public function testConversionIdentifiesLocalAndArrayCastRequests(): void
+    public function testConversionIdentifiesArrayCastRequests(): void
     {
         $forms = new ModernForms();
-        self::assertTrue($forms->conversion(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal));
         self::assertFalse($forms->conversion(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::Convert));
         self::assertTrue($forms->conversion(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true)));
     }

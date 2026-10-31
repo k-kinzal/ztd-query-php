@@ -42,12 +42,15 @@ final class ValuesClausesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): ValuesClauses => new ValuesClauses(with: $parts[0], body: $parts[1], orderBy: [$parts[2], ...$parts[3]], limit: $parts[4], queryInformation: null, inputSource: null),
-            Generators::tuple(
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
-                new ValuesQueryGenerator($release, $depth - 1),
-                new DeferredOrderItemGenerator($release, $depth - 1),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::bool(), static fn (bool $deferred): ErisGenerator => $deferred ? new DeferredOrderItemGenerator($release, $depth - 1) : new OrderItemGenerator($release, $depth - 1)))),
-                Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($parts[0], [$parts[1]]) === null,
+                Generators::tuple(
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
+                    new ValuesQueryGenerator($release, $depth - 1),
+                    new DeferredOrderItemGenerator($release, $depth - 1),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::bool(), static fn (bool $deferred): ErisGenerator => $deferred ? new DeferredOrderItemGenerator($release, $depth - 1) : new OrderItemGenerator($release, $depth - 1)))),
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release))
+                )
             )
         );
         $this->delegate = Generators::suchThat(

@@ -382,6 +382,7 @@ final class Problems
 
     /**
      * Answers the nodes of a statement the server prepares: all but those of a common table expression that no table reference outside it names.
+     * A reference reaches a definition by its exact name, as the server compares table names with lower_case_table_names=0 (`WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM C` is accepted on 8.4.7: `C` is a table).
      *
      * @return list<Node>
      */
@@ -402,7 +403,7 @@ final class Problems
         }
         foreach ((new Walker())->find($statement, CommonTableExpression::class) as $table) {
             $inside = array_fill_keys(array_map(spl_object_id(...), (new Walker())->find($table, Node::class)), true);
-            $used = array_filter($references, static fn (TableReference|ExplicitTable|WriteTarget $reference): bool => strcasecmp($reference->name()->name->value, $table->name->value) === 0 && !isset($inside[spl_object_id($reference)]));
+            $used = array_filter($references, static fn (TableReference|ExplicitTable|WriteTarget $reference): bool => $reference->name()->name->value === $table->name->value && !isset($inside[spl_object_id($reference)]));
             if ($used === []) {
                 $skipped += $inside;
             }

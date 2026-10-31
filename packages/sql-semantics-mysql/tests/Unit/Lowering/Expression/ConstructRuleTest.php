@@ -25,15 +25,26 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 #[Medium]
 final class ConstructRuleTest extends TestCase
 {
-    public function testCastRetainsAtLocalAndTheLaterProjection(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerAtLocal(): iterable
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AT LOCAL AS DATE), BINARY 2');
-        $failure = $statement->warnings()[0];
+        yield 'standalone before a later projection' => ['SELECT CAST(1 AT LOCAL AS DATE), BINARY 2'];
+        yield 'before an oversized target' => ['SELECT CAST(1 AT LOCAL AS DATETIME(7))'];
+        yield 'in a stored program body' => ['CREATE PROCEDURE p() SELECT CAST(1 AT LOCAL AS DATE)'];
+    }
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $failure);
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'), $failure->problem);
-        self::assertFalse($failure->aborts);
-        self::assertSame('SELECT CAST(1 AT LOCAL AS DATE), BINARY 2', $statement->toString());
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerAtLocal')]
+    public function testCastRefusesAtLocalWhileReading(string $sql): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze($sql);
+            self::fail('No release executes AT LOCAL.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'), $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
     }
 
     public function testLowerLowersTheKeywordConstructs(): void
