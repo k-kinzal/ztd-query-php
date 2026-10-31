@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Call\Window;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -38,6 +39,12 @@ final class WindowFunctionGenerator implements ErisGenerator
     /** @var ErisGenerator<WindowFunction> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of WindowFunction from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::bind(
@@ -58,7 +65,7 @@ final class WindowFunctionGenerator implements ErisGenerator
                             $arguments[1] = new Grouped($arguments[1]);
                         }
 
-                        return new WindowFunction(kind: $kind, arguments: $arguments, over: $over, nulls: $kind->treatsNulls() ? $nulls : null, edge: $kind === WindowFunctionKind::NthValue ? $edge : null, scalarInformation: null, inputSource: null);
+                        return new WindowFunction(kind: $kind, arguments: array_values($arguments), over: $over, nulls: $kind->treatsNulls() ? $nulls : null, edge: $kind === WindowFunctionKind::NthValue ? $edge : null, scalarInformation: null, inputSource: null);
                     },
                     Generators::tuple(
                         Generators::bind(Generators::choose($minimum, $maximum), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ScalarGenerator($release, $depth - 1))),
@@ -86,15 +93,15 @@ final class WindowFunctionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<WindowFunction>
+     * @return GeneratedValueSingle<WindowFunction>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<WindowFunction> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<WindowFunction>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

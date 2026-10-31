@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Account;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -38,6 +40,11 @@ final class AlterUserGenerator implements ErisGenerator
     /** @var ErisGenerator<AlterUser> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of AlterUser from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -73,6 +80,19 @@ final class AlterUserGenerator implements ErisGenerator
                 )
             )
         );
+        $this->delegate = Generators::map(
+            static function (AlterUser $statement) use ($release): AlterUser {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof AlterUser, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (AlterUser $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (AlterUser $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -85,27 +105,19 @@ final class AlterUserGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (AlterUser $statement): AlterUser => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterUser $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<AlterUser>
+     * @return GeneratedValueSingle<AlterUser>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<AlterUser> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<AlterUser>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

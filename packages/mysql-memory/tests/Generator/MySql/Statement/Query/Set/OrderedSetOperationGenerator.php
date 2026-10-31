@@ -6,8 +6,10 @@ namespace Tests\Generator\MySql\Statement\Query\Set;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -16,10 +18,9 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
-use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
-use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody;
 use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
@@ -39,6 +40,12 @@ final class OrderedSetOperationGenerator implements ErisGenerator
     /** @var ErisGenerator<OrderedSetOperation> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of OrderedSetOperation from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -46,19 +53,11 @@ final class OrderedSetOperationGenerator implements ErisGenerator
             static fn (array $parts): OrderedSetOperation => new OrderedSetOperation(left: $parts[0], operator: $parts[1], quantifier: $parts[2], right: $parts[3], orderBy: $parts[4], limit: $parts[5], queryInformation: $parts[6], inputSource: $parts[7]),
             Generators::suchThat(
                 static fn (array $parts): bool => (($parts[4]) !== [] || ($parts[5]) !== null)
-                && (static function (Select|DeferredBody $right): bool {
-                    $block = $right instanceof Select ? $right : $right->selection;
-                    return $block->orderBy !== [] || $block->limit !== null || ($right instanceof Select && $right->locking !== []);
-                })(($parts[3]))
+                && (($parts[3]) instanceof DeferredBody ? (($parts[3])->selection->orderBy !== [] || ($parts[3])->selection->limit !== null) && ($parts[3])->selection->procedure === null : ($parts[3])->trailed() && ($parts[3])->late === null && ($parts[3])->into === null && ($parts[3])->procedure === null)
                 && (!($parts[0]) instanceof DeferredBody || (($parts[0])->selection->orderBy === [] && ($parts[0])->selection->procedure === null))
                 && (!($parts[0]) instanceof SetOperation || !($parts[1])->tighter(($parts[0])->operator))
                 && (!($parts[0]) instanceof LeadingUnion || ($parts[1]) === SetOperator::Union)
-                && (!($parts[0]) instanceof OrderedSetOperation && !($parts[0]) instanceof QueryStatement && !(($parts[0]) instanceof QueryExpression && ($parts[0])->with !== null))
-                && ((($parts[4]) !== [] || ($parts[5]) !== null)
-                && (($parts[3]) instanceof DeferredBody ? (($parts[3])->selection->orderBy !== [] || ($parts[3])->selection->limit !== null) && ($parts[3])->selection->procedure === null : ($parts[3])->trailed() && ($parts[3])->late === null && ($parts[3])->into === null && ($parts[3])->procedure === null)
-                && (!($parts[0]) instanceof SetOperation || !($parts[1])->tighter(($parts[0])->operator))
-                && (!($parts[0]) instanceof LeadingUnion || ($parts[1]) === SetOperator::Union)
-                && !($parts[0]) instanceof OrderedSetOperation && !($parts[0]) instanceof QueryStatement && !(($parts[0]) instanceof QueryExpression && ($parts[0])->with !== null)),
+                && !($parts[0]) instanceof OrderedSetOperation && !($parts[0]) instanceof QueryStatement && !(($parts[0]) instanceof QueryExpression && ($parts[0])->with !== null),
                 Generators::tuple(
                     Generators::bind(Generators::elements(array_keys(array_filter([511, $depth > 0 ? 3 : 0], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new QueryGenerator($release, $depth - 1),
@@ -99,15 +98,15 @@ final class OrderedSetOperationGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<OrderedSetOperation>
+     * @return GeneratedValueSingle<OrderedSetOperation>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<OrderedSetOperation> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<OrderedSetOperation>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

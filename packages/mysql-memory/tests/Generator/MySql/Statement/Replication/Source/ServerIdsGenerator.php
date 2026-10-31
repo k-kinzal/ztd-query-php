@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Replication\Source;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class ServerIdsGenerator implements ErisGenerator
     /** @var ErisGenerator<ServerIds> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ServerIds from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -53,15 +59,15 @@ final class ServerIdsGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ServerIds>
+     * @return GeneratedValueSingle<ServerIds>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ServerIds> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ServerIds>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

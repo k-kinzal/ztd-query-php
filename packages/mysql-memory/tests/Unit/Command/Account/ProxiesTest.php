@@ -124,7 +124,7 @@ final class ProxiesTest extends TestCase
         self::assertSame([], $session->instance->accounts->find(new Identity('u', '%'))?->grants->proxies);
     }
 
-    public function testDelegatedAuthorityCannotGrantToASystemUserAccount(): void
+    public function testSystemUserRefusesAGrantToASystemUserAccountWithoutThePrivilege(): void
     {
         $instance = new Instance();
         $root = $instance->connect();
@@ -172,4 +172,16 @@ final class ProxiesTest extends TestCase
         self::assertSame([1141, 1141, 1141, 1141], array_column($session->diagnostics->conditions, 1));
     }
 
+    public function testCheckAllowsTheSessionAccountItself(): void
+    {
+        $instance = new Instance();
+        $instance->connect()->query('CREATE USER u@localhost');
+        $user = $instance->connect('u');
+        (new Proxies())->check($user->variables->definer, $user);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1698);
+
+        (new Proxies())->check(new Identity('root', 'localhost'), $user);
+    }
 }

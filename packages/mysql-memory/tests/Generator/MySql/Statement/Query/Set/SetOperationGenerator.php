@@ -6,8 +6,11 @@ namespace Tests\Generator\MySql\Statement\Query\Set;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -16,10 +19,8 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
-use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
-use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody;
@@ -35,6 +36,12 @@ final class SetOperationGenerator implements ErisGenerator
     /** @var ErisGenerator<SetOperation> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SetOperation from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -45,18 +52,6 @@ final class SetOperationGenerator implements ErisGenerator
                 && (!($parts[0]) instanceof DeferredBody || (($parts[0])->selection->orderBy === [] && ($parts[0])->selection->procedure === null))
                 && (!($parts[0]) instanceof SetOperation || !($parts[1])->tighter(($parts[0])->operator))
                 && (!($parts[0]) instanceof LeadingUnion || ($parts[1]) === SetOperator::Union)
-                && (!($parts[0]) instanceof QueryStatement && !($parts[3]) instanceof QueryStatement)
-                && (!($parts[0]) instanceof OrderedSetOperation && !($parts[3]) instanceof OrderedSetOperation)
-                && (!($parts[3]) instanceof QueryExpression && !(($parts[0]) instanceof QueryExpression && ($parts[0])->with !== null))
-                && ((((!($parts[3]) instanceof SetOperation || ($parts[3])->operator->tighter(($parts[1])))))
-                && (!($parts[0]) instanceof Select || (($parts[0])->orderBy === [] && ($parts[0])->into === null && ($parts[0])->procedure === null))
-                && (((!($parts[3]) instanceof Select || (($parts[3])->orderBy === [] && ($parts[3])->limit === null && ($parts[3])->into === null && ($parts[3])->locking === [])))))
-                && (((!($parts[3]) instanceof SetOperation || ($parts[3])->operator->tighter(($parts[1]))))
-                && (!($parts[3]) instanceof Select || (($parts[3])->orderBy === [] && ($parts[3])->limit === null && ($parts[3])->into === null && ($parts[3])->locking === [] && ($parts[3])->procedure === null))
-                && ((($bit & 3) !== 0 || (!(($parts[0]) instanceof Select && ($parts[0])->trailed()) && !($parts[0]) instanceof QueryExpression))))
-                && ((!($parts[3]) instanceof SetOperation || ($parts[3])->operator->tighter(($parts[1])))
-                && (!($parts[0]) instanceof SetOperation || !($parts[1])->tighter(($parts[0])->operator))
-                && (!($parts[0]) instanceof LeadingUnion || ($parts[1]) === SetOperator::Union)
                 && !($parts[0]) instanceof QueryStatement && !($parts[3]) instanceof QueryStatement
                 && !($parts[0]) instanceof OrderedSetOperation && !($parts[3]) instanceof OrderedSetOperation
                 && !($parts[3]) instanceof QueryExpression && !(($parts[0]) instanceof QueryExpression && ($parts[0])->with !== null)
@@ -64,7 +59,7 @@ final class SetOperationGenerator implements ErisGenerator
                 && (!($parts[3]) instanceof Select || (($parts[3])->orderBy === [] && ($parts[3])->limit === null && ($parts[3])->into === null && ($parts[3])->locking === [] && ($parts[3])->procedure === null))
                 && (!($parts[3]) instanceof DeferredBody || (($parts[3])->selection->orderBy === [] && ($parts[3])->selection->limit === null && ($parts[3])->selection->procedure === null))
                 && (($bit & 3) !== 0 || (!(($parts[0]) instanceof Select && ($parts[0])->trailed()) && !($parts[0]) instanceof QueryExpression))
-                && (($bit & 1) !== 0 || (!(($parts[0]) instanceof Select && ($parts[0])->limit !== null) && !(($parts[0]) instanceof DeferredBody && ($parts[0])->selection->limit !== null)))),
+                && (($bit & 1) !== 0 || (!(($parts[0]) instanceof Select && ($parts[0])->limit !== null) && !(($parts[0]) instanceof DeferredBody && ($parts[0])->selection->limit !== null))),
                 Generators::tuple(
                     Generators::bind(Generators::elements(array_keys(array_filter([511, $depth > 0 ? 3 : 0], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new QueryGenerator($release, $depth - 1),
@@ -95,15 +90,15 @@ final class SetOperationGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SetOperation>
+     * @return GeneratedValueSingle<SetOperation>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SetOperation> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SetOperation>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

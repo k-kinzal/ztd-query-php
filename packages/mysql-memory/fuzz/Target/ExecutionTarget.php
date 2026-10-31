@@ -186,9 +186,14 @@ final class ExecutionTarget
             if (count($row) !== 2 || count($other) !== 2 || !is_string($row[0]) || $row[0] !== $other[0] || !is_string($row[1]) || !is_string($other[1])) {
                 return false;
             }
-            $name = $global && in_array($row[0], explode(' ', self::STARTUP_COUNTERS), true) ? 'Queries' : $row[0];
-            $valid = self::environment($name, $row[1]);
-            if ($valid === null ? $row[1] !== $other[1] : (!$valid || self::environment($name, $other[1]) !== true)) {
+            if ($global && in_array($row[0], explode(' ', self::STARTUP_COUNTERS), true)) {
+                if (!self::unsigned($row[1]) || !self::unsigned($other[1])) {
+                    return false;
+                }
+                continue;
+            }
+            $valid = self::environment($row[0], $row[1]);
+            if ($valid === null ? $row[1] !== $other[1] : (!$valid || self::environment($row[0], $other[1]) !== true)) {
                 return false;
             }
         }

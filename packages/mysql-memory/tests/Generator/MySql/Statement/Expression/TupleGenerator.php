@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class TupleGenerator implements ErisGenerator
     /** @var ErisGenerator<Tuple> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Tuple from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(static fn (int $width): Tuple => new Tuple(width: $width), Generators::choose(2, 5));
@@ -45,15 +51,15 @@ final class TupleGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Tuple>
+     * @return GeneratedValueSingle<Tuple>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Tuple> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Tuple>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

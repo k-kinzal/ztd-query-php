@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Dml\Load;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -29,6 +30,11 @@ final class FieldOptionGenerator implements ErisGenerator
     /** @var ErisGenerator<FieldOption> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of FieldOption from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -55,15 +61,15 @@ final class FieldOptionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<FieldOption>
+     * @return GeneratedValueSingle<FieldOption>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<FieldOption> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<FieldOption>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

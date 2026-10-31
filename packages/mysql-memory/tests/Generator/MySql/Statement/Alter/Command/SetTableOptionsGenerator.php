@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Alter\Command;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -40,6 +41,11 @@ final class SetTableOptionsGenerator implements ErisGenerator
     /** @var ErisGenerator<SetTableOptions> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SetTableOptions from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -81,15 +87,15 @@ final class SetTableOptionsGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SetTableOptions>
+     * @return GeneratedValueSingle<SetTableOptions>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SetTableOptions> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SetTableOptions>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

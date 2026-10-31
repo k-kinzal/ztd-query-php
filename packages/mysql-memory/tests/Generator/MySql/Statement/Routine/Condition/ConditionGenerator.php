@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Condition;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -27,6 +28,11 @@ final class ConditionGenerator implements ErisGenerator
     /** @var ErisGenerator<Condition> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Condition from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -52,15 +58,15 @@ final class ConditionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Condition>
+     * @return GeneratedValueSingle<Condition>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Condition> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Condition>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

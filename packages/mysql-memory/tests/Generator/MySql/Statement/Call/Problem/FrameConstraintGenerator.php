@@ -6,9 +6,11 @@ namespace Tests\Generator\MySql\Statement\Call\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Window\FrameConstraints;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -28,10 +30,20 @@ final class FrameConstraintGenerator implements ErisGenerator
     /** @var ErisGenerator<FrameConstraint> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of FrameConstraint from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): FrameConstraint => new FrameConstraint(window: $parts[0], condition: (new FrameConstraints())->condition($parts[0])),
+            static function (array $parts): FrameConstraint {
+                $condition = (new FrameConstraints())->condition($parts[0]);
+                Check::invariant($condition !== null, 'The window specification carries a frame condition.');
+
+                return new FrameConstraint(window: $parts[0], condition: $condition);
+            },
             Generators::suchThat(
                 static fn (array $parts): bool => (new FrameConstraints())->condition(($parts[0])) !== null,
                 Generators::tuple(
@@ -56,15 +68,15 @@ final class FrameConstraintGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<FrameConstraint>
+     * @return GeneratedValueSingle<FrameConstraint>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<FrameConstraint> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<FrameConstraint>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

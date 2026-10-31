@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Account\User;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -32,6 +33,11 @@ final class UserSpecificationGenerator implements ErisGenerator
     /** @var ErisGenerator<UserSpecification> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of UserSpecification from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -47,7 +53,7 @@ final class UserSpecificationGenerator implements ErisGenerator
                     $factors = [];
                     $initial = null;
                     if (!$discardOld && !($identification?->password() ?? false)) {
-                        $user = new AccountName(new Name($user->alias?->value ?? 'user'));
+                        $user = new AccountName(new Name($user->alias === null ? 'user' : $user->alias->value));
                     }
                 }
 
@@ -80,15 +86,15 @@ final class UserSpecificationGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<UserSpecification>
+     * @return GeneratedValueSingle<UserSpecification>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<UserSpecification> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<UserSpecification>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

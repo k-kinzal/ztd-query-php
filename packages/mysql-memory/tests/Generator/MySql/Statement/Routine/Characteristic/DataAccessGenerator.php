@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Characteristic;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class DataAccessGenerator implements ErisGenerator
     /** @var ErisGenerator<DataAccess> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DataAccess from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -51,15 +57,15 @@ final class DataAccessGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DataAccess>
+     * @return GeneratedValueSingle<DataAccess>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DataAccess> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DataAccess>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

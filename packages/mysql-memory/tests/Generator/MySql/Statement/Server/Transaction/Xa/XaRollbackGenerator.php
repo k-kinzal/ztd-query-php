@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Server\Transaction\Xa;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -33,6 +35,11 @@ final class XaRollbackGenerator implements ErisGenerator
     /** @var ErisGenerator<XaRollback> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of XaRollback from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -46,6 +53,19 @@ final class XaRollbackGenerator implements ErisGenerator
                 Generators::constant(null)
             )
         );
+        $this->delegate = Generators::map(
+            static function (XaRollback $statement) use ($release): XaRollback {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof XaRollback, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (XaRollback $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (XaRollback $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -58,27 +78,19 @@ final class XaRollbackGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (XaRollback $statement): XaRollback => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (XaRollback $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<XaRollback>
+     * @return GeneratedValueSingle<XaRollback>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<XaRollback> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<XaRollback>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

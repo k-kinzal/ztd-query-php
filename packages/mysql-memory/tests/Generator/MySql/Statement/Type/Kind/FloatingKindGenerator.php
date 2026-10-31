@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Type\Kind;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class FloatingKindGenerator implements ErisGenerator
     /** @var ErisGenerator<FloatingKind> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of FloatingKind from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(FloatingKind::cases());
@@ -45,15 +51,15 @@ final class FloatingKindGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<FloatingKind>
+     * @return GeneratedValueSingle<FloatingKind>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<FloatingKind> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<FloatingKind>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

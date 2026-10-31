@@ -6,12 +6,14 @@ namespace Tests\Generator\MySql\Statement\Alter;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -71,6 +73,12 @@ final class AlterTableGenerator implements ErisGenerator
     /** @var ErisGenerator<AlterTable> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of AlterTable from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -133,6 +141,19 @@ final class AlterTableGenerator implements ErisGenerator
                 )
             )
         );
+        $this->delegate = Generators::map(
+            static function (AlterTable $statement) use ($release): AlterTable {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof AlterTable, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (AlterTable $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (AlterTable $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -145,27 +166,19 @@ final class AlterTableGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (AlterTable $statement): AlterTable => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterTable $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<AlterTable>
+     * @return GeneratedValueSingle<AlterTable>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<AlterTable> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<AlterTable>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

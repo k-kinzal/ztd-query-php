@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Alter\Modifier;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class AlgorithmOptionGenerator implements ErisGenerator
     /** @var ErisGenerator<AlgorithmOption> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of AlgorithmOption from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -55,15 +61,15 @@ final class AlgorithmOptionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<AlgorithmOption>
+     * @return GeneratedValueSingle<AlgorithmOption>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<AlgorithmOption> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<AlgorithmOption>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

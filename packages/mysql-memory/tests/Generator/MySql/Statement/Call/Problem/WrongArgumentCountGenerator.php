@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Call\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class WrongArgumentCountGenerator implements ErisGenerator
     /** @var ErisGenerator<WrongArgumentCount> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of WrongArgumentCount from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -52,15 +58,15 @@ final class WrongArgumentCountGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<WrongArgumentCount>
+     * @return GeneratedValueSingle<WrongArgumentCount>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<WrongArgumentCount> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<WrongArgumentCount>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

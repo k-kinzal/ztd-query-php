@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query\Problem\Operand;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class RefusedIntoSetOperandGenerator implements ErisGenerator
     /** @var ErisGenerator<RefusedIntoSetOperand> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of RefusedIntoSetOperand from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -56,15 +62,15 @@ final class RefusedIntoSetOperandGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<RefusedIntoSetOperand>
+     * @return GeneratedValueSingle<RefusedIntoSetOperand>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<RefusedIntoSetOperand> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<RefusedIntoSetOperand>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

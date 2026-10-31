@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Utility\Show\Session;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -31,6 +33,11 @@ final class ShowErrorCountGenerator implements ErisGenerator
     /** @var ErisGenerator<ShowErrorCount> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ShowErrorCount from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -39,6 +46,19 @@ final class ShowErrorCountGenerator implements ErisGenerator
                 Generators::constant(null),
                 Generators::constant(null)
             )
+        );
+        $this->delegate = Generators::map(
+            static function (ShowErrorCount $statement) use ($release): ShowErrorCount {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof ShowErrorCount, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ShowErrorCount $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
         $this->delegate = Generators::suchThat(
             static function (ShowErrorCount $value) use ($release): bool {
@@ -52,27 +72,19 @@ final class ShowErrorCountGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (ShowErrorCount $statement): ShowErrorCount => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowErrorCount $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ShowErrorCount>
+     * @return GeneratedValueSingle<ShowErrorCount>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ShowErrorCount> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ShowErrorCount>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

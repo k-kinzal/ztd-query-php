@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Dml\Prepared;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -32,6 +34,11 @@ final class DeallocateGenerator implements ErisGenerator
     /** @var ErisGenerator<Deallocate> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Deallocate from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -42,6 +49,19 @@ final class DeallocateGenerator implements ErisGenerator
                 Generators::constant(null),
                 new DeallocationWordGenerator($release)
             )
+        );
+        $this->delegate = Generators::map(
+            static function (Deallocate $statement) use ($release): Deallocate {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof Deallocate, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Deallocate $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
         $this->delegate = Generators::suchThat(
             static function (Deallocate $value) use ($release): bool {
@@ -55,27 +75,19 @@ final class DeallocateGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (Deallocate $statement): Deallocate => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Deallocate $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Deallocate>
+     * @return GeneratedValueSingle<Deallocate>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Deallocate> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Deallocate>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

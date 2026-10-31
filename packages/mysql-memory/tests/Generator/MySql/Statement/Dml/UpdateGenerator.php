@@ -6,12 +6,14 @@ namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -46,6 +48,12 @@ final class UpdateGenerator implements ErisGenerator
     /** @var ErisGenerator<Update> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Update from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -91,6 +99,19 @@ final class UpdateGenerator implements ErisGenerator
                 )
             )
         );
+        $this->delegate = Generators::map(
+            static function (Update $statement) use ($release): Update {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof Update, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Update $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (Update $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -103,27 +124,19 @@ final class UpdateGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (Update $statement): Update => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Update $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Update>
+     * @return GeneratedValueSingle<Update>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Update> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Update>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

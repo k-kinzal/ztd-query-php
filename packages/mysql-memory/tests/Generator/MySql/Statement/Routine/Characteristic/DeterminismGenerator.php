@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Characteristic;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class DeterminismGenerator implements ErisGenerator
     /** @var ErisGenerator<Determinism> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Determinism from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -51,15 +57,15 @@ final class DeterminismGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Determinism>
+     * @return GeneratedValueSingle<Determinism>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Determinism> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Determinism>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

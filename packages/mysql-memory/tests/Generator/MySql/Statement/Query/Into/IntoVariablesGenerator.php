@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query\Into;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,7 +29,12 @@ final class IntoVariablesGenerator implements ErisGenerator
     /** @var ErisGenerator<IntoVariables> */
     private ErisGenerator $delegate;
 
-    public function __construct(GrammarRelease $release, int $depth = 3)
+    /**
+     * Composes the generator of IntoVariables from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
+    public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
             static fn (array $targets): IntoVariables => new IntoVariables(targets: $targets, inputSource: null),
@@ -50,15 +56,15 @@ final class IntoVariablesGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<IntoVariables>
+     * @return GeneratedValueSingle<IntoVariables>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<IntoVariables> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<IntoVariables>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

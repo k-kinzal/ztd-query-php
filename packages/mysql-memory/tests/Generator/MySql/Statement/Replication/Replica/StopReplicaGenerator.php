@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Replication\Replica;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -35,6 +37,11 @@ final class StopReplicaGenerator implements ErisGenerator
     /** @var ErisGenerator<StopReplica> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of StopReplica from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -46,6 +53,19 @@ final class StopReplicaGenerator implements ErisGenerator
                 Generators::constant(null),
                 Generators::constant(null)
             )
+        );
+        $this->delegate = Generators::map(
+            static function (StopReplica $statement) use ($release): StopReplica {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof StopReplica, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (StopReplica $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
         $this->delegate = Generators::suchThat(
             static function (StopReplica $value) use ($release): bool {
@@ -59,27 +79,19 @@ final class StopReplicaGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (StopReplica $statement): StopReplica => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (StopReplica $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<StopReplica>
+     * @return GeneratedValueSingle<StopReplica>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<StopReplica> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<StopReplica>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

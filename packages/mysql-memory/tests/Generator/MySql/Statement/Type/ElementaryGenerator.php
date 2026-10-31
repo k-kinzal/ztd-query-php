@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Type;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -29,12 +30,17 @@ final class ElementaryGenerator implements ErisGenerator
     /** @var ErisGenerator<Elementary> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Elementary from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(
             new ElementaryKindGenerator($release),
             static function (ElementaryKind $kind): ErisGenerator {
-                $aliases = array_values(array_filter(ElementaryAlias::cases(), static fn (ElementaryAlias $alias): bool => $alias->kind() === $kind));
+                $aliases = array_filter(ElementaryAlias::cases(), static fn (ElementaryAlias $alias): bool => $alias->kind() === $kind);
 
                 return Generators::map(
                     static fn (array $parts): Elementary => new Elementary(kind: $kind, length: $parts[0], inputSource: null, alias: $parts[1]),
@@ -61,15 +67,15 @@ final class ElementaryGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Elementary>
+     * @return GeneratedValueSingle<Elementary>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Elementary> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Elementary>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

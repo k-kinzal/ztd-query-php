@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Type\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class InvalidTypeSizeGenerator implements ErisGenerator
     /** @var ErisGenerator<InvalidTypeSize> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of InvalidTypeSize from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -55,15 +61,15 @@ final class InvalidTypeSizeGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<InvalidTypeSize>
+     * @return GeneratedValueSingle<InvalidTypeSize>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<InvalidTypeSize> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<InvalidTypeSize>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

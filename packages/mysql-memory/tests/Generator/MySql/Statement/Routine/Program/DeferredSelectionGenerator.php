@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -47,6 +48,12 @@ final class DeferredSelectionGenerator implements ErisGenerator
     /** @var ErisGenerator<DeferredSelection> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DeferredSelection from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -94,7 +101,7 @@ final class DeferredSelectionGenerator implements ErisGenerator
                 $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
                     0 => new IntoDumpfileGenerator($release),
                     1 => new IntoOutfileGenerator($release),
-                    2 => new IntoVariablesGenerator($release, $depth - 1),
+                    2 => new IntoVariablesGenerator($release),
                     default => throw new LogicException('Unreachable alternative.'),
                 })) : Generators::constant(null),
                 Generators::constant(null),
@@ -117,15 +124,15 @@ final class DeferredSelectionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DeferredSelection>
+     * @return GeneratedValueSingle<DeferredSelection>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DeferredSelection> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DeferredSelection>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

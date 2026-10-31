@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -35,6 +36,12 @@ final class QueryStatementGenerator implements ErisGenerator
     /** @var ErisGenerator<QueryStatement> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of QueryStatement from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -60,7 +67,7 @@ final class QueryStatementGenerator implements ErisGenerator
                 $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
                     0 => new IntoDumpfileGenerator($release),
                     1 => new IntoOutfileGenerator($release),
-                    default => new IntoVariablesGenerator($release, $depth - 1),
+                    default => new IntoVariablesGenerator($release),
                 })) : Generators::constant(null),
                 Generators::bool(),
                 new LockingClauseGenerator($release)
@@ -82,15 +89,15 @@ final class QueryStatementGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<QueryStatement>
+     * @return GeneratedValueSingle<QueryStatement>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<QueryStatement> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<QueryStatement>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

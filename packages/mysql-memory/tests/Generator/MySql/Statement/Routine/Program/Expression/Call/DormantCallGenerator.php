@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program\Expression\Call;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -32,6 +33,12 @@ final class DormantCallGenerator implements ErisGenerator
     /** @var ErisGenerator<DormantCall> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DormantCall from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -66,15 +73,15 @@ final class DormantCallGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DormantCall>
+     * @return GeneratedValueSingle<DormantCall>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DormantCall> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DormantCall>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

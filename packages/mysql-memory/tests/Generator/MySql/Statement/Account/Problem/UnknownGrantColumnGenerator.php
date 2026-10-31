@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Account\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class UnknownGrantColumnGenerator implements ErisGenerator
     /** @var ErisGenerator<UnknownGrantColumn> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of UnknownGrantColumn from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -53,15 +59,15 @@ final class UnknownGrantColumnGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<UnknownGrantColumn>
+     * @return GeneratedValueSingle<UnknownGrantColumn>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<UnknownGrantColumn> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<UnknownGrantColumn>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

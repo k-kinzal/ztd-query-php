@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -31,6 +33,11 @@ final class EmptyStatementGenerator implements ErisGenerator
     /** @var ErisGenerator<EmptyStatement> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of EmptyStatement from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -39,6 +46,19 @@ final class EmptyStatementGenerator implements ErisGenerator
                 Generators::constant(null),
                 Generators::constant(null)
             )
+        );
+        $this->delegate = Generators::map(
+            static function (EmptyStatement $statement) use ($release): EmptyStatement {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof EmptyStatement, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (EmptyStatement $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
         $this->delegate = Generators::suchThat(
             static function (EmptyStatement $value) use ($release): bool {
@@ -52,27 +72,19 @@ final class EmptyStatementGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (EmptyStatement $statement): EmptyStatement => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (EmptyStatement $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<EmptyStatement>
+     * @return GeneratedValueSingle<EmptyStatement>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<EmptyStatement> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<EmptyStatement>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

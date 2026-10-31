@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Account\ResourceGroup;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -32,6 +34,11 @@ final class CreateResourceGroupGenerator implements ErisGenerator
     /** @var ErisGenerator<CreateResourceGroup> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of CreateResourceGroup from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -48,6 +55,19 @@ final class CreateResourceGroupGenerator implements ErisGenerator
                 Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release))
             )
         );
+        $this->delegate = Generators::map(
+            static function (CreateResourceGroup $statement) use ($release): CreateResourceGroup {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof CreateResourceGroup, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateResourceGroup $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (CreateResourceGroup $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -60,27 +80,19 @@ final class CreateResourceGroupGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (CreateResourceGroup $statement): CreateResourceGroup => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateResourceGroup $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<CreateResourceGroup>
+     * @return GeneratedValueSingle<CreateResourceGroup>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<CreateResourceGroup> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<CreateResourceGroup>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

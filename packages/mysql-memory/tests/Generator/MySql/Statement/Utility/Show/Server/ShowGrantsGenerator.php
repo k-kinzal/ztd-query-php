@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Utility\Show\Server;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -32,6 +34,11 @@ final class ShowGrantsGenerator implements ErisGenerator
     /** @var ErisGenerator<ShowGrants> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ShowGrants from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -42,6 +49,19 @@ final class ShowGrantsGenerator implements ErisGenerator
                 Generators::constant(null),
                 Generators::constant(null)
             )
+        );
+        $this->delegate = Generators::map(
+            static function (ShowGrants $statement) use ($release): ShowGrants {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof ShowGrants, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (ShowGrants $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
         $this->delegate = Generators::suchThat(
             static function (ShowGrants $value) use ($release): bool {
@@ -55,27 +75,19 @@ final class ShowGrantsGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (ShowGrants $statement): ShowGrants => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowGrants $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ShowGrants>
+     * @return GeneratedValueSingle<ShowGrants>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ShowGrants> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ShowGrants>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Server\Storage;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -36,6 +38,11 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
     /** @var ErisGenerator<CreateUndoTablespace> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of CreateUndoTablespace from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -49,6 +56,19 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
                 Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
             )
         );
+        $this->delegate = Generators::map(
+            static function (CreateUndoTablespace $statement) use ($release): CreateUndoTablespace {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof CreateUndoTablespace, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateUndoTablespace $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (CreateUndoTablespace $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -61,27 +81,19 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (CreateUndoTablespace $statement): CreateUndoTablespace => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateUndoTablespace $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<CreateUndoTablespace>
+     * @return GeneratedValueSingle<CreateUndoTablespace>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<CreateUndoTablespace> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<CreateUndoTablespace>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

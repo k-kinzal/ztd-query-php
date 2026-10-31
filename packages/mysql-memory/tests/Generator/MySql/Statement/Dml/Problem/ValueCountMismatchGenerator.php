@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Dml\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class ValueCountMismatchGenerator implements ErisGenerator
     /** @var ErisGenerator<ValueCountMismatch> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ValueCountMismatch from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -52,15 +58,15 @@ final class ValueCountMismatchGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ValueCountMismatch>
+     * @return GeneratedValueSingle<ValueCountMismatch>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ValueCountMismatch> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ValueCountMismatch>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

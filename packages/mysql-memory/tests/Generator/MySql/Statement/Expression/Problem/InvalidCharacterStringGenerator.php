@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class InvalidCharacterStringGenerator implements ErisGenerator
     /** @var ErisGenerator<InvalidCharacterString> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of InvalidCharacterString from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -51,15 +57,15 @@ final class InvalidCharacterStringGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<InvalidCharacterString>
+     * @return GeneratedValueSingle<InvalidCharacterString>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<InvalidCharacterString> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<InvalidCharacterString>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

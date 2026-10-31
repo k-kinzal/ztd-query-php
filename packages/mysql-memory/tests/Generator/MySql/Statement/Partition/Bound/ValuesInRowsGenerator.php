@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Partition\Bound;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,12 @@ final class ValuesInRowsGenerator implements ErisGenerator
     /** @var ErisGenerator<ValuesInRows> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ValuesInRows from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -51,15 +58,15 @@ final class ValuesInRowsGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ValuesInRows>
+     * @return GeneratedValueSingle<ValuesInRows>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ValuesInRows> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ValuesInRows>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

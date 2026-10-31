@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Hint\Form;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -29,6 +30,11 @@ final class TableHintGenerator implements ErisGenerator
     /** @var ErisGenerator<TableHint> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of TableHint from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(
@@ -57,15 +63,15 @@ final class TableHintGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<TableHint>
+     * @return GeneratedValueSingle<TableHint>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<TableHint> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<TableHint>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

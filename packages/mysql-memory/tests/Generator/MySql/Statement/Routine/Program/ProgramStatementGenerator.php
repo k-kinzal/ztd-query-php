@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -53,6 +54,12 @@ final class ProgramStatementGenerator implements ErisGenerator
     /** @var ErisGenerator<ProgramStatement> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ProgramStatement from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -116,15 +123,15 @@ final class ProgramStatementGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ProgramStatement>
+     * @return GeneratedValueSingle<ProgramStatement>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ProgramStatement> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ProgramStatement>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Account\Privilege\Item;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -27,6 +28,11 @@ final class PrivilegeGenerator implements ErisGenerator
     /** @var ErisGenerator<Privilege> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Privilege from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -52,15 +58,15 @@ final class PrivilegeGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Privilege>
+     * @return GeneratedValueSingle<Privilege>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Privilege> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Privilege>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

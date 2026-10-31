@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program\Flow;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -28,6 +29,11 @@ final class FunctionBodyGenerator implements ErisGenerator
     /** @var ErisGenerator<FunctionBody> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of FunctionBody from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(Generators::choose(0, 7), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -57,15 +63,15 @@ final class FunctionBodyGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<FunctionBody>
+     * @return GeneratedValueSingle<FunctionBody>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<FunctionBody> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<FunctionBody>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Call\Aggregate;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class AggregateFunctionGenerator implements ErisGenerator
     /** @var ErisGenerator<AggregateFunction> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of AggregateFunction from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(AggregateFunction::cases());
@@ -45,15 +51,15 @@ final class AggregateFunctionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<AggregateFunction>
+     * @return GeneratedValueSingle<AggregateFunction>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<AggregateFunction> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<AggregateFunction>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

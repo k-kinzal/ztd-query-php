@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression\Predicate;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -18,7 +19,9 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
+use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
@@ -32,12 +35,18 @@ final class InListGenerator implements ErisGenerator
     /** @var ErisGenerator<InList> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of InList from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): InList => new InList(operand: (new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : new Grouped($parts[0]), elements: $parts[1], negated: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]),
+            static fn (array $parts): InList => new InList(operand: (new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : ($parts[0] instanceof Scalar ? new Grouped($parts[0]) : new GroupedRow($parts[0])), elements: $parts[1], negated: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]),
             Generators::suchThat(
-                static fn (array $parts): bool => array_filter(($parts[1]), static fn ($element): bool => (new RowShapes())->problem(((new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : new Grouped($parts[0])), $element) !== null) === [],
+                static fn (array $parts): bool => array_filter(($parts[1]), static fn ($element): bool => (new RowShapes())->problem(((new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : ($parts[0] instanceof Scalar ? new Grouped($parts[0]) : new GroupedRow($parts[0]))), $element) !== null) === [],
                 Generators::tuple(
                     Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new ScalarGenerator($release, $depth - 1),
@@ -71,15 +80,15 @@ final class InListGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<InList>
+     * @return GeneratedValueSingle<InList>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<InList> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<InList>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

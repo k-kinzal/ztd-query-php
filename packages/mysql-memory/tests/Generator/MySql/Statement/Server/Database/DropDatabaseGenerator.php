@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Server\Database;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -32,6 +34,11 @@ final class DropDatabaseGenerator implements ErisGenerator
     /** @var ErisGenerator<DropDatabase> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DropDatabase from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -43,6 +50,19 @@ final class DropDatabaseGenerator implements ErisGenerator
                 Generators::constant(null),
                 new DatabaseWordGenerator($release)
             )
+        );
+        $this->delegate = Generators::map(
+            static function (DropDatabase $statement) use ($release): DropDatabase {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof DropDatabase, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (DropDatabase $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
         $this->delegate = Generators::suchThat(
             static function (DropDatabase $value) use ($release): bool {
@@ -56,27 +76,19 @@ final class DropDatabaseGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (DropDatabase $statement): DropDatabase => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropDatabase $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DropDatabase>
+     * @return GeneratedValueSingle<DropDatabase>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DropDatabase> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DropDatabase>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

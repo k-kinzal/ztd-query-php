@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Variable\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class UnknownSystemVariableGenerator implements ErisGenerator
     /** @var ErisGenerator<UnknownSystemVariable> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of UnknownSystemVariable from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -52,15 +58,15 @@ final class UnknownSystemVariableGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<UnknownSystemVariable>
+     * @return GeneratedValueSingle<UnknownSystemVariable>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<UnknownSystemVariable> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<UnknownSystemVariable>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

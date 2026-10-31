@@ -6,6 +6,7 @@ namespace Tests\Generator\Semantics\Statement;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -144,6 +145,12 @@ final class OperandGenerator implements ErisGenerator
     /** @var ErisGenerator<Operand> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Operand from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -212,7 +219,7 @@ final class OperandGenerator implements ErisGenerator
                 60 => new StringLiteralGenerator($release),
                 61 => new TemporalLiteralGenerator($release),
                 62 => new ColumnUseGenerator($release),
-                63 => new OutputOrdinalGenerator($release, $depth - 1),
+                63 => new OutputOrdinalGenerator($release),
                 64 => new ProgramVariableGenerator($release),
                 65 => new DeferredFullTextSearchGenerator($release, $depth - 1),
                 66 => new DeferredCaseGenerator($release, $depth - 1),
@@ -309,15 +316,15 @@ final class OperandGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Operand>
+     * @return GeneratedValueSingle<Operand>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Operand> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Operand>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

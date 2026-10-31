@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Name;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -30,6 +31,11 @@ final class ColumnUseGenerator implements ErisGenerator
     /** @var ErisGenerator<ColumnUse> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ColumnUse from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $qualifiers = Generators::oneOf(Generators::constant(null), Generators::map(
@@ -62,15 +68,15 @@ final class ColumnUseGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ColumnUse>
+     * @return GeneratedValueSingle<ColumnUse>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ColumnUse> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ColumnUse>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

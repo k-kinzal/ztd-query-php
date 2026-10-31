@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Condition\Diagnostics;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class StatementItemNameGenerator implements ErisGenerator
     /** @var ErisGenerator<StatementItemName> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of StatementItemName from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(StatementItemName::cases());
@@ -45,15 +51,15 @@ final class StatementItemNameGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<StatementItemName>
+     * @return GeneratedValueSingle<StatementItemName>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<StatementItemName> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<StatementItemName>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

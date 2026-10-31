@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class WriteTargetGenerator implements ErisGenerator
     /** @var ErisGenerator<WriteTarget> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of WriteTarget from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -57,15 +63,15 @@ final class WriteTargetGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<WriteTarget>
+     * @return GeneratedValueSingle<WriteTarget>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<WriteTarget> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<WriteTarget>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

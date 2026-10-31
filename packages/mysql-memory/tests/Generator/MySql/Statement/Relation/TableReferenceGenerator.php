@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Relation;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -32,6 +33,12 @@ final class TableReferenceGenerator implements ErisGenerator
     /** @var ErisGenerator<TableReference> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of TableReference from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -41,7 +48,7 @@ final class TableReferenceGenerator implements ErisGenerator
                 new QualifiedNameGenerator($release),
                 Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
                 Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NameGenerator($release))),
-                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new IndexHintGenerator($release, $depth - 1))) : Generators::constant([]),
+                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new IndexHintGenerator($release))) : Generators::constant([]),
                 $depth > 0 && ($bit & 448) !== 0 ? Generators::oneOf(Generators::constant(null), new TableSampleGenerator($release)) : Generators::constant(null),
                 Generators::constant(\SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As),
                 new OptionalWordsGenerator($release),
@@ -65,15 +72,15 @@ final class TableReferenceGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<TableReference>
+     * @return GeneratedValueSingle<TableReference>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<TableReference> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<TableReference>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Utility\Set;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -36,10 +38,19 @@ final class SetTransactionGenerator implements ErisGenerator
     /** @var ErisGenerator<SetTransaction> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SetTransaction from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): SetTransaction => new SetTransaction(characteristics: array_values(array_filter([$parts[0], $parts[1]], static fn (IsolationLevel|AccessMode|null $characteristic): bool => $characteristic !== null)) ?: [$parts[5]], scope: $parts[2], profile: $parts[3], client: $parts[4], source: null, statementInformation: null, inputSource: null),
+            static function (array $parts): SetTransaction {
+                $characteristics = array_values(array_filter([$parts[0], $parts[1]], static fn (IsolationLevel|AccessMode|null $characteristic): bool => $characteristic !== null));
+
+                return new SetTransaction(characteristics: $characteristics === [] ? [$parts[5]] : $characteristics, scope: $parts[2], profile: $parts[3], client: $parts[4], source: null, statementInformation: null, inputSource: null);
+            },
             Generators::tuple(
                 Generators::oneOf(Generators::constant(null), new IsolationLevelGenerator($release)),
                 Generators::oneOf(Generators::constant(null), new AccessModeGenerator($release)),
@@ -48,6 +59,19 @@ final class SetTransactionGenerator implements ErisGenerator
                 Generators::oneOf(Generators::constant(null), new CharsetGenerator($release)),
                 new IsolationLevelGenerator($release)
             )
+        );
+        $this->delegate = Generators::map(
+            static function (SetTransaction $statement) use ($release): SetTransaction {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof SetTransaction, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (SetTransaction $statement): bool => Analysis::accepted($statement),
+            $this->delegate
         );
         $this->delegate = Generators::suchThat(
             static function (SetTransaction $value) use ($release): bool {
@@ -61,27 +85,19 @@ final class SetTransactionGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (SetTransaction $statement): SetTransaction => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (SetTransaction $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SetTransaction>
+     * @return GeneratedValueSingle<SetTransaction>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SetTransaction> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SetTransaction>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

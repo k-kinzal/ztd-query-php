@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -33,6 +34,12 @@ final class QueryExpressionGenerator implements ErisGenerator
     /** @var ErisGenerator<QueryExpression> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of QueryExpression from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -80,15 +87,15 @@ final class QueryExpressionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<QueryExpression>
+     * @return GeneratedValueSingle<QueryExpression>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<QueryExpression> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<QueryExpression>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

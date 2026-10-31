@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Alter\Partition;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -32,6 +33,11 @@ final class MaintainPartitionsGenerator implements ErisGenerator
     /** @var ErisGenerator<MaintainPartitions> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of MaintainPartitions from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(
@@ -40,7 +46,7 @@ final class MaintainPartitionsGenerator implements ErisGenerator
                 static fn (array $parts): MaintainPartitions => new MaintainPartitions(kind: $kind, binlog: $kind->logged() ? $parts[0] : null, partitions: $parts[1], options: match ($kind) {
                     MaintenanceKind::Check => $parts[2],
                     MaintenanceKind::Repair => $parts[3],
-                    default => [],
+                    MaintenanceKind::Rebuild, MaintenanceKind::Optimize, MaintenanceKind::Analyze, MaintenanceKind::Truncate => [],
                 }, ignoredBinlog: $kind === MaintenanceKind::Optimize ? $parts[4] : null, inputSource: null),
                 Generators::tuple(
                     Generators::oneOf(Generators::constant(null), new BinlogOptionGenerator($release)),
@@ -67,15 +73,15 @@ final class MaintainPartitionsGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<MaintainPartitions>
+     * @return GeneratedValueSingle<MaintainPartitions>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<MaintainPartitions> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<MaintainPartitions>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

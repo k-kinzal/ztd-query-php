@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program\Server;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -40,12 +41,22 @@ final class DeferredExplainGenerator implements ErisGenerator
     /** @var ErisGenerator<DeferredExplain> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DeferredExplain from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
-            static function (array $parts): DeferredExplain {
+            static function (array $parts) use ($bit): DeferredExplain {
                 [$statement, $format, $into, $database, $analyze, $modifier, $emptyInto, $verb] = $parts;
+                $analyze = ($bit & 508) !== 0 && $analyze;
+                $into = ($bit & 504) !== 0 ? $into : null;
+                $database = ($bit & 496) !== 0 ? $database : null;
+                $emptyInto = ($bit & 48) !== 0 && $emptyInto;
                 if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Explainable) {
                     return new DeferredExplain(statement: $statement, format: new Name('TRADITIONAL'), into: $into, database: $database, analyze: true, modifier: null, emptyInto: false, inputSource: null, verb: $verb);
                 }
@@ -59,7 +70,7 @@ final class DeferredExplainGenerator implements ErisGenerator
                 return new DeferredExplain(statement: $statement, format: $format, into: $into, database: $database, analyze: $analyze, modifier: null, emptyInto: false, inputSource: null, verb: $verb);
             },
             Generators::tuple(
-                Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 508, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+                Generators::bind(Generators::elements(array_keys(array_filter([508, 511, 511, 511, 511, 511, 508, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                     0 => new ExplainableGenerator($release, $depth - 1),
                     1 => new DeferredSelectionGenerator($release, $depth - 1),
                     2 => new DeferredQueryGenerator($release, $depth - 1),
@@ -95,15 +106,15 @@ final class DeferredExplainGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DeferredExplain>
+     * @return GeneratedValueSingle<DeferredExplain>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DeferredExplain> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DeferredExplain>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

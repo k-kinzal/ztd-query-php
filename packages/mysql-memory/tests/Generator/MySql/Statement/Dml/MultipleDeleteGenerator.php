@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Dml;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -19,7 +21,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
-use SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Dml\Target\DeletionInputGenerator;
@@ -38,11 +39,17 @@ final class MultipleDeleteGenerator implements ErisGenerator
     /** @var ErisGenerator<MultipleDelete> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of MultipleDelete from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
-            static fn (array $parts): MultipleDelete => new MultipleDelete(with: $parts[0], options: $parts[1], input: $parts[2]->targets === [] ? new DeletionInput($parts[2]->tables, null, null, null) : $parts[2], form: $parts[3], where: $parts[4], hints: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
+            static fn (array $parts): MultipleDelete => new MultipleDelete(with: $parts[0], options: $parts[1], input: $parts[2], form: $parts[3], where: $parts[4], hints: $parts[5], statementInformation: $parts[6], inputSource: $parts[7]),
             Generators::suchThat(
                 static fn (array $parts): bool => (static function (array $parts): bool {
                     foreach ($parts as $part) {
@@ -67,6 +74,19 @@ final class MultipleDeleteGenerator implements ErisGenerator
                 )
             )
         );
+        $this->delegate = Generators::map(
+            static function (MultipleDelete $statement) use ($release): MultipleDelete {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof MultipleDelete, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (MultipleDelete $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (MultipleDelete $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -79,27 +99,19 @@ final class MultipleDeleteGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (MultipleDelete $statement): MultipleDelete => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (MultipleDelete $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<MultipleDelete>
+     * @return GeneratedValueSingle<MultipleDelete>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<MultipleDelete> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<MultipleDelete>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

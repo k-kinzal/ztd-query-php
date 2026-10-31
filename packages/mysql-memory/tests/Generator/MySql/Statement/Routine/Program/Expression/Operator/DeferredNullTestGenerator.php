@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program\Expression\Operator;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -15,12 +16,8 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
-use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
-use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest;
-use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
 
 /**
@@ -33,10 +30,16 @@ final class DeferredNullTestGenerator implements ErisGenerator
     /** @var ErisGenerator<DeferredNullTest> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DeferredNullTest from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): DeferredNullTest => new DeferredNullTest(operand: (new Precedence())->fits($parts[0], Precedence::BOOL_PRI, Precedence::BOOL_PRI) ? $parts[0] : ($parts[0] instanceof Scalar ? new Grouped($parts[0]) : ($parts[0] instanceof RowOperand ? new GroupedRow($parts[0]) : new DeferredGrouped($parts[0]))), negated: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]),
+            static fn (array $parts): DeferredNullTest => new DeferredNullTest(operand: (new Precedence())->fits($parts[0], Precedence::BOOL_PRI, Precedence::BOOL_PRI) ? $parts[0] : new DeferredGrouped($parts[0]), negated: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]),
             Generators::tuple(
                 new DeferredOperandGenerator($release, $depth - 1),
                 Generators::bool(),
@@ -60,15 +63,15 @@ final class DeferredNullTestGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DeferredNullTest>
+     * @return GeneratedValueSingle<DeferredNullTest>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DeferredNullTest> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DeferredNullTest>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Account\Problem\Role;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -16,6 +17,8 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole;
+use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;
 
 /**
@@ -28,15 +31,20 @@ final class RefusedCreateRoleGenerator implements ErisGenerator
     /** @var ErisGenerator<RefusedCreateRole> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of RefusedCreateRole from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): RefusedCreateRole => new RefusedCreateRole(ifNotExists: $parts[0], roles: $parts[1]),
+            static fn (array $parts): RefusedCreateRole => new RefusedCreateRole(ifNotExists: false, roles: [...$parts[0], $parts[1] ? new AccountName(new Name('')) : $parts[0][0]]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new RoleDefinitions())->problem(($parts[0]), ($parts[1])) !== null,
+                static fn (array $parts): bool => (new RoleDefinitions())->problem(false, [...$parts[0], $parts[1] ? new AccountName(new Name('')) : $parts[0][0]]) !== null,
                 Generators::tuple(
-                    Generators::bool(),
-                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new AccountNameGenerator($release)))
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, new AccountNameGenerator($release))),
+                    Generators::bool()
                 )
             )
         );
@@ -56,15 +64,15 @@ final class RefusedCreateRoleGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<RefusedCreateRole>
+     * @return GeneratedValueSingle<RefusedCreateRole>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<RefusedCreateRole> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<RefusedCreateRole>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

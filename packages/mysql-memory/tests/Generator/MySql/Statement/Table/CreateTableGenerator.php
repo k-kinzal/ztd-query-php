@@ -6,12 +6,14 @@ namespace Tests\Generator\MySql\Statement\Table;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -54,6 +56,12 @@ final class CreateTableGenerator implements ErisGenerator
     /** @var ErisGenerator<CreateTable> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of CreateTable from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -70,7 +78,7 @@ final class CreateTableGenerator implements ErisGenerator
                         2 => new ForeignKeyGenerator($release),
                         3 => new IndexDefinitionGenerator($release, $depth - 1),
                         default => throw new LogicException('Unreachable alternative.'),
-                    }))) : Generators::constant([]),
+                    }))) : Generators::vector(1, new ColumnDefinitionGenerator($release, $depth - 1)),
                     Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::elements(array_keys(array_filter([508, 511, 511, 511, 511, 511, 511, 508, 508, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new AutoextendSizeOptionGenerator($release),
                         1 => new CharsetOptionGenerator($release),
@@ -99,6 +107,19 @@ final class CreateTableGenerator implements ErisGenerator
                 )
             )
         );
+        $this->delegate = Generators::map(
+            static function (CreateTable $statement) use ($release): CreateTable {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof CreateTable, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateTable $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (CreateTable $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -111,27 +132,19 @@ final class CreateTableGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (CreateTable $statement): CreateTable => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateTable $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<CreateTable>
+     * @return GeneratedValueSingle<CreateTable>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<CreateTable> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<CreateTable>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,8 +6,10 @@ namespace Tests\Generator\MySql\Statement\Table\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -28,13 +30,24 @@ final class InvalidColumnAttributeGenerator implements ErisGenerator
     /** @var ErisGenerator<InvalidColumnAttribute> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of InvalidColumnAttribute from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): InvalidColumnAttribute => new InvalidColumnAttribute(column: $parts[0], attribute: $parts[1], scope: $parts[2]),
+            static fn (array $parts): InvalidColumnAttribute => new InvalidColumnAttribute(column: $parts[0], attribute: match ($parts[1]) {
+                0 => 'SRID',
+                1 => 'DEFAULT',
+                2 => 'ON UPDATE',
+                3 => 'AUTO_INCREMENT',
+                default => throw new LogicException('Unreachable alternative.'),
+            }, scope: $parts[2]),
             Generators::tuple(
                 new NameGenerator($release),
-                Generators::map(static fn (int $number): string => 'text_' . $number, Generators::choose(0, 99)),
+                Generators::choose(0, 3),
                 Generators::oneOf(Generators::constant(null), new QualifiedNameGenerator($release))
             )
         );
@@ -54,15 +67,15 @@ final class InvalidColumnAttributeGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<InvalidColumnAttribute>
+     * @return GeneratedValueSingle<InvalidColumnAttribute>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<InvalidColumnAttribute> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<InvalidColumnAttribute>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

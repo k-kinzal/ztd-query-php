@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Literal;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class RadixLiteralGenerator implements ErisGenerator
     /** @var ErisGenerator<RadixLiteral> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of RadixLiteral from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(
@@ -59,15 +65,15 @@ final class RadixLiteralGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<RadixLiteral>
+     * @return GeneratedValueSingle<RadixLiteral>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<RadixLiteral> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<RadixLiteral>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

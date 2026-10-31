@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Replication\Reset;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -29,6 +30,11 @@ final class ResetBinaryLogsGenerator implements ErisGenerator
     /** @var ErisGenerator<ResetBinaryLogs> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ResetBinaryLogs from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $releases = new Releases();
@@ -56,15 +62,15 @@ final class ResetBinaryLogsGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ResetBinaryLogs>
+     * @return GeneratedValueSingle<ResetBinaryLogs>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ResetBinaryLogs> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ResetBinaryLogs>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

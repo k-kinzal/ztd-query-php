@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Table\Problem\Column;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class SridRangeGenerator implements ErisGenerator
     /** @var ErisGenerator<SridRange> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SridRange from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -51,15 +57,15 @@ final class SridRangeGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SridRange>
+     * @return GeneratedValueSingle<SridRange>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SridRange> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SridRange>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

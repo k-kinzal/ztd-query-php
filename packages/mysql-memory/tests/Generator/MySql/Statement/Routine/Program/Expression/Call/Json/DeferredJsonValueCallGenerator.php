@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program\Expression\Call\Json;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -16,12 +17,10 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
-use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Call\Json\JsonResponseGenerator;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Literal\StringLiteralGenerator;
@@ -38,10 +37,16 @@ final class DeferredJsonValueCallGenerator implements ErisGenerator
     /** @var ErisGenerator<DeferredJsonValueCall> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DeferredJsonValueCall from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): DeferredJsonValueCall => new DeferredJsonValueCall(document: (new Precedence())->admits($parts[0], Precedence::SIMPLE_EXPR) ? $parts[0] : ($parts[0] instanceof Scalar ? new Grouped($parts[0]) : ($parts[0] instanceof RowOperand ? new GroupedRow($parts[0]) : new DeferredGrouped($parts[0]))), path: $parts[1], returning: $parts[2], onEmpty: $parts[3], onError: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]),
+            static fn (array $parts): DeferredJsonValueCall => new DeferredJsonValueCall(document: (new Precedence())->admits($parts[0], Precedence::SIMPLE_EXPR) ? $parts[0] : ($parts[0] instanceof RowOperand ? new GroupedRow($parts[0]) : new DeferredGrouped($parts[0])), path: $parts[1], returning: $parts[2], onEmpty: $parts[3], onError: $parts[4], scalarInformation: $parts[5], inputSource: $parts[6]),
             Generators::tuple(
                 Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
                     0 => new RowOperandGenerator($release, $depth - 1),
@@ -72,15 +77,15 @@ final class DeferredJsonValueCallGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DeferredJsonValueCall>
+     * @return GeneratedValueSingle<DeferredJsonValueCall>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DeferredJsonValueCall> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DeferredJsonValueCall>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

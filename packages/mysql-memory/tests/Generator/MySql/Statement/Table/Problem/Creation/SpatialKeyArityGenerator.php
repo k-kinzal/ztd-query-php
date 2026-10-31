@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Table\Problem\Creation;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -29,6 +30,11 @@ final class SpatialKeyArityGenerator implements ErisGenerator
     /** @var ErisGenerator<SpatialKeyArity> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SpatialKeyArity from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -60,15 +66,15 @@ final class SpatialKeyArityGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SpatialKeyArity>
+     * @return GeneratedValueSingle<SpatialKeyArity>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SpatialKeyArity> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SpatialKeyArity>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\Semantics\Statement\Type;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class NullOnlyGenerator implements ErisGenerator
     /** @var ErisGenerator<NullOnly> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of NullOnly from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::constant(new NullOnly());
@@ -45,15 +51,15 @@ final class NullOnlyGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<NullOnly>
+     * @return GeneratedValueSingle<NullOnly>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<NullOnly> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<NullOnly>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

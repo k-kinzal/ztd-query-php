@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression\Subquery;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -32,14 +33,21 @@ final class ScalarSubqueryGenerator implements ErisGenerator
     /** @var ErisGenerator<ScalarSubquery> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ScalarSubquery from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
             static fn (array $parts): ScalarSubquery => new ScalarSubquery(query: $parts[0], scalarInformation: $parts[1], inputSource: $parts[2]),
             Generators::suchThat(
-                static fn (array $parts): bool => (((new QueryWidth())->of(($parts[0])) ?? 1) === 1 && (new ReadColumns())->problem(($parts[0])) === null)
-                && (((new QueryWidth())->of(($parts[0])) ?? 1) === 1 && (new ReadColumns())->problem(($parts[0])) === null && (new DerivedOptions())->problem(($parts[0])) === null)
-                && (((new QueryWidth())->of(($parts[0])) ?? 1) === 1 && (new ReadColumns())->problem(($parts[0])) === null && (new SubqueryOptions())->problem($parts[0]) === null),
+                static fn (array $parts): bool => ((new QueryWidth())->of(($parts[0])) ?? 1) === 1
+                && (new ReadColumns())->problem(($parts[0])) === null
+                && (new DerivedOptions())->problem(($parts[0])) === null
+                && (new SubqueryOptions())->problem($parts[0]) === null,
                 Generators::tuple(
                     Generators::suchThat(
                         static fn (Query $query): bool => ((new QueryWidth())->of($query) ?? 1) === 1 && (new ReadColumns())->problem($query) === null && (new DerivedOptions())->problem($query) === null && (new SubqueryOptions())->problem($query) === null,
@@ -67,15 +75,15 @@ final class ScalarSubqueryGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ScalarSubquery>
+     * @return GeneratedValueSingle<ScalarSubquery>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ScalarSubquery> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ScalarSubquery>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -19,8 +19,8 @@ final class PrivilegeInputTest extends TestCase
     {
         $input = new PrivilegeInput();
 
-        self::assertSame(3835, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', 'database', 'ER_UNSUPPORTED_USE_OF_GRANT_AS'), (new Instance())->connect())?->getCode());
-        self::assertSame(1144, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('SELECT', 'routine', 'ER_ILLEGAL_GRANT_FOR_TABLE'), (new Instance())->connect())?->getCode());
+        self::assertSame(3835, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', 'database', 'ER_UNSUPPORTED_USE_OF_GRANT_AS'), (new Instance())->connect())->getCode());
+        self::assertSame(1144, $input->placement(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('SELECT', 'routine', 'ER_ILLEGAL_GRANT_FOR_TABLE'), (new Instance())->connect())->getCode());
     }
 
     public function testLevelUsesTypedTargetsWithoutReadingRequestText(): void

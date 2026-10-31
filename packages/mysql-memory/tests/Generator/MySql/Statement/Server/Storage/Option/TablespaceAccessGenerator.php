@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Server\Storage\Option;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class TablespaceAccessGenerator implements ErisGenerator
     /** @var ErisGenerator<TablespaceAccess> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of TablespaceAccess from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(TablespaceAccess::cases());
@@ -45,15 +51,15 @@ final class TablespaceAccessGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<TablespaceAccess>
+     * @return GeneratedValueSingle<TablespaceAccess>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<TablespaceAccess> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<TablespaceAccess>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

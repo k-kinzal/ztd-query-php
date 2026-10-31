@@ -74,7 +74,7 @@ final class SemanticCatalogue
                     $imports[$use->getAlias()->toString()] = $use->name->toString();
                 }
                 $class = $value->namespacedName->toString();
-                $this->structure[$class] = $this->structure($value, $imports, substr($class, 0, strrpos($class, '\\') ?: 0));
+                $this->structure[$class] = $this->structure($value, $imports, substr($class, 0, max(0, (int) strrpos($class, '\\'))));
                 if (!str_contains($value->getDocComment()?->getText() ?? '', '@visibility public') || !$this->isValue($value)) {
                     continue;
                 }
@@ -124,7 +124,7 @@ final class SemanticCatalogue
     /**
      * Tells whether a type is an analysis result in its own right: a statement.
      */
-    private function isRoot(string $class): bool
+    public function isRoot(string $class): bool
     {
         $pending = [$class];
         while ($pending !== []) {
@@ -148,7 +148,7 @@ final class SemanticCatalogue
      * @param string $namespace The namespace of the declaration
      * @return array{implements: list<string>, extends: string|null, parameters: list<string>}
      */
-    private function structure(Node\Stmt\ClassLike $node, array $imports, string $namespace): array
+    public function structure(Node\Stmt\ClassLike $node, array $imports, string $namespace): array
     {
         $implements = [];
         $extends = null;
@@ -162,14 +162,15 @@ final class SemanticCatalogue
         }
         $parameters = [];
         $constructor = $node->getMethod('__construct');
-        foreach ($constructor?->params ?? [] as $parameter) {
+        foreach ($constructor === null ? [] : $constructor->params as $parameter) {
             $name = $parameter->var instanceof Node\Expr\Variable && is_string($parameter->var->name) ? $parameter->var->name : '';
             if ($name === 'inputSource' || str_ends_with($name, 'Information')) {
                 continue;
             }
             array_push($parameters, ...$this->typeNames($parameter->type));
-            if (preg_match('/@param\s+(\S+)\s+\$' . preg_quote($name, '/') . '\b/', $constructor?->getDocComment()?->getText() ?? '', $match) === 1) {
-                foreach (preg_split('/[^A-Za-z0-9_\\\\]+/', $match[1]) ?: [] as $token) {
+            if (preg_match('/@param\s+(.+?)\s+\$' . preg_quote($name, '/') . '\b/', $constructor?->getDocComment()?->getText() ?? '', $match) === 1) {
+                $tokens = preg_split('/[^A-Za-z0-9_\\\\]+/', $match[1]);
+                foreach ($tokens === false ? [] : $tokens as $token) {
                     if ($token === '' || preg_match('/^[a-z]/', $token) === 1) {
                         continue;
                     }
@@ -183,7 +184,7 @@ final class SemanticCatalogue
             }
         }
 
-        return ['implements' => $implements, 'extends' => $extends, 'parameters' => array_values(array_unique($parameters))];
+        return ['implements' => array_values($implements), 'extends' => $extends, 'parameters' => array_values(array_unique($parameters))];
     }
 
     /**
@@ -191,7 +192,7 @@ final class SemanticCatalogue
      *
      * @return list<string>
      */
-    private function typeNames(Node\Identifier|Node\Name|Node\ComplexType|null $type): array
+    public function typeNames(Node\Identifier|Node\Name|Node\ComplexType|null $type): array
     {
         return match (true) {
             $type instanceof Node\Name => [$type->toString()],

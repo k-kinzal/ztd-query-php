@@ -6,6 +6,7 @@ namespace Tests\Generator\Semantics\Statement\Reference\Missing;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -31,6 +32,11 @@ final class MissingInputGenerator implements ErisGenerator
     /** @var ErisGenerator<MissingInput> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of MissingInput from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(Generators::choose(0, 9), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -62,15 +68,15 @@ final class MissingInputGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<MissingInput>
+     * @return GeneratedValueSingle<MissingInput>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<MissingInput> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<MissingInput>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

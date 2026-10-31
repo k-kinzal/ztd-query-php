@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Generator\MySql\Statement\Notice;
+namespace Tests\Generator\MySql\Statement\Literal\Quoted;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -14,23 +15,28 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Escape;
 
 /**
- * Generates Deprecated values from the generators of its operands.
+ * Generates Escape values from the generators of its operands.
  *
- * @implements ErisGenerator<Deprecated>
+ * @implements ErisGenerator<Escape>
  */
-final class DeprecatedGenerator implements ErisGenerator
+final class EscapeGenerator implements ErisGenerator
 {
-    /** @var ErisGenerator<Deprecated> */
+    /** @var ErisGenerator<Escape> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Escape from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
-        $this->delegate = Generators::elements(Deprecated::cases());
+        $this->delegate = Generators::elements(Escape::cases());
         $this->delegate = Generators::suchThat(
-            static function (Deprecated $value) use ($release): bool {
+            static function (Escape $value) use ($release): bool {
                 $domain = new ReleaseDomain();
                 $transition = (new Generations())->transition($value);
 
@@ -45,16 +51,16 @@ final class DeprecatedGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Deprecated>
+     * @return GeneratedValueSingle<Escape>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Deprecated> $element The generated counterexample
-     * @return GeneratedValue<Deprecated>
+     * @param GeneratedValue<mixed> $element The generated counterexample
+     * @return GeneratedValue<Escape>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
     {

@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Account\User;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class FactorActionGenerator implements ErisGenerator
     /** @var ErisGenerator<FactorAction> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of FactorAction from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(FactorAction::cases());
@@ -45,15 +51,15 @@ final class FactorActionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<FactorAction>
+     * @return GeneratedValueSingle<FactorAction>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<FactorAction> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<FactorAction>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

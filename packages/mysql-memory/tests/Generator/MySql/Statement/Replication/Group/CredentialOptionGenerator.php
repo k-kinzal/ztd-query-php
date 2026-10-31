@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Replication\Group;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class CredentialOptionGenerator implements ErisGenerator
     /** @var ErisGenerator<CredentialOption> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of CredentialOption from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -53,15 +59,15 @@ final class CredentialOptionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<CredentialOption>
+     * @return GeneratedValueSingle<CredentialOption>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<CredentialOption> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<CredentialOption>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

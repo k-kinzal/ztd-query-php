@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\View;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -33,6 +34,12 @@ final class ViewDefinitionGenerator implements ErisGenerator
     /** @var ErisGenerator<ViewDefinition> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ViewDefinition from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::bind(
@@ -41,7 +48,7 @@ final class ViewDefinitionGenerator implements ErisGenerator
                 static fn (array $parts): ViewDefinition => new ViewDefinition(name: $parts[0], query: $query, columns: $parts[1], algorithm: $parts[2], definer: $parts[3], security: $parts[4], check: $parts[5], ifNotExists: $parts[6], inputSource: null),
                 Generators::tuple(
                     new QualifiedNameGenerator($release),
-                    (new QueryWidth())->of($query) === null || (new QueryWidth())->of($query) === 0 ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::vector((int) (new QueryWidth())->of($query), new NameGenerator($release))),
+                    (new QueryWidth())->of($query) === null || (new QueryWidth())->of($query) === 0 ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::vector((new QueryWidth())->of($query), new NameGenerator($release))),
                     Generators::oneOf(Generators::constant(null), new ViewAlgorithmGenerator($release)),
                     Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
                     Generators::oneOf(Generators::constant(null), new ViewSecurityGenerator($release)),
@@ -66,15 +73,15 @@ final class ViewDefinitionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ViewDefinition>
+     * @return GeneratedValueSingle<ViewDefinition>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ViewDefinition> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ViewDefinition>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

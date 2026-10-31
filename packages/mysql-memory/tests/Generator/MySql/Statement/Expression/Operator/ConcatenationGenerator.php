@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression\Operator;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -29,6 +30,12 @@ final class ConcatenationGenerator implements ErisGenerator
     /** @var ErisGenerator<Concatenation> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Concatenation from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -56,15 +63,15 @@ final class ConcatenationGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Concatenation>
+     * @return GeneratedValueSingle<Concatenation>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Concatenation> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Concatenation>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

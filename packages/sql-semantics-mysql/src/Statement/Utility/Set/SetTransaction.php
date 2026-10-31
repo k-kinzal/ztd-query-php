@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionStatement;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
@@ -46,10 +45,8 @@ final class SetTransaction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
     public readonly array $characteristics;
 
     /**
-     * @param array<array-key, object> $characteristics The characteristics in the order written, as a list of one or two IsolationLevel and AccessMode cases of different kinds
+     * @param array<array-key, IsolationLevel|AccessMode> $characteristics The characteristics in the order written, as a list of one or two IsolationLevel and AccessMode cases of different kinds
      * @param VariableScope|null $scope The scope keyword, or null for the next transaction only
-     *
-     * @throws InvalidConstruction When a characteristic is not an isolation level or an access mode
      * @param LanguageProfile $profile The selected grammar and lexical interpretation; MySQL 8.4.7 by default
      * @param Charset|null $client The client encoding used to reconstruct identifiers
      * @param Span|null $source The optional original statement location
@@ -64,9 +61,6 @@ final class SetTransaction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         $kinds = [];
         $written = [];
         foreach ($characteristics as $characteristic) {
-            if (!$characteristic instanceof IsolationLevel && !$characteristic instanceof AccessMode) {
-                throw new InvalidConstruction('A transaction characteristic is an isolation level or an access mode.');
-            }
             $kinds[$characteristic::class] = true;
             $written[] = $characteristic;
         }

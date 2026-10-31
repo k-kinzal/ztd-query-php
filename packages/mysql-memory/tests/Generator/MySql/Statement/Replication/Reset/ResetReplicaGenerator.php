@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Replication\Reset;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -30,6 +31,11 @@ final class ResetReplicaGenerator implements ErisGenerator
     /** @var ErisGenerator<ResetReplica> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ResetReplica from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -58,15 +64,15 @@ final class ResetReplicaGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ResetReplica>
+     * @return GeneratedValueSingle<ResetReplica>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ResetReplica> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ResetReplica>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Account\Option;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class UserCommentGenerator implements ErisGenerator
     /** @var ErisGenerator<UserComment> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of UserComment from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -53,15 +59,15 @@ final class UserCommentGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<UserComment>
+     * @return GeneratedValueSingle<UserComment>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<UserComment> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<UserComment>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\Semantics\Statement\Identifier;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class NameQuoteGenerator implements ErisGenerator
     /** @var ErisGenerator<NameQuote> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of NameQuote from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(NameQuote::cases());
@@ -45,15 +51,15 @@ final class NameQuoteGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<NameQuote>
+     * @return GeneratedValueSingle<NameQuote>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<NameQuote> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<NameQuote>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\Semantics\Statement;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -636,6 +637,12 @@ final class NodeGenerator implements ErisGenerator
     /** @var ErisGenerator<Node> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Node from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -865,7 +872,7 @@ final class NodeGenerator implements ErisGenerator
                 221 => new QueryRootGenerator($release, $depth - 1),
                 222 => new GroupingGenerator($release, $depth - 1),
                 223 => new LateOrderingGenerator($release, $depth - 1),
-                224 => new OutputOrdinalGenerator($release, $depth - 1),
+                224 => new OutputOrdinalGenerator($release),
                 225 => new ProcedureAnalyseGenerator($release),
                 226 => new ProgramVariableGenerator($release),
                 227 => new RowLimitGenerator($release),
@@ -873,7 +880,7 @@ final class NodeGenerator implements ErisGenerator
                 229 => new ExplicitTableGenerator($release),
                 230 => new IntoDumpfileGenerator($release),
                 231 => new IntoOutfileGenerator($release),
-                232 => new IntoVariablesGenerator($release, $depth - 1),
+                232 => new IntoVariablesGenerator($release),
                 233 => new LockingClauseGenerator($release),
                 234 => new OrderItemGenerator($release, $depth - 1),
                 235 => new ParenthesizedQueryGenerator($release, $depth - 1),
@@ -895,7 +902,7 @@ final class NodeGenerator implements ErisGenerator
                 251 => new DerivedTableGenerator($release, $depth - 1),
                 252 => new DualGenerator($release),
                 253 => new EscapedRelationGenerator($release, $depth - 1),
-                254 => new IndexHintGenerator($release, $depth - 1),
+                254 => new IndexHintGenerator($release),
                 255 => new PrimaryIndexGenerator($release),
                 256 => new TableSampleGenerator($release),
                 257 => new JoinedTableGenerator($release, $depth - 1),
@@ -1648,15 +1655,15 @@ final class NodeGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Node>
+     * @return GeneratedValueSingle<Node>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Node> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Node>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

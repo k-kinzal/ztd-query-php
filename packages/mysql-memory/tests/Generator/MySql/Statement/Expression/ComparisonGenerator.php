@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -19,6 +20,8 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
+use SqlSemantics\Statement\Scalar;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
@@ -31,6 +34,12 @@ final class ComparisonGenerator implements ErisGenerator
     /** @var ErisGenerator<Comparison> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Comparison from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -40,8 +49,8 @@ final class ComparisonGenerator implements ErisGenerator
 
                 return new Comparison(
                     operator: $operator,
-                    left: $precedence->fits($left, Precedence::BOOL_PRI, Precedence::BOOL_PRI) ? $left : new Grouped($left),
-                    right: $precedence->opening($right) >= Precedence::PREDICATE ? $right : new Grouped($right),
+                    left: $precedence->fits($left, Precedence::BOOL_PRI, Precedence::BOOL_PRI) ? $left : ($left instanceof Scalar ? new Grouped($left) : new GroupedRow($left)),
+                    right: $precedence->opening($right) >= Precedence::PREDICATE ? $right : ($right instanceof Scalar ? new Grouped($right) : new GroupedRow($right)),
                     scalarInformation: null,
                     inputSource: null,
                 );
@@ -79,15 +88,15 @@ final class ComparisonGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Comparison>
+     * @return GeneratedValueSingle<Comparison>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Comparison> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Comparison>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

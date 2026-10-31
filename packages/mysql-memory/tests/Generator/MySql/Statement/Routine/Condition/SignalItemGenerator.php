@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Condition;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -40,6 +41,12 @@ final class SignalItemGenerator implements ErisGenerator
     /** @var ErisGenerator<SignalItem> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SignalItem from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -49,7 +56,7 @@ final class SignalItemGenerator implements ErisGenerator
                 static fn (array $parts): bool => ($bit & 3) !== 0 || !(($parts[1]) instanceof VariableAssignment || ($parts[1]) instanceof DeferredAssignment)
                 && (!($parts[1]) instanceof NullLiteral),
                 Generators::tuple(
-                    Generators::elements(array_values(array_filter(ConditionItemName::cases(), static fn (ConditionItemName $name): bool => $name !== ConditionItemName::ReturnedSqlstate))),
+                    Generators::elements(array_filter(ConditionItemName::cases(), static fn (ConditionItemName $name): bool => $name !== ConditionItemName::ReturnedSqlstate)),
                     Generators::bind(Generators::choose(0, 5), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new LiteralExpressionGenerator($release),
                         1 => new ColumnUseGenerator($release),
@@ -81,15 +88,15 @@ final class SignalItemGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SignalItem>
+     * @return GeneratedValueSingle<SignalItem>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SignalItem> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SignalItem>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

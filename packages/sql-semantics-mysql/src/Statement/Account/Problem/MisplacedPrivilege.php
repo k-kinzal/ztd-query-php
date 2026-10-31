@@ -31,7 +31,7 @@ final class MisplacedPrivilege implements Diagnostic
     /**
      * @param string $privilege The privilege, column list or object kind, as a person reads it
      * @param string $level The level as the manual names it
-     * @param string $error The server error the statement fails with
+     * @param 'ER_ILLEGAL_GRANT_FOR_TABLE'|'ER_ILLEGAL_PRIVILEGE_LEVEL'|'ER_PARSE_ERROR'|'ER_UNSUPPORTED_USE_OF_GRANT_AS'|'ER_WRONG_USAGE' $error The server error the statement fails with
      */
     public function __construct(public readonly string $privilege, public readonly string $level, public readonly string $error)
     {

@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program\Expression\Conversion;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -16,12 +17,10 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredBinaryCast;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
-use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
 
@@ -35,10 +34,16 @@ final class DeferredBinaryCastGenerator implements ErisGenerator
     /** @var ErisGenerator<DeferredBinaryCast> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DeferredBinaryCast from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): DeferredBinaryCast => new DeferredBinaryCast(operand: (new Precedence())->opening($parts[0]) >= Precedence::PREFIX ? $parts[0] : ($parts[0] instanceof Scalar ? new Grouped($parts[0]) : ($parts[0] instanceof RowOperand ? new GroupedRow($parts[0]) : new DeferredGrouped($parts[0]))), scalarInformation: $parts[1], inputSource: $parts[2]),
+            static fn (array $parts): DeferredBinaryCast => new DeferredBinaryCast(operand: (new Precedence())->opening($parts[0]) >= Precedence::PREFIX ? $parts[0] : ($parts[0] instanceof RowOperand ? new GroupedRow($parts[0]) : new DeferredGrouped($parts[0])), scalarInformation: $parts[1], inputSource: $parts[2]),
             Generators::tuple(
                 Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
                     0 => new RowOperandGenerator($release, $depth - 1),
@@ -65,15 +70,15 @@ final class DeferredBinaryCastGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DeferredBinaryCast>
+     * @return GeneratedValueSingle<DeferredBinaryCast>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DeferredBinaryCast> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DeferredBinaryCast>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

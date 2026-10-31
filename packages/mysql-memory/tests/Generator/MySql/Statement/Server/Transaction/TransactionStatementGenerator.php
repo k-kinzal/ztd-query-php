@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Server\Transaction;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -34,6 +35,11 @@ final class TransactionStatementGenerator implements ErisGenerator
     /** @var ErisGenerator<TransactionStatement> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of TransactionStatement from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(Generators::choose(0, 13), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -69,15 +75,15 @@ final class TransactionStatementGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<TransactionStatement>
+     * @return GeneratedValueSingle<TransactionStatement>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<TransactionStatement> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<TransactionStatement>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

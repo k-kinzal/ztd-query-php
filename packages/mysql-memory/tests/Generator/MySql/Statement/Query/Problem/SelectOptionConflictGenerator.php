@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class SelectOptionConflictGenerator implements ErisGenerator
     /** @var ErisGenerator<SelectOptionConflict> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SelectOptionConflict from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -52,15 +58,15 @@ final class SelectOptionConflictGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SelectOptionConflict>
+     * @return GeneratedValueSingle<SelectOptionConflict>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SelectOptionConflict> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SelectOptionConflict>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

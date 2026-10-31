@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Server\Maintenance;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class LoadHistogramGenerator implements ErisGenerator
     /** @var ErisGenerator<LoadHistogram> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of LoadHistogram from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -54,15 +60,15 @@ final class LoadHistogramGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<LoadHistogram>
+     * @return GeneratedValueSingle<LoadHistogram>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<LoadHistogram> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<LoadHistogram>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

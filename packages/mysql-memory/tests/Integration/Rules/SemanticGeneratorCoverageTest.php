@@ -30,6 +30,18 @@ final class SemanticGeneratorCoverageTest extends TestCase
         try {
             $filesystem->dumpFile($directory . '/source/model/Value.php', "<?php\nnamespace SqlSemantics\\Statement;\n/** @visibility public */\n" . $model);
             $filesystem->dumpFile($directory . '/source/generator/ValueGenerator.php', "<?php\nnamespace Tests\\Generator\\Semantics\\Statement;\n" . $generator);
+            $filesystem->dumpFile($directory . '/source/model/Statement.php', "<?php\nnamespace SqlSemantics\\Statement;\n/** @visibility public */\nfinal class CoverageStatement implements \\SqlSemantics\\Statement\\AnalyzedStatement { public function __construct(public readonly CoverageValue \$value) {} }\n");
+            $filesystem->dumpFile($directory . '/source/generator/StatementGenerator.php', <<<'PHP'
+                <?php
+                namespace Tests\Generator\Semantics\Statement;
+                /** @implements \Eris\Generator<\SqlSemantics\Statement\CoverageStatement> */
+                final class CoverageStatementGenerator implements \Eris\Generator {
+                    public function __invoke($size, \Eris\Random\RandomRange $rand) {
+                        return \Eris\Generator\GeneratedValueSingle::fromJustValue(new \SqlSemantics\Statement\CoverageStatement(new \SqlSemantics\Statement\CoverageValue()));
+                    }
+                    public function shrink(\Eris\Generator\GeneratedValue $element) { return $element; }
+                }
+                PHP);
             $filesystem->dumpFile($directory . '/phpstan.neon', <<<NEON
                 parameters:
                     customRulesetUsed: true

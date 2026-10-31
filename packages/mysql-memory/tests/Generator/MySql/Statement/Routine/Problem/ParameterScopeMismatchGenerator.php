@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class ParameterScopeMismatchGenerator implements ErisGenerator
     /** @var ErisGenerator<ParameterScopeMismatch> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ParameterScopeMismatch from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::constant(new ParameterScopeMismatch());
@@ -45,15 +51,15 @@ final class ParameterScopeMismatchGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ParameterScopeMismatch>
+     * @return GeneratedValueSingle<ParameterScopeMismatch>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ParameterScopeMismatch> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ParameterScopeMismatch>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

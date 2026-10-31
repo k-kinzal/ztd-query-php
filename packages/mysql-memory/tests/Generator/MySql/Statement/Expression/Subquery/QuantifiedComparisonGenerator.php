@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression\Subquery;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -20,8 +21,10 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\Semantics\Statement\QueryGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
@@ -36,6 +39,12 @@ final class QuantifiedComparisonGenerator implements ErisGenerator
     /** @var ErisGenerator<QuantifiedComparison> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of QuantifiedComparison from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -43,7 +52,7 @@ final class QuantifiedComparisonGenerator implements ErisGenerator
                 [$operator, $quantifier, $scalar, $row, $query] = $parts;
                 $operand = $quantifier->comparesRows($operator) && $row !== null ? $row : $scalar;
                 if (!(new Precedence())->fits($operand, Precedence::BOOL_PRI, Precedence::BOOL_PRI)) {
-                    $operand = new Grouped($operand);
+                    $operand = $operand instanceof Scalar ? new Grouped($operand) : new GroupedRow($operand);
                 }
 
                 return new QuantifiedComparison(operand: $operand, operator: $operator, quantifier: $quantifier, query: $query, scalarInformation: null, inputSource: null);
@@ -80,15 +89,15 @@ final class QuantifiedComparisonGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<QuantifiedComparison>
+     * @return GeneratedValueSingle<QuantifiedComparison>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<QuantifiedComparison> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<QuantifiedComparison>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

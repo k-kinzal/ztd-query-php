@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Server\Lock;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class TableLockGenerator implements ErisGenerator
     /** @var ErisGenerator<TableLock> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of TableLock from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -57,15 +63,15 @@ final class TableLockGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<TableLock>
+     * @return GeneratedValueSingle<TableLock>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<TableLock> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<TableLock>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

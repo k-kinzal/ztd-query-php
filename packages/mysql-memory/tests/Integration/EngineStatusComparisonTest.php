@@ -47,9 +47,8 @@ final class EngineStatusComparisonTest extends TestCase
     {
         $expected = ['columns' => [['name' => 'Status']], 'rows' => [['performance_schema', 'threads.size', '256']], 'affected' => 1, 'insertId' => 0, 'warnings' => 0, 'info' => null];
         $actual = $expected;
-        $actual['rows'][0][2] = '0';
         self::assertTrue(ExecutionTarget::engines($expected, $actual));
-        $actual['rows'][0][2] = '-1';
+        $actual['rows'][0][2] = '0';
         self::assertFalse(ExecutionTarget::engines($expected, $actual));
         $actual = $expected;
         $actual['warnings'] = 1;

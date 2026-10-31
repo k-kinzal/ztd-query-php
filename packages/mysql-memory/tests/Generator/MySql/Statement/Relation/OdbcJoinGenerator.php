@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Relation;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,12 @@ final class OdbcJoinGenerator implements ErisGenerator
     /** @var ErisGenerator<OdbcJoin> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of OdbcJoin from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -56,15 +63,15 @@ final class OdbcJoinGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<OdbcJoin>
+     * @return GeneratedValueSingle<OdbcJoin>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<OdbcJoin> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<OdbcJoin>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

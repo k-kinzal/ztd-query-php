@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Call\Json\Path;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,21 +29,27 @@ final class LegGenerator implements ErisGenerator
     /** @var ErisGenerator<Leg> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Leg from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(
             new KindGenerator($release),
             static fn (Kind $kind): ErisGenerator => Generators::map(
                 static function (array $parts) use ($kind): Leg {
-                    [$name, $offsets, $last] = $parts;
-                    $from = in_array($kind, [Kind::Cell, Kind::Range], true) ? new Index($last, $offsets[0]) : null;
-                    $to = $kind === Kind::Range ? new Index($last, $last ? $offsets[0] : $offsets[1]) : null;
+                    [$name, $first, $second, $last] = $parts;
+                    $from = in_array($kind, [Kind::Cell, Kind::Range], true) ? new Index($last, min($first, $second)) : null;
+                    $to = $kind === Kind::Range ? new Index($last, $last ? min($first, $second) : max($first, $second)) : null;
 
                     return new Leg(kind: $kind, name: $kind === Kind::Member ? $name : null, from: $from, to: $to);
                 },
                 Generators::tuple(
                     Generators::map(static fn (int $number): string => 'member_' . $number, Generators::choose(0, 9)),
-                    Generators::map(static fn (array $pair): array => [min($pair[0], $pair[1]), max($pair[0], $pair[1])], Generators::tuple(Generators::choose(0, 9), Generators::choose(0, 9))),
+                    Generators::choose(0, 9),
+                    Generators::choose(0, 9),
                     Generators::bool()
                 )
             )
@@ -63,15 +70,15 @@ final class LegGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Leg>
+     * @return GeneratedValueSingle<Leg>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Leg> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Leg>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

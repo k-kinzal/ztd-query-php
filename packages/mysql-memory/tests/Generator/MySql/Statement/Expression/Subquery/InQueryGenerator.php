@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression\Subquery;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -21,8 +22,10 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\Semantics\Statement\QueryGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
@@ -37,14 +40,21 @@ final class InQueryGenerator implements ErisGenerator
     /** @var ErisGenerator<InQuery> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of InQuery from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): InQuery => new InQuery(operand: (new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : new Grouped($parts[0]), query: $parts[1], negated: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]),
+            static fn (array $parts): InQuery => new InQuery(operand: (new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : ($parts[0] instanceof Scalar ? new Grouped($parts[0]) : new GroupedRow($parts[0])), query: $parts[1], negated: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]),
             Generators::suchThat(
-                static fn (array $parts): bool => ((new RowShapes())->query(((new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : new Grouped($parts[0])), ($parts[1])) === null && (new ReadColumns())->problem(($parts[1])) === null)
-                && ((new RowShapes())->query(((new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : new Grouped($parts[0])), ($parts[1])) === null && (new ReadColumns())->problem(($parts[1])) === null && (new DerivedOptions())->problem(($parts[1])) === null)
-                && ((new RowShapes())->query(((new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : new Grouped($parts[0])), ($parts[1])) === null && (new ReadColumns())->problem(($parts[1])) === null && (new SubqueryOptions())->problem($parts[1]) === null),
+                static fn (array $parts): bool => (new RowShapes())->query(((new Precedence())->fits($parts[0], Precedence::PREDICATE, Precedence::BIT_EXPR) ? $parts[0] : ($parts[0] instanceof Scalar ? new Grouped($parts[0]) : new GroupedRow($parts[0]))), ($parts[1])) === null
+                && (new ReadColumns())->problem(($parts[1])) === null
+                && (new DerivedOptions())->problem(($parts[1])) === null
+                && (new SubqueryOptions())->problem($parts[1]) === null,
                 Generators::tuple(
                     Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new ScalarGenerator($release, $depth - 1),
@@ -78,15 +88,15 @@ final class InQueryGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<InQuery>
+     * @return GeneratedValueSingle<InQuery>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<InQuery> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<InQuery>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

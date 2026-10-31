@@ -6,12 +6,14 @@ namespace Tests\Generator\MySql\Statement\Account\Privilege;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -44,11 +46,16 @@ final class GrantPrivilegesGenerator implements ErisGenerator
     /** @var ErisGenerator<GrantPrivileges> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of GrantPrivileges from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
-            static fn (array $parts): GrantPrivileges => new GrantPrivileges(privileges: $parts[0], kind: $parts[1], level: $parts[2], grantees: $parts[3], tls: $parts[4], options: $parts[5], as: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], tableKeyword: $parts[1] === ObjectKind::Table && $parts[1] === ObjectKind::Table && $parts[9]),
+            static fn (array $parts): GrantPrivileges => new GrantPrivileges(privileges: $parts[0], kind: $parts[1], level: $parts[2], grantees: $parts[3], tls: $parts[4], options: $parts[5], as: $parts[6], statementInformation: $parts[7], inputSource: $parts[8], tableKeyword: $parts[1] === ObjectKind::Table && $parts[9]),
             Generators::suchThat(
                 static fn (array $parts): bool => (($parts[1]) === ObjectKind::Table || array_filter(($parts[0]), static fn ($privilege): bool => $privilege instanceof StaticPrivilege && $privilege->columns !== []) === []) && (array_filter(($parts[0]), static fn ($privilege): bool => $privilege instanceof AllPrivileges) === [] || count(($parts[0])) === 1)
                 && ((($parts[1]) === ObjectKind::Table || array_filter(($parts[0]), static fn ($privilege): bool => $privilege instanceof StaticPrivilege && $privilege->columns !== []) === []) && (array_filter(($parts[0]), static fn ($privilege): bool => $privilege instanceof AllPrivileges) === [] || count(($parts[0])) === 1)),
@@ -70,6 +77,19 @@ final class GrantPrivilegesGenerator implements ErisGenerator
                 ))
             )
         );
+        $this->delegate = Generators::map(
+            static function (GrantPrivileges $statement) use ($release): GrantPrivileges {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof GrantPrivileges, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (GrantPrivileges $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (GrantPrivileges $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -82,27 +102,19 @@ final class GrantPrivilegesGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (GrantPrivileges $statement): GrantPrivileges => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (GrantPrivileges $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<GrantPrivileges>
+     * @return GeneratedValueSingle<GrantPrivileges>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<GrantPrivileges> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<GrantPrivileges>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,12 +6,14 @@ namespace Tests\Generator\MySql\Statement\Table;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
@@ -51,14 +53,20 @@ final class CreateIndexGenerator implements ErisGenerator
     /** @var ErisGenerator<CreateIndex> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of CreateIndex from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
-            static fn (array $parts): CreateIndex => new CreateIndex(name: $parts[0], table: $parts[1], parts: $parts[2], kind: $parts[3], algorithm: in_array($parts[3], [IndexKind::Index, IndexKind::Unique], true) ? $parts[4] : null, options: array_values(array_filter($parts[5], static fn ($option): bool => (!$option instanceof IndexParser || $parts[0] === IndexKind::FullText) && (!$option instanceof IndexUsing || in_array($parts[0], [IndexKind::Index, IndexKind::Unique], true)))), alterOptions: $parts[6], relationInformation: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], typeKeyword: $parts[10]),
+            static fn (array $parts): CreateIndex => new CreateIndex(name: $parts[0], table: $parts[1], parts: $parts[2], kind: $parts[3], algorithm: in_array($parts[3], [IndexKind::Index, IndexKind::Unique], true) ? $parts[4] : null, options: array_values(array_filter($parts[5], static fn ($option): bool => (!$option instanceof IndexParser || $parts[3] === IndexKind::FullText) && (!$option instanceof IndexUsing || in_array($parts[3], [IndexKind::Index, IndexKind::Unique], true)))), alterOptions: $parts[6], relationInformation: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], typeKeyword: $parts[10]),
             Generators::suchThat(
                 static fn (array $parts): bool => count(array_filter(($parts[6]), static fn ($option): bool => $option instanceof AlgorithmOption)) <= 1 && count(array_filter(($parts[6]), static fn ($option): bool => $option instanceof LockOption)) <= 1,
-                Generators::suchThat(static fn (array $parts): bool => ($bit & 3) !== 0 || !(new IndexOrdering())->legacy($parts[3], $parts[2], in_array($parts[3], [IndexKind::Index, IndexKind::Unique], true) ? $parts[4] : null, array_values(array_filter($parts[5], static fn ($option): bool => (!$option instanceof IndexParser || $parts[0] === IndexKind::FullText) && (!$option instanceof IndexUsing || in_array($parts[0], [IndexKind::Index, IndexKind::Unique], true))))), Generators::tuple(
+                Generators::suchThat(static fn (array $parts): bool => ($bit & 3) !== 0 || !(new IndexOrdering())->legacy($parts[3], $parts[2], in_array($parts[3], [IndexKind::Index, IndexKind::Unique], true) ? $parts[4] : null, array_values(array_filter($parts[5], static fn ($option): bool => (!$option instanceof IndexParser || $parts[3] === IndexKind::FullText) && (!$option instanceof IndexUsing || in_array($parts[3], [IndexKind::Index, IndexKind::Unique], true))))), Generators::tuple(
                     new NameGenerator($release),
                     new QualifiedNameGenerator($release),
                     Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::elements(array_keys(array_filter([508, 511, 508, 508], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -91,6 +99,19 @@ final class CreateIndexGenerator implements ErisGenerator
                 ))
             )
         );
+        $this->delegate = Generators::map(
+            static function (CreateIndex $statement) use ($release): CreateIndex {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof CreateIndex, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (CreateIndex $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (CreateIndex $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -103,27 +124,19 @@ final class CreateIndexGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (CreateIndex $statement): CreateIndex => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateIndex $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<CreateIndex>
+     * @return GeneratedValueSingle<CreateIndex>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<CreateIndex> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<CreateIndex>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

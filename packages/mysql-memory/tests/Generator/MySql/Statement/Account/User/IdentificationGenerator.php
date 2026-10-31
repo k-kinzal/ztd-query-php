@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Account\User;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -30,6 +31,11 @@ final class IdentificationGenerator implements ErisGenerator
     /** @var ErisGenerator<Identification> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Identification from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::bind(
@@ -40,7 +46,7 @@ final class IdentificationGenerator implements ErisGenerator
                     match ($credential) {
                         Credential::None, Credential::Hash => new NameGenerator($release),
                         Credential::PasswordHash => Generators::constant(null),
-                        default => Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                        Credential::Password, Credential::RandomPassword => Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
                     },
                     new TextGenerator($release)
                 )
@@ -62,15 +68,15 @@ final class IdentificationGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Identification>
+     * @return GeneratedValueSingle<Identification>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Identification> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Identification>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

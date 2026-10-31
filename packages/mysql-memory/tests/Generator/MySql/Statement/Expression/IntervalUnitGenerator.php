@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class IntervalUnitGenerator implements ErisGenerator
     /** @var ErisGenerator<IntervalUnit> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of IntervalUnit from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(IntervalUnit::cases());
@@ -45,15 +51,15 @@ final class IntervalUnitGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<IntervalUnit>
+     * @return GeneratedValueSingle<IntervalUnit>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<IntervalUnit> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<IntervalUnit>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

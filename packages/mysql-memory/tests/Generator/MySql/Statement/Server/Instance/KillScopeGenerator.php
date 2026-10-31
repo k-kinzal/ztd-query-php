@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Server\Instance;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class KillScopeGenerator implements ErisGenerator
     /** @var ErisGenerator<KillScope> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of KillScope from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(KillScope::cases());
@@ -45,15 +51,15 @@ final class KillScopeGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<KillScope>
+     * @return GeneratedValueSingle<KillScope>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<KillScope> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<KillScope>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

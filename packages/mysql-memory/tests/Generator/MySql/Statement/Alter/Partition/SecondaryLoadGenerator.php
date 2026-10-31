@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Alter\Partition;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class SecondaryLoadGenerator implements ErisGenerator
     /** @var ErisGenerator<SecondaryLoad> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SecondaryLoad from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -53,15 +59,15 @@ final class SecondaryLoadGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SecondaryLoad>
+     * @return GeneratedValueSingle<SecondaryLoad>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SecondaryLoad> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SecondaryLoad>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

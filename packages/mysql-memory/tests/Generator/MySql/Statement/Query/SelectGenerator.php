@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -44,6 +45,12 @@ final class SelectGenerator implements ErisGenerator
     /** @var ErisGenerator<Select> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Select from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -79,7 +86,7 @@ final class SelectGenerator implements ErisGenerator
                 ($bit & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ProcedureAnalyseGenerator($release)) : Generators::constant(null),
                 Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new LockingClauseGenerator($release))),
                 $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new IntoDumpfileGenerator($release), 1 => new IntoOutfileGenerator($release), default => new IntoVariablesGenerator($release, $depth - 1)
+                    0 => new IntoDumpfileGenerator($release), 1 => new IntoOutfileGenerator($release), default => new IntoVariablesGenerator($release)
                 })) : Generators::constant(null),
                 new IntoPositionGenerator($release),
                 $depth > 0 && ($bit & 1) !== 0 ? Generators::oneOf(Generators::constant(null), new LateOrderingGenerator($release, $depth - 1)) : Generators::constant(null),
@@ -102,15 +109,15 @@ final class SelectGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Select>
+     * @return GeneratedValueSingle<Select>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Select> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Select>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

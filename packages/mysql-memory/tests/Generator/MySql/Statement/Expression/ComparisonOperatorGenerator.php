@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class ComparisonOperatorGenerator implements ErisGenerator
     /** @var ErisGenerator<ComparisonOperator> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ComparisonOperator from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(ComparisonOperator::cases());
@@ -45,15 +51,15 @@ final class ComparisonOperatorGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ComparisonOperator>
+     * @return GeneratedValueSingle<ComparisonOperator>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ComparisonOperator> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ComparisonOperator>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

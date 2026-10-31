@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth;
  * Observed on MySQL 5.6.51 and 5.7.44. Modern releases stop at the width error.
  * The input boundary supplies the clause and row role as semantic values.
  *
- * @visibility MySqlMemory\Session\Parse
+ * @visibility MySqlMemory\Session
  */
 final class OperandConditions
 {

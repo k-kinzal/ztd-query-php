@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Dml\Handler;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class RefusedSubqueryGenerator implements ErisGenerator
     /** @var ErisGenerator<RefusedSubquery> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of RefusedSubquery from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -50,15 +56,15 @@ final class RefusedSubqueryGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<RefusedSubquery>
+     * @return GeneratedValueSingle<RefusedSubquery>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<RefusedSubquery> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<RefusedSubquery>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

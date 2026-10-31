@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Replication\Source;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -33,6 +34,11 @@ final class SourceOptionGenerator implements ErisGenerator
     /** @var ErisGenerator<SourceOption> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of SourceOption from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $releases = new Releases();
@@ -72,15 +78,15 @@ final class SourceOptionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<SourceOption>
+     * @return GeneratedValueSingle<SourceOption>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<SourceOption> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<SourceOption>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,12 +6,14 @@ namespace Tests\Generator\MySql\Statement\Server\Instance;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Dml\ValueRoles;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -38,23 +40,18 @@ final class KillGenerator implements ErisGenerator
     /** @var ErisGenerator<Kill> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of Kill from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
             static fn (array $parts): Kill => new Kill(scope: $parts[0], process: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]),
             Generators::suchThat(
-                static fn (array $parts): bool => (static function (array $parts): bool {
-                    foreach ($parts as $part) {
-                        foreach (is_array($part) ? $part : [$part] as $node) {
-                            if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {
-                                return false;
-                            }
-                        }
-                    }
-
-                    return true;
-                })($parts)
-                && (Operands::aggregateFree(($parts[1]))),
+                static fn (array $parts): bool => (new ValueRoles())->problem($parts[1]) === null && Operands::aggregateFree($parts[1]),
                 Generators::tuple(
                     Generators::oneOf(Generators::constant(null), new KillScopeGenerator($release)),
                     Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -68,6 +65,19 @@ final class KillGenerator implements ErisGenerator
                 )
             )
         );
+        $this->delegate = Generators::map(
+            static function (Kill $statement) use ($release): Kill {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof Kill, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (Kill $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (Kill $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -80,27 +90,19 @@ final class KillGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (Kill $statement): Kill => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Kill $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<Kill>
+     * @return GeneratedValueSingle<Kill>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<Kill> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<Kill>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

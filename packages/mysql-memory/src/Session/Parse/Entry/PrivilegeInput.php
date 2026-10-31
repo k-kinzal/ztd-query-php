@@ -27,12 +27,14 @@ final class PrivilegeInput
     /**
      * Formats immediate or deferred target contradictions using their semantic operands.
      */
-    public function placement(\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege $problem, Session $session): ?SqlError
+    public function placement(\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege $problem, Session $session): SqlError
     {
         return match ($problem->error) {
             'ER_UNSUPPORTED_USE_OF_GRANT_AS' => \MySqlMemory\Error\Family\AccountError::UnsupportedGrantAs->error(),
             'ER_ILLEGAL_GRANT_FOR_TABLE' => \MySqlMemory\Error\Family\AccountError::IllegalGrantForTable->error(),
-            default => null,
+            'ER_ILLEGAL_PRIVILEGE_LEVEL' => \MySqlMemory\Error\Family\AccountError::IllegalPrivilegeLevel->error($problem->privilege),
+            'ER_PARSE_ERROR' => \MySqlMemory\Error\Family\StatementError::ParseError->error('', 1),
+            'ER_WRONG_USAGE' => \MySqlMemory\Error\Family\StatementError::WrongUsage->error('DB GRANT', 'GLOBAL PRIVILEGES'),
         };
     }
 

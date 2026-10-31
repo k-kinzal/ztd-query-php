@@ -6,6 +6,7 @@ namespace MySqlMemory\Session\Problem;
 
 use LogicException;
 use MySqlMemory\Error\ErrorNumbers;
+use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\Family\ProgramError;
@@ -114,6 +115,7 @@ final class Errors
             ?? $this->definition($diagnostic, $database, $session->settings()->legacy())
             ?? $this->manipulation($diagnostic, $statement)
             ?? $this->expression($diagnostic, $session->settings()->legacy())
+            ?? $this->account($diagnostic, $session)
             ?? $this->server($diagnostic, $session, $statement)
             ?? throw new LogicException('No MySQL error mapping for ' . $diagnostic::class . ': ' . $diagnostic->message());
     }
@@ -252,6 +254,7 @@ final class Errors
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions => \MySqlMemory\Error\Family\PartitionError::PartitionsNotDefined->error($diagnostic->kind->value),
             $diagnostic instanceof NoColumns => SchemaError::TableMustHaveColumns->error(),
             $diagnostic instanceof DuplicateColumn, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
             $diagnostic instanceof IncorrectColumnName => SchemaError::WrongColumnName->error($diagnostic->column->value),
             $diagnostic instanceof NullablePrimaryKey => SchemaError::PrimaryCantHaveNull->error(),
             $diagnostic instanceof UnknownKeyColumn => SchemaError::KeyColumnMissing->error($diagnostic->column->value),
@@ -337,6 +340,10 @@ final class Errors
      * Answers the server error of a problem of a server, variable, program or utility statement, or null for another diagnostic.
      *
      * SHOW PROCEDURE CODE and SHOW FUNCTION CODE need a server built with debugging.
+     *
+     * A utility misuse of EXPLAIN carries no format name: an unknown format is reported without
+     * its name, EXPLAIN ANALYZE with TRADITIONAL as ER_NOT_SUPPORTED_YET, and EXPLAIN INTO with a
+     * format other than JSON as the implicit-format refusal (ER_EXPLAIN_INTO_IMPLICIT_FORMAT_NOT_SUPPORTED).
      */
     public function server(Diagnostic $diagnostic, Session $session, ?Node $statement): ?SqlError
     {
@@ -349,6 +356,14 @@ final class Errors
             $diagnostic instanceof UnknownSystemVariable => $this->unknownVariable($diagnostic, $session->settings()->legacy()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable => AdministrationError::VariableIsNotStruct->error($diagnostic->name),
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorNumbers::from($diagnostic->rule->code()), $diagnostic->message()),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment => $this->programText($diagnostic, $session),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ParameterScopeMismatch => StatementError::UnsupportedPreparedStatement->error(),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Event\Problem\OperandWidth => (new \MySqlMemory\Session\Parse\Entry\Event\OperandConditions())->error($diagnostic, $session->settings()->legacy()),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::UnknownExplainFormat => StatementError::UnknownExplainFormat->error(''),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::AnalyzeFormat => StatementError::NotSupportedYet->error('EXPLAIN ANALYZE with TRADITIONAL format'),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::ExplainIntoFormat => StatementError::ExplainIntoImplicitFormat->error(),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused => new SqlError(StatementError::ParseError, "Partitioning can not be used stand-alone in query near '' at line 1"),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression => new SqlError(StatementError::ParseError, $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic, $session->settings()->release()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly => StatementError::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug'),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesShadow => ProgramError::VariableShadow->error('names'),
@@ -356,6 +371,110 @@ final class Errors
             \MySqlMemory\Command\Admin\Refusals::handles($diagnostic) => (new \MySqlMemory\Command\Admin\Refusals())->error($diagnostic, $statement, $session->text, $session->settings()->legacy()),
             default => null,
         };
+    }
+
+    /**
+     * Answers the server error of an account statement the analysis refuses before any catalog
+     * lookup: a user attribute that is not a JSON object (ER_INVALID_USER_ATTRIBUTE_JSON), a
+     * privilege at a level that cannot hold it, a column privilege on a column the table lacks
+     * (ER_BAD_FIELD_ERROR), a password hash ALTER USER does not accept (ER_PARSE_ERROR), and the
+     * role and rename contradictions below, all verified on an 8.4.7 server.
+     *
+     * CREATE ROLE fails with ER_CANNOT_USER for the anonymous user before any other role, then for
+     * the first account it would define twice. GRANT of roles refuses an anonymous grantee first
+     * (ER_ANONYMOUS_USER), then, role by role, a role granted to itself (ER_FAILED_ROLE_GRANT loop)
+     * or an anonymous role (ER_FAILED_ROLE_GRANT). RENAME USER fails with ER_CANNOT_USER for the
+     * source of the first pair that cannot succeed: a pair renaming an account to itself, a source
+     * an earlier pair renamed away, or a destination an earlier pair created.
+     */
+    public function account(Diagnostic $diagnostic, Session $session): ?SqlError
+    {
+        $names = new \MySqlMemory\Command\Account\Names($session->settings()->release());
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute) {
+            return AccountError::InvalidUserAttributeJson->error();
+        }
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege) {
+            return (new \MySqlMemory\Session\Parse\Entry\PrivilegeInput())->placement($diagnostic, $session);
+        }
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn) {
+            return QueryError::BadField->error($diagnostic->column->value, $diagnostic->table->name->value);
+        }
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash) {
+            return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near(strlen($session->text), $session->text, $session->following, new \RuntimeException($diagnostic->message()), true, $session->semantics()->parser());
+        }
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole) {
+            $seen = [];
+            foreach ($diagnostic->roles as $role) {
+                if ($role->username() === '') {
+                    return $names->failure('CREATE ROLE', 'anonymous user');
+                }
+            }
+            foreach ($diagnostic->roles as $role) {
+                $identity = new \MySqlMemory\Account\Identity($role->username(), $role->hostname() ?? '%');
+                $key = mb_strtolower($identity->key(), 'UTF-8');
+                if (isset($seen[$key])) {
+                    return $names->failure('CREATE ROLE', $seen[$key]->quoted());
+                }
+                $seen[$key] = $identity;
+            }
+        }
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles) {
+            $users = [];
+            foreach ($diagnostic->users as $user) {
+                if ($user instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName) {
+                    if ($user->username() === '') {
+                        return AccountError::AnonymousRoleGrantee->error();
+                    }
+                    $users[] = new \MySqlMemory\Account\Identity($user->username(), $user->hostname() ?? '%');
+                }
+            }
+            foreach ($diagnostic->roles as $granted) {
+                $role = new \MySqlMemory\Account\Identity($granted->role->username(), $granted->role->hostname() ?? '%');
+                foreach ($users as $user) {
+                    if (mb_strtolower($user->key(), 'UTF-8') === mb_strtolower($role->key(), 'UTF-8')) {
+                        return AccountError::RoleGrantedToItself->error($user->backquoted(), $role->backquoted());
+                    }
+                }
+                if ($role->user === '') {
+                    return AccountError::FailedRoleGrant->error($role->backquoted(), ($users[0] ?? $role)->backquoted());
+                }
+            }
+        }
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser) {
+            $gone = [];
+            $made = [];
+            $first = null;
+            foreach ($diagnostic->renamings as $renaming) {
+                if (!$renaming->from instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName || !$renaming->to instanceof \SqlSemantics\Platform\MySql\Statement\Name\AccountName) {
+                    continue;
+                }
+                $from = new \MySqlMemory\Account\Identity($renaming->from->username(), $renaming->from->hostname() ?? '%');
+                $to = new \MySqlMemory\Account\Identity($renaming->to->username(), $renaming->to->hostname() ?? '%');
+                $first ??= $from;
+                [$source, $destination] = [mb_strtolower($from->key(), 'UTF-8'), mb_strtolower($to->key(), 'UTF-8')];
+                if ($source === $destination || isset($gone[$source]) || isset($made[$destination])) {
+                    return $names->failure('RENAME USER', $from->quoted());
+                }
+                unset($made[$source], $gone[$destination]);
+                $gone[$source] = true;
+                $made[$destination] = true;
+            }
+            return $names->failure('RENAME USER', ($first ?? $session->variables->definer)->quoted());
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers the syntax error of a program body the parser refuses: a routine body in a language the
+     * server does not read, or a local variable assignment carrying a system variable scope. MySQL 5.6
+     * reports the scoped assignment after the assignment; later releases report it at the variable.
+     */
+    public function programText(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch|\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment $diagnostic, Session $session): SqlError
+    {
+        $offset = $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $diagnostic->end : $diagnostic->offset;
+
+        return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($offset ?? strlen($session->text), $session->text, $session->following, new \RuntimeException($diagnostic->message()), true, $session->semantics()->parser());
     }
 
     /**

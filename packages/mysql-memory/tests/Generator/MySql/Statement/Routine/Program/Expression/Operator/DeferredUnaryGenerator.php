@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Routine\Program\Expression\Operator;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -16,12 +17,10 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary;
-use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Expression\Operator\UnaryOperatorGenerator;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
@@ -36,10 +35,16 @@ final class DeferredUnaryGenerator implements ErisGenerator
     /** @var ErisGenerator<DeferredUnary> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of DeferredUnary from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): DeferredUnary => new DeferredUnary(operator: $parts[0], operand: (new Precedence())->opening($parts[1]) >= Precedence::PREFIX ? $parts[1] : ($parts[1] instanceof Scalar ? new Grouped($parts[1]) : ($parts[1] instanceof RowOperand ? new GroupedRow($parts[1]) : new DeferredGrouped($parts[1]))), keyword: false, scalarInformation: $parts[3], inputSource: $parts[4]),
+            static fn (array $parts): DeferredUnary => new DeferredUnary(operator: $parts[0], operand: (new Precedence())->opening($parts[1]) >= Precedence::PREFIX ? $parts[1] : ($parts[1] instanceof RowOperand ? new GroupedRow($parts[1]) : new DeferredGrouped($parts[1])), keyword: false, scalarInformation: $parts[3], inputSource: $parts[4]),
             Generators::tuple(
                 new UnaryOperatorGenerator($release),
                 Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -68,15 +73,15 @@ final class DeferredUnaryGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<DeferredUnary>
+     * @return GeneratedValueSingle<DeferredUnary>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<DeferredUnary> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<DeferredUnary>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

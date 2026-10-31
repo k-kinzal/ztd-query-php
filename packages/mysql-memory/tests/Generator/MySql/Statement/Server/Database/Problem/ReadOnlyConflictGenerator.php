@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Server\Database\Problem;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class ReadOnlyConflictGenerator implements ErisGenerator
     /** @var ErisGenerator<ReadOnlyConflict> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ReadOnlyConflict from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::constant(new ReadOnlyConflict());
@@ -45,15 +51,15 @@ final class ReadOnlyConflictGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ReadOnlyConflict>
+     * @return GeneratedValueSingle<ReadOnlyConflict>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ReadOnlyConflict> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ReadOnlyConflict>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

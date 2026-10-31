@@ -12,6 +12,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser;
+use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
+use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
@@ -25,6 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -878,4 +887,80 @@ final class ErrorsTest extends TestCase
         self::assertSame([3066, 'HY000', $problem->message()], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
     }
 
+    public function testProgramTextReportsTheScopedAssignmentNearItsVariable(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->text = 'CREATE PROCEDURE p() BEGIN DECLARE v INT; SET GLOBAL v = 1; END';
+        $error = (new Errors())->programText(new ScopedLocalAssignment(46, 58), $session);
+
+        self::assertSame(1064, $error->getCode());
+        self::assertStringContainsString("near 'GLOBAL v = 1; END'", $error->getMessage());
+    }
+
+    public function testProgramTextReportsTheScopedAssignmentAfterItOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->text = 'CREATE PROCEDURE p() BEGIN DECLARE v INT; SET GLOBAL v = 1; END';
+        $error = (new Errors())->programText(new ScopedLocalAssignment(46, 58), $session);
+
+        self::assertSame(1064, $error->getCode());
+        self::assertStringContainsString("near '; END'", $error->getMessage());
+    }
+
+    public function testAccountMapsAnInvalidUserAttribute(): void
+    {
+        $error = (new Errors())->account(new InvalidUserAttribute('x'), (new Instance('8.4.7'))->connect());
+
+        self::assertSame([3982, 'The user attribute must be a valid JSON object'], [$error?->getCode(), $error?->getMessage()]);
+    }
+
+    public function testAccountMapsAnAnonymousRoleDefinitionBeforeADuplicate(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $anonymous = (new Errors())->account(new RefusedCreateRole(false, [new AccountName(new Name('r5')), new AccountName(new Name('')), new AccountName(new Name('r5'))]), $session);
+        $duplicate = (new Errors())->account(new RefusedCreateRole(false, [new AccountName(new Name('r6'), new Name('h1')), new AccountName(new Name('r6'), new Name('H1'))]), $session);
+
+        self::assertSame([1396, 'Operation CREATE ROLE failed for anonymous user'], [$anonymous?->getCode(), $anonymous?->getMessage()]);
+        self::assertSame([1396, "Operation CREATE ROLE failed for 'r6'@'h1'"], [$duplicate?->getCode(), $duplicate?->getMessage()]);
+    }
+
+    public function testAccountMapsRoleGrantContradictionsInServerOrder(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $u1 = new AccountName(new Name('u1'));
+        $anonymousGrantee = (new Errors())->account(new RefusedGrantRoles([new GrantedRole($u1)], [new AccountName(new Name('')), $u1]), $session);
+        $loop = (new Errors())->account(new RefusedGrantRoles([new GrantedRole($u1), new GrantedRole(new AccountName(new Name('')))], [$u1]), $session);
+        $anonymousRole = (new Errors())->account(new RefusedGrantRoles([new GrantedRole(new AccountName(new Name('')))], [$u1]), $session);
+
+        self::assertSame([3876, 'Cannot grant roles to an anonymous user.'], [$anonymousGrantee?->getCode(), $anonymousGrantee?->getMessage()]);
+        self::assertSame([4027, 'User account `u1`@`%` is directly or indirectly granted to the role `u1`@`%`. The GRANT would create a loop'], [$loop?->getCode(), $loop?->getMessage()]);
+        self::assertSame([3524, 'Failed to grant ``@`%`` to `u1`@`%`'], [$anonymousRole?->getCode(), $anonymousRole?->getMessage()]);
+    }
+
+    public function testAccountMapsTheFirstImpossibleRenaming(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $u1 = new AccountName(new Name('u1'));
+        $u2 = new AccountName(new Name('u2'));
+        $u9 = new AccountName(new Name('u9'));
+        $self = (new Errors())->account(new RefusedRenameUser([new UserRenaming($u1, $u1)]), $session);
+        $renamedAway = (new Errors())->account(new RefusedRenameUser([new UserRenaming($u1, $u9), new UserRenaming($u1, new AccountName(new Name('u8')))]), $session);
+        $created = (new Errors())->account(new RefusedRenameUser([new UserRenaming($u1, $u9), new UserRenaming($u2, $u9)]), $session);
+
+        self::assertSame("Operation RENAME USER failed for 'u1'@'%'", $self?->getMessage());
+        self::assertSame("Operation RENAME USER failed for 'u1'@'%'", $renamedAway?->getMessage());
+        self::assertSame([1396, "Operation RENAME USER failed for 'u2'@'%'"], [$created?->getCode(), $created?->getMessage()]);
+    }
+
+    public function testAccountMapsAnUnknownGrantColumnToTheTableName(): void
+    {
+        $error = (new Errors())->account(new UnknownGrantColumn(new Name('nocol'), new QualifiedName(new Name('user'), new Name('mysql'))), (new Instance('8.4.7'))->connect());
+
+        self::assertSame([1054, "Unknown column 'nocol' in 'user'"], [$error?->getCode(), $error?->getMessage()]);
+    }
+
+    public function testAccountLeavesOtherProblemsToTheOtherMappings(): void
+    {
+        self::assertNull((new Errors())->account(new AggregateInOrdering(2, true), (new Instance('8.4.7'))->connect()));
+    }
 }

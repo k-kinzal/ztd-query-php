@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Expression\Access;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -18,11 +19,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextMode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
-use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
-use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
-use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
-use SqlSemantics\Statement\Scalar;
 use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
 use Tests\Generator\MySql\Statement\Name\ColumnUseGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
@@ -37,6 +34,12 @@ final class FullTextSearchGenerator implements ErisGenerator
     /** @var ErisGenerator<FullTextSearch> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of FullTextSearch from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -45,7 +48,7 @@ final class FullTextSearchGenerator implements ErisGenerator
                 $stated = $mode === FullTextMode::Boolean ? OptionalWords::Omitted : $stated;
                 $precedence = new Precedence();
                 if (!$precedence->admits($against, Precedence::BIT_EXPR) || (($mode === FullTextMode::Boolean || $stated === OptionalWords::Written) && $precedence->absorbs($against, Precedence::PREDICATE, Precedence::BIT_EXPR))) {
-                    $against = $against instanceof Scalar ? new Grouped($against) : ($against instanceof RowOperand ? new GroupedRow($against) : new DeferredGrouped($against));
+                    $against = new Grouped($against);
                 }
 
                 return new FullTextSearch(columns: $columns, against: $against, mode: $mode, parentheses: $parentheses, stated: $stated, scalarInformation: null, inputSource: null);
@@ -74,15 +77,15 @@ final class FullTextSearchGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<FullTextSearch>
+     * @return GeneratedValueSingle<FullTextSearch>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<FullTextSearch> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<FullTextSearch>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

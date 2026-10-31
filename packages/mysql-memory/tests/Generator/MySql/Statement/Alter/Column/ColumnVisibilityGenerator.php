@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Alter\Column;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,11 @@ final class ColumnVisibilityGenerator implements ErisGenerator
     /** @var ErisGenerator<ColumnVisibility> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of ColumnVisibility from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -54,15 +60,15 @@ final class ColumnVisibilityGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<ColumnVisibility>
+     * @return GeneratedValueSingle<ColumnVisibility>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<ColumnVisibility> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<ColumnVisibility>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

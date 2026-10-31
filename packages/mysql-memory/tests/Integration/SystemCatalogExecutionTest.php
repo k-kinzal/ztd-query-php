@@ -39,7 +39,7 @@ final class SystemCatalogExecutionTest extends TestCase
 
 
     #[DataProvider('providerGeneratedCatalogs')]
-    public function testGeneratedCatalogMetadataIsConsumedByShowColumns(\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables $catalog, \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns $statement): void
+    public function testCatalogMetadataIsConsumedByShowColumns(\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables $catalog, \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns $statement): void
     {
         $instance = new Instance('8.4.7');
         $instance->dictionary->system = new \MySqlMemory\System\SystemSchemas($instance, \SqlSemantics\Contract\GrammarRelease::MySql847, $catalog);
@@ -53,15 +53,12 @@ final class SystemCatalogExecutionTest extends TestCase
      */
     public static function providerGeneratedCatalogs(): iterable
     {
-        $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
-        $random->seed(1983);
-        $generator = new \Tests\Generator\MySql\Statement\Table\Catalog\SystemTablesGenerator(\SqlSemantics\Contract\GrammarRelease::MySql847);
-        do {
-            $catalog = $generator(8, $random)->unbox();
-        } while ($catalog->tables === []);
+        $catalog = \SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables::of(\SqlSemantics\Contract\GrammarRelease::MySql847);
         $table = $catalog->tables[0];
-        $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($table->name), new \SqlSemantics\Statement\Identifier\Name($table->schema))));
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name($table->name), new \SqlSemantics\Statement\Identifier\Name($table->schema))), \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowListing::Full);
         $context = new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), [new \SqlSemantics\Statement\Identifier\Name('pbt')]);
-        yield [$catalog, (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement)];
+        $published = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($context, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns::class, $published);
+        yield [$catalog, $published];
     }
 }

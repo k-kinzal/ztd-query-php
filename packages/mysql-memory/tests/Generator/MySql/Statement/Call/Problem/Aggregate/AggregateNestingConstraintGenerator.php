@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Call\Problem\Aggregate;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use LogicException;
@@ -31,6 +32,11 @@ final class AggregateNestingConstraintGenerator implements ErisGenerator
     /** @var ErisGenerator<AggregateNestingConstraint> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of AggregateNestingConstraint from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $bit = (new ReleaseDomain())->bit($release);
@@ -62,15 +68,15 @@ final class AggregateNestingConstraintGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<AggregateNestingConstraint>
+     * @return GeneratedValueSingle<AggregateNestingConstraint>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<AggregateNestingConstraint> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<AggregateNestingConstraint>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -32,6 +33,12 @@ final class OrderItemGenerator implements ErisGenerator
     /** @var ErisGenerator<OrderItem> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of OrderItem from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -41,7 +48,7 @@ final class OrderItemGenerator implements ErisGenerator
                 default => $parts[0],
             }, direction: $parts[1], inputSource: null),
             Generators::tuple(
-                Generators::bind(Generators::bool(), static fn (bool $ordinal): ErisGenerator => $ordinal ? new OutputOrdinalGenerator($release, $depth - 1) : new ScalarGenerator($release, $depth - 1)),
+                Generators::bind(Generators::bool(), static fn (bool $ordinal): ErisGenerator => $ordinal ? new OutputOrdinalGenerator($release) : new ScalarGenerator($release, $depth - 1)),
                 Generators::oneOf(Generators::constant(null), new DirectionGenerator($release))
             )
         );
@@ -61,15 +68,15 @@ final class OrderItemGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<OrderItem>
+     * @return GeneratedValueSingle<OrderItem>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<OrderItem> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<OrderItem>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

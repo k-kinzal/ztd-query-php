@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Table\Option;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -28,6 +29,11 @@ final class CollationOptionGenerator implements ErisGenerator
     /** @var ErisGenerator<CollationOption> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of CollationOption from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
@@ -55,15 +61,15 @@ final class CollationOptionGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<CollationOption>
+     * @return GeneratedValueSingle<CollationOption>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<CollationOption> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<CollationOption>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

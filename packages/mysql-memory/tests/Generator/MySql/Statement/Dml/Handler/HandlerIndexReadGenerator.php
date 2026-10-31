@@ -6,11 +6,13 @@ namespace Tests\Generator\MySql\Statement\Dml\Handler;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Construction\Publication;
 use SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -35,6 +37,12 @@ final class HandlerIndexReadGenerator implements ErisGenerator
     /** @var ErisGenerator<HandlerIndexRead> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of HandlerIndexRead from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     * @param int $depth The nesting depth left for the recursive components
+     */
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
@@ -52,6 +60,19 @@ final class HandlerIndexReadGenerator implements ErisGenerator
                 )
             )
         );
+        $this->delegate = Generators::map(
+            static function (HandlerIndexRead $statement) use ($release): HandlerIndexRead {
+                $published = (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement);
+                Check::invariant($published instanceof HandlerIndexRead, 'Publication keeps the statement type.');
+
+                return $published;
+            },
+            $this->delegate
+        );
+        $this->delegate = Generators::suchThat(
+            static fn (HandlerIndexRead $statement): bool => Analysis::accepted($statement),
+            $this->delegate
+        );
         $this->delegate = Generators::suchThat(
             static function (HandlerIndexRead $value) use ($release): bool {
                 $domain = new ReleaseDomain();
@@ -64,27 +85,19 @@ final class HandlerIndexReadGenerator implements ErisGenerator
             },
             $this->delegate
         );
-        $this->delegate = Generators::map(
-            static fn (HandlerIndexRead $statement): HandlerIndexRead => (new Publication())->publish(new AnalysisContext(new LanguageProfile($release), [new Name('pbt')]), $statement),
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (HandlerIndexRead $statement): bool => Analysis::accepted($statement),
-            $this->delegate
-        );
     }
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<HandlerIndexRead>
+     * @return GeneratedValueSingle<HandlerIndexRead>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<HandlerIndexRead> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<HandlerIndexRead>
      */
     public function shrink(GeneratedValue $element): GeneratedValue

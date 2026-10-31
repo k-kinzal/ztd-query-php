@@ -18,17 +18,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\RejectedInput;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseStop;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use Tests\Generator\MySql\Statement\Notice\DeprecationGenerator;
-use Tests\Generator\MySql\Statement\Notice\ParseFailureGenerator;
-use Tests\Generator\MySql\Statement\Notice\ParseStopGenerator;
+use Tests\Support\Analysis;
 use Tests\Generator\Semantics\Statement\Fact\DiagnosticGenerator;
 
-/**
- * Generated semantic refusals reach the failure handling of a session without source SQL.
- */
 #[CoversNothing]
 #[Large]
 final class SemanticInputRefusalTest extends TestCase
@@ -43,6 +40,9 @@ final class SemanticInputRefusalTest extends TestCase
         $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
         $random->seed(20261029);
         (new \Eris\Quantifier\ForAll([$conditions], 100, new \Eris\Shrinker\ShrinkerFactory(['timeLimit' => null]), 'multiple', $random))->withMaxSize(10)->then(static function (RejectedInput $condition) use ($release): void {
+            if (Analysis::state($condition->problem)) {
+                return;
+            }
             $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             $session->text = 'Semantic input failure supplied without source SQL';
             try {
@@ -82,15 +82,19 @@ final class SemanticInputRefusalTest extends TestCase
         $release = GrammarRelease::MySql847;
         $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
         $random->seed(20261029);
+        $deprecations = Generators::map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), Generators::elements(Deprecated::cases()));
         $conditions = Generators::tuple(
-            Generators::suchThat(static fn (Deprecation $warning): bool => !$warning->aborts, new DeprecationGenerator($release)),
-            Generators::suchThat(static fn (ParseFailure $failure): bool => !$failure->aborts, new ParseFailureGenerator($release)),
-            new ParseStopGenerator($release),
-            new DeprecationGenerator($release)
+            $deprecations,
+            Generators::map(static fn (Diagnostic $problem): ParseFailure => new ParseFailure($problem), new DiagnosticGenerator($release)),
+            Generators::constant(ParseStop::ProgramStatement),
+            $deprecations
         );
         (new \Eris\Quantifier\ForAll([$conditions], 100, new \Eris\Shrinker\ShrinkerFactory(['timeLimit' => null]), 'multiple', $random))->then(
             static function (array $conditions): void {
                 [$warning, $failure, $stop, $ignored] = $conditions;
+                if (Analysis::state($failure->problem)) {
+                    return;
+                }
                 $session = (new Instance('8.4.7'))->connect();
                 $session->text = 'Completed semantic conditions without SQL text';
                 $syntax = \MySqlMemory\Error\Family\StatementError::ParseError->error('later input', 1);

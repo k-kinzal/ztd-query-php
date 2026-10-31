@@ -6,6 +6,7 @@ namespace Tests\Generator\MySql\Statement\Query\Clause;
 
 use Eris\Generator as ErisGenerator;
 use Eris\Generator\GeneratedValue;
+use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
 use SqlSemantics\Contract\GrammarRelease;
@@ -26,6 +27,11 @@ final class GroupingModifierGenerator implements ErisGenerator
     /** @var ErisGenerator<GroupingModifier> */
     private ErisGenerator $delegate;
 
+    /**
+     * Composes the generator of GroupingModifier from the generators of its components.
+     *
+     * @param GrammarRelease $release The release whose forms the values keep
+     */
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::elements(GroupingModifier::cases());
@@ -45,15 +51,15 @@ final class GroupingModifierGenerator implements ErisGenerator
 
     /**
      * @param int $size The size selected by Eris
-     * @return GeneratedValue<GroupingModifier>
+     * @return GeneratedValueSingle<GroupingModifier>
      */
-    public function __invoke($size, RandomRange $rand): GeneratedValue
+    public function __invoke($size, RandomRange $rand): GeneratedValueSingle
     {
         return ($this->delegate)($size, $rand);
     }
 
     /**
-     * @param GeneratedValue<GroupingModifier> $element The generated counterexample
+     * @param GeneratedValue<mixed> $element The generated counterexample
      * @return GeneratedValue<GroupingModifier>
      */
     public function shrink(GeneratedValue $element): GeneratedValue
