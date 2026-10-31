@@ -60,7 +60,7 @@ final class DeclarationErrorsTest extends TestCase
         $programAnalysis = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(' . $elements . ')');
         $program = $programAnalysis;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $program);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $program->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable::class, $program->body);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode($code);
 

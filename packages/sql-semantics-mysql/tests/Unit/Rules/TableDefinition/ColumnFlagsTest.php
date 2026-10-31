@@ -21,7 +21,7 @@ final class ColumnFlagsTest extends TestCase
 {
     public function testFlagsAppliesTheAttributesInOrder(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)');
+        $create = (new Semantics(Dialect::MySql, '5.6.51'))->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)');
         $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
 

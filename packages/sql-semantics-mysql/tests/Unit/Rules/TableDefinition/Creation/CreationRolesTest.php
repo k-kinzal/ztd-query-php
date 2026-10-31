@@ -36,10 +36,7 @@ final class CreationRolesTest extends TestCase
 
     public function testDeferredRetainsTheColumnlessRequest(): void
     {
-        $name = new QualifiedName(new Name('t'));
-        $definition = new M\Table\CreateTable($name, ifNotExists: true);
-        self::assertTrue((new CreationRoles())->deferred($definition->elements, $definition->options, $definition->query));
-        self::assertTrue($definition->hasExecutionCondition());
+        self::assertTrue((new CreationRoles())->deferred([], [], null));
     }
     public function testTemporaryStorageDistinguishesZeroAndTheLastSpecifiedSize(): void
     {

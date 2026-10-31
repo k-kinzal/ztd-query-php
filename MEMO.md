@@ -63,6 +63,249 @@ recorded here so that they are not lost and not reinterpreted.
    errors above and cost the user time.
 
 
+## The type property SQL Semantics must have (user's review of 2026-10-31, mandatory)
+
+The user reviewed the PBT results and corrected the direction of the work. These points
+are binding.
+
+1. **The analysis-result types are type-safe and protected by invariants: a value that can be
+   instantiated is executable SQL, except for conditions that depend on database state.**
+   MemoryDB exists to measure whether SQL Semantics' structured types have this property.
+   The PBT exposed that they do not: the generators instantiated values the server rejects.
+2. **The `statementInformation` record (diagnostics and warnings) mixes three different
+   things and is therefore wrong as a structure.**
+   - Problems of the structure itself (`DuplicateColumn`, `Misuse`, `MisplacedPrivilege`, ...)
+     are violations of the type's invariants. The constructor must refuse them; the analysis
+     must fail with an error instead of returning a value.
+   - `ParseFailure` and `ParseStop` are analysis errors. They are never part of a value.
+   - Conditions that depend on database state (`MissingTable`, `MissingColumn`,
+     `UndeclaredVariable`, ...) are MemoryDB's responsibility. State management belongs to
+     MemoryDB; the type carries only the name. If the structure could be built, it must run.
+   - `Deprecation` and the other release-dependent notices are properties of the type. Whether
+     a warning is raised is decided by the consumer (MemoryDB) from the type and the release,
+     not recorded in the value.
+3. **MemoryDB must not compensate for the type.** Mapping recorded diagnostics to server
+   errors, or filtering generated values after construction (`Analysis::accepted`,
+   `Operands`), hides the broken property instead of fixing it. Both are removed as the
+   types are corrected.
+4. The work proceeds in this PR without further confirmation: classify every diagnostic and
+   warning class (table below), then change the types, the analysis, MemoryDB and the
+   generators category by category, verifying each step with the fuzz replay and the PBT.
+
+### Stored program bodies are read, not executed (verified on 8.4.7 and 5.7.44)
+
+CREATE PROCEDURE reads its body with the grammar and performs only the checks the parser
+performs while reading: syntax (1064, including built-in function arity), unknown collation
+(1273), cast precision and width (1426, 1439), unknown system variable (1193), unknown EXPLAIN
+format (1791), unknown storage engine (1286). Everything that needs name resolution or
+structural consistency is deferred to CALL: unknown tables, columns and functions, GROUP BY,
+value counts, partitions, sql_mode values, SELECT ... INTO arity, duplicate columns, several
+primary keys and empty definitions of CREATE TABLE, duplicate ALTER TABLE columns.
+
+Consequently a body member has a different meaning from the standalone statement: it is bound
+to definitions and given its exact semantics only when the routine is called (the user's
+formulation). The model keeps the two apart:
+
+- The standalone statement type carries the execution invariants (class I above).
+- A body member is a stored form (`Deferred*`, the existing convention) whose invariants are
+  the parser's reading-time checks only. Statement kinds that lack a stored form get one.
+  MemoryDB constructs the executable type from the stored form when the routine runs and
+  reports that construction's refusal as the server error.
+- The reading-time checks the server performs in bodies and standalone alike are the
+  `ParseFailure` class: they are analysis errors, never values.
+
+### Progress of the type correction
+
+| Step | State |
+| --- | --- |
+| CREATE TABLE (class I: `DuplicateColumn`, `MultiplePrimaryKeys`, `NoColumns`, `UnknownKeyColumn` against written columns, `DuplicateKeyColumn`, `SpatialKeyArity`, `FunctionalIndexKind`; `NullablePrimaryKey` from 5.7) | Done. `CreateTable` refuses, as a constructor invariant, the written problems every release refuses (`TableProblems::problem` for `GrammarRelease::MySql5651`; a nullable primary key is accepted by 5.6, so only the release-aware lowering refuses it). The lowering (`CreateTableRule::create`) computes the problem for the selected release in the server's order (5.x and 9.x check an empty definition before the keys, 8.x after them) and raises `RejectedInput(RefusedCreateTable)` carrying the stored form `DeferredCreateTable`; a routine body keeps the stored form. Before the written problem the lowering refuses a partitioning or subpartitioning expression the parser refuses (`RefusedCreateTail(InvalidPartitionExpression)`, with the origins so MemoryDB quotes the operand): the server reports it while reading, before any written problem and even inside CREATE PROCEDURE (verified on 8.4.7 and 5.7.44). MemoryDB executes a refused definition with `RefusedDefinitionCommand` in the server's order: the tables the query and functional keys read, the reading-time type and collation conditions, the engine, the database (8.0+), the tablespace, the partition clause checks the server runs before it looks the table up (`PartitionDefinitions::early`: temporary table 1562, engine 1178 from 8.0, name spelling 1567, method mix 1500, count 1492/1504/1499, VALUES kind 1480, repeated name 1517, MAXVALUE not last 1481; verified before an existing table, before IF NOT EXISTS and before a duplicate column on 5.7.44 and 8.4.7; 5.7 reports them before an unknown database, 8.4 after it), 9.x empty definition, the existing table or the IF NOT EXISTS note (8.0+), the functional key expressions, then the written problem; 5.x reports the written problem before the database and the table. Standalone, through PREPARE/EXECUTE (`PendingTable`) and through CALL (`Interpreter::definition`). A refused definition nested in SHOW PARSE_TREE reports the debug-only syntax error, after the reading-time conditions of its operands, as the server does. Compared with native 8.4.7 and 5.7.44 on 45 statements each (partitioning, nesting, PREPARE, CALL, written problems): all equal; the earlier 33-statement comparison on 8.4.7, 9.1.0, 5.7.44 and 5.6.51 was all equal before the partition step. Known differences: `CREATE TABLE t (CHECK (1))` is 3812 on 8.4 and 1113/4028 in MemoryDB; the partition expression refused inside a CREATE PROCEDURE body is reported without the `near '...' at line N` suffix (the body notice carries no source map); partition-level `ENGINE` mixing (1497) is not implemented; a zero partition count inside a CREATE PROCEDURE body (`DefinitionIssue::ZeroPartitions`, natively 1504 at CREATE PROCEDURE) raises an unmapped-diagnostic LogicException in MemoryDB (pre-existing). |
+
+### Classification of the diagnostic and warning classes
+
+The 164 diagnostic classes and 7 warning classes, classified by where their condition belongs. `M/` is `SqlSemantics\Platform\MySql\Statement\`, `S/` is `SqlSemantics\Statement\`.
+
+| Class | Count | Meaning |
+| --- | --- | --- |
+| I | 107 | Type invariant: the constructor refuses the value with `InvalidConstruction`; the analysis fails with an error. |
+| I/S | 3 | Both: the structural part becomes a constructor invariant, the part that needs the installed table moves to MemoryDB. |
+| E | 32 | Analysis error: the analysis raises an error; the class and its recording disappear from the values. |
+| S | 24 | Database state: removed from the type; MemoryDB checks its own catalog, session and variables. |
+| N | 5 | Release-dependent notice: a property of the type; MemoryDB raises the warning from the type and the release. |
+
+| Diagnostic or warning | Class |
+| --- | --- |
+| `M/Account/Problem/AccountNameFailure` | I |
+| `M/Account/Problem/InvalidFactorPair` | I |
+| `M/Account/Problem/InvalidUserAttribute` | I |
+| `M/Account/Problem/MisplacedPrivilege` | I |
+| `M/Account/Problem/NumberOutOfRange` | I |
+| `M/Account/Problem/PriorityOutOfRange` | I |
+| `M/Account/Problem/RefusedColumnLevel` | E |
+| `M/Account/Problem/RejectedPasswordHash` | E |
+| `M/Account/Problem/RepeatedTlsAttribute` | I |
+| `M/Account/Problem/ResourceGroupNameTooLong` | I |
+| `M/Account/Problem/Role/RefusedCreateRole` | I |
+| `M/Account/Problem/Role/RefusedGrantRoles` | I |
+| `M/Account/Problem/RoleOrPrivilegeMismatch` | E |
+| `M/Account/Problem/RoutineColumnPrivilege` | I |
+| `M/Account/Problem/UnknownGrantColumn` | S |
+| `M/Account/Problem/User/RefusedRenameUser` | I |
+| `M/Alter/Problem/DuplicateColumn` | I/S |
+| `M/Alter/Problem/PartitionEntryRefused` | E |
+| `M/Alter/Problem/RepeatedTable` | I |
+| `M/Alter/Problem/TableExists` | S |
+| `M/Alter/Problem/UnknownAlterChoice` | I |
+| `M/Alter/Problem/UnknownColumn` | S |
+| `M/Call/Problem/Aggregate/AggregateNestingConstraint` | I |
+| `M/Call/Problem/FrameConstraint` | I |
+| `M/Call/Problem/InvalidJsonDocument` | I |
+| `M/Call/Problem/InvalidJsonPath` | I |
+| `M/Call/Problem/InvalidNamedConstant` | I |
+| `M/Call/Problem/InvalidWindowCount` | I |
+| `M/Call/Problem/NamedArgument` | I |
+| `M/Call/Problem/ReservedFunction` | I |
+| `M/Call/Problem/Type/ArgumentDomainMismatch` | S |
+| `M/Call/Problem/UnsupportedWindowing` | I |
+| `M/Call/Problem/Window/NestingConstraint` | I |
+| `M/Call/Problem/WindowConstraint` | I |
+| `M/Call/Problem/WindowOperandConstraint` | I |
+| `M/Call/Problem/WindowRefinement` | I |
+| `M/Call/Problem/WrongArgumentCount` | I |
+| `M/Dml/Handler/RefusedRead` | E |
+| `M/Dml/Handler/RefusedSubquery` | E |
+| `M/Dml/Problem/DuplicateColumn` | I |
+| `M/Dml/Problem/EvaluationWildcard` | I |
+| `M/Dml/Problem/GeneratedColumnWrite` | S |
+| `M/Dml/Problem/Insert/InsertGrouping` | I |
+| `M/Dml/Problem/LoadConflict` | I |
+| `M/Dml/Problem/Read/OrderingPosition` | I |
+| `M/Dml/Problem/RepeatedDeleteTarget` | E |
+| `M/Dml/Problem/UnknownDeleteTable` | I |
+| `M/Dml/Problem/ValueCountMismatch` | I |
+| `M/Dml/Problem/WriteMisuse` | I |
+| `M/Dml/Problem/ZeroFileCount` | I |
+| `M/Expression/Problem/CharacterCastRange` | I |
+| `M/Expression/Problem/CollationMismatch` | S |
+| `M/Expression/Problem/IllegalCollationMix` | S |
+| `M/Expression/Problem/InvalidCharacterString` | I |
+| `M/Expression/Problem/InvalidJsonCast` | I |
+| `M/Expression/Problem/NotSupportedYet` | I |
+| `M/Expression/Problem/OperandColumns` | I |
+| `M/Expression/Problem/RefusedNumberLiteral` | I |
+| `M/Expression/Problem/RefusedScalar` | E |
+| `M/Expression/Problem/RefusedTemporalLiteral` | I |
+| `M/Expression/Problem/SpatialArithmetic` | S |
+| `M/Expression/Problem/TimeZoneConversion` | S |
+| `M/Expression/Problem/TooBigPrecision` | I |
+| `M/Expression/Problem/UnknownCharset` | S |
+| `M/Expression/Problem/UnknownCollation` | S |
+| `M/Hint/Comment/HintError` | N |
+| `M/Name/AmbiguousAlias` | I |
+| `M/Name/EmptyObjectName` | I |
+| `M/Name/InvalidProjectionAlias` | I |
+| `M/Name/MissingTableQualifier` | I |
+| `M/Name/Problem/MismatchedDefinitionName` | I |
+| `M/Name/Problem/NameTooLong` | I |
+| `M/Notice/Deprecation` | N |
+| `M/Notice/HeartbeatPeriod` | N |
+| `M/Notice/NameConversion` | N |
+| `M/Notice/ParseFailure` | E |
+| `M/Notice/ParseStop` | E |
+| `M/Notice/TrimmedName` | N |
+| `M/Partition/Problem/DefinitionIssue` | I |
+| `M/Partition/Problem/InvalidPartitionExpression` | I |
+| `M/Partition/Problem/MissingPartitions` | I |
+| `M/Partition/Problem/RefusedKeyAlgorithm` | I |
+| `M/Partition/Problem/RefusedScalar` | E |
+| `M/Query/Problem/AggregateInOrdering` | I |
+| `M/Query/Problem/CountMismatch` | I |
+| `M/Query/Problem/Misuse` | I |
+| `M/Query/Problem/NonGroupedColumn` | S |
+| `M/Query/Problem/Operand/RefusedIntoSetOperand` | E |
+| `M/Query/Problem/Operand/RefusedQuery` | E |
+| `M/Query/Problem/Operand/RefusedSelection` | E |
+| `M/Query/Problem/Operand/RefusedSetClause` | E |
+| `M/Query/Problem/Operand/UnenclosedUnion` | E |
+| `M/Query/Problem/Option/RestrictedSelectOption` | I |
+| `M/Query/Problem/OrdinalOutOfRange` | I |
+| `M/Query/Problem/SelectOptionConflict` | I |
+| `M/Query/Problem/UndeclaredVariable` | S |
+| `M/Query/Problem/UnknownPartition` | S |
+| `M/Query/Problem/UnknownQualifier` | I |
+| `M/Query/Problem/UnpartitionedTable` | S |
+| `M/Replication/Problem/RefusedLogSubquery` | E |
+| `M/Replication/Problem/RefusedPurgeOperand` | E |
+| `M/Replication/Problem/RefusedSetting` | I |
+| `M/Replication/Problem/RefusedSourceNumber` | I |
+| `M/Routine/Event/Problem/OperandWidth` | I |
+| `M/Routine/Event/Problem/RefusedOperand` | E |
+| `M/Routine/Problem/AssignedConditionOperand` | I |
+| `M/Routine/Problem/EmptyEventAlteration` | I |
+| `M/Routine/Problem/LanguageBodyMismatch` | E |
+| `M/Routine/Problem/ParameterScopeMismatch` | I |
+| `M/Routine/Problem/ProgramProblem` | I/S |
+| `M/Routine/Problem/RefusedProgramBody` | I |
+| `M/Routine/Problem/ScopedLocalAssignment` | E |
+| `S/Reference/Column/AmbiguousColumn` | S |
+| `S/Reference/Column/MissingColumn` | S |
+| `S/Reference/Table/ConflictingTables` | S |
+| `S/Reference/Table/MissingTable` | S |
+| `M/Server/Database/Problem/CharsetConflict` | I |
+| `M/Server/Database/Problem/InvalidEncryption` | I |
+| `M/Server/Database/Problem/InvalidUpgradeName` | I |
+| `M/Server/Database/Problem/ReadOnlyConflict` | I |
+| `M/Server/Problem/BucketCountOutOfRange` | I |
+| `M/Server/Problem/FractionalNumber` | I |
+| `M/Server/Problem/HistogramTables` | I |
+| `M/Server/Problem/NonUniqueTable` | I |
+| `M/Server/Problem/RefusedKillOperand` | E |
+| `M/Server/Problem/RefusedSpatial` | I |
+| `M/Server/Problem/RefusedXaIdentifier` | I |
+| `M/Server/Problem/SpatialProblem` | I |
+| `M/Server/Problem/StorageProblem` | I |
+| `M/Server/Problem/UnknownHistogramColumn` | S |
+| `M/Table/Problem/Column/SridRange` | I |
+| `M/Table/Problem/Creation/DuplicateKeyColumn` | I |
+| `M/Table/Problem/Creation/FunctionalIndexKind` | I |
+| `M/Table/Problem/Creation/InvalidIndexName` | I |
+| `M/Table/Problem/Creation/RefusedCreateTail` | E |
+| `M/Table/Problem/Creation/SpatialKeyArity` | I |
+| `M/Table/Problem/DuplicateColumn` | I |
+| `M/Table/Problem/ExplicitIndexOrder` | I |
+| `M/Table/Problem/Generation/InvalidAttribute` | I |
+| `M/Table/Problem/Generation/RefusedOperand` | I |
+| `M/Table/Problem/IncorrectColumnName` | I |
+| `M/Table/Problem/InvalidColumnAttribute` | I |
+| `M/Table/Problem/MultiplePrimaryKeys` | I |
+| `M/Table/Problem/NoColumns` | I |
+| `M/Table/Problem/NullablePrimaryKey` | I |
+| `M/Table/Problem/RefusedJsonAttribute` | I |
+| `M/Table/Problem/UnattachedEnforcement` | E |
+| `M/Table/Problem/UnknownIndexParser` | S |
+| `M/Table/Problem/UnknownKeyColumn` | I/S |
+| `M/Table/Problem/ViewColumnCount` | I |
+| `M/Table/Problem/WrongRelationKind` | S |
+| `M/Table/Problem/ZeroKeyPrefix` | E |
+| `M/Type/Problem/CastSizeInput` | E |
+| `M/Type/Problem/InvalidTypeSize` | I |
+| `M/Utility/Problem/GeneratedColumnEntry` | E |
+| `M/Utility/Problem/InvalidExplainTarget` | I |
+| `M/Utility/Problem/RefusedConnectionExplain` | I |
+| `M/Utility/Problem/RefusedExplain` | E |
+| `M/Utility/Problem/RefusedExplainInto` | I |
+| `M/Utility/Problem/RefusedNamesAssignment` | I |
+| `M/Utility/Problem/UnknownExplainFormat` | I |
+| `M/Utility/Problem/UtilityMisuse` | I |
+| `M/Utility/Show/RefusedFilter` | E |
+| `M/Variable/Problem/UnknownSystemVariable` | S |
+| `M/Variable/Problem/UnstructuredVariable` | I |
+| `M/Variable/Problem/VariableMisuse` | S |
+| `M/View/Problem/BodyRestriction` | I |
+| `M/View/Problem/RefusedBody` | E |
+| `M/View/Problem/RefusedColumns` | E |
+| `M/View/Problem/RefusedExistenceClause` | I |
+| `M/View/Problem/RefusedQuery` | E |
+
 ## Goal and authority
 
 Build MySQL Memory so that it correctly executes SQL Semantics' meaning-bearing,
@@ -246,6 +489,12 @@ portable completion gates:
 - `property-nonstate.txt`: the server refusals of the last property run that do not depend on database state.
 
 An earlier set of "two-server" logs measured one reused container twice and was discarded; `Testcontainers::run()` returns the running container of the same class, so the experiments stop the first server before starting the second.
+
+State after the CREATE TABLE step of the type correction (2026-10-31):
+
+- `sql-semantics-mysql`: whole-package PHPStan clean (seven `problem()`/`refusal()`/`accepts()` methods received their unit tests); unit suite green except `StopReplicaTest::testRenderWritesTheThreads` (`RELAY_THREAD` is rendered as written; last changed in an earlier commit of this branch, not by this step); doctests green (the five "Reading the problem" examples read the problem from the stored body through `TableProblems::problem`).
+- `mysql-memory`: doctests green; property suite 86 failing properties (104 before this step); none of them concerns CREATE TABLE's written problems. The remaining CREATE TABLE failure is `Undeclared variable` in a standalone definition (a stored-program-only operand accepted by the type: the S/E classes still to correct); CREATE PROCEDURE on 5.6 fails in a generator invariant (`SetPassword`).
+- Generator smoke (8 samples per generator): 8.4.7 1,080 generators, 2 failing (release mixing in `UpdateGenerator` and `WindowRefinementGenerator`, as before); 5.7.44 1,030 generators, 5 failing (`UpdateGenerator` and `CreateFunctionGenerator` cannot satisfy their release predicate within Eris's retry budget; two more flow generators than before reach that limit).
 
 ### Known implementation gaps
 

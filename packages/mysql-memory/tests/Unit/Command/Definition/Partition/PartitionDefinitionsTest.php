@@ -195,4 +195,36 @@ final class PartitionDefinitionsTest extends TestCase
         self::assertSame([1], $table->definition->partitioning->columns);
         self::assertCount(3, $table->definition->partitioning->partitions);
     }
+
+    public function testEarlyRefusesARepeatedPartitionNameBeforeAnExistingTable(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t2 (a INT)');
+
+        $error = $session->run('CREATE TABLE IF NOT EXISTS t2 (a INT) PARTITION BY RANGE (a) (PARTITION p0 VALUES LESS THAN (1), PARTITION p0 VALUES LESS THAN (2))')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1517, $error->getCode());
+    }
+
+    public function testEarlyRefusesAMaxvalueBoundBeforeTheLastPartition(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t2 (a INT)');
+
+        $error = $session->run('CREATE TABLE t2 (a INT) PARTITION BY RANGE (a) (PARTITION p0 VALUES LESS THAN MAXVALUE, PARTITION p1 VALUES LESS THAN (1))')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1481, $error->getCode());
+    }
+
+    public function testDeclaredAnswersTheGeneratedNamesOfACount(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('CREATE TABLE t (a INT) PARTITION BY HASH(a) PARTITIONS 3');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause::class, $operation->partitioning);
+
+        self::assertSame(['p0', 'p1', 'p2'], PartitionDefinitions::declared($operation->partitioning, PartitionMethod::Hash, false));
+    }
 }

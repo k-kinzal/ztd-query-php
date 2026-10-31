@@ -45,9 +45,6 @@ final class TableUse
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->temporaryStorage($definition->temporary(), $definition->options)) {
             (new \MySqlMemory\Program\Definition\TemporaryStorage())->raise($definition, $session);
         }
-        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->columnless($definition->elements, $definition->query)) {
-            return (new \MySqlMemory\Program\Definition\ColumnlessUse())->execute($definition, $session);
-        }
         if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacySubqueries())->columns($definition->elements)) {
             return (new GenerationUse($this->rewrite))->execute($definition, $session);
         }

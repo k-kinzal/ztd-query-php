@@ -49,7 +49,7 @@ final class IndexOptionsTest extends TestCase
         $operation = $session->analyze('CREATE PROCEDURE p() CREATE TABLE t(a INT,KEY k(missing) USING HASH)');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
         $definition = $operation->body;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $definition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable::class, $definition);
         $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $options = new IndexOptions();
         $options->prepare($definition, $session, $context);

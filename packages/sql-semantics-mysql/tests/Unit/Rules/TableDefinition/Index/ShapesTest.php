@@ -50,11 +50,12 @@ final class ShapesTest extends TestCase
         self::assertTrue((new M\Alter\AlterTable(new QualifiedName(new Name('t')), [new M\Alter\Command\AddConstraint($index)]))->hasExecutionCondition());
     }
 
-    public function testCreationRetainsMultipleSpatialParts(): void
+    public function testCreationRefusesMultipleSpatialPartsAsAWrittenProblem(): void
     {
         $index = new M\Table\Key\IndexDefinition(M\Table\Key\IndexKind::Spatial, [new M\Table\Key\ColumnPart(new Name('a')), new M\Table\Key\ColumnPart(new Name('b'))]);
-        $column = new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
-        self::assertTrue((new M\Table\CreateTable(new QualifiedName(new Name('t')), [$column, new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('b')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int))), $index]))->hasExecutionCondition());
+        $column = static fn (string $name): M\Table\Column\ColumnDefinition => new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name($name)), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
+
+        self::assertInstanceOf(M\Table\Problem\Creation\SpatialKeyArity::class, (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems())->problem([$column('a'), $column('b'), $index], null, \SqlSemantics\Contract\GrammarRelease::MySql847));
     }
     /**
      * @return iterable<string, array{M\Table\Key\IndexKind, bool}>

@@ -21,4 +21,11 @@ final class ValueRolesTest extends TestCase
         (new ValueRoles())->check($operation);
         self::assertSame('INSERT INTO t VALUES ROW(1) ORDER BY ABS()', $operation->toString());
     }
+
+    public function testProblemAnswersNullWhenEveryValueFitsItsRole(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t VALUES ROW(1) ORDER BY ABS()');
+
+        self::assertNull((new ValueRoles())->problem($operation));
+    }
 }

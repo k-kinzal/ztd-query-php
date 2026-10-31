@@ -59,7 +59,10 @@ final class CommandPrefix
             try {
                 $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-                return null;
+                if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable) {
+                    return null;
+                }
+                $operation = $failure->problem->definition;
             } catch (AnalysisException $failure) {
                 return (new Syntax())->error($failure, $statement, $session->settings()->release(), $session->following);
             }
@@ -146,9 +149,9 @@ final class CommandPrefix
     /**
      * Answers the condition raised after a command prefix has been resolved.
      */
-    public function completed(\SqlSemantics\Statement\Statement $model, ?Token $next, string $statement, Session $session): ?SqlError
+    public function completed(\SqlSemantics\Statement\Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $model, ?Token $next, string $statement, Session $session): ?SqlError
     {
-        if (($model instanceof LoadTable && $model->table->name->schema === null) || (($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable) && $model->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $model->table->schema === null)) {
+        if (($model instanceof LoadTable && $model->table->name->schema === null) || (($model instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $model instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable) && $model->name->schema === null) || ($model instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable && $model->table->schema === null)) {
             return $session->variables->database === '' ? QueryError::NoDatabase->error() : null;
         }
         if ($model instanceof \SqlSemantics\Platform\MySql\Statement\Account\SetPassword && $next?->text === ',' && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {

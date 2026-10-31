@@ -50,4 +50,13 @@ final class ColumnQualifiersTest extends TestCase
         self::assertNull((new ColumnQualifiers())->problem($name, $target));
         self::assertNotNull((new ColumnQualifiers())->problem($name, $target, Comparison::Sensitive));
     }
+
+    public function testAcceptsRequiresEveryQualifierToNameTheTable(): void
+    {
+        $rules = new ColumnQualifiers();
+        $target = new QualifiedName(new Name('t'));
+
+        self::assertTrue($rules->accepts($target, [new DropElement(ElementKind::Column, new ColumnName(new Name('a'), new QualifiedName(new Name('t'))))]));
+        self::assertFalse($rules->accepts($target, [new DropElement(ElementKind::Column, new ColumnName(new Name('a'), new QualifiedName(new Name('other'))))]));
+    }
 }

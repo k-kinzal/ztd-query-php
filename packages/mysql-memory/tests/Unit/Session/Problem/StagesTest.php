@@ -26,13 +26,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
-    public function testTableDefinitionDefersNullablePrimaryKeysEvenWithACreationQuery(): void
-    {
-        $session = (new Instance(databases: ['d']))->connect(database: 'd');
-        $statement = $session->analyze('CREATE TABLE t(a INT NULL PRIMARY KEY) AS SELECT 1 AS b');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);
-        self::assertTrue(Stages::tableDefinition($statement, new \SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey(new Name('a'))));
-    }
 
     public function testInstructionsKeepsSameInstructionNoticesBeforeItsContextualFailure(): void
     {
@@ -58,7 +51,7 @@ final class StagesTest extends TestCase
     public function testDefinitionConditionKeepsCompleteRequestsSeparateFromInstallableActions(): void
     {
         $name = new QualifiedName(new Name('t'));
-        self::assertTrue(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable($name)));
+        self::assertTrue(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable($name, [], [], null, new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()])))));
         self::assertTrue(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($name, [new \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption(true)])));
         self::assertFalse(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable($name, [new \SqlSemantics\Platform\MySql\Statement\Alter\Command\Force()])));
         self::assertFalse(Stages::definitionCondition(new \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit()));

@@ -156,5 +156,4 @@ final class TableInput
     {
         return $problem instanceof RefusedCreateTail;
     }
-
 }

@@ -286,4 +286,34 @@ final class InterpreterTest extends TestCase
         self::assertSame([['1', '2']], $result->rows);
     }
 
+    public function testDefinitionReportsTheWrittenProblemWhenTheRoutineRuns(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE PROCEDURE p() CREATE TABLE t (a INT, a INT)');
+        $session->query('CREATE PROCEDURE q() CREATE TABLE nodb.t (a INT PRIMARY KEY, b INT PRIMARY KEY)');
+
+        $duplicate = $session->run('CALL p()')[0];
+        $unknown = $session->run('CALL q()')[0];
+        $legacy = (new Instance('5.6.51', [], ['d']))->connect(database: 'd')->run('CREATE PROCEDURE q() CREATE TABLE nodb.t (a INT, a INT); CALL q()')[1];
+
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $duplicate);
+        self::assertSame([1060, "Duplicate column name 'a'"], [$duplicate->getCode(), $duplicate->getMessage()]);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $unknown);
+        self::assertSame(1049, $unknown->getCode());
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $legacy);
+        self::assertSame(1060, $legacy->getCode());
+    }
+
+    public function testDefinitionRunsAStoredDefinitionTheServerAccepts(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [$column]);
+        $interpreter = new Interpreter($session, new Activation('PROCEDURE', 'd.p', false, Collation::known('utf8mb4_0900_ai_ci')));
+
+        self::assertNull($interpreter->definition($definition));
+        $tables = $session->query('SHOW TABLES')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $tables);
+        self::assertCount(1, $tables->rows);
+    }
 }

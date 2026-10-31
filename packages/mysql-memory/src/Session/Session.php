@@ -288,6 +288,8 @@ final class Session
                 $this->diagnostics->clear();
             }
             throw (new CacheOptions())->reported($error, $statement, $this);
+        } catch (Parse\Definition\RefusedExecution $refused) {
+            return (new \MySqlMemory\Command\Definition\RefusedDefinitionCommand())->execute($refused->definition->definition, $this);
         }
 
         return (new Execution($this))->statement($operation, $parameters);
@@ -300,6 +302,7 @@ final class Session
      *
      * @throws SqlError When the statement does not parse or does not resolve
      * @throws Parse\Definition\DeferredPreparation When prepared input retains an execution-time definition condition
+     * @throws Parse\Definition\RefusedExecution When the analysis refuses a definition the server executes only to refuse
      * @param list<array{int|float|string|\MySqlMemory\Evaluation\ExactDecimal|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): MySqlStatement
@@ -320,6 +323,12 @@ final class Session
                 [$structure, $sources] = $reader->lower($tree, $this);
                 $operation = (new Statement\Binding())->statement($this, $structure, $parameters, sources: $sources, prepared: $prepared);
             } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable && strcasecmp($tree->tokens()[0]->text ?? '', 'CREATE') === 0) {
+                    if ($prepared) {
+                        (new Access\TableCreation())->locks($failure->problem->definition, $this);
+                    }
+                    throw $prepared ? new Parse\Definition\DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($failure->problem, $database)) : new Parse\Definition\RefusedExecution($failure->problem);
+                }
                 throw $reader->operand($failure, $tree, $statement, $this);
             } catch (AnalysisException $error) {
                 throw $reader->refusal($tree, $error, $statement, $database, $this);

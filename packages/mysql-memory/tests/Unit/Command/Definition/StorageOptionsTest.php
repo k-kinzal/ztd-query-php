@@ -137,7 +137,7 @@ final class StorageOptionsTest extends TestCase
     public function testDirectoriesPrecedeMissingColumnsAndDestinationSchemas(string $release, int $code): void
     {
         $session = (new Instance($release))->connect();
-        $create = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('absent')), options: [new \SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::DataDirectory, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('text'))]);
+        $create = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('absent')), options: [new \SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption(\SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind::DataDirectory, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('text'))]);
         $this->expectException(\MySqlMemory\Error\SqlError::class);
         $this->expectExceptionCode($code);
         (new StorageOptions())->directories($create, $session);

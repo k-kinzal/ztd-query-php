@@ -37,9 +37,9 @@ final class TableCreation
      *
      * @throws SqlError When the permanent target has no matching explicit lock
      */
-    public function locks(Statement $statement, Session $session): void
+    public function locks(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $statement, Session $session): void
     {
-        if ((!$statement instanceof CreateTable && !$statement instanceof CreateTableLike) || $statement->temporaryWords > 0 || $session->locks === []) {
+        if ((!$statement instanceof CreateTable && !$statement instanceof CreateTableLike && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable) || $statement->temporaryWords > 0 || $session->locks === []) {
             return;
         }
         $name = $statement->name;
@@ -93,7 +93,7 @@ final class TableCreation
     /**
      * Tells whether a table definition requests a transaction that keeps the new table unpublished.
      */
-    public function requested(CreateTable $create): bool
+    public function requested(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $create): bool
     {
         return array_filter($create->options, static fn ($option): bool => $option instanceof StartTransaction) !== [];
     }
@@ -105,9 +105,9 @@ final class TableCreation
      *
      * @throws SqlError When the table cannot be created in a restricted transaction
      */
-    public function validate(Statement $statement, Session $session): void
+    public function validate(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $statement, Session $session): void
     {
-        if ((!$statement instanceof CreateTable) || !$this->requested($statement)) {
+        if ((!$statement instanceof CreateTable && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable) || !$this->requested($statement)) {
             return;
         }
         $engine = (new StorageOptions())->engine($statement, $session->variables);

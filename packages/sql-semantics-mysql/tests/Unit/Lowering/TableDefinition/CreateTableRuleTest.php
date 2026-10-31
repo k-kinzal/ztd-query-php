@@ -147,4 +147,40 @@ final class CreateTableRuleTest extends TestCase
         self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($procedure->body, $creation));
     }
 
+    public function testCreateRefusesAWrittenProblemWithTheStoredDefinition(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (b))')->find('create')[0];
+
+        try {
+            (new CreateTableRule($lowering))->legacy($lowering->form($node));
+            self::fail('The second key names no column.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn::class, $failure->problem->problem);
+            self::assertSame(strlen('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (b))'), $failure->end);
+        }
+    }
+
+    public function testForbiddenPartitionExpressionFindsTheExpressionTheParserRefuses(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $rule = new CreateTableRule($lowering);
+        $accepted = $rule->modern($platform->parser($profile)->parse('CREATE TABLE t (a INT) PARTITION BY HASH(a) SUBPARTITION BY KEY(a) SUBPARTITIONS 2')->find('create_table_stmt')[0]);
+        self::assertInstanceOf(CreateTable::class, $accepted);
+
+        self::assertNull($rule->forbiddenPartitionExpression(null));
+        self::assertNull($rule->forbiddenPartitionExpression($accepted->partitioning));
+        try {
+            $rule->modern($platform->parser($profile)->parse('CREATE TABLE t (a INT, a INT) PARTITION BY HASH(a) SUBPARTITION BY HASH(USER()) SUBPARTITIONS 2')->find('create_table_stmt')[0]);
+            self::fail('The subpartitioning function is refused while reading.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $failure->problem->problem);
+        }
+    }
 }

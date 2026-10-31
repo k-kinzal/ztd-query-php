@@ -28,9 +28,9 @@ final class SpatialColumns
     /**
      * Checks spatial reference systems before preparing the indexes of a new table.
      */
-    public function prepare(Statement $statement, Session $session): void
+    public function prepare(Statement|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $statement, Session $session): void
     {
-        if (!$statement instanceof CreateTable) {
+        if (!$statement instanceof CreateTable && !$statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable) {
             return;
         }
         $schemaName = $statement->name->schema->value ?? $session->variables->database;

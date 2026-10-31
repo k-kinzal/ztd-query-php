@@ -97,4 +97,13 @@ final class HandlerOperandsTest extends TestCase
         $this->expectExceptionMessage('Native signatures and grammar operands must share a supported language interpretation.');
         new H\HandlerIndexSeek(new H\OpenHandler(new Name('h')), new Name('i'), H\KeyComparison::Equal, [$call]);
     }
+
+    #[DataProvider('providerMoments')]
+    public function testProblemDescribesAQueryBearingScanAndAcceptsALiteral(Scalar $moment): void
+    {
+        $rules = new HandlerOperands();
+
+        self::assertSame('A HANDLER read cannot contain a subquery.', $rules->problem($moment));
+        self::assertNull($rules->problem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+    }
 }

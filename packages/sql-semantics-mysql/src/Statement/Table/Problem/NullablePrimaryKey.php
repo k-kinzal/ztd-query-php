@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY NULL)')->diagnostics()[0]->column->value // => 'a'
+ *     (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems())->problem((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT PRIMARY KEY NULL)')->body->elements, null, \SqlSemantics\Contract\GrammarRelease::MySql847)->column->value // => 'a'
  */
 final class NullablePrimaryKey implements Diagnostic
 {

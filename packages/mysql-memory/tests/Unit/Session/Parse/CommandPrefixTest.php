@@ -150,7 +150,7 @@ final class CommandPrefixTest extends TestCase
     public function testCompletedRequiresADatabaseForUnqualifiedCreation(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $model = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
+        $model = new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)))]);
 
         self::assertSame(1046, (new CommandPrefix())->completed($model, null, '', $session)?->getCode());
         $session->use('mysql');

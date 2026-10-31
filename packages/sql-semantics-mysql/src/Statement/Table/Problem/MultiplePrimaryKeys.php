@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT PRIMARY KEY, b INT PRIMARY KEY)')->diagnostics()[0]->message() // => 'Multiple primary key defined.'
+ *     (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems())->problem((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT PRIMARY KEY, b INT PRIMARY KEY)')->body->elements, null, \SqlSemantics\Contract\GrammarRelease::MySql847)->message() // => 'Multiple primary key defined.'
  */
 final class MultiplePrimaryKeys implements Diagnostic
 {

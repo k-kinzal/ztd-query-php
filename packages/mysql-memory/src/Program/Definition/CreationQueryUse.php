@@ -40,7 +40,16 @@ final class CreationQueryUse
         $problems = new Problems();
         $problems->opened($query, $session, $query->facts->diagnostics);
         $database = $definition->name->schema->value ?? $session->variables->database;
-        $schema = (new ColumnlessUse())->schema($definition, $database, $session);
+        $schema = $session->instance->dictionary->schema($database);
+        if ($schema === null) {
+            throw \MySqlMemory\Error\Family\QueryError::BadDatabase->error($database);
+        }
+        $storage = new \MySqlMemory\Command\Definition\StorageOptions();
+        foreach ($definition->options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption) {
+                $storage->tablespace($option, $definition, $storage->engine($definition, $session->variables), $session);
+            }
+        }
         $name = $definition->name->name->value;
         $exists = $definition->temporary() ? $session->temporaries->table($database, $name) !== null : $schema->table($name) !== null || isset($schema->views[$name]);
         if ($exists) {
@@ -60,7 +69,6 @@ final class CreationQueryUse
             $prepared = (new \MySqlMemory\Program\Expression\TableUse())->bound($definition, $session);
             (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->added((new \MySqlMemory\Evaluation\Compile\Walker())->find($definition, \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class), $prepared->statementInformation(), $session);
             (new \MySqlMemory\Session\Problem\Definition\IndexNames())->creation($prepared, $session);
-            (new ColumnlessUse())->columns($definition, $schema, $session);
             $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\DeclarationConstraints())->problem($definition->elements, $definition->query);
         }
         Check::invariant($problem !== null, 'A retained creation query has a fixed read-shape constraint.');

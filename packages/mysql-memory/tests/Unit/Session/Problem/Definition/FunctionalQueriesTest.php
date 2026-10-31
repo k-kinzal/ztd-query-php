@@ -59,7 +59,7 @@ final class FunctionalQueriesTest extends TestCase
     public function testDeferredKeepsIndexedConversionsWithTheirIndexOwner(): void
     {
         $session = (new Instance())->connect();
-        $indexed = $session->analyze("CREATE PROCEDURE p() CREATE TABLE t(a INT,PRIMARY KEY ((CAST(a AT TIME ZONE '+00:00' AS DATETIME))))");
+        $indexed = $session->analyze("CREATE PROCEDURE p() CREATE TABLE t(a INT,UNIQUE ((CAST(a AT TIME ZONE '+00:00' AS DATETIME))))");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $indexed);
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
         $selected = $session->analyze("SELECT CAST(a AT TIME ZONE '+00:00' AS DATETIME) FROM t");
@@ -76,7 +76,7 @@ final class FunctionalQueriesTest extends TestCase
         $routine = $routineAnalysis;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
         $statement = $routine->body;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable::class, $statement);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3758);
         $this->expectExceptionMessage("Expression of functional index 'i' contains a disallowed function.");

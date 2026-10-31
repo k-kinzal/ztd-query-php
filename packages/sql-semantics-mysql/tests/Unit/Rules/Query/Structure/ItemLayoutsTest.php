@@ -151,4 +151,13 @@ final class ItemLayoutsTest extends TestCase
 
         new SelectExpression($expression, layout: $layout, spellingProfile: new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('ANSI_QUOTES')));
     }
+
+    public function testProblemDescribesARedundantLayout(): void
+    {
+        $profile = (new \SqlSemantics\Platform\MySql\Platform())->profile('8.4.7', null, \SqlSemantics\Contract\ParameterStyle::Native);
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('..'));
+        $layout = new Layout([new Spelled('', '@'), new Spelled('', '..')]);
+
+        self::assertSame('A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.', (new ItemLayouts())->problem($expression, $layout, $profile));
+    }
 }

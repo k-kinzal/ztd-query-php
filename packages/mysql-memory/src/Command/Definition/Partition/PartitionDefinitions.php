@@ -86,7 +86,7 @@ final class PartitionDefinitions
             throw PartitionError::ForeignKeys->error();
         }
         (new PartitionNames())->check($clause);
-        $method = $this->method($clause);
+        $method = self::method($clause);
         if ($clause->subpartitioning !== null && in_array($method, [PartitionMethod::Hash, PartitionMethod::Key], true)) {
             throw PartitionError::MixedSubpartitionMethods->error();
         }
@@ -103,7 +103,7 @@ final class PartitionDefinitions
     /**
      * Answers the method of a clause.
      */
-    public function method(PartitionClause $clause): PartitionMethod
+    public static function method(PartitionClause $clause): PartitionMethod
     {
         $method = $clause->method;
 
@@ -124,12 +124,55 @@ final class PartitionDefinitions
      */
     public function names(PartitionClause $clause, PartitionMethod $method): array
     {
+        return self::declared($clause, $method, $this->planner->settings->legacy());
+    }
+
+    /**
+     * Checks the partition clause the server checks before it looks the table up: a temporary
+     * table, the engine, the spelling of the names, the mix of methods, the number and names of
+     * the partitions, and a MAXVALUE bound that is not the last. The server reports these before
+     * an existing table, IF NOT EXISTS included, and before the written problems of the
+     * definition (verified on 5.7.44 and 8.4.7). 5.7 still partitions MyISAM tables.
+     *
+     * @throws SqlError When the clause is refused
+     */
+    public static function early(PartitionClause $clause, bool $temporary, string $engine, bool $legacy): void
+    {
+        if ($temporary) {
+            throw PartitionError::TemporaryPartitioned->error();
+        }
+        if (!$legacy && strcasecmp($engine, 'InnoDB') !== 0) {
+            throw SchemaError::EngineUnsupportedOperation->error('native partitioning');
+        }
+        (new PartitionNames())->check($clause);
+        $method = self::method($clause);
+        if ($clause->subpartitioning !== null && in_array($method, [PartitionMethod::Hash, PartitionMethod::Key], true)) {
+            throw PartitionError::MixedSubpartitionMethods->error();
+        }
+        self::declared($clause, $method, $legacy);
+        $last = count($clause->definitions) - 1;
+        foreach ($clause->definitions as $index => $definition) {
+            if ($definition->values instanceof LessThan && $definition->values->row === null && $index !== $last) {
+                throw PartitionError::MaxValueNotLast->error();
+            }
+        }
+    }
+
+    /**
+     * Answers the declared names of the partitions for a method, or p0, p1 and so on for the number the clause asks for.
+     *
+     * @return list<string>
+     *
+     * @throws SqlError When RANGE or LIST defines no partition, the number is not allowed, or a name repeats
+     */
+    public static function declared(PartitionClause $clause, PartitionMethod $method, bool $legacy): array
+    {
         $ranged = in_array($method, [PartitionMethod::Range, PartitionMethod::RangeColumns, PartitionMethod::List, PartitionMethod::ListColumns], true);
         if ($ranged && $clause->definitions === []) {
             throw PartitionError::PartitionsNotDefined->error($method === PartitionMethod::Range || $method === PartitionMethod::RangeColumns ? 'RANGE' : 'LIST');
         }
         $count = $clause->definitions === [] ? ($clause->partitions === null ? 1 : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($clause->partitions)) : count($clause->definitions);
-        $count = $this->planner->settings->legacy() ? $count : max(1, $count);
+        $count = $legacy ? $count : max(1, $count);
         if ($count === 0) {
             throw PartitionError::NoPartitions->error();
         }
@@ -145,6 +188,9 @@ final class PartitionDefinitions
             $bound = $partition->values;
             if (!$ranged && $bound !== null) {
                 throw $bound instanceof LessThan ? PartitionError::WrongValuesKind->error('RANGE', 'LESS THAN') : PartitionError::WrongValuesKind->error('LIST', 'IN');
+            }
+            if (($method === PartitionMethod::Range || $method === PartitionMethod::RangeColumns) && $bound !== null && !$bound instanceof LessThan) {
+                throw PartitionError::WrongValuesKind->error('LIST', 'IN');
             }
             if (isset($names[mb_strtolower($partition->name->value)])) {
                 throw PartitionError::DuplicatePartition->error($partition->name->value);

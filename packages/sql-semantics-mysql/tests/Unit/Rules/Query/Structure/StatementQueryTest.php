@@ -88,4 +88,15 @@ final class StatementQueryTest extends TestCase
 
         self::assertSame([$first, $second], (new StatementQuery())->blocks($query));
     }
+
+    public function testRefusalDescribesAnOperandOnlyFormAndAcceptsAStandaloneQuery(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)], options: [\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct]);
+        $rules = new StatementQuery();
+        $standalone = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))]);
+
+        self::assertSame('A statement query cannot combine ALL and DISTINCT in one query block.', $rules->refusal(new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection)));
+        self::assertNull($rules->refusal($standalone));
+    }
 }

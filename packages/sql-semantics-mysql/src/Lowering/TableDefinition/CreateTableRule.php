@@ -66,7 +66,7 @@ final class CreateTableRule
 
         return match ($tail->signature) {
             'create2: ( create2a' => $this->enclosed($name, $this->lowering->productions->form($tail->node(1)), $temporary, $exists),
-            'create2: opt_create_table_options opt_create_partitioning create3' => $this->create($name, [], $options->options($tail->node(0)), $changes->partitioning($tail->node(1)), $this->legacyQuery($tail->node(2)), $temporary, $exists, optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($tail->node(0), ['create_table_option'])),
+            'create2: opt_create_table_options opt_create_partitioning create3' => $this->create($name, [], $options->options($tail->node(0)), $changes->partitioning($tail->node(1)), $this->legacyQuery($tail->node(2)), $temporary, $exists, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($tail->node(0), ['create_table_option'])),
             'create2: LIKE table_ident' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(1)), $temporary, $exists),
             'create2: ( LIKE table_ident )' => new CreateTableLike($name, $this->lowering->names->qualified($tail->node(2)), $temporary, $exists, enclosed: true),
             default => throw ImplementationGap::production($tail),
@@ -93,9 +93,10 @@ final class CreateTableRule
                 $this->legacyQuery($form->node(4)),
                 $temporary,
                 $exists,
+                (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0,
                 optionsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(2), ['create_table_option']),
             ),
-            'create2a: opt_create_partitioning create_select ) union_opt' => $this->partitioned($name, $changes->partitioning($form->node(0)), new TableQuery($this->lowering->queries->legacyParenthesizedQuery($form->node(1), $form->node(3)), as: false), $temporary, $exists),
+            'create2a: opt_create_partitioning create_select ) union_opt' => $this->partitioned($name, $changes->partitioning($form->node(0)), new TableQuery($this->lowering->queries->legacyParenthesizedQuery($form->node(1), $form->node(3)), as: false), $temporary, $exists, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -103,9 +104,9 @@ final class CreateTableRule
     /**
      * Builds CREATE TABLE ... SELECT whose query is written in parentheses, with the partitioning inside them when one is written.
      */
-    public function partitioned(QualifiedName $name, ?Partitioning $partitioning, TableQuery $query, int $temporary, bool $exists): CreateTable
+    public function partitioned(QualifiedName $name, ?Partitioning $partitioning, TableQuery $query, int $temporary, bool $exists, int $end): CreateTable
     {
-        return $this->create($name, [], [], $partitioning, $query, $temporary, $exists, $partitioning !== null);
+        return $this->create($name, [], [], $partitioning, $query, $temporary, $exists, $end, $partitioning !== null);
     }
 
     /**
@@ -200,8 +201,11 @@ final class CreateTableRule
                 default => throw ImplementationGap::production($part),
             };
 
-            return $this->create($name, $elements, $options, $clause, $this->query($query, true), $temporary, $exists, optionsCommas: $options === [] ? [] : (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(0), ['create_table_option']));
+            return $this->create($name, $elements, $options, $clause, $this->query($query, true), $temporary, $exists, (new \SqlSemantics\Construction\SourceRanges())->span($rest)[1] ?? 0, optionsCommas: $options === [] ? [] : (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(0), ['create_table_option']));
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail) {
+                throw $failure;
+            }
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail($name, $elements, $options, $temporary, $exists, $failure->problem), $failure->end, $failure->aborts, $failure->sources);
         }
     }
@@ -244,9 +248,43 @@ final class CreateTableRule
      * @param list<bool>|null $optionsCommas Retained boundaries between options
      * @param list<TableElement> $elements Complete column and key definitions
      * @param list<\SqlSemantics\Platform\MySql\Statement\Table\TableOption> $options Complete table options
+     * @param int $end The byte offset where the written definition ends
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the server executes the written definition only to refuse it
      */
-    public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, bool $enclosed = false, ?array $optionsCommas = null): CreateTable
+    public function create(QualifiedName $name, array $elements, array $options, ?Partitioning $partitioning, ?TableQuery $query, int $temporary, bool $exists, int $end, bool $enclosed = false, ?array $optionsCommas = null): CreateTable
     {
+        $expression = $this->forbiddenPartitionExpression($partitioning);
+        if ($expression !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail($name, $elements, $options, $temporary, $exists, new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression($expression)), $end, sources: $this->lowering->origins->publish());
+        }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems())->problem($elements, $query, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            $definition = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed, optionsCommas: $optionsCommas);
+
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable($definition, $problem), $end);
+        }
+
         return new CreateTable($name, $elements, $options, $partitioning, $query, $temporary, $exists, $enclosed, optionsCommas: $optionsCommas);
+    }
+
+    /**
+     * Finds the partitioning or subpartitioning expression the parser refuses in the selected
+     * release: the server reports it while reading the statement, before any written-definition
+     * problem and even inside a stored program body (verified on 8.4.7).
+     */
+    public function forbiddenPartitionExpression(?Partitioning $partitioning): ?\SqlSemantics\Statement\Scalar
+    {
+        if (!$partitioning instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause) {
+            return null;
+        }
+        $rules = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions();
+        foreach ([$partitioning->method, $partitioning->subpartitioning?->method] as $method) {
+            if (($method instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod || $method instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod) && $rules->forbidden($method->expression, $this->lowering->profile->grammar)) {
+                return $method->expression;
+            }
+        }
+
+        return null;
     }
 }

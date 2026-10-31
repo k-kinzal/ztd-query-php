@@ -39,7 +39,7 @@ final class ColumnQualifiers
     /**
      * Tells whether every column-name qualifier among the parts identifies the table of the statement.
      *
-     * @param list<mixed> $parts
+     * @param list<Node> $parts The definition elements or alteration commands
      */
     public function accepts(QualifiedName $target, array $parts): bool
     {

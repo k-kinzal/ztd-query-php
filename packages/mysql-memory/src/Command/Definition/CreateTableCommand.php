@@ -75,6 +75,9 @@ final class CreateTableCommand implements Command
         $definitions = new Definitions($planner, $schema->collation);
         $definition = $session->settings()->legacy() && $create->query === null ? $definitions->shape($create, $operation->declarations()[0], $schemaName) : null;
         Constraint\CheckDefinitions::forbidden($create, $session->settings()->legacy(), release: $session->settings()->release());
+        if ($create->partitioning instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause) {
+            Partition\PartitionDefinitions::early($create->partitioning, $create->temporaryWords > 0, (new StorageOptions())->engine($create, $session->variables), $session->settings()->legacy());
+        }
         if ($create->temporaryWords > 0 ? $session->temporaries->table($schemaName, $name) !== null : $schema->table($name) !== null || isset($schema->views[$name])) {
             if (!$create->ifNotExists) {
                 throw SchemaError::TableExists->error($name);
@@ -87,7 +90,6 @@ final class CreateTableCommand implements Command
             return new Completion(0, 0, $context->diagnostics->raised());
         }
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->rows($create);
-        $this->columns($operation, $session, $connection);
         (new \MySqlMemory\Session\Problem\Definition\FunctionalQueries())->forbidden($create);
         (new StorageOptions())->check($create, $session, $context);
         if ($create->temporaryWords > 0 && $session->transaction->open) {
@@ -120,7 +122,6 @@ final class CreateTableCommand implements Command
         }
         $schema = $session->instance->dictionary->schema($schemaName);
         if ($session->settings()->legacy()) {
-            $this->columns($operation, $session, $connection);
             if ($create->query === null || $schema === null) {
                 (new Constraint\DeclarationErrors())->check($operation->statementInformation());
             }
@@ -136,31 +137,8 @@ final class CreateTableCommand implements Command
                 }
             }
         }
-        if (in_array($session->settings()->release(), [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830, \SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
-            $this->columns($operation, $session, $connection);
-        }
         (new Partition\PartitionNames())->check($create->partitioning);
         return $schema;
-    }
-
-    /**
-     * Raises the semantic empty-definition condition at the release's preparation phase.
-     */
-    public function columns(MySqlStatement $operation, Session $session, Connection $connection): void
-    {
-        foreach ($operation->statementInformation()->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns) {
-                if ($session->settings()->legacy()) {
-                    throw SchemaError::TableMustHaveColumns->error();
-                }
-                $create = $operation;
-                assert($create instanceof CreateTable);
-                $schema = $session->instance->dictionary->schema($create->name->schema->value ?? $session->variables->database);
-                \SqlSemantics\Diagnostic\Check::invariant($schema !== null, 'The destination schema precedes modern column validation.');
-                $planner = new Planner($create, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session));
-                (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schema->name);
-            }
-        }
     }
 
     /**

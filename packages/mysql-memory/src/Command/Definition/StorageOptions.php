@@ -82,7 +82,7 @@ final class StorageOptions
      *
      * @throws SqlError When the database is unspecified or an engine is unknown
      */
-    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail $header, Session $session, Context $context, ?string $database = null): void
+    public function header(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $header, Session $session, Context $context, ?string $database = null): void
     {
         if ($header->name->schema === null && ($database ?? $session->variables->database) === '') {
             throw QueryError::NoDatabase->error();
@@ -192,7 +192,7 @@ final class StorageOptions
     /**
      * Resolves the selected engine, optionally reporting the fallback after resolve() checked its name.
      */
-    public function engine(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail $create, Variables $variables, ?Context $context = null): string
+    public function engine(CreateTable|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $create, Variables $variables, ?Context $context = null): string
     {
         if (isset($variables->preparedEngines[spl_object_id($create)])) {
             return $variables->preparedEngines[spl_object_id($create)];
@@ -240,7 +240,7 @@ final class StorageOptions
      * columns, absent schemas and IF NOT EXISTS follow it on 5.6 through 9.1.
      * Observed through SQL on 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
      */
-    public function directories(CreateTable $create, Session $session): void
+    public function directories(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $create, Session $session): void
     {
         foreach ($create->options as $option) {
             if ($option instanceof TextOption && in_array($option->kind, [TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory], true) && !str_starts_with($option->value->bytes(), '/')) {
@@ -257,7 +257,7 @@ final class StorageOptions
      *
      * @throws SqlError When the selected engine requires an absent tablespace
      */
-    public function tablespace(TablespaceOption $option, CreateTable $create, string $engine, Session $session): void
+    public function tablespace(TablespaceOption $option, CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $create, string $engine, Session $session): void
     {
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $engine !== 'InnoDB' || in_array($option->tablespace->value, ['innodb_system', 'innodb_file_per_table'], true) || isset($session->instance->registry->tablespaces[$option->tablespace->value])) {
             return;

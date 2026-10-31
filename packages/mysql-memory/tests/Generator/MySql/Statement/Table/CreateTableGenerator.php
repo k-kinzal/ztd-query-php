@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Identifier\Name;
@@ -69,7 +70,8 @@ final class CreateTableGenerator implements ErisGenerator
             static fn (array $parts): CreateTable => new CreateTable(name: $parts[0], elements: $parts[1], options: $parts[2], partitioning: $parts[3], query: $parts[4], temporaryWords: ($bit & 3) !== 0 ? $parts[5] : min(1, $parts[5]), ifNotExists: $parts[6], enclosed: $parts[7] && ($parts[1]) === [] && ($parts[2]) === [] && ($parts[3]) !== null && ($parts[4]) !== null && ($parts[4])->duplicate === null && (new EnclosedQuery())->accepts(($parts[4])->query), relationInformation: $parts[8], statementInformation: $parts[9], inputSource: $parts[10], optionsCommas: $parts[11] === null ? null : array_slice($parts[11], 0, max(0, count($parts[2]) - 1))),
             Generators::suchThat(
                 static fn (array $parts): bool => (new ColumnQualifiers())->accepts(($parts[0]), ($parts[1]))
-                && (($parts[4]) !== null || array_filter(($parts[1]), static fn ($element): bool => $element instanceof ColumnDefinition) !== []),
+                && (($parts[4]) !== null || array_filter(($parts[1]), static fn ($element): bool => $element instanceof ColumnDefinition) !== [])
+                && (new TableProblems())->problem(($parts[1]), ($parts[4]), GrammarRelease::MySql847) === null,
                 Generators::tuple(
                     new QualifiedNameGenerator($release),
                     $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => match ($choice) {

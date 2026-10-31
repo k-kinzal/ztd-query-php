@@ -20,10 +20,10 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTa
 final class PendingTable
 {
     /**
-     * @param RefusedCreateTail $header The header retained before a refused partition operand
+     * @param RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable $header The header retained before a refused partition operand, or the refused definition
      * @param string $database The default database selected at preparation
      */
-    public function __construct(public readonly RefusedCreateTail $header, public readonly string $database)
+    public function __construct(public readonly RefusedCreateTail|\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable $header, public readonly string $database)
     {
     }
 
@@ -45,9 +45,12 @@ final class PendingTable
     {
         $session->activity->begin();
         \MySqlMemory\Session\State\StatementCounters::received($session);
+        $session->text = $label;
+        if ($this->header instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable) {
+            return (new \MySqlMemory\Command\Definition\RefusedDefinitionCommand())->execute($this->header->definition, $session, $this->database);
+        }
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_create_table');
         $session->diagnostics->clear();
-        $session->text = $label;
         $database = $this->header->name->schema->value ?? $this->database;
         if ($session->instance->dictionary->schema($database) === null) {
             throw QueryError::BadDatabase->error($database);

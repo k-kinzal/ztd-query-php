@@ -94,6 +94,9 @@ final class Errors
     public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list', ?Node $statement = null): SqlError
     {
         $database = $session->variables->database;
+        if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable) {
+            return $this->error($diagnostic->problem, $session, $clause, $statement);
+        }
         if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute && $statement !== null && \MySqlMemory\Command\Dispatcher::program($statement)) {
             return (new TypeErrors())->columnAttribute($diagnostic);
         }
@@ -252,7 +255,7 @@ final class Errors
             $diagnostic instanceof MultiplePrimaryKeys => SchemaError::MultiplePrimaryKey->error(),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute => (new TypeErrors())->columnAttribute($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions => \MySqlMemory\Error\Family\PartitionError::PartitionsNotDefined->error($diagnostic->kind->value),
-            $diagnostic instanceof NoColumns => SchemaError::TableMustHaveColumns->error(),
+            $diagnostic instanceof NoColumns => $legacy ? SchemaError::TableMustHaveColumns->error() : SchemaError::NoVisibleColumn->error(),
             $diagnostic instanceof DuplicateColumn, $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\DuplicateColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
             $diagnostic instanceof IncorrectColumnName => SchemaError::WrongColumnName->error($diagnostic->column->value),

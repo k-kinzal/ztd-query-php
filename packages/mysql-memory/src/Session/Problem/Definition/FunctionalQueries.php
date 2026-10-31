@@ -165,7 +165,7 @@ final class FunctionalQueries
      *
      * @throws \MySqlMemory\Error\SqlError When an index expression contains a forbidden construct
      */
-    public function forbidden(CreateTable $create): void
+    public function forbidden(CreateTable|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $create): void
     {
         $indexes = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof IndexDefinition));
         if (array_filter($indexes, static fn (IndexDefinition $index): bool => (new Walker())->find($index, Query::class) !== []) === []) {

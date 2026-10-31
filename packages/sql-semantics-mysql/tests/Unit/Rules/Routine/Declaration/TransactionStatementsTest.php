@@ -25,8 +25,9 @@ final class TransactionStatementsTest extends TestCase
     {
         $name = new QualifiedName(new Name('x'));
         yield 'tablespace' => [new M\Server\Storage\AlterTablespace(new Name('x'), [new M\Server\Storage\Option\WaitOption(false)]), true];
-        yield 'columnless' => [new M\Table\CreateTable($name), true];
-        yield 'temporary-columnless' => [new M\Table\CreateTable($name, temporaryWords: 1), false];
+        $column = static fn (): M\Table\Column\ColumnDefinition => new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)));
+        yield 'table' => [new M\Table\CreateTable($name, [$column()]), true];
+        yield 'temporary table' => [new M\Table\CreateTable($name, [$column()], temporaryWords: 1), false];
         yield 'like' => [new M\Table\CreateTableLike($name, new QualifiedName(new Name('y'))), true];
         yield 'temporary-like' => [new M\Table\CreateTableLike($name, new QualifiedName(new Name('y')), temporaryWords: 1), false];
         yield 'instance TLS' => [new M\Server\Instance\AlterInstance(new M\Server\Instance\ReloadTls()), true];

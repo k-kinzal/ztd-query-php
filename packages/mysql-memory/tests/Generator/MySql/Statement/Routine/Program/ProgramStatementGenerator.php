@@ -9,6 +9,7 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
+use Tests\Generator\MySql\Statement\Routine\Program\Definition\DeferredCreateTableGenerator;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -64,7 +65,7 @@ final class ProgramStatementGenerator implements ErisGenerator
     {
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = $depth > 0
-            ? Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 504, 511, 511, 511, 508, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+            ? Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 504, 511, 511, 511, 508, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                 0 => new GrantPrivilegesGenerator($release),
                 1 => new GetDiagnosticsGenerator($release, $depth - 1),
                 2 => new ResignalGenerator($release, $depth - 1),
@@ -95,6 +96,7 @@ final class ProgramStatementGenerator implements ErisGenerator
                 27 => new DeferredInsertRowsGenerator($release, $depth - 1),
                 28 => new DeferredInsertSetGenerator($release, $depth - 1),
                 29 => new DeferredMultipleDeleteGenerator($release, $depth - 1),
+                30 => new DeferredCreateTableGenerator($release, $depth - 1),
                 default => throw new LogicException('Unreachable alternative.'),
             })
             : Generators::bind(Generators::choose(0, 6), static fn (int $choice): ErisGenerator => match ($choice) {

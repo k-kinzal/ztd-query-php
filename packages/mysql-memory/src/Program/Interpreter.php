@@ -120,6 +120,7 @@ final class Interpreter
             $statement instanceof OpenCursor, $statement instanceof FetchCursor, $statement instanceof CloseCursor => $this->cursor($statement),
             $statement instanceof Signal, $statement instanceof Resignal => $this->signalled($statement),
             $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredExplain => $this->explanation($statement),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable => $this->definition($statement),
             $statement instanceof Statement => $this->sql($statement),
             default => throw new LogicException('No stored instruction executor for ' . $statement::class),
         };
@@ -219,6 +220,22 @@ final class Interpreter
     {
         $this->activation->sqlStatements++;
         $jump = $this->instruction(fn () => (new Expression\ExplainUse())->raise($statement, $this->session));
+        return $jump?->flow === Flow::Resume ? null : $jump;
+    }
+
+    /**
+     * Runs a stored table definition: the executable statement when its written columns and keys
+     * form a table, otherwise the written problem the server reports when it reaches the
+     * definition, through the enclosing program's handlers.
+     */
+    public function definition(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable $statement): ?Jump
+    {
+        $this->activation->sqlStatements++;
+        $jump = $this->instruction(function () use ($statement): void {
+            \MySqlMemory\Session\State\StatementCounters::query($this->session);
+            (new \MySqlMemory\Command\Definition\RefusedDefinitionCommand())->execute($statement, $this->session);
+        });
+
         return $jump?->flow === Flow::Resume ? null : $jump;
     }
 

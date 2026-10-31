@@ -54,9 +54,9 @@ use SqlSemantics\Statement\Relation;
  * @example The relation fact of the statement resolves to the declaration it provides
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
  *     $create->elements[1]->condition->left->scalarInformation()->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
- * @example A contradictory column namespace remains a request with an execution condition
- *     $column = static fn () => new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
- *     (new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [$column(), $column()]))->hasExecutionCondition() // => true
+ * @example A definition the server executes only to refuse is not an executable statement
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, a INT)');
+ *     $create->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable // => true
  */
 final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
@@ -121,6 +121,8 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         );
         (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+        $problem = (new TableProblems())->problem($this->elements, $query, \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        Check::input($problem === null, $problem === null ? '' : $problem->message());
     }
 
     /**
@@ -190,27 +192,6 @@ final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE');
-        for ($word = 0; $word < $this->temporaryWords; $word++) {
-            $out->keyword('TEMPORARY');
-        }
-        $out->keyword('TABLE');
-        if ($this->ifNotExists) {
-            $out->keyword('IF', 'NOT', 'EXISTS');
-        }
-        if ($this->name->schema !== null) {
-            $out->name($this->name->schema, NameUse::Qualifier)->symbol('.');
-        }
-        $out->name($this->name->name, NameUse::Relation);
-        if ($this->enclosed && $this->partitioning !== null && $this->query !== null) {
-            (new EnclosedQuery())->write($out, $this->query->query, $this->partitioning);
-
-            return;
-        }
-        if ($this->elements !== []) {
-            $out->symbol('(')->list($this->elements)->symbol(')');
-        }
-        (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->options, $this->optionsCommas);
-        $out->node($this->partitioning)->node($this->query);
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\TableDefinitionText())->render($out, $this->name, $this->temporaryWords, $this->ifNotExists, $this->elements, $this->options, $this->optionsCommas, $this->partitioning, $this->query, $this->enclosed);
     }
 }

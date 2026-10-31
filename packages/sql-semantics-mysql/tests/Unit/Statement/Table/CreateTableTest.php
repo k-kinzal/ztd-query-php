@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement as M;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
-use SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -54,15 +53,25 @@ final class CreateTableTest extends TestCase
         self::assertSame($create->declarations()[0]->columns[1], $resolution->slot->column);
     }
 
-    public function testDeriveStatementReportsTheProblemsOfOrdinaryAndStoredDefinitions(): void
+    public function testAnalysisRefusesAStandaloneDefinitionWithItsWrittenProblem(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
+            self::fail('The definition has two primary keys.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable::class, $failure->problem);
+            self::assertInstanceOf(MultiplePrimaryKeys::class, $failure->problem->problem);
+            self::assertCount(2, $failure->problem->definition->elements);
+        }
+    }
+
+    public function testAStoredDefinitionTheRoutineRefusesWhenItRunsIsRetainedAsItsStoredForm(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t ENGINE = InnoDB');
-        self::assertInstanceOf(M\Statement::class, $create);
-        $keys = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
-        self::assertInstanceOf(M\Statement::class, $keys);
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $create);
 
-        self::assertInstanceOf(NoColumns::class, $create->diagnostics()[0]);
-        self::assertInstanceOf(MultiplePrimaryKeys::class, $keys->diagnostics()[0]);
+        self::assertInstanceOf(M\Routine\Program\Definition\DeferredCreateTable::class, $create->body);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveRelationProvidesTheDeclaration(): void

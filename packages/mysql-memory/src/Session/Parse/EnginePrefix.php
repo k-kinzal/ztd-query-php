@@ -45,10 +45,15 @@ final class EnginePrefix
             $semantics = $session->semantics();
             $tree = $semantics->parser()->parse(substr($statement, 0, $end));
             $operation = $semantics->analyze($tree);
-        } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable) {
+                return [];
+            }
+            $operation = $failure->problem->definition;
+        } catch (SourceException|AnalysisException) {
             return [];
         }
-        if (!$operation instanceof CreateTable && !$operation instanceof AlterTable) {
+        if (!$operation instanceof CreateTable && !$operation instanceof AlterTable && !$operation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable) {
             return [];
         }
         $errors = [];

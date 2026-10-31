@@ -106,4 +106,12 @@ final class SubqueryOptionsTest extends TestCase
         $this->expectExceptionMessage('An expression subquery cannot invoke PROCEDURE ANALYSE.');
         (new SubqueryOptions())->check($query);
     }
+
+    public function testProblemDescribesACacheOptionAndAcceptsAPlainSelect(): void
+    {
+        $rules = new SubqueryOptions();
+
+        self::assertSame('SQL_CACHE is not an option of a subquery.', $rules->problem(new Select([SelectOption::Cache], [new SelectExpression(new NumberLiteral('1'))])));
+        self::assertNull($rules->problem(new Select([], [new SelectExpression(new NumberLiteral('1'))])));
+    }
 }
