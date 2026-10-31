@@ -164,7 +164,7 @@
 <span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">accounts</span>-&gt;<span class="tok-id">find</span>(<span class="tok-kw">new</span> <span class="tok-id">Identity</span>(<span class="tok-str">&#039;u&#039;</span>, <span class="tok-str">&#039;%&#039;</span>))?-&gt;<span class="tok-id">grants</span>-&gt;<span class="tok-id">proxies</span>);</span>
 <span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>    }</span>
 <span class="src-line" id="L126" data-diff="added"><a class="ln" href="#L126">126</a></span>
-<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDelegatedAuthorityCannotGrantToASystemUserAccount</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L127" data-diff="added"><a class="ln" href="#L127">127</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSystemUserRefusesAGrantToASystemUserAccountWithoutThePrivilege</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L128" data-diff="added"><a class="ln" href="#L128">128</a>    {</span>
 <span class="src-line" id="L129" data-diff="added"><a class="ln" href="#L129">129</a>        <span class="tok-var">$instance</span> = <span class="tok-kw">new</span> <span class="tok-id">Instance</span>();</span>
 <span class="src-line" id="L130" data-diff="added"><a class="ln" href="#L130">130</a>        <span class="tok-var">$root</span> = <span class="tok-var">$instance</span>-&gt;<span class="tok-id">connect</span>();</span>
@@ -212,8 +212,20 @@
 <span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-num">1141</span>, <span class="tok-num">1141</span>, <span class="tok-num">1141</span>, <span class="tok-num">1141</span>], <span class="tok-id">array_column</span>(<span class="tok-var">$session</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">conditions</span>, <span class="tok-num">1</span>));</span>
 <span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>    }</span>
 <span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a></span>
-<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>}</span>
-<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a></span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCheckAllowsTheSessionAccountItself</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a>    {</span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>        <span class="tok-var">$instance</span> = <span class="tok-kw">new</span> <span class="tok-id">Instance</span>();</span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>        <span class="tok-var">$instance</span>-&gt;<span class="tok-id">connect</span>()-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE USER u@localhost&#039;</span>);</span>
+<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>        <span class="tok-var">$user</span> = <span class="tok-var">$instance</span>-&gt;<span class="tok-id">connect</span>(<span class="tok-str">&#039;u&#039;</span>);</span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a>        (<span class="tok-kw">new</span> <span class="tok-id">Proxies</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-var">$user</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">definer</span>, <span class="tok-var">$user</span>);</span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a></span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">SqlError</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionCode</span>(<span class="tok-num">1698</span>);</span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a></span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a>        (<span class="tok-kw">new</span> <span class="tok-id">Proxies</span>())-&gt;<span class="tok-id">check</span>(<span class="tok-kw">new</span> <span class="tok-id">Identity</span>(<span class="tok-str">&#039;root&#039;</span>, <span class="tok-str">&#039;localhost&#039;</span>), <span class="tok-var">$user</span>);</span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a>    }</span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>}</span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
