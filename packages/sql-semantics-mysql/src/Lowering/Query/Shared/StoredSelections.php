@@ -63,7 +63,7 @@ final class StoredSelections
         $items = $this->items($list);
         $input = $from === null ? ($dual ? new \SqlSemantics\Platform\MySql\Statement\Relation\Dual() : null) : (new FromRule($this->lowering))->from($from);
         $predicate = $where === null || $where->tokens() === [] ? null : $this->predicate($where);
-        $options = isset($clauses['options']) ? (new ItemRule($this->lowering))->options($clauses['options']) : [];
+        $options = isset($clauses['options']) ? (new ItemRule($this->lowering))->options($clauses['options'], !$this->lowering->operand) : [];
         $grouping = isset($clauses['group']) ? (new StoredClauses($this->lowering))->grouping($clauses['group']) : null;
         $having = isset($clauses['having']) ? $this->predicate($clauses['having']) : null;
         $tail = (new StoredClauses($this->lowering))->tail($clauses);

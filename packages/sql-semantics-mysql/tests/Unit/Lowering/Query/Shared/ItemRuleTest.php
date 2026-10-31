@@ -64,4 +64,40 @@ final class ItemRuleTest extends TestCase
         self::assertInstanceOf(Select::class, $operation->query);
         self::assertSame([AliasMark::Bare, AliasMark::As, AliasMark::Bare, AliasMark::As], array_map(static fn (object $item): AliasMark => $item instanceof SelectExpression ? $item->mark : AliasMark::Equals, $operation->query->items));
     }
+
+    /**
+     * @return iterable<string, array{string, string, class-string, string, int}>
+     */
+    public static function providerLegacyRefusals(): iterable
+    {
+        yield '5.7 repeats a cache modifier' => ['mysql-5.7.44', 'SELECT SQL_CACHE SQL_CACHE SQL_NO_CACHE 1', \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict::class, "Option 'SQL_CACHE' used twice in statement", 26];
+        yield '5.6 compares with the first cache modifier' => ['mysql-5.6.51', 'SELECT SQL_NO_CACHE ALL SQL_CACHE 1', \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict::class, 'Incorrect usage of SQL_NO_CACHE and SQL_CACHE', 33];
+        yield '5.6 refuses the placement before the conflict' => ['mysql-5.6.51', 'SELECT 1 UNION SELECT SQL_CACHE SQL_NO_CACHE 2', \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption::class, "Incorrect usage/placement of 'SQL_CACHE'", 31];
+        yield '5.6 refuses the first written restricted modifier' => ['mysql-5.6.51', 'SELECT 1 UNION SELECT ALL DISTINCT HIGH_PRIORITY 2', \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption::class, "Incorrect usage/placement of 'HIGH_PRIORITY'", 48];
+        yield '5.6 refuses a cache modifier of a derived table' => ['mysql-5.6.51', 'SELECT * FROM (SELECT SQL_NO_CACHE 1) d', \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption::class, "Incorrect usage/placement of 'SQL_NO_CACHE'", 34];
+    }
+
+    /**
+     * @param class-string $class The refused problem
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyRefusals')]
+    public function testPlacedRefusesLegacyModifiersWhileParsingTheBlock(string $release, string $sql, string $class, string $message, int $end): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The legacy release refuses the modifier while parsing.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf($class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+            self::assertSame($end, $failure->end);
+            self::assertTrue($failure->aborts);
+        }
+    }
+
+    public function testPlacedAcceptsTheModifiersOfTheFirstBlockAndSeparatedCacheModifiersIn57(): void
+    {
+        self::assertSame('SELECT SQL_CACHE 1 UNION SELECT 2', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT SQL_CACHE 1 UNION SELECT 2')->toString());
+        self::assertSame('SELECT SQL_NO_CACHE ALL SQL_CACHE 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_NO_CACHE ALL SQL_CACHE 1')->toString());
+        self::assertSame('SELECT SQL_NO_CACHE SQL_NO_CACHE 1', (new Semantics(Dialect::MySql))->analyze('SELECT SQL_NO_CACHE SQL_NO_CACHE 1')->toString());
+    }
 }

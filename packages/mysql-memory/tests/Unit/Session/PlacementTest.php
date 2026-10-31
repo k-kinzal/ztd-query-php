@@ -128,14 +128,14 @@ final class PlacementTest extends TestCase
 
     public function testMisplacedRefusesAQueryCacheModifierOfABlockButTheFirstIn56(): void
     {
-        $session = (new Instance('5.6.51'))->connect();
-        $statement = $session->analyze('SELECT 1 UNION SELECT SQL_CACHE 2');
-        $selects = (new Walker())->find($statement, Select::class);
+        $first = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+        $later = new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);
+        (new Placement())->misplaced($first, $first, GrammarRelease::MySql5651);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1234);
 
-        (new Placement())->misplaced($selects[1], $selects[0], GrammarRelease::MySql5651);
+        (new Placement())->misplaced($later, $first, GrammarRelease::MySql5651);
     }
 
     public function testBoundariesAnswerTheBlockAfterAUnionOperandWithInto(): void

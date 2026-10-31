@@ -135,6 +135,7 @@ final class ExpressionRule
      * @throws \SqlSemantics\Construction\RejectedInput When a leading operand redirects its result
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a later operand carries a modifier that belongs to the first block of the statement (ER_CANT_USE_OPTION_HERE), which the server refuses once it has read the statement; the refusal ends where the operand starts, so the conditions raised while parsing the input before it come first
      */
     public function body(Node $body): Block|Query
     {
@@ -160,10 +161,15 @@ final class ExpressionRule
         foreach (array_reverse($steps) as [$operator, $quantifier, $right]) {
             if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $query->into !== null) {
                 $origin = $this->lowering->origins->publish()->of($query->into);
-                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand($query, $operator), $origin->offset ?? 0);
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand($query, $operator), $origin === null ? 0 : $origin->offset + $origin->length);
             }
             $operand = $this->body($right);
-            $query = new SetOperation($query, $operator, $quantifier, $operand instanceof Block ? $operand->select() : $operand);
+            $operand = $operand instanceof Block ? $operand->select() : $operand;
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($operand, $this->lowering->profile->grammar);
+            if ($problem !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($right)[0] ?? 0, false);
+            }
+            $query = new SetOperation($query, $operator, $quantifier, $operand);
         }
 
         return $query;

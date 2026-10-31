@@ -44,6 +44,10 @@ use SqlSemantics\Statement\Query;
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion($one, null, $two) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing HIGH_PRIORITY in a last operand, which belongs to the first block of the statement
+ *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+ *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion($one, null, $two) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class LeadingUnion implements Node
 {
@@ -53,13 +57,14 @@ final class LeadingUnion implements Node
      * @param Query|LeadingUnion $left The operands before the last one
      * @param SetQuantifier|null $quantifier The written DISTINCT or ALL
      * @param Select|DeferredBody $right The last operand, with its own LIMIT or locking clauses and nothing else after its items
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the last operand keeps no such clause or another one, or the left operand is written in parentheses as a set operand
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the last operand keeps no such clause or another one, carries a modifier of the first block of a statement, or the left operand is written in parentheses as a set operand
      */
     public function __construct(public readonly Query|LeadingUnion $left, public readonly ?SetQuantifier $quantifier, public readonly Select|DeferredBody $right, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $block = $right instanceof DeferredBody ? $right->selection : $right;
         $own = $right instanceof DeferredBody ? $block->limit !== null : $right->trailed() && $right->into === null && $right->late === null;
         Check::input($own && $block->orderBy === [] && $block->procedure === null, 'The last operand of a leading union keeps its own LIMIT or locking clauses and nothing else.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($right) === null, 'The last operand of a leading union carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE: they belong to the first query block of the statement.');
         Check::input(!$left instanceof SetOperation || $left->operator === SetOperator::Union, 'A leading union continues a UNION.');
         Check::input(!$left instanceof QueryStatement && !$left instanceof OrderedSetOperation && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SetOperands())->left($left);

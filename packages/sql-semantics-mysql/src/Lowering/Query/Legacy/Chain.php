@@ -48,7 +48,7 @@ use SqlSemantics\Statement\Query;
 final class Chain
 {
     /**
-     * @param non-empty-list<array{Block|Query, Trailer}> $operands The operands in written order, each with the clauses written after it
+     * @param non-empty-list<array{Block|Query, Trailer, 2?: int}> $operands The operands in written order, each with the clauses written after it and, after the first, the offset it starts at
      * @param list<SetQuantifier|null> $quantifiers The quantifier written after each UNION
      * @param GrammarRelease $release The grammar release the union is written in
      * @param Trailer $trailer The clauses written after the last operand
@@ -60,6 +60,7 @@ final class Chain
     /**
      * Combines the operands into one query.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When an operand after the first carries a modifier that belongs to the first block of the statement
      * @throws AnalysisException When the last SELECT writes PROCEDURE ANALYSE (ER_WRONG_USAGE of the 5.6 `procedure_analyse_clause` action, which refuses any block but the first, and of 5.7 `PT_procedure_analyse::contextualize`), or an earlier operand writes a clause the server rejects there
      * @throws ImplementationGap When clauses cannot follow their query block
      */
@@ -75,6 +76,9 @@ final class Chain
         $query = null;
         foreach (array_slice($operands, 0, $last) as $index => [$operand, $clauses]) {
             $operand = $operand instanceof Block ? $this->earlier($operand, $clauses, $index) : $this->enclosed($operand, $clauses, $index);
+            if ($index > 0) {
+                $this->later($operand, $operands[$index][2] ?? null);
+            }
             $query = match (true) {
                 $query === null => $operand,
                 ($operand instanceof Select && $operand->trailed()) || ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody && $operand->selection->limit !== null) => new LeadingUnion($query, $this->quantifiers[$index - 1] ?? null, $operand),
@@ -82,20 +86,47 @@ final class Chain
             };
         }
         $quantifier = $this->quantifiers[$last - 1] ?? null;
+        $start = $operands[$last][2] ?? null;
         if ($final instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
+            $this->later($final, $start);
+
             return (new RetainedTails())->union($query, $quantifier, $final, $after);
         }
         if (!$final instanceof Block) {
+            $this->later($final, $start);
+
             return $after->wrap(new SetOperation($query, SetOperator::Union, $quantifier, $final));
         }
         if ($final->trailer->procedure !== null) {
             throw new AnalysisException('Incorrect usage of PROCEDURE and subquery: PROCEDURE ANALYSE follows a single query block only.');
         }
         if (!$after->empty() && !$final->trailer->empty()) {
-            return new OrderedSetOperation($query, SetOperator::Union, $quantifier, $final->select(), $after->orderBy, $after->limit);
-        }
+            $select = $final->select();
+            $this->later($select, $start);
 
-        return $final->trailer->then($after)->wrap(new SetOperation($query, SetOperator::Union, $quantifier, $final->bare()->select()));
+            return new OrderedSetOperation($query, SetOperator::Union, $quantifier, $select, $after->orderBy, $after->limit);
+        }
+        $bare = $final->bare()->select();
+        $this->later($bare, $start);
+
+        return $final->trailer->then($after)->wrap(new SetOperation($query, SetOperator::Union, $quantifier, $bare));
+    }
+
+    /**
+     * Refuses, in an operand after the first, the modifiers that belong to the first block of the statement (ER_CANT_USE_OPTION_HERE), as MySQL 5.7 does once it has read the statement; MySQL 5.6 refuses them while parsing the block (ItemRule), so none reach this point.
+     *
+     * The refusal ends where the operand starts: the conditions the server raises while it
+     * parses the input before the operand come first, those inside the operand after.
+     *
+     * @param int|null $start The offset the operand starts at, when the input is known
+     * @throws \SqlSemantics\Construction\RejectedInput When the operand carries such a modifier
+     */
+    public function later(Query $operand, ?int $start): void
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($operand, $this->release);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, $start ?? 0, $this->release === GrammarRelease::MySql5651);
+        }
     }
 
     /**

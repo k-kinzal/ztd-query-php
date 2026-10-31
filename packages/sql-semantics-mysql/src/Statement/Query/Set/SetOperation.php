@@ -25,7 +25,9 @@ use SqlSemantics\Statement\Query;
  * looser one on the left of INTERSECT, a query with a WITH clause or with
  * statement-level INTO or locking clauses, and on the right a query whose
  * ORDER BY, LIMIT or other trailing clauses would be read as applying to
- * the whole operation.
+ * the whole operation. A right operand carries no HIGH_PRIORITY,
+ * SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE: the server refuses them
+ * in any block but the first of the statement (ER_CANT_USE_OPTION_HERE).
  *
  * Rule: MYSQL-SET-OPERATION-001. The output is derived by
  * MYSQL-SET-FACTS-001. Source: https://dev.mysql.com/doc/refman/8.4/en/set-operations.html,
@@ -35,6 +37,10 @@ use SqlSemantics\Statement\Query;
  * @example Reading the operands of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t UNION SELECT b FROM u');
  *     [$query->query->left->from->name->name->value, $query->query->right->from->name->name->value] // => ['t', 'u']
+ * @example Refusing HIGH_PRIORITY in a right operand, which belongs to the first block of the statement
+ *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+ *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($one, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $two) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a right operand that would associate differently without parentheses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     $two = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2'))]);

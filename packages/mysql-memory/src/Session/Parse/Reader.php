@@ -204,6 +204,10 @@ final class Reader
         $error = new SqlError($error->error, $error->getMessage(), $failure, $error->following, $error->signalled, $error->getCode(), $error->recorded);
         $target = (new Entry\DerivedInput())->refusal($failure, $statement, $session);
         $error = $target ?? $error;
+        $variable = $this->undeclared($failure, $statement, $session);
+        if ($variable !== null) {
+            return (new CacheOptions())->undeclared(\MySqlMemory\Error\Family\ProgramError::UndeclaredVariable->error($variable), $statement, $session);
+        }
         $earlier = ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $failure->problem->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias ? (new Entry\DerivedInput())->before($statement, $failure->end, $session) : null) ?? ($failure->end === 0 || $target !== null ? null : (new CacheOptions())->condition($error, $statement, $session, (new Entry\InputErrors())->precedingEnd($failure)));
         if ($earlier !== null) {
             return $earlier;
@@ -235,6 +239,44 @@ final class Reader
         return (new ModernWarnings())->recorded(array_column($notices, 1), $error, $session, $append);
     }
 
+
+    /**
+     * Answers the variable of an INTO or LIMIT written before a refused set operand or a misplaced INTO that no running stored program declares, or null.
+     *
+     * The server raises ER_SP_UNDECLARED_VAR while it parses the clause, so the variable
+     * precedes a refusal the server finds where the operand starts (`RestrictedSelectOption`,
+     * `SelectOptionConflict`) or where the INTO clause ends (`RefusedIntoSetOperand`); an
+     * unqualified table name written before the variable without a current database precedes
+     * both (verified on live 5.6.51, 5.7.44 and 8.4.7 servers). A stored program body declares
+     * its own variables, and the other refusals end where their statement ends.
+     */
+    public function undeclared(\SqlSemantics\Construction\RejectedInput $failure, string $statement, Session $session): ?string
+    {
+        $problem = $failure->problem;
+        if ($session->program !== null || !($problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict || $problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand)) {
+            return null;
+        }
+        $parser = $session->semantics()->parser();
+        $tokens = $parser->tokenize($statement);
+        $variable = (new Clauses())->unknown($tokens, $failure->end, null);
+        if ($variable === null) {
+            return null;
+        }
+        $at = $failure->end;
+        $clause = false;
+        foreach ($tokens as $token) {
+            $clause = $clause || $token->name === 'INTO' || $token->name === 'LIMIT';
+            if ($clause && (str_starts_with($token->text, '`') ? str_replace('``', '`', substr($token->text, 1, -1)) : $token->text) === $variable) {
+                $at = $token->offset;
+                break;
+            }
+        }
+        if ($session->variables->database === '' && (new Entry\ImplicitTables())->before($parser->parse($statement), $at, $session->settings()->legacy())) {
+            return null;
+        }
+
+        return $variable;
+    }
     /**
      * Preserves a completed table header when a later operand prevents publication.
      *

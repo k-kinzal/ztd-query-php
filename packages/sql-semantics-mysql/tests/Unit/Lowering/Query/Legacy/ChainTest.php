@@ -142,4 +142,30 @@ final class ChainTest extends TestCase
 
         (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 UNION SELECT 2 FROM t PROCEDURE ANALYSE()');
     }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLaterOperands(): iterable
+    {
+        yield 'priority' => ['SELECT 1 UNION SELECT HIGH_PRIORITY 2', 'HIGH_PRIORITY'];
+        yield 'cache modifier' => ['SELECT 1 UNION SELECT SQL_NO_CACHE 2', 'SQL_NO_CACHE'];
+        yield 'cache modifier written last' => ['SELECT 1 UNION SELECT HIGH_PRIORITY SQL_NO_CACHE 2', 'SQL_NO_CACHE'];
+        yield 'parenthesized last operand' => ['SELECT 1 UNION (SELECT SQL_CALC_FOUND_ROWS 2)', 'SQL_CALC_FOUND_ROWS'];
+        yield 'middle operand' => ['SELECT 1 UNION SELECT SQL_BUFFER_RESULT 2 UNION SELECT 3', 'SQL_BUFFER_RESULT'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLaterOperands')]
+    public function testLaterRefusesAModifierOfTheFirstBlockInALaterOperandOnceMySql57HasReadTheStatement(string $sql, string $option): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze($sql);
+            self::fail('The modifier belongs to the first block of the statement.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption::class, $failure->problem);
+            self::assertSame("Incorrect usage/placement of '$option'", $failure->problem->message());
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('SELECT SQL_CACHE 1 UNION SELECT 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE 1 UNION SELECT 2')->toString());
+    }
 }

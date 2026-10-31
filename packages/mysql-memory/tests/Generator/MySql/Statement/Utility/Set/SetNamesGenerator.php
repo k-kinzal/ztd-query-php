@@ -38,10 +38,13 @@ final class SetNamesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): SetNames => new SetNames(charset: $parts[0], collation: $parts[1], inputSource: $parts[2]),
-            Generators::tuple(
-                new CharsetNameGenerator($release),
-                Generators::oneOf(Generators::constant(null), new CollationNameGenerator($release)),
-                Generators::constant(null)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Utility\SetEncoding())->mismatch($parts[0], $parts[1]) === null,
+                Generators::tuple(
+                    new CharsetNameGenerator($release),
+                    Generators::oneOf(Generators::constant(null), new CollationNameGenerator($release)),
+                    Generators::constant(null)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

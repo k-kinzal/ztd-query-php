@@ -73,12 +73,13 @@ final class EncodingSettingsTest extends TestCase
         $settings->client('character_set_client', $charset);
     }
 
-    public function testCompatibleRejectsACollationFromAnotherCharacterSet(): void
+    public function testCompatibleRejectsACollationTheReleaseDoesNotHave(): void
     {
-        $session = (new Instance('8.4.7'))->connect();
+        $session = (new Instance('5.7.44'))->connect();
         $settings = new EncodingSettings(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $settings->compatible('utf8mb4_bin');
         $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1253);
-        $settings->compatible('utf8', 'latin1_bin');
+        $this->expectExceptionCode(1273);
+        $settings->compatible('utf8mb4_0900_ai_ci');
     }
 }

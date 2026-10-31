@@ -55,14 +55,6 @@ final class CastNoticesTest extends TestCase
         self::assertTrue($derivation->facts()->warnings[0]->aborts);
     }
 
-    public function testPrecisionRetainsTheCompletedTimeZoneBound(): void
-    {
-        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
-        $problem = (new CastNotices())->precision('8', $derivation);
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(8, 'CAST'), $problem);
-        self::assertSame($problem, $derivation->facts()->diagnostics[0]);
-    }
-
     public function testReturningContinuesAfterASpatialTargetCondition(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));

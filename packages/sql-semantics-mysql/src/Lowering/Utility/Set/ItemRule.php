@@ -95,6 +95,7 @@ final class ItemRule
      * Lowers an item that sets the connection character sets, or a MySQL 5.6 password item.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When SET NAMES writes a collation of another character set than the named one, which the server refuses while parsing in every release (ER_COLLATION_CHARSET_MISMATCH)
      */
     public function connection(Form $form): SetItem
     {
@@ -105,7 +106,14 @@ final class ItemRule
                 return new SetCharacterSet($charsets->charset($form->node(1)), form: $this->lowering->types->parts->named($form->node(0)));
             case 'option_value_no_option_type: NAMES_SYM charset_name_or_default opt_collate':
             case 'option_value_no_option_type: NAMES_SYM charset_name opt_collate':
-                return new SetNames($charsets->charset($form->node(1)), $charsets->collation($form->node(2)));
+                $charset = $charsets->charset($form->node(1));
+                $collation = $charsets->collation($form->node(2));
+                $mismatch = (new \SqlSemantics\Platform\MySql\Rules\Utility\SetEncoding())->mismatch($charset, $collation, $this->lowering->profile->grammar);
+                if ($mismatch !== null) {
+                    throw new \SqlSemantics\Construction\RejectedInput($mismatch, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+                }
+
+                return new SetNames($charset, $collation);
             case 'option_value_no_option_type: NAMES_SYM DEFAULT_SYM':
                 return new SetNames(new CharsetName(null));
             case 'option_value_no_option_type: NAMES_SYM equal expr':

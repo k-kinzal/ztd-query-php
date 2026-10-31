@@ -57,7 +57,7 @@ final class DeferredSubqueryPredicateGenerator implements ErisGenerator
             },
             Generators::tuple(
                 new DeferredOperandGenerator($release, $depth - 1),
-                Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null, new QueryGenerator($release, $depth - 1)),
+                Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null && ((new ReleaseDomain())->subquery($query) & (new ReleaseDomain())->bit($release)) !== 0, new QueryGenerator($release, $depth - 1)),
                 Generators::oneOf(Generators::constant(null), Generators::elements(array_values(array_filter(ComparisonOperator::cases(), static fn (ComparisonOperator $operator): bool => $operator !== ComparisonOperator::NullSafeEqual)))),
                 Generators::oneOf(Generators::constant(null), new QuantifierGenerator($release)),
                 Generators::bool()

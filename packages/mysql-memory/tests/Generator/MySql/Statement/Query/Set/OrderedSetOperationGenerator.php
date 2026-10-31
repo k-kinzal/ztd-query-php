@@ -53,11 +53,14 @@ final class OrderedSetOperationGenerator implements ErisGenerator
             static fn (array $parts): OrderedSetOperation => new OrderedSetOperation(left: $parts[0], operator: $parts[1], quantifier: $parts[2], right: $parts[3], orderBy: $parts[4], limit: $parts[5], queryInformation: $parts[6], inputSource: $parts[7]),
             Generators::suchThat(
                 static fn (array $parts): bool => (($parts[4]) !== [] || ($parts[5]) !== null)
+                && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($parts[3]) === null
+                && ((new ReleaseDomain())->operand($parts[3]) & $bit) !== 0
                 && (($parts[3]) instanceof DeferredBody ? (($parts[3])->selection->orderBy !== [] || ($parts[3])->selection->limit !== null) && ($parts[3])->selection->procedure === null : ($parts[3])->trailed() && ($parts[3])->late === null && ($parts[3])->into === null && ($parts[3])->procedure === null)
                 && (!($parts[0]) instanceof DeferredBody || (($parts[0])->selection->orderBy === [] && ($parts[0])->selection->procedure === null))
                 && (!($parts[0]) instanceof SetOperation || !($parts[1])->tighter(($parts[0])->operator))
                 && (!($parts[0]) instanceof LeadingUnion || ($parts[1]) === SetOperator::Union)
-                && !($parts[0]) instanceof OrderedSetOperation && !($parts[0]) instanceof QueryStatement && !(($parts[0]) instanceof QueryExpression && ($parts[0])->with !== null),
+                && !($parts[0]) instanceof OrderedSetOperation && !($parts[0]) instanceof QueryStatement && !(($parts[0]) instanceof QueryExpression && ($parts[0])->with !== null)
+                && (!($parts[0]) instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || (($parts[0])->orderBy === [] && ($parts[0])->into === null && ($parts[0])->procedure === null)),
                 Generators::tuple(
                     Generators::bind(Generators::elements(array_keys(array_filter([511, $depth > 0 ? 3 : 0], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new QueryGenerator($release, $depth - 1),

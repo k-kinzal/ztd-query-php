@@ -62,7 +62,7 @@ final class InQueryGenerator implements ErisGenerator
                         default => throw new LogicException('Unreachable alternative.'),
                     }),
                     Generators::suchThat(
-                        static fn (Query $query): bool => (new ReadColumns())->problem($query) === null && (new DerivedOptions())->problem($query) === null && (new SubqueryOptions())->problem($query) === null,
+                        static fn (Query $query): bool => (new ReadColumns())->problem($query) === null && (new DerivedOptions())->problem($query) === null && (new SubqueryOptions())->problem($query) === null && ((new ReleaseDomain())->subquery($query) & (new ReleaseDomain())->bit($release)) !== 0,
                         new QueryGenerator($release, $depth - 1),
                         1000
                     ),

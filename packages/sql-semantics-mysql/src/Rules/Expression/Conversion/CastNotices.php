@@ -46,15 +46,6 @@ final class CastNotices
     }
 
     /**
-     * Retains an excessive AT TIME ZONE precision at its completed cast boundary.
-     */
-    public function precision(?string $precision, Derivation $derivation): ?\SqlSemantics\Statement\Fact\Diagnostic
-    {
-        $problem = (int) ($precision ?? '0') > 6 ? new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision((int) $precision, 'CAST') : null;
-        return $this->failure($problem, $derivation, $this->aborts($derivation));
-    }
-
-    /**
      * Derives JSON_VALUE return-target conditions, which continue reading in every release.
      */
     public function returning(?CastTarget $target, \SqlSemantics\Statement\Node $document, Derivation $derivation): ?\SqlSemantics\Statement\Fact\Diagnostic

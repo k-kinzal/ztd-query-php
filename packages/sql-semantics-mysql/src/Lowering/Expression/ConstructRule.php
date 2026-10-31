@@ -116,12 +116,17 @@ final class ConstructRule
      * Lowers CAST … AT TIME ZONE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the DATETIME precision exceeds 6, which the server refuses while parsing the cast (ER_TOO_BIG_PRECISION); MySQL 5.7, 8.0 and 8.1 read the rest of the statement first
      */
     public function zone(Form $form): AtTimeZone|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone
     {
         $operand = $this->lowering->expressions->operand($form->node(2));
         $zone = new \SqlSemantics\Platform\MySql\Statement\Literal\Text($this->lowering->literals->bytes($form->node(7)));
         $precision = $this->lowering->types->precision($form->node(10));
+        if ((int) ($precision ?? '0') > 6) {
+            $aborts = !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision((int) $precision, 'CAST'), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $aborts);
+        }
 
         return !$operand instanceof Scalar || (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->input($operand) === false || !(new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\TimeZoneOperands())->zone($zone)
             ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTimeZone($operand, $this->lowering->leaves->record($zone), $this->flag($form->node(6)), $precision)

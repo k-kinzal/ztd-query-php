@@ -53,6 +53,10 @@ final class ContinuingRefusal
 
     /**
      * Records the complete grammar observation, including a debug-build refusal.
+     *
+     * Without a current database, an unqualified table name written before the refused
+     * operand is refused first (ER_NO_DB_ERROR), also before a legacy modifier conflict the
+     * token scan finds (verified on live 5.7.44: `(SELECT 1 FROM t LIMIT a) UNION (SELECT SQL_CACHE 2)` -> 1046).
      */
     public function error(RejectedInput $failure, string $statement, Session $session): SqlError
     {
@@ -68,13 +72,15 @@ final class ContinuingRefusal
             return $prefix;
         }
         $error = (new Errors())->error($failure->problem, $session);
+        $tree = $parser->parse($statement);
+        $implicit = $session->variables->database === '' && (new Entry\ImplicitTables())->before($tree, $failure->end, $session->settings()->legacy());
         if ($session->settings()->legacy()) {
             $modifiers = new Modifiers($tokens, $session->settings()->release());
             [$operators, $conflict] = $modifiers->scan($end, $end);
             if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && ($error->error === \MySqlMemory\Error\Family\QueryError::NoDatabase || array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $notice[1]->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) !== [])) {
                 $conflict = $modifiers->conflict;
             }
-            if ($conflict !== null) {
+            if ($conflict !== null && !$implicit) {
                 return (new \MySqlMemory\Session\CacheOptions())->recorded($operators, $conflict, $error, $session);
             }
         } else {
@@ -84,14 +90,13 @@ final class ContinuingRefusal
         $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session), ...(new Entry\Query\Notices())->completed($failure, $session)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $contextual = true;
-        $tree = $parser->parse($statement);
         $recipients = (new Entry\Account\Recipients())->notes($failure, $tree, $session);
         if ($recipients !== []) {
             $notices = [...$notices, ...$recipients];
             usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         }
         $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($tree, $session->semantics()->profile());
-        if ($session->variables->database === '' && (($target !== null && $target->schema === null) || (new Entry\ImplicitTables())->before($tree, $failure->end, $session->settings()->legacy()))) {
+        if ($implicit || ($session->variables->database === '' && $target !== null && $target->schema === null)) {
             $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
             $contextual = false;
         }

@@ -60,7 +60,7 @@ final class DeferredSelectionGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): DeferredSelection => new DeferredSelection(items: [$parts[13], ...array_values(array_filter($parts[0], static fn ($item): bool => $item instanceof SelectExpression || $item instanceof DeferredProjection || $item instanceof TableWildcard))], from: $parts[1], where: $parts[2], options: $parts[3], groupBy: $parts[4], having: $parts[5], orderBy: $parts[6], limit: $parts[7], windows: $parts[8], procedure: $parts[1] === null ? null : $parts[9], qualify: ($bit & 480) !== 0 ? $parts[10] : null, into: $parts[11], inputSource: $parts[12]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$parts[1]]) === null,
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$parts[1]]) === null && ((new ReleaseDomain())->modifiers($parts[3]) & $bit) !== 0,
                 Generators::tuple(
                     $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NodeGenerator($release, $depth - 1))) : Generators::constant([]),
                     $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {

@@ -82,7 +82,7 @@ final class QueryRules
      * `subquery`, `table_subquery`, `row_subquery`, `query_expression`, `query_expression_parens`,
      * `query_expression_with_opt_locking_clauses` or `view_select_aux`.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When a nested query has statement-level modifiers
+     * @throws \SqlSemantics\Construction\RejectedInput When a nested query has statement-level modifiers, or combines ALL and DISTINCT in one block outside MySQL 5.6, which accepts the pair in an expression subquery
      * @throws ImplementationGap When a production has no rule
      */
     public function query(Node $query): Query
@@ -102,6 +102,9 @@ final class QueryRules
         };
         if (in_array($query->name, ['subselect', 'subquery', 'table_subquery', 'row_subquery'], true)) {
             $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($result, $this->lowering->profile->grammar);
+            if ($problem === null && $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($result);
+            }
             if ($problem !== null) {
                 throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($query)[1] ?? 0, false);
             }

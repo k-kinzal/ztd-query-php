@@ -13,37 +13,79 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Statement\Query;
 
 /**
- * Defines the modifier domain of the query blocks forming a derived table.
+ * Defines the modifier domain of the query blocks that are not the first block of their statement: derived tables, later set operands and expression subqueries.
  *
  * HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS and legacy SQL_CACHE cannot occur in
- * these blocks, including later set operands and uncalled stored definitions.
+ * these blocks in any release (ER_CANT_USE_OPTION_HERE), including uncalled stored definitions;
+ * MySQL 5.6 and 5.7 also refuse SQL_NO_CACHE there, which later releases accept.
  * Nested expressions and CTE declarations have their own query boundaries.
- * Verified through SQL on MySQL 5.6, 5.7, 8.0 and 8.4.
+ * Verified through SQL on MySQL 5.6.51, 5.7.44, 8.0.44 and 8.4.7.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
 final class DerivedOptions
 {
     /**
-     * Answers a role violation, preserving the versioned quantifier precedence.
+     * Answers the problem the release reports first in the blocks of a query that is not the first block of its statement, or null when it accepts every block.
+     *
+     * Without a release, the modifiers every release refuses are answered: the invariant of the types that hold such a query.
      */
     public function problem(Query $query, GrammarRelease $release = GrammarRelease::MySql847): RestrictedSelectOption|SelectOptionConflict|null
     {
         foreach ($this->blocks($query) as $block) {
-            $priority = [SelectOption::HighPriority->value, SelectOption::BufferResult->value, SelectOption::CalcFoundRows->value, SelectOption::Cache->value];
-            $written = array_map(static fn (SelectOption $option): string => $option->value, $block->options);
-            $restricted = array_values($release === GrammarRelease::MySql5651 ? array_intersect($written, $priority) : array_intersect($priority, $written));
-            if ($restricted === []) {
-                continue;
+            $problem = $this->block($block->options, $release);
+            if ($problem !== null) {
+                return $problem;
             }
-            if ($release !== GrammarRelease::MySql5651 && in_array(SelectOption::All, $block->options, true) && in_array(SelectOption::Distinct, $block->options, true)) {
-                return new SelectOptionConflict(SelectOption::All, SelectOption::Distinct);
-            }
-
-            return new RestrictedSelectOption(SelectOption::from($restricted[0]));
         }
 
         return null;
+    }
+
+    /**
+     * Answers the problem the release reports first for the modifiers of one such block, in the order the server checks them.
+     *
+     * MySQL 5.6 refuses, in written order, the first of HIGH_PRIORITY, SQL_BUFFER_RESULT,
+     * SQL_CALC_FOUND_ROWS, SQL_CACHE and SQL_NO_CACHE. MySQL 5.7 refuses a query cache modifier
+     * written last, then ALL with DISTINCT, then HIGH_PRIORITY, SQL_BUFFER_RESULT and
+     * SQL_CALC_FOUND_ROWS in that order, then the last query cache modifier. Later releases
+     * refuse ALL with DISTINCT when the block has a restricted modifier, then HIGH_PRIORITY,
+     * SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS and SQL_CACHE in that order.
+     *
+     * @param list<SelectOption> $options The modifiers in written order
+     */
+    public function block(array $options, GrammarRelease $release): RestrictedSelectOption|SelectOptionConflict|null
+    {
+        $priority = [SelectOption::HighPriority, SelectOption::BufferResult, SelectOption::CalcFoundRows];
+        if ($release === GrammarRelease::MySql5651) {
+            foreach ($options as $option) {
+                if (in_array($option, [...$priority, SelectOption::Cache, SelectOption::NoCache], true)) {
+                    return new RestrictedSelectOption($option);
+                }
+            }
+
+            return null;
+        }
+        $legacy = $release === GrammarRelease::MySql5744;
+        $restricted = array_values(array_filter($legacy ? [...$priority, SelectOption::Cache, SelectOption::NoCache] : [...$priority, SelectOption::Cache], static fn (SelectOption $option): bool => in_array($option, $options, true)));
+        if ($restricted === []) {
+            return null;
+        }
+        $cache = array_values(array_filter($options, static fn (SelectOption $option): bool => $option === SelectOption::Cache || $option === SelectOption::NoCache));
+        $last = $options[count($options) - 1];
+        if ($legacy && ($last === SelectOption::Cache || $last === SelectOption::NoCache)) {
+            return new RestrictedSelectOption($last);
+        }
+        if (in_array(SelectOption::All, $options, true) && in_array(SelectOption::Distinct, $options, true)) {
+            return new SelectOptionConflict(SelectOption::All, SelectOption::Distinct);
+        }
+        foreach ($priority as $option) {
+            if (in_array($option, $options, true)) {
+                return new RestrictedSelectOption($option);
+            }
+        }
+
+        return new RestrictedSelectOption($legacy ? $cache[count($cache) - 1] : SelectOption::Cache);
     }
 
     /**

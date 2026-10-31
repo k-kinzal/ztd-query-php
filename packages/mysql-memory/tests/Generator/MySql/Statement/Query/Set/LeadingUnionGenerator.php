@@ -66,7 +66,9 @@ final class LeadingUnionGenerator implements ErisGenerator
                             $block = $right instanceof Select ? $right : $right->selection;
                             $own = $right instanceof DeferredBody ? $block->limit !== null : $right->trailed() && $right->into === null && $right->late === null;
 
-                            return $own && $block->orderBy === [] && $block->procedure === null && (($bit & 1) !== 0 || ($right instanceof Select && $right->limit === null));
+                            return $own && $block->orderBy === [] && $block->procedure === null && (($bit & 1) !== 0 || ($right instanceof Select && $right->limit === null))
+                                && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($right) === null
+                                && ((new ReleaseDomain())->operand($right) & $bit) !== 0;
                         },
                         ($bit & 1) !== 0 ? Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
                             0 => new SelectGenerator($release, $depth - 1),

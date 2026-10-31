@@ -50,7 +50,7 @@ final class ScalarSubqueryGenerator implements ErisGenerator
                 && (new SubqueryOptions())->problem($parts[0]) === null,
                 Generators::tuple(
                     Generators::suchThat(
-                        static fn (Query $query): bool => ((new QueryWidth())->of($query) ?? 1) === 1 && (new ReadColumns())->problem($query) === null && (new DerivedOptions())->problem($query) === null && (new SubqueryOptions())->problem($query) === null,
+                        static fn (Query $query): bool => ((new QueryWidth())->of($query) ?? 1) === 1 && (new ReadColumns())->problem($query) === null && (new DerivedOptions())->problem($query) === null && (new SubqueryOptions())->problem($query) === null && ((new ReleaseDomain())->subquery($query) & (new ReleaseDomain())->bit($release)) !== 0,
                         new QueryGenerator($release, $depth - 1),
                         1000
                     ),

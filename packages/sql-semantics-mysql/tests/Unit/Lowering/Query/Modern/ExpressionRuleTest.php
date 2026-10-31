@@ -106,4 +106,29 @@ final class ExpressionRuleTest extends TestCase
         self::assertInstanceOf(DerivedTable::class, $operation->query->from);
         self::assertInstanceOf(Select::class, $operation->query->from->query);
     }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLaterOperands(): iterable
+    {
+        yield 'union' => ['SELECT 1 UNION SELECT HIGH_PRIORITY 2', 'HIGH_PRIORITY'];
+        yield 'parenthesized operand' => ['SELECT 1 UNION (SELECT SQL_BUFFER_RESULT 2)', 'SQL_BUFFER_RESULT'];
+        yield 'insert source' => ['INSERT INTO t SELECT 1 EXCEPT SELECT SQL_CALC_FOUND_ROWS 2', 'SQL_CALC_FOUND_ROWS'];
+        yield 'stored program body' => ['CREATE PROCEDURE p() SELECT 1 UNION SELECT HIGH_PRIORITY 2', 'HIGH_PRIORITY'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLaterOperands')]
+    public function testBodyRefusesAModifierOfTheFirstBlockInALaterOperandOnceRead(string $sql, string $option): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The modifier belongs to the first block of the statement.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption::class, $failure->problem);
+            self::assertSame("Incorrect usage/placement of '$option'", $failure->problem->message());
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('SELECT HIGH_PRIORITY 1 UNION SELECT SQL_NO_CACHE 2', (new Semantics(Dialect::MySql))->analyze('SELECT HIGH_PRIORITY 1 UNION SELECT SQL_NO_CACHE 2')->toString());
+    }
 }

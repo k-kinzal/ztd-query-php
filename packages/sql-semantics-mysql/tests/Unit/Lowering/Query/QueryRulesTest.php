@@ -305,4 +305,26 @@ final class QueryRulesTest extends TestCase
         self::assertSame('SELECT a x, b AS y FROM t u', (new Semantics(Dialect::MySql))->analyze('select a x, b as y from t u')->toString());
         self::assertSame('SELECT f(a b, c AS d) AS e FROM t', (new Semantics(Dialect::MySql))->analyze('select f(a b, c as d) as e from t')->toString());
     }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerQuantifiedSubqueryReleases(): iterable
+    {
+        yield '8.4' => ['mysql-8.4.7'];
+        yield '5.7' => ['mysql-5.7.44'];
+    }
+
+    #[DataProvider('providerQuantifiedSubqueryReleases')]
+    public function testQueryRefusesAllWithDistinctInAnExpressionSubqueryOutsideMySql56(string $release): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze('SELECT (SELECT ALL DISTINCT 1)');
+            self::fail('The release refuses ALL with DISTINCT in a subquery.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('SELECT (SELECT ALL DISTINCT 1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT ALL DISTINCT 1)')->toString());
+    }
 }

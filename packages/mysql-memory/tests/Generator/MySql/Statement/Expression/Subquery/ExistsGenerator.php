@@ -41,7 +41,7 @@ final class ExistsGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (Query $query): Exists => new Exists(query: $query, scalarInformation: null, inputSource: null),
-            Generators::suchThat(static fn (Query $query): bool => (new ReadColumns())->problem($query, true) === null, Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null, new QueryGenerator($release, $depth - 1)))
+            Generators::suchThat(static fn (Query $query): bool => (new ReadColumns())->problem($query, true) === null, Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null && ((new ReleaseDomain())->subquery($query) & (new ReleaseDomain())->bit($release)) !== 0, new QueryGenerator($release, $depth - 1)))
         );
         $this->delegate = Generators::suchThat(
             static function (Exists $value) use ($release): bool {

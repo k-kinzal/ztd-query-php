@@ -100,7 +100,7 @@ final class FactorRule
         }
 
         $query = (new ExpressionRule($this->lowering))->subquery($form->node($at));
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query, $this->lowering->profile->grammar);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query, $this->lowering->profile->grammar) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($query);
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($derived)[1] ?? 0, false);
         }

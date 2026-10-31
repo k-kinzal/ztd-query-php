@@ -88,4 +88,35 @@ final class ReleaseDomainTest extends TestCase
         new \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition($index->kind, [$part, new \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart(new NumberLiteral('1'))]);
     }
 
+    public function testModifiersKeepsConflictingCacheModifiersOutOfTheLegacyReleasesThatRefuseThem(): void
+    {
+        $rule = new ReleaseDomain();
+
+        self::assertSame(508, $rule->modifiers([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache]));
+        self::assertSame(510, $rule->modifiers([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache]));
+        self::assertSame(511, $rule->modifiers([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache]));
+        self::assertSame(508, $rule->of(new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache], [new SelectExpression(new NumberLiteral('1'))])));
+    }
+
+    public function testOperandKeepsALaterOperandWithNoCacheInTheModernReleases(): void
+    {
+        $rule = new ReleaseDomain();
+        $noCache = new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache], [new SelectExpression(new NumberLiteral('1'))]);
+
+        self::assertSame(508, $rule->operand($noCache));
+        self::assertSame(511, $rule->operand(new Select([], [new SelectExpression(new NumberLiteral('1'))])));
+        self::assertSame(508, $rule->of(new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($noCache, new Name('d'))));
+        self::assertSame(508, $rule->of(new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation(new Select([], [new SelectExpression(new NumberLiteral('1'))]), \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $noCache)));
+    }
+
+    public function testSubqueryKeepsAllWithDistinctInMySql56Only(): void
+    {
+        $rule = new ReleaseDomain();
+        $quantified = new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct], [new SelectExpression(new NumberLiteral('1'))]);
+        $noCache = new Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache], [new SelectExpression(new NumberLiteral('1'))]);
+
+        self::assertSame(1, $rule->subquery($quantified));
+        self::assertSame(508, $rule->subquery($noCache));
+        self::assertSame(1, $rule->of(new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery($quantified)));
+    }
 }

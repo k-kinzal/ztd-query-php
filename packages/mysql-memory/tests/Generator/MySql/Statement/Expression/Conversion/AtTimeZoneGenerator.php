@@ -44,7 +44,7 @@ final class AtTimeZoneGenerator implements ErisGenerator
                 Generators::suchThat(static fn (Scalar $operand): bool => (new TimeZoneOperands())->input($operand) !== false, new ScalarGenerator($release, $depth - 1)),
                 new TimeZoneGenerator($release),
                 Generators::bool(),
-                Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99)))
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 6)))
             )
         );
         $this->delegate = Generators::suchThat(

@@ -77,6 +77,11 @@ final class Lowering
     public bool $body = false;
 
     /**
+     * Whether the query blocks being lowered belong to an operand of a 5.x UNION after the first one. MySQL 5.6 lets only the first block of a statement carry HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS and the query cache modifiers, and refuses them while parsing any other block.
+     */
+    public bool $operand = false;
+
+    /**
      * The start_entry alternatives the server enters by a grammar selector token; no SQL text parses to them.
      */
     private const SELECTED = [

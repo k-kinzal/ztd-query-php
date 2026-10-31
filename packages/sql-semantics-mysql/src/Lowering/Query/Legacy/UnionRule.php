@@ -58,14 +58,15 @@ final class UnionRule
     }
 
     /**
-     * Lowers one operand of a statement-level union and answers it with the node of the union that follows it.
+     * Lowers one operand of a statement-level union and answers it with the node of the union that follows it and the offset the operand starts at.
      *
-     * @return array{Block|Query, Node}
+     * @return array{Block|Query, Node, int}
      * @throws ImplementationGap When a production has no rule
      */
     public function operand(Node $init): array
     {
         $form = $this->lowering->form($init);
+        $start = (new \SqlSemantics\Construction\SourceRanges())->span($init)[0] ?? 0;
         switch ($form->signature) {
             case 'select_init: SELECT_SYM select_init2':
                 $second = $this->lowering->form($form->node(1));
@@ -73,11 +74,11 @@ final class UnionRule
                     throw ImplementationGap::production($second);
                 }
 
-                return [$this->retained($second->node(0), $this->lowering->hints($form->token(0))), $second->node(1)];
+                return [$this->retained($second->node(0), $this->lowering->hints($form->token(0))), $second->node(1), $start];
             case 'select_init: ( select_paren ) union_opt':
-                return [new ParenthesizedQuery($this->paren($form->node(1))), $form->node(3)];
+                return [new ParenthesizedQuery($this->paren($form->node(1))), $form->node(3), $start];
             case 'select_init: SELECT_SYM select_part2 opt_union_clause':
-                return [$this->retained($form->node(1), $this->lowering->hints($form->token(0))), $form->node(2)];
+                return [$this->retained($form->node(1), $this->lowering->hints($form->token(0))), $form->node(2), $start];
             default:
                 throw ImplementationGap::production($form);
         }
@@ -142,8 +143,14 @@ final class UnionRule
                         throw ImplementationGap::production($list);
                     }
                     $quantifiers[] = $expressions->quantifier($list->node(1));
-                    [$operand, $union] = $this->operand($list->node(2));
-                    $operands[] = [$operand, new Trailer()];
+                    $previous = $this->lowering->operand;
+                    $this->lowering->operand = true;
+                    try {
+                        [$operand, $union, $start] = $this->operand($list->node(2));
+                    } finally {
+                        $this->lowering->operand = $previous;
+                    }
+                    $operands[] = [$operand, new Trailer(), $start];
                     break;
                 case 'union_opt: union_order_or_limit':
                     $trailer = $this->ordering($form->node(0));

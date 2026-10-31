@@ -11,13 +11,16 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * Two SELECT modifiers that cannot coexist in their query-block position: a repeated cache modifier (ER_DUP_ARGUMENT), opposite cache modifiers, or ALL with DISTINCT (ER_WRONG_USAGE).
  *
- * The enclosing rule determines when the server reports the conflict.
+ * MySQL 5.6 and 5.7 refuse the conflict while parsing the second modifier; the
+ * lowering refuses the input there. A constructed block is reported under a
+ * legacy release only (SelectOptions).
  * Source: https://dev.mysql.com/doc/refman/5.7/en/query-cache-in-select.html.
  *
  * @visibility public
- * @example Reading the problem of SQL_CACHE written twice in 5.7
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE SQL_CACHE 1');
- *     $query->diagnostics()[0]->message() // => "Option 'SQL_CACHE' used twice in statement"
+ * @example Refusing SQL_CACHE written twice in 5.7 while reading
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE SQL_CACHE 1') // throws \SqlSemantics\Construction\RejectedInput
+ * @example Describing the problem
+ *     (new \SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache))->message() // => "Option 'SQL_CACHE' used twice in statement"
  */
 final class SelectOptionConflict implements Diagnostic
 {

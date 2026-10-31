@@ -40,7 +40,7 @@ final class DeferredTimeZone implements DeferredOperand
      * @param Scalar|RowOperand|DeferredOperand $operand The expression requiring invocation-time preparation
      * @param Text $zone The quoted zone name
      * @param bool $interval Whether INTERVAL precedes the zone
-     * @param string|null $precision The fractional seconds precision exactly as written
+     * @param string|null $precision The fractional seconds precision exactly as written, at most 6: the server refuses a larger one while parsing the body (ER_TOO_BIG_PRECISION)
      */
     public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Text $zone, public readonly bool $interval = false, public readonly ?string $precision = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
@@ -50,6 +50,7 @@ final class DeferredTimeZone implements DeferredOperand
         Check::input(!$operand instanceof Scalar || (new TimeZoneOperands())->input($operand) === false || !(new TimeZoneOperands())->zone($zone), 'A deferred time-zone conversion retains an incompatible operand or zone.');
         Check::input($zone->radix === null, 'A time zone is a quoted string.');
         Check::input($precision === null || preg_match('/\A[0-9]+\z/', $precision) === 1, 'A precision is an unsigned integer.');
+        Check::input($precision === null || (int) $precision <= 6, 'A DATETIME precision is at most 6.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -59,10 +60,7 @@ final class DeferredTimeZone implements DeferredOperand
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->operand, $environment);
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->precision($this->precision, $derivation);
-        if ($problem !== null) {
-            return new ScalarFact(new Invalid($problem), $fact->nullability);
-        }
+
         return new ScalarFact(new Invalid($this->problem()), $fact->nullability);
     }
 

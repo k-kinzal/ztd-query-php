@@ -42,7 +42,7 @@ final class DerivedTableGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): DerivedTable => new DerivedTable(query: $parts[0], alias: $parts[1], columns: ($bit & 508) !== 0 ? $parts[2] : [], lateral: ($bit & 508) !== 0 && $parts[3], mark: $parts[4], relationInformation: $parts[5], inputSource: $parts[6]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new DerivedOptions())->problem(($parts[0])) === null,
+                static fn (array $parts): bool => (new DerivedOptions())->problem(($parts[0])) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($parts[0]) === null && ((new ReleaseDomain())->operand($parts[0]) & $bit) !== 0,
                 Generators::tuple(
                     new QueryGenerator($release, $depth - 1),
                     new NameGenerator($release),

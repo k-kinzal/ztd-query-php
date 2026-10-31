@@ -109,17 +109,12 @@ final class EncodingSettings
     }
 
     /**
-     * Checks an explicit SET NAMES collation against the selected character set.
+     * Checks that an explicit SET NAMES collation is one this release of the server has; a collation of another character set than the named one is refused while reading.
      */
-    public function compatible(string $charset, string $collation): void
+    public function compatible(string $collation): void
     {
-        $named = Charset::named($charset);
-        $compared = Collation::forName($collation, $this->context->modes->release);
-        if ($compared === null) {
+        if (Collation::forName($collation, $this->context->modes->release) === null) {
             throw \MySqlMemory\Error\Family\SchemaError::UnknownCollation->error($collation);
-        }
-        if ($named !== null && $compared->charset !== $named) {
-            throw \MySqlMemory\Error\Family\SchemaError::CollationCharsetMismatch->error($compared->nameIn($this->context->modes->release), $named->nameIn($this->context->modes->release));
         }
     }
 }

@@ -237,4 +237,27 @@ final class ReaderTest extends TestCase
         self::assertSame('Undefined CONDITION: c', $earlier->problem->message());
         self::assertSame($later, (new Reader())->earlier($later, $session->semantics()->parser()->parse('SELECT 1'), $session));
     }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerUndeclaredBeforeRefusals(): iterable
+    {
+        yield '5.7 LIMIT before a misplaced cache modifier' => ['5.7.44', '(SELECT 1 LIMIT a) UNION (SELECT SQL_CACHE 2)', 1327];
+        yield '5.6 LIMIT before a misplaced cache modifier' => ['5.6.51', 'SELECT 1 LIMIT a UNION SELECT SQL_NO_CACHE 2', 1327];
+        yield '8.4 INTO before a misplaced INTO' => ['8.4.7', 'SELECT 1 INTO a UNION SELECT 2', 1327];
+        yield '8.4 INTO after the refused operand' => ['8.4.7', 'SELECT 1 UNION SELECT HIGH_PRIORITY 2 INTO a', 1234];
+        yield '5.7 table before the variable without a database' => ['5.7.44', '(SELECT 1 FROM t LIMIT a) UNION (SELECT SQL_CACHE 2)', 1046];
+        yield '5.7 table after the variable without a database' => ['5.7.44', '(SELECT 1 LIMIT a) UNION (SELECT SQL_CACHE 2 FROM t)', 1327];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUndeclaredBeforeRefusals')]
+    public function testUndeclaredOrdersAVariableBeforeTheRefusedOperandAsTheServerDoes(string $release, string $sql, int $code): void
+    {
+        $session = (new Instance($release))->connect();
+        $answers = $session->run($sql);
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame($code, $answers[0]->getCode());
+    }
 }

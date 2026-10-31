@@ -220,7 +220,7 @@ final class FactorRule
      */
     public function derived(Query $query, ?\SqlSemantics\Statement\Identifier\Name $name, Node $alias): Query|DerivedTable
     {
-        $problem = $name === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query, $this->lowering->profile->grammar);
+        $problem = $name === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query, $this->lowering->profile->grammar) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($query);
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($alias)[1] ?? 0, $this->lowering->profile->grammar === GrammarRelease::MySql5651);
         }

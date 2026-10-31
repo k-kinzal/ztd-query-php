@@ -37,6 +37,9 @@ use SqlSemantics\Statement\Query;
  * @example Refusing an option that no derived table accepts
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::HighPriority], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]);
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($query, new \SqlSemantics\Statement\Identifier\Name('t')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing ALL with DISTINCT in a derived relation, which every release refuses there
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::All, \SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($query, new \SqlSemantics\Statement\Identifier\Name('t')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing the cache modifier in a derived relation
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Cache], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral())]);
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable($query, new \SqlSemantics\Statement\Identifier\Name('t')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
@@ -65,6 +68,7 @@ final class DerivedTable implements Relation, \SqlSemantics\Statement\TableUse
         }
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a derived table holds names.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query) === null, 'A derived query cannot carry statement-level SELECT modifiers.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($query) === null, 'A derived query cannot combine ALL and DISTINCT in one query block.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

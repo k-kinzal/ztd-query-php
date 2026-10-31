@@ -56,15 +56,59 @@ final class ReleaseDomain
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod, $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod, $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->releases($value->expression),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateIndex, $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition => (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\IndexOrdering())->legacy($value->kind, $value->parts, $value->algorithm, $value->options) ? 3 : self::ALL,
             $value instanceof LanguageProfile => $this->bit($value->grammar),
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && (($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->left->limit !== null) || ($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody && $value->left->selection->limit !== null)) => 1,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion && ($value->right instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || $value->right->limit !== null) => 1,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation => $this->operand($value->right) & (($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->left->limit !== null) || ($value->left instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody && $value->left->selection->limit !== null) ? 1 : self::ALL),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion => $this->operand($value->right) & ($value->right instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody || $value->right->limit !== null ? 1 : self::ALL),
             $value instanceof Explain, $value instanceof DeferredExplain, $value instanceof ExplainConnection => $this->explanation($value),
             $value === \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Vector => 384,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->qualify !== null => 480,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select && $value->qualify !== null => 480 & $this->modifiers($value->options),
             $value instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample => 448,
-            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal => $this->ordering($value),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select => $this->ordering($value) & $this->modifiers($value->options),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection => $this->modifiers($value->options),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation => $this->ordering($value) & $this->operand($value->right),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable => $this->operand($value->query),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery, $value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery, $value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists, $value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery, $value instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubquery, $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredSubqueryPredicate => $this->subquery($value->query),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression, $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal => $this->ordering($value),
             default => $this->handler($value),
         };
+    }
+
+    /**
+     * Keeps a query block whose query cache modifiers conflict out of the legacy releases that refuse the pair (SelectOptions).
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Query\SelectOption> $options The modifiers in written order
+     */
+    public function modifiers(array $options): int
+    {
+        $domain = self::ALL;
+        foreach ([GrammarRelease::MySql5651, GrammarRelease::MySql5744] as $release) {
+            if ((new \SqlSemantics\Platform\MySql\Rules\Query\SelectOptions())->conflict($options, $release) !== null) {
+                $domain &= ~$this->bit($release);
+            }
+        }
+
+        return $domain;
+    }
+
+    /**
+     * Keeps a later set operand or a derived query with SQL_NO_CACHE in the releases that accept the modifier outside the first block of a statement: MySQL 8.0 and later.
+     */
+    public function operand(\SqlSemantics\Statement\Query $query): int
+    {
+        foreach ((new DerivedOptions())->blocks($query) as $block) {
+            if (in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::NoCache, $block->options, true)) {
+                return self::ALL & ~3;
+            }
+        }
+
+        return self::ALL;
+    }
+
+    /**
+     * Keeps an expression subquery that combines ALL and DISTINCT in one block in MySQL 5.6, the only release that accepts the pair there, and one with SQL_NO_CACHE in the releases whose grammar admits the modifier in a subquery.
+     */
+    public function subquery(\SqlSemantics\Statement\Query $query): int
+    {
+        return $this->operand($query) & ((new StatementQuery())->problem($query) === null ? self::ALL : 1);
     }
 
     /**

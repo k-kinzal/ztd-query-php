@@ -53,10 +53,34 @@ final class DerivedOptionsTest extends TestCase
     #[DataProvider('providerOptions')]
     public function testProblemFindsARestrictedOptionInALaterOperand(SelectOption $option): void
     {
-        $first = new Select([], [new SelectExpression(new NumberLiteral('1'))]);
         $last = new Select([$option], [new SelectExpression(new NumberLiteral('2'))]);
 
-        self::assertSame("Incorrect usage/placement of '{$option->value}'", (new DerivedOptions())->problem(new SetOperation($first, SetOperator::Union, null, $last))?->message());
+        self::assertSame("Incorrect usage/placement of '{$option->value}'", (new DerivedOptions())->problem(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($last))?->message());
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease, list<SelectOption>, string|null}>
+     */
+    public static function providerBlocks(): iterable
+    {
+        yield '5.6 names the first written restricted modifier' => [GrammarRelease::MySql5651, [SelectOption::All, SelectOption::Distinct, SelectOption::NoCache], "Incorrect usage/placement of 'SQL_NO_CACHE'"];
+        yield '5.6 keeps written order over priority' => [GrammarRelease::MySql5651, [SelectOption::NoCache, SelectOption::HighPriority], "Incorrect usage/placement of 'SQL_NO_CACHE'"];
+        yield '5.6 accepts other modifiers' => [GrammarRelease::MySql5651, [SelectOption::SmallResult, SelectOption::Distinct], null];
+        yield '5.7 names a cache modifier written last first' => [GrammarRelease::MySql5744, [SelectOption::HighPriority, SelectOption::NoCache], "Incorrect usage/placement of 'SQL_NO_CACHE'"];
+        yield '5.7 names the priority modifier before an earlier cache modifier' => [GrammarRelease::MySql5744, [SelectOption::NoCache, SelectOption::HighPriority], "Incorrect usage/placement of 'HIGH_PRIORITY'"];
+        yield '5.7 reports ALL with DISTINCT before an earlier cache modifier' => [GrammarRelease::MySql5744, [SelectOption::NoCache, SelectOption::All, SelectOption::Distinct], 'Incorrect usage of ALL and DISTINCT'];
+        yield '5.7 names a cache modifier written last before ALL with DISTINCT' => [GrammarRelease::MySql5744, [SelectOption::All, SelectOption::Distinct, SelectOption::NoCache], "Incorrect usage/placement of 'SQL_NO_CACHE'"];
+        yield '8.4 accepts SQL_NO_CACHE anywhere' => [GrammarRelease::MySql847, [SelectOption::NoCache, SelectOption::NoCache], null];
+        yield '8.4 names the modifiers in priority order' => [GrammarRelease::MySql847, [SelectOption::CalcFoundRows, SelectOption::BufferResult, SelectOption::HighPriority], "Incorrect usage/placement of 'HIGH_PRIORITY'"];
+    }
+
+    /**
+     * @param list<SelectOption> $options The modifiers of the block in written order
+     */
+    #[DataProvider('providerBlocks')]
+    public function testBlockFollowsTheOrderEachReleaseChecks(GrammarRelease $release, array $options, ?string $message): void
+    {
+        self::assertSame($message, (new DerivedOptions())->block($options, $release)?->message());
     }
 
     public function testProblemPreservesVersionedQuantifierPrecedence(): void

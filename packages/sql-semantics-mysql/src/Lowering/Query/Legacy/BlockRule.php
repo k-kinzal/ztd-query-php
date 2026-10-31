@@ -55,7 +55,7 @@ final class BlockRule
         $items = new ItemRule($this->lowering);
         switch ($form->signature) {
             case 'select_part2: select_options select_item_list select_into select_lock_type':
-                return $this->into($form->node(2), $items->options($form->node(0)), $items->items($form->node(1)), new Trailer([], null, null, $tail->locking($form->node(3))));
+                return $this->into($form->node(2), $items->options($form->node(0), !$this->lowering->operand), $items->items($form->node(1)), new Trailer([], null, null, $tail->locking($form->node(3))));
             case 'select_part2: select_options_and_item_list opt_order_clause opt_limit_clause opt_select_lock_type':
                 [$options, $list] = $this->head($form->node(0));
 
@@ -117,7 +117,7 @@ final class BlockRule
         }
         $items = new ItemRule($this->lowering);
 
-        return [$items->options($form->node(0)), $items->items($form->node(1))];
+        return [$items->options($form->node(0), !$this->lowering->operand), $items->items($form->node(1))];
     }
 
     /**
@@ -237,8 +237,8 @@ final class BlockRule
         $items = new ItemRule($this->lowering);
 
         return match ($form->signature) {
-            'create_select: SELECT_SYM select_options select_item_list opt_select_from' => $this->optional($form->node(3), $items->options($form->node(1)), $items->items($form->node(2)))->hinted($this->lowering->hints($form->token(0))),
-            'create_select: SELECT_SYM select_options select_item_list table_expression' => $this->expression($form->node(3), $items->options($form->node(1)), $items->items($form->node(2)))->hinted($this->lowering->hints($form->token(0))),
+            'create_select: SELECT_SYM select_options select_item_list opt_select_from' => $this->optional($form->node(3), $items->options($form->node(1), !$this->lowering->operand), $items->items($form->node(2)))->hinted($this->lowering->hints($form->token(0))),
+            'create_select: SELECT_SYM select_options select_item_list table_expression' => $this->expression($form->node(3), $items->options($form->node(1), !$this->lowering->operand), $items->items($form->node(2)))->hinted($this->lowering->hints($form->token(0))),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -257,9 +257,9 @@ final class BlockRule
             return $this->derived($form->node(0), $expression);
         }
         $block = match ($form->signature) {
-            'select_part2_derived: opt_query_expression_options select_item_list opt_select_from select_lock_type' => $this->optional($form->node(2), $items->options($form->node(0)), $items->items($form->node(1)))->then(new Trailer([], null, null, (new TailRule($this->lowering))->locking($form->node(3)))),
-            'select_part2_derived: opt_query_spec_options select_item_list' => $this->expression($expression ?? throw ImplementationGap::production($form), $items->options($form->node(0)), $items->items($form->node(1))),
-            'select_derived2: select_options select_item_list opt_select_from' => $this->optional($form->node(2), $items->options($form->node(0)), $items->items($form->node(1))),
+            'select_part2_derived: opt_query_expression_options select_item_list opt_select_from select_lock_type' => $this->optional($form->node(2), $items->options($form->node(0), false), $items->items($form->node(1)))->then(new Trailer([], null, null, (new TailRule($this->lowering))->locking($form->node(3)))),
+            'select_part2_derived: opt_query_spec_options select_item_list' => $this->expression($expression ?? throw ImplementationGap::production($form), $items->options($form->node(0), false), $items->items($form->node(1))),
+            'select_derived2: select_options select_item_list opt_select_from' => $this->optional($form->node(2), $items->options($form->node(0), false), $items->items($form->node(1))),
             default => throw ImplementationGap::production($form),
         };
         if ($block->trailer->procedure !== null) {

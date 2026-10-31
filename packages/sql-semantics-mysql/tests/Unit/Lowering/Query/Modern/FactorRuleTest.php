@@ -50,4 +50,14 @@ final class FactorRuleTest extends TestCase
         (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT * FROM (SELECT HIGH_PRIORITY 1) d');
     }
 
+    public function testDerivedRefusesAllWithDistinctOnceRead(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('SELECT * FROM (SELECT ALL DISTINCT 1) AS d');
+            self::fail('A derived table refuses ALL with DISTINCT.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
+    }
 }

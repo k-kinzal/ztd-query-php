@@ -72,7 +72,7 @@ final class SelectGenerator implements ErisGenerator
                 return new Select(options: $options, items: $items, from: $from, where: $where, groupBy: $groupBy, having: $having, windows: $windows, qualify: $qualify, orderBy: $orderBy, limit: $limit, procedure: $procedure, locking: $locking, into: $into, intoPosition: $position, queryInformation: null, inputSource: null, late: $late, hints: $hints);
             },
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$parts[3]]) === null,
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$parts[3]]) === null && ((new ReleaseDomain())->modifiers($parts[0]) & $bit) !== 0,
                 Generators::tuple(
                     Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SelectOptionGenerator($release))),
                     Generators::bool(),

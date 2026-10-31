@@ -49,6 +49,8 @@ final class SetOperationGenerator implements ErisGenerator
             static fn (array $parts): SetOperation => new SetOperation(left: $parts[0], operator: $parts[1], quantifier: $parts[2], right: $parts[3], queryInformation: $parts[4], inputSource: $parts[5]),
             Generators::suchThat(
                 static fn (array $parts): bool => (!($parts[3]) instanceof SetOperation || ($parts[3])->operator->tighter(($parts[1])))
+                && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($parts[3]) === null
+                && ((new ReleaseDomain())->operand($parts[3]) & $bit) !== 0
                 && (!($parts[0]) instanceof DeferredBody || (($parts[0])->selection->orderBy === [] && ($parts[0])->selection->procedure === null))
                 && (!($parts[0]) instanceof SetOperation || !($parts[1])->tighter(($parts[0])->operator))
                 && (!($parts[0]) instanceof LeadingUnion || ($parts[1]) === SetOperator::Union)

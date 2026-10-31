@@ -74,16 +74,27 @@ final class ConstructRuleTest extends TestCase
         yield 'aborting 8.4' => ['mysql-8.4.7', true];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerPrecisionRefusals')]
-    public function testZoneRetainsExcessivePrecisionAndLaterExpressions(string $release, bool $aborts): void
+    /**
+     * @return iterable<string, array{string, bool, string}>
+     */
+    public static function providerPrecisionInputs(): iterable
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1");
-        $failure = $statement->warnings()[0];
+        foreach (self::providerPrecisionRefusals() as $name => [$release, $aborts]) {
+            yield $name . ' standalone' => [$release, $aborts, "SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1"];
+            yield $name . ' in a body' => [$release, $aborts, "CREATE PROCEDURE p() SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7))"];
+        }
+    }
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $failure);
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(7, 'CAST'), $failure->problem);
-        self::assertSame($aborts, $failure->aborts);
-        self::assertSame("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME(7)), BINARY 1", $statement->toString());
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerPrecisionInputs')]
+    public function testZoneRefusesAnExcessivePrecisionWhileReading(string $release, bool $aborts, string $sql): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze($sql);
+            self::fail('The precision exceeds 6.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision(7, 'CAST'), $failure->problem);
+            self::assertSame($aborts, $failure->aborts);
+        }
     }
 
     /**

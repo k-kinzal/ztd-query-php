@@ -196,7 +196,7 @@ final class SetCommand implements Command
 
         return static function () use ($assigner, $charset, $collation, $connection, $item, $session): void {
             if ($item instanceof SetNames && $item->collation?->name !== null) {
-                (new \MySqlMemory\Variable\EncodingSettings($assigner->context))->compatible($charset, $collation);
+                (new \MySqlMemory\Variable\EncodingSettings($assigner->context))->compatible($collation);
             }
             $text = Domain::string(64, Collation::known('utf8mb4_0900_ai_ci'));
             foreach (['character_set_client', 'character_set_results'] as $name) {

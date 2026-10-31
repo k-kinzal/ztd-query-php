@@ -86,6 +86,7 @@ final class OrderedSetOperation implements Query
         Check::input($this->orderBy !== [] || $limit !== null, 'An ordered set operation holds an ORDER BY or a LIMIT of its result.');
         $own = $right instanceof DeferredBody ? ($right->selection->orderBy !== [] || $right->selection->limit !== null) && $right->selection->procedure === null : $right->trailed() && $right->late === null && $right->into === null && $right->procedure === null;
         Check::input($own, 'The last SELECT of an ordered set operation writes an ORDER BY, LIMIT or locking clause of its own and nothing after them.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($right) === null, 'The last SELECT of an ordered set operation carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE: they belong to the first query block of the statement.');
         Check::input(!$left instanceof SetOperation || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
         Check::input(!$left instanceof LeadingUnion || $operator === SetOperator::Union, 'A leading union continues with UNION.');
         Check::input(!$left instanceof self && !$left instanceof QueryStatement && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');

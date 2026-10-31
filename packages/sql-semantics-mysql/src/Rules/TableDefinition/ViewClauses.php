@@ -9,7 +9,6 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectOptions;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
-use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
@@ -33,7 +32,7 @@ final class ViewClauses
     /**
      * Returns preceding-variable presence and modifier conditions at the first INTO, or null.
      *
-     * @return array{bool, list<Deprecation|ParseFailure>}|null The structural reading boundary
+     * @return array{bool, list<Deprecation>}|null The structural reading boundary
      */
     public function before(Query $query, GrammarRelease $release): ?array
     {
