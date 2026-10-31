@@ -67,9 +67,9 @@
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * Status: Implemented.</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Reading the place of an unknown collation</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;SELECT BINARY (&#039;a&#039; COLLATE nope)&quot;);</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> *     [$query-&gt;warnings()[0]-&gt;message(), $query-&gt;warnings()[1]-&gt;message()] // =&gt; [&quot;Unknown collation: &#039;nope&#039;&quot;, &quot;&#039;BINARY expr&#039; is deprecated and will be removed in a future release. Please use CAST instead&quot;]</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Reading the place of a deprecated BINARY operator</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&quot;SELECT BINARY (&#039;a&#039; COLLATE utf8mb4_bin)&quot;);</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> *     $query-&gt;warnings()[0]-&gt;message() // =&gt; &quot;&#039;BINARY expr&#039; is deprecated and will be removed in a future release. Please use CAST instead&quot;</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ParseFailure</span> <span class="tok-kw">implements</span> <span class="tok-id">Warning</span></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>{</span>
