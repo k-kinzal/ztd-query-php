@@ -42,6 +42,24 @@ final class BodyStructureTest extends TestCase
         self::assertSame('HANDLER is not allowed in stored procedures', (new BodyStructure())->problem($body, ProgramKind::Procedure, new QualifiedName(new Name('p')))?->message());
     }
 
+    public function testLocatedNamesTheInstructionOfAnImmediateRestrictionAndTheBodyOfABodyWideOne(): void
+    {
+        $return = new ReturnStatement(new NumberLiteral('1'));
+        $body = new Block([], [new Commit(), $return]);
+        $procedure = (new BodyStructure())->located($body, ProgramKind::Procedure);
+        self::assertNotNull($procedure);
+        self::assertSame(ProgramRule::ReturnOutsideFunction, $procedure[0]->rule);
+        self::assertSame($return, $procedure[1]);
+        $function = (new BodyStructure())->located($body, ProgramKind::Function);
+        self::assertNotNull($function);
+        self::assertSame(ProgramRule::CommitInFunction, $function[0]->rule);
+        self::assertSame($body, $function[1]);
+        $missing = (new BodyStructure())->located(new Block(), ProgramKind::Function, new QualifiedName(new Name('f')));
+        self::assertNotNull($missing);
+        self::assertSame('No RETURN found in FUNCTION f', $missing[0]->message());
+        self::assertNull((new BodyStructure())->located(new Block([], [$return]), ProgramKind::Function));
+    }
+
     public function testContainedDependsOnTheDeclarationKind(): void
     {
         $rules = new BodyStructure();

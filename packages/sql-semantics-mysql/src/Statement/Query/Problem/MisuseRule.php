@@ -33,5 +33,7 @@ enum MisuseRule: string
     case UnknownLockedTable = 'Table in the locking clause is not in the query';
     case RepeatedLockedTable = 'Table appears in multiple locking clauses';
     case AmbiguousJoinColumn = 'Column in from clause is ambiguous';
+    case AggregateOutsideQuery = 'Invalid use of group function';
+    case WindowOutsideQuery = 'You cannot use the window function in this context';
     case EmptyValuesRow = 'Each row of a VALUES clause must have at least one column, unless when used as source in an INSERT statement.';
 }

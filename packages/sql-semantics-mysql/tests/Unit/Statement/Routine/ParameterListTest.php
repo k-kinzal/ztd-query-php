@@ -111,16 +111,11 @@ final class ParameterListTest extends TestCase
     }
 
     #[DataProvider('providerRepeatedNames')]
-    public function testRepeatedRetainsTheFirstDuplicateAndAllLaterParameters(string $first, string $second): void
+    public function testRepeatedAnswersTheFirstParameterRepeatingAnEarlierName(string $first, string $second): void
     {
         $duplicate = new Parameter(new Name($second), new Integral(IntegralKind::Int));
-        $parameters = new ParameterList([new Parameter(new Name($first), new Integral(IntegralKind::Int)), $duplicate, new Parameter(new Name('later'), new Integral(IntegralKind::Int))]);
-        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
-        $fact = $derivation->relation($parameters, $derivation->environment());
 
-        self::assertSame($duplicate, $parameters->repeated());
-        self::assertCount(3, $fact->shape->slots);
-        self::assertSame(['Duplicate parameter: ' . $second], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics));
+        self::assertSame($duplicate, ParameterList::repeated([new Parameter(new Name($first), new Integral(IntegralKind::Int)), $duplicate, new Parameter(new Name('later'), new Integral(IntegralKind::Int))]));
     }
 
     public function testDeriveRelationRetainsInvalidNamesBesideModernQuerySyntax(): void
@@ -137,9 +132,7 @@ final class ParameterListTest extends TestCase
 
     public function testRepeatedAcceptsDistinctNames(): void
     {
-        $parameters = new ParameterList([new Parameter(new Name('x'), new Integral(IntegralKind::Int)), new Parameter(new Name('y'), new Integral(IntegralKind::Int))]);
-
-        self::assertNull($parameters->repeated());
+        self::assertNull(ParameterList::repeated([new Parameter(new Name('x'), new Integral(IntegralKind::Int)), new Parameter(new Name('y'), new Integral(IntegralKind::Int))]));
     }
 
     public function testDeriveRelationReportsANameWhenTheSessionUsesAModernRelease(): void

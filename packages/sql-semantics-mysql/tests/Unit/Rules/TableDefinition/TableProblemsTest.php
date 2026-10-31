@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class TableProblemsTest extends TestCase
 {
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerUnavailableCollations')]
+    #[DataProvider('providerUnavailableCollations')]
     public function testCollationsRejectsNamesUnavailableInTheRelease(string $release, string $sql): void
     {
         try {

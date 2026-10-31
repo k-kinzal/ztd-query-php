@@ -46,7 +46,7 @@ final class DropLogfileGroupGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): DropLogfileGroup => new DropLogfileGroup(name: $parts[0], options: array_values(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::DROP, true))), statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $parts[4] === null ? null : array_slice($parts[4], 0, max(0, count(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::DROP, true))) - 1)), leadingComma: $parts[5] && array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::DROP, true)) !== []),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[1]) === null,
+                static fn (array $parts): bool => (new StorageOptions())->repeated($parts[1]) === null,
                 Generators::tuple(
                     new NameGenerator($release),
                     Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),

@@ -10,8 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Schedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
@@ -85,9 +83,6 @@ final class ProgramFacts
         }
         $environment = new Environment($context, null, [new VisibleRelation($parameters, $fact->shape)]);
         (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, $kind, complete: $scopeComplete));
-        if ($kind === ProgramKind::Function && !(new ReturnSearch())->found($body)) {
-            $derivation->report(new ProgramProblem(ProgramRule::MissingReturn, $name->name->value));
-        }
     }
 
     /**

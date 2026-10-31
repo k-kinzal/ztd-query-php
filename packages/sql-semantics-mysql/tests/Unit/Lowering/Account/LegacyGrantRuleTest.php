@@ -17,12 +17,15 @@ use SqlSemantics\Platform\MySql\Lowering\Account\LegacyGrantRule;
 final class LegacyGrantRuleTest extends TestCase
 {
     #[DataProvider('providerColumnTargets')]
-    public function testRequestPreservesCompleteColumnPrivileges(string $release, string $sql): void
+    public function testRequestRefusesColumnPrivilegesOutsideATable(string $release, string $sql): void
     {
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertSame($sql, $statement->toString());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RefusedColumnLevel::class, $statement->warnings()[0]->problem);
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('Column privileges apply only to tables.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege::class, $failure->problem);
+            self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $failure->problem->error);
+        }
     }
 
     /**

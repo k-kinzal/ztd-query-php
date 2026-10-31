@@ -54,18 +54,21 @@ final class CreateEventGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): CreateEvent => new CreateEvent(name: $parts[0], schedule: $parts[1], body: $parts[2], completion: $parts[3], status: $parts[4], comment: $parts[5], definer: $parts[6], ifNotExists: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]),
-            Generators::tuple(
-                new QualifiedNameGenerator($release),
-                new ScheduleGenerator($release, $depth - 1),
-                Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1))),
-                Generators::oneOf(Generators::constant(null), new CompletionGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new EventStatusGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
-                Generators::bool(),
-                Generators::constant(null),
-                Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[2], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $parts[0], null, [], $parts[10]?->bodyRefusalOffset) === null,
+                Generators::tuple(
+                    new QualifiedNameGenerator($release),
+                    new ScheduleGenerator($release, $depth - 1),
+                    Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1))),
+                    Generators::oneOf(Generators::constant(null), new CompletionGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new EventStatusGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                    Generators::bool(),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+                )
             )
         );
         $this->delegate = Generators::map(

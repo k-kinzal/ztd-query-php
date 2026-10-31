@@ -170,4 +170,25 @@ final class CharacteristicRuleTest extends TestCase
 
         $rule->characteristic(new Node('sp_name', 1, []));
     }
+
+    public function testLanguageAcceptsJavaScriptAndRefusesOtherNames(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-9.1.0', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $rule = new CharacteristicRule($lowering);
+        $javascript = $platform->parser($profile)->parse("CREATE FUNCTION f() RETURNS INT LANGUAGE JavaScript AS 'return 1'")->find('sp_chistic')[0]->children[1];
+        $python = $platform->parser($profile)->parse("CREATE FUNCTION f() RETURNS INT LANGUAGE python AS 'return 1'")->find('sp_chistic')[0]->children[1];
+        self::assertInstanceOf(Node::class, $javascript);
+        self::assertInstanceOf(Node::class, $python);
+
+        self::assertSame('JavaScript', $rule->language($javascript)->value);
+        try {
+            $rule->language($python);
+            self::fail('The grammar accepts only SQL and JAVASCRIPT.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedLanguage::class, $failure->problem);
+            self::assertSame("Unknown routine language 'python'", $failure->problem->message());
+        }
+    }
 }

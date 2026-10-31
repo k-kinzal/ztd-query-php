@@ -15,10 +15,11 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * A function's instruction body and the characteristics that interpret it.
  *
- * SQL instructions and opaque external code remain available even when their
- * language, bindings or instruction arrangement would be rejected by the server.
- * CreateFunction derives those conditions after combining the implementation
- * with its name, parameter list and result declaration.
+ * The body representation agrees with the LANGUAGE characteristic: external code
+ * is written for a non-SQL language and SQL instructions for SQL. An SQL body
+ * reaches a RETURN. CreateFunction checks the remaining stored program
+ * restrictions after combining the implementation with its name, parameter list
+ * and result declaration.
  *
  * @visibility public
  * @example Constructing a SQL implementation independently of a function name
@@ -26,6 +27,8 @@ use SqlSemantics\Statement\Snapshot;
  *     count($implementation->characteristics) // => 0
  * @example Excluding values that are not instruction bodies
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \TypeError
+ * @example Refusing an SQL body without a RETURN
+ *     new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class FunctionImplementation
 {
@@ -44,11 +47,13 @@ final class FunctionImplementation
     /**
      * @param ExternalBody|ProgramStatement|Statement $body The complete SQL instruction structure or external code
      * @param list<Characteristic> $characteristics The characteristics in written order
-     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a characteristic is not a routine characteristic
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a characteristic is not a routine characteristic, the language and the body disagree, or an SQL body never returns
      */
     public function __construct(ExternalBody|ProgramStatement|Statement $body, array $characteristics = [])
     {
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage())->compatible($body, $this->characteristics), 'The routine language and the body representation agree.');
+        Check::input($body instanceof ExternalBody || (new \SqlSemantics\Platform\MySql\Rules\Routine\ReturnSearch())->found($body), 'An SQL function body reaches a RETURN.');
         $this->body = $body;
     }
 

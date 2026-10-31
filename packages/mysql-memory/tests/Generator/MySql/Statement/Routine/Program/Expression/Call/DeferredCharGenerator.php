@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredChar;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
-use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**

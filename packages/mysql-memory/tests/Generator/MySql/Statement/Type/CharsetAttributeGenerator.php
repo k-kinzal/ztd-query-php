@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use Tests\Generator\MySql\Statement\Type\Kind\BinaryMarkGenerator;
 use Tests\Generator\MySql\Statement\Type\Kind\CharsetFormGenerator;
-use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
  * Generates CharsetAttribute values from the generators of its operands.

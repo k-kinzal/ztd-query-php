@@ -51,17 +51,20 @@ final class ParameterList implements Relation, \SqlSemantics\Statement\TableUse
             $this->initializeRelationInformation($relationInformation);
         }
         $this->parameters = Check::listOf($parameters, Parameter::class, 'A parameter list holds parameters.');
+        Check::input(self::repeated($this->parameters) === null, 'Parameter names are distinct.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Answers the first parameter whose case- and accent-insensitive name repeats.
-     * The complete list remains available, including parameters after the duplicate.
+     * Answers the first parameter whose case- and accent-insensitive name repeats an earlier one.
+     * A list holding such a parameter cannot be constructed; the lowering refuses it at that parameter.
+     *
+     * @param list<Parameter> $parameters The parameters in order
      */
-    public function repeated(): ?Parameter
+    public static function repeated(array $parameters): ?Parameter
     {
         $seen = [];
-        foreach ($this->parameters as $parameter) {
+        foreach ($parameters as $parameter) {
             $key = $parameter->key();
             if (isset($seen[$key])) {
                 return $parameter;
@@ -77,12 +80,10 @@ final class ParameterList implements Relation, \SqlSemantics\Statement\TableUse
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
         $slots = [];
-        $repeated = $this->repeated();
         foreach ($this->parameters as $parameter) {
             (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($parameter->type, $derivation);
             (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->warn($parameter->collation, $derivation);
             $problem = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? null : Parameter::nameProblem($parameter->name);
-            $problem ??= $parameter === $repeated ? new Problem\ProgramProblem(Problem\ProgramRule::DuplicateParameter, $parameter->name->value) : null;
             if ($problem !== null) {
                 $derivation->report($problem);
                 $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $parameter);

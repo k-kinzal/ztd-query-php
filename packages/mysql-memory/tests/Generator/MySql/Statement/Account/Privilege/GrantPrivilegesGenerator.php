@@ -93,7 +93,9 @@ final class GrantPrivilegesGenerator implements ErisGenerator
                 return ($domain->of($value) & $domain->bit($release)) !== 0
                     && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
                     && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
-                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+                    && ((new LexicalModes())->requirement($value) & 10) === 0
+                    && $value->problem() === null
+                    && (new \SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks())->usage($value->privileges, $value->kind, $value->level) === null;
             },
             $this->delegate
         );

@@ -72,6 +72,7 @@ final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         ProgramNames::check($name);
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
         $this->body = (new StatementSequence())->member($body);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Trigger, $name, null, [], $definitionSource?->bodyRefusalOffset) === null, 'A trigger body satisfies the stored program restrictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -90,7 +91,7 @@ final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStat
     {
         (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
         (new ProgramFacts())->trigger($this->table, $this->time, $this->event, $this->body, $derivation);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->order($this, $derivation);
     }
 
     /**

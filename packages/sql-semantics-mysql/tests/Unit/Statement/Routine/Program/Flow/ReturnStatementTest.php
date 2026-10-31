@@ -72,7 +72,7 @@ final class ReturnStatementTest extends TestCase
     /**
      * @return iterable<string, array{string, non-empty-list<string>}>
      */
-    public static function providerRetainsIntrinsicBodyConditions(): iterable
+    public static function providerRefusesIntrinsicBodyConditions(): iterable
     {
         yield 'a procedure' => ['CREATE PROCEDURE p() RETURN 1', ['RETURN is only allowed in a FUNCTION']];
         yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN 1', ['RETURN is only allowed in a FUNCTION']];
@@ -82,15 +82,15 @@ final class ReturnStatementTest extends TestCase
     /**
      * @param non-empty-list<string> $messages
      */
-    #[DataProvider('providerRetainsIntrinsicBodyConditions')]
-    public function testRetainsIntrinsicBodyConditions(string $sql, array $messages): void
+    #[DataProvider('providerRefusesIntrinsicBodyConditions')]
+    public function testRefusesIntrinsicBodyConditions(string $sql, array $messages): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($messages[0], $notices[0]->message());
-        self::assertNotSame('', $statement->toString());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 }

@@ -43,7 +43,6 @@ final class AssignmentOperatorTest extends TestCase
                     "CREATE PROCEDURE p() SET @x $sign ROW(1, 2), @@autocommit $sign ROW(1, 2), sql_mode $sign ROW(1, 2)",
                     "CREATE PROCEDURE p() UPDATE t SET a $sign ROW(1, 2)",
                     "CREATE PROCEDURE p() INSERT INTO t VALUES (1) ON DUPLICATE KEY UPDATE a $sign ROW(1, 2)",
-                    "CREATE PROCEDURE p() LOAD DATA INFILE 'f' INTO TABLE t SET a $sign ROW(1, 2)",
                 ] as $sql) {
                     yield "$release->value: $sql" => [$release, $sql];
                 }

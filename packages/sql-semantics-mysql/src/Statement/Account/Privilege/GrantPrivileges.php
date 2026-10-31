@@ -145,6 +145,15 @@ final class GrantPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlSt
     }
 
     /**
+     * Answers the condition the server reports once a standalone request is read: the AS clause outside the
+     * global level, then the privilege, column list or object kind that does not fit the level.
+     */
+    public function problem(): ?\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege
+    {
+        return $this->condition() ?? (new PrivilegeChecks())->problem($this->privileges, $this->kind, $this->level, false);
+    }
+
+    /**
      * Derives the complete request, keeping invocation conditions out of stored definitions.
      */
     public function deriveStatement(Derivation $derivation): void

@@ -106,6 +106,14 @@ final class GroupConcat implements SetFunction
     }
 
     /**
+     * Answers the window written after OVER, or null when the call aggregates its query block.
+     */
+    public function over(): Name|WindowSpecification|null
+    {
+        return $this->over;
+    }
+
+    /**
      * Derives the parts and the result, and reports a window.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact

@@ -59,4 +59,9 @@ final class GroupConcatTest extends TestCase
 
         self::assertSame("GROUP_CONCAT(DISTINCT a ORDER BY a DESC SEPARATOR ';')", (new Lexical())->join($out->pieces()));
     }
+
+    public function testOverAnswersTheWindowWrittenAfterOver(): void
+    {
+        self::assertNull((new GroupConcat([new NumberLiteral('1')]))->over());
+    }
 }

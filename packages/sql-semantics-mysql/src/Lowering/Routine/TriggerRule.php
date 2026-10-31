@@ -69,6 +69,7 @@ final class TriggerRule
      * Lowers CREATE TRIGGER: a node of `trigger_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the body has a definition condition
      */
     public function create(Node $tail, ?Account $definer): CreateTrigger
     {
@@ -90,6 +91,8 @@ final class TriggerRule
         $name = $this->lowering->names->qualified($parts['sp_name']);
         $body = (new StatementRule($this->lowering->inProgram($name)))->statement($parts['sp_proc_stmt']);
         $table = new TriggerTable($this->lowering->names->qualified($parts['table_ident']));
+        $source = (new DefinitionBody())->source($body, $parts['sp_name'], $parts['sp_proc_stmt']);
+        (new BodyRefusal($this->lowering))->checked($tail, $name, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $body, null, [], $definer, $source);
         return new CreateTrigger(
             $name,
             self::TIMES[$time->signature] ?? throw ImplementationGap::production($time),
@@ -99,7 +102,7 @@ final class TriggerRule
             isset($parts['trigger_follows_precedes_clause']) ? $this->order($parts['trigger_follows_precedes_clause']) : null,
             $definer,
             isset($parts['opt_if_not_exists']) && $this->lowering->options->present($parts['opt_if_not_exists']),
-            definitionSource: (new DefinitionBody())->source($body, $parts['sp_name'], $parts['sp_proc_stmt']),
+            definitionSource: $source,
         );
     }
 

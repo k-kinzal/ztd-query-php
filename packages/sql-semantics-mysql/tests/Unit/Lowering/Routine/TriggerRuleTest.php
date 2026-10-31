@@ -94,13 +94,13 @@ final class TriggerRuleTest extends TestCase
 
     public function testCreateKeepsABodyConditionBeforeTheSchemaRelationship(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW RETURN 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('RETURN is only allowed in a FUNCTION', $notices[0]->message());
-        self::assertNotSame('', $statement->toString());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW RETURN 1');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('RETURN is only allowed in a FUNCTION', $failure->problem->message());
+        }
     }
 
     public function testCreateRefusesAnotherProduction(): void

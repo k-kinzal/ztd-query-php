@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
-use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**

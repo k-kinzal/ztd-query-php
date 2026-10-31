@@ -14,8 +14,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the global value of a session variable
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT @@GLOBAL.timestamp');
- *     $query->diagnostics()[0]->message() // => "Variable 'timestamp' is a SESSION variable"
+ *     try { (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT @@GLOBAL.timestamp'); } catch (\SqlSemantics\Construction\RejectedInput $failure) { $problem = $failure->problem; }
+ *     $problem->message() // => "Variable 'timestamp' is a SESSION variable"
  */
 final class VariableMisuse implements Diagnostic
 {

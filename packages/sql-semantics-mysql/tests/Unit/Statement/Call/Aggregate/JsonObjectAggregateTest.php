@@ -81,4 +81,11 @@ final class JsonObjectAggregateTest extends TestCase
 
         self::assertSame('JSON_OBJECTAGG(ALL a, a) OVER w', (new Lexical())->join($out->pieces()));
     }
+
+    public function testOverAnswersTheWindowWrittenAfterOver(): void
+    {
+        $name = new Name('w');
+        self::assertNull((new JsonObjectAggregate(new NumberLiteral('1'), new NumberLiteral('2')))->over());
+        self::assertSame($name, (new JsonObjectAggregate(new NumberLiteral('1'), new NumberLiteral('2'), over: $name))->over());
+    }
 }

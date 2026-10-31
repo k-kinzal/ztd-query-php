@@ -76,7 +76,13 @@ final class SystemAssignmentTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame(["Variable 'version' is a read only variable"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('SET @@version = 1')->diagnostics()));
+        try {
+            $semantics->analyze('SET @@version = 1');
+            self::fail('The variable is read-only.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Variable 'version' is a read only variable", $failure->problem->message());
+            self::assertFalse($failure->aborts);
+        }
         self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1')->diagnostics());
     }
 

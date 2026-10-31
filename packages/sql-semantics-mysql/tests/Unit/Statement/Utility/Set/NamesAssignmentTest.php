@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
-use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(NamesAssignment::class)]

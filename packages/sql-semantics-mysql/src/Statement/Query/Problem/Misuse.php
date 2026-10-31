@@ -36,6 +36,10 @@ final class Misuse implements Diagnostic
      */
     public function message(): string
     {
+        if ($this->rule === MisuseRule::WindowOutsideQuery && $this->name !== null) {
+            return sprintf("You cannot use the window function '%s' in this context.'", $this->name instanceof Name ? $this->name->value : $this->name->name->value);
+        }
+
         return $this->rule->value;
     }
 }

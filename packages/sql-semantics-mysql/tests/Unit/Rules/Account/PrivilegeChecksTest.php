@@ -60,7 +60,10 @@ final class PrivilegeChecksTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE BACKUP_ADMIN ON db.* FROM u')->diagnostics()[0]);
+        $stored = $semantics->analyze('CREATE PROCEDURE p() REVOKE BACKUP_ADMIN ON db.* FROM u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges::class, $stored->body);
+        self::assertInstanceOf(MisplacedPrivilege::class, $stored->body->problem(\SqlSemantics\Contract\GrammarRelease::MySql847));
         self::assertSame([], $semantics->analyze('REVOKE IF EXISTS BACKUP_ADMIN ON db.* FROM u')->diagnostics());
     }
 
@@ -68,8 +71,14 @@ final class PrivilegeChecksTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE EXECUTE ON t FROM u')->diagnostics()[0]);
-        self::assertInstanceOf(MisplacedPrivilege::class, $semantics->analyze('REVOKE SELECT ON PROCEDURE p FROM u')->diagnostics()[0]);
+        $table = $semantics->analyze('CREATE PROCEDURE p() REVOKE EXECUTE ON t FROM u');
+        $routine = $semantics->analyze('CREATE PROCEDURE q() REVOKE SELECT ON PROCEDURE p FROM u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $table);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $routine);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges::class, $table->body);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges::class, $routine->body);
+        self::assertInstanceOf(MisplacedPrivilege::class, $table->body->problem(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertInstanceOf(MisplacedPrivilege::class, $routine->body->problem(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
     public function testColumnPrivilegesOnRoutinesAreRefusedBeforeDerivation(): void
@@ -125,10 +134,17 @@ final class PrivilegeChecksTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyGlobalAll')]
     public function testRevokeRetainsTheLegacyGlobalRoutineCondition(string $release): void
     {
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze('REVOKE ALL ON FUNCTION *.* FROM u');
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze('REVOKE ALL ON FUNCTION *.* FROM u');
+            self::fail('A legacy release refuses a routine kind at the global level.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(MisplacedPrivilege::class, $failure->problem);
+        }
+        $stored = (new Semantics(Dialect::MySql, $release))->analyze('CREATE PROCEDURE p() REVOKE ALL ON FUNCTION *.* FROM u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        $statement = $stored->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges::class, $statement);
-        self::assertTrue($statement->hasExecutionCondition($statement->profile()->grammar));
-        self::assertInstanceOf(MisplacedPrivilege::class, $statement->diagnostics()[0]);
+        self::assertTrue($statement->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::from($release)));
         self::assertSame('REVOKE ALL ON FUNCTION *.* FROM u', $statement->toString());
     }
 
@@ -136,10 +152,58 @@ final class PrivilegeChecksTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerModernGlobalAll')]
     public function testGrantGlobalAllRequiresTheRoutineObjectInEveryRelease(string $release): void
     {
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze('GRANT ALL ON FUNCTION *.* TO u');
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze('GRANT ALL ON FUNCTION *.* TO u');
+            self::fail('A routine kind does not fit the global level.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(MisplacedPrivilege::class, $failure->problem);
+            self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $failure->problem->error);
+        }
+        $stored = (new Semantics(Dialect::MySql, $release))->analyze('CREATE PROCEDURE p() GRANT ALL ON FUNCTION *.* TO u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        $statement = $stored->body;
         self::assertInstanceOf(GrantPrivileges::class, $statement);
         self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $statement->condition()?->error);
-        self::assertEquals([$statement->condition()], $statement->diagnostics());
         self::assertSame('GRANT ALL ON FUNCTION *.* TO u', $statement->toString());
+    }
+
+    public function testProblemAnswersTheFirstPrivilegeOutsideTheLevel(): void
+    {
+        $checks = new PrivilegeChecks();
+        $database = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel(new Name('d'));
+        $reload = new StaticPrivilege(PrivilegeKind::Reload);
+        $select = new StaticPrivilege(PrivilegeKind::Select);
+        $dynamic = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege(new Name('BACKUP_ADMIN'));
+
+        self::assertNull($checks->problem([$select], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $database, false));
+        self::assertNull($checks->problem([$select, $reload], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $database, false));
+        self::assertSame('ER_WRONG_USAGE', $checks->usage([$select, $reload], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $database)?->error);
+        self::assertNull($checks->usage([$select], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $database));
+        self::assertSame('ER_ILLEGAL_PRIVILEGE_LEVEL', $checks->problem([$dynamic], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $database, false)?->error);
+        self::assertNull($checks->problem([$dynamic], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $database, true));
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $checks->problem([$select], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, $database, false)?->error);
+    }
+
+    public function testUsageAnswersAGlobalPrivilegeAtTheDatabaseLevel(): void
+    {
+        $checks = new PrivilegeChecks();
+        $database = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\DatabaseLevel(new Name('d'));
+
+        self::assertSame('RELOAD', $checks->usage([new StaticPrivilege(PrivilegeKind::Reload)], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $database)?->privilege);
+        self::assertNull($checks->usage([new StaticPrivilege(PrivilegeKind::Reload)], \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel()));
+    }
+
+    public function testMisfitAnswersWhyAStaticPrivilegeDoesNotFit(): void
+    {
+        $checks = new PrivilegeChecks();
+        $table = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t')));
+        $global = new \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel();
+        $columns = new StaticPrivilege(PrivilegeKind::Select, [new Name('a')]);
+
+        self::assertNull($checks->misfit(new StaticPrivilege(PrivilegeKind::Reload), \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $global));
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $checks->misfit($columns, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $global)?->error);
+        self::assertSame('ER_PARSE_ERROR', $checks->misfit($columns, \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, $table)?->error);
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $checks->misfit(new StaticPrivilege(PrivilegeKind::Execute), \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Table, $table)?->error);
+        self::assertNull($checks->misfit(new StaticPrivilege(PrivilegeKind::Execute), \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind::Procedure, $table));
     }
 }

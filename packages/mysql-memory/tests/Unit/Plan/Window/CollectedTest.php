@@ -66,7 +66,7 @@ final class CollectedTest extends TestCase
         $session = (new Instance())->connect();
         $this->expectException(\MySqlMemory\Error\SqlError::class);
         $this->expectExceptionCode(1241);
-        $session->query('SELECT 1 WINDOW w AS (missing_window ORDER BY (1,2), missing_column)');
+        $session->query('SELECT 1 WINDOW w AS (ORDER BY (1,2), missing_column)');
     }
 
     public function testDependenciesBindAnEarlierWindowItemBeforeADeferredWidth(): void

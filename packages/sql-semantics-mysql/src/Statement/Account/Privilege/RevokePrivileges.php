@@ -93,6 +93,21 @@ final class RevokePrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlS
     }
 
     /**
+     * Answers the privilege, column list or object kind that does not fit the level, which the server reports
+     * once a standalone request is read; under IF EXISTS a dynamic privilege at another level is only a warning,
+     * and MySQL 8.0 and later accept REVOKE ALL at the global level whatever object kind is written.
+     */
+    public function problem(\SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege
+    {
+        $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($this->level instanceof Level\GlobalLevel && $this->privileges[0] instanceof AllPrivileges && !$legacy) {
+            return null;
+        }
+
+        return (new PrivilegeChecks())->problem($this->privileges, $this->kind, $this->level, $this->ifExists);
+    }
+
+    /**
      * Derives the level and the table.
      */
     public function deriveStatement(Derivation $derivation): void

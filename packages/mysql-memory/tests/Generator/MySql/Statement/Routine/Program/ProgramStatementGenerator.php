@@ -9,7 +9,6 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use Tests\Generator\MySql\Statement\Routine\Program\Definition\DeferredCreateTableGenerator;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -25,6 +24,7 @@ use Tests\Generator\MySql\Statement\Routine\Condition\SignalGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Cursor\CloseCursorGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Cursor\FetchCursorGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Cursor\OpenCursorGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Definition\DeferredCreateTableGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Flow\IfStatementGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Flow\IterateGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Flow\LeaveGenerator;
@@ -99,7 +99,7 @@ final class ProgramStatementGenerator implements ErisGenerator
                 30 => new DeferredCreateTableGenerator($release, $depth - 1),
                 default => throw new LogicException('Unreachable alternative.'),
             })
-            : Generators::bind(Generators::choose(0, 6), static fn (int $choice): ErisGenerator => match ($choice) {
+            : Generators::bind(Generators::choose(0, 7), static fn (int $choice): ErisGenerator => match ($choice) {
                 0 => new GrantPrivilegesGenerator($release),
                 1 => new CloseCursorGenerator($release),
                 2 => new FetchCursorGenerator($release),
@@ -107,6 +107,7 @@ final class ProgramStatementGenerator implements ErisGenerator
                 4 => new IterateGenerator($release),
                 5 => new LeaveGenerator($release),
                 6 => new DeferredGroupStartGenerator($release),
+                7 => new ReturnStatementGenerator($release, $depth - 1),
                 default => throw new LogicException('Unreachable alternative.'),
             });
         $this->delegate = Generators::suchThat(

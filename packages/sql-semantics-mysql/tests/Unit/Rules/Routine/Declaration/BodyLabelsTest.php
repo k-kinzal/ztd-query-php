@@ -20,11 +20,9 @@ final class BodyLabelsTest extends TestCase
     {
         $body = new M\Routine\Program\Flow\Leave(new Name('absent'));
         self::assertSame(M\Routine\Problem\ProgramRule::LeaveWithoutLabel, (new BodyLabels())->problem($body)?->rule);
-        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context(), new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body));
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof M\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('LEAVE with no matching label: absent', $notices[0]->message());
-
+        $refusal = (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($body, M\Routine\ProgramKind::Procedure, new QualifiedName(new Name('p')), new M\Routine\ParameterList([]));
+        self::assertNotNull($refusal);
+        self::assertSame('LEAVE with no matching label: absent', $refusal[0]->message());
     }
 
     public function testProblemDistinguishesBlockAndLoopTargetsAndClosingLabels(): void

@@ -28,6 +28,7 @@ final class RoutineLanguage implements Characteristic
      */
     public function __construct(public readonly ?Name $external = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($external === null || strcasecmp($external->value, 'JAVASCRIPT') === 0, 'A routine language other than SQL is JAVASCRIPT.');
     }
 
     /**

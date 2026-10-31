@@ -33,8 +33,9 @@ final class RevokeRuleTest extends TestCase
 
     public function testStatementRetainsARoutineWildcard(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('REVOKE ALL ON FUNCTION * FROM u');
-        self::assertInstanceOf(M\Statement::class, $operation);
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() REVOKE ALL ON FUNCTION * FROM u');
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $stored);
+        $operation = $stored->body;
         self::assertInstanceOf(M\Account\Privilege\RevokePrivileges::class, $operation);
         self::assertTrue($operation->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }

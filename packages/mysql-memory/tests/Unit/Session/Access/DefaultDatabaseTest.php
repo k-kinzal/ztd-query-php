@@ -13,7 +13,6 @@ use MySqlMemory\Session\Access\DefaultDatabase;
 use MySqlMemory\Session\Execution;
 use MySqlMemory\Session\State\StatementCounters;
 use MySqlMemory\Session\Statement\Binding;
-use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -57,10 +56,10 @@ final class DefaultDatabaseTest extends TestCase
      */
     public static function providerPrivilegeTargets(): iterable
     {
-        yield 'current grant' => ['GRANT SELECT(a) ON * TO u', true];
+        yield 'current grant' => ['GRANT SELECT ON * TO u', true];
         yield 'object revocation' => ['REVOKE SELECT(a) ON t FROM u', true];
-        yield 'global grant' => ['GRANT SELECT(a) ON *.* TO u', false];
-        yield 'database revocation' => ['REVOKE SELECT(a) ON d.* FROM u', false];
+        yield 'global grant' => ['GRANT SELECT ON *.* TO u', false];
+        yield 'database revocation' => ['REVOKE SELECT ON d.* FROM u', false];
         yield 'qualified object' => ['GRANT SELECT(a) ON d.t TO u', false];
         yield 'unrelated command' => ['SET @x=1', false];
     }
@@ -153,7 +152,7 @@ final class DefaultDatabaseTest extends TestCase
     public function testCheckPreservesAnEarlierDefinerConditionWithoutADatabase(): void
     {
         $session = (new Instance())->connect();
-        $operation = $session->analyze("CREATE DEFINER='u'@'bad@host' EVENT e ON SCHEDULE EVERY 1 DAY DO SIGNAL c");
+        $operation = $session->analyze("CREATE DEFINER='u'@'bad@host' EVENT e ON SCHEDULE EVERY 1 DAY DO SET @a = 1");
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1105);
 

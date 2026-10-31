@@ -124,12 +124,14 @@ final class ResignalTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsTheBrokenRuleBeforePublication')]
     public function testDeriveProgramReportsTheBrokenRuleBeforePublication(string $sql, array $messages): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertCount(1, $notices);
-        self::assertSame($messages, [$notices[0]->message()]);
-        self::assertTrue($notices[0]->aborts);
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages, [$failure->problem->message()]);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     /**

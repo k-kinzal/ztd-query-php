@@ -17,11 +17,13 @@ use SqlSemantics\Statement\Query;
 final class QueryMeaning
 {
     /**
-     * Retains contradictory fixed columns only as a deferred stored instruction.
+     * Retains contradictory fixed columns only as a deferred stored instruction. A standalone star
+     * without tables is refused once the statement is read ("No tables used"), as the server does.
      *
-     * @throws \SqlSemantics\Construction\RejectedInput When statement-level quantifiers conflict
+     * @param bool $stored Whether the query belongs to a stored program body, which keeps it
+     * @throws \SqlSemantics\Construction\RejectedInput When statement-level quantifiers conflict, or a standalone star has no tables
      */
-    public function of(Query $query, int $end = 0): QueryRoot|DeferredQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection
+    public function of(Query $query, int $end = 0, bool $stored = false): QueryRoot|DeferredQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection
     {
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($query);
         if ($problem !== null) {
@@ -30,6 +32,10 @@ final class QueryMeaning
         if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody) {
             return $query->selection;
         }
-        return (new ReadColumns())->problem($query) === null ? new QueryRoot($query) : new DeferredQuery($query);
+        $columns = (new ReadColumns())->problem($query);
+        if (!$stored && $columns instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $columns->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::StarWithoutTables) {
+            throw new \SqlSemantics\Construction\RejectedInput($columns, $end, false);
+        }
+        return $columns === null ? new QueryRoot($query) : new DeferredQuery($query);
     }
 }

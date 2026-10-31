@@ -31,7 +31,6 @@ final class EvaluationTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['DO 1', false])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['DO *', true])]
     #[\PHPUnit\Framework\Attributes\TestWith(['DO (1, 2)', true])]
     public function testHasExecutionConditionRetainsRequestsThatCannotPrepare(string $sql, bool $conditional): void
     {
@@ -39,6 +38,7 @@ final class EvaluationTest extends TestCase
         $statement = $semantics->analyze($sql);
         self::assertInstanceOf(Evaluation::class, $statement);
         self::assertSame($conditional, $statement->hasExecutionCondition());
+        self::assertTrue((new Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\Star()]))->hasExecutionCondition());
     }
 
     public function testProblemRetainsDependenciesAfterTheFixedCondition(): void
@@ -49,10 +49,8 @@ final class EvaluationTest extends TestCase
         self::assertCount(2, $statement->items);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $statement->items[1]);
         self::assertSame('DO (1, 2), (SELECT a FROM missing)', $statement->toString());
-        $wildcard = (new Semantics(Dialect::MySql))->analyze('DO t.*, (SELECT a FROM t)');
-        self::assertInstanceOf(Evaluation::class, $wildcard);
+        $wildcard = new Evaluation([new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
         self::assertCount(2, $wildcard->items);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard::class, $wildcard->problem());
-        self::assertSame('DO t.*, (SELECT a FROM t)', $wildcard->toString());
     }
 }

@@ -52,8 +52,11 @@ final class ParameterRule
     /**
      * Lowers a parameter list: a node of `sp_fdparam_list` or `sp_pdparam_list`.
      *
+     * The server refuses a repeated parameter name when it reads the parameter; MySQL 8.0 and
+     * later also refuse a name that is not a routine name. Reading stops at that parameter.
+     *
      * @throws ImplementationGap When a production has no rule
-     * @throws RejectedInput When a parameter collation has no compatible declared character set
+     * @throws RejectedInput When a parameter collation has no compatible declared character set, a name repeats, or a name is refused
      */
     public function parameters(Node $list): ParameterList
     {
@@ -65,8 +68,15 @@ final class ParameterRule
             'sp_fdparams: sp_fdparams , sp_fdparam', 'sp_fdparams: sp_fdparam', 'sp_pdparams: sp_pdparams , sp_pdparam', 'sp_pdparams: sp_pdparam' => (new Sequence($this->lowering))->items($list, self::LISTS),
             default => throw ImplementationGap::production($form),
         };
+        $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         foreach ($items as $item) {
-            $parameters[] = $this->parameter($item);
+            $parameter = $this->parameter($item);
+            $parameters[] = $parameter;
+            $problem = $legacy ? null : Parameter::nameProblem($parameter->name);
+            $problem ??= ParameterList::repeated($parameters) === null ? null : new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateParameter, $parameter->name->value);
+            if ($problem !== null) {
+                throw new RejectedInput($problem, (new SourceRanges())->span($item)[1] ?? 0);
+            }
         }
 
         return new ParameterList($parameters);
@@ -104,7 +114,7 @@ final class ParameterRule
         $identifier = $this->lowering->names->identifier($form->node($name));
         $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($declared, '', $this->lowering->profile->grammar);
         if ($size !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($parameter)[1] ?? 0);
+            throw new RejectedInput($size, (new SourceRanges())->span($parameter)[1] ?? 0);
         }
 
         return $this->lowering->origins->record(new Parameter($identifier, $declared, $collate, $direction), $parameter);

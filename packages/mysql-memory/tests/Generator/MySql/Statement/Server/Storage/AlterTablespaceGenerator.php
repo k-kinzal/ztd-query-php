@@ -46,7 +46,7 @@ final class AlterTablespaceGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): AlterTablespace => new AlterTablespace(name: $parts[0], options: array_values(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::ALTER_TABLESPACE, true))), statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $parts[4] === null ? null : array_slice($parts[4], 0, max(0, count(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::ALTER_TABLESPACE, true))) - 1))),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[1]) === null,
+                static fn (array $parts): bool => (new StorageOptions())->repeated($parts[1]) === null,
                 Generators::tuple(
                     new NameGenerator($release),
                     Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => Generators::vector($count, Generators::suchThat(static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::ALTER_TABLESPACE, true), new StorageOptionGenerator($release)))),

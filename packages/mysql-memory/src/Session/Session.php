@@ -329,6 +329,9 @@ final class Session
                     }
                     throw $prepared ? new Parse\Definition\DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingTable($failure->problem, $database)) : new Parse\Definition\RefusedExecution($failure->problem);
                 }
+                if ($prepared && !$failure->aborts && $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege) {
+                    throw new Parse\Definition\DeferredPreparation(new \MySqlMemory\Command\Prepared\PendingRefusal($statement, $failure));
+                }
                 throw $reader->operand($failure, $tree, $statement, $this);
             } catch (AnalysisException $error) {
                 throw $reader->refusal($tree, $error, $statement, $database, $this);

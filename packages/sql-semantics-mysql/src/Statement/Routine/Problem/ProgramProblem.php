@@ -14,7 +14,8 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a LEAVE without a label in scope
  *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::LeaveWithoutLabel, 'missing'))->message() // => 'LEAVE with no matching label: missing'
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() LEAVE missing')->warnings()[0]->message() // => 'LEAVE with no matching label: missing'
+ * @example Refusing a LEAVE without a label in scope while reading
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() LEAVE missing') // throws \SqlSemantics\Construction\RejectedInput
  */
 final class ProgramProblem implements Diagnostic
 {

@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
-use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**

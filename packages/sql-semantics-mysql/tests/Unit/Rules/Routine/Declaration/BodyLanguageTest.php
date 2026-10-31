@@ -30,11 +30,11 @@ final class BodyLanguageTest extends TestCase
         $rule = new BodyLanguage();
         $external = new ExternalBody(new Text('return 1'));
         $sql = new Block();
-        $language = new RoutineLanguage(new Name('PYTHON'));
+        $language = new RoutineLanguage(new Name('JavaScript'));
         self::assertFalse($rule->compatible($external, []));
         self::assertFalse($rule->compatible($sql, [$language]));
         self::assertTrue($rule->compatible($sql, []));
-        self::assertTrue($rule->compatible($sql, [$language, new RoutineLanguage(new Name('sQl'))]));
+        self::assertTrue($rule->compatible($sql, [$language, new RoutineLanguage()]));
         self::assertFalse($rule->compatible($external, [$language, new RoutineLanguage()]));
     }
 }

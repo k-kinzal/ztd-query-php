@@ -80,6 +80,14 @@ final class JsonObjectAggregate implements SetFunction
     }
 
     /**
+     * Answers the window written after OVER, or null when the call aggregates its query block.
+     */
+    public function over(): Name|WindowSpecification|null
+    {
+        return $this->over;
+    }
+
+    /**
      * Derives the operands and the window; the result is JSON, as the temporary table of a window holds it over a window.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact

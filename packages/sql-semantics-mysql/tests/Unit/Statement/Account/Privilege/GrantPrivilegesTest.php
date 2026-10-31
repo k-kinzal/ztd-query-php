@@ -34,16 +34,20 @@ final class GrantPrivilegesTest extends TestCase
 
     public function testDeriveStatementKeepsAsOutsideTheGlobalLevel(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON db.* TO root AS CURRENT_USER');
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT SELECT ON db.* TO root AS CURRENT_USER');
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $stored);
+        $statement = $stored->body;
         self::assertInstanceOf(GrantPrivileges::class, $statement);
         self::assertSame('AS clause cannot be granted at database db (ER_UNSUPPORTED_USE_OF_GRANT_AS).', $statement->condition()?->message());
-        self::assertEquals([$statement->condition()], $statement->diagnostics());
+        self::assertSame([], $stored->diagnostics());
         self::assertSame('GRANT SELECT ON db.* TO root AS CURRENT_USER', $statement->toString());
     }
 
     public function testConditionPrioritizesAsBeforeThePrivilegeScope(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('GRANT SELECT ON PROCEDURE d.p TO u AS CURRENT_USER WITH ROLE ALL');
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE q() GRANT SELECT ON PROCEDURE d.p TO u AS CURRENT_USER WITH ROLE ALL');
+        self::assertInstanceOf(M\Routine\CreateProcedure::class, $stored);
+        $statement = $stored->body;
         self::assertInstanceOf(GrantPrivileges::class, $statement);
         self::assertSame('ER_UNSUPPORTED_USE_OF_GRANT_AS', $statement->condition()?->error);
         self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $statement->scopeProblem()?->error);
@@ -127,5 +131,18 @@ final class GrantPrivilegesTest extends TestCase
         self::assertInstanceOf(M\Account\Privilege\Item\StaticPrivilege::class, $grant->privileges[0]);
         self::assertSame($privilege, $grant->privileges[0]->kind);
         self::assertTrue((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms())->requires($privilege));
+    }
+
+    public function testProblemAnswersTheAsClauseBeforeTheLevel(): void
+    {
+        $database = new M\Account\Privilege\Level\DatabaseLevel(new Name('d'));
+        $reload = new M\Account\Privilege\Item\StaticPrivilege(M\Account\Privilege\Item\PrivilegeKind::Reload);
+        $grantee = new M\Account\User\Grantee(new M\Name\AccountName(new Name('u')));
+        $as = new M\Account\Privilege\GrantAs(new M\Name\AccountName(new Name('u')));
+
+        self::assertSame('ER_UNSUPPORTED_USE_OF_GRANT_AS', (new GrantPrivileges([$reload], M\Account\Privilege\Level\ObjectKind::Table, $database, [$grantee], as: $as))->problem()?->error);
+        self::assertNull((new GrantPrivileges([$reload], M\Account\Privilege\Level\ObjectKind::Table, $database, [$grantee]))->problem());
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', (new GrantPrivileges([new M\Account\Privilege\Item\StaticPrivilege(M\Account\Privilege\Item\PrivilegeKind::Execute)], M\Account\Privilege\Level\ObjectKind::Table, new M\Account\Privilege\Level\ObjectLevel(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('t'))), [$grantee]))->problem()?->error);
+        self::assertNull((new GrantPrivileges([new M\Account\Privilege\Item\StaticPrivilege(M\Account\Privilege\Item\PrivilegeKind::Select)], M\Account\Privilege\Level\ObjectKind::Table, $database, [$grantee]))->problem());
     }
 }

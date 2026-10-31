@@ -15,7 +15,10 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
+use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
@@ -36,13 +39,28 @@ final class SystemTargetGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): SystemTarget => new SystemTarget(name: $parts[0], scope: $parts[1], instance: $parts[2], scalarInformation: $parts[3], inputSource: $parts[4]),
-            Generators::tuple(
-                new NameGenerator($release),
-                Generators::oneOf(Generators::constant(null), new VariableScopeGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
-                Generators::constant(null),
-                Generators::constant(null)
+            static fn (array $parts): SystemTarget => new SystemTarget(name: $parts[0], scope: $parts[1], instance: in_array(strtolower($parts[0]->value), \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable::KEY_CACHE, true) ? $parts[2] : null, scalarInformation: $parts[3], inputSource: $parts[4]),
+            Generators::suchThat(
+                static function (array $parts) use ($release): bool {
+                    $definition = SystemVariables::of($release)->find($parts[0]->value);
+                    if ($definition === null || $definition->writability === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability::ReadOnly) {
+                        return false;
+                    }
+                    if ($parts[1] === null) {
+                        return true;
+                    }
+
+                    return in_array($parts[1], [VariableScope::Session, VariableScope::Local], true)
+                        ? $definition->reach->session() && $definition->writability !== \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability::GlobalOnly
+                        : $definition->reach->global();
+                },
+                Generators::tuple(
+                    Generators::map(static fn (string $name): Name => new Name($name), Generators::elements(array_keys(SystemVariables::of($release)->definitions))),
+                    Generators::oneOf(Generators::constant(null), new VariableScopeGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

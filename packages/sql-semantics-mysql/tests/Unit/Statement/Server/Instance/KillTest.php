@@ -16,14 +16,20 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class KillTest extends TestCase
 {
-    public function testDeriveStatementReportsDirectWindowNamesOutsideQueryBlocks(): void
+    public function testDeriveStatementIsNeverReachedForAWindowNameOutsideQueryBlocks(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('KILL SUM(1) OVER missing');
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $operation->diagnostics()[0]);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $operation->diagnostics()[0]->rule);
-        self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $operation->diagnostics()[0]->name);
-        self::assertSame('missing', $operation->diagnostics()[0]->name->value);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('KILL SUM(1) OVER missing');
+            self::fail('No query block defines the window.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $failure->problem);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $failure->problem->rule);
+            self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $failure->problem->name);
+            self::assertSame('missing', $failure->problem->name->value);
+        }
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() KILL SUM(1) OVER missing');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        self::assertInstanceOf(Kill::class, $stored->body);
     }
 
     public function testRenderRetainsTheRejectedTruthComputation(): void

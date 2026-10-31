@@ -53,17 +53,21 @@ final class CreateFunctionGenerator implements ErisGenerator
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
             static fn (array $parts): CreateFunction => new CreateFunction(name: $parts[0], parameters: $parts[1], returns: $parts[2], implementation: $parts[3], collation: (static fn (?CollationName $collation): ?CollationName => $collation === null || ($collation->name === null && ($bit & 3) === 0) ? null : $collation)((new DeclaredCollation())->problem($parts[2], $parts[4]) === null ? $parts[4] : null), definer: $parts[5], ifNotExists: ($bit & 508) !== 0 && $parts[6], statementInformation: $parts[7], inputSource: $parts[8], definitionSource: $parts[9]),
-            Generators::tuple(
-                new QualifiedNameGenerator($release),
-                Generators::suchThat(static fn (ParameterList $parameters): bool => array_filter($parameters->parameters, static fn (Parameter $parameter): bool => $parameter->mode !== null) === [], new ParameterListGenerator($release)),
-                new DeclaredNameGenerator($release),
-                new FunctionImplementationGenerator($release, $depth - 1),
-                Generators::oneOf(Generators::constant(null), new CollationNameGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
-                Generators::bool(),
-                Generators::constant(null),
-                Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[3]->body, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Function, $parts[0], $parts[1], $parts[3]->characteristics, $parts[9]?->bodyRefusalOffset) === null,
+                Generators::tuple(
+                    new QualifiedNameGenerator($release),
+                    Generators::suchThat(static fn (ParameterList $parameters): bool => array_filter($parameters->parameters, static fn (Parameter $parameter): bool => $parameter->mode !== null) === [], new ParameterListGenerator($release)),
+                    new DeclaredNameGenerator($release),
+                    new FunctionImplementationGenerator($release, $depth - 1),
+                    Generators::oneOf(Generators::constant(null), new CollationNameGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                    Generators::bool(),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+                ),
+                1000
             )
         );
         $this->delegate = Generators::map(

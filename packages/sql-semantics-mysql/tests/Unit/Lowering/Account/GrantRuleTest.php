@@ -37,7 +37,9 @@ final class GrantRuleTest extends TestCase
 
     public function testRequestKeepsAnImmediateNonGlobalAsClause(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('GRANT ALL ON d.* TO u AS CURRENT_USER');
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() GRANT ALL ON d.* TO u AS CURRENT_USER');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        $statement = $stored->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
         self::assertSame('ER_UNSUPPORTED_USE_OF_GRANT_AS', $statement->condition()?->error);
         self::assertSame('GRANT ALL ON d.* TO u AS CURRENT_USER', $statement->toString());

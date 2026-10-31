@@ -26,7 +26,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
-
     public function testInstructionsKeepsSameInstructionNoticesBeforeItsContextualFailure(): void
     {
         $first = new \SqlSemantics\Platform\MySql\Statement\EmptyStatement();

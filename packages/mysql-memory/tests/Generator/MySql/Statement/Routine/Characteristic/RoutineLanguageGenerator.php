@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage;
-use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Generates RoutineLanguage values from the generators of its operands.
@@ -38,7 +38,7 @@ final class RoutineLanguageGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): RoutineLanguage => new RoutineLanguage(external: $parts[0], inputSource: $parts[1]),
             Generators::tuple(
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (string $language): Name => new Name($language), Generators::elements(['JAVASCRIPT', 'javascript', 'JavaScript']))),
                 Generators::constant(null)
             )
         );

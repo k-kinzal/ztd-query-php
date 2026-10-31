@@ -9,15 +9,21 @@ use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyArrays;
 use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyBindings;
 use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage;
 use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyStructure;
-use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Routine as R;
+use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Source\SourceMap;
 
 /**
- * Derives definition-time conditions without discarding a complete instruction body.
+ * Finds the definition condition that makes a stored program body unstorable.
  *
- * The same typed operands are checked for parsed and directly constructed declarations.
- * Input sources order and format notices but never supply missing SQL meaning.
+ * @phpstan-type Problem R\Problem\ProgramProblem|\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse|R\Problem\LanguageBodyMismatch|R\Problem\ScopedLocalAssignment|R\Problem\ParameterScopeMismatch|\SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount|\SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument|\SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction
+ *
+ * The same typed operands are checked for parsed and directly constructed
+ * declarations: a definition statement refuses construction with such a body,
+ * and the lowering refuses the input before constructing it. Input sources
+ * order the condition among other input notices but never supply SQL meaning.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-program-restrictions.html.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -25,20 +31,65 @@ use SqlSemantics\Statement\Node;
 final class BodyConditions
 {
     /**
-     * Publishes the first definition condition beside the complete statement and body.
+     * Answers the first definition condition, the instruction it is found at, and whether reading stops there.
+     *
+     * Declaration-input conditions precede completed-body restrictions. The server finds
+     * most conditions while parsing the instruction; the body-wide restrictions of
+     * functions and triggers and a missing RETURN are found once the whole body is read.
+     *
+     * @param list<R\Characteristic\Characteristic> $characteristics The routine characteristics in written order
+     * @param int|null $bodyRefusalOffset The input position of a language/body mismatch, when known
+     * @return array{Problem, Node, bool}|null
      */
-    public function publish(R\CreateProcedure|R\CreateFunction|R\CreateTrigger|R\CreateEvent|R\AlterEvent $statement, Derivation $derivation): void
+    public function refusal(Node $body, R\ProgramKind $kind, QualifiedName $name, ?R\ParameterList $parameters, array $characteristics = [], ?int $bodyRefusalOffset = null, ?SourceMap $sources = null): ?array
     {
-        $condition = $this->first($statement, $derivation);
-        if ($condition !== null) {
-            [$problem, $at, $aborts] = $condition;
-            $diagnostic = $problem->problem;
-            $reported = $diagnostic instanceof R\Problem\ProgramProblem && array_filter($derivation->diagnostics(), static fn ($existing): bool => $existing instanceof R\Problem\ProgramProblem && $existing->rule === $diagnostic->rule && $existing->subject === $diagnostic->subject) !== [];
-            if (!$reported) {
-                $derivation->report($diagnostic);
-            }
-            $derivation->warn(new ParseFailure($problem, $aborts), $at);
+        $locals = array_map(static fn (R\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
+        $input = (new BodyInputs())->first($body, $locals, $sources);
+        if ($input !== null) {
+            return [$input[0], $input[1], true];
         }
+        $completed = $this->completed($body, $kind, $name, $parameters, $characteristics, $bodyRefusalOffset);
+        if ($completed === null) {
+            return null;
+        }
+        return [$completed[0], $completed[1], $this->aborts($completed[0])];
+    }
+
+    /**
+     * Checks complete-body restrictions independently of runtime state and SQL text.
+     *
+     * @param list<R\Characteristic\Characteristic> $characteristics The routine characteristics in written order
+     * @return array{Problem, Node}|null The condition and the instruction it is found at
+     */
+    public function completed(Node $body, R\ProgramKind $kind, QualifiedName $name, ?R\ParameterList $parameters, array $characteristics = [], ?int $bodyRefusalOffset = null): ?array
+    {
+        $position = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->position($body);
+        $located = $position === null ? (new BodyStructure())->located($body, $kind, $name, $parameters) : [$position, $body];
+        $problem = $located[0] ?? null;
+        if (!(new BodyLanguage())->compatible($body, $characteristics) && ($problem === null || !$this->aborts($problem))) {
+            return [new R\Problem\LanguageBodyMismatch($bodyRefusalOffset), $body];
+        }
+        if ($located !== null) {
+            return $located;
+        }
+        $problem = (new BodyBindings())->problem($body, $kind) ?? (new BodyArrays())->problem($body) ?? (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($body);
+        return $problem === null ? null : [$problem, $body];
+    }
+
+    /**
+     * Tells whether the server stops reading at the condition: every condition but the
+     * body-wide restrictions of functions and triggers and a missing RETURN.
+     */
+    public function aborts(Diagnostic $problem): bool
+    {
+        return !($problem instanceof R\Problem\ProgramProblem && in_array($problem->rule, [R\Problem\ProgramRule::MissingReturn, R\Problem\ProgramRule::ResultSet, R\Problem\ProgramRule::AutocommitInFunction, R\Problem\ProgramRule::CommitInFunction, R\Problem\ProgramRule::FunctionStatement], true));
+    }
+
+    /**
+     * Orders the derived notices of a definition by the input order of its declarations and body.
+     */
+    public function order(R\CreateProcedure|R\CreateFunction|R\CreateTrigger|R\CreateEvent|R\AlterEvent $statement, Derivation $derivation): void
+    {
         $inputs = $statement instanceof R\CreateProcedure || $statement instanceof R\CreateFunction ? [$statement->parameters] : [];
         if ($statement instanceof R\CreateFunction) {
             $inputs[] = $statement->returns;
@@ -51,56 +102,5 @@ final class BodyConditions
         }
         $ordered = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->inputs($inputs, childrenFirst: true);
         $derivation->orderWarnings($statement, [...$ordered, $statement]);
-    }
-
-    /**
-     * Orders declaration-input conditions before completed-body restrictions.
-     *
-     * @return array{R\Problem\RefusedProgramBody, Node, bool}|null The condition, semantic boundary and whether reading stops there
-     */
-    public function first(R\CreateProcedure|R\CreateFunction|R\CreateTrigger|R\CreateEvent|R\AlterEvent $statement, Derivation $derivation): ?array
-    {
-        if ($statement->body === null) {
-            return null;
-        }
-        $kind = match (true) {
-            $statement instanceof R\CreateProcedure => R\ProgramKind::Procedure,
-            $statement instanceof R\CreateFunction => R\ProgramKind::Function,
-            $statement instanceof R\CreateTrigger => R\ProgramKind::Trigger,
-            default => R\ProgramKind::Event,
-        };
-        $parameters = $statement instanceof R\CreateProcedure || $statement instanceof R\CreateFunction ? $statement->parameters : null;
-        $returns = $statement instanceof R\CreateFunction ? $statement->returns : null;
-        $problem = null;
-        $at = $statement;
-        $aborts = false;
-        $locals = array_map(static fn (R\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
-        $input = (new BodyInputs())->first($statement->body, $locals, $derivation->sources);
-        if ($input !== null) {
-            [$problem, $at] = $input;
-            $aborts = true;
-        }
-        $problem ??= $this->completed($statement, $kind, $parameters);
-        if ($problem === null) {
-            return null;
-        }
-        return [new R\Problem\RefusedProgramBody($statement->name, $kind, $problem, $statement->definer, $parameters, $returns, $statement instanceof R\CreateFunction ? $statement->collation : null, $statement->definitionSource->typeEnds ?? [], $statement->definitionSource->nameEnd ?? 0), $at, $aborts];
-    }
-
-    /**
-     * Checks complete-body restrictions independently of runtime state and SQL text.
-     */
-    public function completed(R\CreateProcedure|R\CreateFunction|R\CreateTrigger|R\CreateEvent|R\AlterEvent $statement, R\ProgramKind $kind, ?R\ParameterList $parameters): \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse|R\Problem\ProgramProblem|R\Problem\LanguageBodyMismatch|R\Problem\ParameterScopeMismatch|\SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount|\SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument|\SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction|null
-    {
-        $body = $statement->body;
-        if ($body === null) {
-            return null;
-        }
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->position($body) ?? (new BodyStructure())->problem($body, $kind, $statement->name, $parameters);
-        $characteristics = $statement instanceof R\CreateProcedure || $statement instanceof R\CreateFunction ? $statement->characteristics : [];
-        if (!(new BodyLanguage())->compatible($body, $characteristics) && ($problem === null || ($problem instanceof R\Problem\ProgramProblem && in_array($problem->rule, [R\Problem\ProgramRule::MissingReturn, R\Problem\ProgramRule::ResultSet, R\Problem\ProgramRule::AutocommitInFunction, R\Problem\ProgramRule::CommitInFunction, R\Problem\ProgramRule::FunctionStatement], true)))) {
-            $problem = new R\Problem\LanguageBodyMismatch($statement->definitionSource?->bodyRefusalOffset);
-        }
-        return $problem ?? (new BodyBindings())->problem($body, $kind) ?? (new BodyArrays())->problem($body) ?? (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($body);
     }
 }

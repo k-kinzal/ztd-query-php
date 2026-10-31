@@ -23,4 +23,14 @@ final class SetFunctionTest extends TestCase
         self::assertFalse((new Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Minimum, [new NumberLiteral('1')], over: new Name('w')))->aggregates());
         self::assertContains(SetFunction::class, class_implements(Aggregate::class));
     }
+
+    public function testOverAnswersTheWindowOfAWindowedSetFunction(): void
+    {
+        $window = new Name('w');
+        $windowed = new Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum, [new NumberLiteral('1')], over: $window);
+        $plain = new GroupConcat([new NumberLiteral('1')]);
+
+        self::assertSame($window, $windowed->over());
+        self::assertNull($plain->over());
+    }
 }

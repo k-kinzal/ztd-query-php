@@ -48,13 +48,16 @@ final class StatementRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart::class, $operation->body);
     }
 
-    public function testSqlKeepsTheCompleteLoadAndItsProgramRestriction(): void
+    public function testSqlRefusesACompleteLoadWithItsProgramRestriction(): void
     {
-        $operation = (new Semantics(Dialect::MySql, '8.4.7'))->analyze("CREATE PROCEDURE p() LOAD DATA INFILE 'f' INTO TABLE t SET a=ROW(1,2)");
-        self::assertInstanceOf(CreateProcedure::class, $operation);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable::class, $operation->body);
-        self::assertTrue($operation->body->hasExecutionCondition());
-        self::assertContains(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadStatement, array_map(static fn ($problem) => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem ? $problem->rule : null, $operation->diagnostics()));
+        try {
+            (new Semantics(Dialect::MySql, '8.4.7'))->analyze("CREATE PROCEDURE p() LOAD DATA INFILE 'f' INTO TABLE t SET a=ROW(1,2)");
+            self::fail('LOAD DATA is not allowed in stored procedures.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('LOAD DATA is not allowed in stored procedures', $failure->problem->message());
+            self::assertTrue($failure->aborts);
+        }
     }
 
     /**

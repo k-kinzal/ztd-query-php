@@ -19,13 +19,13 @@ use SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedGrantRoles
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\UnknownGrantColumn;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\User\RefusedRenameUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserRenaming;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;

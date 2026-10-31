@@ -23,10 +23,10 @@ use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated;
-use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
-use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Statement\Scalar;
+use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
+use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 

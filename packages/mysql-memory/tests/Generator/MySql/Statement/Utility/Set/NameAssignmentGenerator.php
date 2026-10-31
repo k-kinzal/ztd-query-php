@@ -43,18 +43,21 @@ final class NameAssignmentGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): NameAssignment => new NameAssignment(name: $parts[0], value: $parts[1] instanceof BareName ? new BareName($parts[1]->word, $parts[1]->qualifier, $parts[2] !== null) : $parts[1], scope: $parts[2], qualifier: $parts[3], inputSource: $parts[4], operator: $parts[5]),
-            Generators::tuple(
-                new NameGenerator($release),
-                Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new ScalarGenerator($release, $depth - 1),
-                    1 => new BareNameGenerator($release),
-                    2 => new SetWordGenerator($release),
-                    default => throw new LogicException('Unreachable alternative.'),
-                }),
-                Generators::oneOf(Generators::constant(null), new VariableScopeGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
-                Generators::constant(null),
-                new AssignmentOperatorGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => $parts[2] !== null || $parts[3] !== null || !in_array(strtolower($parts[0]->value), ['names', 'charset'], true),
+                Generators::tuple(
+                    new NameGenerator($release),
+                    Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new BareNameGenerator($release),
+                        2 => new SetWordGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    Generators::oneOf(Generators::constant(null), new VariableScopeGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                    Generators::constant(null),
+                    new AssignmentOperatorGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::suchThat(
@@ -65,7 +68,8 @@ final class NameAssignmentGenerator implements ErisGenerator
                 return ($domain->of($value) & $domain->bit($release)) !== 0
                     && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
                     && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
-                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+                    && ((new LexicalModes())->requirement($value) & 10) === 0
+                    && (new \SqlSemantics\Platform\MySql\Rules\Expression\Placement\StatementCalls())->problem($value) === null;
             },
             $this->delegate
         );

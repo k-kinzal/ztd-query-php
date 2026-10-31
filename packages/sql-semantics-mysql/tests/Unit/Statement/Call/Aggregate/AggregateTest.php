@@ -116,4 +116,11 @@ final class AggregateTest extends TestCase
         self::assertInstanceOf(Aggregate::class, $average);
         self::assertSame(4, $average->divisionPrecision());
     }
+
+    public function testOverAnswersTheWindowWrittenAfterOver(): void
+    {
+        $window = new WindowSpec();
+        self::assertNull((new Aggregate(AggregateFunction::Sum, [new NumberLiteral('1')]))->over());
+        self::assertSame($window, (new Aggregate(AggregateFunction::Sum, [new NumberLiteral('1')], over: $window))->over());
+    }
 }

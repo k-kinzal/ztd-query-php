@@ -39,4 +39,18 @@ final class QueryMeaningTest extends TestCase
         self::assertSame($query, $stored->query);
         self::assertInstanceOf(M\QueryRoot::class, (new QueryMeaning())->of(new M\Query\ValuesQuery([new M\Query\ValueRow([new M\Literal\NumberLiteral('1')])])));
     }
+
+    public function testOfRefusesAStandaloneStarWithoutTablesAndStoresIt(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\Star()]);
+        self::assertInstanceOf(M\Routine\Program\Selection\DeferredQuery::class, (new QueryMeaning())->of($query, 8, true));
+        try {
+            (new QueryMeaning())->of($query, 8);
+            self::fail('A star needs tables.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('No tables used', $failure->problem->message());
+            self::assertSame(8, $failure->end);
+            self::assertFalse($failure->aborts);
+        }
+    }
 }

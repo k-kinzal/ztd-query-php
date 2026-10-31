@@ -143,7 +143,7 @@ final class BodyFactsTest extends TestCase
     /**
      * @return iterable<string, array{string, non-empty-list<string>}>
      */
-    public static function providerRetainsIntrinsicBodyConditions(): iterable
+    public static function providerRefusesIntrinsicBodyConditions(): iterable
     {
         yield 'a result set of a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'a commit in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN COMMIT; RETURN 1; END', ['Explicit or implicit commit is not allowed in stored function or trigger.']];
@@ -153,16 +153,17 @@ final class BodyFactsTest extends TestCase
     /**
      * @param non-empty-list<string> $messages
      */
-    #[DataProvider('providerRetainsIntrinsicBodyConditions')]
-    public function testRetainsIntrinsicBodyConditions(string $sql, array $messages): void
+    #[DataProvider('providerRefusesIntrinsicBodyConditions')]
+    public function testRefusesIntrinsicBodyConditions(string $sql, array $messages): void
     {
 
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($messages[0], $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
     /**
      * @param list<string> $messages

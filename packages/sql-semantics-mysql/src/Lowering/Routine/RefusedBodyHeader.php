@@ -43,6 +43,7 @@ final class RefusedBodyHeader
 
     /**
      * Reads parameter and return declarations in header order.
+     * A refused parameter precedes the body condition and is returned in its place.
      */
     public function routine(Node $tail, RejectedInput $failure, Lowering $lowering, ?Account $definer): RejectedInput
     {
@@ -63,9 +64,14 @@ final class RefusedBodyHeader
         $function = $tail->name === 'sf_tail';
         $parameterTree = $parts[$function ? 'sp_fdparam_list' : 'sp_pdparam_list'];
         $returnTree = $function ? ($parts['type_with_opt_collate'] ?? $parts['type']) : null;
+        try {
+            $list = $parameters->parameters($parameterTree);
+        } catch (RejectedInput $earlier) {
+            return $earlier;
+        }
         [$returns, $collation] = $returnTree === null ? [null, null] : $parameters->declared($returnTree, $parts['opt_collate'] ?? null);
         \SqlSemantics\Diagnostic\Check::invariant($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\EmptyEventAlteration, 'A refused body carries a program diagnostic.');
-        $problem = new RefusedProgramBody($lowering->names->qualified($parts['sp_name']), $function ? ProgramKind::Function : ProgramKind::Procedure, $failure->problem, $definer, $parameters->parameters($parameterTree), $returns, $collation, (new DefinitionBody())->typeEnds($parameterTree, $returnTree), (new SourceRanges())->span($parts['sp_name'])[1] ?? 0);
+        $problem = new RefusedProgramBody($lowering->names->qualified($parts['sp_name']), $function ? ProgramKind::Function : ProgramKind::Procedure, $failure->problem, $definer, $list, $returns, $collation, (new DefinitionBody())->typeEnds($parameterTree, $returnTree), (new SourceRanges())->span($parts['sp_name'])[1] ?? 0);
 
         return new RejectedInput($problem, $failure->end, $failure->aborts);
     }

@@ -43,14 +43,18 @@ final class FunctionImplementationGenerator implements ErisGenerator
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
             static fn (array $parts): FunctionImplementation => new FunctionImplementation(body: $parts[0], characteristics: $parts[1]),
-            Generators::tuple(
-                Generators::bind(Generators::elements(array_keys(array_filter([508, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new ExternalBodyGenerator($release),
-                    1 => new ProgramStatementGenerator($release, $depth - 1),
-                    2 => new StatementGenerator($release, $depth - 1),
-                    default => throw new LogicException('Unreachable alternative.'),
-                }),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CharacteristicGenerator($release)))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyLanguage())->compatible($parts[0], $parts[1]) && ($parts[0] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody || (new \SqlSemantics\Platform\MySql\Rules\Routine\ReturnSearch())->found($parts[0])),
+                Generators::tuple(
+                    Generators::bind(Generators::elements(array_keys(array_filter([508, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ExternalBodyGenerator($release),
+                        1 => new ProgramStatementGenerator($release, $depth - 1),
+                        2 => new StatementGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CharacteristicGenerator($release)))
+                ),
+                1000
             )
         );
         $this->delegate = Generators::suchThat(

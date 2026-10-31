@@ -44,21 +44,38 @@ final class InvocationRule
     }
 
     /**
+     * Answers a DO statement, refusing a standalone one that evaluates a wildcard: the server reports
+     * "No tables used" once the statement is read, while a stored program body keeps it.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone DO evaluates a wildcard
+     */
+    public function checked(Evaluation $evaluation, Form $form): Evaluation
+    {
+        $problem = $this->lowering->stored() ? null : $evaluation->problem();
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        return $evaluation;
+    }
+
+    /**
      * Lowers a node of `do` or `do_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone DO evaluates a wildcard
      */
     public function evaluation(Form $form): Evaluation
     {
         switch ($form->signature) {
             case 'do: DO_SYM expr_list':
-                return new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1)));
+                return $this->checked(new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1))), $form);
             case 'do_stmt: DO_SYM empty_select_options select_item_list':
                 $this->lowering->options->skip($form->node(1));
 
-                return new Evaluation((new EvaluationItems($this->lowering))->read($form->node(2)));
+                return $this->checked(new Evaluation((new EvaluationItems($this->lowering))->read($form->node(2))), $form);
             case 'do_stmt: DO_SYM select_item_list':
-                return new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1)));
+                return $this->checked(new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1))), $form);
             default:
                 throw ImplementationGap::production($form);
         }

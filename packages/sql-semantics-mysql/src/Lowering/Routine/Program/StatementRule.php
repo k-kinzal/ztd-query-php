@@ -157,7 +157,7 @@ final class StatementRule
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $statement->hasExecutionCondition()) {
             $this->lowering->origins->forget($statement);
-            return $this->lowering->origins->record((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($statement->query, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0), $node);
+            return $this->lowering->origins->record((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($statement->query, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, true), $node);
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
             throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);

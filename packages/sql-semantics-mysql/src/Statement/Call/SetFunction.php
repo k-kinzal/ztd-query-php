@@ -26,4 +26,9 @@ interface SetFunction extends Scalar
      * Tells whether the call aggregates the rows of its query block: it is written without OVER.
      */
     public function aggregates(): bool;
+
+    /**
+     * Answers the window written after OVER, or null when the call aggregates its query block.
+     */
+    public function over(): \SqlSemantics\Statement\Identifier\Name|WindowSpecification|null;
 }

@@ -31,10 +31,23 @@ final class ExplainRuleTest extends TestCase
     public static function providerReadConditions(): iterable
     {
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
-            foreach (['DESC SELECT *', 'EXPLAIN FORMAT = JSON SELECT *', 'DESCRIBE SELECT 1 UNION SELECT 1, 2'] as $sql) {
+            foreach (['DESCRIBE SELECT 1 UNION SELECT 1, 2'] as $sql) {
                 yield $version . ' ' . $sql => ['mysql-' . $version, $sql];
             }
         }
+    }
+
+    public function testDeferredRefusesAStandaloneStarWithoutTablesAndStoresIt(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT = JSON SELECT *');
+            self::fail('A star needs tables.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('No tables used', $failure->problem->message());
+        }
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() DESC SELECT *');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $stored->body);
     }
 
     public function testStatementLowersEveryForm(): void

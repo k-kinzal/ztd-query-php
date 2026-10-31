@@ -138,7 +138,6 @@ final class LoadTableTest extends TestCase
             }
             foreach (["LOAD DATA INFILE 'f' INTO TABLE t () SET a=ROW(1,2)", "LOAD DATA LOCAL INFILE 'f' INTO TABLE t COLUMNS TERMINATED BY '' (@v)"] as $sql) {
                 yield "$release->value/$sql" => [$release->value, $sql];
-                yield "$release->value/program/$sql" => [$release->value, 'CREATE PROCEDURE wrapper() ' . $sql];
             }
         }
     }

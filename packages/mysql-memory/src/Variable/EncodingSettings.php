@@ -67,7 +67,7 @@ final class EncodingSettings
             $construct = Deprecation::charsetWarning($name);
             $notice = $construct !== null && $construct->warnedIn($this->context->modes->release) ? new Deprecation($construct) : null;
         } else {
-            $notice = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($name) === null ? null : (new CollationName(new Name($name)))->deprecation($this->context->modes->release);
+            $notice = Collation::named($name) === null ? null : (new CollationName(new Name($name)))->deprecation($this->context->modes->release);
         }
         if ($notice !== null) {
             $this->context->diagnostics->warning($notice->code(), $notice->message());

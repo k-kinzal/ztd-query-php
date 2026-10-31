@@ -103,7 +103,7 @@ final class DefinitionRule
      * Lowers CREATE PROCEDURE or CREATE FUNCTION of a stored function: a node of `sp_tail` or `sf_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When the RETURNS type exceeds a bound
+     * @throws \SqlSemantics\Construction\RejectedInput When the RETURNS type exceeds a bound, a parameter is refused, or the body has a definition condition
      */
     public function routine(Node $tail, ?Account $definer): CreateProcedure|CreateFunction
     {
@@ -124,18 +124,24 @@ final class DefinitionRule
         $name = $this->lowering->names->qualified($parts['sp_name']);
         $characteristics = (new CharacteristicRule($this->lowering))->characteristics($parts['sp_c_chistics']);
         $bodyTree = $parts['stored_routine_body'] ?? $parts['sp_proc_stmt'];
-        $body = (new StatementRule($this->lowering->inProgram($name)))->body($bodyTree);
         if ($tail->name === 'sp_tail') {
             $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_pdparam_list']);
-            return new CreateProcedure($name, $parameters, $body, $characteristics, $definer, $exists, definitionSource: (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_pdparam_list']));
+            $body = (new StatementRule($this->lowering->inProgram($name)))->body($bodyTree);
+            $source = (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_pdparam_list']);
+            (new BodyRefusal($this->lowering))->checked($tail, $name, ProgramKind::Procedure, $body, $parameters, $characteristics, $definer, $source, typeEnds: $source->typeEnds);
+            return new CreateProcedure($name, $parameters, $body, $characteristics, $definer, $exists, definitionSource: $source);
         }
-        [$type, $collation] = (new ParameterRule($this->lowering))->declared($parts['type_with_opt_collate'] ?? $parts['type'], $parts['opt_collate'] ?? null);
+        $returnTree = $parts['type_with_opt_collate'] ?? $parts['type'];
+        [$type, $collation] = (new ParameterRule($this->lowering))->declared($returnTree, $parts['opt_collate'] ?? null);
         $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($type, '', $this->lowering->profile->grammar);
         if ($size !== null) {
-            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($parts['type_with_opt_collate'] ?? $parts['type'])[1] ?? 0);
+            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($returnTree)[1] ?? 0);
         }
         $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_fdparam_list']);
-        return new CreateFunction($name, $parameters, $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, $characteristics), $collation, $definer, $exists, definitionSource: (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_fdparam_list'], $parts['type_with_opt_collate'] ?? $parts['type']));
+        $body = (new StatementRule($this->lowering->inProgram($name)))->body($bodyTree);
+        $source = (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_fdparam_list'], $returnTree);
+        (new BodyRefusal($this->lowering))->checked($tail, $name, ProgramKind::Function, $body, $parameters, $characteristics, $definer, $source, $type, $collation, $source->typeEnds);
+        return new CreateFunction($name, $parameters, $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, $characteristics), $collation, $definer, $exists, definitionSource: $source);
     }
 
     /**

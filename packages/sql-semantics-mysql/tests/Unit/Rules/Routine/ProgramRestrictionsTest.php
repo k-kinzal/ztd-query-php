@@ -25,12 +25,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementNoStoredProgramMayContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $statement = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($messages[0], $notices[0]->message());
-
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -90,12 +91,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementAStoredFunctionOrTriggerMayNotContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $statement = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($messages[0], $notices[0]->message());
-
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -172,12 +174,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementWhereverItIsNested(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $statement = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($messages[0], $notices[0]->message());
-
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -200,12 +203,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementInEveryRelease(string $release, string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql, $release);
-        $statement = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($messages[0], $notices[0]->message());
-
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**

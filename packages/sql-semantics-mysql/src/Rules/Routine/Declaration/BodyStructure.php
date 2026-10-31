@@ -34,34 +34,50 @@ final class BodyStructure
      */
     public function problem(Node $body, ProgramKind $kind, ?QualifiedName $name = null, ?\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList $parameters = null): ?ProgramProblem
     {
+        return $this->located($body, $kind, $name, $parameters)[0] ?? null;
+    }
+
+    /**
+     * Answers the restriction of problem() with the instruction it is found at.
+     * A body-wide restriction and a missing RETURN are found at the body itself.
+     *
+     * @return array{ProgramProblem, Node}|null
+     */
+    public function located(Node $body, ProgramKind $kind, ?QualifiedName $name = null, ?\SqlSemantics\Platform\MySql\Statement\Routine\ParameterList $parameters = null): ?array
+    {
         if ($body instanceof ExternalBody) {
             return null;
         }
         $labels = (new BodyLabels())->problem($body);
         if ($labels !== null) {
-            return $labels;
+            return [$labels, $body];
         }
         $pending = [$body];
         $found = ($kind === ProgramKind::Function || $kind === ProgramKind::Trigger) && (new BodyAssignments())->forbidden($body, $kind === ProgramKind::Trigger ? new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]) : $parameters)
             ? new ProgramProblem(ProgramRule::AutocommitInFunction) : null;
+        $at = $body;
         $rules = new ProgramRestrictions();
         $search = new ReturnSearch();
         while ($pending !== []) {
             $current = array_pop($pending);
             $immediate = $current instanceof Statement ? $rules->anywhere($current) : null;
             if ($immediate !== null) {
-                return $immediate;
+                return [$immediate, $current];
             }
             if ($current instanceof ReturnStatement && $kind !== ProgramKind::Function) {
-                return new ProgramProblem(ProgramRule::ReturnOutsideFunction);
+                return [new ProgramProblem(ProgramRule::ReturnOutsideFunction), $current];
             }
             $problem = $this->contained($current, $kind);
             if ($problem !== null && ($found === null || $this->priority($problem) < $this->priority($found))) {
                 $found = $problem;
+                $at = $this->priority($problem) < 6 ? $body : $current;
             }
             array_push($pending, ...array_reverse($search->nested($current)));
         }
-        return $found ?? ($kind === ProgramKind::Function && !$search->found($body) ? new ProgramProblem(ProgramRule::MissingReturn, $name?->name->value ?? '') : null);
+        if ($found !== null) {
+            return [$found, $at];
+        }
+        return $kind === ProgramKind::Function && !$search->found($body) ? [new ProgramProblem(ProgramRule::MissingReturn, $name?->name->value ?? ''), $body] : null;
     }
 
     /**

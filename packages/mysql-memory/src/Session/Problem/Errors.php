@@ -17,6 +17,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Error\TypeErrors;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
+use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
@@ -405,7 +406,7 @@ final class Errors
             return QueryError::BadField->error($diagnostic->column->value, $diagnostic->table->name->value);
         }
         if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash) {
-            return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near(strlen($session->text), $session->text, $session->following, new \RuntimeException($diagnostic->message()), true, $session->semantics()->parser());
+            return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near(strlen($session->text), $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser());
         }
         if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\Role\RefusedCreateRole) {
             $seen = [];
@@ -479,7 +480,7 @@ final class Errors
     {
         $offset = $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $diagnostic->end : $diagnostic->offset;
 
-        return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($offset ?? strlen($session->text), $session->text, $session->following, new \RuntimeException($diagnostic->message()), true, $session->semantics()->parser());
+        return (new \MySqlMemory\Session\Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->near($offset ?? strlen($session->text), $session->text, $session->following, new RuntimeException($diagnostic->message()), true, $session->semantics()->parser());
     }
 
     /**
@@ -535,6 +536,8 @@ final class Errors
 
         return match ($misuse->rule) {
             MisuseRule::StarWithoutTables => QueryError::NoTablesUsed->error(),
+            MisuseRule::AggregateOutsideQuery => QueryError::InvalidGroupFunctionUse->error(),
+            MisuseRule::WindowOutsideQuery => QueryError::WindowFunctionMisplaced->error($name),
             MisuseRule::DerivedWithoutAlias => QueryError::DerivedMustHaveAlias->error(),
             MisuseRule::JsonTableSubquery => StatementError::WrongArguments->error('JSON_TABLE'),
             MisuseRule::TableFunctionWithoutAlias => QueryError::TableFunctionWithoutAlias->error(),

@@ -10,7 +10,6 @@ use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\ProgramErrors;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
-use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody;
 

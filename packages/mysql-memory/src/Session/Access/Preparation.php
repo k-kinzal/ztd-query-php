@@ -301,7 +301,7 @@ final class Preparation
      *
      * @throws SqlError When splitting or semantic interpretation refuses the input
      */
-    public function read(string $sql, Session $session): \SqlSemantics\Statement\AnalyzedStatement|\MySqlMemory\Command\Prepared\PendingTable
+    public function read(string $sql, Session $session): \SqlSemantics\Statement\AnalyzedStatement|\MySqlMemory\Command\Prepared\Pending
     {
         (new \MySqlMemory\Session\Parse\Preparation\EmptyPrepared())->check($sql, $session->semantics()->parser(), $session->resolution()->client, $session->settings()->legacy());
         try {

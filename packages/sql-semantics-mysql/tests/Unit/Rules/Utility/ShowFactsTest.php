@@ -36,14 +36,18 @@ final class ShowFactsTest extends TestCase
         self::assertSame('Column nope does not exist.', $show->diagnostics()[0]->message());
     }
 
-    public function testDeriveKeepsWindowNamesInTheInspectionScope(): void
+    public function testDeriveIsNeverReachedForAWindowNameInAFilter(): void
     {
-        $show = (new Semantics(Dialect::MySql))->analyze('SHOW EVENTS FROM d WHERE DENSE_RANK() OVER missing');
-        $diagnostic = $show->diagnostics()[0];
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $diagnostic);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $diagnostic->rule);
-        self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $diagnostic->name);
-        self::assertSame('missing', $diagnostic->name->value);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('SHOW EVENTS FROM d WHERE DENSE_RANK() OVER missing');
+            self::fail('No query block defines the window.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            $diagnostic = $failure->problem;
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse::class, $diagnostic);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $diagnostic->rule);
+            self::assertInstanceOf(\SqlSemantics\Statement\Identifier\Name::class, $diagnostic->name);
+            self::assertSame('missing', $diagnostic->name->value);
+        }
     }
 
     public function testRowsRecordsTheLayout(): void

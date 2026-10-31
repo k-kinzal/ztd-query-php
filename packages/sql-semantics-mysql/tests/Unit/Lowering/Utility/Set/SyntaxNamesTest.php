@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Lowering\Utility\Set\InputLocals;
 use SqlSemantics\Platform\MySql\Lowering\Utility\Set\SyntaxNames;
 use SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedNamesAssignment;
-use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 
 #[CoversClass(SyntaxNames::class)]
 #[Medium]

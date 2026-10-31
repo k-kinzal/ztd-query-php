@@ -10,9 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
-use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 
 #[CoversClass(DatabaseOptions::class)]
 #[Medium]

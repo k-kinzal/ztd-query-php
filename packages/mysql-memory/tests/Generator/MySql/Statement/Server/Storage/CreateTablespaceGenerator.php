@@ -47,7 +47,7 @@ final class CreateTablespaceGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): CreateTablespace => new CreateTablespace(name: $parts[0], datafile: $parts[1], logfileGroup: $parts[2], options: array_values(array_filter($parts[3], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::TABLESPACE, true))), statementInformation: $parts[4], inputSource: $parts[5], optionsCommas: $parts[6] === null ? null : array_slice($parts[6], 0, max(0, count(array_filter($parts[3], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::TABLESPACE, true))) - 1))),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[3]) === null,
+                static fn (array $parts): bool => (new StorageOptions())->repeated($parts[3]) === null,
                 Generators::tuple(
                     new NameGenerator($release),
                     Generators::oneOf(Generators::constant(null), new TextGenerator($release)),

@@ -18,7 +18,7 @@ final class SetVariablesTest extends TestCase
 {
     public function testScopeOfAnswersTheInheritedScope(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST autocommit = 1, sql_mode = 2, @@SESSION.max_connections = 3, @d = 4, wait_timeout = 5');
+        $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST autocommit = 1, sql_mode = 2, @@SESSION.sql_log_bin = 3, @d = 4, wait_timeout = 5');
         self::assertInstanceOf(SetVariables::class, $set);
         self::assertSame(VariableScope::Persist, $set->scopeOf(1));
         self::assertSame(VariableScope::Session, $set->scopeOf(2));

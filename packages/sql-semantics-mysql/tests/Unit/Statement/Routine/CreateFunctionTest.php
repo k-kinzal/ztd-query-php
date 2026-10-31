@@ -70,25 +70,26 @@ final class CreateFunctionTest extends TestCase
         self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
-    public function testDeriveStatementKeepsDuplicateParametersInTheCompleteDefinition(): void
+    public function testDeriveStatementIsNeverReachedWithDuplicateParameters(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
-
-        self::assertInstanceOf(CreateFunction::class, $statement);
-        self::assertCount(2, $statement->parameters->parameters);
-        self::assertSame('Duplicate parameter: x', $statement->diagnostics()[0]->message());
-        self::assertSame('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x', $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(x INT, x BIGINT) RETURNS INT RETURN x');
+            self::fail('The parameter list repeats a name.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('Duplicate parameter: x', $failure->problem->message());
+            self::assertTrue($failure->aborts);
+        }
     }
 
     public function testDeriveStatementRetainsTheBodyAndReportsAMissingReturn(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION shop.f(x INT) RETURNS INT BEGIN SET @a = x; END');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('No RETURN found in FUNCTION f', $notices[0]->message());
-        self::assertNotSame('', $statement->toString());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION shop.f(x INT) RETURNS INT BEGIN SET @a = x; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('No RETURN found in FUNCTION f', $failure->problem->message());
+        }
     }
 
     /**
@@ -142,13 +143,13 @@ final class CreateFunctionTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredFunctionMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredFunctionMayNotContain(string $statement, string $message): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN ' . $statement . '; RETURN 1; END');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($message, $notices[0]->message());
-        self::assertNotSame('', $statement->toString());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN ' . $statement . '; RETURN 1; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     public function testDeriveStatementAcceptsAQueryThatWritesIntoVariables(): void
@@ -160,13 +161,13 @@ final class CreateFunctionTest extends TestCase
 
     public function testDeriveStatementReportsAResultSetBeforeAMissingReturn(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('Not allowed to return a result set from a function', $notices[0]->message());
-        self::assertNotSame('', $statement->toString());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT SELECT 1');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Not allowed to return a result set from a function', $failure->problem->message());
+        }
     }
 
     /**

@@ -194,14 +194,17 @@ final class ParameterRuleTest extends TestCase
     }
 
     #[DataProvider('providerRepeatedParameters')]
-    public function testParametersRetainTheCompleteDefinitionWithItsFirstDuplicate(string $sql, string $message): void
+    public function testParametersRefuseTheFirstDuplicateWhileReading(string $sql, string $message): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
-
-        self::assertTrue($statement instanceof CreateProcedure || $statement instanceof CreateFunction);
-        self::assertNotNull($statement->parameters->repeated());
-        self::assertSame($message, $statement->diagnostics()[0]->message());
-        self::assertSame($sql, $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
+            self::fail('The parameter list repeats a name.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem::class, $failure->problem);
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateParameter, $failure->problem->rule);
+            self::assertSame($message, $failure->problem->message());
+            self::assertTrue($failure->aborts);
+        }
     }
 
 }

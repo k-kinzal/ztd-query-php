@@ -61,10 +61,8 @@ final class ConstraintsTest extends TestCase
         $query = new M\Query\QueryExpression(new M\Query\With\With(true, [new M\Query\With\CommonTableExpression(new Name('c'), [], $nested)]), new M\Query\ExplicitTable(new QualifiedName(new Name('c'))));
         $body = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('0'), [new M\Routine\Program\Selection\DeferredQuery($query)])]);
         self::assertSame(M\Query\Problem\MisuseRule::RecursiveReferencePosition, (new Constraints())->position($body)?->rule);
-        $create = new M\Routine\CreateProcedure(new QualifiedName(new Name('p')), new M\Routine\ParameterList([]), $body);
-        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), [new Name('test')]), $create);
-        self::assertInstanceOf(M\Routine\CreateProcedure::class, $statement);
-        self::assertInstanceOf(M\Routine\Program\Flow\IfStatement::class, $statement->body);
-        self::assertSame('A recursive table must be referenced only once per query block and not in a subquery', $statement->warnings()[0]->message());
+        $refusal = (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($body, M\Routine\ProgramKind::Procedure, new QualifiedName(new Name('p')), new M\Routine\ParameterList([]));
+        self::assertNotNull($refusal);
+        self::assertSame('A recursive table must be referenced only once per query block and not in a subquery', $refusal[0]->message());
     }
 }

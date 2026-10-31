@@ -104,6 +104,6 @@ final class HandlerOperandsTest extends TestCase
         $rules = new HandlerOperands();
 
         self::assertSame('A HANDLER read cannot contain a subquery.', $rules->problem($moment));
-        self::assertNull($rules->problem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+        self::assertNull($rules->problem(new NumberLiteral('1')));
     }
 }

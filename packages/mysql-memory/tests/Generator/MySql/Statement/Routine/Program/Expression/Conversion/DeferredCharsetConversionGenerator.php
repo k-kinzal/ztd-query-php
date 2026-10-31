@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCharsetConversion;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
-use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 
 /**
  * Generates DeferredCharsetConversion values from the generators of its operands.

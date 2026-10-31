@@ -29,14 +29,7 @@ final class SyntaxParameters
         }
         try {
             $parameters = (new ParameterRule($lowering))->parameters($node);
-            $repeated = $parameters->repeated();
-            $legacy = in_array($lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
             foreach ($parameters->parameters as $parameter) {
-                $problem = $legacy ? null : $parameter::nameProblem($parameter->name);
-                $problem ??= $parameter === $repeated ? new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateParameter, $parameter->name->value) : null;
-                if ($problem !== null) {
-                    return new ParseFailure($problem, true);
-                }
                 $problem = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($parameter->type, '', $lowering->profile->grammar);
                 if ($problem !== null) {
                     return new ParseFailure($problem, true);

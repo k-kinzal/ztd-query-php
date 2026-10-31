@@ -84,6 +84,7 @@ final class EventRule
      * Lowers CREATE EVENT: a node of `event_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the body has a definition condition
      */
     public function create(Node $tail, ?Account $definer): CreateEvent
     {
@@ -97,6 +98,8 @@ final class EventRule
         $name = $this->lowering->names->qualified($form->node($first + 2));
         $schedule = $this->schedule($form->node($first + 5), $name, $definer);
         $body = (new StatementRule($this->lowering->inProgram($name)))->event($form->node($first + 10));
+        $source = (new DefinitionBody())->source($body, $form->node($first + 2), $form->node($first + 10));
+        (new BodyRefusal($this->lowering))->checked($tail, $name, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $body, null, [], $definer, $source);
 
         return new CreateEvent(
             $name,
@@ -111,7 +114,7 @@ final class EventRule
             $this->comment($form->node($first + 8)),
             $definer,
             $this->lowering->options->present($form->node($first + 1)),
-            definitionSource: (new DefinitionBody())->source($body, $form->node($first + 2), $form->node($first + 10)),
+            definitionSource: $source,
         );
     }
 
@@ -150,6 +153,10 @@ final class EventRule
         if ($refusal !== null) {
             throw $refusal;
         }
+        $source = $instruction === null ? null : (new DefinitionBody())->source($instruction, $form->node(3), $body->node(1));
+        if ($instruction !== null && $source !== null) {
+            (new BodyRefusal($this->lowering))->checked($form->node, $name, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $instruction, null, [], $definer, $source);
+        }
 
         return new AlterEvent(
             $name,
@@ -164,7 +171,7 @@ final class EventRule
             $comment,
             $instruction,
             $definer,
-            definitionSource: $instruction === null ? null : (new DefinitionBody())->source($instruction, $form->node(3), $body->node(1)),
+            definitionSource: $source,
         );
     }
 

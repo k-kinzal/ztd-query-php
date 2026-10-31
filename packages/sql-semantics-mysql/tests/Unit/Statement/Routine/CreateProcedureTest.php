@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -37,11 +38,9 @@ final class CreateProcedureTest extends TestCase
     #[DataProvider('providerLegacyUpgradeBodies')]
     public function testLegacyUpgradeCannotBeAStoredInstruction(\SqlSemantics\Statement\Node $body): void
     {
-        $statement = Semantics::fromStatement((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context(), new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), $body));
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame("Can't drop or alter a DATABASE from within another stored routine", $notices[0]->message());
+        $refusal = (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($body, ProgramKind::Procedure, new QualifiedName(new Name('p')), new ParameterList([]));
+        self::assertNotNull($refusal);
+        self::assertSame("Can't drop or alter a DATABASE from within another stored routine", $refusal[0]->message());
     }
 
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
@@ -85,14 +84,15 @@ final class CreateProcedureTest extends TestCase
         self::assertSame([], $create->diagnostics());
     }
 
-    public function testDeriveStatementKeepsDuplicateParametersInTheCompleteDefinition(): void
+    public function testDeriveStatementIsNeverReachedWithDuplicateParameters(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
-
-        self::assertInstanceOf(CreateProcedure::class, $statement);
-        self::assertCount(2, $statement->parameters->parameters);
-        self::assertSame('Duplicate parameter: X', $statement->diagnostics()[0]->message());
-        self::assertSame('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1', $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
+            self::fail('The parameter list repeats a name.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('Duplicate parameter: X', $failure->problem->message());
+            self::assertTrue($failure->aborts);
+        }
     }
 
     /**
@@ -115,13 +115,13 @@ final class CreateProcedureTest extends TestCase
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($message, $notices[0]->message());
-        self::assertNotSame('', $statement->toString());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**

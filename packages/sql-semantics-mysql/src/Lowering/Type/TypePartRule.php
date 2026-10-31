@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Type;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -13,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers the parts a data type is written with: lengths, precisions, numeric attributes and character set attributes.

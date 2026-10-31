@@ -301,6 +301,10 @@ final class Lowering
         }
 
         $statement = $this->statement($form->node(0));
+        $misplaced = $this->stored() ? null : (new \SqlSemantics\Platform\MySql\Rules\Expression\Placement\StatementCalls())->problem($statement);
+        if ($misplaced !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($misplaced, (new \SqlSemantics\Construction\SourceRanges())->span($form->node(0))[1] ?? 0, false);
+        }
         $first = null;
         foreach ($input->tokens() as $token) {
             if ($token->text !== '(') {

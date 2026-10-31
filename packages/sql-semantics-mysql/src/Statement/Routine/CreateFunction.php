@@ -83,17 +83,18 @@ final class CreateFunction extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         }
         $this->characteristics = $implementation->characteristics;
         $this->body = $implementation->body;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Function, $name, $parameters, $this->characteristics, $definitionSource?->bodyRefusalOffset) === null, 'A function body satisfies the stored program restrictions and returns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives the parameters and the body, and checks that the body returns.
+     * Derives the parameters and the body.
      */
     public function deriveStatement(Derivation $derivation): void
     {
         (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
         (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Function, $this->name, $derivation, $this->returns, $this->collation);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->order($this, $derivation);
     }
 
     /**

@@ -9,7 +9,6 @@ use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
 use Eris\Random\RandomRange;
-use Tests\Generator\MySql\Statement\Table\Problem\Creation\RefusedCreateTableGenerator;
 use LogicException;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations;
@@ -114,6 +113,7 @@ use Tests\Generator\MySql\Statement\Routine\Problem\EmptyEventAlterationGenerato
 use Tests\Generator\MySql\Statement\Routine\Problem\LanguageBodyMismatchGenerator;
 use Tests\Generator\MySql\Statement\Routine\Problem\ParameterScopeMismatchGenerator;
 use Tests\Generator\MySql\Statement\Routine\Problem\ProgramProblemGenerator;
+use Tests\Generator\MySql\Statement\Routine\Problem\RefusedLanguageGenerator;
 use Tests\Generator\MySql\Statement\Routine\Problem\RefusedProgramBodyGenerator;
 use Tests\Generator\MySql\Statement\Routine\Problem\ScopedLocalAssignmentGenerator;
 use Tests\Generator\MySql\Statement\Server\Database\Problem\CharsetConflictGenerator;
@@ -132,6 +132,7 @@ use Tests\Generator\MySql\Statement\Table\Problem\Column\SridRangeGenerator;
 use Tests\Generator\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumnGenerator;
 use Tests\Generator\MySql\Statement\Table\Problem\Creation\FunctionalIndexKindGenerator;
 use Tests\Generator\MySql\Statement\Table\Problem\Creation\InvalidIndexNameGenerator;
+use Tests\Generator\MySql\Statement\Table\Problem\Creation\RefusedCreateTableGenerator;
 use Tests\Generator\MySql\Statement\Table\Problem\Creation\RefusedCreateTailGenerator;
 use Tests\Generator\MySql\Statement\Table\Problem\Creation\SpatialKeyArityGenerator;
 use Tests\Generator\MySql\Statement\Table\Problem\ExplicitIndexOrderGenerator;
@@ -189,7 +190,7 @@ final class DiagnosticGenerator implements ErisGenerator
     {
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = $depth > 0
-            ? Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 508, 508, 511, 508, 511, 511, 511, 511, 508, 508, 508, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 504, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+            ? Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 508, 508, 511, 508, 511, 511, 511, 511, 508, 508, 508, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 504, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                 0 => new AccountNameFailureGenerator($release),
                 1 => new InvalidFactorPairGenerator($release),
                 2 => new InvalidUserAttributeGenerator($release),
@@ -350,9 +351,10 @@ final class DiagnosticGenerator implements ErisGenerator
                 157 => new MissingColumnGenerator($release),
                 158 => new MissingTableGenerator($release),
                 159 => new RefusedCreateTableGenerator($release, $depth - 1),
+                160 => new RefusedLanguageGenerator($release),
                 default => throw new LogicException('Unreachable alternative.'),
             })
-            : Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 508, 508, 511, 508, 511, 511, 511, 511, 508, 508, 508, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 504, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
+            : Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 508, 508, 511, 508, 511, 511, 511, 511, 508, 508, 508, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 508, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 504, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                 0 => new AccountNameFailureGenerator($release),
                 1 => new InvalidFactorPairGenerator($release),
                 2 => new InvalidUserAttributeGenerator($release),
@@ -510,6 +512,7 @@ final class DiagnosticGenerator implements ErisGenerator
                 154 => new MissingColumnGenerator($release),
                 155 => new MissingTableGenerator($release),
                 156 => new RefusedCreateTableGenerator($release, $depth - 1),
+                157 => new RefusedLanguageGenerator($release),
                 default => throw new LogicException('Unreachable alternative.'),
             });
         $this->delegate = Generators::suchThat(

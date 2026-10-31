@@ -47,7 +47,7 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): CreateUndoTablespace => new CreateUndoTablespace(name: $parts[0], datafile: $parts[1], options: array_values(array_filter($parts[2], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::UNDO_TABLESPACE, true))), statementInformation: $parts[3], inputSource: $parts[4], optionsCommas: $parts[5] === null ? null : array_slice($parts[5], 0, max(0, count(array_filter($parts[2], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::UNDO_TABLESPACE, true))) - 1))),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[2]) === null,
+                static fn (array $parts): bool => (new StorageOptions())->repeated($parts[2]) === null,
                 Generators::tuple(
                     new NameGenerator($release),
                     new TextGenerator($release),

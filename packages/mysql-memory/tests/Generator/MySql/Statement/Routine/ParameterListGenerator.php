@@ -36,10 +36,13 @@ final class ParameterListGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): ParameterList => new ParameterList(parameters: $parts[0], relationInformation: $parts[1], inputSource: $parts[2]),
-            Generators::tuple(
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ParameterGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null)
+            Generators::suchThat(
+                static fn (array $parts): bool => ParameterList::repeated($parts[0]) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ParameterGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

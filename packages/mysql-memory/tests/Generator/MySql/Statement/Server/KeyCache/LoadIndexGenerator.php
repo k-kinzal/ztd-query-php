@@ -43,7 +43,7 @@ final class LoadIndexGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): LoadIndex => new LoadIndex(tables: $parts[0], statementInformation: null, inputSource: null),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable $table): array => [$table->table, null, $table], $parts[0])) === null,
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (PreloadedTable $table): array => [$table->table, null, $table], $parts[0])) === null,
                 Generators::tuple(
                     Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 1 ? Generators::vector(1, new PreloadedTableGenerator($release)) : Generators::vector($count, Generators::suchThat(static fn (PreloadedTable $table): bool => $table->partitions === null, new PreloadedTableGenerator($release))))
                 )

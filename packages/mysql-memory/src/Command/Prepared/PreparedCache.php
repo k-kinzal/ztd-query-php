@@ -32,7 +32,7 @@ final class PreparedCache
     /**
      * @param list<array{string, string, Table|\MySqlMemory\Dictionary\View|null, bool}> $tables Schema, name, stored identity and permanent-only lookup
      */
-    public function __construct(public PreparedStatement|PendingTable $definition, public array $tables, public readonly ?Definition $input = null)
+    public function __construct(public PreparedStatement|Pending $definition, public array $tables, public readonly ?Definition $input = null)
     {
     }
 
@@ -41,9 +41,9 @@ final class PreparedCache
      *
      * @throws LogicException When the statement has no preparation implementation
      */
-    public static function capture(\SqlSemantics\Statement\AnalyzedStatement|PendingTable $operation, Session $session, ?Definition $input = null): self
+    public static function capture(\SqlSemantics\Statement\AnalyzedStatement|Pending $operation, Session $session, ?Definition $input = null): self
     {
-        if ($operation instanceof PendingTable) {
+        if ($operation instanceof Pending) {
             return new self($operation, [], $input);
         }
 

@@ -46,9 +46,11 @@ final class PrivilegeRuleTest extends TestCase
         self::assertSame('GRANT SELECT, INSERT, CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert, create role, drop role on *.* to u')->toString());
     }
 
-    public function testItemsRetainsAColumnListAtTheGlobalLevel(): void
+    public function testItemsRetainsAColumnListInAStoredRequest(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u');
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() grant select, insert (a), create role, drop role on *.* to u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        $statement = $stored->body;
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
         self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $statement->condition()?->error);
         self::assertCount(4, $statement->privileges);
@@ -63,7 +65,7 @@ final class PrivilegeRuleTest extends TestCase
     #[DataProvider('providerSuperReleases')]
     public function testItemRetainsEachSuperDeprecationBeforePrivilegeValidation(string $release, int $count): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze('GRANT SUPER,SUPER ON d.* TO u');
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze('GRANT SUPER,SUPER ON *.* TO u');
 
         self::assertSame(array_fill(0, $count, 'The SUPER privilege identifier is deprecated'), array_map(static fn (Warning $warning): string => $warning->message(), $operation->warnings()));
     }

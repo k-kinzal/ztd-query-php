@@ -61,15 +61,15 @@ final class AlterDatabaseGenerator implements ErisGenerator
                     return $charset === null || $collation === null || Collation::named($collation)?->charset->name === Charset::named($charset)?->name;
                 })(($parts[1])),
                 Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($parts[1]) === null,
-                Generators::tuple(
+                    static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($parts[1]) === null,
+                    Generators::tuple(
                         Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
                         Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DatabaseOptionGenerator($release))),
                         Generators::constant(null),
                         Generators::constant(null),
                         new DatabaseWordGenerator($release)
                     )
-            )
+                )
             )
         );
         $this->delegate = Generators::map(

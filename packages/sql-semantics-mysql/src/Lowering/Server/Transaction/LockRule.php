@@ -79,7 +79,7 @@ final class LockRule
         foreach ((new Lists())->items($list) as $item) {
             $locks[] = $this->lock($item);
         }
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock $lock): array => [$lock->table, $lock->alias, $lock], $locks));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (TableLock $lock): array => [$lock->table, $lock->alias, $lock], $locks));
         if ($problem !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0, false);
         }

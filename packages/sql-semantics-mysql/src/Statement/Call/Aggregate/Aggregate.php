@@ -114,6 +114,14 @@ final class Aggregate implements SetFunction
     }
 
     /**
+     * Answers the window written after OVER, or null when the call aggregates its query block.
+     */
+    public function over(): Name|WindowSpecification|null
+    {
+        return $this->over;
+    }
+
+    /**
      * Derives the arguments, the window and the result.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact

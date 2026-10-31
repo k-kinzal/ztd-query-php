@@ -30,8 +30,8 @@ final class DeclarationPrefixTest extends TestCase
         self::assertCount(2, $notices);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $notices[0][1]);
         self::assertSame(4079, $notices[0][1]->code());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[1][1]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet::class, $notices[1][1]->problem);
+        self::assertInstanceOf(ParseFailure::class, $notices[1][1]);
+        self::assertInstanceOf(NotSupportedYet::class, $notices[1][1]->problem);
     }
 
     public function testFollowingKeepsReturnCollationBeforeAnUnfinishedBody(): void

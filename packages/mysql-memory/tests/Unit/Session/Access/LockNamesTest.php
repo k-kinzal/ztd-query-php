@@ -11,7 +11,6 @@ use MySqlMemory\Session\Access\LockNames;
 use MySqlMemory\Session\Execution;
 use MySqlMemory\Session\State\StatementCounters;
 use MySqlMemory\Session\Statement\Binding;
-use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;

@@ -17,9 +17,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption;
-use SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption;
 use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
-use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 
 /**
  * Generates DatabaseEncryption values from the generators of its operands.

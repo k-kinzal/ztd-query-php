@@ -33,7 +33,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class RelationsTest extends TestCase
 {
-
     /**
      * @return iterable<string, array{string}>
      */

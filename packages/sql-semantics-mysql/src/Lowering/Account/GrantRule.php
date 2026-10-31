@@ -97,6 +97,7 @@ final class GrantRule
 
     /**
      * Retains either privilege spelling and every recipient before deriving level conditions.
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone request names a privilege outside its level
      */
     public function request(Form $form, bool $all): GrantPrivileges
     {
@@ -111,7 +112,7 @@ final class GrantRule
         $options = (new ClauseRule($this->lowering))->grantOptions($form->node(7 + $offset));
         $as = $this->grantAs($form->node(8 + $offset));
         $this->privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
-        return new GrantPrivileges($items, $kind, $level, $grantees, options: $options, as: $as, tableKeyword: strtoupper($form->node(3 + $offset)->tokens()[0]->text ?? '') === 'TABLE');
+        return (new Privilege\LevelRule($this->lowering))->checked(new GrantPrivileges($items, $kind, $level, $grantees, options: $options, as: $as, tableKeyword: strtoupper($form->node(3 + $offset)->tokens()[0]->text ?? '') === 'TABLE'), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**

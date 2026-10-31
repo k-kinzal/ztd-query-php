@@ -52,16 +52,19 @@ final class CreateProcedureGenerator implements ErisGenerator
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
             static fn (array $parts): CreateProcedure => new CreateProcedure(name: $parts[0], parameters: $parts[1], body: $parts[2], characteristics: $parts[3], definer: $parts[4], ifNotExists: ($bit & 508) !== 0 && $parts[5], statementInformation: $parts[6], inputSource: $parts[7], definitionSource: $parts[8]),
-            Generators::tuple(
-                new QualifiedNameGenerator($release),
-                new ParameterListGenerator($release),
-                Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1))),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CharacteristicGenerator($release))),
-                Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
-                Generators::bool(),
-                Generators::constant(null),
-                Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[2], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Procedure, $parts[0], $parts[1], $parts[3], $parts[8]?->bodyRefusalOffset) === null,
+                Generators::tuple(
+                    new QualifiedNameGenerator($release),
+                    new ParameterListGenerator($release),
+                    Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1))),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CharacteristicGenerator($release))),
+                    Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                    Generators::bool(),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+                )
             )
         );
         $this->delegate = Generators::map(

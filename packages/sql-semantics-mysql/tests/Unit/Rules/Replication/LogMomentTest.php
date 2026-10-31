@@ -68,6 +68,6 @@ final class LogMomentTest extends TestCase
         $rules = new LogMoment();
 
         self::assertSame('A PURGE moment cannot contain a subquery.', $rules->problem($moment));
-        self::assertNull($rules->problem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+        self::assertNull($rules->problem(new NumberLiteral('1')));
     }
 }

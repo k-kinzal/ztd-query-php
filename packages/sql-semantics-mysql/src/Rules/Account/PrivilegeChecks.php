@@ -139,6 +139,73 @@ final class PrivilegeChecks
     }
 
     /**
+     * Answers the first privilege, column list or object kind that does not fit the level, in the order the
+     * server checks them, or null when every item fits. The server finds these once the statement is read;
+     * a global privilege at the database level (ER_WRONG_USAGE) it reports per recipient when the statement
+     * runs, so that condition is left to `usage()` (verified on 5.7.44 and 8.4.7).
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges
+     * @param bool $lenient Whether a dynamic privilege outside the global level is only a warning (REVOKE IF EXISTS)
+     */
+    public function problem(array $privileges, ObjectKind $kind, PrivilegeLevel $level, bool $lenient): ?MisplacedPrivilege
+    {
+        if ($kind !== ObjectKind::Table && !$level instanceof ObjectLevel) {
+            return new MisplacedPrivilege((string) $kind->keyword(), $level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE');
+        }
+        foreach ($privileges as $privilege) {
+            if ($privilege instanceof DynamicPrivilege && !$level instanceof GlobalLevel && !$lenient) {
+                return new MisplacedPrivilege($privilege->name->value, $level->describe(), 'ER_ILLEGAL_PRIVILEGE_LEVEL');
+            }
+            $problem = $privilege instanceof StaticPrivilege ? $this->misfit($privilege, $kind, $level) : null;
+            if ($problem !== null && $problem->error !== 'ER_WRONG_USAGE') {
+                return $problem;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers the first global privilege written at the database level, which the server reports for each
+     * recipient when the statement runs, or null.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges
+     */
+    public function usage(array $privileges, ObjectKind $kind, PrivilegeLevel $level): ?MisplacedPrivilege
+    {
+        foreach ($privileges as $privilege) {
+            $problem = $privilege instanceof StaticPrivilege ? $this->misfit($privilege, $kind, $level) : null;
+            if ($problem !== null && $problem->error === 'ER_WRONG_USAGE') {
+                return $problem;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers why a static privilege or its column list does not fit the level, or null when it fits.
+     */
+    public function misfit(StaticPrivilege $privilege, ObjectKind $kind, PrivilegeLevel $level): ?MisplacedPrivilege
+    {
+        $name = $privilege->kind->value;
+        if ($privilege->columns !== [] && $kind !== ObjectKind::Table) {
+            return new MisplacedPrivilege($name . ' with a column list', $level->describe(), 'ER_PARSE_ERROR');
+        }
+        if ($privilege->columns !== [] && !$level instanceof ObjectLevel) {
+            return new MisplacedPrivilege($name . ' with a column list', $level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE');
+        }
+        if ($level instanceof GlobalLevel) {
+            return null;
+        }
+        if (!$level instanceof ObjectLevel) {
+            return $privilege->kind->database() ? null : new MisplacedPrivilege($name, $level->describe(), 'ER_WRONG_USAGE');
+        }
+
+        return ($kind === ObjectKind::Table ? $privilege->kind->table() : $privilege->kind->routine()) ? null : new MisplacedPrivilege($name, $level->describe(), 'ER_ILLEGAL_GRANT_FOR_TABLE');
+    }
+
+    /**
      * Reports the privileges, column lists and object kind that do not fit the level.
      *
      * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $privileges

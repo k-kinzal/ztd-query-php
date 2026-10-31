@@ -54,7 +54,7 @@ final class TableUseTest extends TestCase
     public function testContextualizeUsesThePartitionStructureBeforeTheDeferredCreationRole(): void
     {
         $partition = new M\Partition\PartitionClause(new M\Partition\Method\HashMethod(false, new M\Call\FunctionCall(new Name('ST_LATITUDE'), [new M\Call\CallArgument(new M\Literal\NumberLiteral('1'))])), null, null, []);
-        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t'), new Name('missing')), [new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)))], partitioning: $partition);
+        $definition = new M\Table\CreateTable(new QualifiedName(new Name('t'), new Name('missing')), [new M\Table\Column\ColumnDefinition(new M\Name\ColumnName(new Name('a')), new M\Table\Column\OrdinaryColumn(new M\Type\Integral(M\Type\Kind\IntegralKind::Int)))], partitioning: $partition);
         $session = (new Instance('5.7.44'))->connect();
         $session->text = 'unrelated input';
         $this->expectException(SqlError::class);

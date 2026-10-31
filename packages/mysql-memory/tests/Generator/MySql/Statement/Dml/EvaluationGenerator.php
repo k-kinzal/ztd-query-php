@@ -48,7 +48,7 @@ final class EvaluationGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): Evaluation => new Evaluation(items: [...($parts[3] ? [new Star()] : []), ...$parts[0]], statementInformation: $parts[1], inputSource: $parts[2]),
             Generators::suchThat(
-                static fn (array $parts): bool => (static function (array $parts): bool {
+                static fn (array $parts): bool => !$parts[3] && array_filter($parts[0], static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard) === [] && (static function (array $parts): bool {
                     foreach ($parts as $part) {
                         foreach (is_array($part) ? $part : [$part] as $node) {
                             if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {
@@ -84,7 +84,8 @@ final class EvaluationGenerator implements ErisGenerator
                 return ($domain->of($value) & $domain->bit($release)) !== 0
                     && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
                     && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
-                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+                    && ((new LexicalModes())->requirement($value) & 10) === 0
+                    && (new \SqlSemantics\Platform\MySql\Rules\Expression\Placement\StatementCalls())->problem($value) === null;
             },
             $this->delegate
         );

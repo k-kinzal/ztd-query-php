@@ -54,18 +54,21 @@ final class CreateTriggerGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]),
-            Generators::tuple(
-                new QualifiedNameGenerator($release),
-                new TriggerTimeGenerator($release),
-                new TriggerEventGenerator($release),
-                new TriggerTableGenerator($release),
-                Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1))),
-                Generators::oneOf(Generators::constant(null), new TriggerOrderGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
-                Generators::bool(),
-                Generators::constant(null),
-                Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[4], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $parts[0], null, [], $parts[10]?->bodyRefusalOffset) === null,
+                Generators::tuple(
+                    new QualifiedNameGenerator($release),
+                    new TriggerTimeGenerator($release),
+                    new TriggerEventGenerator($release),
+                    new TriggerTableGenerator($release),
+                    Generators::bind(Generators::bool(), static fn (bool $program): ErisGenerator => $program ? new ProgramStatementGenerator($release, $depth - 1) : Generators::suchThat(static fn ($statement): bool => !$statement instanceof Begin && !$statement instanceof BinlogEvent && !$statement instanceof ExplainConnection, new StatementGenerator($release, $depth - 1))),
+                    Generators::oneOf(Generators::constant(null), new TriggerOrderGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new AccountGenerator($release)),
+                    Generators::bool(),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new DefinitionSourceGenerator($release))
+                )
             )
         );
         $this->delegate = Generators::map(

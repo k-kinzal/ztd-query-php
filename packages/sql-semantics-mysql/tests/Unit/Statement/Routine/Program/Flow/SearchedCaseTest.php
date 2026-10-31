@@ -33,13 +33,13 @@ final class SearchedCaseTest extends TestCase
 
     public function testDeriveProgramChecksTheLabelsInTheBranches(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) l: LOOP CASE WHEN a > 0 THEN LEAVE l; ELSE LEAVE m; END CASE; END LOOP');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('LEAVE with no matching label: m', $notices[0]->message());
-        self::assertNotSame('', $statement->toString());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) l: LOOP CASE WHEN a > 0 THEN LEAVE l; ELSE LEAVE m; END CASE; END LOOP');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('LEAVE with no matching label: m', $failure->problem->message());
+        }
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]

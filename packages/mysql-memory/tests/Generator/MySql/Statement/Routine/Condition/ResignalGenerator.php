@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Condition;
 
 use Eris\Generator as ErisGenerator;
-use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
 use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
@@ -22,6 +21,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**

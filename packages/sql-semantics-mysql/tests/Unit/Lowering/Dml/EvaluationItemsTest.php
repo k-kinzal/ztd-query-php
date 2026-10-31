@@ -23,10 +23,13 @@ final class EvaluationItemsTest extends TestCase
 {
     public function testReadRetainsAStarInTheCompleteEvaluation(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('DO *');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Evaluation::class, $statement);
-        self::assertSame('No tables used', $statement->problem()?->message());
-        self::assertSame('DO *', $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('DO *');
+            self::fail('A standalone wildcard has no tables to read.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('No tables used', $failure->problem->message());
+        }
+        self::assertSame('DO 1, 2', (new Semantics(Dialect::MySql))->analyze('DO 1, 2')->toString());
     }
 
     public function testProgramRetainsWildcardsOnlyInAStoredInstruction(): void

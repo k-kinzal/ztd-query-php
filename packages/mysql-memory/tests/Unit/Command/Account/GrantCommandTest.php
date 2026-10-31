@@ -85,7 +85,7 @@ final class GrantCommandTest extends TestCase
         $session->query('GRANT PROXY ON nobody TO root');
 
         self::assertSame([], $session->diagnostics->conditions);
-        self::assertArrayHasKey((new \MySqlMemory\Account\Identity('nobody', '%'))->key(), $instance->accounts->find(new \MySqlMemory\Account\Identity('root', '%'))?->grants->proxies ?? []);
+        self::assertArrayHasKey((new Identity('nobody', '%'))->key(), $instance->accounts->find(new Identity('root', '%'))?->grants->proxies ?? []);
     }
 
     public function testApplyRefusesAnUnregisteredDynamicPrivilege(): void

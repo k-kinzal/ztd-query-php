@@ -58,11 +58,14 @@ final class ExternalBodyTest extends TestCase
         self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
     }
 
-    public function testRenderRefusesTheOriginalSqlLanguageAndExternalCodeExample(): void
+    public function testRenderIsNeverReachedForTheSqlLanguageWithExternalCode(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("create procedure p() language sql as 'x'");
-        self::assertSame("CREATE PROCEDURE p() LANGUAGE SQL AS 'x'", $statement->toString());
-        self::assertContains('The routine language and body representation disagree.', array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("create procedure p() language sql as 'x'");
+            self::fail('The body representation disagrees with the SQL language.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('The routine language and body representation disagree.', $failure->problem->message());
+        }
     }
 
     public function testRenderWritesAConstructedBody(): void

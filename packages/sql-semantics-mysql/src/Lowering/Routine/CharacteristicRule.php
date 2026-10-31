@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineComment;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SecurityContext;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\SqlSecurity;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers the characteristics of stored routines.
@@ -77,6 +78,7 @@ final class CharacteristicRule
      * Lowers one characteristic: a node of `sp_chistic` or `sp_c_chistic`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the language is neither SQL nor JAVASCRIPT
      */
     public function characteristic(Node $characteristic): Characteristic
     {
@@ -101,9 +103,26 @@ final class CharacteristicRule
         return match ($form->signature) {
             'sp_chistic: COMMENT_SYM TEXT_STRING_sys' => new RoutineComment($this->lowering->literals->text($form->node(1))),
             'sp_chistic: LANGUAGE_SYM SQL_SYM' => new RoutineLanguage(),
-            'sp_chistic: LANGUAGE_SYM ident' => new RoutineLanguage($this->lowering->names->identifier($form->node(1))),
+            'sp_chistic: LANGUAGE_SYM ident' => new RoutineLanguage($this->language($form->node(1))),
             'sp_c_chistic: DETERMINISTIC_SYM' => new Determinism(true),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers the name of an external routine language: a node of `ident`. The grammar accepts only
+     * JAVASCRIPT, so another name is refused while parsing (verified on 8.4.7 and 9.1.0).
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the language is neither SQL nor JAVASCRIPT
+     */
+    public function language(Node $name): Name
+    {
+        $language = $this->lowering->names->identifier($name);
+        if (strcasecmp($language->value, 'JAVASCRIPT') !== 0) {
+            $span = (new \SqlSemantics\Construction\SourceRanges())->span($name) ?? [0, 0];
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedLanguage($language, $span[0]), $span[1]);
+        }
+
+        return $language;
     }
 }

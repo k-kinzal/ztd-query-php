@@ -275,7 +275,7 @@ final class BlockRuleTest extends TestCase
     public function testSizedRefusesADeclaredTypeOutsideItsBounds(): void
     {
         try {
-            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE v DECIMAL(70); END');
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE v DECIMAL(70); END');
             self::fail('The precision exceeds 65.');
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             self::assertSame("Too-big precision 70 specified for ''. Maximum is 65.", $failure->problem->message());
@@ -286,7 +286,7 @@ final class BlockRuleTest extends TestCase
     {
         $sql = 'CREATE PROCEDURE p() BEGIN DECLARE a INT(256) DEFAULT (SELECT 1); END';
         try {
-            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze($sql);
+            (new Semantics(Dialect::MySql))->analyze($sql);
             self::fail('The display width exceeds 255.');
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
             self::assertSame("Display width out of range for column '' (max = 255)", $failure->problem->message());

@@ -29,7 +29,7 @@ final class StaticPrivilegeTest extends TestCase
     {
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
             foreach (['SCHEMAS', 'DATABASES'] as $word) {
-                foreach (["GRANT SHOW $word ON * TO CURRENT_USER", "REVOKE SHOW $word ON * FROM CURRENT_USER"] as $sql) {
+                foreach (["GRANT SHOW $word ON *.* TO CURRENT_USER", "REVOKE SHOW $word ON *.* FROM CURRENT_USER"] as $sql) {
                     yield "$version $sql" => [$version, $sql];
                 }
             }

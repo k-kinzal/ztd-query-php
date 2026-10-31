@@ -111,7 +111,7 @@ final class VariableRule
         $first = $this->lowering->names->identifier($form->node(2));
         $second = $this->lowering->names->optional($form->node(3));
         $scope = $this->scope($form->node(1));
-        $unknown = $this->unknown($second ?? $first, $second === null ? null : $first, false);
+        $unknown = $this->unknown($second ?? $first, $second === null ? null : $first, false) ?? $this->scoped($second ?? $first, $second === null ? null : $first, $scope, false);
         if ($unknown !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($unknown, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
         }
@@ -138,12 +138,53 @@ final class VariableRule
             'lvalue_variable: DEFAULT_SYM . ident' => [$names->identifier($form->node(2)), $this->lowering->leaves->record(new Name('default', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))],
             default => throw ImplementationGap::production($form),
         };
-        $unknown = $component ? null : $this->unknown($variable, $instance, $assigned);
+        $unknown = $component ? null : ($this->unknown($variable, $instance, $assigned) ?? $this->scoped($variable, $instance, $scope, $assigned));
         if ($unknown !== null) {
             throw new \SqlSemantics\Construction\RejectedInput($unknown, (new \SqlSemantics\Construction\SourceRanges())->span($name)[1] ?? 0, false);
         }
 
         return $this->lowering->origins->record($this->lowering->leaves->record($assigned ? new SystemTarget($variable, $scope, $instance) : new SystemVariable($variable, $scope, $instance)), $name);
+    }
+
+    /**
+     * Answers the scope misuse of a known variable read or assigned under a scope the catalog does not give
+     * it, or null. MySQL 8.0 and later report a read under the wrong scope once the statement is read, even inside
+     * a stored program body; 5.6 and 5.7 report it when the statement runs, among the other conditions of that run,
+     * so a read is left to the run there. Every release checks an assignment before any assignment of the statement
+     * takes effect, so a standalone assignment is refused once read while a stored body keeps it. A standalone
+     * assignment of a read-only variable, or of a global-only variable under a session scope, is refused the same
+     * way (verified on 5.7.44 and 8.4.7).
+     */
+    public function scoped(Name $variable, ?Name $instance, ?VariableScope $scope, bool $assigned): ?\SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse
+    {
+        $grammar = $this->lowering->profile->grammar;
+        $legacy = in_array($grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($instance !== null || ($legacy && !$assigned) || ($this->lowering->stored() && $assigned)) {
+            return null;
+        }
+        $definition = \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of($grammar)->find($variable->value);
+        if ($definition === null) {
+            return null;
+        }
+        $rules = \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableRule::class;
+        if ($scope === null) {
+            return $assigned && $definition->writability === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability::ReadOnly ? new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse($rules::ReadOnly, $variable->value) : null;
+        }
+        $session = $scope === VariableScope::Session || $scope === VariableScope::Local;
+        if (!$session && !$definition->reach->global()) {
+            return new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse($assigned ? $rules::SetGlobalOfSessionVariable : $rules::GlobalOfSessionVariable, $variable->value);
+        }
+        if ($session && !$definition->reach->session()) {
+            return new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse($assigned ? $rules::SetSessionOfGlobalVariable : $rules::SessionOfGlobalVariable, $variable->value);
+        }
+        if ($assigned && $definition->writability === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability::ReadOnly) {
+            return new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse($rules::ReadOnly, $variable->value);
+        }
+        if ($assigned && $session && $definition->writability === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability::GlobalOnly) {
+            return new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse($rules::SessionReadOnly, $variable->value);
+        }
+
+        return null;
     }
 
     /**

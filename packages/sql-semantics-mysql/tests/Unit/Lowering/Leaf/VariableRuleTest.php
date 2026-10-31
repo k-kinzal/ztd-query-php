@@ -169,4 +169,23 @@ final class VariableRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable::class, $legacy->unknown(new \SqlSemantics\Statement\Identifier\Name('autocommit'), new \SqlSemantics\Statement\Identifier\Name('innodb'), false));
         self::assertSame('x', $legacy->unknown(new \SqlSemantics\Statement\Identifier\Name('x'), new \SqlSemantics\Statement\Identifier\Name('innodb'), false)?->name);
     }
+
+    public function testScopedAnswersTheScopeTheCatalogDoesNotGive(): void
+    {
+        $platform = new Platform();
+        $modern = new VariableRule(new Lowering($platform->productions($platform->profile('mysql-8.4.7', null, ParameterStyle::Native)), new Leaves(), $platform->profile('mysql-8.4.7', null, ParameterStyle::Native)));
+        $legacy = new Lowering($platform->productions($platform->profile('mysql-5.7.44', null, ParameterStyle::Native)), new Leaves(), $platform->profile('mysql-5.7.44', null, ParameterStyle::Native));
+        $global = new \SqlSemantics\Statement\Identifier\Name('max_connections');
+        $session = new \SqlSemantics\Statement\Identifier\Name('sql_log_bin');
+
+        self::assertSame("Variable 'max_connections' is a GLOBAL variable", $modern->scoped($global, null, VariableScope::Session, false)?->message());
+        self::assertSame("Variable 'max_connections' is a GLOBAL variable and should be set with SET GLOBAL", $modern->scoped($global, null, VariableScope::Local, true)?->message());
+        self::assertSame("Variable 'sql_log_bin' is a SESSION variable", $modern->scoped($session, null, VariableScope::Global, false)?->message());
+        self::assertSame("Variable 'sql_log_bin' is a SESSION variable and can't be used with SET GLOBAL", $modern->scoped($session, null, VariableScope::Global, true)?->message());
+        self::assertNull($modern->scoped($global, null, VariableScope::Global, false));
+        self::assertNull($modern->scoped($global, null, null, false));
+        self::assertNull((new VariableRule($legacy))->scoped($global, null, VariableScope::Session, false));
+        self::assertNotNull((new VariableRule($legacy))->scoped($global, null, VariableScope::Session, true));
+        self::assertNull((new VariableRule($legacy->inProgram(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p')))))->scoped($global, null, VariableScope::Session, false));
+    }
 }

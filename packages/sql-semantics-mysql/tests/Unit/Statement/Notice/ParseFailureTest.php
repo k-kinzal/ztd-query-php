@@ -7,10 +7,7 @@ namespace Tests\Unit\Statement\Notice;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 
 #[CoversClass(ParseFailure::class)]
@@ -31,7 +28,7 @@ final class ParseFailureTest extends TestCase
 
     public function testPhaseDefaultsToTheSyntaxPhase(): void
     {
-        $failure = new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation('nope'), false);
+        $failure = new ParseFailure(new UnknownCollation('nope'), false);
 
         self::assertFalse($failure->aborts);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $failure->phase);

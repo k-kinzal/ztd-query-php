@@ -73,6 +73,7 @@ final class LegacyGrantRule
      * Retains complete legacy privilege and account operands before deriving conditions.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone request names a privilege outside its level
      */
     public function request(Form $form): GrantPrivileges|GrantProxy
     {
@@ -97,7 +98,7 @@ final class LegacyGrantRule
         $options = $clauses->grantOptions($command->node(7));
         $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
 
-        return new GrantPrivileges($items, $kind, $level, $users, $tls, $options, tableKeyword: $command->node->children[2] instanceof Node && $command->node(2)->children !== []);
+        return (new Privilege\LevelRule($this->lowering))->checked(new GrantPrivileges($items, $kind, $level, $users, $tls, $options, tableKeyword: $command->node->children[2] instanceof Node && $command->node(2)->children !== []), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**

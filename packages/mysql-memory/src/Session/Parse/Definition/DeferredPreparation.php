@@ -15,9 +15,9 @@ use RuntimeException;
 final class DeferredPreparation extends RuntimeException
 {
     /**
-     * @param \MySqlMemory\Command\Prepared\PendingTable $definition The retained execution-time condition
+     * @param \MySqlMemory\Command\Prepared\Pending $definition The retained execution-time condition
      */
-    public function __construct(public readonly \MySqlMemory\Command\Prepared\PendingTable $definition)
+    public function __construct(public readonly \MySqlMemory\Command\Prepared\Pending $definition)
     {
         parent::__construct('The prepared instruction retains a condition resolved during execution.');
     }

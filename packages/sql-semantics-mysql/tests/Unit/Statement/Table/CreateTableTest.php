@@ -59,7 +59,7 @@ final class CreateTableTest extends TestCase
             (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (a))');
             self::fail('The definition has two primary keys.');
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
-            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable::class, $failure->problem);
+            self::assertInstanceOf(M\Table\Problem\Creation\RefusedCreateTable::class, $failure->problem);
             self::assertInstanceOf(MultiplePrimaryKeys::class, $failure->problem->problem);
             self::assertCount(2, $failure->problem->definition->elements);
         }

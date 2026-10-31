@@ -32,4 +32,10 @@ final class MisuseTest extends TestCase
         self::assertSame('w', $misuse->name instanceof Name ? $misuse->name->value : null);
         self::assertSame('Window name is defined more than once', $misuse->message());
     }
+
+    public function testMessageNamesTheWindowFunctionOutsideAQuery(): void
+    {
+        self::assertSame("You cannot use the window function 'sum' in this context.'", (new Misuse(MisuseRule::WindowOutsideQuery, new Name('sum')))->message());
+        self::assertSame('Invalid use of group function', (new Misuse(MisuseRule::AggregateOutsideQuery))->message());
+    }
 }

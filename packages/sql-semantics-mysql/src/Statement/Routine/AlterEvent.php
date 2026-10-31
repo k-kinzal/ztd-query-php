@@ -79,6 +79,7 @@ final class AlterEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         Check::input($schedule !== null || $completion !== null || $newName !== null || $status !== null || $comment !== null || $body !== null, 'ALTER EVENT changes at least one event property after its name.');
         $this->body = $body === null ? null : (new StatementSequence())->member($body);
+        Check::input($this->body === null || (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Event, $name, null, [], $definitionSource?->bodyRefusalOffset) === null, 'An event body satisfies the stored program restrictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -92,7 +93,7 @@ final class AlterEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
         }
         (new ProgramFacts())->event($this->schedule, $this->body, $derivation);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->order($this, $derivation);
     }
 
     /**

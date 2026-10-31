@@ -74,6 +74,7 @@ final class CreateEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
         Check::input($name->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
         $this->body = (new StatementSequence())->member($body);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Event, $name, null, [], $definitionSource?->bodyRefusalOffset) === null, 'An event body satisfies the stored program restrictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -87,7 +88,7 @@ final class CreateEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
             \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
         }
         (new ProgramFacts())->event($this->schedule, $this->body, $derivation);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->order($this, $derivation);
     }
 
     /**

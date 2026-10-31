@@ -60,7 +60,7 @@ final class KillCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $reply = $session->run('KILL ROW(@@missing,2)')[0];
-        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertInstanceOf(SqlError::class, $reply);
         self::assertSame(1193, $reply->getCode());
         self::assertSame([1193], array_column($session->diagnostics->conditions, 1));
     }

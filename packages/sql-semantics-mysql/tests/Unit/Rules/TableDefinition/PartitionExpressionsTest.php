@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\TableDefinition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -15,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression;
-use SqlSemantics\Statement\Scalar;
 
 #[CoversClass(PartitionExpressions::class)]
 #[Small]

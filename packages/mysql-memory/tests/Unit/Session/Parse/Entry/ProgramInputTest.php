@@ -61,20 +61,16 @@ final class ProgramInputTest extends TestCase
         self::assertSame(['Warning', 'Note', 'Note', 'Warning', 'Error'], array_column($session->diagnostics->conditions, 0));
     }
 
-    public function testRetainedOrdersDirectHeaderConditionsWithoutSourcePositions(): void
+    public function testNotesOrderDirectHeaderConditionsWithoutSourcePositions(): void
     {
         $session = (new Instance('8.4.7', ['sql_mode' => ''], ['d']))->connect(database: 'd');
         $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a')]);
-        $body = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\OpenCursor(new Name('c'));
-        $create = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new QualifiedName(new Name('p')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('a'), $type)]), $body);
-        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $create);
+        $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('a'), $type)]);
+        $refusal = new RefusedProgramBody(new QualifiedName(new Name('p')), ProgramKind::Procedure, new ProgramProblem(ProgramRule::UndefinedCursor, 'c'), parameters: $parameters);
         $session->text = 'Unrelated input without SQL';
-        try {
-            (new \MySqlMemory\Session\Execution($session))->statement($statement);
-            self::fail('The generated body references an undeclared cursor.');
-        } catch (\MySqlMemory\Error\SqlError $error) {
-            self::assertSame(1324, $error->getCode());
-        }
+        $error = (new \MySqlMemory\Session\Parse\Reader())->rejection(new \SqlSemantics\Construction\RejectedInput($refusal, 0), $session->text, $session);
+        self::assertSame(1324, $error->getCode());
+        self::assertTrue($error->recorded);
         self::assertSame([['Note', 1291, "Column '' has duplicated value 'a' in ENUM"], ['Error', 1324, 'Undefined CURSOR: c']], $session->diagnostics->conditions);
         self::assertSame('Unrelated input without SQL', $session->text);
     }

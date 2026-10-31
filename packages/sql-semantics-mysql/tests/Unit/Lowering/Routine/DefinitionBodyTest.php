@@ -16,20 +16,24 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 #[Medium]
 final class DefinitionBodyTest extends TestCase
 {
-    public function testSourceKeepsAnExternalBodyLocationAlongsideTheDeclaration(): void
+    public function testSourceKeepsAnExternalBodyLocationForTheLanguageMismatch(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze("CREATE FUNCTION f() RETURNS INT AS 'body'");
-        self::assertInstanceOf(CreateFunction::class, $statement);
-        self::assertSame(35, $statement->definitionSource?->bodyRefusalOffset);
-        self::assertSame("CREATE FUNCTION f() RETURNS INT AS 'body'", $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze("CREATE FUNCTION f() RETURNS INT AS 'body'");
+            self::fail('The body representation disagrees with the SQL language.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\LanguageBodyMismatch::class, $failure->problem->problem);
+            self::assertSame(35, $failure->problem->problem->offset);
+        }
     }
 
     public function testTypeEndsPublishesOnlyCompletedDeclarationBoundaries(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a INT,b INT) RETURNS INT BEGIN END');
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a INT,b INT) RETURNS INT BEGIN RETURN 1; END');
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertSame([23, 29, 42], $statement->definitionSource?->typeEnds);
         self::assertSame(17, $statement->definitionSource->nameEnd);
-        self::assertSame('CREATE FUNCTION f(a INT, b INT) RETURNS INT BEGIN END', $statement->toString());
+        self::assertSame('CREATE FUNCTION f(a INT, b INT) RETURNS INT BEGIN RETURN 1; END', $statement->toString());
     }
 }

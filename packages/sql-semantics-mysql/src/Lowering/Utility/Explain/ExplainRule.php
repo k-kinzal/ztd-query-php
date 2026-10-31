@@ -225,7 +225,7 @@ final class ExplainRule
         if (isset(self::QUERIES[$node->name])) {
             $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->body($node) ?? $this->lowering->queries->query($node);
             $statement = $selection instanceof \SqlSemantics\Statement\Query
-                ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($selection, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0)
+                ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($selection, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, $this->lowering->stored())
                 : $selection;
             return $this->lowering->origins->record($statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery ? new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement->query) : $statement, $node);
         }

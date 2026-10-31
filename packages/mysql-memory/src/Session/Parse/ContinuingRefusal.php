@@ -85,6 +85,11 @@ final class ContinuingRefusal
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $contextual = true;
         $tree = $parser->parse($statement);
+        $recipients = (new Entry\Account\Recipients())->notes($failure, $tree, $session);
+        if ($recipients !== []) {
+            $notices = [...$notices, ...$recipients];
+            usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
+        }
         $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($tree, $session->semantics()->profile());
         if ($session->variables->database === '' && (($target !== null && $target->schema === null) || (new Entry\ImplicitTables())->before($tree, $failure->end, $session->settings()->legacy()))) {
             $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();

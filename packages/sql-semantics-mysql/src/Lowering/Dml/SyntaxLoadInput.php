@@ -36,7 +36,7 @@ final class SyntaxLoadInput
         }
         try {
             $name = (new FormatRule($lowering))->charset($node)?->name?->value;
-        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+        } catch (RejectedInput $failure) {
             return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
         }
         $notice = match (strtolower($name ?? '')) {

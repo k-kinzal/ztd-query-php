@@ -25,13 +25,15 @@ final class DeferredAssignmentTest extends TestCase
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SET @x=(x,2)');
         self::assertSame([], $operation->diagnostics());
     }
-    public function testDeriveProgramKeepsAScopedLocalTargetBoundToItsDeclaration(): void
+    public function testDeriveProgramIsNeverReachedForAScopedLocalTarget(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SET GLOBAL x=(1,2)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $warnings = array_map(static fn ($notice): string => $notice->warning->message(), $statement->statementInformation()->notices);
-        self::assertNotContains("Unknown system variable 'x'", $warnings);
-        self::assertContains('A local variable assignment cannot carry a system variable scope.', $warnings);
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) SET GLOBAL x=(1,2)');
+            self::fail('A local variable assignment cannot carry a system variable scope.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('A local variable assignment cannot carry a system variable scope.', $failure->problem->message());
+        }
     }
 
 }

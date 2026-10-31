@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
@@ -80,7 +79,8 @@ final class KillGenerator implements ErisGenerator
                 return ($domain->of($value) & $domain->bit($release)) !== 0
                     && (in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? !(new ModernForms())->requires($value) : !(new LegacyForms())->requires($value))
                     && ($transition === 0 || ($transition & ($release === GrammarRelease::MySql5651 ? 1 : 2)) !== 0)
-                    && ((new LexicalModes())->requirement($value) & 10) === 0;
+                    && ((new LexicalModes())->requirement($value) & 10) === 0
+                    && (new \SqlSemantics\Platform\MySql\Rules\Expression\Placement\StatementCalls())->problem($value) === null;
             },
             $this->delegate
         );

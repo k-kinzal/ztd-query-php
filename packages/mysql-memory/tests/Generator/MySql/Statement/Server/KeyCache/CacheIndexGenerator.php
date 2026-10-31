@@ -44,7 +44,7 @@ final class CacheIndexGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): CacheIndex => new CacheIndex(tables: $parts[0], cache: $parts[1], statementInformation: null, inputSource: null),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable $table): array => [$table->table, null, $table], $parts[0])) === null,
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (CachedTable $table): array => [$table->table, null, $table], $parts[0])) === null,
                 Generators::tuple(
                     Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 1 ? Generators::vector(1, new CachedTableGenerator($release)) : Generators::vector($count, Generators::suchThat(static fn (CachedTable $table): bool => $table->partitions === null, new CachedTableGenerator($release)))),
                     Generators::oneOf(Generators::constant(null), new NameGenerator($release))

@@ -59,12 +59,13 @@ final class BlockFactsTest extends TestCase
     public function testDeriveEndsTheScopeOfTheDeclarationsWithTheBlock(): void
     {
 
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; END; SELECT x; OPEN c; END');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('Undefined CURSOR: c', $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; END; SELECT x; OPEN c; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undefined CURSOR: c', $failure->problem->message());
+        }
     }
 
     public function testDeriveDerivesTheCursorQueryInTheScopeOfTheBlock(): void
@@ -95,12 +96,13 @@ final class BlockFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN SET x = 1; CLOSE c; END; END')->diagnostics());
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('LEAVE with no matching label: b', $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('LEAVE with no matching label: b', $failure->problem->message());
+        }
     }
 
     /**
@@ -168,23 +170,25 @@ final class BlockFactsTest extends TestCase
     public function testVariablesRejectsADuplicateNameBeforePublication(): void
     {
 
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y, X CHAR(1); SELECT x, y; END');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('Duplicate variable: X', $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y, X CHAR(1); SELECT x, y; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Duplicate variable: X', $failure->problem->message());
+        }
     }
 
     public function testVariablesReportsANameRepeatedInOneDeclaration(): void
     {
 
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y, x INT; END');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('Duplicate variable: x', $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y, x INT; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Duplicate variable: x', $failure->problem->message());
+        }
     }
 
     public function testVariablesMakesTheNamesVisibleAfterTheDeclarationOnly(): void
@@ -249,41 +253,44 @@ final class BlockFactsTest extends TestCase
     public function testDeriveRejectsUnboundHandlerNamesBeforePublication(string $sql): void
     {
 
-        $statement = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('Undefined CONDITION: c', $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undefined CONDITION: c', $failure->problem->message());
+        }
     }
     public function testDeriveRejectsAnUnboundHandlerFetchTarget(): void
     {
 
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND FETCH c INTO x, y; END');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame('Undeclared variable: y', $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND FETCH c INTO x, y; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undeclared variable: y', $failure->problem->message());
+        }
     }
 
 
-    #[DataProvider('providerDeriveReportsTheBrokenRuleRetainsDefinitionCondition')]
-    public function testDeriveReportsTheBrokenRuleRetainsDefinitionCondition(string $release, string $sql, string $message): void
+    #[DataProvider('providerDeriveReportsTheBrokenRuleRefusesTheDefinition')]
+    public function testDeriveReportsTheBrokenRuleRefusesTheDefinition(string $release, string $sql, string $message): void
     {
 
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($message, $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**
      * @return iterable<string, array{string, string, string}>
      */
-    public static function providerDeriveReportsTheBrokenRuleRetainsDefinitionCondition(): iterable
+    public static function providerDeriveReportsTheBrokenRuleRefusesTheDefinition(): iterable
     {
         yield 'a duplicate variable in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; END', 'Duplicate variable: x'];
         yield 'a duplicate condition in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE C CONDITION FOR 1052; END', 'Duplicate condition: C'];
@@ -291,22 +298,23 @@ final class BlockFactsTest extends TestCase
     }
 
 
-    #[DataProvider('providerOrderedReportsADeclarationAfterOneItMustPrecedeRetainsDefinitionCondition')]
-    public function testOrderedReportsADeclarationAfterOneItMustPrecedeRetainsDefinitionCondition(string $sql, string $message): void
+    #[DataProvider('providerOrderedReportsADeclarationAfterOneItMustPrecedeRefusesTheDefinition')]
+    public function testOrderedReportsADeclarationAfterOneItMustPrecedeRefusesTheDefinition(string $sql, string $message): void
     {
 
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($message, $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function providerOrderedReportsADeclarationAfterOneItMustPrecedeRetainsDefinitionCondition(): iterable
+    public static function providerOrderedReportsADeclarationAfterOneItMustPrecedeRefusesTheDefinition(): iterable
     {
         yield 'a variable after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE x INT; END', 'Variable or condition declaration after cursor or handler declaration'];
         yield 'a condition after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE e CONDITION FOR 1051; END', 'Variable or condition declaration after cursor or handler declaration'];
@@ -316,44 +324,46 @@ final class BlockFactsTest extends TestCase
     }
 
 
-    #[DataProvider('providerDistinctComparesNamesWithoutRegardToLetterCaseRetainsDefinitionCondition')]
-    public function testDistinctComparesNamesWithoutRegardToLetterCaseRetainsDefinitionCondition(string $sql, string $message): void
+    #[DataProvider('providerDistinctComparesNamesWithoutRegardToLetterCaseRefusesTheDefinition')]
+    public function testDistinctComparesNamesWithoutRegardToLetterCaseRefusesTheDefinition(string $sql, string $message): void
     {
 
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($message, $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function providerDistinctComparesNamesWithoutRegardToLetterCaseRetainsDefinitionCondition(): iterable
+    public static function providerDistinctComparesNamesWithoutRegardToLetterCaseRefusesTheDefinition(): iterable
     {
         yield 'conditions in another case' => ["CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE E CONDITION FOR SQLSTATE '42S02'; END", 'Duplicate condition: E'];
         yield 'cursors in another case' => ['CREATE PROCEDURE p() BEGIN DECLARE cur CURSOR FOR SELECT 1; DECLARE CUR CURSOR FOR SELECT 2; END', 'Duplicate cursor: CUR'];
     }
 
 
-    #[DataProvider('providerHandledReportsAConditionValueHandledTwiceInTheBlockRetainsDefinitionCondition')]
-    public function testHandledReportsAConditionValueHandledTwiceInTheBlockRetainsDefinitionCondition(string $release, string $sql, string $message): void
+    #[DataProvider('providerHandledReportsAConditionValueHandledTwiceInTheBlockRefusesTheDefinition')]
+    public function testHandledReportsAConditionValueHandledTwiceInTheBlockRefusesTheDefinition(string $release, string $sql, string $message): void
     {
 
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
-        $notices = array_values(array_filter($statement->statementInformation()->warnings, static fn ($notice): bool => $notice instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-        self::assertNotEmpty($notices);
-        self::assertSame($message, $notices[0]->message());
-
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**
      * @return iterable<string, array{string, string, string}>
      */
-    public static function providerHandledReportsAConditionValueHandledTwiceInTheBlockRetainsDefinitionCondition(): iterable
+    public static function providerHandledReportsAConditionValueHandledTwiceInTheBlockRefusesTheDefinition(): iterable
     {
         yield 'a general condition of two handlers in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END', 'Duplicate handler declared in the same block'];
         yield 'one error number in two spellings in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1051, 0x41b BEGIN END; END', 'Duplicate handler declared in the same block'];

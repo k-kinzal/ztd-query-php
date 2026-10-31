@@ -93,7 +93,7 @@ final class PreparedCommand implements Command
         $session->following = '';
         try {
             $prepared = (new \MySqlMemory\Session\Access\Preparation())->read($text, $session);
-            if ($prepared instanceof PendingTable) {
+            if ($prepared instanceof Pending) {
                 $bindings = $prepared->parameters();
                 $session->preparation->named[$key] = [$text, count($bindings->types), $bindings, PreparedCache::capture($prepared, $session)];
                 return new Completion(0, 0, $session->diagnostics->stale ? 0 : $session->diagnostics->raised(), 'Statement prepared');

@@ -26,7 +26,7 @@ use SqlSemantics\Rendering\Output;
  *
  * @visibility public
  * @example Retaining a wildcard request until execution
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DO *')->hasExecutionCondition() // => true
+ *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\Star()]))->hasExecutionCondition() // => true
  * @example Reading the expressions of DO
  *     $do = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DO SLEEP(1), @a := 2');
  *     [count($do->items), $do->output(), $do->toString()] // => [2, null, 'DO SLEEP(1), @a := 2']

@@ -92,4 +92,18 @@ final class RevokePrivilegesTest extends TestCase
         self::assertFalse($request->hasExecutionCondition(\SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
+    public function testProblemAnswersADynamicPrivilegeOutsideTheGlobalLevelUnlessIfExists(): void
+    {
+        $database = new M\Account\Privilege\Level\DatabaseLevel(new Name('d'));
+        $dynamic = new M\Account\Privilege\Item\DynamicPrivilege(new Name('BACKUP_ADMIN'));
+        $user = new M\Account\User\UserSpecification(new M\Name\AccountName(new Name('u')));
+
+        $release = \SqlSemantics\Contract\GrammarRelease::MySql847;
+        $all = new RevokePrivileges(false, [new M\Account\Privilege\Item\AllPrivileges()], M\Account\Privilege\Level\ObjectKind::Function, new M\Account\Privilege\Level\GlobalLevel(), [$user]);
+
+        self::assertSame('ER_ILLEGAL_PRIVILEGE_LEVEL', (new RevokePrivileges(false, [$dynamic], M\Account\Privilege\Level\ObjectKind::Table, $database, [$user]))->problem($release)?->error);
+        self::assertNull((new RevokePrivileges(true, [$dynamic], M\Account\Privilege\Level\ObjectKind::Table, $database, [$user]))->problem($release));
+        self::assertNull($all->problem($release));
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $all->problem(\SqlSemantics\Contract\GrammarRelease::MySql5744)?->error);
+    }
 }

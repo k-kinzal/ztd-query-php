@@ -26,9 +26,8 @@ use SqlSemantics\Statement\Node;
  *
  * @example Refusing an empty procedure name before derivation
  *     new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('')), new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block([], [])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
- * @example Retaining a body that the server refuses in a procedure
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() RETURN 1');
- *     $create->toString() // => 'CREATE PROCEDURE p() RETURN 1'
+ * @example Refusing a body that the server refuses in a procedure
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() RETURN 1') // throws \SqlSemantics\Construction\RejectedInput
  * @visibility public
  * @example Reading a procedure definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE shop.p(IN a INT) DETERMINISTIC SELECT a');
@@ -55,7 +54,7 @@ final class CreateProcedure extends \SqlSemantics\Platform\MySql\Statement\SqlSt
      * @param list<Characteristic> $characteristics The characteristics in written order
      * @param Account|null $definer The DEFINER clause, when written
      * @param bool $ifNotExists Whether IF NOT EXISTS is written (MySQL 8.0.29 and later)
-     * @throws InvalidConstruction When the body or a characteristic is of another class
+     * @throws InvalidConstruction When the body or a characteristic is of another class, or the body breaks a stored program restriction
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -75,6 +74,7 @@ final class CreateProcedure extends \SqlSemantics\Platform\MySql\Statement\SqlSt
         Check::input($name->catalog === null, 'A routine name has at most a database qualifier.');
         $this->characteristics = Check::listOf($characteristics, Characteristic::class, 'A routine holds characteristics.');
         $this->body = (new ProgramFacts())->body($body);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Procedure, $name, $parameters, $this->characteristics, $definitionSource?->bodyRefusalOffset) === null, 'A procedure body satisfies the stored program restrictions.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -85,7 +85,7 @@ final class CreateProcedure extends \SqlSemantics\Platform\MySql\Statement\SqlSt
     {
         (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
         (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Procedure, $this->name, $derivation);
-        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->publish($this, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->order($this, $derivation);
     }
 
     /**
