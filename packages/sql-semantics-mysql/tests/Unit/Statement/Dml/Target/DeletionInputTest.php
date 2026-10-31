@@ -27,9 +27,9 @@ final class DeletionInputTest extends TestCase
         self::assertEquals([$table->name], (new DeletionInput([$table]))->targets);
     }
 
-    public function testAnAbsentTargetRetainsItsWrittenOperand(): void
+    public function testAWrittenTargetRetainsItsOperand(): void
     {
-        $target = new QualifiedName(new Name('x'));
+        $target = new QualifiedName(new Name('T'));
         $input = new DeletionInput([new TableReference(new QualifiedName(new Name('t')))], [$target]);
         self::assertSame([$target], $input->targets);
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted], $input->wildcards);

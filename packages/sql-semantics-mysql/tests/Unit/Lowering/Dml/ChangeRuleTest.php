@@ -29,12 +29,16 @@ final class ChangeRuleTest extends TestCase
     }
 
     #[DataProvider('providerTargetRefusalReleases')]
-    public function testMultiplePublishesCompleteUnmatchedTargetsInEveryRelease(string $release, bool $aborts): void
+    public function testMultipleRefusesAnUnmatchedTargetOnceReadInEveryRelease(string $release, bool $aborts): void
     {
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze('DELETE QUICK x.* FROM t AS y WHERE y.a = 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
-        self::assertTrue($statement->hasExecutionCondition());
-        self::assertSame('DELETE QUICK x.* FROM t AS y WHERE y.a = 1', $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze('DELETE QUICK x.* FROM t AS y WHERE y.a = 1');
+            self::fail('No input table matches the target.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable::class, $failure->problem);
+            self::assertSame('x', $failure->problem->table->name->value);
+            self::assertFalse($failure->aborts);
+        }
     }
 
 
@@ -142,12 +146,15 @@ final class ChangeRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[0][1]);
         self::assertSame("Not unique table/alias: 'a'", $notices[0][1]->problem->message());
     }
-    public function testMultiplePublishesAnUnmatchedTargetWithItsMissingBinding(): void
+    public function testMultipleRefusesAnUnmatchedTargetWhileParsingAStoredBody(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('DELETE x FROM t AS y');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
-        self::assertTrue($statement->hasExecutionCondition());
-        self::assertNull($statement->input->relation($statement->targets[0]));
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DELETE x FROM t AS y; SET @a = 1; END');
+            self::fail('No input table matches the target.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable::class, $failure->problem);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     public function testSinglePublishesTheCompleteCommonTableTarget(): void

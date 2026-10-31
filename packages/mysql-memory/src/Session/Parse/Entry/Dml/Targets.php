@@ -19,45 +19,15 @@ final class Targets
 {
     /**
      * Checks the complete deletion's target list using already published bindings.
+     * A target absent from every input under every name comparison is a construction
+     * invariant of the statement, so only the repeated and database conditions remain here.
      *
-     * @throws SqlError When a written target is repeated or absent
+     * @throws SqlError When a written target is repeated or needs a database
      */
     public function statement(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete $write, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, Session $session): void
     {
-        $database = $session->variables->database;
         $this->names($write->targets, $session);
-        if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($write->targets, $write->tables) === null) {
-            return;
-        }
-        foreach ($facts->diagnostics as $diagnostic) {
-            if (\MySqlMemory\Session\Problem\Stages::characters($diagnostic, $session->settings()->legacy())) {
-                throw (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
-            }
-        }
-        if ($database === '' && array_filter($write->targets, static fn ($target): bool => $target->schema === null) !== []) {
-            throw QueryError::NoDatabase->error();
-        }
-        $alias = null;
-        foreach ($facts->diagnostics as $diagnostic) {
-            if (\MySqlMemory\Session\Problem\Stages::parsed($diagnostic)) {
-                throw (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
-            }
-            if (\MySqlMemory\Session\Problem\Stages::closing($diagnostic)) {
-                throw (new \MySqlMemory\Session\Problem\Errors())->error($alias ?? $diagnostic, $session);
-            }
-            $alias ??= $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable ? $diagnostic : null;
-        }
-        if ($alias !== null) {
-            throw (new \MySqlMemory\Session\Problem\Errors())->error($alias, $session);
-        }
-        foreach ($facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable) {
-                throw (new \MySqlMemory\Session\Problem\Errors())->error($diagnostic, $session);
-            }
-        }
     }
-
-
 
     /**
      * Registers written target names before input charset and alias resolution.

@@ -131,10 +131,10 @@ final class DeleteUseTest extends TestCase
     public function testExplainedRestoresTheCallerDatabaseAfterTargetFailure(): void
     {
         $session = (new Instance('8.4.7', [], ['d', 'other']))->connect(database: 'other');
-        $statement = $session->semantics()->analyze('EXPLAIN FOR DATABASE d DELETE x FROM t');
+        $statement = $session->semantics()->analyze('EXPLAIN FOR DATABASE d DELETE q FROM (SELECT 1 AS a) q');
         self::assertInstanceOf(M\Utility\Explain\Explain::class, $statement);
         $session->text = 'opaque explanation label';
-        $this->expectExceptionCode(1109);
+        $this->expectExceptionCode(1288);
         try {
             (new DeleteUse())->explained($statement, $session);
         } finally {

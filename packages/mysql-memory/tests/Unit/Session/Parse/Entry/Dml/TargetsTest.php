@@ -43,14 +43,14 @@ final class TargetsTest extends TestCase
         (new Targets())->names([new QualifiedName(new Name('t')), new QualifiedName(new Name('t'), new Name('d'))], $session);
     }
 
-    public function testStatementUsesPublishedTargetBindingsWithoutSqlText(): void
+    public function testStatementChecksTheTargetNamesOfAPublishedStatementWithoutSqlText(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
-        $write = new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')), new Name('y'))], [new QualifiedName(new Name('x'))]), \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom);
+        $write = new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')))], [new QualifiedName(new Name('t')), new QualifiedName(new Name('t'), new Name('d'))]), \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom);
         $statement = \SqlSemantics\Facade\Semantics::fromStatement($session->semantics()->context([], true, new \SqlSemantics\Contract\SearchPath('d'), $session->resolution()), $write);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
         $session->text = 'unrelated invalid input';
-        $this->expectExceptionCode(1109);
+        $this->expectExceptionCode(1066);
         (new Targets())->statement($statement, $statement->statementInformation(), $session);
     }
 

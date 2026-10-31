@@ -47,8 +47,11 @@ final class DeletionInputGenerator implements ErisGenerator
                         array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
                     }
 
+                    $targets = $parts[1] ?? (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->names($members);
+
                     return (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated($parts[0]) === null
-                        && (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($parts[1] ?? (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->names($members)) === null;
+                        && (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($targets) === null
+                        && (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($targets, $parts[0]) === null;
                 },
                 Generators::tuple(
                     Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TableSourceGenerator($release, $depth - 1))),

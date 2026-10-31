@@ -17,9 +17,11 @@ use SqlSemantics\Statement\Snapshot;
  * predicates, hints or statement options.
  *
  * @visibility public
- * @example Keeping an unmatched target until preparation
- *     $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Statement\Identifier\Name('alias'))], [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))]);
- *     $input->targets[0]->name->value // => 't'
+ * @example Refusing a target that an alias hides from every input
+ *     new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Statement\Identifier\Name('alias'))], [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Keeping a target that another letter case may still match
+ *     $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))], [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('T'))]);
+ *     $input->targets[0]->name->value // => 'T'
  */
 final class DeletionInput
 {
@@ -65,6 +67,7 @@ final class DeletionInput
             Check::input($target->catalog === null, 'A table is qualified by at most a database.');
         }
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) === null, 'A multiple-table DELETE names each target once.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($this->targets, $this->tables) === null, 'A multiple-table DELETE names only tables of its inputs.');
         $this->wildcards = Check::listOf($wildcards ?? array_fill(0, count($this->targets), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::class, 'DELETE target suffixes are optional wildcards.', 1);
         Check::input(count($this->wildcards) === count($this->targets), 'Every DELETE target has one wildcard choice.');
         if ($resolutions !== null) {

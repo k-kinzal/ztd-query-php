@@ -24,9 +24,10 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class MultipleDeleteTest extends TestCase
 {
-    public function testHasExecutionConditionRetainsAnAbsentTarget(): void
+    public function testHasExecutionConditionRetainsAReadOnlyTarget(): void
     {
-        $delete = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference(new QualifiedName(new Name('t')))], [new QualifiedName(new Name('z'))]), MultipleDeleteForm::BeforeFrom);
+        $delete = (new Semantics(Dialect::MySql))->analyze('DELETE q FROM (SELECT 1 AS a) q');
+        self::assertInstanceOf(MultipleDelete::class, $delete);
         self::assertTrue($delete->hasExecutionCondition());
     }
 

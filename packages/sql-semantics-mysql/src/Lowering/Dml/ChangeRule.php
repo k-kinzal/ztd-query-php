@@ -182,9 +182,16 @@ final class ChangeRule
      * @param list<\SqlSemantics\Platform\MySql\Statement\Relation\TableSource> $tables The complete inputs
      * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The optimizer hints
      * @param list<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>|null $wildcards The optional target suffixes
+     * @throws \SqlSemantics\Construction\RejectedInput When a target names no input table under any name comparison: the server
+     *     refuses it once the statement is read (`DELETE a FROM t WHERE` answers the syntax error, `DELETE a FROM nosuch` 1109
+     *     before the table is opened, on 8.4.7) and while parsing a stored program body
      */
     public function multiple(Node $source, ?\SqlSemantics\Platform\MySql\Statement\Query\WithClause $with, array $options, array $targets, MultipleDeleteForm $form, array $tables, ?\SqlSemantics\Statement\Scalar $where = null, array $hints = [], ?array $wildcards = null): MultipleDelete
     {
+        $missing = (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($targets, $tables);
+        if ($missing !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable($missing), (new \SqlSemantics\Construction\SourceRanges())->span($source)[1] ?? 0, $this->lowering->stored());
+        }
         $input = new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput($tables, $targets, wildcards: $wildcards);
         return new MultipleDelete($with, $options, $input, $form, $where, $hints);
     }

@@ -17,12 +17,12 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use Tests\Generator\MySql\Statement\Dml\DeleteOptionGenerator;
 use Tests\Generator\MySql\Statement\Dml\MultipleDeleteFormGenerator;
 use Tests\Generator\MySql\Statement\Dml\Target\DeletionInputGenerator;
 use Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator;
 use Tests\Generator\MySql\Statement\Query\With\WithGenerator;
-use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
@@ -37,6 +37,7 @@ final class DeferredMultipleDeleteGenerator implements ErisGenerator
 
     /**
      * Composes the generator of DeferredMultipleDelete from the generators of its components.
+     * The deferred form exists only around a derived or JSON table, which the table sources produce from depth two on, so its input keeps that depth.
      *
      * @param GrammarRelease $release The release whose forms the values keep
      * @param int $depth The nesting depth left for the recursive components
@@ -44,19 +45,31 @@ final class DeferredMultipleDeleteGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $bit = (new ReleaseDomain())->bit($release);
-        $this->delegate = Generators::map(
-            static fn (array $parts): DeferredMultipleDelete => new DeferredMultipleDelete(with: $parts[0], options: $parts[1], input: new DeletionInput($parts[2]->tables, [$parts[7]], null, null), form: $parts[3], where: $parts[4], hints: $parts[5], inputSource: $parts[6]),
-            Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing([$parts[7]], $parts[2]->tables) !== null,
+        $readOnly = static function (DeletionInput $input): array {
+            $names = [];
+            foreach ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->occurrences($input->tables) as $occurrence) {
+                if ($occurrence->alias !== null && !$occurrence instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference) {
+                    $name = new QualifiedName($occurrence->alias);
+                    if ((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly([$name], $input->tables) !== null) {
+                        $names[] = $name;
+                    }
+                }
+            }
+
+            return $names;
+        };
+        $this->delegate = Generators::bind(
+            Generators::suchThat(static fn (DeletionInput $input): bool => $readOnly($input) !== [], new DeletionInputGenerator($release, max(2, $depth - 1))),
+            static fn (DeletionInput $input): ErisGenerator => Generators::map(
+                static fn (array $parts): DeferredMultipleDelete => new DeferredMultipleDelete(with: $parts[0], options: $parts[1], input: new DeletionInput($input->tables, [$parts[6]], null, null), form: $parts[2], where: $parts[3], hints: $parts[4], inputSource: $parts[5]),
                 Generators::tuple(
                     $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
                     Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DeleteOptionGenerator($release))),
-                    new DeletionInputGenerator($release, $depth - 1),
                     new MultipleDeleteFormGenerator($release),
                     $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
                     ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
                     Generators::constant(null),
-                    new QualifiedNameGenerator($release)
+                    Generators::elements($readOnly($input))
                 )
             )
         );
