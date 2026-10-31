@@ -33,7 +33,7 @@ final class CastProblems
             if (($target->length === null ? 10 : (int) $target->length) < (int) $target->scale) {
                 return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::ScaleExceedsPrecision, '');
             }
-            return (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal($target->length, $target->scale), '');
+            return (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractionalParts(true, $target->length, $target->scale, '');
         }
         if (in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) && $target->length !== null && (new JsonWidths())->of($target->length) === null) {
             return new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(TypeLimit::Width, 'cast as char', (int) $target->length, 4294967295);

@@ -27,7 +27,6 @@ use Tests\Generator\MySql\Statement\Dml\Target\DeletionInputGenerator;
 use Tests\Generator\MySql\Statement\Hint\OptimizerHintGenerator;
 use Tests\Generator\MySql\Statement\Query\With\WithGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates MultipleDelete values from the generators of its operands.
@@ -81,10 +80,6 @@ final class MultipleDeleteGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (MultipleDelete $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

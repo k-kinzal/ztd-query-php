@@ -24,7 +24,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ReleaseSavepoint values from the generators of its operands.
@@ -61,10 +60,6 @@ final class ReleaseSavepointGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ReleaseSavepoint $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

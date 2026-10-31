@@ -102,6 +102,11 @@ final class ParameterRule
         [$declared, $collate] = $this->declared($form->node($type), $collation === null ? null : $form->node($collation));
 
         $identifier = $this->lowering->names->identifier($form->node($name));
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($declared, '', $this->lowering->profile->grammar);
+        if ($size !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($parameter)[1] ?? 0);
+        }
+
         return $this->lowering->origins->record(new Parameter($identifier, $declared, $collate, $direction), $parameter);
     }
 

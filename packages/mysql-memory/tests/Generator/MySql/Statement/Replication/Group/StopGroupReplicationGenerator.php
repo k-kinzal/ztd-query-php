@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StopGroupReplication;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Analysis;
 
 /**
  * Generates StopGroupReplication values from the generators of its operands.
@@ -54,10 +53,6 @@ final class StopGroupReplicationGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (StopGroupReplication $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

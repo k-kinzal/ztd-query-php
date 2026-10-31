@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogStatus;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Replication\TerminologyGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowBinaryLogStatus values from the generators of its operands.
@@ -56,10 +55,6 @@ final class ShowBinaryLogStatusGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowBinaryLogStatus $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

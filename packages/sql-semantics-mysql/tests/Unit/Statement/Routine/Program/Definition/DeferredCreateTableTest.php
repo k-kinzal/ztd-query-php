@@ -27,13 +27,13 @@ final class DeferredCreateTableTest extends TestCase
         self::assertSame([], $operation->diagnostics());
     }
 
-    public function testDeriveProgramKeepsTheReadingTimeChecksOfTheBody(): void
+    public function testDeriveProgramLeavesTheStoredDefinitionWithoutConditions(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, a INT, b DECIMAL(70))');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, a INT) AS SELECT * FROM missing_table');
 
         self::assertInstanceOf(CreateProcedure::class, $operation);
         self::assertInstanceOf(DeferredCreateTable::class, $operation->body);
-        self::assertNotSame([], $operation->diagnostics());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheStoredDefinition(): void

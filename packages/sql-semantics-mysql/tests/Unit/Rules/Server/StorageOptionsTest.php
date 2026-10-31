@@ -28,14 +28,6 @@ final class StorageOptionsTest extends TestCase
         self::assertSame($options, (new StorageOptions())->checked($options, StorageOptions::DROP));
     }
 
-    public function testDeriveReportsARepeatedOption(): void
-    {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TABLESPACE ts FILE_BLOCK_SIZE 4K FILE_BLOCK_SIZE 8K');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateTablespace::class, $statement);
-        self::assertCount(2, $statement->options);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem::class, $statement->diagnostics()[0]);
-    }
-
     public function testDeriveAcceptsARepeatedNoWaitInMysql8(): void
     {
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP TABLESPACE ts NO_WAIT NO_WAIT')->diagnostics());

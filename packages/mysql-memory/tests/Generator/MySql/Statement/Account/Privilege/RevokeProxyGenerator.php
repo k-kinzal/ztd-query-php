@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates RevokeProxy values from the generators of its operands.
@@ -61,10 +60,6 @@ final class RevokeProxyGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (RevokeProxy $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -178,6 +178,33 @@ final class LoweringTest extends TestCase
         self::assertSame($lowering->leaves, $scoped->leaves);
     }
 
+    public function testInBodyReadsAStatementAsPartOfAStoredProgramWithoutItsName(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $lowering->columnTable = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+        $body = $lowering->inBody();
+
+        self::assertFalse($lowering->body);
+        self::assertTrue($body->body);
+        self::assertNull($body->programName);
+        self::assertSame($lowering->columnTable, $body->columnTable);
+        self::assertSame($lowering->origins, $body->origins);
+    }
+
+    public function testStoredTellsWhetherTheInputBelongsToAStoredProgramBody(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'));
+
+        self::assertFalse($lowering->stored());
+        self::assertTrue($lowering->inProgram($name)->stored());
+        self::assertTrue($lowering->inBody()->stored());
+    }
+
     public function testUnpreparedSharesInputOwnershipWithoutNativeContextualization(): void
     {
         $platform = new Platform();

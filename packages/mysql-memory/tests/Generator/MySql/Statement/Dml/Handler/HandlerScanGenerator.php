@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates HandlerScan values from the generators of its operands.
@@ -65,10 +64,6 @@ final class HandlerScanGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (HandlerScan $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

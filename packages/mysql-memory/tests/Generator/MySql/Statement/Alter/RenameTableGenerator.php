@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates RenameTable values from the generators of its operands.
@@ -57,10 +56,6 @@ final class RenameTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (RenameTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

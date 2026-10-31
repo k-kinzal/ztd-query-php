@@ -50,6 +50,7 @@ final class LegacyForms
             || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)
             || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash
             || ($value instanceof DatabaseCollation && $value->collation->name === null)
+            || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated && $value->operand instanceof \SqlSemantics\Statement\Scalar)
             || (($value instanceof ResetReplica || $value instanceof SourceOption) && $value->terminology === Terminology::Legacy)
             || $this->conditionAssignment($value)
             || $this->definition($value)

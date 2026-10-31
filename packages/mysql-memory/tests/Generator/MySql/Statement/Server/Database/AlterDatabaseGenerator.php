@@ -26,7 +26,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterDatabase values from the generators of its operands.
@@ -61,13 +60,16 @@ final class AlterDatabaseGenerator implements ErisGenerator
 
                     return $charset === null || $collation === null || Collation::named($collation)?->charset->name === Charset::named($charset)?->name;
                 })(($parts[1])),
+                Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($parts[1]) === null,
                 Generators::tuple(
-                    Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
-                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DatabaseOptionGenerator($release))),
-                    Generators::constant(null),
-                    Generators::constant(null),
-                    new DatabaseWordGenerator($release)
-                )
+                        Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                        Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DatabaseOptionGenerator($release))),
+                        Generators::constant(null),
+                        Generators::constant(null),
+                        new DatabaseWordGenerator($release)
+                    )
+            )
             )
         );
         $this->delegate = Generators::map(
@@ -77,10 +79,6 @@ final class AlterDatabaseGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterDatabase $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

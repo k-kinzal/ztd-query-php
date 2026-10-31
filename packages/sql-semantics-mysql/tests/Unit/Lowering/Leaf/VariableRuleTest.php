@@ -30,8 +30,8 @@ final class VariableRuleTest extends TestCase
 {
     public function testVariableLowersUserAndSystemVariablesOfEveryGeneration(): void
     {
-        $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
-        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y');
+        $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT @v, @@GLOBAL.autocommit, @@autocommit, @@hot_cache.key_buffer_size');
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT @v, @@GLOBAL.autocommit, @@autocommit, @@hot_cache.key_buffer_size');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern);
         self::assertInstanceOf(Select::class, $modern->query);
@@ -47,8 +47,8 @@ final class VariableRuleTest extends TestCase
         $item3 = $legacy->query->items[3];
         self::assertInstanceOf(SelectExpression::class, $item3);
         self::assertInstanceOf(SystemVariable::class, $item3->expression);
-        self::assertSame('innodb', $item3->expression->instance?->value);
-        self::assertSame('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y', $modern->toString());
+        self::assertSame('hot_cache', $item3->expression->instance?->value);
+        self::assertSame('SELECT @v, @@GLOBAL.autocommit, @@autocommit, @@hot_cache.key_buffer_size', $modern->toString());
         self::assertSame($modern->toString(), $legacy->toString());
     }
 
@@ -107,7 +107,7 @@ final class VariableRuleTest extends TestCase
 
     public function testLegacySystemLowersTheScopeAndComponentOfMySql5(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode AS a, @@LOCAL.hot_cache.key_buffer_size AS b');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         self::assertInstanceOf(Select::class, $operation->query);
@@ -119,8 +119,8 @@ final class VariableRuleTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(SystemVariable::class, $item1->expression);
         self::assertSame(VariableScope::Local, $item1->expression->scope);
-        self::assertSame('x', $item1->expression->name->value);
-        self::assertSame('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b', $operation->toString());
+        self::assertSame('key_buffer_size', $item1->expression->name->value);
+        self::assertSame('SELECT @@SESSION.sql_mode AS a, @@LOCAL.hot_cache.key_buffer_size AS b', $operation->toString());
     }
 
     public function testSystemLowersTheSettableVariableForms(): void
@@ -131,13 +131,13 @@ final class VariableRuleTest extends TestCase
         $ident = static fn (string $text): Node => new Node('ident', 0, [new Node('IDENT_sys', 0, [new Token(0, 'IDENT', $text, 0)])]);
         $lvalue = static fn (string $text): Node => new Node('lvalue_ident', 0, [new Node('IDENT_sys', 0, [new Token(0, 'IDENT', $text, 0)])]);
         $dot = new Token(0, '.', '.', 0);
-        $plain = $rule->system(new Node('lvalue_variable', 0, [$lvalue('x')]), VariableScope::Persist, true);
-        $component = $rule->system(new Node('lvalue_variable', 1, [$lvalue('innodb'), $dot, $ident('x')]), null, true);
-        $default = $rule->system(new Node('lvalue_variable', 2, [new Token(0, 'DEFAULT_SYM', 'DEFAULT', 0), $dot, $ident('x')]), VariableScope::Global, true);
+        $plain = $rule->system(new Node('lvalue_variable', 0, [$lvalue('autocommit')]), VariableScope::Persist, true);
+        $component = $rule->system(new Node('lvalue_variable', 1, [$lvalue('hot_cache'), $dot, $ident('key_buffer_size')]), null, true);
+        $default = $rule->system(new Node('lvalue_variable', 2, [new Token(0, 'DEFAULT_SYM', 'DEFAULT', 0), $dot, $ident('key_buffer_size')]), VariableScope::Global, true);
 
-        self::assertSame('x', $plain->name->value);
+        self::assertSame('autocommit', $plain->name->value);
         self::assertSame(VariableScope::Persist, $plain->scope);
-        self::assertSame('innodb', $component->instance?->value);
+        self::assertSame('hot_cache', $component->instance?->value);
         self::assertSame('default', $default->instance?->value);
         self::assertSame(VariableScope::Global, $default->scope);
     }
@@ -154,5 +154,19 @@ final class VariableRuleTest extends TestCase
         self::assertSame(VariableScope::PersistOnly, $rule->scope(new Node('opt_set_var_ident_type', 2, [new Token(0, 'PERSIST_ONLY_SYM', 'PERSIST_ONLY', 0), $dot])));
         self::assertSame(VariableScope::Global, $rule->scope(new Node('opt_rvalue_system_variable_type', 1, [new Token(0, 'GLOBAL_SYM', 'GLOBAL', 0), $dot])));
         self::assertSame(VariableScope::Local, $rule->scope(new Node('opt_rvalue_system_variable_type', 2, [new Token(0, 'LOCAL_SYM', 'LOCAL', 0), $dot])));
+    }
+
+    public function testUnknownFollowsTheStructuredNameRulesOfEachRelease(): void
+    {
+        $platform = new Platform();
+        $modern = new VariableRule(new Lowering($platform->productions($platform->profile('mysql-8.4.7', null, ParameterStyle::Native)), new Leaves(), $platform->profile('mysql-8.4.7', null, ParameterStyle::Native)));
+        $legacy = new VariableRule(new Lowering($platform->productions($platform->profile('mysql-5.7.44', null, ParameterStyle::Native)), new Leaves(), $platform->profile('mysql-5.7.44', null, ParameterStyle::Native)));
+
+        self::assertNull($modern->unknown(new \SqlSemantics\Statement\Identifier\Name('autocommit'), null, false));
+        self::assertSame('missing', $modern->unknown(new \SqlSemantics\Statement\Identifier\Name('missing'), null, true)?->name);
+        self::assertNull($modern->unknown(new \SqlSemantics\Statement\Identifier\Name('key_buffer_size'), new \SqlSemantics\Statement\Identifier\Name('hot_cache'), false));
+        self::assertNull($modern->unknown(new \SqlSemantics\Statement\Identifier\Name('x'), new \SqlSemantics\Statement\Identifier\Name('innodb'), false));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable::class, $legacy->unknown(new \SqlSemantics\Statement\Identifier\Name('autocommit'), new \SqlSemantics\Statement\Identifier\Name('innodb'), false));
+        self::assertSame('x', $legacy->unknown(new \SqlSemantics\Statement\Identifier\Name('x'), new \SqlSemantics\Statement\Identifier\Name('innodb'), false)?->name);
     }
 }

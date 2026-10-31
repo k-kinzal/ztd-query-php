@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterView values from the generators of its operands.
@@ -60,10 +59,6 @@ final class AlterViewGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterView $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

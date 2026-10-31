@@ -39,16 +39,17 @@ final class NameAssignmentTest extends TestCase
         (new Semantics(Dialect::MySql))->analyze('SET SESSION sort_buffer_size = (1, 2)');
     }
 
-    public function testDeriveItemResolvesAnUnknownTargetBeforeItsValue(): void
+    public function testDeriveItemIsNeverReachedForAnUnknownLegacyTarget(): void
     {
-        $diagnostics = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET unknown_target = @@unknown_value')->diagnostics();
-
-        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[0]);
-        self::assertSame('unknown_target', $diagnostics[0]->name);
-        self::assertTrue($diagnostics[0]->assigned);
-        self::assertFalse($diagnostics[0]->structured);
-        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[1]);
-        self::assertFalse($diagnostics[1]->assigned);
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET unknown_target = @@unknown_value');
+            self::fail('5.6 resolves the target before its value.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(UnknownSystemVariable::class, $failure->problem);
+            self::assertSame('unknown_target', $failure->problem->name);
+            self::assertTrue($failure->problem->assigned);
+            self::assertFalse($failure->problem->structured);
+        }
     }
 
     public function testRenderWritesTheScopeAndTheQualifier(): void

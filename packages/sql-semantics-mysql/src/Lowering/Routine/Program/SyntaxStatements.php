@@ -25,6 +25,9 @@ final class SyntaxStatements
     /**
      * Answers a completed statement's global variable-name refusal.
      *
+     * A name the server resolves after reading the statement ends the program at that
+     * statement; an expression collation is recorded while reading and the body continues.
+     *
      * @throws \SqlParser\Lexer\SourceException When a completed instruction reaches its syntax boundary
      * @throws \SqlSemantics\Diagnostic\AnalysisException When a refusal has no token boundary
      */
@@ -47,7 +50,7 @@ final class SyntaxStatements
             if (($parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName || $parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns) && !$parameters->aborts) {
                 return new ParseFailure($parameters->problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
             }
-            return new ParseFailure($parameters->problem, $parameters->aborts);
+            return new ParseFailure($parameters->problem, $parameters->aborts || !$parameters->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation);
         }
         $problem = $prefix->diagnostic($frame->body(), $parameters, false);
 

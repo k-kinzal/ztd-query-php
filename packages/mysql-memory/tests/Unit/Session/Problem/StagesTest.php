@@ -78,16 +78,6 @@ final class StagesTest extends TestCase
         self::assertSame([1 => $operator, 0 => $call, 2 => $context], Stages::grammar([$call, $operator, $context], false));
     }
 
-    public function testPlannedResolvesConflictingDeclarationsAtTheInstalledTable(): void
-    {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, '8.4.7');
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE d.t(a INT)'), $semantics->analyze('CREATE TABLE d.t(b INT)')], true, new \SqlSemantics\Contract\SearchPath('d'));
-        $statement = $semantics->analyze('SELECT 1 FROM t', $context);
-
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\ConflictingTables::class, $statement->diagnostics()[0]);
-        self::assertTrue(Stages::planned($statement->diagnostics()[0]));
-    }
-
     public function testPlannedLeavesWindowOptionsAndFramesToThePlanner(): void
     {
         self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::IgnoreNulls)));

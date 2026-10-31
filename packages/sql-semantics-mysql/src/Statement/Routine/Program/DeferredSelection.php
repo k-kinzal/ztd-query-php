@@ -77,6 +77,7 @@ final class DeferredSelection implements ProgramStatement
     {
         $this->windows = Check::listOf($windows, \SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition::class, 'A stored selection retains its named window definitions.');
         $this->options = Check::listOf($options, SelectOption::class, 'A stored selection retains SELECT modifiers.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$from]) === null, 'A FROM clause names each relation once.');
         $ordering = [];
         foreach (Check::listOf($orderBy, Node::class, 'A stored ordering retains ordering items.') as $item) {
             Check::input($item instanceof OrderItem || $item instanceof DeferredOrderItem, 'A stored ordering item retains its scalar, ordinal or deferred role.');

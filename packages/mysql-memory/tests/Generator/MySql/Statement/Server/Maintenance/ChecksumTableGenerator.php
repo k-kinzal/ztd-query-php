@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ChecksumTable values from the generators of its operands.
@@ -43,12 +42,15 @@ final class ChecksumTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): ChecksumTable => new ChecksumTable(tables: $parts[0], mode: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], tableWord: $parts[4]),
-            Generators::tuple(
-                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
-                Generators::oneOf(Generators::constant(null), new ChecksumModeGenerator($release)),
-                Generators::constant(null),
-                Generators::constant(null),
-                new TableWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable $table): array => [$table->name, null, $table], $parts[0])) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
+                    Generators::oneOf(Generators::constant(null), new ChecksumModeGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    new TableWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -58,10 +60,6 @@ final class ChecksumTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ChecksumTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

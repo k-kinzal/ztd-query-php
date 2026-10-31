@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarningCount;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowWarningCount values from the generators of its operands.
@@ -54,10 +53,6 @@ final class ShowWarningCountGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowWarningCount $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

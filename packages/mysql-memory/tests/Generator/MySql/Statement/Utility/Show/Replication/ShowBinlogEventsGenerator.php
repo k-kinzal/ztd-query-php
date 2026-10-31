@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEve
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowBinlogEvents values from the generators of its operands.
@@ -64,10 +63,6 @@ final class ShowBinlogEventsGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowBinlogEvents $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

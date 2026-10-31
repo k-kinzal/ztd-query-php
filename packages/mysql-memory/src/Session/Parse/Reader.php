@@ -62,11 +62,30 @@ final class Reader
             (new TemporalInput())->check($tree, $statement, $rejection->end ?? PHP_INT_MAX, $session);
         }
         if ($rejection !== null) {
-            throw $this->rejection($rejection, $statement, $session);
+            throw $this->rejection($this->earlier($rejection, $tree, $session), $statement, $session);
         }
         $session->dots = $session->settings()->release() === GrammarRelease::MySql5744 ? (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->dots($tree) : [];
 
         return $tree;
+    }
+
+    /**
+     * Prefers the refusal the ordinary lowering finds before the operand pre-pass's one.
+     * The pre-pass finds a refused operand anywhere in the statement; the lowering reads the
+     * statement in the server's order and may refuse an earlier part first, such as the
+     * condition name of a standalone SIGNAL or a variable inside a view body.
+     */
+    public function earlier(\SqlSemantics\Construction\RejectedInput $rejection, Node $tree, Session $session): \SqlSemantics\Construction\RejectedInput
+    {
+        try {
+            $this->lower($tree, $session);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return $failure->end < $rejection->end ? $failure : $rejection;
+        } catch (AnalysisException) {
+            return $rejection;
+        }
+
+        return $rejection;
     }
 
     /**

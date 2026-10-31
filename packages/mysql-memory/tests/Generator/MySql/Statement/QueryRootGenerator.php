@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesClauses;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\QueryGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates QueryRoot values from the generators of its operands.
@@ -65,10 +64,6 @@ final class QueryRootGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (QueryRoot $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

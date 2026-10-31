@@ -21,8 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(LockNames::class)]
 #[Medium]
@@ -46,14 +44,14 @@ final class LockNamesTest extends TestCase
         $node = new LockTables([new TableLock($qualified, new Name('a'), LockMode::LowPriorityWrite), new TableLock(new QualifiedName(new Name('t')), new Name('b'), LockMode::Read), new TableLock($qualified, new Name('c'), LockMode::LowPriorityWrite)]);
         $session = (new Instance('5.7.44'))->connect();
         $session->text = 'unrelated invalid input';
-        $statement1 = (new Embedding())->statement($node);
-        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $statement1 = $node;
+        $parameters1 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;

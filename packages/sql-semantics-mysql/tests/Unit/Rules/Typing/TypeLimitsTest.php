@@ -64,28 +64,27 @@ final class TypeLimitsTest extends TestCase
     }
 
     #[DataProvider('providerStoredDeclarations')]
-    public function testCheckRetainsFixedBoundsInCompleteStoredDefinitions(string $sql, TypeLimit $rule): void
+    public function testCheckIsNeverReachedForAStoredDeclarationTheReadingRefuses(string $sql, TypeLimit $rule): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $statement = $semantics->analyze($sql);
-        $problem = $statement->diagnostics()[0];
-        self::assertInstanceOf(InvalidTypeSize::class, $problem);
-        self::assertSame([$rule, ''], [$problem->rule, $problem->name]);
-        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
-        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The type exceeds a bound.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(InvalidTypeSize::class, $failure->problem);
+            self::assertSame($rule, $failure->problem->rule);
+        }
     }
 
     #[DataProvider('providerDeclarations')]
-    public function testCheckSharesBoundsAcrossDeclarations(string $sql, TypeLimit $rule, string $name): void
+    public function testCheckIsNeverReachedForABoundTheReadingRefuses(string $sql, TypeLimit $rule, string $name): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $statement = $semantics->analyze($sql);
-        $problems = array_values(array_filter($statement->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof InvalidTypeSize));
-        self::assertCount(1, $problems);
-        $problem = $problems[0];
-        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
-        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
-        self::assertSame([$rule, $name], [$problem->rule, $problem->name]);
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The type exceeds a bound.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(InvalidTypeSize::class, $failure->problem);
+            self::assertSame([$rule, $name], [$failure->problem->rule, $failure->problem->name]);
+        }
     }
 
     /**
@@ -101,49 +100,52 @@ final class TypeLimitsTest extends TestCase
     }
 
     #[DataProvider('providerLegacyBitDeclarations')]
-    public function testCheckKeepsReleaseDependentBoundsInDerivation(string $sql, string $name): void
+    public function testCheckIsNeverReachedForAnEmptyBitTheReadingRefuses(string $sql, string $name): void
     {
-        $problem = (new Semantics(Dialect::MySql))->analyze($sql)->diagnostics()[0];
-        self::assertInstanceOf(InvalidTypeSize::class, $problem);
-        self::assertSame([TypeLimit::Empty, $name], [$problem->rule, $problem->name]);
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The bit width is empty.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(InvalidTypeSize::class, $failure->problem);
+            self::assertSame([TypeLimit::Empty, $name], [$failure->problem->rule, $failure->problem->name]);
+        }
     }
 
-    public function testCheckPlacesTheAbortingFailureBeforeLaterWarnings(): void
+    public function testCheckIsNeverReachedForAParameterTheReadingRefuses(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a BIT(0)) RETURNS INT(11) RETURN 1');
-
-        self::assertInstanceOf(ParseFailure::class, $operation->warnings()[0]);
-        self::assertTrue($operation->warnings()[0]->aborts);
-        self::assertSame("Invalid size for column ''.", $operation->warnings()[0]->message());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f(a BIT(0)) RETURNS INT(11) RETURN 1');
+            self::fail('The bit width is empty.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Invalid size for column ''.", $failure->problem->message());
+        }
     }
 
-    public function testSimpleReportsBitOverflowAndAcceptsAnOmittedWidth(): void
+    public function testSimpleAcceptsAnOmittedBitWidth(): void
     {
         $limits = new TypeLimits();
 
-        self::assertEquals(new InvalidTypeSize(TypeLimit::Width, 'a', 65, 64), $limits->simple(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '65'), 'a'));
         self::assertNull($limits->simple(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit), 'a'));
+        self::assertNull($limits->simple(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '64'), 'a'));
     }
 
-    public function testFractionalReportsScaleBeforePrecision(): void
+    public function testFractionalAcceptsTheLargestDecimal(): void
     {
-        $problem = (new TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('66', '31'), 'a');
-
-        self::assertEquals(new InvalidTypeSize(TypeLimit::Scale, 'a', 31, 30), $problem);
+        self::assertNull((new TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('65', '30'), 'a'));
     }
 
-    public function testWidthChecksTheCommonBoundBeforeTheTypeSpecificBound(): void
+    public function testWidthAcceptsALengthWithinTheCommonBound(): void
     {
         $limits = new TypeLimits();
         $kind = \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit;
 
-        self::assertNull($limits->width(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary($kind, '4294967295.9'), 'a'));
-        self::assertEquals(new InvalidTypeSize(TypeLimit::Width, 'a', 4294967296, 4294967295), $limits->width(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary($kind, '4294967296'), 'a'));
+        self::assertNull($limits->width(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary($kind, '64.9'), 'a'));
+        self::assertNull($limits->width(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int, '255'), 'a'));
     }
 
-    public function testFractionalFormatsLargeDecimalPrecisionAsASignedInteger(): void
+    public function testFractionalPartsFormatsLargeDecimalPrecisionAsASignedInteger(): void
     {
-        $problem = (new TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('4294967295'), 'a');
+        $problem = (new TypeLimits())->fractionalParts(true, '4294967295', null, 'a');
 
         self::assertSame("Too-big precision -1 specified for 'a'. Maximum is 65.", $problem?->message());
     }
@@ -169,5 +171,59 @@ final class TypeLimitsTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a BIT(1), b BIT(64), c INT(255), d FLOAT(53), e DOUBLE(255,30), f DECIMAL(65,30), g TIME(6), h BIT, i INT, j FLOAT, k DECIMAL(0,0))');
 
         self::assertSame([], $operation->diagnostics());
+    }
+
+    public function testInvariantAcceptsADeclarationWithinEveryBound(): void
+    {
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('65', '30');
+        (new TypeLimits())->invariant($type);
+
+        self::assertSame('65', $type->precision);
+    }
+
+    public function testOverflowReportsALengthAboveTheUnsigned32BitBound(): void
+    {
+        self::assertNull((new TypeLimits())->overflow('4294967295', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Width, 'a', 4294967296, 4294967295), (new TypeLimits())->overflow('4294967296', 'a'));
+    }
+
+    public function testCharacterLengthBoundsCharAt255(): void
+    {
+        self::assertNull((new TypeLimits())->characterLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, '255', 'a'));
+        self::assertNull((new TypeLimits())->characterLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::VarChar, '256', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Length, 'a', 256, 255), (new TypeLimits())->characterLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::Char, '256', 'a'));
+    }
+
+    public function testBinaryLengthBoundsBinaryAt255(): void
+    {
+        self::assertNull((new TypeLimits())->binaryLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind::VarBinary, '256', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Length, 'a', 256, 255), (new TypeLimits())->binaryLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind::Binary, '256', 'a'));
+    }
+
+    public function testElementaryLengthBoundsBitBetweenOneAnd64(): void
+    {
+        self::assertNull((new TypeLimits())->elementaryLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '64', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Empty, 'a'), (new TypeLimits())->elementaryLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '0', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Width, 'a', 65, 64), (new TypeLimits())->elementaryLength(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit, '65', 'a'));
+    }
+
+    public function testIntegralWidthBoundsTheDisplayWidthAt255(): void
+    {
+        self::assertNull((new TypeLimits())->integralWidth(null, 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Width, 'a', 256, 255), (new TypeLimits())->integralWidth('256', 'a'));
+    }
+
+    public function testTemporalPrecisionBoundsTheFractionAt6(): void
+    {
+        self::assertNull((new TypeLimits())->temporalPrecision(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Date, '9', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Precision, 'a', 7, 6), (new TypeLimits())->temporalPrecision(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::DateTime, '7', 'a'));
+    }
+
+    public function testFractionalPartsOrdersScaleBeforePrecision(): void
+    {
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Scale, 'a', 31, 30), (new TypeLimits())->fractionalParts(true, '66', '31', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Precision, 'a', 66, 65), (new TypeLimits())->fractionalParts(true, '66', '30', 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Specifier, 'a'), (new TypeLimits())->fractionalParts(false, '54', null, 'a'));
+        self::assertNull((new TypeLimits())->fractionalParts(false, '53', null, 'a'));
     }
 }

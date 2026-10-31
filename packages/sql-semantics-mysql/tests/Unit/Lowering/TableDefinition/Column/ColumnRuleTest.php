@@ -23,14 +23,15 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 #[Medium]
 final class ColumnRuleTest extends TestCase
 {
-    public function testSpecificationKeepsAnOutOfRangeTypeWithItsColumnIdentity(): void
+    public function testSpecificationRefusesAnOutOfRangeTypeWithItsColumnIdentity(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE d.t(c BIT(65))');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $statement);
-        self::assertSame('CREATE TABLE d.t (c BIT(65))', $statement->toString());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize::class, $statement->warnings()[0]->problem);
-        self::assertSame('c', $statement->warnings()[0]->problem->name);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TABLE d.t(c BIT(65))');
+            self::fail('The bit width exceeds 64.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize::class, $failure->problem);
+            self::assertSame('c', $failure->problem->name);
+        }
     }
 
     public function testSpecificationLowersAGeneratedColumn(): void

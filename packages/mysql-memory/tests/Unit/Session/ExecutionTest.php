@@ -35,8 +35,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Signal;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(Execution::class)]
 #[Small]
@@ -100,11 +98,10 @@ final class ExecutionTest extends TestCase
     public function testReadingChecksLegacyDatabaseBeforeDefinitionConditions(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $operation = $session->analyze('CREATE TABLE t(a INT) CHARACTER SET missing');
+        $reply = $session->run('CREATE TABLE t(a INT) CHARACTER SET missing')[0];
 
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1046);
-        (new Execution($session))->reading($operation, true);
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1046, $reply->getCode());
     }
 
     public function testFailedRetainsRowsProducedBeforeTheError(): void
@@ -215,13 +212,12 @@ final class ExecutionTest extends TestCase
     public function testParsingFailsWithTheFirstProblemFoundWhileParsing(): void
     {
         $session = (new Instance())->connect();
-        $operation = $session->analyze("SELECT ('a' COLLATE nope) COLLATE nope2");
+        $reply = $session->run("SELECT ('a' COLLATE nope) COLLATE nope2")[0];
 
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1273);
-        $this->expectExceptionMessage("Unknown collation: 'nope'");
-
-        (new Execution($session))->parsing($operation, $operation->statementInformation()->warnings);
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1273, $reply->getCode());
+        self::assertSame("Unknown collation: 'nope'", $reply->getMessage());
+        self::assertSame([['Error', 1273, "Unknown collation: 'nope'"], ['Error', 1273, "Unknown collation: 'nope2'"]], $session->diagnostics->conditions);
     }
 
     public function testRetainsKeepsTheDiagnosticsOfAStatementWithoutTablesIn56(): void
@@ -423,29 +419,29 @@ final class ExecutionTest extends TestCase
         $node = new \SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore(new Parameter());
         $parameters = [['2024-01-01 00:00:00', Domain::string(19, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())]];
         $session1 = (new Instance('8.4.7'))->connect();
-        $statement1 = (new Embedding())->statement($node);
+        $statement1 = $node;
         $parameters1 = $parameters;
         $session1->activity->begin();
         StatementCounters::received($session1);
 
         $session1->dots = [];
-        $operation1 = (new Binding())->operation($session1, $statement1, $parameters1, new LanguageProfile($session1->semantics()->profile()->grammar, $session1->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+        $operation1 = (new Binding())->operation($session1, $statement1, $parameters1, new LanguageProfile($session1->semantics()->profile()->grammar, $session1->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
         self::assertInstanceOf(\MySqlMemory\Result\Completion::class, (new Execution($session1))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1));
     }
 
     public function testPerformBindsNullParametersInsideTypedParentExpressions(): void
     {
         $query = new Select([], [new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat(\SqlSemantics\Platform\MySql\Statement\Call\Temporal\TemporalFormat::Date, new Parameter(':format'))), new SelectExpression(new Concatenation(new Parameter(), new Parameter())), new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression(null, [new \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseBranch(new NumberLiteral('1'), new Parameter())]))]);
-        $bindings = array_fill(0, (new Bindings())->count($query), [null, Domain::null()]);
+        $bindings = array_fill(0, 4, [null, Domain::null()]);
         $session3 = (new Instance('8.4.7'))->connect();
         $session3->variables->session['sql_mode'] = 'PIPES_AS_CONCAT';
-        $statement3 = (new Embedding())->statement($query);
+        $statement3 = new \SqlSemantics\Platform\MySql\Statement\QueryRoot($query);
         $parameters3 = $bindings;
         $session3->activity->begin();
         StatementCounters::received($session3);
 
         $session3->dots = [];
-        $operation3 = (new Binding())->operation($session3, $statement3, $parameters3, new LanguageProfile($session3->semantics()->profile()->grammar, $session3->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
+        $operation3 = (new Binding())->operation($session3, $statement3, $parameters3, new LanguageProfile($session3->semantics()->profile()->grammar, $session3->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
         $reply = (new Execution($session3))->perform($operation3, (new Dispatcher())->command($operation3), $parameters3);
         self::assertCount(4, $bindings);
         self::assertInstanceOf(ResultSet::class, $reply);

@@ -26,7 +26,7 @@ final class LoadAssignmentsTest extends TestCase
 
     public function testAssignmentRetainsEveryAssignmentBeforeTheOptionConflict(): void
     {
-        $load = (new Semantics(Dialect::MySql, '8.4.7'))->analyze("LOAD XML INFILE 'f' INTO TABLE d.t COMPRESSION='x' SET a=1,b=DEFAULT,c=ROW(@@missing,2),e=SUM(ROW(1,2))");
+        $load = (new Semantics(Dialect::MySql, '8.4.7'))->analyze("LOAD XML INFILE 'f' INTO TABLE d.t COMPRESSION='x' SET a=1,b=DEFAULT,c=ROW(@@autocommit,2),e=SUM(ROW(1,2))");
         self::assertInstanceOf(M\Dml\Load\LoadTable::class, $load);
         $assignments = $load->assignments;
         self::assertCount(4, $assignments);

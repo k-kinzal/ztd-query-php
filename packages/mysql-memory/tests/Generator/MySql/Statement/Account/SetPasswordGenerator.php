@@ -24,7 +24,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates SetPassword values from the generators of its operands.
@@ -62,10 +61,6 @@ final class SetPasswordGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (SetPassword $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

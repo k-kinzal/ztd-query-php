@@ -27,7 +27,7 @@ final class ConditionsTest extends TestCase
      */
     public static function providerOperands(): iterable
     {
-        foreach (['USER()', '@v', '@@missing', '(SELECT 1)', 'ROW(1, 2)', '?'] as $expression) {
+        foreach (['USER()', '@v', '@@autocommit', '(SELECT 1)', 'ROW(1, 2)', '?'] as $expression) {
             foreach (['CREATE TABLE t (a INT, g INT GENERATED ALWAYS AS (%s) STORED)', 'ALTER TABLE t ADD g INT AS (%s)', 'ALTER TABLE t MODIFY g INT AS (%s)', 'ALTER TABLE t CHANGE a g INT AS (%s)'] as $form) {
                 $sql = sprintf($form, $expression);
                 yield $sql => [$sql, $expression];

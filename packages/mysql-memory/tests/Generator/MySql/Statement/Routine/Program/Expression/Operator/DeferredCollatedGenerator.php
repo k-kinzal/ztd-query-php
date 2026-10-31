@@ -17,13 +17,18 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\LegacyForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\LexicalModes;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
 use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredGrouped;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Statement\Scalar;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
+use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
  * Generates DeferredCollated values from the generators of its operands.
@@ -37,6 +42,7 @@ final class DeferredCollatedGenerator implements ErisGenerator
 
     /**
      * Composes the generator of DeferredCollated from the generators of its components.
+     * A plain scalar operand is stored only with a collation the server resolves when the statement runs.
      *
      * @param GrammarRelease $release The release whose forms the values keep
      * @param int $depth The nesting depth left for the recursive components
@@ -44,16 +50,24 @@ final class DeferredCollatedGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): DeferredCollated => new DeferredCollated(operand: (new Precedence())->fits($parts[0], Precedence::COLLATION, Precedence::SIMPLE_EXPR) ? $parts[0] : ($parts[0] instanceof RowOperand ? new GroupedRow($parts[0]) : new DeferredGrouped($parts[0])), collation: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]),
-            Generators::tuple(
-                Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new RowOperandGenerator($release, $depth - 1),
-                    1 => new DeferredOperandGenerator($release, $depth - 1),
-                    default => throw new LogicException('Unreachable alternative.'),
-                }),
-                new NameGenerator($release),
-                Generators::constant(null),
-                Generators::constant(null)
+            static fn (array $parts): DeferredCollated => new DeferredCollated(operand: (new Precedence())->fits($parts[0], Precedence::COLLATION, Precedence::SIMPLE_EXPR) ? $parts[0] : match (true) {
+                $parts[0] instanceof RowOperand => new GroupedRow($parts[0]),
+                $parts[0] instanceof DeferredOperand => new DeferredGrouped($parts[0]),
+                default => new Grouped($parts[0]),
+            }, collation: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]),
+            Generators::suchThat(
+                static fn (array $parts): bool => !$parts[0] instanceof Scalar || Collation::named($parts[1]->value) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new RowOperandGenerator($release, $depth - 1),
+                        1 => new DeferredOperandGenerator($release, $depth - 1),
+                        2 => new ScalarGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }),
+                    new NameGenerator($release),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

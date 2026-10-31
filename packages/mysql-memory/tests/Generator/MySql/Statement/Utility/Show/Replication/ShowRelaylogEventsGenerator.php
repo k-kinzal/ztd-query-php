@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowRelaylogE
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowRelaylogEvents values from the generators of its operands.
@@ -65,10 +64,6 @@ final class ShowRelaylogEventsGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowRelaylogEvents $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

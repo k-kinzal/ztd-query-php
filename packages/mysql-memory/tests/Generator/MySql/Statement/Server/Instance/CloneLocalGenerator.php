@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneLocal;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CloneLocal values from the generators of its operands.
@@ -58,10 +57,6 @@ final class CloneLocalGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CloneLocal $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

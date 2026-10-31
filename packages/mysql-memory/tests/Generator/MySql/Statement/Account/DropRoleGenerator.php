@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\DropRole;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates DropRole values from the generators of its operands.
@@ -57,10 +56,6 @@ final class DropRoleGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropRole $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

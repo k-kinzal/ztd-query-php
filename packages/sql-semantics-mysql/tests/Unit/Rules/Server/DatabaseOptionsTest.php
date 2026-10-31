@@ -18,28 +18,31 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 #[Medium]
 final class DatabaseOptionsTest extends TestCase
 {
-    public function testDerivePreservesUnknownOptionNamesAsOrderedFacts(): void
+    public function testDeriveIsNeverReachedForAnUnknownOptionName(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE DATABASE d COLLATE 'bad_collation' CHARACTER SET bad_charset");
-
-        self::assertEquals([new UnknownCollation('bad_collation'), new UnknownCharset('bad_charset')], $operation->diagnostics());
-        self::assertEquals([new ParseFailure(new UnknownCollation('bad_collation'), true), new ParseFailure(new UnknownCharset('bad_charset'), true)], $operation->warnings());
+        try {
+            (new Semantics(Dialect::MySql))->analyze("CREATE DATABASE d COLLATE 'bad_collation' CHARACTER SET bad_charset");
+            self::fail('The collation does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new UnknownCollation('bad_collation'), $failure->problem);
+        }
     }
 
-    public function testDeriveChecksAvailabilityUnderTheSelectedRelease(): void
+    public function testDeriveIsNeverReachedForACollationUnavailableInTheRelease(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER DATABASE d COLLATE utf8mb4_0900_ai_ci');
-
-        self::assertEquals([new UnknownCollation('utf8mb4_0900_ai_ci')], $operation->diagnostics());
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER DATABASE d COLLATE utf8mb4_0900_ai_ci');
+            self::fail('The collation is unavailable in 5.7.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new UnknownCollation('utf8mb4_0900_ai_ci'), $failure->problem);
+        }
     }
-    public function testProblemsRetainsConflictsAtTheirOptionOccurrence(): void
+    public function testProblemsIndexesAnUnavailableCollationAtItsOption(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER DATABASE d READ ONLY DEFAULT READ ONLY 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase::class, $operation);
-        $problems = (new DatabaseOptions())->problems($operation->options, \SqlSemantics\Contract\GrammarRelease::MySql847);
+        $options = [new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset(new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4'))), new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation(new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(new \SqlSemantics\Statement\Identifier\Name('utf8mb4_0900_ai_ci')))];
 
-        self::assertEquals([1 => new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\ReadOnlyConflict()], $problems);
-        self::assertEquals([new ParseFailure($problems[1], true)], $operation->warnings());
+        self::assertEquals([1 => new UnknownCollation('utf8mb4_0900_ai_ci')], (new DatabaseOptions())->problems($options, \SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertSame([], (new DatabaseOptions())->problems($options, \SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
     public function testInvalidAcceptsConvertedEncryptionAndReadOnlyOptions(): void
@@ -87,4 +90,28 @@ final class DatabaseOptionsTest extends TestCase
         self::assertNull($rules->collationNotice($option, \SqlSemantics\Contract\GrammarRelease::MySql910));
     }
 
+    public function testMismatchComparesTheNamedCollationWithTheNamedCharacterSet(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE DATABASE d CHARACTER SET utf8mb4 COLLATE latin1_bin');
+            self::fail('The collation belongs to another character set.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch('latin1_bin', 'utf8mb4'), $failure->problem);
+        }
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE DATABASE d CHARACTER SET utf8mb4 COLLATE utf8mb4_bin')->diagnostics());
+    }
+
+    public function testConflictFindsTheFirstConflictAmongTheOptions(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $sound = $semantics->analyze('CREATE DATABASE d CHARACTER SET utf8mb4 COLLATE utf8mb4_bin');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase::class, $sound);
+        self::assertNull((new DatabaseOptions())->conflict($sound->options));
+        try {
+            $semantics->analyze('CREATE DATABASE d CHARACTER SET utf8mb4 CHARACTER SET latin1');
+            self::fail('Two character sets conflict.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\CharsetConflict::class, $failure->problem);
+        }
+    }
 }

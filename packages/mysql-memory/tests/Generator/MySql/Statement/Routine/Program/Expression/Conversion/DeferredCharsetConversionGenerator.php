@@ -48,7 +48,7 @@ final class DeferredCharsetConversionGenerator implements ErisGenerator
                     1 => new DeferredOperandGenerator($release, $depth - 1),
                     default => throw new LogicException('Unreachable alternative.'),
                 }),
-                new NameGenerator($release),
+                Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $charset): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($charset->name), Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::all($release))),
                 Generators::constant(null),
                 Generators::constant(null)
             )

@@ -25,7 +25,6 @@ final class AlterationRoles
     {
         return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->commands($commands)
             || (new \SqlSemantics\Platform\MySql\Rules\Partition\MethodRoles())->commands($commands)
-            || (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->problem($commands) !== null
             || $this->invalidValidation($commands)
             || $this->transaction($commands)
             || array_filter($commands, static fn (A\AlterCommand $command): bool => $command instanceof DeferredDefaultSetting) !== []

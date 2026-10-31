@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates HandlerClose values from the generators of its operands.
@@ -56,10 +55,6 @@ final class HandlerCloseGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (HandlerClose $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

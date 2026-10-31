@@ -28,7 +28,6 @@ use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Dml\AssignmentGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator;
 use Tests\Generator\Semantics\Statement\QueryGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates InsertQuery values from the generators of its operands.
@@ -83,10 +82,6 @@ final class InsertQueryGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (InsertQuery $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

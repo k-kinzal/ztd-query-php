@@ -26,7 +26,7 @@ final class StopReplicaTest extends TestCase
 
     public function testRenderWritesTheThreads(): void
     {
-        self::assertSame('STOP REPLICA SQL_THREAD, IO_THREAD', (new Semantics(Dialect::MySql))->analyze('stop replica sql_thread, relay_thread')->toString());
+        self::assertSame('STOP REPLICA SQL_THREAD, RELAY_THREAD', (new Semantics(Dialect::MySql))->analyze('stop replica sql_thread, relay_thread')->toString());
     }
 
     public function testValueRejectsIncompatibleChannel(): void

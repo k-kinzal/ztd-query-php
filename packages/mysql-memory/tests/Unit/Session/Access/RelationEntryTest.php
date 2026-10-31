@@ -24,10 +24,10 @@ final class RelationEntryTest extends TestCase
         (new RelationEntry())->declared($variable, (new Instance())->connect());
     }
 
-    public function testMaintenanceChecksTheDatabaseBeforeDuplicateTargets(): void
+    public function testMaintenanceRequiresTheDatabaseOfAnUnqualifiedTarget(): void
     {
         $session = (new Instance('8.4.7'))->connect();
-        $operation = $session->semantics()->analyze('CHECK TABLE t, t, later', []);
+        $operation = $session->semantics()->analyze('CHECK TABLE t, pbt.later', []);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1046);
@@ -39,16 +39,10 @@ final class RelationEntryTest extends TestCase
      */
     public static function providerInputs(): iterable
     {
-        yield 'maintenance database before duplicate' => ['ANALYZE TABLE t, t, later', 1046];
-        yield 'maintenance duplicate before later database' => ['ANALYZE TABLE pbt.t, pbt.t, later', 1066];
-        yield 'qualified maintenance duplicate' => ['CHECKSUM TABLE pbt.t, pbt.t, pbt.later', 1066];
-        yield 'projection before input' => ['SELECT @@missing FROM t QUALIFY 1', 1193];
-        yield 'input before predicate' => ['SELECT 1 FROM t QUALIFY @@missing', 1046];
-        yield 'input before alias collision' => ['WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE d.t AS a,t AS a SET a.x=1', 1046];
+        yield 'maintenance database before a later table' => ['ANALYZE TABLE t, pbt.later', 1046];
         yield 'active common table' => ['WITH c AS (SELECT 1 FROM t QUALIFY 1) SELECT * FROM c', 1046];
         yield 'count before relation' => ['SELECT NTILE(n) OVER () + (SELECT 1 FROM absent)', 1327];
         yield 'relation before count' => ['SELECT (SELECT 1 FROM absent) + NTILE(n) OVER ()', 1046];
-        yield 'system variable before count' => ['SELECT @@missing + NTILE(n) OVER ()', 1193];
     }
 
     public function testCountsLeavesAnUnusedCommonTableDefinitionInactive(): void

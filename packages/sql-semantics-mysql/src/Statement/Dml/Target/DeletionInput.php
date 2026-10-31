@@ -59,6 +59,7 @@ final class DeletionInput
             array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
         }
         $this->tables = $members;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated($members) === null, 'A multiple-table DELETE names each relation once.');
         $this->targets = Check::listOf($targets ?? (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->names($this->tables), QualifiedName::class, 'A multiple-table DELETE names at least one table to delete from.', 1);
         foreach ($this->targets as $target) {
             Check::input($target->catalog === null, 'A table is qualified by at most a database.');

@@ -26,18 +26,21 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class CollatedTest extends TestCase
 {
-    public function testDeriveScalarDefersLegacyProgramNameLookupUntilTheInstructionIsDerived(): void
+    public function testDeriveScalarStoresALegacyProgramCollationForTheInvocation(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44');
         $definition = $semantics->analyze("CREATE PROCEDURE p() SELECT 'x' COLLATE missing");
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $definition);
-        self::assertInstanceOf(\SqlSemantics\Statement\Statement::class, $definition->body);
-        $instruction = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([]), $definition->body, new \SqlSemantics\Statement\Source\SourceMap());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection::class, $definition->body);
+        $projection = $definition->body->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection::class, $projection);
+        $stored = $projection->expression;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated::class, $stored);
 
         self::assertSame([], $definition->diagnostics());
         self::assertSame([], $definition->warnings());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $instruction->diagnostics()[0]);
-        self::assertSame([], $instruction->warnings());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $stored->problem());
+        self::assertSame('missing', $stored->problem()->name);
     }
 
     public function testDeriveScalarMakesCollatedResultsNullableFrom57(): void
@@ -89,21 +92,26 @@ final class CollatedTest extends TestCase
         new Collated(new BinaryCast(new StringLiteral(['a'])), new Name('utf8mb4_bin'));
     }
 
-    public function testDeriveScalarPlacesTheUnknownCollationAfterTheWarningsOfTheOperand(): void
+    public function testDeriveScalarIsNeverReachedForACollationTheReadingRefuses(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (BINARY 1) COLLATE zz');
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->warnings()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->warnings()[1]);
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (BINARY 1) COLLATE zz');
+            self::fail('The collation does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $failure->problem);
+        }
     }
 
-    public function testAnEmptyCollationNameIsResolvedAfterTheOperand(): void
+    public function testAnEmptyCollationNameIsRefusedWhileReading(): void
     {
-        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT missing COLLATE ``');
-
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\MissingColumn::class, $operation->diagnostics()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $operation->diagnostics()[1]);
-        self::assertSame([], $operation->warnings());
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT missing COLLATE ``');
+            self::fail('The empty collation name is unknown.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $failure->problem);
+            self::assertSame('', $failure->problem->name);
+            self::assertFalse($failure->aborts);
+        }
     }
 
 }

@@ -125,8 +125,62 @@ final class DatabaseOptions
         return match (true) {
             $option instanceof DatabaseCollation && $option->collation->name !== null && Collation::forName($option->collation->name->value, $release) === null => new UnknownCollation($option->collation->name->value),
             $option instanceof DatabaseCharset && $option->charset->name !== null && Charset::named($option->charset->name->value) === null => new UnknownCharset($option->charset->name->value),
-            $option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption && $option->encryption instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Text => new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption($option->encryption),
             default => null,
         };
+    }
+
+    /**
+     * Answers the first conflict among the options, independent of the release: two character sets or collations
+     * that select different character sets (ER_CONFLICTING_DECLARATIONS), two READ ONLY settings that differ, or a
+     * collation of another character set than the named one (ER_COLLATION_CHARSET_MISMATCH). The server refuses
+     * each while reading the statement, even inside a stored program body (verified on 8.4.7).
+     *
+     * @param list<DatabaseOption> $options The options in written order
+     */
+    public function conflict(array $options): ?Diagnostic
+    {
+        $charset = null;
+        $collation = null;
+        $readOnly = null;
+        foreach ($options as $option) {
+            if ($option instanceof DatabaseReadOnly) {
+                $value = $option->readOnly();
+                if ($readOnly !== null && $readOnly !== $value) {
+                    return new ReadOnlyConflict();
+                }
+                $readOnly = $value;
+            }
+            $named = $this->charset($option);
+            if ($named !== null && $charset !== null && $charset->name !== $named->name) {
+                return $this->charsetConflict($option, $charset, $named);
+            }
+            $charset = $named ?? $charset;
+            if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
+                $collation = Collation::named($option->collation->name->value);
+            }
+        }
+        if ($charset !== null && $collation !== null && $collation->charset->name !== $charset->name) {
+            return new CollationMismatch($collation->name, $charset->name);
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers the first problem the server reports while reading the options of the selected release: a name the
+     * release does not know, then a conflict.
+     *
+     * @param list<DatabaseOption> $options The options in written order
+     */
+    public function problem(array $options, GrammarRelease $release): ?Diagnostic
+    {
+        foreach ($options as $option) {
+            $invalid = $this->invalid($option, $release);
+            if ($invalid !== null) {
+                return $invalid;
+            }
+        }
+
+        return $this->conflict($options);
     }
 }

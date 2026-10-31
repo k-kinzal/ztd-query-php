@@ -54,8 +54,8 @@ final class PrimaryRuleTest extends TestCase
     }
     public function testValueRowRetainsAllDependenciesOfAnUnusedDefinition(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@bogus)))) SELECT 9');
-        self::assertSame('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@bogus)))) SELECT 9', $operation->toString());
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@autocommit)))) SELECT 9');
+        self::assertSame('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@autocommit)))) SELECT 9', $operation->toString());
         self::assertSame([], $operation->diagnostics());
     }
 

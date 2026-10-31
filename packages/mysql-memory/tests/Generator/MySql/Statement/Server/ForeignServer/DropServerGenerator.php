@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\DropServer;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates DropServer values from the generators of its operands.
@@ -57,10 +56,6 @@ final class DropServerGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropServer $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -20,13 +20,13 @@ final class ValueRuleTest extends TestCase
 {
     public function testValueLowersTheKeywords(): void
     {
-        self::assertSame('SET a = ON, b = ALL, c = BINARY', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set a = on, b = all, c = binary')->toString());
+        self::assertSame('SET autocommit = ON, sql_mode = ALL, character_set_client = BINARY', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set autocommit = on, sql_mode = all, character_set_client = binary')->toString());
         self::assertSame('SET a = ROW, b = SYSTEM', (new Semantics(Dialect::MySql))->analyze('set a = row, b = system')->toString());
     }
 
     public function testWordLowersABareName(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET @@a = b, @@c = (d)');
+        $set = (new Semantics(Dialect::MySql))->analyze('SET @@autocommit = b, @@sql_mode = (d)');
         self::assertInstanceOf(SetVariables::class, $set);
         self::assertInstanceOf(SystemAssignment::class, $set->items[1]);
         self::assertNotInstanceOf(BareName::class, $set->items[1]->value);

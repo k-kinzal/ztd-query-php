@@ -43,7 +43,7 @@ final class CollatedGenerator implements ErisGenerator
             static fn (array $parts): Collated => new Collated(operand: (new Precedence())->fits($parts[0], Precedence::COLLATION, Precedence::SIMPLE_EXPR) ? $parts[0] : new Grouped($parts[0]), collation: $parts[1], scalarInformation: $parts[2], inputSource: $parts[3]),
             Generators::tuple(
                 new ScalarGenerator($release, $depth - 1),
-                new NameGenerator($release),
+                Generators::map(static fn (string $name): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($name), Generators::elements(array_keys(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Catalog::shared()->collations))),
                 Generators::constant(null),
                 Generators::constant(null)
             )

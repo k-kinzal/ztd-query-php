@@ -26,7 +26,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\MySql\Statement\Variable\VariableScopeGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates SetTransaction values from the generators of its operands.
@@ -67,10 +66,6 @@ final class SetTransactionGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (SetTransaction $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

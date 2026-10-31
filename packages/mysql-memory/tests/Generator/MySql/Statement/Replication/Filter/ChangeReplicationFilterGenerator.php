@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFilter;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ChangeReplicationFilter values from the generators of its operands.
@@ -58,10 +57,6 @@ final class ChangeReplicationFilterGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ChangeReplicationFilter $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

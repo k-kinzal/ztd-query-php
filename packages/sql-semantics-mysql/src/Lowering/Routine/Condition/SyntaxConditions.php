@@ -20,19 +20,19 @@ final class SyntaxConditions
 {
     /**
      * Answers the typed refusal of a completed condition operand, or null for accepted operands.
+     * @throws \SqlSemantics\Construction\RejectedInput When a condition operand is one the server refuses while reading
      */
     public function completed(Node $node, Lowering $lowering): ?ParseFailure
     {
         if ($node->name === 'signal_allowed_expr' && $lowering->form($node)->signature === 'signal_allowed_expr: rvalue_system_or_user_variable') {
-            $value = (new SignalRule($lowering))->operand($node);
-            if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable) {
-                $derivation = new \SqlSemantics\Construction\Derivation(new \SqlSemantics\Contract\AnalysisContext($lowering->profile, [new \SqlSemantics\Statement\Identifier\Name(\SqlSemantics\Platform\MySql\Rules\SessionDatabase::UNNAMED)]));
-                $derivation->scalar($value, $derivation->environment());
-                foreach ($derivation->facts()->diagnostics as $problem) {
-                    if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable) {
-                        return new ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
-                    }
+            try {
+                (new SignalRule($lowering))->operand($node);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable) {
+                    return new ParseFailure($failure->problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
                 }
+
+                throw $failure;
             }
             return null;
         }

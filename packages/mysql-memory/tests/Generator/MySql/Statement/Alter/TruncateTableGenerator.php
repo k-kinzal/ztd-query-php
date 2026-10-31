@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates TruncateTable values from the generators of its operands.
@@ -59,10 +58,6 @@ final class TruncateTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (TruncateTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

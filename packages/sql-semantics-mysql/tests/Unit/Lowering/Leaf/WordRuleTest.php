@@ -19,6 +19,6 @@ final class WordRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         self::assertSame('SET @@sql_mode = TRADITIONAL', $semantics->analyze('SET @@sql_mode=TRADITIONAL')->toString());
-        self::assertSame("INSTALL COMPONENT 'c' SET x = d.word, y = 1 + 2", $semantics->analyze("INSTALL COMPONENT 'c' SET x=d.word, y=1+2")->toString());
+        self::assertSame("INSTALL COMPONENT 'c' SET sql_mode = d.word, max_connections = 1 + 2", $semantics->analyze("INSTALL COMPONENT 'c' SET sql_mode=d.word, max_connections=1+2")->toString());
     }
 }

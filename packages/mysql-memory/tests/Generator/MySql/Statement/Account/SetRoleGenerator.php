@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\SetRole;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\User\RoleSelectionGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates SetRole values from the generators of its operands.
@@ -56,10 +55,6 @@ final class SetRoleGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (SetRole $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

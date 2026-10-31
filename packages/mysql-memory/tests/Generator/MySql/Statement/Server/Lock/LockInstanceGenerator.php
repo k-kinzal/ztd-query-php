@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockInstance;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Analysis;
 
 /**
  * Generates LockInstance values from the generators of its operands.
@@ -54,10 +53,6 @@ final class LockInstanceGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (LockInstance $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -108,7 +108,7 @@ final class PluginRule
             'install_option_type: GLOBAL_SYM' => VariableScope::Global,
             'install_option_type: PERSIST_SYM' => VariableScope::Persist,
             default => throw ImplementationGap::production($scope),
-        }, true);
+        }, true, true);
         $value = $this->lowering->form($form->node(3));
 
         return new ComponentSetting($variable, match ($value->signature) {

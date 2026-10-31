@@ -97,11 +97,11 @@ final class BlockRule
         $parameters = new ParameterRule($this->lowering);
         switch ($form->signature) {
             case 'sp_decl: DECLARE_SYM sp_decl_idents type_with_opt_collate sp_opt_default':
-                [$type, $collation] = $parameters->declared($form->node(2), null);
+                [$type, $collation] = $this->declared($parameters, $form->node(2), null, $declaration);
 
                 return new VariableDeclaration($this->names($form->node(1), 'sp_decl_idents'), $type, $collation, $this->initial($form->node(3)));
             case 'sp_decl: DECLARE_SYM sp_decl_idents type opt_collate sp_opt_default':
-                [$type, $collation] = $parameters->declared($form->node(2), $form->node(3));
+                [$type, $collation] = $this->declared($parameters, $form->node(2), $form->node(3), $declaration);
 
                 return new VariableDeclaration($this->names($form->node(1), 'sp_decl_idents'), $type, $collation, $this->initial($form->node(4)));
             case 'sp_decl: DECLARE_SYM ident CONDITION_SYM FOR_SYM sp_cond':
@@ -175,5 +175,42 @@ final class BlockRule
             'sp_proc_stmt_close: CLOSE_SYM ident' => new CloseCursor($this->lowering->names->identifier($form->node(1))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers the type of a DECLARE statement. The server checks the type once the whole declaration is read,
+     * so a refused size is placed at the end of the declaration, after the notices of its DEFAULT value.
+     *
+     * @return array{\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName, \SqlSemantics\Platform\MySql\Statement\Name\CollationName|null}
+     * @throws ImplementationGap When a part has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
+     */
+    public function declared(ParameterRule $parameters, Node $type, ?Node $collation, Node $declaration): array
+    {
+        try {
+            $declared = $parameters->declared($type, $collation);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize) {
+                throw $failure;
+            }
+
+            throw new \SqlSemantics\Construction\RejectedInput($failure->problem, (new \SqlSemantics\Construction\SourceRanges())->span($declaration)[1] ?? 0, $failure->aborts, $failure->sources);
+        }
+        $this->sized($declared[0], $declaration);
+
+        return $declared;
+    }
+
+    /**
+     * Refuses a declared type that exceeds a bound of the release, as the server does while reading the body.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
+     */
+    public function sized(\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName $type, Node $at): void
+    {
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($type, '', $this->lowering->profile->grammar);
+        if ($size !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($at)[1] ?? 0);
+        }
     }
 }

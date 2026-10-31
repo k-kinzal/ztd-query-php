@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use Tests\Support\Analysis;
 
 /**
  * Generates SetVariables values from the generators of its operands.
@@ -73,10 +72,6 @@ final class SetVariablesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (SetVariables $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

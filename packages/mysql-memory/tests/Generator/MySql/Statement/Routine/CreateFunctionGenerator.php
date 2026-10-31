@@ -31,7 +31,6 @@ use Tests\Generator\MySql\Statement\Routine\Definition\DefinitionSourceGenerator
 use Tests\Generator\MySql\Statement\Routine\Definition\FunctionImplementationGenerator;
 use Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateFunction values from the generators of its operands.
@@ -74,10 +73,6 @@ final class CreateFunctionGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateFunction $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

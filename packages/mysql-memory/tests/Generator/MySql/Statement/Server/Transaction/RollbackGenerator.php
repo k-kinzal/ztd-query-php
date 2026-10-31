@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates Rollback values from the generators of its operands.
@@ -62,10 +61,6 @@ final class RollbackGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Rollback $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

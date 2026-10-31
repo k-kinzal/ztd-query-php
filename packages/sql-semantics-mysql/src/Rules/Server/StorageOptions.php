@@ -87,8 +87,8 @@ final class StorageOptions
      * @param list<string> $accepted The keywords of the accepted options
      * @param int $minimum The least number of options
      * @return list<StorageOption>
-     * @example Retaining two effective engine settings for definition diagnostics
-     *     count((new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->checked([new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB')), new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB'))], \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions::DROP)) // => 2
+     * @example Checking the options a DROP statement accepts
+     *     count((new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->checked([new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB')), new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption(true)], \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions::DROP)) // => 2
      */
     public function checked(array $options, array $accepted, int $minimum = 0): array
     {
@@ -96,6 +96,7 @@ final class StorageOptions
         foreach ($checked as $option) {
             Check::input(in_array($option->keyword(), $accepted, true), 'The statement takes no ' . $option->keyword() . ' option.');
         }
+        Check::input($this->repeated($checked) === null, 'A storage option is written once.');
 
         return $checked;
     }

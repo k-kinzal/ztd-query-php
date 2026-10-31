@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicaSt
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Replication\TerminologyGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowReplicaStatus values from the generators of its operands.
@@ -59,10 +58,6 @@ final class ShowReplicaStatusGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowReplicaStatus $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

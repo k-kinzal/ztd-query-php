@@ -14,10 +14,12 @@ use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Type\Keyword;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
@@ -121,6 +123,11 @@ final class TypeRule
     public readonly CastTypeRule $casts;
 
     /**
+     * The column the type being lowered belongs to, or empty for parameters, declarations, return types and casts.
+     */
+    public string $name = '';
+
+    /**
      * @param Lowering $lowering The lowering this rule belongs to
      */
     public function __construct(private readonly Lowering $lowering)
@@ -134,9 +141,11 @@ final class TypeRule
      * Lowers a data type.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
      */
-    public function type(Node $type): DeclaredName
+    public function type(Node $type, string $name = ''): DeclaredName
     {
+        $this->name = $name;
         $form = $this->lowering->productions->form($type);
 
         return $this->lowering->origins->record($this->numeric($form) ?? $this->keyword($form) ?? $this->strings->type($form) ?? throw ImplementationGap::production($form), $type);
@@ -166,13 +175,17 @@ final class TypeRule
      * Lowers a numeric type production, or answers null for another kind of type.
      *
      * @throws ImplementationGap When a part has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
      */
     public function numeric(Form $form): ?DeclaredName
     {
         if ($form->signature === 'type: int_type opt_field_length field_options') {
             $kind = $this->lowering->productions->form($form->node(0));
 
-            return new Integral(self::INTEGERS[$kind->signature] ?? throw ImplementationGap::production($kind), $this->parts->length($form->node(1)), $this->parts->modifiers($form->node(2)), alias: Keyword\IntegralAlias::tryFrom(strtoupper($kind->token(0)->text)));
+            $width = $this->parts->length($form->node(1));
+            $this->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->integralWidth($width, $this->name), $form);
+
+            return new Integral(self::INTEGERS[$kind->signature] ?? throw ImplementationGap::production($kind), $width, $this->parts->modifiers($form->node(2)), alias: Keyword\IntegralAlias::tryFrom(strtoupper($kind->token(0)->text)));
         }
         if ($form->signature === 'type: real_type opt_precision field_options') {
             return $this->fraction($this->real($form->node(0)), $form);
@@ -193,10 +206,12 @@ final class TypeRule
      * Builds a DECIMAL or approximate type from a production whose second and third symbols are its options and attributes.
      *
      * @throws ImplementationGap When a part has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
      */
     public function fraction(?FloatingKind $kind, Form $form): DeclaredName
     {
         [$precision, $scale] = $this->parts->numbers($form->node(1));
+        $this->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractionalParts($kind === null, $precision, $scale, $this->name), $form);
         $modifiers = $this->parts->modifiers($form->node(2));
 
         $keyword = $form->node->children[0];
@@ -243,18 +258,25 @@ final class TypeRule
      * Lowers a type written as one keyword, a temporal type or a spatial type, or answers null for another kind of type.
      *
      * @throws ImplementationGap When a part has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
      */
     public function keyword(Form $form): ?DeclaredName
     {
         if (isset(self::ELEMENTARY[$form->signature])) {
             [$kind, $position] = self::ELEMENTARY[$form->signature];
 
-            return new Elementary($kind, $position === null ? null : $this->parts->length($form->node($position)), alias: Keyword\ElementaryAlias::tryFrom(strtoupper($form->token(0)->text)));
+            $length = $position === null ? null : $this->parts->length($form->node($position));
+            $this->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->elementaryLength($kind, $length, $this->name), $form);
+
+            return new Elementary($kind, $length, alias: Keyword\ElementaryAlias::tryFrom(strtoupper($form->token(0)->text)));
         }
         if (isset(self::TEMPORALS[$form->signature])) {
             [$kind, $position] = self::TEMPORALS[$form->signature];
 
-            return new Temporal($kind, $position === null ? null : $this->parts->length($form->node($position)));
+            $precision = $position === null ? null : $this->parts->length($form->node($position));
+            $this->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->temporalPrecision($kind, $precision, $this->name), $form);
+
+            return new Temporal($kind, $precision);
         }
         if ($form->signature === 'type: YEAR_SYM opt_field_length field_options') {
             return new Temporal(TemporalKind::Year, $this->parts->length($form->node(1)), $this->parts->modifiers($form->node(2)), sqlTsiYear: strtoupper($form->node->tokens()[0]->text) === 'SQL_TSI_YEAR');
@@ -265,5 +287,58 @@ final class TypeRule
         $kind = $this->lowering->productions->form($form->node(0));
 
         return new Spatial(self::SPATIALS[$kind->signature] ?? throw ImplementationGap::production($kind), alias: Keyword\SpatialAlias::tryFrom(strtoupper($kind->token(0)->text)));
+    }
+
+    /**
+     * Answers the deprecation notices a numeric type carries, read from its written parts.
+     * A type refused for its size reports these notices before the refusal, as the server does.
+     *
+     * @return list<Deprecated>
+     * @throws ImplementationGap When a part has no rule
+     */
+    public function deprecations(Node $type): array
+    {
+        $form = $this->lowering->productions->form($type);
+        if ($form->signature === 'type: int_type opt_field_length field_options') {
+            $notices = in_array(NumericModifier::Zerofill, $this->parts->modifiers($form->node(2)), true) ? [Deprecated::Zerofill] : [];
+
+            return $this->parts->length($form->node(1)) === null ? $notices : [...$notices, Deprecated::DisplayWidth];
+        }
+        if ($form->signature === 'type: real_type opt_precision field_options') {
+            $kind = $this->real($form->node(0));
+        } elseif ($form->signature === 'type: numeric_type float_options field_options') {
+            $keyword = $this->lowering->productions->form($form->node(0));
+            $kind = array_key_exists($keyword->signature, self::NUMERIC_KEYWORDS) ? self::NUMERIC_KEYWORDS[$keyword->signature] : throw ImplementationGap::production($keyword);
+        } elseif (array_key_exists($form->signature, self::NUMERICS)) {
+            $kind = self::NUMERICS[$form->signature];
+        } else {
+            return [];
+        }
+        [, $scale] = $this->parts->numbers($form->node(1));
+        $modifiers = $this->parts->modifiers($form->node(2));
+        $notices = in_array(NumericModifier::Zerofill, $modifiers, true) ? [Deprecated::Zerofill] : [];
+        if ($kind !== null && $scale !== null) {
+            $notices[] = Deprecated::FloatingDigits;
+        }
+        if (in_array(NumericModifier::Unsigned, $modifiers, true)) {
+            $notices[] = Deprecated::UnsignedFraction;
+        }
+
+        return $notices;
+    }
+
+    /**
+     * Refuses a declared type outside a bound of the release before constructing it, as the server does while reading
+     * the declaration (verified on 5.6.51, 5.7.44 and 8.4.7); 5.6 accepts an empty BIT width.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
+     */
+    public function sized(?\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize $problem, Form $form): void
+    {
+        if ($problem === null || ($problem->rule === \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Empty && $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651)) {
+            return;
+        }
+
+        throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($problem->rule, $problem->name, $problem->actual, $problem->maximum, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $this->name === '');
     }
 }

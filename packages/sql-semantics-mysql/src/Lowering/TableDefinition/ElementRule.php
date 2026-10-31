@@ -103,7 +103,7 @@ final class ElementRule
         }
         $references = new ReferenceRule($this->lowering);
 
-        return match ($form->signature) {
+        return $this->sized(match ($form->signature) {
             'column_def: ident field_def opt_references' => new ColumnDefinition(
                 $name = $this->lowering->leaves->record(new ColumnName($this->lowering->names->identifier($form->node(0)))),
                 (new ColumnRule($this->lowering))->specification($form->node(1), null, $references->optional($form->node(2)), name: $name->column),
@@ -112,7 +112,26 @@ final class ElementRule
             'column_def: field_spec references' => $this->column($form->node(0), $references->references($form->node(1))),
             'field_spec: field_ident type opt_attribute', 'field_spec: field_ident field_def' => $this->column($element),
             default => throw ImplementationGap::production($form),
-        };
+        }, $element);
+    }
+
+    /**
+     * Refuses a column whose type exceeds a bound of the release, as the server does while reading the definition, even inside a stored program body (verified on 5.6.51, 5.7.44 and 8.4.7).
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
+     */
+    public function sized(ColumnDefinition $column, Node $at): ColumnDefinition
+    {
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($column->specification->dataType(), $column->name->column->value, $this->lowering->profile->grammar);
+        if ($size !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($size->rule, $size->name, $size->actual, $size->maximum, $this->lowering->programName ?? $this->lowering->columnTable), (new \SqlSemantics\Construction\SourceRanges())->span($at)[1] ?? 0, false);
+        }
+        $mismatch = (new \SqlSemantics\Platform\MySql\Rules\Typing\ColumnCollations())->mismatch($column, $this->lowering->profile->grammar);
+        if ($mismatch !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($mismatch, (new \SqlSemantics\Construction\SourceRanges())->span($at)[1] ?? 0, false);
+        }
+
+        return $column;
     }
 
     /**
@@ -127,10 +146,10 @@ final class ElementRule
         $rule = new ColumnRule($this->lowering);
         $trailing = $check === null ? [] : [$check];
 
-        return new ColumnDefinition($name = $this->lowering->names->columnName($form->node(0)), match ($form->signature) {
+        return $this->sized(new ColumnDefinition($name = $this->lowering->names->columnName($form->node(0)), match ($form->signature) {
             'field_spec: field_ident type opt_attribute' => $rule->specification($form->node(1), $form->node(2), $references, $trailing, $name->column),
             'field_spec: field_ident field_def' => $rule->specification($form->node(1), null, $references, $trailing, $name->column),
             default => throw ImplementationGap::production($form),
-        });
+        }), $spec);
     }
 }

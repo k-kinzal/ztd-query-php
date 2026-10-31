@@ -29,7 +29,6 @@ use Tests\Generator\MySql\Statement\Account\User\RegistrationStepGenerator;
 use Tests\Generator\MySql\Statement\Account\User\SessionUserGenerator;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterRegistration values from the generators of its operands.
@@ -71,10 +70,6 @@ final class AlterRegistrationGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterRegistration $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

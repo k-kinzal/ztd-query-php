@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowProfile values from the generators of its operands.
@@ -63,10 +62,6 @@ final class ShowProfileGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowProfile $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

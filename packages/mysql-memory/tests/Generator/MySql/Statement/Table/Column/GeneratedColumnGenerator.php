@@ -27,7 +27,6 @@ use Tests\Generator\MySql\Statement\Table\Column\Kind\GeneratedStorageGenerator;
 use Tests\Generator\MySql\Statement\Table\Key\CheckConstraintGenerator;
 use Tests\Generator\MySql\Statement\Table\Key\ReferencesGenerator;
 use Tests\Generator\MySql\Statement\Type\DeclaredNameGenerator;
-use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
 
 /**
@@ -61,7 +60,7 @@ final class GeneratedColumnGenerator implements ErisGenerator
                         2 => new DeferredOperandGenerator($release, $depth - 1),
                         default => throw new LogicException('Unreachable alternative.'),
                     }),
-                    Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), Generators::map(static fn (string $name): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($name), Generators::elements(array_keys(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Catalog::shared()->collations)))),
                     Generators::oneOf(Generators::constant(null), new GeneratedStorageGenerator($release)),
                     $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 508, 511, 508, 511, 511, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new CollateAttributeGenerator($release),

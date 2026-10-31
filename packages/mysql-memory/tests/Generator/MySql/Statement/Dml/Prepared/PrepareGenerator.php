@@ -25,7 +25,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates Prepare values from the generators of its operands.
@@ -64,10 +63,6 @@ final class PrepareGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Prepare $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

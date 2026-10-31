@@ -32,6 +32,8 @@ final class MaintainedTables
     public function checked(array $tables): array
     {
         $tables = Check::listOf($tables, MaintainedTable::class, 'The statement names at least one table.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (MaintainedTable $table): array => [$table->name, null, $table], $tables)) === null, 'A table list names each table once.');
+
         return $tables;
     }
 

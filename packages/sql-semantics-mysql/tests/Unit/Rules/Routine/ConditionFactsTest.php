@@ -262,12 +262,14 @@ final class ConditionFactsTest extends TestCase
      * @param list<string> $messages
      */
     #[DataProvider('providerSignalReportsRepeatedItemsWithTheCompleteStatement')]
-    public function testSignalReportsRepeatedItemsWithTheCompleteStatement(string $sql, array $messages): void
+    public function testSignalIsNeverReachedForAnItemSetTwice(string $sql, array $messages): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(CreateProcedure::class, $statement);
-        self::assertSame($messages, array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
-        self::assertSame($sql, $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The item is set twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     public function testOperandInterpretsTemporalValuesDuringGrammarActions(): void

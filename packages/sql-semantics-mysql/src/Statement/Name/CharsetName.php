@@ -31,6 +31,7 @@ final class CharsetName implements Node
      */
     public function __construct(public readonly ?Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($name === null || \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name->value) !== null, 'A character set name is one the server knows.');
     }
 
     /**

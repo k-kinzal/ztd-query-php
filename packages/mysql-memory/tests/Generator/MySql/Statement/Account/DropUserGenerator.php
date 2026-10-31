@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\DropUser;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates DropUser values from the generators of its operands.
@@ -57,10 +56,6 @@ final class DropUserGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropUser $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

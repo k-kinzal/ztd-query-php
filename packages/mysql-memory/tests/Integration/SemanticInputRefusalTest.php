@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseStop;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use Tests\Support\Analysis;
 use Tests\Generator\Semantics\Statement\Fact\DiagnosticGenerator;
 
 #[CoversNothing]
@@ -40,9 +39,6 @@ final class SemanticInputRefusalTest extends TestCase
         $random = new \Eris\Random\RandomRange(new \Eris\Random\MersenneTwister());
         $random->seed(20261029);
         (new \Eris\Quantifier\ForAll([$conditions], 100, new \Eris\Shrinker\ShrinkerFactory(['timeLimit' => null]), 'multiple', $random))->withMaxSize(10)->then(static function (RejectedInput $condition) use ($release): void {
-            if (Analysis::state($condition->problem)) {
-                return;
-            }
             $session = (new Instance(substr($release->value, 6), databases: ['pbt']))->connect(database: 'pbt');
             $session->text = 'Semantic input failure supplied without source SQL';
             try {
@@ -92,9 +88,6 @@ final class SemanticInputRefusalTest extends TestCase
         (new \Eris\Quantifier\ForAll([$conditions], 100, new \Eris\Shrinker\ShrinkerFactory(['timeLimit' => null]), 'multiple', $random))->then(
             static function (array $conditions): void {
                 [$warning, $failure, $stop, $ignored] = $conditions;
-                if (Analysis::state($failure->problem)) {
-                    return;
-                }
                 $session = (new Instance('8.4.7'))->connect();
                 $session->text = 'Completed semantic conditions without SQL text';
                 $syntax = \MySqlMemory\Error\Family\StatementError::ParseError->error('later input', 1);

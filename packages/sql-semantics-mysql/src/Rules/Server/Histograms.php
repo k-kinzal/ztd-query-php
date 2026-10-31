@@ -10,8 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\Histogram;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\BucketCountOutOfRange;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
@@ -43,24 +41,6 @@ final class Histograms
     {
         if ($histogram instanceof UpdateHistogram && $histogram->buckets !== null && !$this->buckets($histogram->buckets)) {
             $derivation->report(new BucketCountOutOfRange($histogram->buckets));
-        }
-        if (count($tables) !== 1) {
-            $derivation->report(new HistogramTables(count($tables)));
-
-            return;
-        }
-        $shape = $tables[0]->shape;
-        if ($shape->missing !== []) {
-            return;
-        }
-        foreach ($histogram->columns() as $column) {
-            $found = false;
-            foreach ($shape->slots as $slot) {
-                $found = $found || ($slot->name !== null && $derivation->context->columnNames->equal($slot->name->value, $column->value));
-            }
-            if (!$found) {
-                $derivation->report(new UnknownHistogramColumn($column));
-            }
         }
     }
 

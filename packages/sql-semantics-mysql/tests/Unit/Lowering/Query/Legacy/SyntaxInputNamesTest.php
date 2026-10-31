@@ -30,7 +30,7 @@ final class SyntaxInputNamesTest extends TestCase
         yield 'legacy aliases' => [GrammarRelease::MySql5651, 'SELECT 1 FROM a AS x,b AS x FOR SHARE OF y', ['x']];
         yield 'distinct databases' => [GrammarRelease::MySql5651, 'SELECT 1 FROM d.a,e.a WHERE (', []];
         yield 'later legacy input' => [GrammarRelease::MySql5744, 'SELECT 1 FROM a,a FOR SHARE OF x', []];
-        yield 'complete nested inputs' => [GrammarRelease::MySql5651, 'SELECT 1 FROM a,a,(SELECT 1 FROM b,b) AS c', []];
+        yield 'complete nested inputs' => [GrammarRelease::MySql5651, 'SELECT 1 FROM a,a,(SELECT 1 FROM b,b) AS c', ['b']];
         yield 'modern input' => [GrammarRelease::MySql847, 'SELECT 1 FROM a,a WHERE (', []];
     }
 

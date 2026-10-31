@@ -53,14 +53,14 @@ final class ChangeRuleTest extends TestCase
     }
 
     #[DataProvider('providerUpdateCollisions')]
-    public function testUpdateRetainsTheCompleteInputWithRepeatedNames(string $release, string $sql): void
+    public function testUpdateRefusesRepeatedInputNamesWhileReading(string $release, string $sql): void
     {
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $statement);
-        self::assertTrue($statement->hasExecutionCondition());
-        self::assertCount(2, $statement->tables);
-        self::assertCount(2, $statement->assignments);
-        self::assertSame($sql, $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The input names a relation twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable::class, $failure->problem);
+        }
     }
 
     /**

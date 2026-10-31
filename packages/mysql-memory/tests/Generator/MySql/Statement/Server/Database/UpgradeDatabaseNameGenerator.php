@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates UpgradeDatabaseName values from the generators of its operands.
@@ -62,10 +61,6 @@ final class UpgradeDatabaseNameGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (UpgradeDatabaseName $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

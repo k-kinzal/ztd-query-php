@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Generator\MySql\Statement\Routine\Condition;
 
 use Eris\Generator as ErisGenerator;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
 use Eris\Generator\GeneratedValue;
 use Eris\Generator\GeneratedValueSingle;
 use Eris\Generators;
@@ -22,7 +23,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Analysis;
 
 /**
  * Generates Resignal values from the generators of its operands.
@@ -44,15 +44,18 @@ final class ResignalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): Resignal => new Resignal(condition: $parts[0], items: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]),
-            Generators::tuple(
-                Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new ConditionNameGenerator($release),
-                    1 => new SqlStateGenerator($release),
-                    default => throw new LogicException('Unreachable alternative.'),
-                })),
-                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SignalItemGenerator($release, $depth - 1))) : Generators::constant([]),
-                Generators::constant(null),
-                Generators::constant(null)
+            Generators::suchThat(
+                static fn (array $parts): bool => count(array_unique(array_map(static fn (SignalItem $item): string => $item->name->value, $parts[1]))) === count($parts[1]),
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ConditionNameGenerator($release),
+                        1 => new SqlStateGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })),
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SignalItemGenerator($release, $depth - 1))) : Generators::constant([]),
+                    Generators::constant(null),
+                    Generators::constant(null)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -62,10 +65,6 @@ final class ResignalGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Resignal $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

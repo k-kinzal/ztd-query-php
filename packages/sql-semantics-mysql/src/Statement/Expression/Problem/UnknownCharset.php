@@ -14,8 +14,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting an unknown character set
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT CONVERT('a' USING klingon)");
- *     $query->diagnostics()[0]->message() // => "Unknown character set: 'klingon'"
+ *     try { (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT CONVERT('a' USING klingon)"); } catch (\SqlSemantics\Construction\RejectedInput $failure) { $problem = $failure->problem; }
+ *     $problem->message() // => "Unknown character set: 'klingon'"
  */
 final class UnknownCharset implements Diagnostic
 {

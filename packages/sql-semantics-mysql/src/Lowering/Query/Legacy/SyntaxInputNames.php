@@ -45,7 +45,12 @@ final class SyntaxInputNames
         if ($lowering->profile->grammar !== GrammarRelease::MySql5651 || $node->name !== 'join_table_list') {
             return null;
         }
-        $problem = (new Structure())->names($lowering->queries->tables($node));
+        try {
+            $problem = (new Structure())->names($lowering->queries->tables($node));
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new ParseFailure($failure->problem, true);
+        }
+
         return $problem === null ? null : new ParseFailure($problem, true);
     }
 }

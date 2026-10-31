@@ -32,15 +32,14 @@ final class CollationLookupTest extends TestCase
         self::assertNull($lookup->parsed(new Name('binary'), GrammarRelease::MySql847));
     }
 
-    public function testDerivePlacesLegacyNameLookupAfterTheOperand(): void
+    public function testDeriveBindsTheOperandOfAKnownCollation(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([], true));
         $operand = new ColumnUse(new Name('absent'));
-        $expression = new Collated($operand, new Name('missing'));
+        $expression = new Collated($operand, new Name('utf8mb4_bin'));
         $derivation->scalar($expression, $derivation->environment());
         self::assertInstanceOf(MissingColumn::class, $derivation->facts()->diagnostics[0]);
-        self::assertInstanceOf(UnknownCollation::class, $derivation->facts()->diagnostics[1]);
-        self::assertSame($expression, $derivation->facts()->diagnostics[1]->operand);
+        self::assertCount(1, $derivation->facts()->diagnostics);
         self::assertSame([], $derivation->facts()->warnings);
     }
 }

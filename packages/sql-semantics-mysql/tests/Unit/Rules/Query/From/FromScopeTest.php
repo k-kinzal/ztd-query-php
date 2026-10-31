@@ -69,18 +69,18 @@ final class FromScopeTest extends TestCase
         self::assertSame([], $semantics->analyze('SELECT (SELECT x FROM (SELECT t.a AS x) d) FROM t', [$table])->diagnostics());
     }
 
-    public function testUniqueRetainsTheLaterRelationEvenWhenIdentifierValuesAreShared(): void
+    public function testUniqueReportsAWrittenDatabaseThatNamesTheCurrentOne(): void
     {
         $name = new Name('t');
         $first = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName($name));
-        $second = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName($name));
+        $second = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t'), new Name('pbt')));
         $query = new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([$first, $second]));
-        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        $derivation = new \SqlSemantics\Construction\Derivation(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847), [new Name('pbt')]));
         $derivation->query($query, $derivation->environment());
         $problems = array_values(array_filter($derivation->facts()->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable));
         self::assertCount(1, $problems);
         self::assertSame($second, $problems[0]->relation);
-        self::assertSame($name, $problems[0]->alias);
+        self::assertSame('t', $problems[0]->alias->value);
     }
 
     public function testOpenMakesATableVisibleUnderItsCorrelationName(): void

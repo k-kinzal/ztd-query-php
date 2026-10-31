@@ -50,13 +50,14 @@ final class SyntaxWarnings
         $header = new Routine\Program\NoticeHeader();
         $handlers = new Routine\Condition\HandlerPrefix();
         $labels = new Routine\Program\LabelPrefix();
+        $self = $this;
         try {
-            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($state, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $replicaNetTimeout, $labels, $malformed): void {
+            $parser->parse($statement, static function (Node $node, Token $lookahead) use ($self, $state, $end, $lowering, $parser, $statement, $tokens, $operands, $header, $handlers, $replicaNetTimeout, $labels, $malformed): void {
                 if ($state->aborted) {
                     return;
                 }
                 $state->warnings = [...$state->warnings, ...(new Type\SyntaxNotices())->collation($node, $lowering, $end)];
-                if ($lookahead->offset > $end) {
+                if (($self->end($node) ?? $lookahead->offset) > $end) {
                     return;
                 }
                 (new TableDefinition\Column\SyntaxColumns())->observe($node, $lowering, $tokens);
@@ -74,8 +75,18 @@ final class SyntaxWarnings
                     $state->record((new SourceRanges())->span($node, true)[1] ?? 0, ParseStop::ProgramStatement);
                     return;
                 }
-                $notice = $labels->observe($node, $lookahead, $lowering, $tokens) ?? $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead, $malformed) ?? $lowering->tableChanges->ignored($node, $tokens);
-                $conditions = [...(new Server\Instance\SyntaxForeignStrings())->converted($node, $lowering, $tokens), ...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
+                try {
+                    $notice = $labels->observe($node, $lookahead, $lowering, $tokens) ?? $handlers->observe($node, $lowering) ?? $operands->completed($node, $lookahead, $lowering, $state, $tokens) ?? (new CompletedNotice())->of($node, $lowering, $parser, $statement, $lookahead, $malformed) ?? $lowering->tableChanges->ignored($node, $tokens);
+                    $conditions = [...(new Server\Instance\SyntaxForeignStrings())->converted($node, $lowering, $tokens), ...(new Replication\SyntaxSettings())->warned($node, $lowering, $replicaNetTimeout), ...(new Replication\SyntaxSettings())->converted($node, $lowering), ...($notice === null ? [...(new Type\SyntaxNotices())->completed($node, $lowering), ...(new Account\SyntaxRoles())->completed($node, $lowering)] : [$notice])];
+                } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                    // Only a refusal the server finds while parsing is a parse-time notice; a condition
+                    // it finds after reading the statement is reported by the caller, after these notices.
+                    if ($failure->aborts && !$state->failed) {
+                        $state->record($failure->end, new ParseFailure($failure->problem, true));
+                    }
+
+                    return;
+                }
                 foreach ($conditions as $condition) {
                     $range = (new SourceRanges())->span($node, true) ?? [$lookahead->offset, $lookahead->offset];
                     $state->record($range[1], $condition instanceof ParseFailure ? $header->scoped($condition) : $condition);
@@ -86,6 +97,26 @@ final class SyntaxWarnings
         }
 
         return $this->ordered($state->warnings);
+    }
+
+    /**
+     * Answers the end offset of the last token under a node, or null for an empty node.
+     * A node completed at the refusal boundary still belongs to the input before the refusal.
+     */
+    public function end(Node $node): ?int
+    {
+        for ($index = count($node->children) - 1; $index >= 0; $index--) {
+            $child = $node->children[$index];
+            if ($child instanceof Token) {
+                return $child->end();
+            }
+            $end = $this->end($child);
+            if ($end !== null) {
+                return $end;
+            }
+        }
+
+        return null;
     }
 
     /**

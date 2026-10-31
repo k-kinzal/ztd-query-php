@@ -18,7 +18,7 @@ final class SetVariablesTest extends TestCase
 {
     public function testScopeOfAnswersTheInheritedScope(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST a = 1, b = 2, @@SESSION.c = 3, @d = 4, e = 5');
+        $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST autocommit = 1, sql_mode = 2, @@SESSION.max_connections = 3, @d = 4, wait_timeout = 5');
         self::assertInstanceOf(SetVariables::class, $set);
         self::assertSame(VariableScope::Persist, $set->scopeOf(1));
         self::assertSame(VariableScope::Session, $set->scopeOf(2));
@@ -44,7 +44,7 @@ final class SetVariablesTest extends TestCase
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame('SET LOCAL a = 1, @b := 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set local a = 1, @b := 2')->toString());
+        self::assertSame('SET LOCAL autocommit = 1, @b := 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set local autocommit = 1, @b := 2')->toString());
     }
 
     public function testRefusesAnEmptyList(): void

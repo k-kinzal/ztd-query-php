@@ -101,6 +101,7 @@ final class StatementRule
      * Lowers DROP TABLE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table is named twice
      */
     public function dropTable(Form $form): DropTable
     {
@@ -109,6 +110,10 @@ final class StatementRule
         $tables = [];
         foreach ($names as $name) {
             $tables[] = new TargetTable($name);
+        }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (TargetTable $table): array => [$table->name, null, $table], $tables));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node(4))[1] ?? 0, false);
         }
 
         return new DropTable(

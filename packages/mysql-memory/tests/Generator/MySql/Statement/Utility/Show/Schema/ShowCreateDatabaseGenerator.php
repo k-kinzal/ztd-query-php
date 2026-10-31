@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateDatabase
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Server\Database\DatabaseWordGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowCreateDatabase values from the generators of its operands.
@@ -59,10 +58,6 @@ final class ShowCreateDatabaseGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowCreateDatabase $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

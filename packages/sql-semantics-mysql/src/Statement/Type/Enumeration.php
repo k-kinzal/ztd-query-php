@@ -38,6 +38,7 @@ final class Enumeration implements DeclaredName
     public function __construct(public readonly EnumerationKind $kind, array $members, public readonly ?CharsetAttribute $charset = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->members = Check::listOf($members, Text::class, 'An enumeration declares at least one member.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**

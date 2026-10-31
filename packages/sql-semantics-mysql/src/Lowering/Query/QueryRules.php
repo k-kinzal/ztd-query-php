@@ -236,6 +236,7 @@ final class QueryRules
      *
      * @return list<Relation>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a relation name is written twice
      */
     public function tables(Node $list): array
     {

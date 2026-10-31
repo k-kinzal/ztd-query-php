@@ -26,7 +26,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Server\Storage\Option\StorageOptionGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateUndoTablespace values from the generators of its operands.
@@ -47,13 +46,16 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): CreateUndoTablespace => new CreateUndoTablespace(name: $parts[0], datafile: $parts[1], options: array_values(array_filter($parts[2], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::UNDO_TABLESPACE, true))), statementInformation: $parts[3], inputSource: $parts[4], optionsCommas: $parts[5] === null ? null : array_slice($parts[5], 0, max(0, count(array_filter($parts[2], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::UNDO_TABLESPACE, true))) - 1))),
-            Generators::tuple(
-                new NameGenerator($release),
-                new TextGenerator($release),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[2]) === null,
+                Generators::tuple(
+                    new NameGenerator($release),
+                    new TextGenerator($release),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -63,10 +65,6 @@ final class CreateUndoTablespaceGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateUndoTablespace $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

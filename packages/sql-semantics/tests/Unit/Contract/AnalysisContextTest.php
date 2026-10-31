@@ -35,17 +35,6 @@ final class AnalysisContextTest extends TestCase
         self::assertSame([$table], $context->declared(new QualifiedName(new Name('t')), new Name('main')));
     }
 
-    public function testDeclaredKeepsDistinctDeclarationsWithTheSameName(): void
-    {
-        $profile = new LanguageProfile(GrammarRelease::Sqlite3472);
-        $first = new Table(new QualifiedName(new Name('t')), $profile, []);
-        $second = new Table(new QualifiedName(new Name('t')), $profile, []);
-
-        $context = new AnalysisContext($profile, [new Name('main')], [$first, $second]);
-
-        self::assertSame([$first, $second], $context->declared(new QualifiedName(new Name('t')), new Name('main')));
-    }
-
     public function testDeclaredSearchesOneSchemaAndUsesTheDeclarationSchemaForUnqualifiedTables(): void
     {
         $profile = new LanguageProfile(GrammarRelease::Sqlite3472);

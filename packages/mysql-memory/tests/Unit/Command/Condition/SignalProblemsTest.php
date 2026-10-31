@@ -17,15 +17,15 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 #[Small]
 final class SignalProblemsTest extends TestCase
 {
-    public function testAssignmentResolvesTheConditionOperandBeforeItsRoleIsRefused(): void
+    public function testAssignmentAcceptsAResolvedConditionOperand(): void
     {
         $session = (new Instance('5.7.44'))->connect();
-        $statement = $session->analyze("CREATE PROCEDURE d.p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @n := @@missing_variable");
+        $statement = $session->analyze("CREATE PROCEDURE d.p() SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @n := 'text'");
         $problems = array_values(array_filter($statement->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand));
         self::assertCount(1, $problems);
         $session->text = '';
-        $this->expectExceptionCode(1193);
         (new SignalProblems())->assignment($problems[0], $statement, $session);
+        self::assertSame([], $session->diagnostics->conditions);
     }
 
     public function testCheckKeepsTheEarlierConditionBeforeTheDateOperand(): void

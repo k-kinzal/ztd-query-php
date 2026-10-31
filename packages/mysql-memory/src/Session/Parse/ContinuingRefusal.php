@@ -84,14 +84,15 @@ final class ContinuingRefusal
         $notices = [...$notices, ...(new Entry\ProgramInput())->completed($failure->problem, $session), ...(new Entry\Query\Notices())->completed($failure, $session)];
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $contextual = true;
-        $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($parser->parse($statement), $session->semantics()->profile());
-        if ($target !== null && $target->schema === null && $session->variables->database === '') {
+        $tree = $parser->parse($statement);
+        $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($tree, $session->semantics()->profile());
+        if ($session->variables->database === '' && (($target !== null && $target->schema === null) || (new Entry\ImplicitTables())->before($tree, $failure->end, $session->settings()->legacy()))) {
             $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
             $contextual = false;
         }
         $append = array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === [];
         try {
-            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($parser->parse($statement), $statement);
+            (new Syntax(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $session->variables->read('character_set_client'))))->debugOnly($tree, $statement);
         } catch (SqlError $debug) {
             $error = $debug;
             $append = true;

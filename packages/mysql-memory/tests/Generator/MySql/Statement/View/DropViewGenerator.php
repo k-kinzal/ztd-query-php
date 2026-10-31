@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\View\DropView;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Alter\DropBehaviorGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates DropView values from the generators of its operands.
@@ -59,10 +58,6 @@ final class DropViewGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropView $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

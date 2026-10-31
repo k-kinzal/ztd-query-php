@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicas;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Replication\TerminologyGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowReplicas values from the generators of its operands.
@@ -57,10 +56,6 @@ final class ShowReplicasGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowReplicas $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

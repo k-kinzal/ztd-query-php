@@ -17,7 +17,7 @@ final class PluginRuleTest extends TestCase
 {
     public function testWordPreservesGroupingAndQualification(): void
     {
-        self::assertSame("INSTALL COMPONENT 'a' SET x = ((word)), y = c.word", (new Semantics(Dialect::MySql))->analyze("INSTALL COMPONENT 'a' SET x=((word)), y=c.word")->toString());
+        self::assertSame("INSTALL COMPONENT 'a' SET sql_mode = ((word)), max_connections = c.word", (new Semantics(Dialect::MySql))->analyze("INSTALL COMPONENT 'a' SET sql_mode=((word)), max_connections=c.word")->toString());
     }
 
     public function testStatementLowersComponents(): void
@@ -32,6 +32,6 @@ final class PluginRuleTest extends TestCase
 
     public function testSettingLowersPersist(): void
     {
-        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST x := 2", (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze("install component 'a' set persist x := 2")->toString());
+        self::assertSame("INSTALL COMPONENT 'a' SET PERSIST max_connections := 2", (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze("install component 'a' set persist max_connections := 2")->toString());
     }
 }

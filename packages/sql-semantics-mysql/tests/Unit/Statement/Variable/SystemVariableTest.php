@@ -92,7 +92,7 @@ final class SystemVariableTest extends TestCase
 
     public function testRenderRetainsTheLocalScopeSpelling(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.x AS v');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.autocommit AS v');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         self::assertInstanceOf(Select::class, $operation->query);
@@ -100,12 +100,7 @@ final class SystemVariableTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertSame(VariableScope::Local, $item0->expression->scope);
-        self::assertSame('SELECT @@LOCAL.x AS v', $operation->toString());
-    }
-
-    public function testRenderQuotesANameThatIsAReservedWord(): void
-    {
-        self::assertSame('SELECT @@`select`', (new Semantics(Dialect::MySql))->analyze('SELECT @@`select`')->toString());
+        self::assertSame('SELECT @@LOCAL.autocommit AS v', $operation->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
@@ -121,8 +116,8 @@ final class SystemVariableTest extends TestCase
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @@global.x as v')->toString());
-        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @@global.x as v')->toString());
+        self::assertSame('SELECT @@GLOBAL.autocommit AS v', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @@global.autocommit as v')->toString());
+        self::assertSame('SELECT @@GLOBAL.autocommit AS v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @@global.autocommit as v')->toString());
     }
 
     public function testDeriveScalarReportsAStructuredVariableThatIsNoKeyCacheVariable(): void
@@ -144,8 +139,18 @@ final class SystemVariableTest extends TestCase
     public function testStructuredReadsTheNameAfterTheInstanceInMySql57(): void
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
-
-        self::assertEquals([[new UnknownSystemVariable('y', structured: true)], [new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable('sql_mode')]], [$semantics->analyze('SELECT @@x.y')->diagnostics(), $semantics->analyze("SET x.sql_mode = ''")->diagnostics()]);
+        try {
+            $semantics->analyze('SELECT @@x.y');
+            self::fail('The name after the instance is unknown.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new UnknownSystemVariable('y', structured: true), $failure->problem);
+        }
+        try {
+            $semantics->analyze('SELECT @@innodb.sql_mode');
+            self::fail('The variable takes no component.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable('sql_mode'), $failure->problem);
+        }
     }
 
     public function testDeriveScalarTypesAParameterOfANamedKeyCacheAsTheVariable(): void

@@ -27,8 +27,6 @@ use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Expression\RowOperandGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Analysis;
-use Tests\Support\Operands;
 
 /**
  * Generates Kill values from the generators of its operands.
@@ -51,7 +49,7 @@ final class KillGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): Kill => new Kill(scope: $parts[0], process: $parts[1], statementInformation: $parts[2], inputSource: $parts[3]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new ValueRoles())->problem($parts[1]) === null && Operands::aggregateFree($parts[1]),
+                static fn (array $parts): bool => (new ValueRoles())->problem($parts[1]) === null,
                 Generators::tuple(
                     Generators::oneOf(Generators::constant(null), new KillScopeGenerator($release)),
                     Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -72,10 +70,6 @@ final class KillGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Kill $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

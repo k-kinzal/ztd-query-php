@@ -366,9 +366,9 @@ final class GenerationsTest extends TestCase
     }
     public function testOrdinaryLeavesDeferredTypeOperandsOutsideTheStatementRole(): void
     {
-        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Time, '7');
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Time, '6');
         (new Generations())->ordinary($type);
         (new Generations())->ordinary(new NumberLiteral('1'));
-        self::assertSame('7', $type->precision);
+        self::assertSame('6', $type->precision);
     }
 }

@@ -40,11 +40,14 @@ final class BinaryGenerator implements ErisGenerator
             new BinaryKindGenerator($release),
             static fn (BinaryKind $kind): ErisGenerator => Generators::map(
                 static fn (array $parts): Binary => new Binary(kind: $kind, length: $parts[0], inputSource: null),
-                Generators::tuple(match (true) {
-                    $kind === BinaryKind::VarBinary => Generators::map(static fn (int $length): string => (string) $length, Generators::choose(1, 255)),
-                    in_array($kind, [BinaryKind::Binary, BinaryKind::Blob], true) => Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $length): string => (string) $length, Generators::choose(1, 255))),
-                    default => Generators::constant(null),
-                })
+                Generators::suchThat(
+                    static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->binaryLength($kind, $parts[0], '') === null,
+                    Generators::tuple(match (true) {
+                        $kind === BinaryKind::VarBinary => Generators::map(static fn (int $length): string => (string) $length, Generators::choose(1, 255)),
+                        in_array($kind, [BinaryKind::Binary, BinaryKind::Blob], true) => Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $length): string => (string) $length, Generators::choose(1, 255))),
+                        default => Generators::constant(null),
+                    })
+                )
             )
         );
         $this->delegate = Generators::suchThat(

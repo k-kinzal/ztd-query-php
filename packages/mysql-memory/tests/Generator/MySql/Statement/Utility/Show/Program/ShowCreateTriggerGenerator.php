@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateTrigger;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowCreateTrigger values from the generators of its operands.
@@ -56,10 +55,6 @@ final class ShowCreateTriggerGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowCreateTrigger $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

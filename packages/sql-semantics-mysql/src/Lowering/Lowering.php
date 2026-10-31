@@ -72,6 +72,11 @@ final class Lowering
     public ?\SqlSemantics\Statement\Identifier\QualifiedName $columnTable = null;
 
     /**
+     * Whether the input belongs to a stored program body read on its own, without the program's name.
+     */
+    public bool $body = false;
+
+    /**
      * The start_entry alternatives the server enters by a grammar selector token; no SQL text parses to them.
      */
     private const SELECTED = [
@@ -389,7 +394,27 @@ final class Lowering
         $lowering = new self($this->productions, $this->leaves, $this->profile, $this->origins, $this->client, $name ?? $this->programName, canonicalNames: $this->canonicalNames);
         $lowering->hints = $this->hints;
         $lowering->parameterPositions = $this->parameterPositions;
+        $lowering->body = true;
         return $lowering;
+    }
+
+    /**
+     * Reads a stored program body statement on its own, as the completion helpers do, keeping
+     * the stored-form rules of a body without knowing the program's name.
+     */
+    public function inBody(): self
+    {
+        $lowering = $this->inProgram(null);
+        $lowering->columnTable = $this->columnTable;
+        return $lowering;
+    }
+
+    /**
+     * Tells whether the input is read as part of a stored program body.
+     */
+    public function stored(): bool
+    {
+        return $this->programName !== null || $this->body;
     }
 
     /**

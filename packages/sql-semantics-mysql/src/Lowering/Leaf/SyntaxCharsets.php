@@ -41,9 +41,10 @@ final class SyntaxCharsets
         if (!in_array($previous?->name, ['NAMES_SYM', 'USING'], true)) {
             return null;
         }
-        $name = $lowering->charsets->charset($node)->name;
-        if ($previous->name === 'NAMES_SYM' && $name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name->value) === null) {
-            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name->value), true);
+        try {
+            $name = $lowering->charsets->charset($node)->name;
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
         }
         $notice = $name === null ? null : \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charsetWarning($name->value);
 

@@ -58,12 +58,9 @@ final class EventScheduleTest extends TestCase
     public function testStatementUsesTheScheduleOrderWithoutReadingTheRequestLabel(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('CREATE EVENT d.e ON SCHEDULE AT (SELECT 1 FROM missing)+@@HELP DO SELECT 1');
-        self::assertInstanceOf(M\Routine\CreateEvent::class, $statement);
-        $session->text = 'unrelated invalid input';
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1046);
-        (new EventSchedule())->statement($statement, $session);
+        $reply = $session->run('CREATE EVENT d.e ON SCHEDULE AT (SELECT 1 FROM missing)+@@HELP DO SELECT 1')[0];
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1046, $reply->getCode());
     }
 
 }

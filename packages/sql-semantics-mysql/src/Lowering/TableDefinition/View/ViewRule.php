@@ -174,6 +174,10 @@ final class ViewRule
         try {
             $read = $this->lowering->queries->statement($query->node(0));
         } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            $variable = $failure->aborts ? null : $this->variables($query->node(0));
+            if ($variable !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Variable, $variable, false, $failure->sources);
+            }
             if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedIntoSetOperand) {
                 $this->body($identity, $failure->problem->operand, $definer, $alter, $failure->end);
             }
@@ -188,6 +192,22 @@ final class ViewRule
         $this->lowering->origins->forget($read);
         $this->body($identity, $read->query, $definer, $alter, (new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0);
         return new ViewDefinition($identity, $read->query, $columns, $algorithm, $definer, self::SECURITY[$suid->signature], self::CHECKS[$check->signature], $exists);
+    }
+
+    /**
+     * Finds the first user variable, system variable or parameter marker written in a view body, as its
+     * offset. The server refuses such a body before resolving the names in it, so the refusal of a name
+     * the body also carries is reported as the body restriction, placed at that variable.
+     */
+    public function variables(Node $body): ?int
+    {
+        foreach ($body->tokens() as $token) {
+            if ($token->text === '@' || $token->text === '?') {
+                return $token->offset;
+            }
+        }
+
+        return null;
     }
 
     /**

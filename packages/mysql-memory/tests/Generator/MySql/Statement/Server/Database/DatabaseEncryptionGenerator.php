@@ -39,11 +39,9 @@ final class DatabaseEncryptionGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): DatabaseEncryption => $parts[0] instanceof Encryption
-                ? new DatabaseEncryption(encryption: $parts[0], spelling: $parts[1] ? new Text(strtolower($parts[0]->value)) : null, inputSource: null, operator: $parts[2], defaultKeyword: $parts[3])
-                : new DatabaseEncryption(encryption: $parts[0], spelling: null, inputSource: null, operator: $parts[2], defaultKeyword: $parts[3]),
+            static fn (array $parts): DatabaseEncryption => new DatabaseEncryption(encryption: $parts[0], spelling: $parts[1] ? new Text(strtolower($parts[0]->value)) : null, inputSource: null, operator: $parts[2], defaultKeyword: $parts[3]),
             Generators::tuple(
-                Generators::bind(Generators::bool(), static fn (bool $setting): ErisGenerator => $setting ? new EncryptionGenerator($release) : Generators::suchThat(static fn (Text $text): bool => Encryption::fromOperand($text->value) === null, new TextGenerator($release))),
+                new EncryptionGenerator($release),
                 Generators::bool(),
                 Generators::oneOf(Generators::constant(null), new AssignmentOperatorGenerator($release)),
                 Generators::bool()

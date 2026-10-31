@@ -34,16 +34,17 @@ final class MaintainedTablesTest extends TestCase
         self::assertCount(1, array_filter($derivation->facts()->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof NonUniqueTable));
     }
 
-    public function testCheckedRetainsRepeatedIdentitiesAndLaterTargets(): void
+    public function testCheckedRetainsDistinctTargetsInOrder(): void
     {
-        $tables = [new MaintainedTable(new QualifiedName(new Name('t'))), new MaintainedTable(new QualifiedName(new Name('t'))), new MaintainedTable(new QualifiedName(new Name('later')))];
+        $tables = [new MaintainedTable(new QualifiedName(new Name('t'))), new MaintainedTable(new QualifiedName(new Name('t'), new Name('d'))), new MaintainedTable(new QualifiedName(new Name('later')))];
 
         self::assertSame($tables, (new MaintainedTables())->checked($tables));
     }
 
-    public function testDeriveKeepsTheLaterOccurrenceOnTheDuplicateDiagnostic(): void
+    public function testDeriveReportsAWrittenDatabaseThatNamesTheCurrentOne(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE t, t, later');
+        $semantics = new Semantics(Dialect::MySql);
+        $statement = $semantics->analyze('ANALYZE TABLE t, pbt.t, later', $semantics->context(searchPath: new \SqlSemantics\Contract\SearchPath('pbt')));
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable::class, $statement);
         $duplicates = array_values(array_filter($statement->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof NonUniqueTable));
 

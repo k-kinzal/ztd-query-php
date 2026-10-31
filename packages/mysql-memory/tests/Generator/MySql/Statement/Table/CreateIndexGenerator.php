@@ -41,7 +41,6 @@ use Tests\Generator\MySql\Statement\Table\Key\Option\IndexVisibilityGenerator;
 use Tests\Generator\MySql\Statement\Table\Key\Option\KeyBlockSizeGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateIndex values from the generators of its operands.
@@ -106,10 +105,6 @@ final class CreateIndexGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateIndex $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

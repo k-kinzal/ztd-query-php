@@ -64,7 +64,7 @@ final class TypeLimits
      */
     public function problem(TypeName $type, string $name, \SqlSemantics\Contract\GrammarRelease $release): ?InvalidTypeSize
     {
-        $problem = $this->width($type, $name) ?? ($type instanceof Floating || $type instanceof Decimal ? $this->fractional($type, $name) : $this->simple($type, $name));
+        $problem = $type instanceof Floating || $type instanceof Decimal ? $this->fractional($type, $name) : $this->simple($type, $name);
 
         return $problem?->rule === TypeLimit::Empty && $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : $problem;
     }
@@ -84,6 +84,14 @@ final class TypeLimits
             default => null,
         };
 
+        return $this->overflow($length, $name);
+    }
+
+    /**
+     * Answers the display length, precision or width that exceeds the unsigned 32-bit bound, if any.
+     */
+    public function overflow(?string $length, string $name): ?InvalidTypeSize
+    {
         return (int) $length > 4294967295 ? new InvalidTypeSize(TypeLimit::Width, $name, (int) $length, 4294967295) : null;
     }
 
@@ -92,22 +100,60 @@ final class TypeLimits
      */
     public function simple(TypeName $type, string $name): ?InvalidTypeSize
     {
-        if (($type instanceof Character && $type->kind === CharacterKind::Char) || ($type instanceof Binary && $type->kind === BinaryKind::Binary)) {
-            return (int) $type->length > 255 ? new InvalidTypeSize(TypeLimit::Length, $name, (int) $type->length, 255) : null;
-        }
-        if ($type instanceof Elementary && $type->kind === ElementaryKind::Bit && $type->length !== null) {
-            $size = (int) $type->length;
+        return match (true) {
+            $type instanceof Character => $this->characterLength($type->kind, $type->length, $name),
+            $type instanceof Binary => $this->binaryLength($type->kind, $type->length, $name),
+            $type instanceof Elementary => $this->elementaryLength($type->kind, $type->length, $name),
+            $type instanceof Integral => $this->integralWidth($type->width, $name),
+            $type instanceof Temporal => $this->temporalPrecision($type->kind, $type->precision, $name),
+            default => null,
+        };
+    }
 
-            return $size === 0 ? new InvalidTypeSize(TypeLimit::Empty, $name) : ($size > 64 ? new InvalidTypeSize(TypeLimit::Width, $name, $size, 64) : null);
-        }
-        if ($type instanceof Integral && $type->width !== null && (int) $type->width > 255) {
-            return new InvalidTypeSize(TypeLimit::Width, $name, (int) $type->width, 255);
-        }
-        if ($type instanceof Temporal && in_array($type->kind, [TemporalKind::Time, TemporalKind::DateTime, TemporalKind::Timestamp], true) && (int) $type->precision > 6) {
-            return new InvalidTypeSize(TypeLimit::Precision, $name, (int) $type->precision, 6);
-        }
+    /**
+     * Answers the bound a CHAR length exceeds: 255 characters (ER_TOO_BIG_FIELDLENGTH).
+     */
+    public function characterLength(CharacterKind $kind, ?string $length, string $name): ?InvalidTypeSize
+    {
+        return $this->overflow($length, $name) ?? ($kind === CharacterKind::Char && (int) $length > 255 ? new InvalidTypeSize(TypeLimit::Length, $name, (int) $length, 255) : null);
+    }
 
-        return null;
+    /**
+     * Answers the bound a BINARY length exceeds: 255 bytes (ER_TOO_BIG_FIELDLENGTH).
+     */
+    public function binaryLength(BinaryKind $kind, ?string $length, string $name): ?InvalidTypeSize
+    {
+        return $this->overflow($length, $name) ?? ($kind === BinaryKind::Binary && (int) $length > 255 ? new InvalidTypeSize(TypeLimit::Length, $name, (int) $length, 255) : null);
+    }
+
+    /**
+     * Answers the bound a BIT width exceeds: an empty width (which 5.6 accepts, so the caller's release decides) or more than 64 bits.
+     */
+    public function elementaryLength(ElementaryKind $kind, ?string $length, string $name): ?InvalidTypeSize
+    {
+        $overflow = $this->overflow($length, $name);
+        if ($overflow !== null || $kind !== ElementaryKind::Bit || $length === null) {
+            return $overflow;
+        }
+        $size = (int) $length;
+
+        return $size === 0 ? new InvalidTypeSize(TypeLimit::Empty, $name) : ($size > 64 ? new InvalidTypeSize(TypeLimit::Width, $name, $size, 64) : null);
+    }
+
+    /**
+     * Answers the bound an integer display width exceeds: 255 (ER_TOO_BIG_DISPLAYWIDTH).
+     */
+    public function integralWidth(?string $width, string $name): ?InvalidTypeSize
+    {
+        return $this->overflow($width, $name) ?? ($width !== null && (int) $width > 255 ? new InvalidTypeSize(TypeLimit::Width, $name, (int) $width, 255) : null);
+    }
+
+    /**
+     * Answers the bound a fractional-second precision exceeds: 6 (ER_TOO_BIG_PRECISION).
+     */
+    public function temporalPrecision(TemporalKind $kind, ?string $precision, string $name): ?InvalidTypeSize
+    {
+        return in_array($kind, [TemporalKind::Time, TemporalKind::DateTime, TemporalKind::Timestamp], true) && (int) $precision > 6 ? new InvalidTypeSize(TypeLimit::Precision, $name, (int) $precision, 6) : null;
     }
 
     /**
@@ -115,21 +161,44 @@ final class TypeLimits
      */
     public function fractional(Floating|Decimal $type, string $name): ?InvalidTypeSize
     {
-        $precision = $type->precision === null ? 10 : (int) $type->precision;
-        $scale = (int) $type->scale;
-        if ($type instanceof Floating && $type->scale === null) {
-            return $type->precision !== null && $precision > 53 ? new InvalidTypeSize(TypeLimit::Specifier, $name) : null;
+        return $this->fractionalParts($type instanceof Decimal, $type->precision, $type->scale, $name);
+    }
+
+    /**
+     * Answers the first invalid width, precision or scale of DECIMAL or a floating-point type written as parts.
+     */
+    public function fractionalParts(bool $decimal, ?string $precision, ?string $scale, string $name): ?InvalidTypeSize
+    {
+        $overflow = $this->overflow($precision, $name);
+        if ($overflow !== null) {
+            return $overflow;
         }
-        if ($scale > 30) {
-            return new InvalidTypeSize(TypeLimit::Scale, $name, $scale, 30);
+        $digits = $precision === null ? 10 : (int) $precision;
+        $fraction = (int) $scale;
+        if (!$decimal && $scale === null) {
+            return $precision !== null && $digits > 53 ? new InvalidTypeSize(TypeLimit::Specifier, $name) : null;
         }
-        if ($type instanceof Floating && ($precision === 0 || $precision > 255)) {
-            return new InvalidTypeSize(TypeLimit::Width, $name, $precision, 255);
+        if ($fraction > 30) {
+            return new InvalidTypeSize(TypeLimit::Scale, $name, $fraction, 30);
         }
-        if ($type instanceof Decimal && $precision > 65) {
-            return new InvalidTypeSize(TypeLimit::Precision, $name, $precision >= 2147483648 ? $precision - 4294967296 : $precision, 65);
+        if (!$decimal && ($digits === 0 || $digits > 255)) {
+            return new InvalidTypeSize(TypeLimit::Width, $name, $digits, 255);
+        }
+        if ($decimal && $digits > 65) {
+            return new InvalidTypeSize(TypeLimit::Precision, $name, $digits >= 2147483648 ? $digits - 4294967296 : $digits, 65);
         }
 
-        return $precision < $scale ? new InvalidTypeSize(TypeLimit::ScaleExceedsPrecision, $name) : null;
+        return $digits < $fraction ? new InvalidTypeSize(TypeLimit::ScaleExceedsPrecision, $name) : null;
+    }
+
+    /**
+     * Refuses a declaration outside the bounds every release shares; the empty BIT width 5.6 accepts stays a release rule.
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the declaration exceeds a shared bound
+     */
+    public function invariant(TypeName $type): void
+    {
+        $problem = $this->problem($type, '', \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        \SqlSemantics\Diagnostic\Check::input($problem === null, $problem === null ? '' : $problem->message());
     }
 }

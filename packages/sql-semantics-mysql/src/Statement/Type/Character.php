@@ -48,6 +48,7 @@ final class Character implements DeclaredName
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');
         Check::input(!$national || $kind === CharacterKind::Char || $kind === CharacterKind::VarChar, 'Only CHAR and VARCHAR have a national form.');
         Check::input(!$national || $charset === null || $charset->form === CharsetForm::Binary, 'A national character type takes the BINARY attribute alone.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**

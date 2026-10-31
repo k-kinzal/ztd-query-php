@@ -123,12 +123,18 @@ final class StringTypeRule
                 $this->keyword($form->node(0));
             }
 
-            return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($form->node->tokens()[0]->text)));
+            $size = $length === null ? null : $this->parts->length($form->node($length));
+            $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->characterLength($kind, $size, $this->lowering->types->name), $form);
+
+            return new Character($kind, $size, false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($form->node->tokens()[0]->text)));
         }
         if (isset(self::BINARIES[$form->signature])) {
             [$kind, $length] = self::BINARIES[$form->signature];
 
-            return new Binary($kind, $length === null ? null : $this->parts->length($form->node($length)));
+            $size = $length === null ? null : $this->parts->length($form->node($length));
+            $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->binaryLength($kind, $size, $this->lowering->types->name), $form);
+
+            return new Binary($kind, $size);
         }
         if (isset(self::ENUMERATIONS[$form->signature])) {
             return new Enumeration(self::ENUMERATIONS[$form->signature], $this->lowering->literals->texts($form->node(2)), $this->parts->charset($form->node(4)));
@@ -162,7 +168,10 @@ final class StringTypeRule
 
         $words = ($long ? 'LONG ' : '') . implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $keyword->node->tokens()));
 
-        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($words)));
+        $size = $length === null ? null : $this->parts->length($form->node($length));
+        $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->characterLength($kind, $size, $this->lowering->types->name), $form);
+
+        return new Character($kind, $size, false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($words)));
     }
 
     /**
@@ -180,7 +189,10 @@ final class StringTypeRule
 
         $words = implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(0)->tokens()));
 
-        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), true, $this->parts->nationalAttribute($form->node($binary)), alias: CharacterAlias::tryFrom(strtoupper($words)));
+        $size = $length === null ? null : $this->parts->length($form->node($length));
+        $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->characterLength($kind, $size, $this->lowering->types->name), $form);
+
+        return new Character($kind, $size, true, $this->parts->nationalAttribute($form->node($binary)), alias: CharacterAlias::tryFrom(strtoupper($words)));
     }
 
     /**

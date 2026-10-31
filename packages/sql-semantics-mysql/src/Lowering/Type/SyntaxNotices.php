@@ -30,8 +30,14 @@ final class SyntaxNotices
      */
     public function collation(Node $node, Lowering $lowering, int $end): array
     {
-        $notice = in_array($node->name, ['opt_collate', 'opt_collate_explicit'], true)
-            ? $lowering->charsets->collation($node)?->deprecation($lowering->profile->grammar) : null;
+        if (!in_array($node->name, ['opt_collate', 'opt_collate_explicit'], true)) {
+            return [];
+        }
+        try {
+            $notice = $lowering->charsets->collation($node)?->deprecation($lowering->profile->grammar);
+        } catch (\SqlSemantics\Construction\RejectedInput) {
+            return [];
+        }
         if ($notice === null) {
             return [];
         }
@@ -48,7 +54,12 @@ final class SyntaxNotices
     public function completed(Node $node, Lowering $lowering): array
     {
         if ($node->name === 'type') {
-            $type = $lowering->types->type($node);
+            try {
+                $type = $lowering->types->type($node);
+            } catch (\SqlSemantics\Construction\RejectedInput) {
+                // The server warns about the written parts before refusing the size.
+                return array_values(array_filter($lowering->types->deprecations($node), static fn (Deprecated $notice): bool => $notice->warnedIn($lowering->profile->grammar)));
+            }
             $notices = $type instanceof Integral || $type instanceof Decimal || $type instanceof Floating ? (new TypeNotices())->numericWarnings($type) : [];
             if ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Temporal) {
                 $notices = (new TypeNotices())->temporalWarnings($type);
@@ -60,7 +71,11 @@ final class SyntaxNotices
             return array_values(array_filter($notices, static fn (Deprecated $notice): bool => $notice->warnedIn($lowering->profile->grammar)));
         }
         if ($node->name === 'default_charset') {
-            $name = $lowering->charsets->charset($node)->name;
+            try {
+                $name = $lowering->charsets->charset($node)->name;
+            } catch (\SqlSemantics\Construction\RejectedInput) {
+                return [];
+            }
             $attribute = $name === null ? null : new \SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named, $name);
         } elseif (in_array($node->name, ['ascii', 'unicode'], true)) {
             $attribute = $lowering->types->parts->shorthand($node);

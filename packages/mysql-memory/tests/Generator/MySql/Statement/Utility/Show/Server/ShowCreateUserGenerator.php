@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCreateUser;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowCreateUser values from the generators of its operands.
@@ -56,10 +55,6 @@ final class ShowCreateUserGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowCreateUser $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

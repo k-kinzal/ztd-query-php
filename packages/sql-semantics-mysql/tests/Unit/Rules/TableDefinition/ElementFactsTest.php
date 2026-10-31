@@ -76,17 +76,15 @@ final class ElementFactsTest extends TestCase
         self::assertSame(Nullability::NotNull, (new ElementFacts())->declaration($column)->nullability);
     }
 
-    public function testOptionsPreservesTheOrderOfAbortingNameFailures(): void
+    public function testOptionsAreNeverDerivedForACharacterSetTheReadingRefuses(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) CHARACTER SET missing COLLATE other AS SELECT BINARY 1');
-        $warnings = $create->warnings();
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warnings[0]->problem);
-        self::assertTrue($warnings[0]->aborts);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[1]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $warnings[1]->problem);
-        self::assertTrue($warnings[1]->aborts);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) CHARACTER SET missing COLLATE other AS SELECT BINARY 1');
+            self::fail('The character set does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $failure->problem);
+            self::assertSame('missing', $failure->problem->name);
+        }
     }
 
     public function testEncodingRejectsACollationBeforeItsFirstReleaseWithoutSql(): void

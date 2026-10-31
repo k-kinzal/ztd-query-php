@@ -271,4 +271,27 @@ final class BlockRuleTest extends TestCase
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE a INT; DECLARE k CURSOR FOR SELECT 1; OPEN k; FETCH NEXT FROM k INTO a; FETCH FROM k INTO a; FETCH k INTO a; CLOSE k; END', $operation->toString());
         self::assertSame([], $operation->diagnostics());
     }
+
+    public function testSizedRefusesADeclaredTypeOutsideItsBounds(): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE v DECIMAL(70); END');
+            self::fail('The precision exceeds 65.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Too-big precision 70 specified for ''. Maximum is 65.", $failure->problem->message());
+        }
+    }
+
+    public function testDeclaredPlacesARefusedTypeAtTheEndOfTheDeclaration(): void
+    {
+        $sql = 'CREATE PROCEDURE p() BEGIN DECLARE a INT(256) DEFAULT (SELECT 1); END';
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze($sql);
+            self::fail('The display width exceeds 255.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Display width out of range for column '' (max = 255)", $failure->problem->message());
+            self::assertSame(strpos($sql, '; END'), $failure->end);
+            self::assertTrue($failure->aborts);
+        }
+    }
 }

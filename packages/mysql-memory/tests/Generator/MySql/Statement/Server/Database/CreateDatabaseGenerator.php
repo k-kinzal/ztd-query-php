@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateDatabase values from the generators of its operands.
@@ -44,13 +43,16 @@ final class CreateDatabaseGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): CreateDatabase => new CreateDatabase(ifNotExists: $parts[0], name: $parts[1], options: array_values(array_filter($parts[2], static fn ($option): bool => !$option instanceof DatabaseReadOnly)), statementInformation: $parts[3], inputSource: $parts[4], databaseWord: $parts[5]),
-            Generators::tuple(
-                Generators::bool(),
-                new NameGenerator($release),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DatabaseOptionGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null),
-                new DatabaseWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($parts[2]) === null,
+                Generators::tuple(
+                    Generators::bool(),
+                    new NameGenerator($release),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DatabaseOptionGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    new DatabaseWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -60,10 +62,6 @@ final class CreateDatabaseGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateDatabase $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

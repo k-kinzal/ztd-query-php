@@ -16,13 +16,16 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
- * A stored COLLATE whose operand requires invocation-time preparation.
+ * A stored COLLATE whose meaning is bound when the program runs.
  *
- * The collation name and complete operand are retained without admitting a
- * non-scalar value into Scalar. Name lookup keeps its release-specific phase.
+ * The operand may require invocation-time preparation, or the collation name
+ * may be one MySQL 5.6 and 5.7 resolve only when the statement runs. The name
+ * and the complete operand are retained without admitting a non-scalar value
+ * into Scalar. Name lookup keeps its release-specific phase.
  *
  * @visibility public
  * @example Preserving a row and its explicit collation
@@ -35,15 +38,16 @@ final class DeferredCollated implements DeferredOperand
     use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param RowOperand|DeferredOperand $operand The retained preparation dependency
+     * @param Scalar|RowOperand|DeferredOperand $operand The retained operand
      * @param Name $collation The explicit collation name
      */
-    public function __construct(public readonly RowOperand|DeferredOperand $operand, public readonly Name $collation, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    public function __construct(public readonly Scalar|RowOperand|DeferredOperand $operand, public readonly Name $collation, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         if ($scalarInformation !== null) {
             $this->initializeScalarInformation($scalarInformation);
         }
         Check::input((new Precedence())->fits($operand, Precedence::COLLATION, Precedence::SIMPLE_EXPR), 'The operand of COLLATE needs a grouping to keep its place.');
+        Check::input(!$operand instanceof Scalar || \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($collation->value) === null, 'A stored COLLATE of a plain scalar names a collation the server resolves only when the statement runs.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -57,7 +61,7 @@ final class DeferredCollated implements DeferredOperand
     }
 
     /**
-     * @return non-empty-list<RowOperand|DeferredOperand> The retained operand
+     * @return non-empty-list<Scalar|RowOperand|DeferredOperand> The retained operand
      */
     public function operands(): array
     {
@@ -69,6 +73,10 @@ final class DeferredCollated implements DeferredOperand
      */
     public function problem(): Diagnostic
     {
+        if ($this->operand instanceof Scalar) {
+            return new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($this->collation->value, $this);
+        }
+
         return (new DeferredArguments())->problem($this->operands());
     }
 

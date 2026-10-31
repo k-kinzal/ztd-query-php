@@ -36,8 +36,8 @@ final class ProgramInputTest extends TestCase
      */
     public static function providerTypeCompletions(): iterable
     {
-        yield 'parameter' => ["CREATE PROCEDURE p(x ENUM('v','v'), a INT(256)) SELECT SQL_NO_CACHE 1", [1291, 1681, 1439]];
-        yield 'return' => ["CREATE FUNCTION f(x ENUM('v','v')) RETURNS INT(256) RETURN 1", [1291, 1681, 1439]];
+        yield 'parameter' => ['CREATE PROCEDURE p(x INT(11), a INT(256)) SELECT SQL_NO_CACHE 1', [1681, 1681, 1439]];
+        yield 'return' => ['CREATE FUNCTION f(x INT(11)) RETURNS INT(256) RETURN 1', [1681, 1681, 1439]];
         yield 'local' => ['CREATE PROCEDURE p() BEGIN DECLARE a INT(256); SELECT SQL_NO_CACHE 1; END', [1681, 1439]];
         yield 'local default' => ['CREATE PROCEDURE p() BEGIN DECLARE a INT(256) DEFAULT (SELECT SQL_NO_CACHE 1); SELECT SQL_CALC_FOUND_ROWS 1; END', [1681, 1681, 1439]];
     }
@@ -51,27 +51,6 @@ final class ProgramInputTest extends TestCase
         $session = (new Instance('8.4.7', ['sql_mode' => ''], ['d']))->connect(database: 'd');
         $session->run($sql);
         self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
-    }
-
-    public function testRetainedOrdersDirectTypeFailureAfterTheEarlierParameterNote(): void
-    {
-        $session = (new Instance('8.4.7', ['sql_mode' => ''], ['d']))->connect(database: 'd');
-        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('v'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('v')]);
-        $parameters = new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([
-            new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('x'), $type),
-            new \SqlSemantics\Platform\MySql\Statement\Routine\Parameter(new Name('a'), new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int, '256')),
-        ]);
-        $create = new \SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure(new QualifiedName(new Name('p')), $parameters, new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Block());
-        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context(), $create);
-        $session->text = 'A direct type declaration without SQL';
-        try {
-            (new \MySqlMemory\Session\Execution($session))->statement($statement);
-            self::fail('The completed type exceeds the integer display-width limit.');
-        } catch (\MySqlMemory\Error\SqlError $error) {
-            self::assertSame(1439, $error->getCode());
-        }
-        self::assertSame([1291, 1681, 1439], array_column($session->diagnostics->conditions, 1));
-        self::assertSame('A direct type declaration without SQL', $session->text);
     }
 
     public function testRetainedInterleavesHeaderNotesAndStopsAtTheBodyCondition(): void

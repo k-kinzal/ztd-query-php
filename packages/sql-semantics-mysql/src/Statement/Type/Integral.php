@@ -43,6 +43,7 @@ final class Integral implements DeclaredName
         Check::input($alias === null || $alias->kind() === $kind, 'A type synonym must match its canonical type role.');
         Check::input($width === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $width) === 1, 'A display width is an unsigned number.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**

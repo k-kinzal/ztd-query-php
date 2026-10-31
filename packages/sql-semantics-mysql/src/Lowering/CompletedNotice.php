@@ -24,6 +24,7 @@ final class CompletedNotice
 {
     /**
      * Interprets one completed production before the caller orders its notices.
+     * @throws \SqlSemantics\Construction\RejectedInput When a completed operand is one the server refuses while reading
      */
     public function of(Node $node, Lowering $lowering, ReductionParser $parser, string $statement, ?\SqlParser\Lexer\Token $lookahead = null, bool $malformed = false): Deprecated|\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation|ParseFailure|null
     {
@@ -63,6 +64,7 @@ final class CompletedNotice
 
     /**
      * Interprets completed stored-program conditions, parameters and instructions.
+     * @throws \SqlSemantics\Construction\RejectedInput When a completed program operand is one the server refuses while reading
      */
     public function program(Node $node, Lowering $lowering): ?ParseFailure
     {

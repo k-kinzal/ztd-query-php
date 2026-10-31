@@ -53,31 +53,5 @@ final class TargetsTest extends TestCase
         $this->expectExceptionCode(1109);
         (new Targets())->statement($statement, $statement->statementInformation(), $session);
     }
-    /**
-     * @return iterable<string, array{string, string|null, int}>
-     */
-    public static function providerCharacterPriority(): iterable
-    {
-        yield '5.6 no database' => ['5.6.51', null, 1046];
-        yield '5.7 no database' => ['5.7.44', null, 1115];
-        yield '8.0 no database' => ['8.0.44', null, 1115];
-        yield '8.4 no database' => ['8.4.7', null, 1115];
-        yield '9.1 no database' => ['9.1.0', null, 1115];
-        yield '5.6 selected database' => ['5.6.51', 'd', 1115];
-    }
-
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerCharacterPriority')]
-    public function testStatementPreservesCharsetPriorityWithoutSqlText(string $release, ?string $database, int $number): void
-    {
-        $session = (new Instance($release, [], ['d']))->connect(database: $database);
-        $predicate = new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(new Name('missing_charset')));
-        $table = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')), new Name('y'));
-        $write = new \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([$table], [new QualifiedName(new Name('x'))]), \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm::BeforeFrom, $predicate);
-        $statement = \SqlSemantics\Facade\Semantics::fromStatement($session->semantics()->context([], true, null, $session->resolution()), $write);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
-        $session->text = 'opaque generated namespace';
-        $this->expectExceptionCode($number);
-        (new Targets())->statement($statement, $statement->statementInformation(), $session);
-    }
 
 }

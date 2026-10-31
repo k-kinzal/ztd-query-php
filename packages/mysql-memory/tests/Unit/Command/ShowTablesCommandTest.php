@@ -36,8 +36,8 @@ final class ShowTablesCommandTest extends TestCase
     {
         $session = (new Instance())->connect();
         $statement = new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables(database: new \SqlSemantics\Statement\Identifier\Name('other'));
-        $statement1 = (new \Tests\Support\Embedding())->statement($statement);
-        $headings = (new ShowTablesCommand())->headings((new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement1, [], new \SqlSemantics\Contract\LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new \Tests\Support\Bindings())->parameters($statement1))), $session);
+        $statement1 = $statement;
+        $headings = (new ShowTablesCommand())->headings((new \MySqlMemory\Session\Statement\Binding())->operation($session, $statement1, [], new \SqlSemantics\Contract\LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native)), $session);
         self::assertCount(1, $headings);
         self::assertSame('Tables_in_other', $headings[0]->name);
         self::assertSame('tables', $headings[0]->originalTable);

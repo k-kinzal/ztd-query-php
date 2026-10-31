@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateTable;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Utility\Show\InspectedTableGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowCreateTable values from the generators of its operands.
@@ -56,10 +55,6 @@ final class ShowCreateTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowCreateTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

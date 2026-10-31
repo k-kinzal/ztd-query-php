@@ -50,7 +50,7 @@ final class DeferredCharGenerator implements ErisGenerator
                     2 => new DeferredOperandGenerator($release, $depth - 1),
                     default => throw new LogicException('Unreachable alternative.'),
                 }))),
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $charset): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($charset->name), Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::all($release)))),
                 Generators::constant(null),
                 Generators::constant(null),
                 new DeferredOperandGenerator($release, $depth - 1)

@@ -133,9 +133,9 @@ final class InputPrefix
                 if ($conflict !== null) {
                     return $conflict;
                 }
-                $frame->declarations[] = (new BlockRule($this->lowering))->declaration($node);
+                $frame->declarations[] = (new BlockRule($this->lowering->inBody()))->declaration($node);
             } else {
-                $frame->statements[] = (new StatementRule($this->lowering))->statement($node);
+                $frame->statements[] = (new StatementRule($this->lowering->inBody()))->statement($node);
             }
         } catch (RejectedInput $failure) {
             return $failure;

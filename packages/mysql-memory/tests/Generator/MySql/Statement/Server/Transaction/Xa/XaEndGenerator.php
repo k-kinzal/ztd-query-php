@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaEnd;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates XaEnd values from the generators of its operands.
@@ -61,10 +60,6 @@ final class XaEndGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (XaEnd $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

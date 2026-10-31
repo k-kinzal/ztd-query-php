@@ -18,16 +18,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Platform\MySql\Statement\Call\CallArgument;
-use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
-use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
@@ -35,18 +27,11 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics as D;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
-use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(DebugRequest::class)]
 #[Medium]
@@ -58,14 +43,14 @@ final class DebugRequestTest extends TestCase
         $session->diagnostics->error(1327, 'Undeclared variable: previous');
         $statement = new ShowParseTree(new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), new Block()));
         $session->text = 'unrelated input';
-        $statement1 = (new Embedding())->statement($statement);
-        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $statement1 = $statement;
+        $parameters1 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
@@ -85,14 +70,14 @@ final class DebugRequestTest extends TestCase
         $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement, new \SqlSemantics\Statement\Source\SourceMap());
         $problem = (new DebugRequest())->operand($operation);
         self::assertSame('Undeclared variable: x', $problem?->message());
-        $statement2 = (new Embedding())->statement($statement);
-        $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
+        $statement2 = $statement;
+        $parameters2 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
+            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), $parameters2);
         } catch (SqlError $executionError) {
             $result2 = $executionError;
@@ -134,8 +119,6 @@ final class DebugRequestTest extends TestCase
      */
     public static function providerOperands(): iterable
     {
-        yield 'continuing parse error' => [new Collated(new NumberLiteral('1'), new Name('missing')), [1273, 1064]];
-        yield 'aborting charset' => [new CharsetConversion(new NumberLiteral('1'), new CharsetName(new Name('missing'))), [1115]];
         yield 'later date interpretation' => [new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, 'bad'), [1064]];
         yield 'later time interpretation' => [new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time, 'bad'), [1064]];
         yield 'later timestamp interpretation' => [new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp, 'bad'), [1064]];
@@ -156,20 +139,6 @@ final class DebugRequestTest extends TestCase
         self::assertSame($codes[0], $error->getCode());
         self::assertTrue($error->recorded);
         self::assertSame($codes, array_column($session->diagnostics->conditions, 1));
-    }
-
-    public function testRefusalLeavesContextualizationConditionsForTheirOwnStage(): void
-    {
-        $session = (new Instance())->connect();
-        $session->text = 'unrelated invalid input';
-        $partitioning = new PartitionClause(new HashMethod(false, new Collated(new FunctionCall(new Name('ABS'), [new CallArgument(new NumberLiteral('1'))]), new Name('missing'))), null, null, []);
-        $statement = new ShowParseTree(new CreateTable(new QualifiedName(new Name('t')), [new ColumnDefinition(new ColumnName(new Name('a')), new OrdinaryColumn(new Integral(IntegralKind::Int)))], partitioning: $partitioning));
-        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($session->semantics()->context([], true, null, $session->resolution([])), $statement, new \SqlSemantics\Statement\Source\SourceMap());
-
-        $error = (new DebugRequest())->refusal($operation, (new InternalCommand())->error($operation), $session);
-
-        self::assertSame(1273, $error->getCode());
-        self::assertSame([1273, 1064], array_column($session->diagnostics->conditions, 1));
     }
 
     public function testRefusalPreservesTheColumnlessInputWithTheSameContextualCondition(): void

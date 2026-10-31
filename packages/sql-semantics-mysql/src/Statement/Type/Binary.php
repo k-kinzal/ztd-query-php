@@ -33,6 +33,7 @@ final class Binary implements DeclaredName
         Check::input($kind !== BinaryKind::VarBinary || $length !== null, 'A VARBINARY declaration requires a length.');
         Check::input($length === null || in_array($kind, [BinaryKind::Binary, BinaryKind::VarBinary, BinaryKind::Blob], true), 'Only BINARY, VARBINARY and BLOB take a length.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**

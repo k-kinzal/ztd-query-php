@@ -26,7 +26,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Server\Storage\Option\StorageOptionGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateTablespace values from the generators of its operands.
@@ -47,14 +46,17 @@ final class CreateTablespaceGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): CreateTablespace => new CreateTablespace(name: $parts[0], datafile: $parts[1], logfileGroup: $parts[2], options: array_values(array_filter($parts[3], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::TABLESPACE, true))), statementInformation: $parts[4], inputSource: $parts[5], optionsCommas: $parts[6] === null ? null : array_slice($parts[6], 0, max(0, count(array_filter($parts[3], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::TABLESPACE, true))) - 1))),
-            Generators::tuple(
-                new NameGenerator($release),
-                Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[3]) === null,
+                Generators::tuple(
+                    new NameGenerator($release),
+                    Generators::oneOf(Generators::constant(null), new TextGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -64,10 +66,6 @@ final class CreateTablespaceGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateTablespace $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

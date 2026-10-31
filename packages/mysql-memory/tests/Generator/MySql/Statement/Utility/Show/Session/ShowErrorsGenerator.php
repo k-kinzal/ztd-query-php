@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowErrors values from the generators of its operands.
@@ -60,10 +59,6 @@ final class ShowErrorsGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowErrors $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

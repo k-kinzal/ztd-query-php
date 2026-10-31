@@ -46,6 +46,7 @@ final class AlterDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStat
             $this->initializeStatementInformation($statementInformation);
         }
         $this->options = Check::listOf($options, DatabaseOption::class, 'ALTER DATABASE changes at least one option.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($this->options) === null, 'ALTER DATABASE options do not conflict.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

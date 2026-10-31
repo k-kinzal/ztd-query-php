@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator;
 use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates OptimizeTable values from the generators of its operands.
@@ -44,12 +43,15 @@ final class OptimizeTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): OptimizeTable => new OptimizeTable(binlog: $parts[0], tables: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], tableWord: $parts[4]),
-            Generators::tuple(
-                Generators::oneOf(Generators::constant(null), new BinlogOptionGenerator($release)),
-                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null),
-                new TableWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable $table): array => [$table->name, null, $table], $parts[1])) === null,
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), new BinlogOptionGenerator($release)),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    new TableWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -59,10 +61,6 @@ final class OptimizeTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (OptimizeTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

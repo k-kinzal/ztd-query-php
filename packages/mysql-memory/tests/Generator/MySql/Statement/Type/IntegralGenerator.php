@@ -45,10 +45,13 @@ final class IntegralGenerator implements ErisGenerator
 
                 return Generators::map(
                     static fn (array $parts): Integral => new Integral(kind: $kind, width: $parts[0], modifiers: $parts[1], inputSource: null, alias: $parts[2]),
-                    Generators::tuple(
-                        Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
-                        Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))),
-                        $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                    Generators::suchThat(
+                        static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->integralWidth($parts[0], '') === null,
+                        Generators::tuple(
+                            Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
+                            Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))),
+                            $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                        )
                     )
                 );
             }

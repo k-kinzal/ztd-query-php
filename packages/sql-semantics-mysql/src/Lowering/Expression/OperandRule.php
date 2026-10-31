@@ -51,13 +51,29 @@ final class OperandRule
     /**
      * Resolves parse-time names and retains invocation-time operand preparation.
      *
-     * @throws RejectedInput When a modern expression collation is unknown
+     * MySQL 8.0 and later record an unknown collation while parsing and keep reading the
+     * statement, so the refusal does not abort. MySQL 5.6 and 5.7 resolve the name when the
+     * statement runs: a stored statement keeps it as a deferred form, a standalone one fails.
+     * An empty name is looked up only after the statement is read, on every release.
+     *
+     * @param bool $stored Whether the expression belongs to a stored program body
+     * @throws RejectedInput When an expression collation is unknown to the release and cannot be stored
      */
-    public function collated(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \SqlSemantics\Statement\Identifier\Name $collation, Node $source, \SqlSemantics\Contract\GrammarRelease $release): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated
+    public function collated(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, \SqlSemantics\Statement\Identifier\Name $collation, Node $source, \SqlSemantics\Contract\GrammarRelease $release, bool $stored = false): \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated
     {
         $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CollationLookup())->parsed($collation, $release);
-        if (!$operand instanceof Scalar && $problem !== null) {
+        if ($problem !== null) {
             throw new RejectedInput($problem, (new SourceRanges())->span($source)[1] ?? 0, false);
+        }
+        if ($collation->value === '') {
+            throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation(''), $stored ? (new SourceRanges())->span($source)[1] ?? 0 : PHP_INT_MAX, false);
+        }
+        if ($operand instanceof Scalar && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::forName($collation->value, $release) === null) {
+            if (!$stored) {
+                throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($collation->value), PHP_INT_MAX, false);
+            }
+
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated($operand, $collation);
         }
         return $operand instanceof Scalar
             ? new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated($operand, $collation)

@@ -25,7 +25,6 @@ use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
 use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CloneInstance values from the generators of its operands.
@@ -64,10 +63,6 @@ final class CloneInstanceGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CloneInstance $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

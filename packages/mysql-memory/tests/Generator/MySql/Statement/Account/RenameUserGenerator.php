@@ -24,7 +24,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\User\UserRenamingGenerator;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates RenameUser values from the generators of its operands.
@@ -61,10 +60,6 @@ final class RenameUserGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (RenameUser $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

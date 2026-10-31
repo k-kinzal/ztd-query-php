@@ -53,12 +53,15 @@ final class StorageOptionRuleTest extends TestCase
         ];
     }
 
-    #[DataProvider('providerRefusedOptions')]
-    public function testOptionsRetainsConflictsOnTheCompleteStatement(string $sql): void
+    #[DataProvider('providerConflicts')]
+    public function testOptionsRefusesARepeatedOptionWhileReading(string $sql): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem::class, $statement->diagnostics()[0]);
-        self::assertSame($sql, $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('An option is written twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem::class, $failure->problem);
+        }
     }
     public function testOptionsRetainsTheUnrepresentableSizeBoundary(): void
     {

@@ -50,6 +50,7 @@ final class FlushTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatem
             $this->initializeStatementInformation($statementInformation);
         }
         $this->tables = Check::listOf($tables, MaintainedTable::class, 'FLUSH TABLES takes a list of tables.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (MaintainedTable $table): array => [$table->name, null, $table], $this->tables)) === null, 'FLUSH TABLES names each table once.');
         Check::input($lock !== FlushLock::ForExport || $this->tables !== [], 'FLUSH TABLES ... FOR EXPORT names at least one table.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

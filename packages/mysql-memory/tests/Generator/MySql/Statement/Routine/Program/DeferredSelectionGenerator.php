@@ -59,53 +59,56 @@ final class DeferredSelectionGenerator implements ErisGenerator
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
             static fn (array $parts): DeferredSelection => new DeferredSelection(items: [$parts[13], ...array_values(array_filter($parts[0], static fn ($item): bool => $item instanceof SelectExpression || $item instanceof DeferredProjection || $item instanceof TableWildcard))], from: $parts[1], where: $parts[2], options: $parts[3], groupBy: $parts[4], having: $parts[5], orderBy: $parts[6], limit: $parts[7], windows: $parts[8], procedure: $parts[1] === null ? null : $parts[9], qualify: ($bit & 480) !== 0 ? $parts[10] : null, into: $parts[11], inputSource: $parts[12]),
-            Generators::tuple(
-                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NodeGenerator($release, $depth - 1))) : Generators::constant([]),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new TableSourceGenerator($release, $depth - 1),
-                    1 => new DualGenerator($release),
-                    default => throw new LogicException('Unreachable alternative.'),
-                })) : Generators::constant(null),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new ScalarGenerator($release, $depth - 1),
-                    1 => new RowOperandGenerator($release, $depth - 1),
-                    2 => new DeferredOperandGenerator($release, $depth - 1),
-                    default => throw new LogicException('Unreachable alternative.'),
-                })) : Generators::constant(null),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SelectOptionGenerator($release))),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new GroupingGenerator($release, $depth - 1),
-                    1 => new DeferredGroupingGenerator($release, $depth - 1),
-                    default => throw new LogicException('Unreachable alternative.'),
-                })) : Generators::constant(null),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new ScalarGenerator($release, $depth - 1),
-                    1 => new RowOperandGenerator($release, $depth - 1),
-                    2 => new DeferredOperandGenerator($release, $depth - 1),
-                    default => throw new LogicException('Unreachable alternative.'),
-                })) : Generators::constant(null),
-                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new OrderItemGenerator($release, $depth - 1),
-                    1 => new DeferredOrderItemGenerator($release, $depth - 1),
-                    default => throw new LogicException('Unreachable alternative.'),
-                }))) : Generators::constant([]),
-                Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
-                $depth > 0 && ($bit & 508) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new WindowDefinitionGenerator($release, $depth - 1))) : Generators::constant([]),
-                ($bit & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ProcedureAnalyseGenerator($release)) : Generators::constant(null),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new ScalarGenerator($release, $depth - 1),
-                    1 => new RowOperandGenerator($release, $depth - 1),
-                    2 => new DeferredOperandGenerator($release, $depth - 1),
-                    default => throw new LogicException('Unreachable alternative.'),
-                })) : Generators::constant(null),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new IntoDumpfileGenerator($release),
-                    1 => new IntoOutfileGenerator($release),
-                    2 => new IntoVariablesGenerator($release),
-                    default => throw new LogicException('Unreachable alternative.'),
-                })) : Generators::constant(null),
-                Generators::constant(null),
-                new DeferredProjectionGenerator($release, $depth - 1)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$parts[1]]) === null,
+                Generators::tuple(
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NodeGenerator($release, $depth - 1))) : Generators::constant([]),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new TableSourceGenerator($release, $depth - 1),
+                        1 => new DualGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })) : Generators::constant(null),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new RowOperandGenerator($release, $depth - 1),
+                        2 => new DeferredOperandGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })) : Generators::constant(null),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SelectOptionGenerator($release))),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new GroupingGenerator($release, $depth - 1),
+                        1 => new DeferredGroupingGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })) : Generators::constant(null),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new RowOperandGenerator($release, $depth - 1),
+                        2 => new DeferredOperandGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })) : Generators::constant(null),
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 1), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new OrderItemGenerator($release, $depth - 1),
+                        1 => new DeferredOrderItemGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    }))) : Generators::constant([]),
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                    $depth > 0 && ($bit & 508) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new WindowDefinitionGenerator($release, $depth - 1))) : Generators::constant([]),
+                    ($bit & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ProcedureAnalyseGenerator($release)) : Generators::constant(null),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new ScalarGenerator($release, $depth - 1),
+                        1 => new RowOperandGenerator($release, $depth - 1),
+                        2 => new DeferredOperandGenerator($release, $depth - 1),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })) : Generators::constant(null),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new IntoDumpfileGenerator($release),
+                        1 => new IntoOutfileGenerator($release),
+                        2 => new IntoVariablesGenerator($release),
+                        default => throw new LogicException('Unreachable alternative.'),
+                    })) : Generators::constant(null),
+                    Generators::constant(null),
+                    new DeferredProjectionGenerator($release, $depth - 1)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

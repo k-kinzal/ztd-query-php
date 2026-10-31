@@ -25,7 +25,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowLikeGenerator;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowWhereGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowTriggers values from the generators of its operands.
@@ -68,10 +67,6 @@ final class ShowTriggersGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowTriggers $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

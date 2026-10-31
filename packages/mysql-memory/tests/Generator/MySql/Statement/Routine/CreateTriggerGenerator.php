@@ -33,7 +33,6 @@ use Tests\Generator\MySql\Statement\Routine\Trigger\TriggerTableGenerator;
 use Tests\Generator\MySql\Statement\Routine\Trigger\TriggerTimeGenerator;
 use Tests\Generator\MySql\Statement\StatementGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateTrigger values from the generators of its operands.
@@ -76,10 +75,6 @@ final class CreateTriggerGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateTrigger $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

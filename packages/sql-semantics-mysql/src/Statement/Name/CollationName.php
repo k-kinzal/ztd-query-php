@@ -35,6 +35,7 @@ final class CollationName implements Node
      */
     public function __construct(public readonly ?Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($name === null || \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($name->value) !== null, 'A collation name is one the server knows.');
     }
 
     /**

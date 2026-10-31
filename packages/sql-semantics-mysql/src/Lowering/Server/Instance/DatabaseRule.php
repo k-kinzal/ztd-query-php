@@ -119,6 +119,10 @@ final class DatabaseRule
         foreach ((new Lists())->items($list) as $item) {
             $options[] = $this->option($item);
         }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->problem($options, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
+        }
 
         return $options;
     }
@@ -166,6 +170,7 @@ final class DatabaseRule
      * Lowers ENCRYPTION: a node of `default_encryption`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the encryption value is neither Y nor N
      */
     public function encryption(Node $encryption): DatabaseEncryption
     {
@@ -179,7 +184,7 @@ final class DatabaseRule
         $text = $this->lowering->literals->bytes($form->node(3));
         $value = \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::fromOperand($text);
         if ($value === null) {
-            return new DatabaseEncryption($this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), operator: $operator, defaultKeyword: $default);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), (new \SqlSemantics\Construction\SourceRanges())->span($encryption)[1] ?? 0);
         }
 
         $spelling = $text === $value->value ? null : $this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text));

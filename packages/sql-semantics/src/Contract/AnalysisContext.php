@@ -77,6 +77,9 @@ final class AnalysisContext
         $this->searchPath = $path;
         $this->tables = array_values($unique);
         $this->declarationSchema = $declarationSchema ?? $path[0];
+        foreach ($this->tables as $table) {
+            Check::input(count($this->declared($table->name, $table->name->schema ?? $this->declarationSchema)) === 1, 'A context declares each relation once.');
+        }
     }
 
     /**

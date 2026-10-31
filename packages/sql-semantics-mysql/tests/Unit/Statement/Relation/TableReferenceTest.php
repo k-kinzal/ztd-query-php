@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
@@ -142,26 +141,6 @@ final class TableReferenceTest extends TestCase
         self::assertInstanceOf(TableReference::class, $operation->query->from);
         self::assertInstanceOf(MissingTable::class, $operation->query->from->relationInformation()->table);
         self::assertSame('(current)', $semantics->context()->searchPath[0]->value);
-    }
-
-    public function testDeriveRelationReportsConflictingDeclarations(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $first = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
-            new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
-        ]);
-        $second = new Table(new QualifiedName(new Name('t')), $semantics->profile(), []);
-        $operation = $semantics->analyze('SELECT 1 FROM t', [$first, $second]);
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
-        self::assertInstanceOf(Select::class, $operation->query);
-        self::assertInstanceOf(TableReference::class, $operation->query->from);
-        $fact = $operation->query->from->relationInformation();
-        self::assertInstanceOf(ConflictingTables::class, $fact->table);
-        self::assertSame([$first, $second], $fact->table->candidates);
-        self::assertTrue($fact->shape->complete());
-        self::assertSame([], $fact->shape->slots);
-        self::assertSame('Relation t has conflicting declarations.', $operation->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheDatabaseTheNameAndTheCorrelationName(): void

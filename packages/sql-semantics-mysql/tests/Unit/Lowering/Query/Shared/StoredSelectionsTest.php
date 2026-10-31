@@ -53,11 +53,11 @@ final class StoredSelectionsTest extends TestCase
 
     public function testBodyRetainsAnUnusedQualifyConditionInsideTheCompleteUpdate(): void
     {
-        $operation = (new Semantics(Dialect::MySql, '8.4.7'))->analyze('WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,t SET a=1');
+        $operation = (new Semantics(Dialect::MySql, '8.4.7'))->analyze('WITH c AS (SELECT 1 QUALIFY ROW(1,2)) UPDATE t,u SET a=1');
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Update::class, $operation);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\With::class, $operation->with);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody::class, $operation->with->tables[0]->query);
-        self::assertSame('WITH c AS (SELECT 1 QUALIFY ROW(1, 2)) UPDATE t, t SET a = 1', $operation->toString());
+        self::assertSame('WITH c AS (SELECT 1 QUALIFY ROW(1, 2)) UPDATE t, u SET a = 1', $operation->toString());
     }
 
     public function testClausePreservesEveryRepresentedClause(): void

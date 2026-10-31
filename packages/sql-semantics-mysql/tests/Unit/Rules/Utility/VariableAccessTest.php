@@ -82,16 +82,14 @@ final class VariableAccessTest extends TestCase
         ], $derivation->facts()->warnings);
     }
 
-    public function testFindRetainsBothLegacyAssignmentConditionsInStoredInstructions(): void
+    public function testFindIsNeverReachedForAnAssignedVariableTheReadingRefuses(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() SET missing_target=@@missing_value');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
-        self::assertCount(3, $statement->warnings());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
-        self::assertEquals(new UnknownSystemVariable('missing_target', true), $statement->warnings()[0]->problem);
-        self::assertFalse($statement->warnings()[0]->aborts);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[1]);
-        self::assertTrue($statement->warnings()[1]->aborts);
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('CREATE PROCEDURE p() SET missing_target=@@missing_value');
+            self::fail('The read variable does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new UnknownSystemVariable('missing_value'), $failure->problem);
+        }
     }
 
 

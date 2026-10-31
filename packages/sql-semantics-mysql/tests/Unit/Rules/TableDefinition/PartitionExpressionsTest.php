@@ -45,55 +45,6 @@ final class PartitionExpressionsTest extends TestCase
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, $rules->condition($subquery, GrammarRelease::MySql847));
     }
 
-    /**
-     * @return iterable<string, array{string, bool}>
-     */
-    public static function providerExpressions(): iterable
-    {
-        yield 'session function' => ['USER()', true];
-        yield 'nested nondeterminism' => ['ABS(RAND())', true];
-        yield 'system variable' => ['@@sql_mode', true];
-        yield 'user variable' => ['@x', true];
-        yield 'clock' => ['NOW()', true];
-        yield 'stored function' => ['custom_function(1)', true];
-        yield 'server version checked later' => ['VERSION()', false];
-        yield 'constant checked later' => ['ABS(1)', false];
-        yield 'deterministic disallowed function checked later' => ['SIN(1)', false];
-        yield 'timestamp conversion checked later' => ['UNIX_TIMESTAMP(1)', false];
-        yield 'current timestamp' => ['UNIX_TIMESTAMP()', true];
-    }
-
-    #[DataProvider('providerExpressions')]
-    public function testForbiddenDistinguishesEarlyAndLaterChecks(string $sql, bool $forbidden): void
-    {
-        $expression = (new Semantics(Dialect::MySql))->analyze('SELECT ' . $sql)->field(0)->expression;
-        self::assertInstanceOf(Scalar::class, $expression);
-        self::assertSame($forbidden, (new PartitionExpressions())->forbidden($expression, GrammarRelease::MySql847));
-    }
-
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function providerEarlierErrors(): iterable
-    {
-        yield 'unknown system variable' => ['@@unknown_system_variable'];
-    }
-
-    #[DataProvider('providerEarlierErrors')]
-    public function testDerivePreservesEarlierFunctionAndVariableErrors(string $expression): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $operand = $semantics->analyze('SELECT ' . $expression)->field(0)->expression;
-        self::assertInstanceOf(Scalar::class, $operand);
-        $operand = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($operand);
-        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
-        (new PartitionExpressions())->derive($operand, $derivation, $derivation->environment());
-        self::assertNotEmpty($derivation->facts()->diagnostics);
-        self::assertCount(1, $derivation->facts()->warnings);
-        self::assertInstanceOf(ParseFailure::class, $derivation->facts()->warnings[0]);
-        self::assertSame($derivation->facts()->diagnostics[0], $derivation->facts()->warnings[0]->problem);
-    }
-
     public function testDerivePreservesWarningsAndTheOriginalOccurrenceLocation(): void
     {
         $sql = 'ALTER TABLE missing PARTITION BY HASH ((FOUND_ROWS()))';

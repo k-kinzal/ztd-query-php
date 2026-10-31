@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\AssignmentOperatorGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateResourceGroup values from the generators of its operands.
@@ -62,10 +61,6 @@ final class CreateResourceGroupGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateResourceGroup $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

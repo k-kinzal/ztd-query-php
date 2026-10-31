@@ -25,7 +25,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowLikeGenerator;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowWhereGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowOpenTables values from the generators of its operands.
@@ -67,10 +66,6 @@ final class ShowOpenTablesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowOpenTables $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

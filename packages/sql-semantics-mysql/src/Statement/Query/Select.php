@@ -149,6 +149,7 @@ final class Select implements Query, Selection
         Check::input($late === null || ($into === null && $procedure === null), 'A block with a late ordering has no INTO or PROCEDURE ANALYSE.');
         Check::input($late === null || $this->orderBy === [] || ($from !== null && !$from instanceof Dual), 'A late clause after an ordered block requires an ordinary FROM relation.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$from]) === null, 'A FROM clause names each relation once.');
     }
 
     /**

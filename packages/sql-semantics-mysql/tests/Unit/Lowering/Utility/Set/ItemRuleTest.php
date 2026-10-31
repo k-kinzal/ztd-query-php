@@ -22,8 +22,8 @@ final class ItemRuleTest extends TestCase
 
     public function testUnscopedLowersEveryVariableForm(): void
     {
-        self::assertSame('SET @@GLOBAL.a.b = 1, @c = 2, d = 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@global.a.b = 1, @c = 2, d = 3')->toString());
-        self::assertSame('SET @@PERSIST_ONLY.a = 1', (new Semantics(Dialect::MySql))->analyze('set @@persist_only.a = 1')->toString());
+        self::assertSame('SET @@GLOBAL.hot_cache.key_buffer_size = 1, @c = 2, wait_timeout = 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@global.hot_cache.key_buffer_size = 1, @c = 2, wait_timeout = 3')->toString());
+        self::assertSame('SET @@PERSIST_ONLY.autocommit = 1', (new Semantics(Dialect::MySql))->analyze('set @@persist_only.autocommit = 1')->toString());
     }
 
     public function testConnectionLowersTheCharacterSets(): void

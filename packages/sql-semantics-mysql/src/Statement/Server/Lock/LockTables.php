@@ -46,6 +46,7 @@ final class LockTables extends \SqlSemantics\Platform\MySql\Statement\SqlStateme
             $this->initializeStatementInformation($statementInformation);
         }
         $this->locks = Check::listOf($locks, TableLock::class, 'LOCK TABLES locks at least one table.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (TableLock $lock): array => [$lock->table, $lock->alias, $lock], $this->locks)) === null, 'LOCK TABLES names each table once.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Routine\Characteristic\CharacteristicGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterRoutine values from the generators of its operands.
@@ -61,10 +60,6 @@ final class AlterRoutineGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterRoutine $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

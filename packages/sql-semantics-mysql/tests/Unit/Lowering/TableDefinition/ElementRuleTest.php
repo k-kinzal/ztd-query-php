@@ -54,4 +54,14 @@ final class ElementRuleTest extends TestCase
 
         self::assertSame('t', $column->name->table?->name->value);
     }
+
+    public function testSizedRefusesAColumnTypeOutsideItsBounds(): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (b DECIMAL(70))');
+            self::fail('The precision exceeds 65.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Too-big precision 70 specified for 'b'. Maximum is 65.", $failure->problem->message());
+        }
+    }
 }

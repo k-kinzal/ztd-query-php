@@ -40,7 +40,7 @@ final class CharsetConversionGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): CharsetConversion => new CharsetConversion(operand: $parts[0], charset: new CharsetName($parts[1]), scalarInformation: null, inputSource: null),
-            Generators::tuple(new ScalarGenerator($release, $depth - 1), new NameGenerator($release))
+            Generators::tuple(new ScalarGenerator($release, $depth - 1), Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $charset): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($charset->name), Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::all($release))))
         );
         $this->delegate = Generators::suchThat(
             static function (CharsetConversion $value) use ($release): bool {

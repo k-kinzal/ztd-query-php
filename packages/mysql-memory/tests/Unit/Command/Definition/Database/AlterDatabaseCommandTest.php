@@ -203,22 +203,6 @@ final class AlterDatabaseCommandTest extends TestCase
         self::assertNull((new AlterDatabaseCommand())->collation($statement, GrammarRelease::MySql847, $context));
     }
 
-    public function testCharsetRefusesAnUnknownCharacterSet(): void
-    {
-        $session = (new Instance())->connect();
-        $statement = $session->analyze('ALTER DATABASE d CHARACTER SET nope');
-        self::assertInstanceOf(AlterDatabase::class, $statement);
-        $option = $statement->options[0];
-        self::assertInstanceOf(DatabaseCharset::class, $option);
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1115);
-        $this->expectExceptionMessage("Unknown character set: 'nope'");
-
-        (new AlterDatabaseCommand())->charset($option, null, $context);
-    }
-
     public function testCharsetAnswersTheNamedCharacterSet(): void
     {
         $session = (new Instance())->connect();

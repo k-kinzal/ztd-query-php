@@ -117,6 +117,7 @@ final class KeyCacheRule
      * @param list<Form> $entries
      * @return list<CachedTable>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table is named twice
      */
     public function cached(array $entries): array
     {
@@ -124,6 +125,11 @@ final class KeyCacheRule
         foreach ($entries as $entry) {
             [$table, $partitions, $indexes, , $keyword] = $this->entry($entry);
             $tables[] = new CachedTable($table, $partitions, $indexes, keyword: $keyword);
+        }
+
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (CachedTable $table): array => [$table->table, null, $table], $tables));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($entries[count($entries) - 1]->node)[1] ?? 0, false);
         }
 
         return $tables;
@@ -135,6 +141,7 @@ final class KeyCacheRule
      * @param list<Form> $entries
      * @return list<PreloadedTable>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table is named twice
      */
     public function preloaded(array $entries): array
     {
@@ -142,6 +149,11 @@ final class KeyCacheRule
         foreach ($entries as $entry) {
             [$table, $partitions, $indexes, $ignoreLeaves, $keyword] = $this->entry($entry);
             $tables[] = new PreloadedTable($table, $partitions, $indexes, $ignoreLeaves, keyword: $keyword);
+        }
+
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (PreloadedTable $table): array => [$table->table, null, $table], $tables));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($entries[count($entries) - 1]->node)[1] ?? 0, false);
         }
 
         return $tables;

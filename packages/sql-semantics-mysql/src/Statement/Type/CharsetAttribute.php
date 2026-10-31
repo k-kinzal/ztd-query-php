@@ -39,6 +39,7 @@ final class CharsetAttribute implements Node
     public function __construct(public readonly CharsetForm $form, public readonly ?Name $charset = null, public readonly BinaryMark $mark = BinaryMark::Absent, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($form->named() === ($charset !== null), 'Exactly the named forms hold a character set name.');
+        Check::input($charset === null || \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($charset->value) !== null, 'A named character set is one the server knows.');
         Check::input($mark === BinaryMark::Absent || in_array($form, [CharsetForm::Ascii, CharsetForm::Unicode, CharsetForm::Named, CharsetForm::CharacterSet, CharsetForm::CharSet], true), 'BINARY accompanies ASCII, UNICODE or a named character set only.');
     }
 

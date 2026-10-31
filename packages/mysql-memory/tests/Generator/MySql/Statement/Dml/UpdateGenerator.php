@@ -36,7 +36,6 @@ use Tests\Generator\MySql\Statement\Routine\Program\Expression\DeferredOperandGe
 use Tests\Generator\MySql\Statement\Routine\Program\Selection\DeferredOrderItemGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates Update values from the generators of its operands.
@@ -60,7 +59,7 @@ final class UpdateGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): Update => new Update(with: $parts[0], lowPriority: $parts[1], ignore: $parts[2], tables: $parts[3], assignments: $parts[4], where: $parts[5], orderBy: $parts[6], limit: $parts[7] instanceof RowLimit && $parts[7]->offset !== null ? new RowLimit($parts[7]->count) : $parts[7], hints: $parts[8], statementInformation: $parts[9], inputSource: $parts[10]),
             Generators::suchThat(
-                static fn (array $parts): bool => (static function (array $parts): bool {
+                static fn (array $parts): bool => ((static function (array $parts): bool {
                     foreach ($parts as $part) {
                         foreach (is_array($part) ? $part : [$part] as $node) {
                             if ($node instanceof Node && (new ValueRoles())->problem($node) !== null) {
@@ -70,7 +69,8 @@ final class UpdateGenerator implements ErisGenerator
                     }
 
                     return true;
-                })($parts),
+                })($parts))
+                && (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated($parts[3]) === null,
                 Generators::tuple(
                     $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
                     Generators::bool(),
@@ -106,10 +106,6 @@ final class UpdateGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Update $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

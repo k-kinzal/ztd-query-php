@@ -23,18 +23,29 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class TableProblemsTest extends TestCase
 {
-    public function testCollationsRejectsNamesUnavailableInTheRelease(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUnavailableCollations')]
+    public function testCollationsRejectsNamesUnavailableInTheRelease(string $release, string $sql): void
     {
-        $legacy = new Semantics(Dialect::MySql, '5.7.44');
-        $column = $legacy->analyze('CREATE TABLE t(v VARCHAR(10) COLLATE utf8mb4_0900_ai_ci)');
-        $table = $legacy->analyze('CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs');
-        $generated = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(v VARCHAR(10) COLLATE missing_collation AS (\'x\'))');
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The collation is unknown to the release.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $failure->problem);
+        }
+    }
 
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $column->diagnostics()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $table->diagnostics()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $generated->diagnostics()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $generated->warnings()[0]);
-        self::assertTrue($generated->warnings()[0]->aborts);
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerUnavailableCollations(): iterable
+    {
+        yield 'column collation of 8.0 on 5.7' => ['5.7.44', 'CREATE TABLE t(v VARCHAR(10) COLLATE utf8mb4_0900_ai_ci)'];
+        yield 'table collation of 8.0 on 5.7' => ['5.7.44', 'CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs'];
+        yield 'collation of a generated column' => ['8.4.7', 'CREATE TABLE t(v VARCHAR(10) COLLATE missing_collation AS (\'x\'))'];
+    }
+
+    public function testCollationsAcceptsANameTheReleaseKnows(): void
+    {
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs')->diagnostics());
     }
 

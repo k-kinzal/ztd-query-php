@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ModernForms;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Operands;
 
 /**
  * Generates ShowWhere values from the generators of its operands.
@@ -39,12 +38,9 @@ final class ShowWhereGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): ShowWhere => new ShowWhere(condition: $parts[0], inputSource: $parts[1]),
-            Generators::suchThat(
-                static fn (array $parts): bool => Operands::aggregateFree(($parts[0])),
-                Generators::tuple(
-                    new ScalarGenerator($release, $depth - 1),
-                    Generators::constant(null)
-                )
+            Generators::tuple(
+                new ScalarGenerator($release, $depth - 1),
+                Generators::constant(null)
             )
         );
         $this->delegate = Generators::suchThat(

@@ -26,7 +26,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateSpatialReference values from the generators of its operands.
@@ -71,10 +70,6 @@ final class CreateSpatialReferenceGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateSpatialReference $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

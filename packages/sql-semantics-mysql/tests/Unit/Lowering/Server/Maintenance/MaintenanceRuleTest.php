@@ -57,12 +57,15 @@ final class MaintenanceRuleTest extends TestCase
     }
 
     #[DataProvider('providerRepeatedTargets')]
-    public function testTablesRetainsEveryTargetAndDerivesTheDuplicate(string $sql): void
+    public function testTablesRefusesATableNamedTwiceWhileReading(string $sql): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
-
-        self::assertSame($sql, $statement->toString());
-        self::assertCount(1, array_filter($statement->diagnostics(), static fn ($diagnostic): bool => $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable));
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The list names a table twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable::class, $failure->problem);
+            self::assertSame('t', $failure->problem->alias->value);
+        }
     }
 
     public function testCheckOptionsKeepsTheWrittenOrder(): void

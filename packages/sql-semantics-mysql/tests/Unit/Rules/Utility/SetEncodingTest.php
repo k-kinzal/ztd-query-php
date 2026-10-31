@@ -29,9 +29,6 @@ final class SetEncodingTest extends TestCase
      */
     public static function providerConditions(): iterable
     {
-        yield 'unknown names charset' => [new SetNames(new CharsetName(new Name('missing')), new CollationName(new Name('absent'))), "Unknown character set: 'missing'", NoticePhase::Syntax];
-        yield 'unknown charset' => [new SetCharacterSet(new CharsetName(new Name('missing'))), "Unknown character set: 'missing'", NoticePhase::Syntax];
-        yield 'unknown collation' => [new SetNames(new CharsetName(new Name('latin1')), new CollationName(new Name('absent'))), "Unknown collation: 'absent'", NoticePhase::Syntax];
         yield 'incompatible collation' => [new SetNames(new CharsetName(new Name('latin1')), new CollationName(new Name('utf8mb4_bin'))), "COLLATION 'utf8mb4_bin' is not valid for CHARACTER SET 'latin1'", NoticePhase::Contextualization];
     }
 

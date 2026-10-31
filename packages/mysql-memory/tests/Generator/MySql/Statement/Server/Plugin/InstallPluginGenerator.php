@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates InstallPlugin values from the generators of its operands.
@@ -58,10 +57,6 @@ final class InstallPluginGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (InstallPlugin $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

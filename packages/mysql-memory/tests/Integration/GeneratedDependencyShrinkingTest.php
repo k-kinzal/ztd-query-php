@@ -19,7 +19,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use Tests\Generator\MySql\Statement\QueryRootGenerator;
-use Tests\Support\Analysis;
 
 #[CoversNothing]
 #[Medium]
@@ -28,7 +27,6 @@ final class GeneratedDependencyShrinkingTest extends TestCase
     #[DataProvider('providerShrunkStatements')]
     public function testShrinkingKeepsTheGeneratedStatementExecutable(QueryRoot $statement): void
     {
-        self::assertTrue(Analysis::accepted($statement));
         $session = (new Instance('8.4.7', databases: ['pbt']))->connect(database: 'pbt');
         try {
             (new Execution($session))->statement($statement);

@@ -23,8 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(LegacyPatterns::class)]
 #[Small]
@@ -47,12 +45,12 @@ final class LegacyPatternsTest extends TestCase
         $session->text = 'unrelated invalid request';
         $pattern = new Like(new StringLiteral([$text]), new TemporalLiteral(TemporalForm::Date, '2020-01-02'));
         $query = new QueryRoot(new Select([], [new SelectExpression($pattern)]));
-        $statement1 = (new Embedding())->statement($query);
+        $statement1 = $query;
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
-        $operation1 = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+        $operation1 = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
         $result = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), []);
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['0']], $result->rows);

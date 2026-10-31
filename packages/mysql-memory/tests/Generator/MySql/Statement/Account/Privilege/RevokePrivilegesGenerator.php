@@ -29,7 +29,6 @@ use Tests\Generator\MySql\Statement\Account\Privilege\Item\PrivilegeGenerator;
 use Tests\Generator\MySql\Statement\Account\Privilege\Level\ObjectKindGenerator;
 use Tests\Generator\MySql\Statement\Account\Privilege\Level\PrivilegeLevelGenerator;
 use Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates RevokePrivileges values from the generators of its operands.
@@ -72,10 +71,6 @@ final class RevokePrivilegesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (RevokePrivileges $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

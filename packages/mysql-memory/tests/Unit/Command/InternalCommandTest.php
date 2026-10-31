@@ -25,8 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(InternalCommand::class)]
 #[Medium]
@@ -83,12 +81,12 @@ final class InternalCommandTest extends TestCase
         $this->expectExceptionCode(1064);
         $this->expectExceptionMessage($message);
         $session1 = (new Instance($release))->connect();
-        $statement1 = (new Embedding())->statement($statement);
+        $statement1 = $statement;
         $session1->activity->begin();
         StatementCounters::received($session1);
 
         $session1->dots = [];
-        $operation1 = (new Binding())->operation($session1, $statement1, [], new LanguageProfile($session1->semantics()->profile()->grammar, $session1->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+        $operation1 = (new Binding())->operation($session1, $statement1, [], new LanguageProfile($session1->semantics()->profile()->grammar, $session1->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
         (new Execution($session1))->perform($operation1, (new Dispatcher())->command($operation1), []);
     }
 }

@@ -25,7 +25,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator;
 use Tests\Generator\MySql\Statement\Server\Maintenance\MaintainedTableGenerator;
 use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates FlushTables values from the generators of its operands.
@@ -46,13 +45,16 @@ final class FlushTablesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): FlushTables => new FlushTables(binlog: $parts[0], tables: $parts[1], lock: $parts[2] === FlushLock::ForExport && $parts[1] === [] ? null : $parts[2], statementInformation: $parts[3], inputSource: $parts[4], tableWord: $parts[5]),
-            Generators::tuple(
-                Generators::oneOf(Generators::constant(null), new BinlogOptionGenerator($release)),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
-                Generators::oneOf(Generators::constant(null), new FlushLockGenerator($release)),
-                Generators::constant(null),
-                Generators::constant(null),
-                new TableWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable $table): array => [$table->name, null, $table], $parts[1])) === null,
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), new BinlogOptionGenerator($release)),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
+                    Generators::oneOf(Generators::constant(null), new FlushLockGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    new TableWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -62,10 +64,6 @@ final class FlushTablesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (FlushTables $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -30,8 +30,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
 use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
@@ -224,7 +222,7 @@ final class Stages
     public static function answered(Node $statement, Diagnostic $diagnostic): bool
     {
         if (self::administers($statement)) {
-            return $diagnostic instanceof MissingTable || $diagnostic instanceof HistogramTables || $diagnostic instanceof UnknownHistogramColumn;
+            return $diagnostic instanceof MissingTable;
         }
         if (self::opensTableFirst($statement)) {
             return true;
@@ -305,7 +303,7 @@ final class Stages
             }
             return false;
         }
-        return $diagnostic instanceof \SqlSemantics\Statement\Reference\Table\ConflictingTables || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
+        return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\Window\NestingConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowRefinement || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowOperandConstraint || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\FrameConstraint || ($diagnostic instanceof UnsupportedWindowing && $diagnostic->expression === null);
     }
     /**
      * Identifies character interpretation failures before relation contextualization.

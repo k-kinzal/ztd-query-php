@@ -132,13 +132,14 @@ final class LoadFactsTest extends TestCase
 
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings()));
     }
-    public function testDeriveRecordsTheCharsetFailureBeforeAssignmentNotices(): void
+    public function testDeriveIsNeverReachedForACharacterSetTheReadingRefuses(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARSET missing SET a=(@v:=1)");
-        $warning = $operation->warnings()[0];
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
-        self::assertTrue($warning->aborts);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warning->problem);
+        try {
+            (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARSET missing SET a=(@v:=1)");
+            self::fail('The character set does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $failure->problem);
+        }
     }
 
 }

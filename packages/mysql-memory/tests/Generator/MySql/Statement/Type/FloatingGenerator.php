@@ -45,11 +45,14 @@ final class FloatingGenerator implements ErisGenerator
 
                 return Generators::map(
                     static fn (array $parts): Floating => new Floating(kind: $kind, precision: $parts[0], scale: $parts[0] === null ? null : ($kind === FloatingKind::Float ? $parts[1] : $parts[1] ?? '0'), modifiers: $parts[2], inputSource: null, alias: $parts[3]),
-                    Generators::tuple(
-                        Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
-                        Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
-                        Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))),
-                        $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                    Generators::suchThat(
+                        static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractionalParts(false, $parts[0], $parts[0] === null ? null : ($kind === FloatingKind::Float ? $parts[1] : $parts[1] ?? '0'), '') === null,
+                        Generators::tuple(
+                            Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
+                            Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
+                            Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))),
+                            $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                        )
                     )
                 );
             }

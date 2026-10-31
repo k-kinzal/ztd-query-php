@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Replication\TerminologyGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates StopReplica values from the generators of its operands.
@@ -61,10 +60,6 @@ final class StopReplicaGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (StopReplica $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

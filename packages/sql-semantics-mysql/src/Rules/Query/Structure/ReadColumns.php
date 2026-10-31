@@ -76,7 +76,7 @@ final class ReadColumns
      */
     public function templates(Query|M\Set\LeadingUnion $query, array $common = [], bool $exists = false): ?Diagnostic
     {
-        $recursion = (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputNames())->problem($query) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->problem($query);
+        $recursion = (new \SqlSemantics\Platform\MySql\Rules\Query\Recursion\Constraints())->problem($query);
         if ($recursion !== null) {
             return $recursion;
         }

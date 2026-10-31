@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates LockTables values from the generators of its operands.
@@ -43,11 +42,14 @@ final class LockTablesGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): LockTables => new LockTables(locks: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], tableWord: $parts[3]),
-            Generators::tuple(
-                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TableLockGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null),
-                new TableWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock $lock): array => [$lock->table, $lock->alias, $lock], $parts[0])) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TableLockGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    new TableWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -57,10 +59,6 @@ final class LockTablesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (LockTables $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

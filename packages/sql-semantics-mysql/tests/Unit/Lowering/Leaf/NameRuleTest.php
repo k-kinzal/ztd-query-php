@@ -158,15 +158,15 @@ final class NameRuleTest extends TestCase
 
     public function testOptionalLowersTheComponentOfALegacySystemVariable(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@innodb.x, @@y');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@hot_cache.key_buffer_size, @@autocommit');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
         self::assertInstanceOf(Select::class, $operation->query);
         $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
-        self::assertSame('innodb', $item0->expression->instance?->value);
-        self::assertSame('x', $item0->expression->name->value);
+        self::assertSame('hot_cache', $item0->expression->instance?->value);
+        self::assertSame('key_buffer_size', $item0->expression->name->value);
         $item1 = $operation->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(SystemVariable::class, $item1->expression);

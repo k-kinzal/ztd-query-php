@@ -73,17 +73,4 @@ final class VariableDeclarationTest extends TestCase
 
         new VariableDeclaration([], new Integral(IntegralKind::Int));
     }
-    public function testDeriveRelationChecksTheTypeAfterDefaultNotices(): void
-    {
-        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy((new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT(255) DEFAULT !1; END'));
-        self::assertInstanceOf(CreateProcedure::class, $operation);
-        self::assertInstanceOf(Block::class, $operation->body);
-        $original = $operation->body->declarations[0];
-        self::assertInstanceOf(VariableDeclaration::class, $original);
-        $declaration = new VariableDeclaration($original->names, new Integral(IntegralKind::Int, '256'), default: $original->default);
-        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context([]));
-        $declaration->deriveRelation($derivation, $derivation->environment());
-
-        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", "Display width out of range for column '' (max = 255)"], array_map(static fn ($warning): string => $warning->message(), $derivation->facts()->warnings));
-    }
 }

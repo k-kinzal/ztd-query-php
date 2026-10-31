@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Type;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -172,6 +173,7 @@ final class TypePartRule
      * Lowers the character set attribute of a character type; none is null.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the character set is unknown to the release
      */
     public function charset(Node $attribute): ?CharsetAttribute
     {
@@ -183,8 +185,8 @@ final class TypePartRule
             'opt_binary: ascii', 'opt_binary: unicode', 'opt_charset_with_opt_binary: ascii', 'opt_charset_with_opt_binary: unicode' => $this->shorthand($form->node(0)),
             'opt_binary: BYTE_SYM', 'opt_charset_with_opt_binary: BYTE_SYM' => new CharsetAttribute(CharsetForm::Byte),
             'opt_binary: BINARY', 'opt_charset_with_opt_binary: BINARY_SYM' => new CharsetAttribute(CharsetForm::Binary),
-            'opt_binary: charset charset_name opt_bin_mod', 'opt_charset_with_opt_binary: character_set charset_name opt_bin_mod' => new CharsetAttribute($this->named($form->node(0)), $names->name($form->node(1)), $this->binary($form->node(2)) ? BinaryMark::Trailing : BinaryMark::Absent),
-            'opt_binary: BINARY charset charset_name', 'opt_charset_with_opt_binary: BINARY_SYM character_set charset_name' => new CharsetAttribute($this->named($form->node(1)), $names->name($form->node(2)), BinaryMark::Leading),
+            'opt_binary: charset charset_name opt_bin_mod', 'opt_charset_with_opt_binary: character_set charset_name opt_bin_mod' => new CharsetAttribute($this->named($form->node(0)), $this->known($form->node(1)), $this->binary($form->node(2)) ? BinaryMark::Trailing : BinaryMark::Absent),
+            'opt_binary: BINARY charset charset_name', 'opt_charset_with_opt_binary: BINARY_SYM character_set charset_name' => new CharsetAttribute($this->named($form->node(1)), $this->known($form->node(2)), BinaryMark::Leading),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -200,6 +202,24 @@ final class TypePartRule
         [$charset, $mark] = self::SHORTHANDS[$form->signature] ?? throw ImplementationGap::production($form);
 
         return new CharsetAttribute($charset, null, $mark);
+    }
+
+    /**
+     * Lowers a character set name of a column type: a node of `charset_name`. The server refuses a
+     * name it does not know once the column is read; MySQL 5.6 and 5.7 do so after reading the statement.
+     *
+     * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the character set is unknown to the release
+     */
+    public function known(Node $name): ?Name
+    {
+        $named = $this->lowering->charsets->name($name);
+        if ($named !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($named->value)?->availableIn($this->lowering->profile->grammar) ?? false)) {
+            $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($named->value), (new \SqlSemantics\Construction\SourceRanges())->span($name)[1] ?? 0, !$legacy);
+        }
+
+        return $named;
     }
 
     /**

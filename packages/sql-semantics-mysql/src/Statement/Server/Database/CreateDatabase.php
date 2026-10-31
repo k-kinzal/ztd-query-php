@@ -51,6 +51,7 @@ final class CreateDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlSta
         foreach ($this->options as $option) {
             Check::input(!$option instanceof DatabaseReadOnly, 'READ ONLY is an option of ALTER DATABASE.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($this->options) === null, 'CREATE DATABASE options do not conflict.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

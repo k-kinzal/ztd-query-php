@@ -18,7 +18,7 @@ final class DeferredInsertSetTest extends TestCase
 {
     public function testDeriveProgramKeepsAllAssignmentDependencies(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=ROW(@@unknown,2), b=DEFAULT');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() INSERT INTO t SET a=ROW(@@autocommit,2), b=DEFAULT');
         self::assertInstanceOf(CreateProcedure::class, $operation);
         self::assertInstanceOf(DeferredInsertSet::class, $operation->body);
         self::assertCount(2, $operation->body->assignments);

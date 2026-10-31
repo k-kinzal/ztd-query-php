@@ -26,7 +26,7 @@ final class SelectionUseTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $session->query('CREATE TABLE t(a INT)');
-        $selection = new DeferredSelection([new DeferredProjection(new Row([new NumberLiteral('1'), new NumberLiteral('2')]))], new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([new TableReference(new QualifiedName(new Name('t'))), new TableReference(new QualifiedName(new Name('t')))]));
+        $selection = new DeferredSelection([new DeferredProjection(new Row([new NumberLiteral('1'), new NumberLiteral('2')]))], new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([new TableReference(new QualifiedName(new Name('t'))), new TableReference(new QualifiedName(new Name('t'), new Name('d')))]));
         $session->text = 'unrelated invalid input';
         $this->expectException(\MySqlMemory\Error\SqlError::class);
         $this->expectExceptionCode(1241);

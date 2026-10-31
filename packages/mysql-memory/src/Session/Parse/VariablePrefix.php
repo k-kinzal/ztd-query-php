@@ -49,7 +49,12 @@ final class VariablePrefix
             try {
                 $tree = $semantics->parser()->parse(substr($statement, 0, $position) . '=DEFAULT');
                 $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
-            } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if ($failure->problem instanceof UnknownSystemVariable) {
+                    return (new Errors())->error($failure->problem, $session);
+                }
+                continue;
+            } catch (SourceException|AnalysisException) {
                 continue;
             }
             if (!$operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement) {

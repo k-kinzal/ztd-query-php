@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Analysis;
 
 /**
  * Generates Reset values from the generators of its operands.
@@ -80,10 +79,6 @@ final class ResetGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Reset $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -27,7 +27,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\User\GranteeGenerator;
 use Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates GrantProxy values from the generators of its operands.
@@ -68,10 +67,6 @@ final class GrantProxyGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (GrantProxy $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

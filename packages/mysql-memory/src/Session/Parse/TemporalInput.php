@@ -139,7 +139,12 @@ final class TemporalInput
             (new Syntax($client))->temporals($node, $session->modes());
             return;
         }
-        foreach ((new \SqlSemantics\Platform\MySql\Lowering\Expression\ContextualReading())->read($node, $session->semantics()->profile(), $client) as [, , $value]) {
+        try {
+            $values = (new \SqlSemantics\Platform\MySql\Lowering\Expression\ContextualReading())->read($node, $session->semantics()->profile(), $client);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            throw (new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session);
+        }
+        foreach ($values as [, , $value]) {
             if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable) {
                 $failure = $this->variable($value, $session);
                 if ($failure !== null) {

@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaRecover;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates XaRecover values from the generators of its operands.
@@ -61,10 +60,6 @@ final class XaRecoverGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (XaRecover $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

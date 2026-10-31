@@ -39,16 +39,16 @@ final class SystemAssignmentTest extends TestCase
         (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.sort_buffer_size = (1, 2)');
     }
 
-    public function testDeriveItemChecksTheValueBeforeTheTargetInModernReleases(): void
+    public function testDeriveItemIsNeverReachedWhenTheValueNamesAnUnknownVariable(): void
     {
-        $diagnostics = (new Semantics(Dialect::MySql))->analyze('SET @@unknown_target = @@unknown_value')->diagnostics();
-
-        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[0]);
-        self::assertSame('unknown_value', $diagnostics[0]->name);
-        self::assertFalse($diagnostics[0]->assigned);
-        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[1]);
-        self::assertSame('unknown_target', $diagnostics[1]->name);
-        self::assertTrue($diagnostics[1]->assigned);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('SET @@unknown_target = @@unknown_value');
+            self::fail('The value names an unknown variable.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(UnknownSystemVariable::class, $failure->problem);
+            self::assertSame('unknown_value', $failure->problem->name);
+            self::assertFalse($failure->problem->assigned);
+        }
     }
 
     public function testDeriveItemPreservesAnEarlierKeywordFailureInLegacyStoredLists(): void
@@ -62,8 +62,8 @@ final class SystemAssignmentTest extends TestCase
 
     public function testRenderWritesTheKeywordValue(): void
     {
-        self::assertSame('SET @@LOCAL.x = ON', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@local.x = on')->toString());
-        self::assertSame('SET @@x = SYSTEM', (new Semantics(Dialect::MySql))->analyze('set @@x = system')->toString());
+        self::assertSame('SET @@LOCAL.autocommit = ON', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@local.autocommit = on')->toString());
+        self::assertSame('SET @@time_zone = SYSTEM', (new Semantics(Dialect::MySql))->analyze('set @@time_zone = system')->toString());
     }
 
     public function testRefusesAnUnresolvedWord(): void

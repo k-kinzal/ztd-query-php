@@ -23,8 +23,6 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(UpgradeDatabaseCommand::class)]
 #[Medium]
@@ -79,12 +77,12 @@ final class UpgradeDatabaseCommandTest extends TestCase
     {
         $session = (new Instance($release))->connect();
         $session->query('CREATE DATABASE `#mysql50#old-name` COLLATE latin1_bin; CREATE TABLE `#mysql50#old-name`.t(i INT); INSERT INTO `#mysql50#old-name`.t VALUES (2); USE `#mysql50#old-name`');
-        $statement1 = (new Embedding())->statement(new UpgradeDatabaseName(new LegacyDatabaseName(new Name('old-name'))));
+        $statement1 = new UpgradeDatabaseName(new LegacyDatabaseName(new Name('old-name')));
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
-        $operation1 = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+        $operation1 = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
         $reply = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), []);
         self::assertInstanceOf(Completion::class, $reply);
         self::assertSame(0, $reply->affectedRows);

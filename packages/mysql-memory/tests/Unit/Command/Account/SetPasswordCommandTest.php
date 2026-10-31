@@ -23,8 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction;
 use SqlSemantics\Platform\MySql\Statement\Account\SetPassword;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(SetPasswordCommand::class)]
 #[Small]
@@ -150,14 +148,14 @@ final class SetPasswordCommandTest extends TestCase
         $session->query("SET PASSWORD='old'");
         $statement = new SetPassword(null, new Password(new Text(str_repeat('a', 257))), new Text('wrong'), true);
         $session->text = 'unrelated input';
-        $statement1 = (new Embedding())->statement($statement);
-        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $statement1 = $statement;
+        $parameters1 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;

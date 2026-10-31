@@ -32,7 +32,6 @@ use Tests\Generator\MySql\Statement\Query\Clause\RowLimitGenerator;
 use Tests\Generator\MySql\Statement\Query\DirectionGenerator;
 use Tests\Generator\MySql\Statement\Query\With\WithGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates Delete values from the generators of its operands.
@@ -87,10 +86,6 @@ final class DeleteGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Delete $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

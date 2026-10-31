@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Server\CheckOptionGenerator;
 use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CheckTable values from the generators of its operands.
@@ -44,12 +43,15 @@ final class CheckTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): CheckTable => new CheckTable(tables: $parts[0], options: $parts[1], statementInformation: $parts[2], inputSource: $parts[3], tableWord: $parts[4]),
-            Generators::tuple(
-                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CheckOptionGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null),
-                new TableWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable $table): array => [$table->name, null, $table], $parts[0])) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new MaintainedTableGenerator($release))),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new CheckOptionGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    new TableWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -59,10 +61,6 @@ final class CheckTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CheckTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -146,4 +146,24 @@ final class ViewRuleTest extends TestCase
         $this->expectExceptionMessage("View's SELECT contains a variable or parameter");
         (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE VIEW v AS SELECT ROW(@x,2)');
     }
+
+    public function testVariablesFindsAVariableOrParameterInTheBody(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new ViewRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $parser = $semantics->parser();
+
+        self::assertSame(24, $rule->variables($parser->parse('CREATE VIEW v AS SELECT @@autocommit')->find('view_query_block')[0]));
+        self::assertSame(24, $rule->variables($parser->parse('CREATE VIEW v AS SELECT @x')->find('view_query_block')[0]));
+        self::assertNull($rule->variables($parser->parse('CREATE VIEW v AS SELECT 1')->find('view_query_block')[0]));
+        try {
+            $semantics->analyze('CREATE VIEW v AS SELECT @@nosuchvar');
+            self::fail('A view body cannot read a variable.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Variable, $failure->problem);
+            self::assertSame(24, $failure->end);
+        }
+    }
 }

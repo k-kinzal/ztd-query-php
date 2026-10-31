@@ -41,10 +41,13 @@ final class TemporalGenerator implements ErisGenerator
             new TemporalKindGenerator($release),
             static fn (TemporalKind $kind): ErisGenerator => Generators::map(
                 static fn (array $parts): Temporal => new Temporal(kind: $kind, precision: $parts[0], modifiers: $parts[1], inputSource: null, sqlTsiYear: $parts[2]),
-                Generators::tuple(
-                    $kind === TemporalKind::Date ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $digits): string => (string) $digits, Generators::choose(0, 6))),
-                    $kind === TemporalKind::Year ? Generators::bind(Generators::choose(0, 2), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))) : Generators::constant([]),
-                    $kind === TemporalKind::Year ? Generators::bool() : Generators::constant(false)
+                Generators::suchThat(
+                    static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->temporalPrecision($kind, $parts[0], '') === null,
+                    Generators::tuple(
+                        $kind === TemporalKind::Date ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $digits): string => (string) $digits, Generators::choose(0, 6))),
+                        $kind === TemporalKind::Year ? Generators::bind(Generators::choose(0, 2), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))) : Generators::constant([]),
+                        $kind === TemporalKind::Year ? Generators::bool() : Generators::constant(false)
+                    )
                 )
             )
         );

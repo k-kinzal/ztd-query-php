@@ -35,7 +35,6 @@ use Tests\Generator\MySql\Statement\Name\CharsetNameGenerator;
 use Tests\Generator\MySql\Statement\Name\ColumnUseGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator;
 use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates LoadTable values from the generators of its operands.
@@ -107,10 +106,6 @@ final class LoadTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (LoadTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

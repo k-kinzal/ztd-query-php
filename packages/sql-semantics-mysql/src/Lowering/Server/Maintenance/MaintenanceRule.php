@@ -120,12 +120,18 @@ final class MaintenanceRule
      *
      * @return list<MaintainedTable>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table is named twice
      */
     public function tables(Node $list): array
     {
         $tables = [];
         foreach ($this->lowering->names->qualifiedNodes($list) as $node) {
             $tables[] = $this->lowering->origins->record(new MaintainedTable($this->lowering->names->qualified($node), dot: $this->lowering->names->dotted($node) ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), $node);
+        }
+
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (MaintainedTable $table): array => [$table->name, null, $table], $tables));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0, false);
         }
 
         return $tables;

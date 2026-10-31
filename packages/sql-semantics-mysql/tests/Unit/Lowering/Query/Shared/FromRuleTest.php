@@ -47,4 +47,18 @@ final class FromRuleTest extends TestCase
         self::assertSame('SELECT 1 FROM (t)', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select 1 from (t)')->toString());
         self::assertSame('SELECT 1 FROM (t)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 from (t)')->toString());
     }
+
+    public function testCheckedRefusesARelationNameWrittenTwice(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        self::assertSame('SELECT 1 FROM t a, u b', $semantics->analyze('select 1 from t a, u b')->toString());
+
+        try {
+            $semantics->analyze('select 1 from t a, u a');
+            self::fail('The alias is written twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable::class, $failure->problem);
+            self::assertSame('a', $failure->problem->alias->value);
+        }
+    }
 }

@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Server\BinlogOptionGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates Flush values from the generators of its operands.
@@ -57,10 +56,6 @@ final class FlushGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Flush $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -71,26 +71,29 @@ final class SelectGenerator implements ErisGenerator
 
                 return new Select(options: $options, items: $items, from: $from, where: $where, groupBy: $groupBy, having: $having, windows: $windows, qualify: $qualify, orderBy: $orderBy, limit: $limit, procedure: $procedure, locking: $locking, into: $into, intoPosition: $position, queryInformation: null, inputSource: null, late: $late, hints: $hints);
             },
-            Generators::tuple(
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SelectOptionGenerator($release))),
-                Generators::bool(),
-                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => $choice === 0 ? new TableWildcardGenerator($release) : new SelectExpressionGenerator($release, $depth - 1)))),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::bool(), static fn (bool $table): ErisGenerator => $table ? new TableSourceGenerator($release, $depth - 1) : new DualGenerator($release))) : Generators::constant(null),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), new GroupingGenerator($release, $depth - 1)) : Generators::constant(null),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
-                $depth > 0 && ($bit & 508) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new WindowDefinitionGenerator($release, $depth - 1))) : Generators::constant([]),
-                $depth > 0 && ($bit & 480) !== 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
-                $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::bool(), static fn (bool $deferred): ErisGenerator => $deferred ? new DeferredOrderItemGenerator($release, $depth - 1) : new OrderItemGenerator($release, $depth - 1)))) : Generators::constant([]),
-                Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
-                ($bit & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ProcedureAnalyseGenerator($release)) : Generators::constant(null),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new LockingClauseGenerator($release))),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
-                    0 => new IntoDumpfileGenerator($release), 1 => new IntoOutfileGenerator($release), default => new IntoVariablesGenerator($release)
-                })) : Generators::constant(null),
-                new IntoPositionGenerator($release),
-                $depth > 0 && ($bit & 1) !== 0 ? Generators::oneOf(Generators::constant(null), new LateOrderingGenerator($release, $depth - 1)) : Generators::constant(null),
-                ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([])
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$parts[3]]) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SelectOptionGenerator($release))),
+                    Generators::bool(),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::choose(0, 3), static fn (int $choice): ErisGenerator => $choice === 0 ? new TableWildcardGenerator($release) : new SelectExpressionGenerator($release, $depth - 1)))),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::bool(), static fn (bool $table): ErisGenerator => $table ? new TableSourceGenerator($release, $depth - 1) : new DualGenerator($release))) : Generators::constant(null),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new GroupingGenerator($release, $depth - 1)) : Generators::constant(null),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                    $depth > 0 && ($bit & 508) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new WindowDefinitionGenerator($release, $depth - 1))) : Generators::constant([]),
+                    $depth > 0 && ($bit & 480) !== 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                    $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::bool(), static fn (bool $deferred): ErisGenerator => $deferred ? new DeferredOrderItemGenerator($release, $depth - 1) : new OrderItemGenerator($release, $depth - 1)))) : Generators::constant([]),
+                    Generators::oneOf(Generators::constant(null), new RowLimitGenerator($release)),
+                    ($bit & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ProcedureAnalyseGenerator($release)) : Generators::constant(null),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new LockingClauseGenerator($release))),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
+                        0 => new IntoDumpfileGenerator($release), 1 => new IntoOutfileGenerator($release), default => new IntoVariablesGenerator($release)
+                    })) : Generators::constant(null),
+                    new IntoPositionGenerator($release),
+                    $depth > 0 && ($bit & 1) !== 0 ? Generators::oneOf(Generators::constant(null), new LateOrderingGenerator($release, $depth - 1)) : Generators::constant(null),
+                    ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([])
+                )
             )
         );
         $this->delegate = Generators::suchThat(

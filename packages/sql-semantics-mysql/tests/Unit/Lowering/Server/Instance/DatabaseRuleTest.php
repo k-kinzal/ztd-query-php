@@ -68,10 +68,13 @@ final class DatabaseRuleTest extends TestCase
         self::assertSame("n\0ignored", $operation->options[0]->spelling?->value);
     }
 
-    public function testEncryptionRetainsAnInvalidValueOnItsCompleteStatement(): void
+    public function testEncryptionRefusesAValueOtherThanYOrNWhileReading(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze("ALTER DATABASE d ENCRYPTION 'bad'");
-        self::assertSame("ALTER DATABASE d ENCRYPTION 'bad'", $statement->toString());
-        self::assertSame("Incorrect argument (should be Y or N) value: 'bad'", $statement->diagnostics()[0]->message());
+        try {
+            (new Semantics(Dialect::MySql))->analyze("ALTER DATABASE d ENCRYPTION 'bad'");
+            self::fail('The encryption value is neither Y nor N.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Incorrect argument (should be Y or N) value: 'bad'", $failure->problem->message());
+        }
     }
 }

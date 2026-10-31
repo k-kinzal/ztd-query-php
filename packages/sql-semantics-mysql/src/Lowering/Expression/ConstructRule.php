@@ -80,6 +80,9 @@ final class ConstructRule
 
     /**
      * Lowers the complete cast request, including invalid target bounds and AT LOCAL.
+     * @throws \SqlSemantics\Construction\RejectedInput When the cast target exceeds a bound or is not supported
+     * MySQL 8.0 and later stop reading at a cast target outside its bounds; MySQL 5.6 and 5.7 record
+     * the condition and keep reading the statement.
      */
     public function cast(Form $form): Cast|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast
     {
@@ -89,6 +92,12 @@ final class ConstructRule
         $array = ($local || $form->signature === 'simple_expr: CAST_SYM ( expr AS cast_type opt_array_cast )') && $this->flag($form->node($local ? 7 : 5));
         $syntax = $local ? \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::AtLocal
             : ($form->signature === 'simple_expr: CONVERT_SYM ( expr , cast_type )' ? \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::Convert : \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastForm::Cast);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastProblems())->target($target, $array, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, !$legacy);
+        }
+
         return $operand instanceof Scalar ? new Cast($operand, $target, $array, form: $syntax)
             : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Conversion\DeferredCast($operand, $target, array: $array, form: $syntax);
     }

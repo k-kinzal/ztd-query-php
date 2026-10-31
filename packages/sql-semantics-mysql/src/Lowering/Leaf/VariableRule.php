@@ -63,6 +63,7 @@ final class VariableRule
      * Lowers a variable read, or a user variable assignment, at an expression position.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the system variable is unknown to the release
      */
     public function variable(Node $variable): UserVariable|SystemVariable|VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment
     {
@@ -103,12 +104,17 @@ final class VariableRule
 
     /**
      * Lowers the system variable form of MySQL 5.6 and 5.7: a name and an optional component after it.
+     * @throws \SqlSemantics\Construction\RejectedInput When the system variable is unknown to the release
      */
     public function legacySystem(Form $form): SystemVariable
     {
         $first = $this->lowering->names->identifier($form->node(2));
         $second = $this->lowering->names->optional($form->node(3));
         $scope = $this->scope($form->node(1));
+        $unknown = $this->unknown($second ?? $first, $second === null ? null : $first, false);
+        if ($unknown !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($unknown, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
 
         return $this->lowering->leaves->record($second === null ? new SystemVariable($first, $scope) : new SystemVariable($second, $scope, $first));
     }
@@ -116,10 +122,12 @@ final class VariableRule
     /**
      * Lowers a system variable name of MySQL 8.0 and later, read or assigned, under a scope.
      *
+     * @param bool $component Whether the name belongs to a component being installed, whose variables exist only once it is loaded
      * @return ($assigned is true ? SystemTarget : SystemVariable)
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the system variable is unknown to the release
      */
-    public function system(Node $name, ?VariableScope $scope, bool $assigned = false): SystemVariable|SystemTarget
+    public function system(Node $name, ?VariableScope $scope, bool $assigned = false, bool $component = false): SystemVariable|SystemTarget
     {
         $form = $this->lowering->productions->form($name);
         $names = $this->lowering->names;
@@ -130,6 +138,10 @@ final class VariableRule
             'lvalue_variable: DEFAULT_SYM . ident' => [$names->identifier($form->node(2)), $this->lowering->leaves->record(new Name('default', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))],
             default => throw ImplementationGap::production($form),
         };
+        $unknown = $component ? null : $this->unknown($variable, $instance, $assigned);
+        if ($unknown !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($unknown, (new \SqlSemantics\Construction\SourceRanges())->span($name)[1] ?? 0, false);
+        }
 
         return $this->lowering->origins->record($this->lowering->leaves->record($assigned ? new SystemTarget($variable, $scope, $instance) : new SystemVariable($variable, $scope, $instance)), $name);
     }
@@ -147,5 +159,30 @@ final class VariableRule
         }
 
         return self::SCOPES[$form->signature] ?? throw ImplementationGap::production($form);
+    }
+
+    /**
+     * Answers the problem of a system variable name the server refuses while reading (verified on 5.6.51, 5.7.44 and 8.4.7):
+     * a plain name the release does not know (ER_UNKNOWN_SYSTEM_VARIABLE), and in 5.6 and 5.7 a structured name that is no
+     * key cache name: it names a variable that takes no component (1272) or an unknown variable. From MySQL 8.0 a structured
+     * name may be a component variable, which an installed component supplies: database state, resolved when derived.
+     */
+    public function unknown(Name $variable, ?Name $instance, bool $assigned): \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable|\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable|null
+    {
+        $grammar = $this->lowering->profile->grammar;
+        $variables = \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of($grammar);
+        if ($instance === null) {
+            return $variables->find($variable->value) === null ? new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable($variable->value, $assigned) : null;
+        }
+        if (in_array(strtolower($variable->value), SystemVariable::KEY_CACHE, true)) {
+            return null;
+        }
+        if ($grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            return $variables->find($variable->value) === null
+                ? new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable($variable->value, $assigned, true)
+                : new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable($variable->value);
+        }
+
+        return null;
     }
 }

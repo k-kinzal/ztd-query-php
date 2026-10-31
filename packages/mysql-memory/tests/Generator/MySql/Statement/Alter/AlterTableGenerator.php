@@ -61,7 +61,6 @@ use Tests\Generator\MySql\Statement\Alter\Partition\UpgradePartitioningGenerator
 use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredDefaultSettingGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterTable values from the generators of its operands.
@@ -148,10 +147,6 @@ final class AlterTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

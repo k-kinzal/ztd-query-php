@@ -59,10 +59,10 @@ final class KillCommandTest extends TestCase
     public function testPrepareRefusesAnUnknownSystemVariableBeforeExecution(): void
     {
         $session = (new Instance())->connect();
-        $statement = $session->analyze('KILL ROW(@@missing,2)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::class, $statement);
-        $this->expectExceptionCode(1193);
-        (new KillCommand())->prepare($statement, $session);
+        $reply = $session->run('KILL ROW(@@missing,2)')[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertSame(1193, $reply->getCode());
+        self::assertSame([1193], array_column($session->diagnostics->conditions, 1));
     }
 
     public function testProcessReturnsAScalarWithoutEvaluatingItsIdentifier(): void

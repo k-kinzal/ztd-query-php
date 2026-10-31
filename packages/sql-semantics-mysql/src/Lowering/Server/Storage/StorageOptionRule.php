@@ -191,6 +191,10 @@ final class StorageOptionRule
                 }
             }
         }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($options, in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
+        }
 
         return $options;
     }

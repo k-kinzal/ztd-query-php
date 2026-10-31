@@ -57,6 +57,7 @@ final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
         }
         Check::input($tables !== [], 'DROP TABLE names at least one table.');
         $this->tables = Check::listOf($tables, TargetTable::class, 'DROP TABLE names a list of tables.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (TargetTable $table): array => [$table->name, null, $table], $this->tables)) === null, 'DROP TABLE names each table once.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

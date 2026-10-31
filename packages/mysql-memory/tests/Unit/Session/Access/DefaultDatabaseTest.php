@@ -27,8 +27,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(DefaultDatabase::class)]
 #[Small]
@@ -39,7 +37,7 @@ final class DefaultDatabaseTest extends TestCase
         $session = (new Instance())->connect();
         $statement = new \SqlSemantics\Platform\MySql\Statement\Alter\DropTable(false, false, [
             new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new QualifiedName(new Name('t'))),
-            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new QualifiedName(new Name('t'))),
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new QualifiedName(new Name('t'), new Name('d'))),
         ]);
         $problem = new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable($statement->tables[1]->name);
         $this->expectException(SqlError::class);
@@ -118,14 +116,14 @@ final class DefaultDatabaseTest extends TestCase
         $session = (new Instance('8.4.7', [], ['d']))->connect();
         $session->text = 'unrelated invalid input';
         $node = new QueryRoot($query);
-        $statement1 = (new Embedding())->statement($node);
-        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $statement1 = $node;
+        $parameters1 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
@@ -134,14 +132,14 @@ final class DefaultDatabaseTest extends TestCase
         $first = $result1;
         self::assertSame(1046, ($first instanceof SqlError ? [$first->getCode(), $first->sqlState(), $first->getMessage()] : null)[0] ?? null);
         $session->variables->database = 'd';
-        $statement2 = (new Embedding())->statement($node);
-        $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
+        $statement2 = $node;
+        $parameters2 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
+            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), $parameters2);
         } catch (SqlError $executionError) {
             $result2 = $executionError;

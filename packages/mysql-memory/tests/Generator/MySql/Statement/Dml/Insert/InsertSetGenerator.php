@@ -27,7 +27,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Dml\AssignmentGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates InsertSet values from the generators of its operands.
@@ -86,10 +85,6 @@ final class InsertSetGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (InsertSet $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

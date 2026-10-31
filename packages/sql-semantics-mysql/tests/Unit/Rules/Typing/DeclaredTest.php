@@ -40,15 +40,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 #[Small]
 final class DeclaredTest extends TestCase
 {
-    public function testDomainBoundsARefusedDecimalWithoutChangingItsDescriptor(): void
-    {
-        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('18446744073709551616');
-        $domain = (new Declared(Collation::binary()))->domain($type);
-
-        self::assertSame(65, $domain->precision());
-        self::assertSame('18446744073709551616', $type->precision);
-    }
-
     public function testEnumerationDecodesRadixMembersAndRemovesTrailingSpaces(): void
     {
         $type = new Enumeration(EnumerationKind::Enum, [new Text('e920', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal), new Text('b ')]);

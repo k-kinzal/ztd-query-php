@@ -91,14 +91,22 @@ final class SignalRule
 
     /**
      * Lowers the condition of SIGNAL or RESIGNAL: a node of `signal_value`.
+     * Outside a stored program no condition name is declared, so the server refuses it
+     * while parsing, before the SET items are read.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a condition name is written outside a stored program
      */
     public function condition(Node $value): ConditionName|SqlState
     {
         $form = $this->lowering->form($value);
         if ($form->signature === 'signal_value: ident') {
-            return $this->lowering->origins->record(new ConditionName($this->lowering->names->identifier($form->node(0))), $value);
+            $name = $this->lowering->names->identifier($form->node(0));
+            if (!$this->lowering->stored()) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::UndefinedCondition, $name->value), (new \SqlSemantics\Construction\SourceRanges())->span($value)[1] ?? 0);
+            }
+
+            return $this->lowering->origins->record(new ConditionName($name), $value);
         }
         $state = $form->signature === 'signal_value: sqlstate' ? (new ConditionRule($this->lowering))->value($form->node(0)) : null;
 
@@ -107,6 +115,8 @@ final class SignalRule
 
     /**
      * Lowers the SET clause: a node of `opt_set_signal_information`; an absent clause is empty.
+     * The server resolves a system variable of an item while it parses the item, so an unknown
+     * name stops the reading there.
      *
      * @return list<SignalItem>
      * @throws \SqlSemantics\Construction\RejectedInput When an item operand is outside its value domain
@@ -138,7 +148,21 @@ final class SignalRule
         $items = [];
         foreach (array_reverse($pending) as [$item, $offset]) {
             $name = $this->lowering->form($item->node($offset));
-            $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $this->operand($item->node($offset + 2)));
+            try {
+                $operand = $this->operand($item->node($offset + 2));
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable) {
+                    throw new \SqlSemantics\Construction\RejectedInput($failure->problem, $failure->end, true, $failure->sources);
+                }
+
+                throw $failure;
+            }
+            $candidate = new SignalItem(self::ITEMS[$name->signature] ?? throw ImplementationGap::production($name), $operand);
+            foreach ($items as $earlier) {
+                if ($earlier->name === $candidate->name) {
+                    throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateSignalItem, $candidate->name->value), (new \SqlSemantics\Construction\SourceRanges())->span($item->node($offset))[1] ?? 0);
+                }
+            }
             $items[] = $candidate;
         }
 

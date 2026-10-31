@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Table\TableWordGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates DropTable values from the generators of its operands.
@@ -43,14 +42,17 @@ final class DropTableGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): DropTable => new DropTable(temporary: $parts[0], ifExists: $parts[1], tables: $parts[2], behavior: $parts[3], statementInformation: $parts[4], inputSource: $parts[5], tableWord: $parts[6]),
-            Generators::tuple(
-                Generators::bool(),
-                Generators::bool(),
-                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TargetTableGenerator($release))),
-                Generators::oneOf(Generators::constant(null), new DropBehaviorGenerator($release)),
-                Generators::constant(null),
-                Generators::constant(null),
-                new TableWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Alter\TargetTable $table): array => [$table->name, null, $table], $parts[2])) === null,
+                Generators::tuple(
+                    Generators::bool(),
+                    Generators::bool(),
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TargetTableGenerator($release))),
+                    Generators::oneOf(Generators::constant(null), new DropBehaviorGenerator($release)),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    new TableWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -60,10 +62,6 @@ final class DropTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

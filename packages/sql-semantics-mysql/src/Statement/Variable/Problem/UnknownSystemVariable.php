@@ -14,8 +14,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a variable that does not exist
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT @@nosuch');
- *     $query->diagnostics()[0]->message() // => "Unknown system variable 'nosuch'"
+ *     try { (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT @@nosuch'); } catch (\SqlSemantics\Construction\RejectedInput $failure) { $problem = $failure->problem; }
+ *     $problem->message() // => "Unknown system variable 'nosuch'"
  */
 final class UnknownSystemVariable implements Diagnostic
 {

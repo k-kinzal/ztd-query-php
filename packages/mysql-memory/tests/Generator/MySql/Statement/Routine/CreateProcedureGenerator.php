@@ -30,7 +30,6 @@ use Tests\Generator\MySql\Statement\Routine\Definition\DefinitionSourceGenerator
 use Tests\Generator\MySql\Statement\Routine\Program\ProgramStatementGenerator;
 use Tests\Generator\MySql\Statement\StatementGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateProcedure values from the generators of its operands.
@@ -72,10 +71,6 @@ final class CreateProcedureGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateProcedure $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

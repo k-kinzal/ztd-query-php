@@ -41,14 +41,13 @@ final class NamesAssignmentTest extends TestCase
 
     public function testDeriveItemKeepsTheExpressionConditionBeforeTheAssignment(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET NAMES = @@names_missing');
-        self::assertInstanceOf(UnknownSystemVariable::class, $statement->diagnostics()[0]);
-        self::assertInstanceOf(RefusedNamesAssignment::class, $statement->diagnostics()[1]);
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET NAMES = @@autocommit');
+        self::assertInstanceOf(RefusedNamesAssignment::class, $statement->diagnostics()[0]);
     }
 
     public function testDeriveItemRetainsAnUnreachedVariableOperandInLaterReleases(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SET NAMES = @@names_missing');
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SET NAMES = @@autocommit');
         self::assertInstanceOf(SetVariables::class, $statement);
         self::assertInstanceOf(NamesAssignment::class, $statement->items[0]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable::class, $statement->items[0]->value);
@@ -56,8 +55,6 @@ final class NamesAssignmentTest extends TestCase
         self::assertInstanceOf(RefusedNamesAssignment::class, $statement->diagnostics()[0]);
         self::assertInstanceOf(ParseFailure::class, $statement->warnings()[0]);
         self::assertInstanceOf(RefusedNamesAssignment::class, $statement->warnings()[0]->problem);
-        self::assertInstanceOf(ParseFailure::class, $statement->warnings()[1]);
-        self::assertInstanceOf(UnknownSystemVariable::class, $statement->warnings()[1]->problem);
     }
 
     public function testConditionPublishesLexicalShadowingWithoutInputText(): void

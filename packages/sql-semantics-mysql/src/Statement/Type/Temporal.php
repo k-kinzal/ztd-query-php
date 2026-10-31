@@ -44,6 +44,7 @@ final class Temporal implements DeclaredName
         Check::input($precision === null || $kind === TemporalKind::Year || (new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral($precision))->isIntegerToken(), 'A fractional seconds precision is a decimal NUM integer token.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
         Check::input($this->modifiers === [] || $kind === TemporalKind::Year, 'Only YEAR takes numeric attributes.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**

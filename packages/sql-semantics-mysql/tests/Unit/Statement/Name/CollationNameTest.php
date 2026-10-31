@@ -29,7 +29,6 @@ final class CollationNameTest extends TestCase
         self::assertSame(3778, (new CollationName(new Name('utf8_bin')))->deprecation(GrammarRelease::MySql847)?->code());
         self::assertNull((new CollationName(new Name('ucs2_bin')))->deprecation(GrammarRelease::MySql5744));
         self::assertNull((new CollationName(new Name('utf8mb4_bin')))->deprecation(GrammarRelease::MySql847));
-        self::assertNull((new CollationName(new Name('missing')))->deprecation(GrammarRelease::MySql847));
         self::assertNull((new CollationName(null))->deprecation(GrammarRelease::MySql847));
     }
 

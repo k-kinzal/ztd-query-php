@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\User\RoleSelectionGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterDefaultRole values from the generators of its operands.
@@ -63,10 +62,6 @@ final class AlterDefaultRoleGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterDefaultRole $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -25,7 +25,6 @@ use Tests\Generator\MySql\Statement\Account\Privilege\Item\GrantedRoleGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates GrantRoles values from the generators of its operands.
@@ -64,10 +63,6 @@ final class GrantRolesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (GrantRoles $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

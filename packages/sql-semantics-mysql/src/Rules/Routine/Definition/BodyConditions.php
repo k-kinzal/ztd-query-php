@@ -71,11 +71,11 @@ final class BodyConditions
         };
         $parameters = $statement instanceof R\CreateProcedure || $statement instanceof R\CreateFunction ? $statement->parameters : null;
         $returns = $statement instanceof R\CreateFunction ? $statement->returns : null;
-        $problem = (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->declaration($statement->body, $parameters, $returns);
+        $problem = null;
         $at = $statement;
         $aborts = false;
         $locals = array_map(static fn (R\Parameter $parameter): \SqlSemantics\Statement\Identifier\Name => $parameter->name, $parameters->parameters ?? []);
-        $input = $problem === null ? (new BodyInputs())->first($statement->body, $locals, $derivation->sources) : null;
+        $input = (new BodyInputs())->first($statement->body, $locals, $derivation->sources);
         if ($input !== null) {
             [$problem, $at] = $input;
             $aborts = true;

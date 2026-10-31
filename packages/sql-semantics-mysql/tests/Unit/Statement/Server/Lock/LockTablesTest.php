@@ -34,9 +34,10 @@ final class LockTablesTest extends TestCase
         self::assertInstanceOf(MissingTable::class, $lock->locks[1]->relationInformation()->table);
     }
 
-    public function testDeriveStatementReportsARepeatedAlias(): void
+    public function testDeriveStatementReportsAnAliasNamingAnEarlierTableOfTheCurrentDatabase(): void
     {
-        $lock = (new Semantics(Dialect::MySql))->analyze('LOCK TABLES t READ, u AS t WRITE');
+        $semantics = new Semantics(Dialect::MySql);
+        $lock = $semantics->analyze('LOCK TABLES pbt.t READ, u AS t WRITE', $semantics->context(searchPath: new \SqlSemantics\Contract\SearchPath('pbt')));
 
         self::assertInstanceOf(NonUniqueTable::class, $lock->diagnostics()[0]);
     }

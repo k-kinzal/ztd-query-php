@@ -19,7 +19,7 @@ final class NoticePhaseTest extends TestCase
     public function testCasesDistinguishTheInnerOperandFromItsPartitionContext(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $expression = $semantics->analyze('SELECT @v COLLATE missing')->field(0)->expression;
+        $expression = $semantics->analyze('SELECT @v COLLATE utf8mb4_bin')->field(0)->expression;
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $expression);
         $expression = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($expression);
         $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
@@ -27,7 +27,8 @@ final class NoticePhaseTest extends TestCase
 
         $notices = array_values(array_filter($derivation->facts()->warnings, static fn ($notice): bool => $notice instanceof ParseFailure));
 
-        self::assertCount(2, $notices);
-        self::assertSame([NoticePhase::Syntax, NoticePhase::Contextualization], array_column($notices, 'phase'));
+        self::assertCount(1, $notices);
+        self::assertSame([NoticePhase::Contextualization], array_column($notices, 'phase'));
+        self::assertNotSame(NoticePhase::Syntax, NoticePhase::Contextualization);
     }
 }

@@ -48,6 +48,7 @@ final class LoadIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatemen
             $this->initializeStatementInformation($statementInformation);
         }
         $this->tables = Check::listOf($tables, PreloadedTable::class, 'LOAD INDEX INTO CACHE names at least one table.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (PreloadedTable $table): array => [$table->table, null, $table], $this->tables)) === null, 'LOAD INDEX INTO CACHE names each table once.');
         foreach ($this->tables as $table) {
             Check::input($table->partitions === null || count($this->tables) === 1, 'A table with partitions is the only table of LOAD INDEX INTO CACHE.');
         }

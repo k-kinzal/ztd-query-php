@@ -33,7 +33,6 @@ use Tests\Generator\MySql\Statement\Routine\Event\ScheduleGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\ProgramStatementGenerator;
 use Tests\Generator\MySql\Statement\StatementGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterEvent values from the generators of its operands.
@@ -79,10 +78,6 @@ final class AlterEventGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterEvent $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

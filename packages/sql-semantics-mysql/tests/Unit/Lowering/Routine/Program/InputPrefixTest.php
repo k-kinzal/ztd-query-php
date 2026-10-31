@@ -51,7 +51,7 @@ final class InputPrefixTest extends TestCase
         yield 'duplicate before type' => ['DECLARE x,X INT COLLATE binary;', 'Duplicate variable: X'];
         yield 'duplicate before later type' => ['DECLARE x INT; DECLARE X INT COLLATE binary;', 'Duplicate variable: X'];
         yield 'duplicate variable' => ['DECLARE x INT; DECLARE x INT;', 'Duplicate variable: x'];
-        yield 'call identity before argument' => ['SELECT ``(@@missing_variable);', "Incorrect routine name ''"];
+        yield 'call identity before argument' => ['SELECT ``(@@autocommit);', "Incorrect routine name ''"];
         yield 'earlier statement before call' => ['SELECT @@missing_variable; SELECT ``();', "Unknown system variable 'missing_variable'"];
         yield 'unknown system variable'  => ['SELECT @@missing_variable;', "Unknown system variable 'missing_variable'"];
         yield 'unknown assignment' => ['SET missing_variable=1;', "Unknown system variable 'missing_variable'"];

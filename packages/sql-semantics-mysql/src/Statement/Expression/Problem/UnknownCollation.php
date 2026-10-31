@@ -14,8 +14,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting an unknown collation
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 'a' COLLATE klingon_ci");
- *     $query->diagnostics()[0]->message() // => "Unknown collation: 'klingon_ci'"
+ *     try { (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 'a' COLLATE klingon_ci"); } catch (\SqlSemantics\Construction\RejectedInput $failure) { $problem = $failure->problem; }
+ *     $problem->message() // => "Unknown collation: 'klingon_ci'"
  */
 final class UnknownCollation implements Diagnostic
 {

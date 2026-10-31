@@ -37,6 +37,7 @@ final class Elementary implements DeclaredName
         Check::input($alias === null || $alias->kind() === $kind, 'A type synonym must match its canonical type role.');
         Check::input($length === null || $kind === ElementaryKind::Bit || $kind === ElementaryKind::Vector, 'Only BIT and VECTOR take a length.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**

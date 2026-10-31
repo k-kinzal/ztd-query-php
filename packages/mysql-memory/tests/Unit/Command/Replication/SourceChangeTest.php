@@ -22,8 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSo
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(SourceChange::class)]
 #[Small]
@@ -182,14 +180,14 @@ final class SourceChangeTest extends TestCase
         $statement = new ChangeReplicationSource($vocabulary, [new $option($vocabulary, $kind::Host, new $text('local')), new $option($vocabulary, $kind::CompressionAlgorithms, new $text(str_repeat('x', 129)))]);
         $session = (new Instance())->connect();
         $session->text = 'unrelated request label';
-        $statement1 = (new Embedding())->statement($statement);
-        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $statement1 = $statement;
+        $parameters1 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;

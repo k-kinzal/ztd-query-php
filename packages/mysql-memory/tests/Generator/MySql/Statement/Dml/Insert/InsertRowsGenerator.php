@@ -27,7 +27,6 @@ use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Dml\AssignmentGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredColumnAssignmentGenerator;
 use Tests\Generator\MySql\Statement\Routine\Program\Write\DeferredInsertedRowGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates InsertRows values from the generators of its operands.
@@ -88,10 +87,6 @@ final class InsertRowsGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (InsertRows $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

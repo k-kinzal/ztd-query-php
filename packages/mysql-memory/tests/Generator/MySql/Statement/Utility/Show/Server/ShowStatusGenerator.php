@@ -26,7 +26,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowLikeGenerator;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowWhereGenerator;
 use Tests\Generator\MySql\Statement\Variable\VariableScopeGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowStatus values from the generators of its operands.
@@ -67,10 +66,6 @@ final class ShowStatusGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowStatus $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

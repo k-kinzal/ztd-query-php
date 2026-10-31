@@ -28,7 +28,6 @@ use Tests\Generator\MySql\Statement\Alter\Modifier\AlgorithmOptionGenerator;
 use Tests\Generator\MySql\Statement\Alter\Modifier\LockOptionGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates DropIndex values from the generators of its operands.
@@ -72,10 +71,6 @@ final class DropIndexGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropIndex $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

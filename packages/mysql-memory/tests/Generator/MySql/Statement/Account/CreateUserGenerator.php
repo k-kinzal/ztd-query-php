@@ -28,7 +28,6 @@ use Tests\Generator\MySql\Statement\Account\Option\TlsRequirementGenerator;
 use Tests\Generator\MySql\Statement\Account\Option\UserCommentGenerator;
 use Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateUser values from the generators of its operands.
@@ -69,10 +68,6 @@ final class CreateUserGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateUser $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

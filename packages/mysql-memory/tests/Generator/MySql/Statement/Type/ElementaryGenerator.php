@@ -39,14 +39,21 @@ final class ElementaryGenerator implements ErisGenerator
     {
         $this->delegate = Generators::bind(
             new ElementaryKindGenerator($release),
-            static function (ElementaryKind $kind): ErisGenerator {
+            static function (ElementaryKind $kind) use ($release): ErisGenerator {
                 $aliases = array_filter(ElementaryAlias::cases(), static fn (ElementaryAlias $alias): bool => $alias->kind() === $kind);
 
                 return Generators::map(
                     static fn (array $parts): Elementary => new Elementary(kind: $kind, length: $parts[0], inputSource: null, alias: $parts[1]),
-                    Generators::tuple(
-                        in_array($kind, [ElementaryKind::Bit, ElementaryKind::Vector], true) ? Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $length): string => (string) $length, Generators::choose(1, 64))) : Generators::constant(null),
-                        $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                    Generators::suchThat(
+                        static function (array $parts) use ($kind, $release): bool {
+                            $problem = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->elementaryLength($kind, $parts[0], '');
+
+                            return $problem === null || ($problem->rule === \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Empty && $release === GrammarRelease::MySql5651);
+                        },
+                        Generators::tuple(
+                            in_array($kind, [ElementaryKind::Bit, ElementaryKind::Vector], true) ? Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $length): string => (string) $length, Generators::choose(1, 64))) : Generators::constant(null),
+                            $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                        )
                     )
                 );
             }

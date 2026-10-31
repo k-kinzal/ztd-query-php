@@ -28,7 +28,6 @@ use Tests\Generator\MySql\Statement\Account\Option\ResourceLimitGenerator;
 use Tests\Generator\MySql\Statement\Account\Option\TlsRequirementGenerator;
 use Tests\Generator\MySql\Statement\Account\Option\UserCommentGenerator;
 use Tests\Generator\MySql\Statement\Account\User\UserAlterationGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterUser values from the generators of its operands.
@@ -87,10 +86,6 @@ final class AlterUserGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterUser $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

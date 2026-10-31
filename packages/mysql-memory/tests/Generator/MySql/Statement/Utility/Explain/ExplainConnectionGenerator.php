@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\NumeralGenerator;
 use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ExplainConnection values from the generators of its operands.
@@ -69,10 +68,6 @@ final class ExplainConnectionGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ExplainConnection $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

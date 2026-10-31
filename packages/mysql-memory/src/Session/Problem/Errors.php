@@ -252,6 +252,8 @@ final class Errors
     {
         return match (true) {
             $diagnostic instanceof RepeatedTable => QueryError::NonUniqueTable->error($diagnostic->name->name->value),
+            $diagnostic === \SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Variable => SchemaError::ViewSelectVariable->error(),
+            $diagnostic === \SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Into => SchemaError::ViewSelectClause->error('INTO'),
             $diagnostic instanceof MultiplePrimaryKeys => SchemaError::MultiplePrimaryKey->error(),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute => (new TypeErrors())->columnAttribute($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions => \MySqlMemory\Error\Family\PartitionError::PartitionsNotDefined->error($diagnostic->kind->value),

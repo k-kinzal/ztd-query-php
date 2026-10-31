@@ -20,8 +20,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallPlugin;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(PluginCommand::class)]
 #[Small]
@@ -207,14 +205,14 @@ final class PluginCommandTest extends TestCase
         $session = (new Instance('5.6.51'))->connect();
         $node = new UninstallPlugin(new Name('mysql_old_password'));
         $session->text = 'unrelated invalid input';
-        $statement1 = (new Embedding())->statement($node);
-        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $statement1 = $node;
+        $parameters1 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;

@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 #[CoversClass(AnalyzeTable::class)]
@@ -36,6 +35,6 @@ final class AnalyzeTableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE t, u DROP HISTOGRAM ON a');
 
-        self::assertInstanceOf(HistogramTables::class, $operation->diagnostics()[0]);
+        self::assertSame([], $operation->diagnostics());
     }
 }

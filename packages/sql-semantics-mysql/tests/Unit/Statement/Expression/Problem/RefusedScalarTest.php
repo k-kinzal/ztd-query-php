@@ -33,7 +33,7 @@ final class RefusedScalarTest extends TestCase
     public function testLoweringPreservesDependenciesOfARejectedScalarUse(): void
     {
         try {
-            (new Semantics(Dialect::MySql))->analyze('SET @x=(VALUES ROW() UNION SELECT @@nonexistingvariable)');
+            (new Semantics(Dialect::MySql))->analyze('SET @x=(VALUES ROW() UNION SELECT @@autocommit)');
             self::fail('An ordinary assignment cannot retain a zero-column scalar.');
         } catch (RejectedInput $error) {
             self::assertInstanceOf(M\Expression\Problem\RefusedScalar::class, $error->problem);

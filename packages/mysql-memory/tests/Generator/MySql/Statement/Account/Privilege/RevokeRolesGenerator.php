@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeRoles;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\Privilege\Item\GrantedRoleGenerator;
 use Tests\Generator\MySql\Statement\Name\AccountGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates RevokeRoles values from the generators of its operands.
@@ -60,10 +59,6 @@ final class RevokeRolesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (RevokeRoles $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

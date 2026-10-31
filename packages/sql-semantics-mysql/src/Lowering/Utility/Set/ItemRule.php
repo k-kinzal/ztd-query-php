@@ -64,6 +64,7 @@ final class ItemRule
 
     /**
      * Lowers an item written without a leading scope keyword: a form of `option_value_no_option_type`.
+     * MySQL 8.0 and later resolve the value of a `@@variable` assignment before the assigned variable.
      *
      * @throws ImplementationGap When a production has no rule
      * @throws \SqlSemantics\Construction\RejectedInput When an operand has no SET-item meaning
@@ -82,8 +83,9 @@ final class ItemRule
 
                 return new SystemAssignment($this->lowering->origins->record($this->lowering->leaves->record(new SystemTarget($name, $this->lowering->variables->scope($form->node(2)), $instance)), $form->node(3)), $values->value($form->node(5), true), operator: $this->lowering->options->assignment($form->node(4)));
             case 'option_value_no_option_type: @ @ opt_set_var_ident_type lvalue_variable equal set_expr_or_default':
+                $value = $values->value($form->node(5), true);
 
-                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2)), true), $values->value($form->node(5), true), operator: $this->lowering->options->assignment($form->node(4)));
+                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2)), true), $value, operator: $this->lowering->options->assignment($form->node(4)));
             default:
                 return $this->connection($form);
         }
@@ -135,10 +137,15 @@ final class ItemRule
      * Lowers a name assignment whose name, equals sign and value are the first three children.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a 5.6 or 5.7 target names an unknown system variable
      */
     public function named(?VariableScope $scope, Form $form): NameAssignment
     {
         [$name, $qualifier] = $this->variable($form->node(0));
+        $grammar = $this->lowering->profile->grammar;
+        if ($qualifier === null && !$this->lowering->stored() && ($grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744) && \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of($grammar)->find($name->value) === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable($name->value, true), (new \SqlSemantics\Construction\SourceRanges())->span($form->node(0))[1] ?? 0, false);
+        }
 
         return $this->lowering->origins->record(new NameAssignment($name, (new ValueRule($this->lowering))->value($form->node(2), $scope !== null), $scope, $qualifier, operator: $this->lowering->options->assignment($form->node(1))), $form->node(0));
     }

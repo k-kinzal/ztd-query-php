@@ -38,11 +38,14 @@ final class DecimalGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): Decimal => new Decimal(precision: $parts[0], scale: $parts[0] === null ? null : $parts[1], modifiers: $parts[2], inputSource: null, word: $parts[3]),
-            Generators::tuple(
-                Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
-                Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))),
-                new DecimalWordGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->fractionalParts(true, $parts[0], $parts[0] === null ? null : $parts[1], '') === null,
+                Generators::tuple(
+                    Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
+                    Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new NumericModifierGenerator($release))),
+                    new DecimalWordGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

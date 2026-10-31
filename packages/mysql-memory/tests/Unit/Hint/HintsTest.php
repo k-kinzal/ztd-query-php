@@ -25,8 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\QueryRoot;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(Hints::class)]
 #[Small]
@@ -186,14 +184,14 @@ final class HintsTest extends TestCase
         $session = (new Instance($release))->connect();
         $session->text = 'unrelated invalid input';
         $query = new QueryRoot(new Select([], [new SelectExpression(new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('3')))], hints: [new VariableHint('div_precision_increment', new HintLiteral(HintLiteralKind::Integer, (string) $precision))]));
-        $statement1 = (new Embedding())->statement($query);
-        $operation = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
-        $statement2 = (new Embedding())->statement($query);
+        $statement1 = $query;
+        $operation = (new Binding())->operation($session, $statement1, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
+        $statement2 = $query;
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
-        $operation2 = (new Binding())->operation($session, $statement2, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
+        $operation2 = (new Binding())->operation($session, $statement2, [], new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
         $reply = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), []);
         self::assertNotSame($query, $operation);
         self::assertFalse($query->hasBinding());

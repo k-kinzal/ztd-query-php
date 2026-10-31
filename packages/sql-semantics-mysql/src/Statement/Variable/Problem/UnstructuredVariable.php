@@ -18,8 +18,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a variable that is not structured with an instance in MySQL 5.7
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@x.sql_mode');
- *     $query->diagnostics()[0]->message() // => "Variable 'sql_mode' is not a variable component (can't be used as XXXX.variable_name)"
+ *     try { (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@x.sql_mode'); } catch (\SqlSemantics\Construction\RejectedInput $failure) { $problem = $failure->problem; }
+ *     $problem->message() // => "Variable 'sql_mode' is not a variable component (can't be used as XXXX.variable_name)"
  */
 final class UnstructuredVariable implements Diagnostic
 {

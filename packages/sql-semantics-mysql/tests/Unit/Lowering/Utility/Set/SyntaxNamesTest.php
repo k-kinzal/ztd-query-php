@@ -50,16 +50,13 @@ final class SyntaxNamesTest extends TestCase
         self::assertSame(NoticePhase::Contextualization, $notice->phase);
     }
 
-    public function testPrecedingUsesOrdinaryVariableLookup(): void
+    public function testPrecedingLeavesARefusedVariableToItsOwnCompletedProduction(): void
     {
         $profile = new LanguageProfile(GrammarRelease::MySql847);
         $lowering = new Lowering(Productions::load(dirname(__DIR__, 5) . '/resources/productions/mysql-8.4.7.php'), new Leaves(), $profile);
         $tree = (new MySqlParser('mysql-8.4.7'))->parse('SET @@missing_var = 0, NAMES = 1');
-        $notice = (new SyntaxNames())->preceding($tree->find('option_value_no_option_type')[0], $lowering, new InputLocals());
 
-        self::assertNotNull($notice);
-        self::assertInstanceOf(UnknownSystemVariable::class, $notice->problem);
-        self::assertSame('missing_var', $notice->problem->name);
+        self::assertNull((new SyntaxNames())->preceding($tree->find('option_value_no_option_type')[0], $lowering, new InputLocals()));
     }
 
     /**

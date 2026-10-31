@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa\XaPrepare;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Type\Resolved\CharsetGenerator;
 use Tests\Generator\Semantics\Contract\LanguageProfileGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates XaPrepare values from the generators of its operands.
@@ -60,10 +59,6 @@ final class XaPrepareGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (XaPrepare $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

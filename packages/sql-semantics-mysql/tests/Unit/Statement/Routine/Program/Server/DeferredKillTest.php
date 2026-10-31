@@ -15,14 +15,15 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredKill;
 #[Medium]
 final class DeferredKillTest extends TestCase
 {
-    public function testDeriveProgramRetainsDefinitionTimeVariableProblems(): void
+    public function testDeriveProgramIsNeverReachedForASystemVariableTheReadingRefuses(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() KILL QUERY ROW(@@missing,2)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
-        self::assertInstanceOf(DeferredKill::class, $operation->body);
-        self::assertNotEmpty(array_filter($operation->diagnostics(), static fn ($problem) => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable));
-        self::assertSame('CREATE PROCEDURE p() KILL QUERY ROW(@@missing, 2)', $operation->toString());
-        self::assertNotInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation->body);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() KILL QUERY ROW(@@missing,2)');
+            self::fail('The system variable does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class, $failure->problem);
+            self::assertSame('missing', $failure->problem->name);
+        }
     }
     public function testRenderKeepsTheProcessScopeAndOperand(): void
     {

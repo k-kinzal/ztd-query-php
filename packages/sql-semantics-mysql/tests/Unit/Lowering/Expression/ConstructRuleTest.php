@@ -101,15 +101,14 @@ final class ConstructRuleTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerCastPrecisions')]
-    public function testCastRetainsItsPrecisionConditionOnTheCompleteStatement(string $release, string $cast, int $precision, int $maximum, bool $aborts): void
+    public function testCastRefusesAnOversizedPrecisionWhileReading(string $release, string $cast, int $precision, int $maximum, bool $aborts): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT ' . $cast . ', BINARY 1');
-        $failure = $statement->warnings()[0];
-
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $failure);
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision($precision, 'CAST', $maximum), $failure->problem);
-        self::assertSame($aborts, $failure->aborts);
-        self::assertStringEndsWith(', BINARY 1', $statement->toString());
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT ' . $cast . ', BINARY 1');
+            self::fail('The cast precision exceeds its bound.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision($precision, 'CAST', $maximum), $failure->problem);
+        }
     }
 
     /**
@@ -125,15 +124,14 @@ final class ConstructRuleTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerArrayTargets')]
-    public function testCastRetainsArrayConditionsAndAllOperands(string $release, string $type, string $problem, bool $aborts): void
+    public function testCastRefusesAnUnsupportedArrayTargetWhileReading(string $release, string $type, string $problem, bool $aborts): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT CAST(NULL AS ' . $type . ' ARRAY), BINARY 1');
-        $failures = array_values(array_filter($statement->warnings(), static fn ($warning): bool => $warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure));
-
-        self::assertCount(1, $failures);
-        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet($problem), $failures[0]->problem);
-        self::assertSame($aborts, $failures[0]->aborts);
-        self::assertSame('SELECT CAST(NULL AS ' . $type . ' ARRAY), BINARY 1', $statement->toString());
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('SELECT CAST(NULL AS ' . $type . ' ARRAY), BINARY 1');
+            self::fail('The array target is not supported.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet($problem), $failure->problem);
+        }
     }
 
     public function testOptionalLowersTheOperandAndTheElseOfCase(): void

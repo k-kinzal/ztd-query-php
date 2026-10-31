@@ -50,10 +50,13 @@ final class CharacterGenerator implements ErisGenerator
 
                 return Generators::map(
                     static fn (array $parts): Character => new Character(kind: $kind, length: $parts[0], national: $national, charset: $parts[1], inputSource: null, alias: $parts[2]),
-                    Generators::tuple(
-                        $required ? Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99)) : ($sized ? Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))) : Generators::constant(null)),
-                        $national ? Generators::oneOf(Generators::constant(null), Generators::constant(new CharsetAttribute(CharsetForm::Binary))) : Generators::oneOf(Generators::constant(null), new CharsetAttributeGenerator($release)),
-                        $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                    Generators::suchThat(
+                        static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->characterLength($kind, $parts[0], '') === null,
+                        Generators::tuple(
+                            $required ? Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99)) : ($sized ? Generators::oneOf(Generators::constant(null), Generators::map(static fn (int $number): string => (string) $number, Generators::choose(0, 99))) : Generators::constant(null)),
+                            $national ? Generators::oneOf(Generators::constant(null), Generators::constant(new CharsetAttribute(CharsetForm::Binary))) : Generators::oneOf(Generators::constant(null), new CharsetAttributeGenerator($release)),
+                            $aliases === [] ? Generators::constant(null) : Generators::oneOf(Generators::constant(null), Generators::elements($aliases))
+                        )
                     )
                 );
             }

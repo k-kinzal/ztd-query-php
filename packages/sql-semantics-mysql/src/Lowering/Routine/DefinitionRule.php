@@ -103,6 +103,7 @@ final class DefinitionRule
      * Lowers CREATE PROCEDURE or CREATE FUNCTION of a stored function: a node of `sp_tail` or `sf_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the RETURNS type exceeds a bound
      */
     public function routine(Node $tail, ?Account $definer): CreateProcedure|CreateFunction
     {
@@ -129,6 +130,10 @@ final class DefinitionRule
             return new CreateProcedure($name, $parameters, $body, $characteristics, $definer, $exists, definitionSource: (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_pdparam_list']));
         }
         [$type, $collation] = (new ParameterRule($this->lowering))->declared($parts['type_with_opt_collate'] ?? $parts['type'], $parts['opt_collate'] ?? null);
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($type, '', $this->lowering->profile->grammar);
+        if ($size !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($parts['type_with_opt_collate'] ?? $parts['type'])[1] ?? 0);
+        }
         $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_fdparam_list']);
         return new CreateFunction($name, $parameters, $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, $characteristics), $collation, $definer, $exists, definitionSource: (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_fdparam_list'], $parts['type_with_opt_collate'] ?? $parts['type']));
     }

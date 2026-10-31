@@ -176,4 +176,13 @@ final class SyntaxWarningsTest extends TestCase
         self::assertSame('(SELECT 1) UNION SELECT 2', $operation->toString());
     }
 
+    public function testEndAnswersTheLastTokenEndOfANode(): void
+    {
+        $tree = (new MySqlParser('mysql-8.4.7'))->parse('SELECT 1 FROM t');
+        $warnings = new SyntaxWarnings();
+
+        self::assertSame(15, $warnings->end($tree));
+        self::assertSame(8, $warnings->end($tree->find('select_item_list')[0]));
+        self::assertNull($warnings->end($tree->find('opt_where_clause')[0]));
+    }
 }

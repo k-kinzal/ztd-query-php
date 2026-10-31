@@ -27,8 +27,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use Tests\Support\Bindings;
-use Tests\Support\Embedding;
 
 #[CoversClass(TriggerCommand::class)]
 #[Small]
@@ -226,14 +224,14 @@ final class TriggerCommandTest extends TestCase
         $create = new CreateTrigger(new QualifiedName(new Name('tr'), new Name('x')), $time, $event, new TriggerTable(new QualifiedName(new Name('t'))), new Block([], []));
         $session = (new Instance($release))->connect();
         $session->text = 'unrelated invalid input';
-        $statement1 = (new Embedding())->statement($create);
-        $parameters1 = array_fill(0, (new Bindings())->count($statement1), [null, Domain::null()]);
+        $statement1 = $create;
+        $parameters1 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement1)));
+            $operation1 = (new Binding())->operation($session, $statement1, $parameters1, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result1 = (new Execution($session))->perform($operation1, (new Dispatcher())->command($operation1), $parameters1);
         } catch (SqlError $executionError) {
             $result1 = $executionError;
@@ -243,14 +241,14 @@ final class TriggerCommandTest extends TestCase
         self::assertSame(str_starts_with($release, '5.') ? 1146 : 1049, ($absent instanceof SqlError ? [$absent->getCode(), $absent->sqlState(), $absent->getMessage()] : null)[0] ?? null);
         $session->query('CREATE DATABASE x');
         $session->text = 'unrelated invalid input';
-        $statement2 = (new Embedding())->statement($create);
-        $parameters2 = array_fill(0, (new Bindings())->count($statement2), [null, Domain::null()]);
+        $statement2 = $create;
+        $parameters2 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement2)));
+            $operation2 = (new Binding())->operation($session, $statement2, $parameters2, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result2 = (new Execution($session))->perform($operation2, (new Dispatcher())->command($operation2), $parameters2);
         } catch (SqlError $executionError) {
             $result2 = $executionError;
@@ -260,28 +258,28 @@ final class TriggerCommandTest extends TestCase
         self::assertSame(1146, ($missing instanceof SqlError ? [$missing->getCode(), $missing->sqlState(), $missing->getMessage()] : null)[0] ?? null);
         $session->query('CREATE TABLE x.t(a INT); INSERT INTO x.t VALUES(1),(2)');
         $session->text = 'unrelated invalid input';
-        $statement3 = (new Embedding())->statement($create);
-        $parameters3 = array_fill(0, (new Bindings())->count($statement3), [null, Domain::null()]);
+        $statement3 = $create;
+        $parameters3 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation3 = (new Binding())->operation($session, $statement3, $parameters3, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement3)));
+            $operation3 = (new Binding())->operation($session, $statement3, $parameters3, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result3 = (new Execution($session))->perform($operation3, (new Dispatcher())->command($operation3), $parameters3);
         } catch (SqlError $executionError) {
             $result3 = $executionError;
             (new Execution($session))->failed($executionError);
         }
         self::assertNotInstanceOf(SqlError::class, $result3);
-        $statement4 = (new Embedding())->statement($create);
-        $parameters4 = array_fill(0, (new Bindings())->count($statement4), [null, Domain::null()]);
+        $statement4 = $create;
+        $parameters4 = [];
         $session->activity->begin();
         StatementCounters::received($session);
 
         $session->dots = [];
         try {
-            $operation4 = (new Binding())->operation($session, $statement4, $parameters4, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, (new Bindings())->parameters($statement4)));
+            $operation4 = (new Binding())->operation($session, $statement4, $parameters4, new LanguageProfile($session->semantics()->profile()->grammar, $session->semantics()->profile()->lexical, \SqlSemantics\Contract\ParameterStyle::Native));
             $result4 = (new Execution($session))->perform($operation4, (new Dispatcher())->command($operation4), $parameters4);
         } catch (SqlError $executionError) {
             $result4 = $executionError;

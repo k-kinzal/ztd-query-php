@@ -22,7 +22,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable;
 use SqlSemantics\Statement\Identifier\Name;
-use Tests\Support\Analysis;
 
 /**
  * Generates LoadIndex values from the generators of its operands.
@@ -43,8 +42,11 @@ final class LoadIndexGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): LoadIndex => new LoadIndex(tables: $parts[0], statementInformation: null, inputSource: null),
-            Generators::tuple(
-                Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 1 ? Generators::vector(1, new PreloadedTableGenerator($release)) : Generators::vector($count, Generators::suchThat(static fn (PreloadedTable $table): bool => $table->partitions === null, new PreloadedTableGenerator($release))))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable $table): array => [$table->table, null, $table], $parts[0])) === null,
+                Generators::tuple(
+                    Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 1 ? Generators::vector(1, new PreloadedTableGenerator($release)) : Generators::vector($count, Generators::suchThat(static fn (PreloadedTable $table): bool => $table->partitions === null, new PreloadedTableGenerator($release))))
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -54,10 +56,6 @@ final class LoadIndexGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (LoadIndex $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

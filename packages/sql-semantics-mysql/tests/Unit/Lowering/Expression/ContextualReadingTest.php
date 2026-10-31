@@ -27,12 +27,12 @@ final class ContextualReadingTest extends TestCase
     public static function providerOrders(): iterable
     {
         foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
-            $reversed = $release === '5.6.51' ? ['bad', 'missing'] : ['missing', 'bad'];
-            yield $release . ' select' => [$release, "SELECT @@missing, DATE 'bad', TIME '01:02:03', @a", ['missing', 'bad', '01:02:03', 'a']];
-            yield $release . ' trim' => [$release, "SELECT TRIM(DATE 'bad' FROM @@missing)", $reversed];
-            yield $release . ' add' => [$release, "SELECT TIMESTAMPADD(DAY, DATE 'bad', @@missing)", $reversed];
+            $reversed = $release === '5.6.51' ? ['bad', 'autocommit'] : ['autocommit', 'bad'];
+            yield $release . ' select' => [$release, "SELECT @@autocommit, DATE 'bad', TIME '01:02:03', @a", ['autocommit', 'bad', '01:02:03', 'a']];
+            yield $release . ' trim' => [$release, "SELECT TRIM(DATE 'bad' FROM @@autocommit)", $reversed];
+            yield $release . ' add' => [$release, "SELECT TIMESTAMPADD(DAY, DATE 'bad', @@autocommit)", $reversed];
             yield $release . ' assign' => [$release, "SELECT @a := DATE 'bad'", $release === '5.6.51' ? ['a', 'bad'] : ['bad', 'a']];
-            yield $release . ' diff' => [$release, "SELECT TIMESTAMPDIFF(DAY, DATE 'bad', @@missing)", ['bad', 'missing']];
+            yield $release . ' diff' => [$release, "SELECT TIMESTAMPDIFF(DAY, DATE 'bad', @@autocommit)", ['bad', 'autocommit']];
         }
     }
 
@@ -54,7 +54,7 @@ final class ContextualReadingTest extends TestCase
         $platform = new Platform();
         $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
-        $tree = $platform->parser($profile)->parse("SELECT TRIM(DATE 'bad' FROM @@missing)");
+        $tree = $platform->parser($profile)->parse("SELECT TRIM(DATE 'bad' FROM @@autocommit)");
         $children = (new ContextualReading())->children($tree->find('function_call_keyword')[0], $lowering);
         self::assertCount(2, $children);
         self::assertCount(1, $children[0]->find('rvalue_system_or_user_variable'));
@@ -66,7 +66,7 @@ final class ContextualReadingTest extends TestCase
         $platform = new Platform();
         $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
-        $tree = $platform->parser($profile)->parse("SELECT DATE 'bad', DATE '2026-10-20', @@missing, @a");
+        $tree = $platform->parser($profile)->parse("SELECT DATE 'bad', DATE '2026-10-20', @@autocommit, @a");
         $reader = new ContextualReading();
         $invalid = $reader->value($tree->find('temporal_literal')[0], $lowering);
         self::assertInstanceOf(TemporalLiteral::class, $invalid);

@@ -51,6 +51,7 @@ final class FormatRule
      * Lowers the character set clause: a node of `opt_load_data_charset`; an absent clause is null.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the character set is unknown to the release
      */
     public function charset(Node $charset): ?CharsetName
     {
@@ -63,7 +64,7 @@ final class FormatRule
         }
         $this->lowering->options->skip($form->node(0));
 
-        return $this->lowering->charsets->charset($form->node(1));
+        return $this->lowering->charsets->charset($form->node(1), true);
     }
 
     /**

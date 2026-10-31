@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowLikeGenerator;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowWhereGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowVariables values from the generators of its operands.
@@ -66,10 +65,6 @@ final class ShowVariablesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowVariables $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

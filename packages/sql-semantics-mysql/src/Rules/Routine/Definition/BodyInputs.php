@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Routine\Definition;
 
-use SqlSemantics\Platform\MySql\Rules\Query\From\InputNames;
 use SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies;
 use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\ConditionBindings;
 use SqlSemantics\Platform\MySql\Rules\Routine\Declaration\LocalAssignments;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ScopedLocalAssignment;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Source\SourceMap;
@@ -28,7 +26,7 @@ final class BodyInputs
 {
     /**
      * @param list<Name> $locals The enclosing routine parameters
-     * @return array{ProgramProblem|ScopedLocalAssignment|NonUniqueTable, Node}|null The first condition and its input boundary
+     * @return array{ProgramProblem|ScopedLocalAssignment, Node}|null The first condition and its input boundary
      */
     public function first(Node $body, array $locals, ?SourceMap $sources = null): ?array
     {
@@ -42,14 +40,10 @@ final class BodyInputs
             $origin = $sources?->of($scoped);
             $candidates[spl_object_id($scoped)] = new ScopedLocalAssignment($origin?->offset, $origin === null ? null : $origin->offset + $origin->length);
         }
-        $collision = (new InputNames())->problem($body);
-        if ($collision?->relation !== null) {
-            $candidates[spl_object_id($collision->relation)] = $collision;
-        }
         foreach ((new ReadDependencies())->nodes($body, childrenFirst: true) as $node) {
             $problem = $candidates[spl_object_id($node)] ?? null;
             if ($problem !== null) {
-                return [$problem, $problem instanceof NonUniqueTable ? $this->activation($body, $node, $sources) : $node];
+                return [$problem, $node];
             }
         }
         return null;

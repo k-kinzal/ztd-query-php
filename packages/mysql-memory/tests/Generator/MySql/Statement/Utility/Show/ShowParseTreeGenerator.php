@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\StatementGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowParseTree values from the generators of its operands.
@@ -61,10 +60,6 @@ final class ShowParseTreeGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowParseTree $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

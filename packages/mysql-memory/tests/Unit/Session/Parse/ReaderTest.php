@@ -225,4 +225,16 @@ final class ReaderTest extends TestCase
         self::assertTrue($reader->appendTarget([[1, $failure]], false, false));
     }
 
+    public function testEarlierPrefersTheRefusalTheLoweringFindsFirst(): void
+    {
+        $session = (new Instance())->connect();
+        $tree = $session->semantics()->parser()->parse('SIGNAL c SET MESSAGE_TEXT = @@nosuch');
+        $later = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('nosuch'), 36);
+
+        $earlier = (new Reader())->earlier($later, $tree, $session);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem::class, $earlier->problem);
+        self::assertSame('Undefined CONDITION: c', $earlier->problem->message());
+        self::assertSame($later, (new Reader())->earlier($later, $session->semantics()->parser()->parse('SELECT 1'), $session));
+    }
 }

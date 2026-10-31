@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowLikeGenerator;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowWhereGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowCollation values from the generators of its operands.
@@ -64,10 +63,6 @@ final class ShowCollationGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowCollation $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

@@ -33,23 +33,24 @@ final class DropTableTest extends TestCase
         self::assertSame('DROP TEMPORARY TABLES IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
     }
 
-    public function testRenderPreservesRepeatedTableIdentities(): void
+    public function testRenderPreservesTheTableIdentitiesInOrder(): void
     {
         $drop = new DropTable(false, false, [
             new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
-            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('d'))),
         ]);
         $published = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context(), $drop);
-        self::assertSame('DROP TABLE t, t', $published->toString());
+        self::assertSame('DROP TABLE t, d.t', $published->toString());
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerReleases')]
-    public function testDeriveStatementRetainsARepeatedTargetAsAnOrderedCondition(string $version): void
+    public function testDeriveStatementRetainsAWrittenDatabaseNamingTheCurrentOneAsAnOrderedCondition(string $version): void
     {
-        $drop = (new Semantics(Dialect::MySql, 'mysql-' . $version))->analyze('DROP TEMPORARY TABLES t, t');
+        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $version);
+        $drop = $semantics->analyze('DROP TEMPORARY TABLES t, pbt.t', $semantics->context(searchPath: new \SqlSemantics\Contract\SearchPath('pbt')));
         self::assertInstanceOf(DropTable::class, $drop);
         self::assertCount(2, $drop->tables);
-        self::assertSame('DROP TEMPORARY TABLES t, t', $drop->toString());
+        self::assertSame('DROP TEMPORARY TABLES t, pbt.t', $drop->toString());
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $drop->warnings()[0]);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable::class, $drop->warnings()[0]->problem);
         self::assertSame($drop->tables[1]->name, $drop->warnings()[0]->problem->name);

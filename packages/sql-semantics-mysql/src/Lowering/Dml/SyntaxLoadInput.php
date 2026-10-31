@@ -34,9 +34,10 @@ final class SyntaxLoadInput
         if ($node->name !== 'opt_load_data_charset') {
             return null;
         }
-        $name = (new FormatRule($lowering))->charset($node)?->name?->value;
-        if ($name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name) === null) {
-            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($name), true);
+        try {
+            $name = (new FormatRule($lowering))->charset($node)?->name?->value;
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
         }
         $notice = match (strtolower($name ?? '')) {
             'utf8' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias,

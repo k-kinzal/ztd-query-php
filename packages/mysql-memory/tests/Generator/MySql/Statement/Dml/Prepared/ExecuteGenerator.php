@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Variable\UserVariableGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates Execute values from the generators of its operands.
@@ -58,10 +57,6 @@ final class ExecuteGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Execute $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

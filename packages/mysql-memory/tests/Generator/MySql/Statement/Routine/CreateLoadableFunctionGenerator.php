@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateLoadableFunction values from the generators of its operands.
@@ -61,10 +60,6 @@ final class CreateLoadableFunctionGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateLoadableFunction $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

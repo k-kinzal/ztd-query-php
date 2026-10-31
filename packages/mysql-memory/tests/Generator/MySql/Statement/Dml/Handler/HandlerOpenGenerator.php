@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates HandlerOpen values from the generators of its operands.
@@ -60,10 +59,6 @@ final class HandlerOpenGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (HandlerOpen $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

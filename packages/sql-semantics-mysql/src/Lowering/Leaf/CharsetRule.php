@@ -92,21 +92,29 @@ final class CharsetRule
      * Lowers a character set position.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the character set is unknown to the release
+     * @param bool $definition Whether the name belongs to a table, column or load definition, which MySQL 5.6 and 5.7 resolve only after reading the statement
      */
-    public function charset(Node $charset): CharsetName
+    public function charset(Node $charset, bool $definition = false): CharsetName
     {
         $form = $this->lowering->productions->form($charset);
 
-        return $this->lowering->leaves->record(new CharsetName($this->name(match ($form->signature) {
+        $named = $this->name(match ($form->signature) {
             'default_charset: opt_default charset opt_equal charset_name_or_default', 'default_charset: opt_default character_set opt_equal charset_name' => $form->node(3),
             default => $charset,
-        })));
+        });
+        if ($named !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($named->value)?->availableIn($this->lowering->profile->grammar) ?? false)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($named->value), (new \SqlSemantics\Construction\SourceRanges())->span($charset)[1] ?? 0, !$definition || !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+        }
+
+        return $this->lowering->leaves->record(new CharsetName($named));
     }
 
     /**
      * Lowers a collation position; an absent COLLATE clause is null.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the collation is unknown to the release
      */
     public function collation(Node $collation): ?CollationName
     {
@@ -118,6 +126,14 @@ final class CharsetRule
             default => $collation,
         };
 
-        return $name === null ? null : $this->lowering->leaves->record(new CollationName($this->name($name)));
+        if ($name === null) {
+            return null;
+        }
+        $named = $this->name($name);
+        if ($named !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::forName($named->value, $this->lowering->profile->grammar) === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($named->value), (new \SqlSemantics\Construction\SourceRanges())->span($collation)[1] ?? 0);
+        }
+
+        return $this->lowering->leaves->record(new CollationName($named));
     }
 }

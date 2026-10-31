@@ -25,7 +25,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\StorageOption;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Server\Storage\Option\StorageOptionGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates DropUndoTablespace values from the generators of its operands.
@@ -46,12 +45,15 @@ final class DropUndoTablespaceGenerator implements ErisGenerator
     {
         $this->delegate = Generators::map(
             static fn (array $parts): DropUndoTablespace => new DropUndoTablespace(name: $parts[0], options: array_values(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::UNDO_TABLESPACE, true))), statementInformation: $parts[2], inputSource: $parts[3], optionsCommas: $parts[4] === null ? null : array_slice($parts[4], 0, max(0, count(array_filter($parts[1], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::UNDO_TABLESPACE, true))) - 1))),
-            Generators::tuple(
-                new NameGenerator($release),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),
-                Generators::constant(null),
-                Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[1]) === null,
+                Generators::tuple(
+                    new NameGenerator($release),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new StorageOptionGenerator($release))),
+                    Generators::constant(null),
+                    Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), Generators::vector(2, Generators::bool()))
+                )
             )
         );
         $this->delegate = Generators::map(
@@ -61,10 +63,6 @@ final class DropUndoTablespaceGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (DropUndoTablespace $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

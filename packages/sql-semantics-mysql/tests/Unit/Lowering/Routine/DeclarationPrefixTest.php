@@ -27,9 +27,11 @@ final class DeclarationPrefixTest extends TestCase
         $sql = 'CREATE FUNCTION f() RETURNS INT COLLATE ucs2_bin RETURN 1';
         $notices = (new SyntaxWarnings())->completed(new MySqlParser('mysql-8.4.7'), $sql, strlen('CREATE FUNCTION f() RETURNS INT COLLATE ucs2_bin'), new LanguageProfile(GrammarRelease::MySql847));
 
-        self::assertCount(1, $notices);
+        self::assertCount(2, $notices);
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $notices[0][1]);
         self::assertSame(4079, $notices[0][1]->code());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $notices[1][1]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet::class, $notices[1][1]->problem);
     }
 
     public function testFollowingKeepsReturnCollationBeforeAnUnfinishedBody(): void

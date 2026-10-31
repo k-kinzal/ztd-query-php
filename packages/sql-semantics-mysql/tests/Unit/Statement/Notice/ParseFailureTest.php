@@ -29,13 +29,12 @@ final class ParseFailureTest extends TestCase
         self::assertSame("Unknown collation: 'nope'", (new ParseFailure(new UnknownCollation('nope')))->message());
     }
 
-    public function testMessageKeepsThePlaceOfTheProblemAmongTheWarnings(): void
+    public function testPhaseDefaultsToTheSyntaxPhase(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT BINARY ('a' COLLATE nope)");
+        $failure = new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation('nope'), false);
 
-        self::assertInstanceOf(ParseFailure::class, $operation->warnings()[0]);
-        self::assertFalse($operation->warnings()[0]->aborts);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $operation->warnings()[0]->phase);
-        self::assertInstanceOf(Deprecation::class, $operation->warnings()[1]);
+        self::assertFalse($failure->aborts);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax, $failure->phase);
+        self::assertSame("Unknown collation: 'nope'", $failure->message());
     }
 }

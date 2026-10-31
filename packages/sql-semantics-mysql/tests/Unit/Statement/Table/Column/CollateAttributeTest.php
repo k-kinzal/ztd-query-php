@@ -32,13 +32,15 @@ final class CollateAttributeTest extends TestCase
         self::assertSame('utf8mb4_bin', $attribute->collation->name?->value);
     }
 
-    public function testDeriveAttributeReportsAnUnknownCollationBeforeTableResolution(): void
+    public function testDeriveAttributeIsNeverReachedForACollationTheReadingRefuses(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a BIT NULL COLLATE unknown');
-        $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation));
-
-        self::assertCount(1, $problems);
-        self::assertSame("Unknown collation: 'unknown'", $problems[0]->message());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a BIT NULL COLLATE unknown');
+            self::fail('The collation does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $failure->problem);
+            self::assertSame("Unknown collation: 'unknown'", $failure->problem->message());
+        }
     }
 
     public function testRenderWritesTheAttribute(): void

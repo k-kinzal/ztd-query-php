@@ -42,7 +42,7 @@ final class CharCallGenerator implements ErisGenerator
             static fn (array $parts): CharCall => new CharCall(arguments: $parts[0], charset: $parts[1] === null ? null : new CharsetName($parts[1]), scalarInformation: $parts[2], inputSource: $parts[3]),
             Generators::tuple(
                 Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new ScalarGenerator($release, $depth - 1))),
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $charset): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($charset->name), Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::all($release)))),
                 Generators::constant(null),
                 Generators::constant(null)
             )

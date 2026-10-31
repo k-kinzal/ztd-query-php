@@ -23,8 +23,6 @@ use SqlSemantics\Platform\MySql\Rules\Replication\LogMoment;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Analysis;
-use Tests\Support\Operands;
 
 /**
  * Generates PurgeLogsBefore values from the generators of its operands.
@@ -47,8 +45,7 @@ final class PurgeLogsBeforeGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): PurgeLogsBefore => new PurgeLogsBefore(moment: $parts[0], statementInformation: $parts[1], inputSource: $parts[2], masterLogs: $parts[3]),
             Generators::suchThat(
-                static fn (array $parts): bool => ((new LogMoment())->problem(($parts[0])) === null)
-                && (Operands::aggregateFree(($parts[0]))),
+                static fn (array $parts): bool => ((new LogMoment())->problem(($parts[0])) === null),
                 Generators::tuple(
                     new ScalarGenerator($release, $depth - 1),
                     Generators::constant(null),
@@ -64,10 +61,6 @@ final class PurgeLogsBeforeGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (PurgeLogsBefore $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

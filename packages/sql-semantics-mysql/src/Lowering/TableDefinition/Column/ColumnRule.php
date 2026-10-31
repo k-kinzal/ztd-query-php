@@ -83,14 +83,14 @@ final class ColumnRule
     public function specification(Node $definition, ?Node $attributes = null, ?References $references = null, array $trailing = [], ?\SqlSemantics\Statement\Identifier\Name $name = null): ColumnSpecification
     {
         if ($definition->name === 'type') {
-            return $this->ordinary($definition, $attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes'), $references, $trailing);
+            return $this->ordinary($definition, $attributes ?? throw ImplementationGap::rule('MySQL 5.6 column specification without attributes'), $references, $trailing, $name);
         }
         $form = $this->lowering->productions->form($definition);
         $positions = self::GENERATED[$form->signature] ?? null;
         if ($positions !== null) {
             [$collation, $always, $expression, $storage, $list] = $positions;
             $written = $this->always($form->node($always));
-            $type = $this->lowering->types->type($form->node(0));
+            $type = $this->lowering->types->type($form->node(0), $name->value ?? '');
             $attributes = $this->attributes($form->node($list));
             $value = $this->expression($form->node($expression), $name);
             if (($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value)) {
@@ -108,7 +108,7 @@ final class ColumnRule
         }
 
         return match ($form->signature) {
-            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => $this->ordinary($form->node(0), $form->node(1), $references, $trailing),
+            'field_def: type opt_attribute', 'field_def: type opt_column_attribute_list' => $this->ordinary($form->node(0), $form->node(1), $references, $trailing, $name),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -119,9 +119,9 @@ final class ColumnRule
      * @param list<ColumnAttribute> $trailing Attributes after the type's own list
      * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
      */
-    public function ordinary(Node $definition, Node $list, ?References $references, array $trailing): OrdinaryColumn
+    public function ordinary(Node $definition, Node $list, ?References $references, array $trailing, ?\SqlSemantics\Statement\Identifier\Name $name = null): OrdinaryColumn
     {
-        $type = $this->lowering->types->type($definition);
+        $type = $this->lowering->types->type($definition, $name->value ?? '');
         $attributes = [...$this->attributes($list), ...$trailing];
         return new OrdinaryColumn($type, $attributes, $references);
     }

@@ -104,6 +104,7 @@ final class Update extends \SqlSemantics\Platform\MySql\Statement\SqlStatement i
             array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
         }
         $this->tables = $members;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated($members) === null, 'UPDATE names each relation once.');
         $items = [];
         foreach (Check::listOf($assignments, \SqlSemantics\Statement\Node::class, 'UPDATE holds at least one assignment.', 1) as $item) {
             Check::input($item instanceof Assignment || $item instanceof DeferredColumnAssignment, 'UPDATE retains assignment roles.');

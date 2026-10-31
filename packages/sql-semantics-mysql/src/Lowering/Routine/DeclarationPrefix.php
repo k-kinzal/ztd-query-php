@@ -58,6 +58,8 @@ final class DeclarationPrefix
 
     /**
      * Answers the declaration's refusal before any later body or default expression.
+     * A DECLARE statement's type is checked once the whole declaration is read, so its
+     * refusal is placed after the DEFAULT value, as the server does.
      */
     public function rejected(Node $node, Lowering $lowering): ?RejectedInput
     {
@@ -88,6 +90,10 @@ final class DeclarationPrefix
         try {
             (new ParameterRule($lowering))->declared($type, $collation);
         } catch (RejectedInput $failure) {
+            if ($node->name === 'sp_decl' && $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize) {
+                return new RejectedInput($failure->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? $failure->end, $failure->aborts, $failure->sources);
+            }
+
             return $failure;
         }
 

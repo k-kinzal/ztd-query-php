@@ -23,7 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Account\User\UserSpecificationGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates RevokeAll values from the generators of its operands.
@@ -60,10 +59,6 @@ final class RevokeAllGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (RevokeAll $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

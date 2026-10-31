@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 /**
@@ -51,7 +50,7 @@ final class RenameTo implements AlterCommand
         $resolution = $derivation->table($this->table, $derivation->environment());
         $changed = $scope->relations === [] ? null : $scope->relations[0]->name;
         $same = $changed !== null && (new Targets())->same($derivation->context, $changed, $this->table);
-        if (($resolution instanceof DeclaredTable || $resolution instanceof ConflictingTables) && !$same) {
+        if ($resolution instanceof DeclaredTable && !$same) {
             $derivation->report(new TableExists($this->table));
         }
     }

@@ -45,7 +45,6 @@ use Tests\Generator\MySql\Statement\Table\Option\TablespaceOptionGenerator;
 use Tests\Generator\MySql\Statement\Table\Option\TextOptionGenerator;
 use Tests\Generator\MySql\Statement\Table\Option\UnionOptionGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates CreateTable values from the generators of its operands.
@@ -116,10 +115,6 @@ final class CreateTableGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (CreateTable $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

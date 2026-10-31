@@ -125,9 +125,6 @@ final class DatabaseCommand implements Command
             ? \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled : \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled;
         foreach ($statement->options as $option) {
             if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption) {
-                if ($option->encryption instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Text) {
-                    throw (new \MySqlMemory\Session\Problem\Errors())->error(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption($option->encryption), $session);
-                }
                 $chosen = $option->encryption;
             }
         }

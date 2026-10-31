@@ -35,7 +35,7 @@ final class UpdateUseTest extends TestCase
         $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $nested = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], new M\Relation\TableList([
             new M\Relation\TableReference(new QualifiedName(new Name('u'))),
-            new M\Relation\TableReference(new QualifiedName(new Name('u'))),
+            new M\Relation\TableReference(new QualifiedName(new Name('u'), new Name('d'))),
         ]));
         $write = new M\Dml\Update(null, false, false, [
             new M\Relation\TableReference(new QualifiedName(new Name('t'))),
@@ -63,7 +63,7 @@ final class UpdateUseTest extends TestCase
     {
         $session = (new \MySqlMemory\Instance('5.6.51'))->connect();
         $first = new M\Relation\TableReference(new QualifiedName(new Name('t')));
-        $write = new M\Dml\Update(null, false, false, [$first, new M\Relation\TableReference(new QualifiedName(new Name('t')))], [new M\Dml\Assignment(new M\Name\ColumnUse(new Name('a')), new M\Literal\NumberLiteral('1'))]);
+        $write = new M\Dml\Update(null, false, false, [$first, new M\Relation\TableReference(new QualifiedName(new Name('t'), new Name('d')))], [new M\Dml\Assignment(new M\Name\ColumnUse(new Name('a')), new M\Literal\NumberLiteral('1'))]);
         self::assertSame(1046, (new UpdateUse())->error($write, $session)->getCode());
         $session->query('CREATE DATABASE d; USE d');
         self::assertSame(1066, (new UpdateUse())->error($write, $session)->getCode());

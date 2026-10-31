@@ -211,7 +211,8 @@ final class ColumnItemRule
         }
 
         $identity = $this->name($form->node($name));
-        return new ColumnDefinition($identity, $definitions->columnSpecification($form->node($operand), $second === null ? null : $form->node($second), $identity->column));
+
+        return (new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\ElementRule($this->lowering))->sized(new ColumnDefinition($identity, $definitions->columnSpecification($form->node($operand), $second === null ? null : $form->node($second), $identity->column)), $form->node);
     }
 
     /**

@@ -43,7 +43,7 @@ final class CharsetAttributeGenerator implements ErisGenerator
             new CharsetFormGenerator($release),
             static fn (CharsetForm $form): ErisGenerator => Generators::map(
                 static fn (array $parts): CharsetAttribute => new CharsetAttribute(form: $form, charset: $form->named() ? $parts[0] : null, mark: in_array($form, [CharsetForm::Ascii, CharsetForm::Unicode, CharsetForm::Named, CharsetForm::CharacterSet, CharsetForm::CharSet], true) ? $parts[1] : BinaryMark::Absent, inputSource: null),
-                Generators::tuple(new NameGenerator($release), new BinaryMarkGenerator($release))
+                Generators::tuple(Generators::map(static fn (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset $charset): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($charset->name), Generators::elements(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::all($release))), new BinaryMarkGenerator($release))
             )
         );
         $this->delegate = Generators::suchThat(

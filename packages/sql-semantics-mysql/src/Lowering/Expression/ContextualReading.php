@@ -35,6 +35,7 @@ final class ContextualReading
 {
     /**
      * @return list<array{int, int, TemporalLiteral|SystemVariable|UserVariable, bool}> Start, end, decoded value and view-body context; no retained source tree
+     * @throws \SqlSemantics\Construction\RejectedInput When a completed operand is one the server refuses while reading
      */
     public function read(Node $tree, LanguageProfile $profile, ?Charset $client = null): array
     {
@@ -70,6 +71,8 @@ final class ContextualReading
 
     /**
      * Decodes a complete leaf, retaining invalid temporal operands.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a system variable is unknown to the release
      */
     public function value(Node $node, Lowering $lowering): TemporalLiteral|SystemVariable|UserVariable|null
     {

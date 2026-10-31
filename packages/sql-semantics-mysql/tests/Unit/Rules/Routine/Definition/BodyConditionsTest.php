@@ -42,7 +42,7 @@ final class BodyConditionsTest extends TestCase
     public static function providerBodies(): iterable
     {
         foreach (['CREATE PROCEDURE p() ', 'CREATE FUNCTION f() RETURNS INT ', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW ', 'CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO ', 'ALTER EVENT e DO '] as $header) {
-            foreach (['FETCH c INTO x' => 'Undefined CURSOR: c', 'OPEN c' => 'Undefined CURSOR: c', 'CLOSE c' => 'Undefined CURSOR: c', 'SIGNAL missing_condition' => 'Undefined CONDITION: missing_condition', 'BEGIN SIGNAL missing_condition; SELECT 1 FROM a,a; END' => 'Undefined CONDITION: missing_condition', 'BEGIN SELECT 1 FROM a,a; SIGNAL missing_condition; END' => "Not unique table/alias: 'a'."] as $body => $message) {
+            foreach (['FETCH c INTO x' => 'Undefined CURSOR: c', 'OPEN c' => 'Undefined CURSOR: c', 'CLOSE c' => 'Undefined CURSOR: c', 'SIGNAL missing_condition' => 'Undefined CONDITION: missing_condition'] as $body => $message) {
                 yield $header . $body => [$header . $body, $message];
             }
         }

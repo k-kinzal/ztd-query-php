@@ -31,18 +31,15 @@ final class ConvertCharsetTest extends TestCase
         self::assertSame([], $semantics->analyze('ALTER TABLE t CONVERT TO CHARACTER SET utf8mb4', [$table])->diagnostics());
     }
 
-    public function testDeriveCommandReportsUnknownNamesInOrderBeforeTableBinding(): void
+    public function testDeriveCommandIsNeverReachedForACharacterSetTheReadingRefuses(): void
     {
-        $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET absent COLLATE missing');
-        $warnings = $alter->warnings();
-
-        self::assertCount(2, $warnings);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $warnings[0]->problem);
-        self::assertTrue($warnings[0]->aborts);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warnings[1]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $warnings[1]->problem);
-        self::assertTrue($warnings[1]->aborts);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CONVERT TO CHARSET absent COLLATE missing');
+            self::fail('The character set does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset::class, $failure->problem);
+            self::assertSame('absent', $failure->problem->name);
+        }
     }
 
     public function testDeriveCollationRetainsIncompatibleEncodingMeaning(): void

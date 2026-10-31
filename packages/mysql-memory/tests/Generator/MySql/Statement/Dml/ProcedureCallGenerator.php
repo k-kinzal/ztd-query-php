@@ -27,7 +27,6 @@ use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Expression\OptionalWordsGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\QualifiedNameGenerator;
 use Tests\Generator\Semantics\Statement\ScalarGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ProcedureCall values from the generators of its operands.
@@ -77,10 +76,6 @@ final class ProcedureCallGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ProcedureCall $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

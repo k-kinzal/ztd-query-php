@@ -24,7 +24,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases;
 use SqlSemantics\Statement\Identifier\Name;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowLikeGenerator;
 use Tests\Generator\MySql\Statement\Utility\Show\ShowWhereGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates ShowDatabases values from the generators of its operands.
@@ -65,10 +64,6 @@ final class ShowDatabasesGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (ShowDatabases $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

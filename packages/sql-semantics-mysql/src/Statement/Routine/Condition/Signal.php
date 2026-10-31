@@ -44,6 +44,11 @@ final class Signal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement i
             $this->initializeStatementInformation($statementInformation);
         }
         $this->items = Check::listOf($items, SignalItem::class, 'The SET clause holds condition information items.');
+        $seen = [];
+        foreach ($this->items as $item) {
+            Check::input(!in_array($item->name, $seen, true), 'A condition information item is set once.');
+            $seen[] = $item->name;
+        }
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

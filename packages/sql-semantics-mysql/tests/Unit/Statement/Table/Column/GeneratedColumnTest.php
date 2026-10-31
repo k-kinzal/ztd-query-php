@@ -72,13 +72,15 @@ final class GeneratedColumnTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch::class, $column->expression);
     }
 
-    public function testDeriveSpecificationResolvesItsLeadingCollation(): void
+    public function testDeriveSpecificationIsNeverReachedForACollationTheReadingRefuses(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a INT COLLATE unknown AS (1)');
-        $problems = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation));
-
-        self::assertCount(1, $problems);
-        self::assertSame("Unknown collation: 'unknown'", $problems[0]->message());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a INT COLLATE unknown AS (1)');
+            self::fail('The collation does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $failure->problem);
+            self::assertSame("Unknown collation: 'unknown'", $failure->problem->message());
+        }
     }
 
     public function testDataTypeAnswersTheType(): void

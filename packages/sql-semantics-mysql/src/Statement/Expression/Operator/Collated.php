@@ -63,6 +63,7 @@ final class Collated implements Scalar
             $this->initializeScalarInformation($scalarInformation);
         }
         Check::input((new Precedence())->fits($operand, Precedence::COLLATION, Precedence::SIMPLE_EXPR), 'The operand of COLLATE needs a grouping to keep its place.');
+        Check::input(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($collation->value) !== null, 'A collation name is one the server knows.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

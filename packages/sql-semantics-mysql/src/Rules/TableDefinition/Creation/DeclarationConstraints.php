@@ -34,10 +34,6 @@ final class DeclarationConstraints
      */
     public function problem(array $elements, ?TableQuery $query): ?Diagnostic
     {
-        $type = (new \SqlSemantics\Platform\MySql\Rules\Typing\Declaration\FixedSizeBounds())->problem($elements);
-        if ($type !== null) {
-            return $type;
-        }
         $names = [];
         $primary = 0;
         foreach ($elements as $element) {

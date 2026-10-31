@@ -45,7 +45,7 @@ final class PathColumnGenerator implements ErisGenerator
                 new DeclaredNameGenerator($release),
                 new StringLiteralGenerator($release),
                 Generators::bool(),
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                Generators::oneOf(Generators::constant(null), Generators::map(static fn (string $name): \SqlSemantics\Statement\Identifier\Name => new \SqlSemantics\Statement\Identifier\Name($name), Generators::elements(array_keys(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Catalog::shared()->collations)))),
                 Generators::oneOf(Generators::constant(null), new JsonResponseGenerator($release)),
                 Generators::oneOf(Generators::constant(null), new JsonResponseGenerator($release)),
                 Generators::bool(),

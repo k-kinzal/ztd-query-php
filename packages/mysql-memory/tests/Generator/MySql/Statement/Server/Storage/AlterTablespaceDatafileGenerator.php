@@ -28,7 +28,6 @@ use Tests\Generator\MySql\Statement\Literal\TextGenerator;
 use Tests\Generator\MySql\Statement\Server\Storage\Option\DatafileActionGenerator;
 use Tests\Generator\MySql\Statement\Server\Storage\Option\StorageOptionGenerator;
 use Tests\Generator\Semantics\Statement\Identifier\NameGenerator;
-use Tests\Support\Analysis;
 
 /**
  * Generates AlterTablespaceDatafile values from the generators of its operands.
@@ -50,7 +49,8 @@ final class AlterTablespaceDatafileGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): AlterTablespaceDatafile => new AlterTablespaceDatafile(name: $parts[0], action: $parts[1], datafile: $parts[2], options: array_values(array_filter($parts[3], static fn (StorageOption $option): bool => in_array($option->keyword(), $parts[1] === DatafileAction::Change ? StorageOptions::CHANGE_DATAFILE : StorageOptions::ALTER_TABLESPACE, true))), statementInformation: $parts[4], inputSource: $parts[5], optionsCommas: null),
             Generators::suchThat(
-                static fn (array $parts): bool => ($parts[1]) !== DatafileAction::Change || array_filter($parts[3], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::CHANGE_DATAFILE, true)) !== [],
+                static fn (array $parts): bool => (($parts[1]) !== DatafileAction::Change || array_filter($parts[3], static fn (StorageOption $option): bool => in_array($option->keyword(), StorageOptions::CHANGE_DATAFILE, true)) !== [])
+                && (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($parts[3]) === null,
                 Generators::tuple(
                     new NameGenerator($release),
                     new DatafileActionGenerator($release),
@@ -69,10 +69,6 @@ final class AlterTablespaceDatafileGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (AlterTablespaceDatafile $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(

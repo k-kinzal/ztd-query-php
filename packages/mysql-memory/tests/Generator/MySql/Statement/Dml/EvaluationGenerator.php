@@ -26,8 +26,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use Tests\Generator\MySql\Statement\Name\TableWildcardGenerator;
 use Tests\Generator\MySql\Statement\Query\SelectExpressionGenerator;
-use Tests\Support\Analysis;
-use Tests\Support\Operands;
 
 /**
  * Generates Evaluation values from the generators of its operands.
@@ -60,8 +58,7 @@ final class EvaluationGenerator implements ErisGenerator
                     }
 
                     return true;
-                })($parts)
-                && (Operands::aggregateFree($parts[0])),
+                })($parts),
                 Generators::tuple(
                     Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::bool(), static fn (bool $wildcard): ErisGenerator => $wildcard ? new TableWildcardGenerator($release) : new SelectExpressionGenerator($release, $depth - 1)))),
                     Generators::constant(null),
@@ -77,10 +74,6 @@ final class EvaluationGenerator implements ErisGenerator
 
                 return $published;
             },
-            $this->delegate
-        );
-        $this->delegate = Generators::suchThat(
-            static fn (Evaluation $statement): bool => Analysis::accepted($statement),
             $this->delegate
         );
         $this->delegate = Generators::suchThat(
