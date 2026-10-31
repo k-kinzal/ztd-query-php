@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A name used as a value: a request to resolve it as a column at its position.
@@ -31,18 +30,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a qualified column use
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT t.a FROM t');
- *     [$query->statement->columns[0]->expression->qualifier?->name->value, $query->statement->columns[0]->expression->name->value] // => ['t', 'a']
+ *     [$query->columns[0]->expression->qualifier?->name->value, $query->columns[0]->expression->name->value] // => ['t', 'a']
  */
 final class ColumnUse implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
      * @param QualifiedName|null $qualifier The relation the use is qualified with, with its optional schema
      */
-    public function __construct(public readonly Name $name, public readonly ?QualifiedName $qualifier = null)
+    public function __construct(public readonly Name $name, public readonly ?QualifiedName $qualifier = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

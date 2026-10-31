@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Statement\Notice;
+
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Snapshot;
+
+/**
+ * A result name lost a leading nongraphic prefix or exceeded the name byte limit.
+ *
+ * The full alias remains available even when a NUL ends its diagnostic display.
+ * Observed on MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0.
+ *
+ * @visibility public
+ * @example Describing the removed prefix
+ *     (new \SqlSemantics\Platform\MySql\Statement\Notice\TrimmedName(new \SqlSemantics\Statement\Identifier\Name(' name')))->message() // => "Leading spaces are removed from name ' name'"
+ */
+final class TrimmedName implements CodedWarning
+{
+    use Snapshot;
+
+    /**
+     * @param Name $name The decoded result name before normalization
+     */
+    public function __construct(public readonly Name $name)
+    {
+    }
+
+    /**
+     * Returns the server warning number.
+     */
+    public function code(): int
+    {
+        return 1466;
+    }
+
+    /**
+     * Describes the original alias up to its first NUL.
+     */
+    public function message(): string
+    {
+        $name = (string) preg_replace('/[\xF0-\xF4][\x80-\xBF]{3}/', '????', $this->name->value);
+        return mb_strcut("Leading spaces are removed from name '" . explode("\0", $name, 2)[0] . "'", 0, 511, 'UTF-8');
+    }
+}

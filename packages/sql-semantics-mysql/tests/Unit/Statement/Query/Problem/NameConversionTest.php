@@ -21,7 +21,7 @@ final class NameConversionTest extends TestCase
 {
     public function testDescribeNamesTheConversion(): void
     {
-        self::assertSame('the conversion MySQL applies to text in the character set latin2 when it names a column after it', (new NameConversion('latin2'))->describe());
+        self::assertSame('the conversion MySQL applies to text in the character set latin2 when it names a column after it', (new NameConversion('latin2', 'é'))->describe());
     }
 
     public function testADerivedColumnNamedAfterNonAsciiTextIsNotFoundByName(): void
@@ -31,18 +31,18 @@ final class NameConversionTest extends TestCase
 
         self::assertInstanceOf(Dependent::class, $operation->field('x')->type);
         self::assertEquals(new SessionState('character_set_client'), $operation->field('x')->type->missing[0]);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertEquals([new NameConversion('latin2')], $star->fields()?->at(1)->slot->unnamed);
+        self::assertSame([], $operation->diagnostics());
+        self::assertEquals([new NameConversion('latin2', 'é')], $star->fields()?->at(1)->slot->unnamed);
         self::assertInstanceOf(DependentField::class, $star->fields()?->lookup('é'));
     }
 
     public function testAnUnaliasedItemNamedAfterNonAsciiTextHasADependentName(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'ü', _utf16'ab'", []);
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'ü', _latin2'é'", []);
 
         self::assertNull($operation->field(0)->name);
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
-        self::assertEquals([new NameConversion('utf16')], $operation->field(1)->slot->unnamed);
+        self::assertEquals([new NameConversion('latin2', 'é')], $operation->field(1)->slot->unnamed);
         self::assertInstanceOf(DependentField::class, $operation->fields()?->lookup('ü'));
     }
 

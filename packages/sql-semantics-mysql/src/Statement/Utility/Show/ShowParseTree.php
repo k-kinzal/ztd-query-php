@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW PARSE_TREE: the parse tree of a statement, in debug builds of the server (MySQL 8.1 and later).
@@ -24,19 +23,26 @@ use SqlSemantics\Statement\Statement;
  * against a release build of 8.4.7. Status: Implemented.
  *
  * @visibility public
+ * @example Refusing a legacy database upgrade inside modern debug syntax
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree(new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name('d')))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading the inspected statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW PARSE_TREE SELECT 1');
- *     [$show->facts->diagnostics[0]->rule, $show->shape(), $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly, null, 'SHOW PARSE_TREE SELECT 1']
+ *     [$show->diagnostics()[0]->rule, $show->shape(), $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly, null, 'SHOW PARSE_TREE SELECT 1']
  */
-final class ShowParseTree implements Statement
+final class ShowParseTree extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Statement $statement The statement whose parse tree is requested
      */
-    public function __construct(public readonly Statement $statement)
+    public function __construct(public readonly Statement $statement, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        \SqlSemantics\Diagnostic\Check::input(!$statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin, 'SHOW PARSE_TREE takes a simple statement; BEGIN is a separate transaction entry.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

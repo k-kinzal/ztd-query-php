@@ -10,7 +10,7 @@ namespace SqlSemantics\Statement;
  * @visibility public
  * @example Reading the input relation of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t JOIN u');
- *     $query->statement instanceof \SqlSemantics\Statement\Selection // => true
+ *     $query instanceof \SqlSemantics\Statement\Selection // => true
  */
 interface Selection extends Node
 {

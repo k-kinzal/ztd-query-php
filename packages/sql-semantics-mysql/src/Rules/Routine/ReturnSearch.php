@@ -55,22 +55,22 @@ final class ReturnSearch
     public function nested(Node $statement): array
     {
         if ($statement instanceof Block) {
-            $nested = $statement->statements;
+            $nested = [];
             foreach ($statement->declarations as $declaration) {
                 if ($declaration instanceof HandlerDeclaration) {
                     $nested[] = $declaration->statement;
                 }
             }
 
-            return $nested;
+            return [...$nested, ...$statement->statements];
         }
         if ($statement instanceof IfStatement || $statement instanceof SimpleCase || $statement instanceof SearchedCase) {
-            $nested = $statement->otherwise;
+            $nested = [];
             foreach ($statement->branches as $branch) {
                 array_push($nested, ...$branch->statements);
             }
 
-            return $nested;
+            return [...$nested, ...$statement->otherwise];
         }
 
         return $statement instanceof Loop || $statement instanceof WhileLoop || $statement instanceof RepeatLoop ? $statement->statements : [];

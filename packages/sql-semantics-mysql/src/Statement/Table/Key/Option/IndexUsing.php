@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A USING clause written after the key parts. TYPE is a deprecated synonym of USING.
@@ -16,16 +15,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY (a) USING HASH)');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing // => true
+ *     $create->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing // => true
  */
 final class IndexUsing implements IndexOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IndexAlgorithm $algorithm The index structure
+     * @param bool $typeKeyword Whether TYPE introduces the algorithm instead of USING
      */
-    public function __construct(public readonly IndexAlgorithm $algorithm)
+    public function __construct(public readonly IndexAlgorithm $algorithm, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $typeKeyword = false)
     {
     }
 
@@ -34,6 +34,6 @@ final class IndexUsing implements IndexOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('USING', $this->algorithm->value);
+        $out->keyword($this->typeKeyword ? 'TYPE' : 'USING', $this->algorithm->value);
     }
 }

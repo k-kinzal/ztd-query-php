@@ -10,7 +10,9 @@ use SqlSemantics\Platform\MySql\Lowering\Dml\ListRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertedRow;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesKeyword;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * Lowers what INSERT and REPLACE write: the column list and the rows of VALUES or the query.
@@ -65,14 +67,26 @@ final class InsertSourceRule
     /**
      * Lowers a source with its optional column list: a node of `insert_field_spec`, `insert_from_constructor`, `insert_from_subquery` or `insert_query_expression`.
      *
-     * @return array{ColumnList|null, list<InsertedRow>|Query}
+     * @return array{ColumnList|null, list<InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>|Query, ValuesKeyword, Span|null}
      * @throws ImplementationGap When a production has no rule
      */
     public function source(Node $source): array
     {
         $form = $this->lowering->form($source);
         if (!array_key_exists($form->signature, self::LISTED)) {
-            return [null, $this->body($source)];
+            $body = $this->body($source);
+            $keyword = ValuesKeyword::Values;
+            $span = null;
+            if (is_array($body)) {
+                $written = $form->node->children[0];
+                if ($written instanceof Node) {
+                    $written = $this->lowering->form($written)->token(0);
+                }
+                $keyword = ValuesKeyword::from(strtoupper($written->text));
+                $range = (new \SqlSemantics\Construction\SourceRanges())->span($source);
+                $span = $range === null ? null : new Span($range[0], $range[1] - $range[0]);
+            }
+            return [null, $body, $keyword, $span];
         }
         $position = self::LISTED[$form->signature];
         $columns = $position === null ? null : new ColumnList($position === -1 ? [] : $this->columns($form->node($position)));
@@ -81,20 +95,21 @@ final class InsertSourceRule
             throw ImplementationGap::production($form);
         }
         if ($body->name === 'query_expression_with_opt_locking_clauses') {
-            return [$columns, $this->lowering->queries->query($body)];
+            $values = new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\ValueQueries($this->lowering);
+            return [$columns, $values->values($body) === null ? $this->lowering->queries->query($body) : $values->query($body), ValuesKeyword::Values, null];
         }
         $inner = $this->source($body);
         if ($inner[0] !== null) {
             throw ImplementationGap::production($form);
         }
 
-        return [$columns, $inner[1]];
+        return [$columns, $inner[1], $inner[2], $inner[3]];
     }
 
     /**
      * Lowers rows or a query without a column list: a node of `insert_values` or `insert_query_expression` (5.7).
      *
-     * @return list<InsertedRow>|Query
+     * @return list<InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>|Query
      * @throws ImplementationGap When a production has no rule
      */
     public function body(Node $body): array|Query
@@ -113,7 +128,7 @@ final class InsertSourceRule
     /**
      * Lowers the rows after the keyword VALUE or VALUES: a node of `value_or_values` and a node of `values_list`.
      *
-     * @return list<InsertedRow>
+     * @return list<InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>
      * @throws ImplementationGap When a production has no rule
      */
     public function valued(Node $keyword, Node $list): array
@@ -129,7 +144,7 @@ final class InsertSourceRule
     /**
      * Lowers the rows of a node of `values_list`.
      *
-     * @return list<InsertedRow>
+     * @return list<InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>
      * @throws ImplementationGap When a production has no rule
      */
     public function rows(Node $list): array
@@ -140,10 +155,31 @@ final class InsertSourceRule
             if ($row->signature !== 'no_braces: ( opt_values )' && $row->signature !== 'row_value: ( opt_values )') {
                 throw ImplementationGap::production($row);
             }
-            $rows[] = new InsertedRow($this->lowering->dml->rowValues($row->node(1)));
+            $rows[] = $this->row($row->node(1));
         }
 
         return $rows;
+    }
+
+    /**
+     * Retains every value position before selecting its ordinary or deferred row role.
+     */
+    public function row(Node $values): InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow
+    {
+        $form = $this->lowering->form($values);
+        if ($form->signature === 'opt_values:') {
+            return new InsertedRow([]);
+        }
+        $list = $form->signature === 'opt_values: values' ? $form->node(0) : $values;
+        $items = [];
+        $deferred = false;
+        foreach ((new ListRule($this->lowering))->items($list, ['values: values , expr_or_default', 'values: expr_or_default']) as $item) {
+            $value = $this->lowering->form($item);
+            $operand = $value->signature === 'expr_or_default: expr' ? $this->lowering->expressions->operand($value->node(0)) : (new \SqlSemantics\Platform\MySql\Lowering\Dml\ValueRule($this->lowering))->value($item);
+            $items[] = $operand;
+            $deferred = $deferred || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand || (new \SqlSemantics\Platform\MySql\Rules\Dml\Insert\ValueGroups())->problem($operand) !== null;
+        }
+        return $deferred ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow($items) : new InsertedRow(array_values(array_filter($items, static fn ($item): bool => $item instanceof \SqlSemantics\Statement\Scalar || $item instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest)));
     }
 
     /**
@@ -157,11 +193,12 @@ final class InsertSourceRule
         $columns = [];
         foreach ((new ListRule($this->lowering))->items($list, self::COLUMN_LISTS) as $item) {
             $column = $this->lowering->form($item);
-            $columns[] = match ($column->signature) {
+            $value = match ($column->signature) {
                 'insert_ident: simple_ident_nospvar', 'insert_column: simple_ident_nospvar' => $this->lowering->names->column($column->node(0)),
                 'insert_ident: table_wild' => $this->lowering->names->wildcard($column->node(0)),
                 default => throw ImplementationGap::production($column),
             };
+            $columns[] = $this->lowering->origins->record($value, $item);
         }
 
         return $columns;

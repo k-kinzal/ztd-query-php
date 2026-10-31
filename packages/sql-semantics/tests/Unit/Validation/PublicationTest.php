@@ -24,6 +24,19 @@ use SqlSemantics\Validation\Publication;
 #[Medium]
 final class PublicationTest extends TestCase
 {
+    public function testEstablishKeepsScalarReplacementsInsideThePublishedOperation(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (SELECT 1 LIMIT 0)');
+        $subquery = $operation->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery::class, $subquery);
+        $replacement = $subquery->scalarInformation()->replacement;
+
+        self::assertNotNull($replacement);
+        self::assertTrue($replacement->hasBinding());
+        self::assertSame($replacement, $subquery->query->queryInformation()->fields()?->at(0)->expression);
+        self::assertSame('SELECT (SELECT 1 LIMIT 0)', $operation->toString());
+    }
+
     public function testEstablishDerivesTheFactsAndRendersCorrespondingSql(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -44,16 +57,27 @@ final class PublicationTest extends TestCase
         $context = (new Semantics(Dialect::Sqlite))->context([]);
         $literal = new IntegerLiteral('1');
 
-        $this->expectExceptionMessage('A statement node occurs at one position only.');
+        $this->expectExceptionMessage('A scalar occurrence is resolved once.');
 
         (new Publication())->establish($context, new Select([new ResultColumn($literal), new ResultColumn($literal)]));
+    }
+
+    public function testEstablishAuditsSessionValuesBeforeDerivingFacts(): void
+    {
+        $session = new class () implements \SqlSemantics\Contract\Session {
+        };
+        $context = (new Semantics(Dialect::Sqlite))->context([], true, null, $session);
+
+        $this->expectExceptionMessage('must be final');
+
+        (new Publication())->establish($context, new Select([new ResultColumn(new IntegerLiteral('1'))]));
     }
 
     public function testRootIsTheOnlyStatementOrAScript(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $first = $semantics->analyze('SELECT 1')->statement;
-        $second = $semantics->analyze('SELECT 2')->statement;
+        $first = $semantics->analyze('SELECT 1');
+        $second = $semantics->analyze('SELECT 2');
 
         $publication = new Publication();
 
@@ -65,4 +89,27 @@ final class PublicationTest extends TestCase
         self::assertInstanceOf(Script::class, $empty);
         self::assertSame([], $empty->statements);
     }
+
+    public function testPublishReturnsAResolvedCopyWithItsOwnLocations(): void
+    {
+        $statement = new Select([new ResultColumn(new IntegerLiteral('7'))]);
+        $sources = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($statement, 2, 8)]);
+        $result = (new Publication())->publish((new Semantics(Dialect::Sqlite))->context(), $statement, $sources);
+        self::assertNotSame($statement, $result);
+        self::assertFalse($statement->hasBinding());
+        self::assertTrue($result->hasBinding());
+        self::assertEquals(new \SqlSemantics\Statement\Source\Span(2, 8), $result->source());
+    }
+
+    public function testDeriveCompletesTheSuppliedOccurrencesWithoutSqlText(): void
+    {
+        $value = new IntegerLiteral('7');
+        $statement = new Select([new ResultColumn($value, new Name('answer'))]);
+        [$facts, $statements] = (new Publication())->derive((new Semantics(Dialect::Sqlite))->context(), $statement);
+        self::assertSame($value, $facts->output?->fields()?->at(0)->expression);
+        self::assertTrue($value->hasBinding());
+        self::assertSame($value->scalarInformation(), $facts->scalar($value));
+        self::assertSame($statement, $statements[0][0]);
+    }
+
 }

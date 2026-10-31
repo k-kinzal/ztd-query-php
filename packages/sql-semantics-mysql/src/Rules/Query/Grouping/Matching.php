@@ -1,0 +1,160 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Rules\Query\Grouping;
+
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
+use SqlSemantics\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use UnitEnum;
+
+/**
+ * Matches an expression with the GROUP BY expressions or select items it is written as.
+ *
+ * The grouping check (MYSQL-ONLY-FULL-GROUP-BY-001) accepts a select item or an ORDER BY key
+ * that is written as a GROUP BY expression, and a DISTINCT block an ORDER BY key written as a
+ * select item. Two expressions are written alike when they are of the same classes with the same
+ * values, inside any parentheses; names compare without regard to case, and two column names
+ * that resolve to the same column of the same occurrence are the same however they are
+ * qualified (`t.a + 1` is `a + 1`, verified on a live 8.4 server). A key that is an alias or a
+ * position stands for the select item it names.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-handling.html.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class Matching
+{
+    /**
+     * Tells whether an expression is written as one of a list of expressions.
+     *
+     * @param list<Operand> $expressions
+     */
+    public function listed(Operand $expression, array $expressions): bool
+    {
+        foreach ($expressions as $candidate) {
+            if ($this->same($this->unwrap($expression), $this->unwrap($candidate))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Tells whether two parts of a statement are written alike: same classes and values, column names without regard to case, and with facts two column names that resolve to the same column of the same occurrence however they are qualified.
+     *
+     * The parts are compared property by property, through lists and nested parts; an enum case
+     * is the same only as itself, and any other value only as an identical one.
+     */
+    public function same(Node $left, Node $right): bool
+    {
+        $pending = [[$left, $right]];
+        while ($pending !== []) {
+            [$first, $second] = array_pop($pending);
+            if (is_array($first) && is_array($second)) {
+                if (count($first) !== count($second)) {
+                    return false;
+                }
+                foreach ($first as $index => $value) {
+                    if (!array_key_exists($index, $second)) {
+                        return false;
+                    }
+                    $pending[] = [$value, $second[$index]];
+                }
+
+                continue;
+            }
+            if (!is_object($first) || !is_object($second)) {
+                if ($first !== $second) {
+                    return false;
+                }
+
+                continue;
+            }
+            $alike = $this->alike($first, $second);
+            if ($alike === false) {
+                return false;
+            }
+            if ($alike === null) {
+                $left = get_object_vars($first);
+                $right = get_object_vars($second);
+                if ($first instanceof Node && $second instanceof Node) {
+                    unset($left['inputSource'], $right['inputSource']);
+                }
+                $pending[] = [$left, $right];
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Compares two objects by what they are rather than by their properties: true when they are the same, false when they differ, and null when their properties decide.
+     *
+     * Objects of different classes differ, an enum case is the same only as itself, names compare
+     * without regard to case, and two column names the facts resolve to columns are the same when
+     * they name the same column of the same occurrence.
+     */
+    public function alike(object $first, object $second): ?bool
+    {
+        if ($first::class !== $second::class || $first instanceof UnitEnum) {
+            return $first === $second;
+        }
+        if ($first instanceof Name && $second instanceof Name) {
+            return strcasecmp($first->value, $second->value) === 0;
+        }
+
+        return $first instanceof ColumnUse && $second instanceof ColumnUse ? $this->column($first, $second) : null;
+    }
+
+    /**
+     * Tells whether two column names resolve to the same column of the same occurrence, or answers null when the facts do not resolve both to a column.
+     */
+    public function column(ColumnUse $first, ColumnUse $second): ?bool
+    {
+        if (!$first->hasBinding() || !$second->hasBinding()) {
+            return null;
+        }
+        $one = $first->scalarInformation()->resolution;
+        $two = $second->scalarInformation()->resolution;
+        if (!$one instanceof ResolvedColumn || !$two instanceof ResolvedColumn) {
+            return null;
+        }
+        $reads = new ColumnReads();
+
+        return $reads->key($one) === $reads->key($two);
+    }
+
+    /**
+     * Answers the expression a GROUP BY or ORDER BY key reads: the select item an alias or a position names, or the key itself.
+     */
+    public function target(Operand $key): Operand
+    {
+        $node = $this->unwrap($key);
+        if ($node->hasBinding()) {
+            $resolution = $node->scalarInformation()->resolution;
+            if ($resolution instanceof AliasTarget && $resolution->field->expression !== null) {
+                return $resolution->field->expression;
+            }
+        }
+
+        return $key;
+    }
+
+    /**
+     * Removes the parentheses around an expression.
+     */
+    public function unwrap(Operand $expression): Operand
+    {
+        while ($expression instanceof Grouped) {
+            $expression = $expression->operand;
+        }
+
+        return $expression;
+    }
+}

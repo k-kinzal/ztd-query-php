@@ -43,7 +43,7 @@ $query->toString(); // => 'SELECT id, upper(name) AS label FROM users WHERE id >
 $query->field('id')->type->descriptor->name(); // => 'integer'
 $query->field('id')->nullability; // => Nullability::NotNull
 $query->field('label')->type->descriptor->name(); // => 'text'
-$semantics->analyze('SELECT "ID" FROM users', [$users])->facts->diagnostics[0]->message(); // => 'Column ID does not exist.'
+$semantics->analyze('SELECT "ID" FROM users', [$users])->diagnostics()[0]->message(); // => 'Column ID does not exist.'
 ```
 
 The CREATE TABLE above is analyzed in a complete, empty context (`[]`) so that `integer` and `text` denote the built-in types; see [Type names in open contexts](#type-names-in-open-contexts).
@@ -103,7 +103,7 @@ $app->context()->declarationSchema->value; // => 'app'
 
 $users = $app->analyze('CREATE TABLE users (id integer)', []);
 $query = $app->analyze('SELECT id FROM app.users', [$users]);
-$query->facts->relation($query->inputRelation())->table instanceof DeclaredTable; // => true
+$query->inputRelation()->relationInformation()->table instanceof DeclaredTable; // => true
 ```
 
 Because `pg_temp` is searched first, an unqualified name in a partial context (`$semantics->context([...], false)`) resolves conditionally even when it is declared: an undeclared temporary table could hide it. Qualify the name, or use a complete context.
@@ -171,8 +171,8 @@ $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a', []);
 $sequence = $semantics->analyze('CREATE SEQUENCE s', []);
 
 $view->declarations()[0]->kind; // => RelationKind::View
-$semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); // => '"v" is not a table'
-$semantics->analyze('SELECT * FROM s FOR UPDATE', [$sequence])->facts->diagnostics[0]->message(); // => 'cannot lock rows in sequence "s"'
+$semantics->analyze('DROP TABLE v', [$view])->diagnostics()[0]->message(); // => '"v" is not a table'
+$semantics->analyze('SELECT * FROM s FOR UPDATE', [$sequence])->diagnostics()[0]->message(); // => 'cannot lock rows in sequence "s"'
 ```
 
 ### Generated columns
@@ -187,8 +187,8 @@ $semantics = new Semantics(Dialect::PostgreSql);
 $table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
 
 $table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('INSERT INTO t VALUES (1, 2)', [$table])->facts->diagnostics[0]->message(); // => 'cannot insert a non-DEFAULT value into column "b"'
-$semantics->analyze('UPDATE t SET a = 1, b = DEFAULT', [$table])->facts->diagnostics; // => []
+$semantics->analyze('INSERT INTO t VALUES (1, 2)', [$table])->diagnostics()[0]->message(); // => 'cannot insert a non-DEFAULT value into column "b"'
+$semantics->analyze('UPDATE t SET a = 1, b = DEFAULT', [$table])->diagnostics(); // => []
 ```
 
 ## Limitations

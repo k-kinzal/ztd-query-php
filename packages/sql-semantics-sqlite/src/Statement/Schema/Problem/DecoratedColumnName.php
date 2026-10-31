@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a sort order in a foreign key column list
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE c (p, FOREIGN KEY (p DESC) REFERENCES parent)');
- *     $create->facts->diagnostics[0]->message() // => 'Column name p of a column list is written with a collation or a sort order.'
+ *     $create->diagnostics()[0]->message() // => 'Column name p of a column list is written with a collation or a sort order.'
  */
 final class DecoratedColumnName implements Diagnostic
 {

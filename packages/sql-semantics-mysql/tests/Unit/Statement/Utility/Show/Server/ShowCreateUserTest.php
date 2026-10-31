@@ -18,7 +18,7 @@ final class ShowCreateUserTest extends TestCase
     public function testDeriveStatementDependsOnTheCurrentUser(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW CREATE USER CURRENT_USER');
-        self::assertInstanceOf(ShowCreateUser::class, $show->statement);
+        self::assertInstanceOf(ShowCreateUser::class, $show);
         self::assertFalse($show->shape()?->complete());
     }
 

@@ -22,6 +22,6 @@ final class OptionRuleTest extends TestCase
 
     public function testOptionLowersEveryOption(): void
     {
-        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION a TABLESPACE = ts NODEGROUP = 1 MIN_ROWS = 2 INDEX DIRECTORY = '/i')", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("ALTER TABLE t ADD PARTITION (PARTITION a TABLESPACE 'ts' NODEGROUP 1 MIN_ROWS 2 INDEX DIRECTORY '/i')")->toString());
+        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION a TABLESPACE 'ts' NODEGROUP 1 MIN_ROWS 2 INDEX DIRECTORY '/i')", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("ALTER TABLE t ADD PARTITION (PARTITION a TABLESPACE 'ts' NODEGROUP 1 MIN_ROWS 2 INDEX DIRECTORY '/i')")->toString());
     }
 }

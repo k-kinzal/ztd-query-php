@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DECLARE ... CONDITION: a name for an error code or an SQLSTATE value.
@@ -19,18 +18,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a named condition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR SQLSTATE '42S02'; END");
- *     $declaration = $create->statement->body->declarations[0];
+ *     $declaration = $create->body->declarations[0];
  *     [$declaration->name->value, $declaration->value->state->value] // => ['gone', '42S02']
  */
 final class ConditionDeclaration implements Declaration
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The condition name
      * @param ErrorCode|SqlState $value The error code or SQLSTATE value the name stands for
      */
-    public function __construct(public readonly Name $name, public readonly ErrorCode|SqlState $value)
+    public function __construct(public readonly Name $name, public readonly ErrorCode|SqlState $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

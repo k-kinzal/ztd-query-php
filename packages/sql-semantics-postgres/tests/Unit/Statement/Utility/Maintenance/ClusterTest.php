@@ -20,13 +20,13 @@ final class ClusterTest extends TestCase
     public function testDeriveStatementResolvesTheTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER s.t USING i');
-        self::assertInstanceOf(Cluster::class, $operation->statement);
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
+        self::assertInstanceOf(Cluster::class, $operation);
+        self::assertInstanceOf(UndeclaredTable::class, $operation->relationInformation()->table);
     }
 
     public function testDeriveStatementReportsAnOptionValueThatIsNotBoolean(): void
     {
-        self::assertSame(['verbose requires a Boolean value'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE 2)')->facts->diagnostics));
+        self::assertSame(['verbose requires a Boolean value'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE 2)')->diagnostics()));
     }
 
     public function testRenderWritesEachForm(): void
@@ -49,6 +49,6 @@ final class ClusterTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CLUSTER v', $context)->facts->diagnostics));
+        self::assertSame(['"v" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CLUSTER v', $context)->diagnostics()));
     }
 }

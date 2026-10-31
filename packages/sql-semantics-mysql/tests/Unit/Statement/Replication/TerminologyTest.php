@@ -18,7 +18,7 @@ final class TerminologyTest extends TestCase
 {
     public function testCasesNameBothVocabularies(): void
     {
-        $stop = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('STOP SLAVE')->statement;
+        $stop = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('STOP SLAVE');
 
         self::assertSame(['Legacy', 'Current'], array_column(Terminology::cases(), 'name'));
         self::assertInstanceOf(StopReplica::class, $stop);

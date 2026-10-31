@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of a DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DELETE FROM t WHERE a = 1 RETURNING a');
- *     [$delete->statement->target->name->name->value, $delete->statement->where !== null, $delete->field(0)->name->value] // => ['t', true, 'a']
+ *     [$delete->target->name->name->value, $delete->where !== null, $delete->field(0)->name->value] // => ['t', true, 'a']
  */
-final class Delete implements Statement
+final class Delete extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ResultColumn|Star|TableStar> The RETURNING columns in written order
@@ -48,8 +47,11 @@ final class Delete implements Statement
      * @param WithClause|null $with The WITH clause of the statement
      * @throws InvalidConstruction When a RETURNING column is of no result column class
      */
-    public function __construct(public readonly MutationTarget $target, public readonly ?Scalar $where = null, array $returning = [], public readonly ?WithClause $with = null)
+    public function __construct(public readonly MutationTarget $target, public readonly ?Scalar $where = null, array $returning = [], public readonly ?WithClause $with = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->returning = (new ClosedList())->of($returning, [ResultColumn::class, Star::class, TableStar::class], 'A RETURNING column is an expression, a star or a qualified star.');
     }
 

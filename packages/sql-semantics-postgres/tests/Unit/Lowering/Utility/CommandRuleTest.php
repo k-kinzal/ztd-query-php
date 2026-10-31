@@ -30,22 +30,22 @@ final class CommandRuleTest extends TestCase
 
     public function testCallLowersTheProcedureCall(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('CALL s.p(VARIADIC ARRAY[1])')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('CALL s.p(VARIADIC ARRAY[1])');
         self::assertInstanceOf(Call::class, $statement);
         self::assertSame('p', $statement->call->name->last()->value);
     }
 
     public function testItemsKeepsTheOrderWritten(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze("DO LANGUAGE sql 'a' LANGUAGE plpgsql")->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze("DO LANGUAGE sql 'a' LANGUAGE plpgsql");
         self::assertInstanceOf(DoBlock::class, $statement);
         self::assertSame([DoLanguage::class, \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant::class, DoLanguage::class], array_map(static fn (object $item): string => $item::class, $statement->items));
     }
 
     public function testPayloadIsNullWithoutAPayload(): void
     {
-        $with = (new Semantics(Dialect::PostgreSql))->analyze("NOTIFY c, 'p'")->statement;
-        $without = (new Semantics(Dialect::PostgreSql))->analyze('NOTIFY c')->statement;
+        $with = (new Semantics(Dialect::PostgreSql))->analyze("NOTIFY c, 'p'");
+        $without = (new Semantics(Dialect::PostgreSql))->analyze('NOTIFY c');
         self::assertInstanceOf(Notify::class, $with);
         self::assertInstanceOf(Notify::class, $without);
         self::assertSame(['p', null], [$with->payload?->value, $without->payload]);

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignatur
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FUNCTION support_number [(op_type, ...)] function`: a support function of an operator class or family.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FunctionMember implements OperatorClassItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TypeName>|null The operand types written in parentheses; null when not written
@@ -39,7 +38,7 @@ final class FunctionMember implements OperatorClassItem
      * @param RoutineSignature $function The function
      * @param list<TypeName>|null $operandTypes The operand types written in parentheses, at least one; null when not written
      */
-    public function __construct(public readonly IntegerConstant $support, public readonly RoutineSignature $function, ?array $operandTypes = null)
+    public function __construct(public readonly IntegerConstant $support, public readonly RoutineSignature $function, ?array $operandTypes = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->operandTypes = $operandTypes === null ? null : Check::listOf($operandTypes, TypeName::class, 'The operand types of a support function are at least one type name.', 1);
     }

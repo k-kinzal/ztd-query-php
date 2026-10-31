@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The FOLLOWS or PRECEDES clause of CREATE TRIGGER (MySQL 5.7 and later).
@@ -18,17 +17,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the order of a trigger
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW PRECEDES other SET @a = 1');
- *     [$create->statement->order->placement->value, $create->statement->order->other->value] // => ['PRECEDES', 'other']
+ *     [$create->order->placement->value, $create->order->other->value] // => ['PRECEDES', 'other']
  */
 final class TriggerOrder implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param OrderPlacement $placement Whether the trigger runs after or before the other
      * @param Name $other The name of the other trigger
      */
-    public function __construct(public readonly OrderPlacement $placement, public readonly Name $other)
+    public function __construct(public readonly OrderPlacement $placement, public readonly Name $other, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

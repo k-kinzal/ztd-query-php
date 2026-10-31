@@ -21,7 +21,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -48,12 +47,13 @@ use SqlSemantics\Statement\Statement;
  *     [count($table->columns), $table->columns[1]->nullability, $table->implicit[0]->column === $table->columns[0]] // => [2, \SqlSemantics\Statement\Type\Nullability::NotNull, true]
  * @example The relation fact of the statement resolves to the declaration it provides
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b CHECK (a > 0))');
- *     $check = $create->statement->columns[1]->constraints[0];
- *     [$create->facts->relation($create->statement)->table->table === $create->declarations()[0], $create->facts->scalar($check->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0]] // => [true, true]
+ *     $check = $create->columns[1]->constraints[0];
+ *     [$create->relationInformation()->table->table === $create->declarations()[0], $check->expression->left->scalarInformation()->resolution->slot->column === $create->declarations()[0]->columns[0]] // => [true, true]
  */
-final class CreateTable implements Statement, Relation
+final class CreateTable extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ColumnDefinition> The column definitions in order
@@ -87,7 +87,16 @@ final class CreateTable implements Statement, Relation
         public readonly bool $temporary = false,
         public readonly bool $ifNotExists = false,
         public readonly bool $optionsComma = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($name->catalog === null, 'A table name has at most a schema qualifier.');
         $this->columns = Check::listOf($columns, ColumnDefinition::class, 'A table definition has at least one column.', 1);
         $this->constraints = Check::listOf($constraints, ConstraintRun::class, 'Table constraints are an ordered list of constraint runs.');

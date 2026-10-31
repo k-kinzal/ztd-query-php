@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetTarget;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers RESET with its items and RESET PERSIST.
@@ -95,6 +95,7 @@ final class ResetRule
     /**
      * Lowers one item of RESET.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a binary log index or channel is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function target(Form $form): ResetTarget
@@ -106,20 +107,27 @@ final class ResetRule
         if ($replica !== null) {
             $all = $this->lowering->form($form->node(1));
             $channel = count($form->node->children) === 3 ? $this->lowering->replication->channel($form->node(2)) : null;
-
-            return new ResetReplica($replica, self::ALL[$all->signature] ?? throw ImplementationGap::production($all), $channel);
+            return new ResetReplica($replica, self::ALL[$all->signature] ?? throw ImplementationGap::production($all), $channel, $form->signature === 'reset_option: SLAVE opt_replica_reset_options opt_channel');
         }
         $terminology = self::BINARY_LOGS[$form->signature] ?? throw ImplementationGap::production($form);
+        $master = false;
         if ($form->signature === 'reset_option: master_or_binary_logs_and_gtids source_reset_options') {
             $words = $this->lowering->form($form->node(0));
             if ($words->signature !== 'master_or_binary_logs_and_gtids: MASTER_SYM' && $words->signature !== 'master_or_binary_logs_and_gtids: BINARY_SYM LOGS_SYM AND_SYM GTIDS_SYM') {
                 throw ImplementationGap::production($words);
             }
+            $master = $words->signature === 'master_or_binary_logs_and_gtids: MASTER_SYM';
         }
         $children = $form->node->children;
         $last = $children[count($children) - 1];
 
-        return new ResetBinaryLogs($terminology, $last instanceof Node ? $this->first($last) : null);
+        $number = $last instanceof Node ? $this->first($last) : null;
+        $problem = ResetBinaryLogs::problem($number);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
+
+        return new ResetBinaryLogs($terminology, $number, $master && $terminology === Terminology::Current);
     }
 
     /**
@@ -159,7 +167,7 @@ final class ResetRule
         return match ($variable->signature) {
             'persisted_variable_ident: ident' => new ResetPersist($ifExists, $names->identifier($variable->node(0))),
             'persisted_variable_ident: ident . ident' => new ResetPersist($ifExists, $names->identifier($variable->node(2)), $names->identifier($variable->node(0))),
-            'persisted_variable_ident: DEFAULT_SYM . ident' => new ResetPersist($ifExists, $names->identifier($variable->node(2)), $this->lowering->leaves->record(new Name('default'))),
+            'persisted_variable_ident: DEFAULT_SYM . ident' => new ResetPersist($ifExists, $names->identifier($variable->node(2)), $this->lowering->leaves->record(new Name('default', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))),
             default => throw ImplementationGap::production($variable),
         };
     }

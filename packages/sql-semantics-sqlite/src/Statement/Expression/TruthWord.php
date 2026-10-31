@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -31,17 +30,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading TRUE as the integer constant
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT true AS t', []);
- *     [$query->statement->columns[0]->expression->value, $query->field(0)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, 'SELECT TRUE AS t']
+ *     [$query->columns[0]->expression->value, $query->field(0)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, 'SELECT TRUE AS t']
  */
 final class TruthWord implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $value Whether the word is TRUE
      */
-    public function __construct(public readonly bool $value)
+    public function __construct(public readonly bool $value, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -33,11 +32,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parameters of a function
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE FUNCTION add(a int4, b int4) RETURNS int4 RETURN a + b');
- *     [$operation->statement->name->last()->value, count($operation->statement->parameters->parameters)] // => ['add', 2]
+ *     [$operation->name->last()->value, count($operation->parameters->parameters)] // => ['add', 2]
  */
-final class CreateFunction implements Statement
+final class CreateFunction extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<RoutineOption> The options in written order
@@ -61,7 +60,12 @@ final class CreateFunction implements Statement
         public readonly ReturnStatement|AtomicBody|null $body = null,
         public readonly bool $procedure = false,
         public readonly bool $replace = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, RoutineOption::class, 'Routine options are a list of routine options.');
         Check::input(!$procedure || $returns === null, 'A procedure has no result.');
         $language = null;

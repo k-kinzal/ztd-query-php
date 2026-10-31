@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -38,19 +37,27 @@ use SqlSemantics\Statement\Statement;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a)');
  *     $drop = $semantics->analyze('DROP TABLE IF EXISTS main.t', [$table]);
- *     [$drop->statement->ifExists, $drop->facts->relation($drop->statement)->table->table === $table->declarations()[0]] // => [true, true]
+ *     [$drop->ifExists, $drop->relationInformation()->table->table === $table->declarations()[0]] // => [true, true]
  */
-final class Drop implements Statement
+final class Drop extends \SqlSemantics\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SchemaObjectKind $object The kind of object to remove
      * @param QualifiedName $name The object name
      * @param bool $ifExists Whether IF EXISTS is written
      */
-    public function __construct(public readonly SchemaObjectKind $object, public readonly QualifiedName $name, public readonly bool $ifExists = false)
+    public function __construct(public readonly SchemaObjectKind $object, public readonly QualifiedName $name, public readonly bool $ifExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null, ?RelationFact $relationInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($name->catalog === null, 'An object name has at most a schema qualifier.');
     }
 

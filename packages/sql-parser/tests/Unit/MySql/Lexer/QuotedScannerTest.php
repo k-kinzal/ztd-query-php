@@ -89,4 +89,26 @@ final class QuotedScannerTest extends TestCase
 
         (new QuotedScanner())->quotedIdentifier(new Scan(new Cursor('`open'), new KeywordTable([], []), new SqlMode(), MySqlVersion::resolve()), '`');
     }
+    public function testQuotedIdentifierRejectsNulInsideBackticks(): void
+    {
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage("Unexpected '`' at line 1, column 1");
+
+        (new QuotedScanner())->quotedIdentifier(new Scan(new Cursor("`zero\0tail`"), new KeywordTable([], []), new SqlMode(), MySqlVersion::resolve()), '`');
+    }
+
+    public function testScanRejectsNulInsideAnsiQuotedIdentifiers(): void
+    {
+        $this->expectException(LexicalException::class);
+
+        (new QuotedScanner())->scan(new Scan(new Cursor("\"zero\0tail\""), new KeywordTable([], []), new SqlMode(ansiQuotes: true), MySqlVersion::resolve()));
+    }
+
+    public function testStringRetainsNulInStringLiterals(): void
+    {
+        $scan = new Scan(new Cursor("'zero\0tail'"), new KeywordTable([], []), new SqlMode(), MySqlVersion::resolve());
+
+        self::assertSame("'zero\0tail'", (new QuotedScanner())->string($scan, 'TEXT_STRING', "'")->text);
+    }
+
 }

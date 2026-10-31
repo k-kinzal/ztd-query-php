@@ -7,22 +7,19 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Group;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Replication\GroupCredentials;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
-use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START GROUP_REPLICATION [USER = …, PASSWORD = …, DEFAULT_AUTH = …]`: starts group replication (MySQL 5.7 and later).
  *
  * Mirrors SQLCOM_START_GROUP_REPLICATION with LEX::replica_connection; the
  * options are kept in written order, an option possibly written twice. The
- * options need MySQL 8.0 or later. Rule: MYSQL-GROUP-REPLICATION-001. Facts:
- * a line feed in a value, or a password longer than 32 bytes
- * (ER_GROUP_REPLICATION_PASSWORD_LENGTH), is a RefusedSetting diagnostic.
+ * options need MySQL 8.0 or later. Rule: MYSQL-GROUP-REPLICATION-001. Explicit
+ * credentials must name a nonempty user when a password is supplied, and
+ * passwords must fit the 32-byte limit.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-group-replication.html.
  * Status: Implemented.
  *
@@ -30,14 +27,9 @@ use SqlSemantics\Statement\Statement;
  * @example Starting with credentials
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start group_replication user = 'u', password = 'p'")->toString() // => "START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'"
  */
-final class StartGroupReplication implements Statement
+final class StartGroupReplication extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
-
-    /**
-     * The longest password the server accepts, in bytes.
-     */
-    private const PASSWORD = 32;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CredentialOption> The options in written order
@@ -47,9 +39,13 @@ final class StartGroupReplication implements Statement
     /**
      * @param list<CredentialOption> $options The options in written order
      */
-    public function __construct(array $options = [])
+    public function __construct(array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, CredentialOption::class, 'START GROUP_REPLICATION sets a list of options.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -60,11 +56,17 @@ final class StartGroupReplication implements Statement
         $release = $derivation->context->profile->grammar;
         Check::input($release !== GrammarRelease::MySql5651, 'Group replication needs MySQL 5.7 or later.');
         Check::input($this->options === [] || !(new Releases())->legacy($release), 'The options of START GROUP_REPLICATION need MySQL 8.0 or later.');
+        $credentials = new GroupCredentials();
         foreach ($this->options as $option) {
-            (new SourceSettings())->lineFeed($derivation, $option->value);
-            if ($option->credential === Credential::Password && strlen($option->value->value) > self::PASSWORD) {
-                $derivation->report(new RefusedSetting(ReplicationError::GroupPasswordTooLong));
+            $problem = $credentials->credential($option);
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
             }
+        }
+        $problem = $credentials->problem($this->options);
+        if ($problem?->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing) {
+            $derivation->report($problem);
         }
     }
 

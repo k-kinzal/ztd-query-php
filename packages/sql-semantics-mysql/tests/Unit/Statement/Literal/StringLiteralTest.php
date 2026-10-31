@@ -11,15 +11,13 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -30,7 +28,9 @@ final class StringLiteralTest extends TestCase
     public function testValueConcatenatesTheAdjacentSegments(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = 'x' \"y\" 'z'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
@@ -38,86 +38,88 @@ final class StringLiteralTest extends TestCase
 
         self::assertSame(['x', 'y', 'z'], $literal->segments);
         self::assertSame('xyz', $literal->value());
-        self::assertSame("SELECT a FROM t WHERE a = 'x' 'y' 'z'", $operation->toString());
+        self::assertSame("SELECT a FROM t WHERE a = 'x' \"y\" 'z'", $operation->toString());
     }
 
     public function testDeriveScalarAnswersVarCharOfNoCharacterSetThatIsNeverNull(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'a'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
-        self::assertSame(EscapeRule::Backslash, $literal->escapes);
         self::assertNull($literal->introducer);
         self::assertFalse($literal->national);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharacterKind::VarChar, $fact->type->descriptor->kind);
-        self::assertNull($fact->type->descriptor->length);
-        self::assertFalse($fact->type->descriptor->national);
-        self::assertNull($fact->type->descriptor->charset);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 1, 'utf8mb4_0900_ai_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
     public function testDeriveScalarAnswersTheIntroducedCharacterSet(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _UTF8MB4'x'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertSame('utf8mb4', $literal->introducer?->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('utf8mb4', $fact->type->descriptor->charset->charset?->value);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame('utf8mb4_0900_ai_ci', $fact->type->descriptor->collation->name);
         self::assertSame("SELECT _utf8mb4 'x'", $operation->toString());
     }
 
     public function testDeriveScalarAnswersTheNationalCharacterSet(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT N'x' 'y'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertTrue($literal->national);
         self::assertSame('xy', $literal->value());
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertTrue($fact->type->descriptor->national);
-        self::assertNull($fact->type->descriptor->charset);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 2, 'utf8mb3_general_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame("SELECT N'x' 'y'", $operation->toString());
     }
 
-    public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
+    public function testDeriveScalarKeepsDecodedBytesAcrossLexicalProfiles(): void
     {
-        $context = (new Semantics(Dialect::MySql))->context();
-        $statement = new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]);
+        $statement = new Select([], [new SelectExpression(new StringLiteral(['a\\b']))]);
+        $plain = new Semantics(Dialect::MySql);
+        $verbatim = new Semantics(Dialect::MySql, null, Mode::fromString('NO_BACKSLASH_ESCAPES'));
 
-        $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
-
-        new Operation($context, $statement);
+        self::assertSame("SELECT 'a\\\\b'", ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($plain->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
+        self::assertSame("SELECT 'a\\b'", ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($verbatim->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($statement), new \SqlSemantics\Statement\Source\SourceMap()))->toString());
     }
 
     public function testRenderDecodesAndSpellsEscapesUnderTheBackslashRule(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze("SELECT 'a\\nb'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -126,28 +128,29 @@ final class StringLiteralTest extends TestCase
 
         self::assertSame("a\nb", $literal->value());
         self::assertSame("SELECT 'a\\nb'", $operation->toString());
-        self::assertSame("SELECT 'it''s'", $semantics->analyze("SELECT 'it\\'s'")->toString());
+        self::assertSame("SELECT 'it\\'s'", $semantics->analyze("SELECT 'it\\'s'")->toString());
         self::assertSame("SELECT 'a\\\\b'", $semantics->analyze("SELECT 'a\\\\b'")->toString());
     }
 
     public function testRenderKeepsBackslashesUnderTheVerbatimRule(): void
     {
         $operation = (new Semantics(Dialect::MySql, null, Mode::fromString('NO_BACKSLASH_ESCAPES')))->analyze("SELECT 'a\\nb'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
 
-        self::assertSame(EscapeRule::Verbatim, $literal->escapes);
         self::assertSame('a\\nb', $literal->value());
         self::assertSame("SELECT 'a\\nb'", $operation->toString());
     }
 
-    public function testRenderWritesADoubleQuotedStringInSingleQuotes(): void
+    public function testRenderRetainsTheDoubleQuotedStringDelimiter(): void
     {
-        self::assertSame("SELECT 'q'", (new Semantics(Dialect::MySql))->analyze('SELECT "q"')->toString());
+        self::assertSame('SELECT "q"', (new Semantics(Dialect::MySql))->analyze('SELECT "q"')->toString());
     }
 
     public function testRejectsAnEmptySegmentList(): void
@@ -175,13 +178,49 @@ final class StringLiteralTest extends TestCase
     {
         $this->expectExceptionMessage('An introducer names a character set of the server in lower case and excludes the national form.');
 
-        new StringLiteral(['a'], EscapeRule::Backslash, new Name('nope'));
+        new StringLiteral(['a'], new Name('nope'));
     }
 
     public function testRejectsAnIntroducerOnANationalString(): void
     {
         $this->expectExceptionMessage('An introducer names a character set of the server in lower case and excludes the national form.');
 
-        new StringLiteral(['a'], EscapeRule::Backslash, new Name('utf8mb4'), true);
+        new StringLiteral(['a'], new Name('utf8mb4'), true);
+    }
+
+    public function testDeriveScalarWarnsAboutAUtf8mb3Introducer(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 'a', _utf8 'b'");
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::Utf8Alias)], $operation->warnings());
+    }
+
+    public function testDeriveScalarWarnsThatANationalStringIsUtf8mb3FromMySql80(): void
+    {
+        self::assertSame([Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("SELECT N'a'")->warnings()));
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT N'a'")->warnings());
+    }
+    public function testDataTypeDistinguishesBoundCollationFromMissingSessionState(): void
+    {
+        $unbound = new StringLiteral(['42']);
+        $bound = new StringLiteral(['42'], collation: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_unicode_ci'));
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Dependent::class, $unbound->dataType());
+        $type = $bound->dataType();
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, $type->descriptor->kind);
+        self::assertSame(2, $type->descriptor->length);
+    }
+
+    public function testNullabilityDoesNotDependOnTheInsertionDestination(): void
+    {
+        self::assertSame(Nullability::NotNull, (new StringLiteral(['']))->nullability());
+    }
+
+    public function testSourceIsOptionalForDirectlyGeneratedValues(): void
+    {
+        $span = new \SqlSemantics\Statement\Source\Span(12, 4);
+        self::assertNull((new StringLiteral(['42']))->source());
+        self::assertSame($span, (new StringLiteral(['42'], location: $span))->source());
     }
 }

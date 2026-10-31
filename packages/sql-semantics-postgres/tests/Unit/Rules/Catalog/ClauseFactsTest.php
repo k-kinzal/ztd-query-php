@@ -14,6 +14,6 @@ final class ClauseFactsTest extends TestCase
 {
     public function testDeriveRecordsTheModifiersOfAType(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION e ADD TYPE numeric(4, 2)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION e ADD TYPE numeric(4, 2)')->diagnostics());
     }
 }

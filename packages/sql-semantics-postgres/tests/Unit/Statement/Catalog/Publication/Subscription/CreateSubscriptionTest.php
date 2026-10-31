@@ -19,6 +19,6 @@ final class CreateSubscriptionTest extends TestCase
 
     public function testDeriveStatementDerivesTheParameters(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SUBSCRIPTION s CONNECTION \'x\' PUBLICATION p')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SUBSCRIPTION s CONNECTION \'x\' PUBLICATION p')->diagnostics());
     }
 }

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The name of a configuration parameter as an object of a GRANT or REVOKE, such as `work_mem` or `myext.setting`.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ParameterName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The parts in the order written
@@ -33,7 +32,7 @@ final class ParameterName implements Node
     /**
      * @param list<Name> $parts The parts in the order written, at least one
      */
-    public function __construct(array $parts)
+    public function __construct(array $parts, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->parts = Check::listOf($parts, Name::class, 'A parameter name has at least one part.', 1);
     }

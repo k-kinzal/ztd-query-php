@@ -15,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
 use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
@@ -83,7 +82,7 @@ final class ColumnTyping
     /**
      * Answers the declared type text an expression carries, or null when it carries none.
      */
-    public function text(Scalar $expression, Facts $facts): ?string
+    public function text(Scalar $expression): ?string
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
@@ -91,12 +90,12 @@ final class ColumnTyping
         if ($expression instanceof ScalarSubquery) {
             $arms = (new ExpressionAffinity())->arms($expression->query);
 
-            return $this->arm($arms[count($arms) - 1], 0, $facts);
+            return $this->arm($arms[count($arms) - 1], 0);
         }
         if ($expression instanceof ColumnUse || $expression instanceof DoubleQuotedWord || $expression instanceof LiteralColumn) {
-            $resolution = $facts->covers($expression) ? $facts->scalar($expression)->resolution : null;
+            $resolution = $expression->hasBinding() ? $expression->scalarInformation()->resolution : null;
 
-            return $resolution instanceof ResolvedColumn ? $this->resolved($resolution, $facts) : null;
+            return $resolution instanceof ResolvedColumn ? $this->resolved($resolution) : null;
         }
 
         return null;
@@ -105,18 +104,18 @@ final class ColumnTyping
     /**
      * Answers the declared type text a resolved column carries.
      */
-    public function resolved(ResolvedColumn $resolution, Facts $facts): ?string
+    public function resolved(ResolvedColumn $resolution): ?string
     {
         if ($resolution->slot->column !== null) {
             return $this->column($resolution->slot->column);
         }
         $affinities = new ExpressionAffinity();
-        $query = $affinities->computing($resolution->relation, $facts);
+        $query = $affinities->computing($resolution->relation);
         if ($query !== null) {
-            $position = $affinities->position($query, $resolution->slot, $facts);
+            $position = $affinities->position($query, $resolution->slot);
             $arms = $affinities->arms($query);
 
-            return $position === null ? null : $this->arm($arms[count($arms) - 1], $position, $facts);
+            return $position === null ? null : $this->arm($arms[count($arms) - 1], $position);
         }
         $column = $resolution->slot->declaration();
 
@@ -139,34 +138,34 @@ final class ColumnTyping
     /**
      * Answers the declared type text the result of an arm at a position carries; an expanded star is a column reference.
      */
-    public function arm(Select|ValueRow $arm, int $position, Facts $facts): ?string
+    public function arm(Select|ValueRow $arm, int $position): ?string
     {
         if ($arm instanceof ValueRow) {
-            return isset($arm->values[$position]) ? $this->text($arm->values[$position], $facts) : null;
+            return isset($arm->values[$position]) ? $this->text($arm->values[$position]) : null;
         }
-        $item = $facts->covers($arm) ? ($facts->query($arm)->projection[$position] ?? null) : null;
+        $item = $arm->hasBinding() ? ($arm->queryInformation()->projection[$position] ?? null) : null;
 
-        return $item instanceof Field ? $this->field($item, $facts) : null;
+        return $item instanceof Field ? $this->field($item) : null;
     }
 
     /**
      * Answers the declared type text a column of a defining query carries: that of the leftmost arm at its position.
      */
-    public function leftmost(Query $query, int $position, Facts $facts): ?string
+    public function leftmost(Query $query, int $position): ?string
     {
-        return $this->arm((new ExpressionAffinity())->arms($query)[0], $position, $facts);
+        return $this->arm((new ExpressionAffinity())->arms($query)[0], $position);
     }
 
     /**
      * Answers the declared type text an output field carries: that of its expression, or of the column an expanded star exposes.
      */
-    public function field(Field $field, Facts $facts): ?string
+    public function field(Field $field): ?string
     {
         if ($field->expression !== null) {
-            return $this->text($field->expression, $facts);
+            return $this->text($field->expression);
         }
 
-        return $field->resolution instanceof ResolvedColumn ? $this->resolved($field->resolution, $facts) : null;
+        return $field->resolution instanceof ResolvedColumn ? $this->resolved($field->resolution) : null;
     }
 
     /**

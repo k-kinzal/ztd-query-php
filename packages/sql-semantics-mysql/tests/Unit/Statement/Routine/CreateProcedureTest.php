@@ -13,9 +13,8 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
+use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -26,6 +25,24 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class CreateProcedureTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Statement\Node}>
+     */
+    public static function providerLegacyUpgradeBodies(): iterable
+    {
+        $upgrade = new \SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new Name('old-name')));
+        yield 'direct instruction' => [$upgrade];
+        yield 'unreachable branch' => [new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\IfStatement([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ConditionalBranch(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0'), [$upgrade])])];
+    }
+
+    #[DataProvider('providerLegacyUpgradeBodies')]
+    public function testLegacyUpgradeCannotBeAStoredInstruction(\SqlSemantics\Statement\Node $body): void
+    {
+        $refusal = (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($body, ProgramKind::Procedure, new QualifiedName(new Name('p')), new ParameterList([]));
+        self::assertNotNull($refusal);
+        self::assertSame("Can't drop or alter a DATABASE from within another stored routine", $refusal[0]->message());
+    }
+
     public function testDeriveStatementResolvesParametersAndLocalVariablesInEveryBodyStatement(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -33,11 +50,11 @@ final class CreateProcedureTest extends TestCase
         $create = $semantics->analyze('CREATE PROCEDURE p(x INT, OUT y INT) BEGIN DECLARE v INT DEFAULT x; '
             . 'UPDATE t SET b = x WHERE a = v; INSERT INTO t (a, b) VALUES (x, v); DELETE FROM t WHERE b = y; '
             . 'SET @w = x + v; SELECT a INTO y FROM t WHERE a = x LIMIT 1; SELECT x, v, a FROM t; END', [$table]);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveStatementReportsAnUnknownNameInACompleteContext(): void
@@ -46,7 +63,7 @@ final class CreateProcedureTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE PROCEDURE p(x INT) UPDATE t SET b = x + zz', [$table]);
 
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementEndsTheScopeOfALocalVariableWithItsBlock(): void
@@ -55,7 +72,7 @@ final class CreateProcedureTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE z INT; SET @in = z; END; SELECT z; END', [$table]);
 
-        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementLetsALocalVariableHideAParameter(): void
@@ -64,18 +81,18 @@ final class CreateProcedureTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x INT DEFAULT x; SET @v = x; END', [$table]);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
-    public function testDeriveStatementReportsADuplicateParameterWhateverItsCase(): void
+    public function testDeriveStatementIsNeverReachedWithDuplicateParameters(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
-
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::DuplicateParameter, $problem->rule);
-        self::assertSame('Duplicate parameter: X', $problem->message());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT, OUT X INT) SELECT 1');
+            self::fail('The parameter list repeats a name.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('Duplicate parameter: X', $failure->problem->message());
+            self::assertTrue($failure->aborts);
+        }
     }
 
     /**
@@ -90,21 +107,21 @@ final class CreateProcedureTest extends TestCase
         yield 'LOAD XML' => ["LOAD XML INFILE 'f' INTO TABLE t", 'LOAD XML is not allowed in stored procedures'];
         yield 'ALTER VIEW' => ['ALTER VIEW v AS SELECT 1', 'ALTER VIEW is not allowed in stored procedures'];
         yield 'RETURN' => ['RETURN 1', 'RETURN is only allowed in a FUNCTION'];
-        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE q() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
-        yield 'CREATE FUNCTION' => ['CREATE FUNCTION g() RETURNS INT RETURN 1', "Can't create a FUNCTION from within another stored routine"];
-        yield 'CREATE TRIGGER' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1', "Can't create a TRIGGER from within another stored routine"];
         yield 'DROP PROCEDURE' => ['DROP PROCEDURE q', "Can't drop or alter a PROCEDURE from within another stored routine"];
         yield 'ALTER FUNCTION' => ["ALTER FUNCTION g COMMENT 'x'", "Can't drop or alter a FUNCTION from within another stored routine"];
-        yield 'CREATE EVENT' => ['CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
         yield 'nested in a block' => ['BEGIN IF 1 THEN LOCK TABLES t READ; END IF; END', 'LOCK is not allowed in stored procedures'];
     }
 
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**
@@ -123,7 +140,7 @@ final class CreateProcedureTest extends TestCase
     #[DataProvider('providerDeriveStatementAcceptsWhatOnlyAProcedureMayContain')]
     public function testDeriveStatementAcceptsWhatOnlyAProcedureMayContain(string $body): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body)->diagnostics());
     }
 
     /**
@@ -144,7 +161,7 @@ final class CreateProcedureTest extends TestCase
         yield 'MySQL 8.0 IF NOT EXISTS' => [
             'mysql-8.0.44',
             "create definer = 'admin'@'%' procedure if not exists shop.p(out total decimal(10,2)) modifies sql data set total = 1",
-            'CREATE DEFINER = `admin`@`%` PROCEDURE IF NOT EXISTS shop.p(OUT total DECIMAL(10, 2)) MODIFIES SQL DATA SET total = 1',
+            'CREATE DEFINER = \'admin\'@\'%\' PROCEDURE IF NOT EXISTS shop.p(OUT total DECIMAL(10, 2)) MODIFIES SQL DATA SET total = 1',
         ];
         yield 'MySQL 9.1 external body' => [
             'mysql-9.1.0',
@@ -172,4 +189,30 @@ final class CreateProcedureTest extends TestCase
 
         new CreateProcedure(new QualifiedName(new Name('p')), new ParameterList([]), new Parameter(new Name('x'), new Integral(IntegralKind::Int)));
     }
+
+    public function testRenderPreservesHintsWhenEnteringAStoredBody(): void
+    {
+        $sql = 'CREATE PROCEDURE p() UPDATE /*+ NO_ICP(`t` `i`) RESOURCE_GROUP(`batch`) */ t SET a = 1';
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertSame($sql, $operation->toString());
+    }
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $body, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ' . $body);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE q() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
+        yield 'CREATE FUNCTION' => ['CREATE FUNCTION g() RETURNS INT RETURN 1', "Can't create a FUNCTION from within another stored routine"];
+        yield 'CREATE TRIGGER' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1', "Can't create a TRIGGER from within another stored routine"];
+        yield 'CREATE EVENT' => ['CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
+    }
+
 }

@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Connection;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,17 +20,20 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the schema a detach request names
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DETACH DATABASE aux')->statement->schema->name->value // => 'aux'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DETACH DATABASE aux')->schema->name->value // => 'aux'
  */
-final class Detach implements Statement
+final class Detach extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $schema The expression that names the schema
      */
-    public function __construct(public readonly Scalar $schema)
+    public function __construct(public readonly Scalar $schema, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

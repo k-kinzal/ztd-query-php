@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A privilege the server defines statically, such as `SELECT (a, b)` or `CREATE ROUTINE`, with its column list.
@@ -19,12 +18,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a column privilege
- *     $privilege = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT (a, b) ON t TO u')->statement->privileges[0];
+ *     $privilege = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT (a, b) ON t TO u')->privileges[0];
  *     [$privilege->kind, count($privilege->columns)] // => [\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\PrivilegeKind::Select, 2]
  */
-final class StaticPrivilege implements Grantable
+final class StaticPrivilege implements Privilege
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The columns the privilege is limited to; none for the whole object
@@ -34,9 +33,11 @@ final class StaticPrivilege implements Grantable
     /**
      * @param PrivilegeKind $kind The privilege
      * @param list<Name> $columns The columns the privilege is limited to; none for the whole object
+     * @param bool $schemas Whether SHOW SCHEMAS is written instead of SHOW DATABASES
      */
-    public function __construct(public readonly PrivilegeKind $kind, array $columns = [])
+    public function __construct(public readonly PrivilegeKind $kind, array $columns = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $schemas = false)
     {
+        Check::input(!$schemas || $kind === PrivilegeKind::ShowDatabases, 'SCHEMAS is a spelling of the SHOW DATABASES privilege only.');
         $this->columns = Check::listOf($columns, Name::class, 'A column list holds column names.');
         Check::input($this->columns === [] || $kind->columns(), 'Only SELECT, INSERT, UPDATE and REFERENCES take a column list.');
     }
@@ -46,7 +47,7 @@ final class StaticPrivilege implements Grantable
      */
     public function render(Output $out): void
     {
-        $out->keyword(...$this->kind->words());
+        $out->keyword(...($this->schemas ? ['SHOW', 'SCHEMAS'] : $this->kind->words()));
         if ($this->columns !== []) {
             $out->symbol('(');
             foreach ($this->columns as $position => $column) {

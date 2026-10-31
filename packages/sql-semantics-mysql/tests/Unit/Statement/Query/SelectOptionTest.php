@@ -25,8 +25,9 @@ final class SelectOptionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_CACHE HIGH_PRIORITY DISTINCT a FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame([SelectOption::Cache, SelectOption::HighPriority, SelectOption::Distinct], $operation->statement->options);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame([SelectOption::Cache, SelectOption::HighPriority, SelectOption::Distinct], $operation->query->options);
         self::assertSame('SELECT SQL_CACHE HIGH_PRIORITY DISTINCT a FROM t', $operation->toString());
     }
 }

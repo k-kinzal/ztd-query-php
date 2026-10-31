@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * What LOAD reads: `[LOCAL] INFILE|URL|S3 'name' [COUNT n] [IN PRIMARY KEY ORDER]`.
@@ -20,19 +19,25 @@ use SqlSemantics\Statement\Snapshot;
  * LOCAL makes the client read the file. COUNT and IN PRIMARY KEY ORDER
  * belong to the bulk load of the HeatWave grammars (8.0.30 and later) and
  * tell how many files the name pattern matches and that they are sorted by
- * primary key. The 8.4 and later grammars read the word COUNT as an
- * identifier, which the server requires to be `count` in any letter case;
- * that word is kept so it is written back the way the grammar reads it.
+ * primary key. COUNT may be read as an identifier, which the server requires
+ * to be `count` in any letter case; that word is kept so it is written back
+ * the way the grammar reads it. MySQL 8.0 through 8.3 also have a keyword
+ * production, while 8.4 and later use only the identifier production.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/load-data.html.
  *
  * @visibility public
  * @example Reading the input of LOAD DATA
  *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA LOCAL INFILE 'f.csv' INTO TABLE t");
- *     [$load->statement->input->local, $load->statement->input->source, $load->statement->input->file->value] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, 'f.csv']
+ *     [$load->input->local, $load->input->source, $load->input->file->value] // => [true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::Infile, 'f.csv']
  */
 final class LoadInput implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * The noncanonical spelling of COUNT when read as an identifier.
+     */
+    public readonly ?Name $countWord;
 
     /**
      * @param bool $local Whether the client reads the file
@@ -40,8 +45,9 @@ final class LoadInput implements Node
      * @param Text $file The file name, URL or pattern
      * @param Numeral|null $count The number of files
      * @param bool $primaryKeyOrder Whether the files are sorted by primary key
-     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier (8.4 and later), which may be quoted; null for the keyword
+     * @param Name|null $countWord The word COUNT when the grammar reads it as an identifier, which may be quoted; null for the keyword
      * @throws InvalidConstruction When the word COUNT is given without a count or is another word
+     * @param bool $from Whether FROM precedes the input source
      */
     public function __construct(
         public readonly bool $local,
@@ -49,9 +55,14 @@ final class LoadInput implements Node
         public readonly Text $file,
         public readonly ?Numeral $count = null,
         public readonly bool $primaryKeyOrder = false,
-        public readonly ?Name $countWord = null,
+        ?Name $countWord = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $from = false
     ) {
+        Check::input($file->radix === null, 'A LOAD file name is quoted text.');
+        Check::input($count === null || $count->isIntegerToken(), 'A LOAD file count is a decimal integer token no greater than 2147483647.');
         Check::input($countWord === null || ($count !== null && strcasecmp($countWord->value, 'count') === 0), 'The word before the number of files is COUNT.');
+        $this->countWord = $countWord?->value === 'COUNT' ? null : $countWord;
     }
 
     /**
@@ -59,6 +70,9 @@ final class LoadInput implements Node
      */
     public function render(Output $out): void
     {
+        if ($this->from) {
+            $out->keyword('FROM');
+        }
         if ($this->local) {
             $out->keyword('LOCAL');
         }

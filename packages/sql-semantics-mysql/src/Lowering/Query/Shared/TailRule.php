@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength;
-use SqlSemantics\Statement\Scalar;
 
 /**
  * Lowers the clauses written after a query: LIMIT, PROCEDURE ANALYSE, INTO and the locking clauses.
@@ -107,7 +106,7 @@ final class TailRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function value(Node $option): Scalar
+    public function value(Node $option): NumberLiteral|\SqlSemantics\Platform\MySql\Statement\Literal\Parameter|ProgramVariable
     {
         $form = $this->lowering->form($option);
 
@@ -164,7 +163,7 @@ final class TailRule
         return match ($form->signature) {
             'opt_into:' => null,
             'opt_into: into' => $this->into($form->node(0)),
-            'into: INTO into_destination', 'into_clause: INTO into_destination' => $this->destination($form->node(1)),
+            'into: INTO into_destination', 'into_clause: INTO into_destination' => $this->lowering->origins->record($this->destination($form->node(1)), $clause),
             default => throw ImplementationGap::production($form),
         };
     }

@@ -20,9 +20,9 @@ final class EnforcementAttributeTest extends TestCase
     public function testDeriveAttributeDerivesNothing(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);

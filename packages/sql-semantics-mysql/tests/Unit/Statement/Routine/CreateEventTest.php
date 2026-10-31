@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -18,8 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
@@ -35,11 +32,11 @@ final class CreateEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY STARTS NOW() DO BEGIN DECLARE v INT DEFAULT 1; '
             . 'UPDATE t SET b = v WHERE a = v; INSERT INTO t (a) VALUES (v); DELETE FROM t WHERE b = v; SET @w = v; SELECT a, v FROM t; END', [$table]);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveStatementReportsAnUnknownNameOfTheBody(): void
@@ -48,7 +45,7 @@ final class CreateEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO DELETE FROM t WHERE zz = 1', [$table]);
 
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementReportsAColumnInTheSchedule(): void
@@ -57,18 +54,14 @@ final class CreateEventTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY a DAY DO SELECT 1', [$table]);
 
-        self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveStatementReportsANestedEventDefinition(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO CREATE EVENT f ON SCHEDULE AT NOW() DO SELECT 1');
-        $problem = $create->facts->diagnostics[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
-
-        self::assertCount(1, $create->facts->diagnostics);
-        self::assertSame(ProgramRule::EventRecursion, $problem->rule);
-        self::assertSame('Recursion of EVENT DDL statements is forbidden when body is present', $problem->message());
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Recursion of EVENT DDL statements is forbidden when body is present');
+        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO CREATE EVENT f ON SCHEDULE AT NOW() DO SELECT 1');
     }
 
     /**
@@ -78,16 +71,18 @@ final class CreateEventTest extends TestCase
     {
         yield 'LOCK TABLES' => ['LOCK TABLES t READ', 'LOCK is not allowed in stored procedures'];
         yield 'RETURN' => ['RETURN 1', 'RETURN is only allowed in a FUNCTION'];
-        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE p() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
-        yield 'ALTER EVENT with a body' => ['ALTER EVENT f DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
     }
 
     #[DataProvider('providerDeriveStatementReportsAStatementAStoredProgramMayNotContain')]
     public function testDeriveStatementReportsAStatementAStoredProgramMayNotContain(string $body, string $message): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
-
-        self::assertSame([$message], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**
@@ -103,12 +98,12 @@ final class CreateEventTest extends TestCase
     #[DataProvider('providerDeriveStatementAcceptsWhatAnEventMayContain')]
     public function testDeriveStatementAcceptsWhatAnEventMayContain(string $body): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body)->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO ' . $body)->diagnostics());
     }
 
     public function testDeriveStatementKeepsTheClauses(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO SELECT 1")->statement;
+        $statement = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE EVERY 1 DAY ON COMPLETION PRESERVE DISABLE COMMENT 'nightly' DO SELECT 1");
         self::assertInstanceOf(CreateEvent::class, $statement);
 
         self::assertSame(Completion::Preserve, $statement->completion);
@@ -125,7 +120,7 @@ final class CreateEventTest extends TestCase
         yield 'MySQL 5.6 definer and DISABLE ON SLAVE' => [
             'mysql-5.6.51',
             "create definer = 'u'@'h' event if not exists shop.e on schedule every 1 hour disable on slave do select 1",
-            'CREATE DEFINER = u@h EVENT IF NOT EXISTS shop.e ON SCHEDULE EVERY 1 HOUR DISABLE ON SLAVE DO SELECT 1',
+            'CREATE DEFINER = \'u\'@\'h\' EVENT IF NOT EXISTS shop.e ON SCHEDULE EVERY 1 HOUR DISABLE ON SLAVE DO SELECT 1',
         ];
         yield 'MySQL 5.7 every clause' => [
             'mysql-5.7.44',
@@ -161,6 +156,30 @@ final class CreateEventTest extends TestCase
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new CreateEvent(new QualifiedName(new Name('e')), new OnceSchedule(new NumberLiteral('1')), new Block([]), null, null, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new CreateEvent(new QualifiedName(new Name('e')), new OnceSchedule(new NumberLiteral('1')), new Block([]), null, null, new Text('41', Radix::Hexadecimal));
     }
+
+    public function testDeriveStatementWarnsOfDisableOnSlave(): void
+    {
+        $facts = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DISABLE ON SLAVE DO SELECT 1");
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings()));
+    }
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $body, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($message);
+        (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO ' . $body);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'CREATE PROCEDURE' => ['CREATE PROCEDURE p() SELECT 1', "Can't create a PROCEDURE from within another stored routine"];
+        yield 'ALTER EVENT with a body' => ['ALTER EVENT f DO SELECT 1', 'Recursion of EVENT DDL statements is forbidden when body is present'];
+    }
+
 }

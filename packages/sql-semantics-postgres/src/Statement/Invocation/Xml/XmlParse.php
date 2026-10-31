@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
@@ -33,15 +32,19 @@ use SqlSemantics\Statement\Type\NullOnly;
  */
 final class XmlParse implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param XmlOption $option Whether a document or content is parsed
      * @param Scalar $value The string parsed
      * @param XmlWhitespace|null $whitespace The whitespace handling written
      */
-    public function __construct(public readonly XmlOption $option, public readonly Scalar $value, public readonly ?XmlWhitespace $whitespace = null)
+    public function __construct(public readonly XmlOption $option, public readonly Scalar $value, public readonly ?XmlWhitespace $whitespace = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

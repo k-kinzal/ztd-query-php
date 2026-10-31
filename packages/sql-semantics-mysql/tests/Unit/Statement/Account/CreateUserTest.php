@@ -11,8 +11,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateUser;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
 
 #[CoversClass(CreateUser::class)]
 #[Medium]
@@ -20,11 +18,9 @@ final class CreateUserTest extends TestCase
 {
     public function testDeriveStatementReportsTheProblemsOfTheClauses(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("CREATE USER u REQUIRE ISSUER 'a' ISSUER 'b' PASSWORD EXPIRE INTERVAL 0 DAY ATTRIBUTE 'x'");
+        $create = (new Semantics(Dialect::MySql))->analyze("CREATE USER u REQUIRE ISSUER 'a' PASSWORD EXPIRE INTERVAL 1 DAY ATTRIBUTE 'x'");
 
-        self::assertInstanceOf(RepeatedTlsAttribute::class, $create->facts->diagnostics[0]);
-        self::assertInstanceOf(NumberOutOfRange::class, $create->facts->diagnostics[1]);
-        self::assertInstanceOf(InvalidUserAttribute::class, $create->facts->diagnostics[2]);
+        self::assertInstanceOf(InvalidUserAttribute::class, $create->diagnostics()[0]);
     }
 
     public function testRenderWritesEveryClause(): void

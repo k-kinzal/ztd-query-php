@@ -14,12 +14,12 @@ final class SetSpecialSettingTest extends TestCase
 {
     public function testDeriveStatementReportsSetCatalog(): void
     {
-        self::assertSame('current database cannot be changed', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET CATALOG \'d\'')->facts->diagnostics[0]->message());
+        self::assertSame('current database cannot be changed', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET CATALOG \'d\'')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementAcceptsSetSchema(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET SCHEMA \'app\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET SCHEMA \'app\'')->diagnostics());
     }
 
     public function testRenderWritesEachSetting(): void

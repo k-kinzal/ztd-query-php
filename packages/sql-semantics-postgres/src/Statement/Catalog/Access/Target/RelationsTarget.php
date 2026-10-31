@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Relations or sequences named as the objects of a GRANT or REVOKE.
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
  *     $table = $semantics->analyze('CREATE TABLE items (id int4, price int4)');
  *     $operation = $semantics->analyze('GRANT SELECT ON items TO joe', [$table]);
- *     $operation->facts->relation($operation->statement->target->relations[0])->table->table === $table->declarations()[0] // => true
+ *     $operation->target->relations[0]->relationInformation()->table->table === $table->declarations()[0] // => true
  */
 final class RelationsTarget implements PrivilegeTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RelationReference> The relations in the order written
@@ -45,7 +44,7 @@ final class RelationsTarget implements PrivilegeTarget
      * @param PrivilegeObjectKind $object The kind: relations or sequences
      * @param list<RelationReference> $relations The relations in the order written, at least one, none limited with ONLY
      */
-    public function __construct(public readonly PrivilegeObjectKind $object, array $relations)
+    public function __construct(public readonly PrivilegeObjectKind $object, array $relations, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($object === PrivilegeObjectKind::Relation || $object === PrivilegeObjectKind::Sequence, 'Qualified names are relations or sequences.');
         $this->relations = Check::listOf($relations, RelationReference::class, 'A grant names at least one relation.', 1);

@@ -24,6 +24,6 @@ final class AttributeChangeTest extends TestCase
     public function testDeriveClauseDerivesTheValue(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER TYPE t SET (receive = r, send = NONE)');
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

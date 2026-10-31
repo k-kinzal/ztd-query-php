@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -44,24 +43,24 @@ final class ExistsTest extends TestCase
         $exists = $query->field(0)->expression;
 
         self::assertInstanceOf(Exists::class, $exists);
-        self::assertCount(2, $query->facts->query($exists->query)->shape->slots);
-        self::assertTrue($query->facts->query($exists->query)->shape->complete());
+        self::assertCount(2, $exists->query->queryInformation()->shape->slots);
+        self::assertTrue($exists->query->queryInformation()->shape->complete());
     }
 
     public function testDeriveScalarDerivesTheQueryInsideTheEnvironmentOfTheExpression(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT a FROM t WHERE EXISTS (SELECT 1 WHERE a = 1)', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
-        $select = $query->statement;
+        $select = $query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Exists::class, $select->where);
         self::assertInstanceOf(Select::class, $select->where->query);
         self::assertInstanceOf(Binary::class, $select->where->query->where);
-        $resolution = $query->facts->scalar($select->where->query->where->left)->resolution;
+        $resolution = $select->where->query->where->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame(1, $resolution->depth);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testRenderWritesTheKeywordAndTheParentheses(): void
@@ -80,7 +79,7 @@ final class ExistsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $exists = new Exists(new Select([new ResultColumn(new IntegerLiteral('1'))]));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($exists)]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn($exists)]));
 
         self::assertSame('SELECT EXISTS (SELECT 1)', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

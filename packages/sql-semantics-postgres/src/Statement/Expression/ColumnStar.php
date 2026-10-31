@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A dotted relation name followed by `.*`: every column of a visible relation.
@@ -37,7 +36,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnStar implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The relation name as written, the relation last
@@ -47,8 +47,11 @@ final class ColumnStar implements Scalar, OutputNaming
     /**
      * @param list<Name> $qualifiers The relation name as written; at least one part
      */
-    public function __construct(array $qualifiers)
+    public function __construct(array $qualifiers, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->qualifiers = Check::listOf($qualifiers, Name::class, 'A star reference names its relation.', 1);
     }
 

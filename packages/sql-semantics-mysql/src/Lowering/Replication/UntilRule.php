@@ -56,6 +56,7 @@ final class UntilRule
     /**
      * Lowers an optional UNTIL clause; an absent clause is null.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a log filename contains a line feed
      * @throws ImplementationGap When a production has no rule
      */
     public function until(Node $clause, Terminology $terminology): ?ReplicaUntil
@@ -72,6 +73,8 @@ final class UntilRule
     /**
      * Lowers the condition list.
      *
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a log filename contains a line feed
      * @throws ImplementationGap When a production has no rule
      */
     public function conditions(Node $list, Terminology $terminology): ReplicaUntil
@@ -83,11 +86,14 @@ final class UntilRule
             array_unshift($positions, $rule->option($form->node(2), $terminology));
             $form = $this->lowering->form($form->node(0));
         }
+        $point = null;
+        $gtids = null;
         if (isset(self::POSITIONS[$form->signature])) {
-            return new ReplicaUntil(null, null, [$rule->option($form->node(0), $terminology), ...$positions]);
+            array_unshift($positions, $rule->option($form->node(0), $terminology));
+        } else {
+            $point = self::POINTS[$form->signature] ?? throw ImplementationGap::production($form);
+            $gtids = $point === UntilPoint::AfterGaps ? null : $this->lowering->literals->text($form->node(2));
         }
-        $point = self::POINTS[$form->signature] ?? throw ImplementationGap::production($form);
-
-        return new ReplicaUntil($point, $point === UntilPoint::AfterGaps ? null : $this->lowering->literals->text($form->node(2)), $positions);
+        return new ReplicaUntil($point, $gtids, $positions);
     }
 }

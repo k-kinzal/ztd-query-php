@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The VERSION clause of a foreign server: a version string, or NULL to clear it.
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ServerVersion implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param StringConstant|null $version The version; null for VERSION NULL
      */
-    public function __construct(public readonly ?StringConstant $version = null)
+    public function __construct(public readonly ?StringConstant $version = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

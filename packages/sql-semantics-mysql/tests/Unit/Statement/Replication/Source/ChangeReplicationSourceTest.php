@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSo
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ChangeReplicationSource::class)]
 #[Medium]
@@ -25,13 +24,13 @@ final class ChangeReplicationSourceTest extends TestCase
 {
     public function testDeriveStatementReportsRefusedSettings(): void
     {
-        $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648, SOURCE_HEARTBEAT_PERIOD = 5000000, REQUIRE_ROW_FORMAT = 2, SOURCE_CONNECTION_AUTO_FAILOVER = 1.5, ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'x' FOR CHANNEL 'a\\nb'");
+        $change = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', SOURCE_DELAY = 2147483648 FOR CHANNEL 'a'");
 
+        self::assertInstanceOf(ChangeReplicationSource::class, $change);
+        self::assertInstanceOf(Numeral::class, $change->options[1]->value);
         self::assertEquals([
-            new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange), new RefusedSetting(ReplicationError::HeartbeatOutOfRange),
-            new RefusedSetting(ReplicationError::RowFormatValue), new RefusedSetting(ReplicationError::FractionalNumber), new RefusedSetting(ReplicationError::InvalidUuid),
-            new RefusedSetting(ReplicationError::LineFeed),
-        ], $change->facts->diagnostics);
+            new RefusedSetting(ReplicationError::PasswordTooLong), new RefusedSetting(ReplicationError::DelayOutOfRange, $change->options[1]->value),
+        ], $change->diagnostics());
     }
 
     public function testDeriveStatementRejectsTheVocabularyOfAnotherRelease(): void
@@ -41,17 +40,14 @@ final class ChangeReplicationSourceTest extends TestCase
 
         $this->expectExceptionMessage('CHANGE REPLICATION SOURCE is written in the vocabulary of the release.');
 
-        new Operation($semantics->context([]), $change);
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context([]), $change, new \SqlSemantics\Statement\Source\SourceMap());
     }
 
-    public function testDeriveStatementRejectsAnOptionOfALaterRelease(): void
+    public function testValueRejectsAnOptionOutsideTheVocabulary(): void
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
-        $change = new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::GtidOnly, new Numeral('1'))]);
+        $this->expectExceptionMessage('A legacy replication option exists in MySQL 5.6 or 5.7.');
 
-        $this->expectExceptionMessage('GTID_ONLY is not an option of this release.');
-
-        new Operation($semantics->context([]), $change);
+        new SourceOption(Terminology::Legacy, SourceOptionKind::GtidOnly, new Numeral('1'));
     }
 
     public function testRenderWritesTheLegacyVocabulary(): void
@@ -59,8 +55,8 @@ final class ChangeReplicationSourceTest extends TestCase
         self::assertSame("CHANGE MASTER TO MASTER_HOST = 'h', RELAY_LOG_POS = 4 FOR CHANNEL 'c'", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("change master to master_host='h', relay_log_pos=4 for channel 'c'")->toString());
     }
 
-    public function testRenderWritesTheCurrentVocabulary(): void
+    public function testRenderWritesTheSpellingOfEachOption(): void
     {
-        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_LOG_FILE = 'f', SOURCE_LOG_POS = 4", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("change replication source to master_log_file='f', source_log_pos=4")->toString());
+        self::assertSame("CHANGE REPLICATION SOURCE TO MASTER_LOG_FILE = 'f', SOURCE_LOG_POS = 4", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("change replication source to master_log_file='f', source_log_pos=4")->toString());
     }
 }

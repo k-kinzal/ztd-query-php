@@ -19,7 +19,7 @@ final class AlterConstraintTest extends TestCase
         self::assertSame([
           0 => 'Relation t does not exist.',
           1 => 'constraint declared INITIALLY DEFERRED must be DEFERRABLE',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

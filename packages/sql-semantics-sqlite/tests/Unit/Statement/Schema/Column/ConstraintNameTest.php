@@ -20,13 +20,13 @@ final class ConstraintNameTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a CONSTRAINT lonely)', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheNameAtItsPlaceInAColumn(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a constraint one constraint "two" not null constraint three)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(ConstraintName::class, $statement->columns[0]->constraints[0]);
@@ -39,7 +39,7 @@ final class ConstraintNameTest extends TestCase
     public function testRenderKeepsTheNameAtItsPlaceAmongTableConstraints(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, CONSTRAINT k UNIQUE (a))');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertCount(2, $statement->constraints[0]->items);

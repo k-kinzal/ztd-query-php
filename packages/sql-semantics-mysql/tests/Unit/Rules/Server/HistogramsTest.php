@@ -11,7 +11,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn;
 
 #[CoversClass(Histograms::class)]
 #[Medium]
@@ -23,13 +22,12 @@ final class HistogramsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $analyze = $semantics->analyze('ANALYZE TABLE t UPDATE HISTOGRAM ON a, b', [$table]);
 
-        self::assertCount(1, $analyze->facts->diagnostics);
-        self::assertInstanceOf(UnknownHistogramColumn::class, $analyze->facts->diagnostics[0]);
+        self::assertSame([], $analyze->diagnostics());
     }
 
     public function testDeriveAcceptsAnUndeclaredTable(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE u DROP HISTOGRAM ON x')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE u DROP HISTOGRAM ON x')->diagnostics());
     }
 
     public function testBucketsTellsWhetherTheCountIsInRange(): void

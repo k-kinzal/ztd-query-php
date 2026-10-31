@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference;
  * @visibility public
  * @example Reading the event of a referential action
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int REFERENCES u ON DELETE CASCADE)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->actions[0]->event // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferenceEvent::Delete
+ *     $create->definition->elements[0]->qualifiers[0]->actions[0]->event // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferenceEvent::Delete
  */
 enum ReferenceEvent: string
 {

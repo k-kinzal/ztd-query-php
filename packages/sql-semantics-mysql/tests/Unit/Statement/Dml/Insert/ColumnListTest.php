@@ -17,7 +17,7 @@ final class ColumnListTest extends TestCase
 {
     public function testRenderWritesTheColumns(): void
     {
-        self::assertSame('INSERT INTO t (a, t.b) VALUES (1, 2)', (new Semantics(Dialect::MySql))->analyze('insert t (a, t.b) values (1, 2)')->toString());
-        self::assertSame('INSERT INTO t () VALUES ()', (new Semantics(Dialect::MySql))->analyze('insert t () values ()')->toString());
+        self::assertSame('INSERT t (a, t.b) VALUES (1, 2)', (new Semantics(Dialect::MySql))->analyze('insert t (a, t.b) values (1, 2)')->toString());
+        self::assertSame('INSERT t () VALUES ()', (new Semantics(Dialect::MySql))->analyze('insert t () values ()')->toString());
     }
 }

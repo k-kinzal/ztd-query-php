@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
@@ -35,14 +34,18 @@ use SqlSemantics\Statement\Type\NullOnly;
  */
 final class JsonParse implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param JsonValueExpression $value The value parsed
      * @param JsonUniqueKeys|null $unique The uniqueness clause written
      */
-    public function __construct(public readonly JsonValueExpression $value, public readonly ?JsonUniqueKeys $unique = null)
+    public function __construct(public readonly JsonValueExpression $value, public readonly ?JsonUniqueKeys $unique = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($unique === null || $value->format !== null || !(new Precedence())->takesUniqueness($value->value), 'A value ending in IS JSON without a uniqueness clause would take the uniqueness clause; group it.');
     }
 

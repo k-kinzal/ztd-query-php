@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a column list that is too short
  *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE VIEW v (a) AS SELECT 1, 2');
- *     $view->facts->diagnostics[0]->message() // => 'The column list names 1 columns but the query returns 2.'
+ *     $view->diagnostics()[0]->message() // => 'The column list names 1 columns but the query returns 2.'
  */
 final class ColumnCountMismatch implements Diagnostic
 {

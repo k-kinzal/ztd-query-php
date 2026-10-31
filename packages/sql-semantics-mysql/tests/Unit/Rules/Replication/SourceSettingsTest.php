@@ -19,37 +19,54 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSo
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(SourceSettings::class)]
 #[Medium]
 final class SourceSettingsTest extends TestCase
 {
+    public function testWarningResolvesEachOccurrenceAgainstTheGlobalTimeout(): void
+    {
+        $rule = new SourceSettings();
+        $option = new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('100'));
+
+        self::assertNull($rule->warning($option, GrammarRelease::MySql847, 200));
+        self::assertSame(1704, $rule->warning($option, GrammarRelease::MySql847, 10)?->code());
+        self::assertNull($rule->warning($option, GrammarRelease::MySql5651));
+        self::assertStringContainsString('slave_net_timeout', $rule->warning($option, GrammarRelease::MySql5744)?->message() ?? '');
+        self::assertSame(1703, $rule->warning(new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('0.0001')), GrammarRelease::MySql847)?->code());
+    }
+
+    public function testOptionsRetainsDistinctNoticesForRepeatedSettings(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=100, SOURCE_HEARTBEAT_PERIOD=100, SOURCE_HEARTBEAT_PERIOD=0');
+
+        self::assertCount(2, $operation->warnings());
+        self::assertEquals($operation->warnings()[0], $operation->warnings()[1]);
+        self::assertNotSame($operation->warnings()[0], $operation->warnings()[1]);
+    }
+
     public function testOptionsDerivesTheHeartbeatPeriod(): void
     {
         $change = (new Semantics(Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 2.5');
 
-        self::assertInstanceOf(ChangeReplicationSource::class, $change->statement);
-        self::assertInstanceOf(NumberLiteral::class, $change->statement->options[0]->value);
-        self::assertInstanceOf(Known::class, $change->facts->scalar($change->statement->options[0]->value)->type);
+        self::assertInstanceOf(ChangeReplicationSource::class, $change);
+        self::assertInstanceOf(NumberLiteral::class, $change->options[0]->value);
+        self::assertInstanceOf(Known::class, $change->options[0]->value->scalarInformation()->type);
     }
 
     public function testOptionRejectsAnOptionOfALaterRelease(): void
     {
-        $this->expectExceptionMessage('NETWORK_NAMESPACE is not an option of this release.');
+        $this->expectExceptionMessage('SOURCE_TLS_VERSION is not an option of this release.');
 
-        new Operation(
-            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]),
-            new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::NetworkNamespace, new Text('n'))]),
-        );
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new ChangeReplicationSource(Terminology::Legacy, [new SourceOption(Terminology::Legacy, SourceOptionKind::TlsVersion, new Text('TLSv1.2'))]), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testErrorAnswersTheCheckOfEachValueKind(): void
     {
         $settings = new SourceSettings();
 
-        self::assertSame(ReplicationError::HeartbeatOutOfRange, $settings->error(new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('4294967.5')), GrammarRelease::MySql847));
+        self::assertNull($settings->error(new SourceOption(Terminology::Current, SourceOptionKind::HeartbeatPeriod, new NumberLiteral('4294967')), GrammarRelease::MySql847));
         self::assertNull($settings->error(new SourceOption(Terminology::Current, SourceOptionKind::PrivilegeChecksUser, null), GrammarRelease::MySql847));
     }
 
@@ -74,6 +91,39 @@ final class SourceSettingsTest extends TestCase
 
     public function testLineFeedReportsALineFeed(): void
     {
-        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze("STOP REPLICA FOR CHANNEL 'a\\nb'")->facts->diagnostics);
+        $derivation = new \SqlSemantics\Construction\Derivation((new Semantics(Dialect::MySql))->context());
+        (new SourceSettings())->lineFeed($derivation, new Text("a\nb"));
+
+        self::assertCount(1, $derivation->facts()->diagnostics);
     }
+    public function testHeartbeatDistinguishesTheInclusiveUpperBoundary(): void
+    {
+        $rule = new SourceSettings();
+
+        self::assertNull($rule->heartbeat(new NumberLiteral('0')));
+        self::assertNull($rule->heartbeat(new NumberLiteral('4294967')));
+        self::assertSame(ReplicationError::HeartbeatOutOfRange, $rule->heartbeat(new NumberLiteral('4294967.5')));
+        self::assertSame(ReplicationError::HeartbeatOutOfRange, $rule->heartbeat(new NumberLiteral('1e300')));
+    }
+
+    public function testConditionRetainsTheNumeralAndItsInputPosition(): void
+    {
+        $number = new Numeral('2', inputSource: new \SqlSemantics\Statement\Source\Span(59, 1));
+        $condition = (new SourceSettings())->condition(new SourceOption(Terminology::Current, SourceOptionKind::GtidOnly, $number), GrammarRelease::MySql847);
+
+        self::assertNotNull($condition);
+        self::assertTrue($condition->aborts);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber(SourceOptionKind::GtidOnly, $number, 59), $condition->problem);
+    }
+
+    public function testConditionKeepsNonAbortingSourceSwitchesAndAbsentConditions(): void
+    {
+        $settings = new SourceSettings();
+        $condition = $settings->condition(new SourceOption(Terminology::Current, SourceOptionKind::RequireRowFormat, new Numeral('2')), GrammarRelease::MySql847);
+
+        self::assertNotNull($condition);
+        self::assertFalse($condition->aborts);
+        self::assertNull($settings->condition(new SourceOption(Terminology::Current, SourceOptionKind::GtidOnly, new Numeral('1')), GrammarRelease::MySql847));
+    }
+
 }

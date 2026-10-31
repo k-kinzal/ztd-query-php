@@ -18,12 +18,12 @@ final class HelpTest extends TestCase
     public function testDeriveStatementLeavesTheShapeOpen(): void
     {
         $help = (new Semantics(Dialect::MySql))->analyze('HELP contents');
-        self::assertInstanceOf(Help::class, $help->statement);
+        self::assertInstanceOf(Help::class, $help);
         self::assertFalse($help->shape()?->complete());
     }
 
     public function testRenderWritesTheTopic(): void
     {
-        self::assertSame('HELP `SHOW TABLES`', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("help 'SHOW TABLES'")->toString());
+        self::assertSame('HELP \'SHOW TABLES\'', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("help 'SHOW TABLES'")->toString());
     }
 }

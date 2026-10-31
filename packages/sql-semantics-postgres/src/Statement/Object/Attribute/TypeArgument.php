@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -29,17 +28,17 @@ use SqlSemantics\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading the state type of an aggregate in a complete context
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE AGGREGATE total (int4) (sfunc = int4pl, stype = int4)', []);
- *     $state = $operation->statement->definition[1]->value;
+ *     $state = $operation->definition[1]->value;
  *     $state->typeFact($operation->context)->descriptor->name() // => 'integer'
  */
 final class TypeArgument implements AttributeArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName|StringConstant|KeywordWord $type The type as written
      */
-    public function __construct(public readonly TypeName|StringConstant|KeywordWord $type)
+    public function __construct(public readonly TypeName|StringConstant|KeywordWord $type, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

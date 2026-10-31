@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Sources;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a cursor declaration
  *     $declare = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DECLARE c SCROLL CURSOR WITHOUT HOLD FOR SELECT 1');
- *     [$declare->statement->name->value, $declare->toString()] // => ['c', 'DECLARE c SCROLL CURSOR WITHOUT HOLD FOR SELECT 1']
+ *     [$declare->name->value, $declare->toString()] // => ['c', 'DECLARE c SCROLL CURSOR WITHOUT HOLD FOR SELECT 1']
  */
-final class DeclareCursor implements Statement
+final class DeclareCursor extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CursorOption> The options in written order
@@ -45,8 +44,11 @@ final class DeclareCursor implements Statement
      *
      * @throws InvalidConstruction When the query is not a query statement, or an option is not a cursor option
      */
-    public function __construct(public readonly Name $name, array $options, public readonly ?Holdability $hold, public readonly Query $query)
+    public function __construct(public readonly Name $name, array $options, public readonly ?Holdability $hold, public readonly Query $query, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, CursorOption::class, 'The options of DECLARE are cursor options.');
         Check::input((new Sources())->statement($query), 'A cursor reads the rows of a query statement.');
     }

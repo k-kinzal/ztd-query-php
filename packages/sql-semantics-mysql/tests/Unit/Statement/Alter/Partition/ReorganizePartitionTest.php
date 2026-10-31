@@ -17,11 +17,18 @@ final class ReorganizePartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesTheValues(): void
     {
-        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REORGANIZE PARTITION p INTO (PARTITION q VALUES LESS THAN (x))')->facts->diagnostics);
+        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REORGANIZE PARTITION p INTO (PARTITION q VALUES LESS THAN (x))')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void
     {
         self::assertSame('ALTER TABLE t REORGANIZE PARTITION', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t REORGANIZE PARTITION')->toString());
     }
+    public function testDefinitionsRequireOneSubpartitionCount(): void
+    {
+        $definitions = [new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p0'), null, [], []), new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p1'), null, [], [new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('s'), [])])];
+        $this->expectExceptionMessage('Wrong number of subpartitions defined, mismatch with previous setting');
+        new ReorganizePartition(null, new \SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions([new \SqlSemantics\Statement\Identifier\Name('old')]), $definitions);
+    }
+
 }

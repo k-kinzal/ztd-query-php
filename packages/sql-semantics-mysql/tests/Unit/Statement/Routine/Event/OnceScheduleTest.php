@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\OnceSchedule;
-use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -28,15 +27,15 @@ final class OnceScheduleTest extends TestCase
     public function testDeriveScheduleDerivesTheTime(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE AT NOW() DO SELECT 1', []);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateEvent::class, $statement);
         self::assertInstanceOf(OnceSchedule::class, $statement->schedule);
-        $fact = $create->facts->scalar($statement->schedule->at);
+        $fact = $statement->schedule->at->scalarInformation();
         self::assertInstanceOf(Known::class, $fact->type);
 
-        self::assertInstanceOf(Temporal::class, $fact->type->descriptor);
+        self::assertSame('DATETIME', $fact->type->descriptor->name());
         self::assertSame(Nullability::NotNull, $fact->nullability);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveScheduleReportsAColumnEvenWhenATableHasIt(): void
@@ -45,14 +44,14 @@ final class OnceScheduleTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a DATETIME)');
         $create = $semantics->analyze('CREATE EVENT e ON SCHEDULE AT a DO SELECT a FROM t', [$table]);
 
-        self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column a does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveScheduleResolvesALocalVariableOfTheEnclosingProcedure(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE v DATETIME; ALTER EVENT e ON SCHEDULE AT v; END', []);
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**

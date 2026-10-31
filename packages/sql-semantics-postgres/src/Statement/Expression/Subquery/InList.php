@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A membership test against a list of values: `a [NOT] IN (v1, v2, …)`.
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class InList implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The values in order
@@ -46,8 +46,11 @@ final class InList implements Scalar
      * @param bool $negated Whether NOT is written
      * @param list<Scalar> $values The values in order; at least one
      */
-    public function __construct(public readonly Scalar $operand, public readonly bool $negated, array $values)
+    public function __construct(public readonly Scalar $operand, public readonly bool $negated, array $values, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->values = Check::listOf($values, Scalar::class, 'An IN list holds at least one value.', 1);
         Check::input((new Precedence())->before($operand, Precedence::PATTERN), 'The tested value needs parentheses to keep its place.');
         Check::input(count($this->values) > 1 || !$this->values[0] instanceof ScalarSubquery, 'IN with one scalar subquery is read as IN (SELECT ...).');

@@ -20,7 +20,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A FOREIGN KEY table constraint: the referencing columns hold values of the referenced columns.
@@ -36,9 +35,11 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)');
  *     $create->toString() // => 'CREATE TABLE t (a INT, FOREIGN KEY (a) REFERENCES u (id) MATCH SIMPLE ON DELETE CASCADE ON UPDATE NO ACTION NOT VALID)'
  */
-final class ForeignKey implements Constraint
+final class ForeignKey implements Constraint, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The referencing columns
@@ -69,8 +70,11 @@ final class ForeignKey implements Constraint
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      * @param Name|null $name The constraint name
      */
-    public function __construct(array $columns, public readonly QualifiedName $table, array $referenced = [], public readonly ?KeyMatch $match = null, array $actions = [], array $attributes = [], public readonly ?Name $name = null)
+    public function __construct(array $columns, public readonly QualifiedName $table, array $referenced = [], public readonly ?KeyMatch $match = null, array $actions = [], array $attributes = [], public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'A foreign key has at least one referencing column.', 1);
         $this->referenced = Check::listOf($referenced, Name::class, 'Referenced columns are names.');
         $this->actions = (new ForeignKeys())->actions($actions);

@@ -16,9 +16,9 @@ final class TruncateTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('TRUNCATE t, u', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\TruncateTable::class, $n1);
-        $n2 = $statement->facts->relation($n1->tables[1])->table;
+        $n2 = $n1->tables[1]->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $n2);
         self::assertSame('SqlSemantics\\Statement\\Reference\\Table\\MissingTable', $n2::class);
     }
@@ -34,6 +34,6 @@ final class TruncateTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE FOREIGN TABLE f (a int) SERVER x')];
-        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('TRUNCATE v, f', $context)->facts->diagnostics));
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('TRUNCATE v, f', $context)->diagnostics()));
     }
 }

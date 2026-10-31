@@ -21,7 +21,7 @@ final class PoliciesTest extends TestCase
         self::assertSame([
           0 => 'Column zz does not exist.',
           1 => 'argument of POLICY must be type boolean',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testWriteWritesTheRolesAndConditions(): void
@@ -35,6 +35,6 @@ final class PoliciesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE POLICY p ON v', $context)->facts->diagnostics));
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE POLICY p ON v', $context)->diagnostics()));
     }
 }

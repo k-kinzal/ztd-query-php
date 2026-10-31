@@ -20,11 +20,24 @@ final class ExpressionMethodTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
 
-        self::assertSame('Column q does not exist.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (q) (PARTITION p VALUES LESS THAN MAXVALUE)', [$table])->facts->diagnostics[0]->message());
+        self::assertSame('Column q does not exist.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (q) (PARTITION p VALUES LESS THAN MAXVALUE)', [$table])->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheKind(): void
     {
         self::assertSame('ALTER TABLE t PARTITION BY LIST (a) (PARTITION p VALUES IN (1, 2))', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY LIST (a) (PARTITION p VALUES IN (1, 2))')->toString());
+    }
+
+    public function testRenderRequiresGroupingForAPredicateOperand(): void
+    {
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\NullTest(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+        $this->expectExceptionMessage('A partition expression needs a grouping to keep its place.');
+        new ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, $expression);
+    }
+
+    public function testRenderPreservesAGroupedPredicateOperand(): void
+    {
+        $sql = 'ALTER TABLE t PARTITION BY RANGE ((a IS NULL))';
+        self::assertSame($sql, (new Semantics(Dialect::MySql))->analyze($sql)->toString());
     }
 }

@@ -10,14 +10,13 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
-use SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesExpression;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetCharacterSet;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetItem;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\UserAssignment;
-use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * option_value_following_option_type, internal_variable_name (5.6, 5.7),
  * and the variable names of lvalue_variable (8.0 and later, also lowered by
  * the leaf rules). Constructs: NameAssignment, SystemAssignment,
- * UserAssignment, SetNames, SetCharacterSet, NamesExpression and, in MySQL
+ * UserAssignment, SetNames, SetCharacterSet and, in MySQL
  * 5.6, PasswordAssignment. The values are lowered by
  * MYSQL-SET-VALUE-LOWERING-001. `DEFAULT.x` names the instance `default`
  * (UtilityNoise). Terminates: every part is a strict subtree.
@@ -65,8 +64,10 @@ final class ItemRule
 
     /**
      * Lowers an item written without a leading scope keyword: a form of `option_value_no_option_type`.
+     * MySQL 8.0 and later resolve the value of a `@@variable` assignment before the assigned variable.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an operand has no SET-item meaning
      */
     public function unscoped(Form $form): SetItem
     {
@@ -76,16 +77,15 @@ final class ItemRule
             case 'option_value_no_option_type: lvalue_variable equal set_expr_or_default':
                 return $this->named(null, $form);
             case 'option_value_no_option_type: @ ident_or_text equal expr':
-                return new UserAssignment($this->lowering->variables->user($form->node(1)), $this->lowering->expressions->expression($form->node(3)));
+                return new UserAssignment($this->lowering->variables->user($form->node(1)), $this->lowering->expressions->expression($form->node(3)), operator: $this->lowering->options->assignment($form->node(2)));
             case 'option_value_no_option_type: @ @ opt_var_ident_type internal_variable_name equal set_expr_or_default':
-                $this->lowering->options->skip($form->node(4));
                 [$name, $instance] = $this->variable($form->node(3));
 
-                return new SystemAssignment($this->lowering->leaves->record(new SystemVariable($name, $this->lowering->variables->scope($form->node(2)), $instance)), $values->value($form->node(5), true));
+                return new SystemAssignment($this->lowering->origins->record($this->lowering->leaves->record(new SystemTarget($name, $this->lowering->variables->scope($form->node(2)), $instance)), $form->node(3)), $values->value($form->node(5), true), operator: $this->lowering->options->assignment($form->node(4)));
             case 'option_value_no_option_type: @ @ opt_set_var_ident_type lvalue_variable equal set_expr_or_default':
-                $this->lowering->options->skip($form->node(4));
+                $value = $values->value($form->node(5), true);
 
-                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2))), $values->value($form->node(5), true));
+                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2)), true), $value, operator: $this->lowering->options->assignment($form->node(4)));
             default:
                 return $this->connection($form);
         }
@@ -95,6 +95,7 @@ final class ItemRule
      * Lowers an item that sets the connection character sets, or a MySQL 5.6 password item.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When SET NAMES writes a collation of another character set than the named one, which the server refuses while parsing in every release (ER_COLLATION_CHARSET_MISMATCH)
      */
     public function connection(Form $form): SetItem
     {
@@ -102,23 +103,27 @@ final class ItemRule
         switch ($form->signature) {
             case 'option_value_no_option_type: charset old_or_new_charset_name_or_default':
             case 'option_value_no_option_type: character_set old_or_new_charset_name_or_default':
-                $this->lowering->options->skip($form->node(0));
-
-                return new SetCharacterSet($charsets->charset($form->node(1)));
+                return new SetCharacterSet($charsets->charset($form->node(1)), form: $this->lowering->types->parts->named($form->node(0)));
             case 'option_value_no_option_type: NAMES_SYM charset_name_or_default opt_collate':
             case 'option_value_no_option_type: NAMES_SYM charset_name opt_collate':
-                return new SetNames($charsets->charset($form->node(1)), $charsets->collation($form->node(2)));
+                $charset = $charsets->charset($form->node(1));
+                $collation = $charsets->collation($form->node(2));
+                $mismatch = (new \SqlSemantics\Platform\MySql\Rules\Utility\SetEncoding())->mismatch($charset, $collation, $this->lowering->profile->grammar);
+                if ($mismatch !== null) {
+                    throw new \SqlSemantics\Construction\RejectedInput($mismatch, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+                }
+
+                return new SetNames($charset, $collation);
             case 'option_value_no_option_type: NAMES_SYM DEFAULT_SYM':
                 return new SetNames(new CharsetName(null));
             case 'option_value_no_option_type: NAMES_SYM equal expr':
-                $this->lowering->options->skip($form->node(1));
-
-                return new NamesExpression($this->lowering->expressions->expression($form->node(2)));
+                $range = (new \SqlSemantics\Construction\SourceRanges())->span($form->node(1));
+                $source = $range === null ? null : new \SqlSemantics\Statement\Source\Span($range[0], $range[1] - $range[0]);
+                return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Utility\Set\NamesAssignment($this->lowering->expressions->operand($form->node(2)), $source, operator: $this->lowering->options->assignment($form->node(1))), $form->node);
         }
         [$user, $password] = self::PASSWORDS[$form->signature] ?? throw ImplementationGap::production($form);
-        $this->lowering->options->skip($form->node($password - 1));
 
-        return new PasswordAssignment($this->lowering->accounts->password($form->node($password)), $user === null ? null : $this->lowering->users->account($form->node($user)));
+        return new PasswordAssignment($this->lowering->accounts->password($form->node($password)), $user === null ? null : $this->lowering->users->account($form->node($user)), operator: $this->lowering->options->assignment($form->node($password - 1)));
     }
 
     /**
@@ -140,13 +145,17 @@ final class ItemRule
      * Lowers a name assignment whose name, equals sign and value are the first three children.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a 5.6 or 5.7 target names an unknown system variable
      */
     public function named(?VariableScope $scope, Form $form): NameAssignment
     {
         [$name, $qualifier] = $this->variable($form->node(0));
-        $this->lowering->options->skip($form->node(1));
+        $grammar = $this->lowering->profile->grammar;
+        if ($qualifier === null && !$this->lowering->stored() && ($grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744) && \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of($grammar)->find($name->value) === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable($name->value, true), (new \SqlSemantics\Construction\SourceRanges())->span($form->node(0))[1] ?? 0, false);
+        }
 
-        return new NameAssignment($name, (new ValueRule($this->lowering))->value($form->node(2), $scope !== null), $scope, $qualifier);
+        return $this->lowering->origins->record(new NameAssignment($name, (new ValueRule($this->lowering))->value($form->node(2), $scope !== null), $scope, $qualifier, operator: $this->lowering->options->assignment($form->node(1))), $form->node(0));
     }
 
     /**
@@ -163,7 +172,7 @@ final class ItemRule
         return match ($form->signature) {
             'internal_variable_name: ident', 'lvalue_variable: lvalue_ident' => [$names->identifier($form->node(0)), null],
             'internal_variable_name: ident . ident', 'lvalue_variable: lvalue_ident . ident' => [$names->identifier($form->node(2)), $names->identifier($form->node(0))],
-            'internal_variable_name: DEFAULT . ident', 'lvalue_variable: DEFAULT_SYM . ident' => [$names->identifier($form->node(2)), $this->lowering->leaves->record(new Name('default'))],
+            'internal_variable_name: DEFAULT . ident', 'lvalue_variable: DEFAULT_SYM . ident' => [$names->identifier($form->node(2)), $this->lowering->leaves->record(new Name('default', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))],
             default => throw ImplementationGap::production($form),
         };
     }

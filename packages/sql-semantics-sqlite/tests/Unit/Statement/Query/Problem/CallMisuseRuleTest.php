@@ -19,9 +19,9 @@ final class CallMisuseRuleTest extends TestCase
     public function testCasesTellWhichRuleACallBreaks(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $window = $semantics->analyze('SELECT row_number()')->facts->diagnostics[0];
-        $scalar = $semantics->analyze('SELECT abs(1) OVER ()')->facts->diagnostics[0];
-        $filter = $semantics->analyze('SELECT abs(1) FILTER (WHERE 1)')->facts->diagnostics[0];
+        $window = $semantics->analyze('SELECT row_number()')->diagnostics()[0];
+        $scalar = $semantics->analyze('SELECT abs(1) OVER ()')->diagnostics()[0];
+        $filter = $semantics->analyze('SELECT abs(1) FILTER (WHERE 1)')->diagnostics()[0];
 
         self::assertInstanceOf(CallMisuse::class, $window);
         self::assertSame(CallMisuseRule::WindowWithoutOver, $window->rule);

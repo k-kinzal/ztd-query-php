@@ -11,9 +11,8 @@ use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CHANGE REPLICATION SOURCE TO option = value, … [FOR CHANNEL 'name']`, written `CHANGE MASTER TO` in the legacy vocabulary.
@@ -22,7 +21,8 @@ use SqlSemantics\Statement\Statement;
  * options in written order, the same option possibly written more than once
  * (the server keeps the last value). The vocabulary is the one of the
  * release (MYSQL-REPLICATION-RELEASE-001); in 8.0 to 8.3 CHANGE MASTER and
- * the MASTER_ options are read as their current synonyms. A channel needs
+ * the MASTER_ options are read as their current synonyms, each keeping the
+ * spelling it is written in ($synonym), which the server warns deprecated. A channel needs
  * MySQL 5.7 or later. Rule: MYSQL-CHANGE-SOURCE-001. Facts: the option checks
  * of MYSQL-REPLICATION-SOURCE-001 and a line feed in the channel name. The
  * statement uses no table and provides no declaration.
@@ -33,14 +33,14 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the options of the legacy spelling as their current synonyms
  *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.0.44'))->analyze("CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'");
- *     [$change->toString(), $change->statement->options[1]->kind] // => ["CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'h', SOURCE_PORT = 3307 FOR CHANNEL 'c'", \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port]
+ *     [$change->toString(), $change->options[1]->kind] // => ["CHANGE MASTER TO MASTER_HOST = 'h', MASTER_PORT = 3307 FOR CHANNEL 'c'", \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port]
  */
-final class ChangeReplicationSource implements Statement
+final class ChangeReplicationSource extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<SourceOption> The options in written order; at least one
+     * @var non-empty-list<SourceOption> The options in written order; at least one
      */
     public readonly array $options;
 
@@ -48,13 +48,20 @@ final class ChangeReplicationSource implements Statement
      * @param Terminology $terminology The vocabulary the statement is written in
      * @param list<SourceOption> $options The options in written order; at least one, each in the vocabulary of the statement
      * @param Text|null $channel The replication channel, when FOR CHANNEL is written
+     * @param bool $synonym Whether the statement is written CHANGE MASTER where the release reads it as its synonym CHANGE REPLICATION SOURCE, which MySQL 8.0 to 8.3 warn deprecated
      */
-    public function __construct(public readonly Terminology $terminology, array $options, public readonly ?Text $channel = null)
+    public function __construct(public readonly Terminology $terminology, array $options, public readonly ?Text $channel = null, public readonly bool $synonym = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        Check::input(!$synonym || $terminology === Terminology::Current, 'CHANGE MASTER is a synonym only in the current replication vocabulary.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->options = Check::listOf($options, SourceOption::class, 'CHANGE REPLICATION SOURCE sets a list of options.', 1);
         foreach ($this->options as $option) {
             Check::input($option->terminology === $terminology, 'An option is written in the vocabulary of its statement.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -62,6 +69,8 @@ final class ChangeReplicationSource implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->options);
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $releases = new Releases();
         $release = $derivation->context->profile->grammar;
         Check::input($releases->source($release) === $this->terminology, 'CHANGE REPLICATION SOURCE is written in the vocabulary of the release.');
@@ -77,7 +86,7 @@ final class ChangeReplicationSource implements Statement
     public function render(Output $out): void
     {
         $out->keyword('CHANGE');
-        if ($this->terminology === Terminology::Legacy) {
+        if ($this->terminology === Terminology::Legacy || $this->synonym) {
             $out->keyword('MASTER');
         } else {
             $out->keyword('REPLICATION', 'SOURCE');

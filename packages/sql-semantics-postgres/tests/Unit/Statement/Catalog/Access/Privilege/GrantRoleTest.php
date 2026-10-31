@@ -19,7 +19,7 @@ final class GrantRoleTest extends TestCase
 
     public function testAnalysisKeepsTheRolesAndMembers(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff TO joe, ann')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff TO joe, ann');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\GrantRole::class, $statement);
         self::assertSame('staff', $statement->roles[0]->privilege());
         self::assertCount(2, $statement->members);
@@ -28,12 +28,12 @@ final class GrantRoleTest extends TestCase
 
     public function testDeriveStatementReportsTheProblems(): void
     {
-        self::assertSame(['column names cannot be included in GRANT/REVOKE ROLE', 'role "public" does not exist', 'role "public" does not exist', 'role "public" does not exist', 'unrecognized role option "foo"'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff (a), public TO PUBLIC WITH foo TRUE GRANTED BY PUBLIC')->facts->diagnostics));
+        self::assertSame(['column names cannot be included in GRANT/REVOKE ROLE', 'role "public" does not exist', 'role "public" does not exist', 'role "public" does not exist', 'unrecognized role option "foo"'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff (a), public TO PUBLIC WITH foo TRUE GRANTED BY PUBLIC')->diagnostics()));
     }
 
     public function testDeriveStatementAcceptsTheKnownOptions(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff TO joe WITH ADMIN TRUE, INHERIT FALSE, SET OPTION')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff TO joe WITH ADMIN TRUE, INHERIT FALSE, SET OPTION')->diagnostics()));
     }
 
     public function testRejectsAllAsARole(): void

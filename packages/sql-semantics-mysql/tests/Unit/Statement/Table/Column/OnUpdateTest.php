@@ -12,25 +12,25 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
-use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(OnUpdate::class)]
 #[Medium]
 final class OnUpdateTest extends TestCase
 {
-    public function testDeriveAttributeDerivesTheValue(): void
+    public function testDeriveAttributeRetainsADeclarationOperandWithoutAScalarFact(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
         $attribute = $column->specification->columnAttributes()[0];
 
         self::assertInstanceOf(OnUpdate::class, $attribute);
-        self::assertSame(Nullability::NotNull, $create->facts->scalar($attribute->value)->nullability);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp::class, $attribute->value);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheAttribute(): void

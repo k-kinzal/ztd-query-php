@@ -16,7 +16,7 @@ final class ParenthesizedQueryTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('(SELECT 1 AS a)');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery::class, $statement);
         self::assertSame('a', $statement->outputName()?->value);
     }

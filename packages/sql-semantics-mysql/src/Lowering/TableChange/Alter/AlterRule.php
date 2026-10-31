@@ -80,23 +80,40 @@ final class AlterRule
      * Lowers ALTER TABLE: a production of `alter` routed to this family, or a node of `alter_table_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Form $form): AlterTable
     {
+        $name = $form->node(str_contains($form->signature, 'opt_ignore') ? 3 : 2);
+        $this->lowering->columnTable = $this->lowering->names->qualified($name);
+        $dot = $this->lowering->names->dotted($name) ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted;
         return match ($form->signature) {
-            'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => new AlterTable(
-                $this->lowering->names->qualified($form->node(3)),
+            'alter: ALTER opt_ignore TABLE_SYM table_ident alter_commands' => $this->definition(
+                $this->lowering->columnTable,
                 $this->commands($form->node(4)),
                 $this->lowering->options->present($form->node(1)),
+                $dot,
             ),
             'alter: ALTER TABLE_SYM table_ident alter_commands',
             'alter_table_stmt: ALTER TABLE_SYM table_ident opt_alter_table_actions',
-            'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => new AlterTable(
-                $this->lowering->names->qualified($form->node(2)),
+            'alter_table_stmt: ALTER TABLE_SYM table_ident standalone_alter_table_action' => $this->definition(
+                $this->lowering->columnTable,
                 $this->commands($form->node(3)),
+                dot: $dot,
             ),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Keeps every action when a legacy declaration must be checked at invocation.
+     *
+     * @param list<AlterCommand> $commands The ordered actions
+     */
+    public function definition(\SqlSemantics\Statement\Identifier\QualifiedName $table, array $commands, bool $ignore = false, \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $dot = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted): AlterTable
+    {
+        return new AlterTable($table, $commands, $ignore, dot: $dot);
     }
 
     /**
@@ -104,6 +121,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function commands(Node $node): array
     {
@@ -136,6 +155,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function others(Form $form): array
     {
@@ -151,7 +172,7 @@ final class AlterRule
             'partitioning: PARTITION_SYM partition' => $form->node,
             default => throw ImplementationGap::production($form),
         };
-        $clause = (new PartitionRule($this->lowering))->partitioning($partitioning);
+        $clause = (new PartitionRule($this->lowering, true))->partitioning($partitioning);
 
         return $clause === null ? [] : [new PartitionBy($clause)];
     }
@@ -161,6 +182,8 @@ final class AlterRule
      *
      * @return list<AlterCommand>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function items(Node $list): array
     {

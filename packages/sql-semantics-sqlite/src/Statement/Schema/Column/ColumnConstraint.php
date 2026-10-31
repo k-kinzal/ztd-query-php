@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the constraints of a column in written order
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a INTEGER NOT NULL DEFAULT 0)');
- *     count($create->statement->columns[0]->constraints) // => 2
+ *     count($create->columns[0]->constraints) // => 2
  */
 interface ColumnConstraint extends Node
 {

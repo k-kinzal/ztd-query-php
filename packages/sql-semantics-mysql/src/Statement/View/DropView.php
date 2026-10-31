@@ -10,13 +10,12 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to drop views.
@@ -34,11 +33,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the views to drop
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP VIEW IF EXISTS v, shop.w');
- *     [count($drop->statement->views), $drop->statement->ifExists] // => [2, true]
+ *     [count($drop->views), $drop->ifExists] // => [2, true]
  */
-final class DropView implements Statement
+final class DropView extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<QualifiedName> The views in order
@@ -50,12 +49,17 @@ final class DropView implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param DropBehavior|null $behavior RESTRICT or CASCADE, when written
      */
-    public function __construct(array $views, public readonly bool $ifExists = false, public readonly ?DropBehavior $behavior = null)
+    public function __construct(array $views, public readonly bool $ifExists = false, public readonly ?DropBehavior $behavior = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->views = Check::listOf($views, QualifiedName::class, 'DROP VIEW names at least one view.', 1);
         foreach ($this->views as $view) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($view);
             Check::input($view->catalog === null, 'A view name has at most a database qualifier.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

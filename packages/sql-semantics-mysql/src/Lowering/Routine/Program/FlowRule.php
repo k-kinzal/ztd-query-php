@@ -20,8 +20,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SearchedCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\SimpleCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\WhileLoop;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the flow control statements of stored programs.
@@ -76,7 +76,7 @@ final class FlowRule
             if ($branch->signature !== 'sp_if: expr THEN_SYM sp_proc_stmts1 sp_elseifs') {
                 throw ImplementationGap::production($branch);
             }
-            $branches[] = new ConditionalBranch($this->lowering->expressions->expression($branch->node(0)), $statements->statements($branch->node(2)));
+            $branches[] = new ConditionalBranch($this->lowering->expressions->operand($branch->node(0)), $statements->statements($branch->node(2)));
             $rest = $this->lowering->form($branch->node(3));
             $branch = match ($rest->signature) {
                 'sp_elseifs:', 'sp_elseifs: ELSE sp_proc_stmts1' => null,
@@ -101,7 +101,7 @@ final class FlowRule
         }
         $case = $this->lowering->form($form->node(0));
         [$operand, $list, $else] = match ($case->signature) {
-            'simple_case_stmt: CASE_SYM expr simple_when_clause_list else_clause_opt END CASE_SYM' => [$this->lowering->expressions->expression($case->node(1)), 2, 3],
+            'simple_case_stmt: CASE_SYM expr simple_when_clause_list else_clause_opt END CASE_SYM' => [$this->lowering->expressions->operand($case->node(1)), 2, 3],
             'searched_case_stmt: CASE_SYM searched_when_clause_list else_clause_opt END CASE_SYM' => [null, 1, 2],
             default => throw ImplementationGap::production($case),
         };
@@ -112,7 +112,7 @@ final class FlowRule
             if ($when->signature !== 'simple_when_clause: WHEN_SYM expr THEN_SYM sp_proc_stmts1' && $when->signature !== 'searched_when_clause: WHEN_SYM expr THEN_SYM sp_proc_stmts1') {
                 throw ImplementationGap::production($when);
             }
-            $branches[] = new ConditionalBranch($this->lowering->expressions->expression($when->node(1)), $statements->statements($when->node(3)));
+            $branches[] = new ConditionalBranch($this->lowering->expressions->operand($when->node(1)), $statements->statements($when->node(3)));
         }
         $rest = $this->lowering->form($case->node($else));
         $otherwise = match ($rest->signature) {
@@ -166,8 +166,8 @@ final class FlowRule
 
         return match ($form->signature) {
             'sp_unlabeled_control: LOOP_SYM sp_proc_stmts1 END LOOP_SYM' => new Loop($statements->statements($form->node(1)), $label, $endLabel),
-            'sp_unlabeled_control: WHILE_SYM expr DO_SYM sp_proc_stmts1 END WHILE_SYM' => new WhileLoop($this->lowering->expressions->expression($form->node(1)), $statements->statements($form->node(3)), $label, $endLabel),
-            'sp_unlabeled_control: REPEAT_SYM sp_proc_stmts1 UNTIL_SYM expr END REPEAT_SYM' => new RepeatLoop($this->lowering->expressions->expression($form->node(3)), $statements->statements($form->node(1)), $label, $endLabel),
+            'sp_unlabeled_control: WHILE_SYM expr DO_SYM sp_proc_stmts1 END WHILE_SYM' => new WhileLoop($this->lowering->expressions->operand($form->node(1)), $statements->statements($form->node(3)), $label, $endLabel),
+            'sp_unlabeled_control: REPEAT_SYM sp_proc_stmts1 UNTIL_SYM expr END REPEAT_SYM' => new RepeatLoop($this->lowering->expressions->operand($form->node(3)), $statements->statements($form->node(1)), $label, $endLabel),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -180,7 +180,7 @@ final class FlowRule
     public function jump(Form $form): ProgramStatement|Statement
     {
         return match ($form->signature) {
-            'sp_proc_stmt_return: RETURN_SYM expr' => new ReturnStatement($this->lowering->expressions->expression($form->node(1))),
+            'sp_proc_stmt_return: RETURN_SYM expr' => new ReturnStatement($this->lowering->expressions->operand($form->node(1))),
             'sp_proc_stmt_leave: LEAVE_SYM label_ident' => new Leave($this->lowering->names->identifier($form->node(1))),
             'sp_proc_stmt_iterate: ITERATE_SYM label_ident' => new Iterate($this->lowering->names->identifier($form->node(1))),
             default => throw ImplementationGap::production($form),

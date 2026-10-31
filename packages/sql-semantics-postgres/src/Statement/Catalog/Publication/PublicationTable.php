@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A table as an item of a publication: `[ TABLE ] [ ONLY ] name [ * ] [ ( column, ... ) ] [ WHERE ( expression ) ]`.
@@ -33,11 +32,12 @@ use SqlSemantics\Statement\Snapshot;
  *     $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
  *     $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4)]);
  *     $operation = $semantics->analyze('CREATE PUBLICATION p FOR TABLE t (a) WHERE (a > 0)', [$t]);
- *     [$operation->facts->relation($operation->statement->objects[0])->table->table === $t, $operation->facts->diagnostics] // => [true, []]
+ *     [$operation->objects[0]->relationInformation()->table->table === $t, $operation->diagnostics()] // => [true, []]
  */
-final class PublicationTable implements PublicationMember, Relation
+final class PublicationTable implements PublicationMember, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The published columns; empty for every column
@@ -51,8 +51,11 @@ final class PublicationTable implements PublicationMember, Relation
      * @param bool $keyword Whether TABLE is written
      * @param bool $star Whether a trailing `*` is written
      */
-    public function __construct(public readonly RelationReference $table, array $columns = [], public readonly ?Scalar $where = null, public readonly bool $keyword = true, public readonly bool $star = false)
+    public function __construct(public readonly RelationReference $table, array $columns = [], public readonly ?Scalar $where = null, public readonly bool $keyword = true, public readonly bool $star = false, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'Published columns are names.');
         Check::input(!($star && $table->only), 'A table name is written with ONLY or with a trailing star, not both.');
     }

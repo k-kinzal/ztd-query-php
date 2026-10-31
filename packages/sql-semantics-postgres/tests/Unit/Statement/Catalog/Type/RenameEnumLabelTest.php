@@ -19,6 +19,6 @@ final class RenameEnumLabelTest extends TestCase
 
     public function testDeriveStatementAcceptsAShortLabel(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE mood RENAME VALUE \'sad\' TO \'blue\'')->diagnostics());
     }
 }

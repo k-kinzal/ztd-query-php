@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FORMAT JSON [ENCODING name]`: the value is JSON text in an encoding.
@@ -28,12 +27,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonFormat implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $encodingName The encoding name written after ENCODING
      */
-    public function __construct(public readonly ?Name $encodingName = null)
+    public function __construct(public readonly ?Name $encodingName = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($encodingName === null || JsonEncoding::named($encodingName->value) !== null, 'A JSON encoding is UTF8, UTF16 or UTF32.');
     }

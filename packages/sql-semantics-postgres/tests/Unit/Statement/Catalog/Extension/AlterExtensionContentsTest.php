@@ -24,7 +24,7 @@ final class AlterExtensionContentsTest extends TestCase
 
     public function testDeriveStatementDerivesTheObject(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION e ADD TYPE numeric(4, 2)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION e ADD TYPE numeric(4, 2)')->diagnostics());
     }
 
     public function testRejectsAKindAlterExtensionCannotAddress(): void
@@ -37,6 +37,6 @@ final class AlterExtensionContentsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['"m" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER EXTENSION e ADD VIEW m', $context)->facts->diagnostics));
+        self::assertSame(['"m" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER EXTENSION e ADD VIEW m', $context)->diagnostics()));
     }
 }

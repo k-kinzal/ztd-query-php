@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting an added UNIQUE column
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ALTER TABLE t ADD COLUMN code TEXT UNIQUE');
- *     $alter->facts->diagnostics[0]->message() // => 'A UNIQUE column cannot be added.'
+ *     $alter->diagnostics()[0]->message() // => 'A UNIQUE column cannot be added.'
  */
 final class AlterationRefused implements Diagnostic
 {

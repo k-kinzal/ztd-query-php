@@ -26,7 +26,6 @@ use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -43,13 +42,14 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3');
- *     [count($query->statement->targets), $query->statement->distinct !== null, count($query->statement->groupBy), count($query->statement->options->order), $query->toString()] // => [2, true, 1, 1, 'SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3']
+ *     [count($query->targets), $query->distinct !== null, count($query->groupBy), count($query->options->order), $query->toString()] // => [2, true, 1, 1, 'SELECT DISTINCT a, 1 FROM t WHERE a > 1 GROUP BY a HAVING a > 2 ORDER BY a LIMIT 3']
  * @example Refusing DISTINCT without a select list
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([], distinct: new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\DistinctClause()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Select implements Statement, Query, Selection, OutputNaming
+final class Select extends \SqlSemantics\Statement\SqlStatement implements Statement, Query, Selection, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Target> The select-list items in output order
@@ -89,7 +89,16 @@ final class Select implements Statement, Query, Selection, OutputNaming
         public readonly ?IntoClause $into = null,
         public readonly ?SetQuantifier $groupQuantifier = null,
         public readonly ?SelectOptions $options = null,
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->targets = Check::listOf($targets, Target::class, 'A select list holds select-list items.');
         $this->groupBy = (new ClosedList())->of($groupBy, [Scalar::class, GroupingRow::class, GroupingSet::class], 'A GROUP BY item is an expression, a grouping row or a grouping set.');
         foreach ($this->groupBy as $item) {

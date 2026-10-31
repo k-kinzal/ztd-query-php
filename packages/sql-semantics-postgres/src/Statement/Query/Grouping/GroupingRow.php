@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A parenthesized list of grouping terms in GROUP BY, ROLLUP, CUBE or GROUPING SETS: `(a, 1)`.
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the terms of a row in GROUP BY
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS a GROUP BY (a, 1)');
- *     [count($query->statement->groupBy[0]->members), $query->statement->groupBy[0]->members[1]::class] // => [2, \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition::class]
+ *     [count($query->groupBy[0]->members), $query->groupBy[0]->members[1]::class] // => [2, \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition::class]
  * @example Refusing an integer constant that is not an output position
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class GroupingRow implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar|GroupingRow> The members in written order
@@ -43,7 +42,7 @@ final class GroupingRow implements Node
     /**
      * @param list<Scalar|GroupingRow> $members The members in written order: at least two, or one row in further parentheses
      */
-    public function __construct(array $members)
+    public function __construct(array $members, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->members = (new ClosedList())->of($members, [Scalar::class, self::class], 'A grouping row holds grouping terms.', 1);
         Check::input(count($this->members) >= 2 || $this->members[0] instanceof self, 'A grouping row has at least two members, or is a row in further parentheses.');

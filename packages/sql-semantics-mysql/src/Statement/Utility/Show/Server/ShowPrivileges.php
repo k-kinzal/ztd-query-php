@@ -7,9 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Server;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW PRIVILEGES: the privileges the server supports.
@@ -24,9 +23,9 @@ use SqlSemantics\Statement\Statement;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW PRIVILEGES');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['Privilege', 'SHOW PRIVILEGES']
  */
-final class ShowPrivileges implements Statement
+final class ShowPrivileges extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
 
     /**
@@ -43,5 +42,14 @@ final class ShowPrivileges implements Statement
     public function render(Output $out): void
     {
         $out->keyword('SHOW', 'PRIVILEGES');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 }

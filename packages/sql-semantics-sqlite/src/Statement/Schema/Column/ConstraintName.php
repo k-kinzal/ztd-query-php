@@ -10,7 +10,6 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A `CONSTRAINT name` clause.
@@ -28,16 +27,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a constraint name that precedes a CHECK
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a CONSTRAINT positive CHECK (a > 0))');
- *     $create->statement->columns[0]->constraints[0]->name->value // => 'positive'
+ *     $create->columns[0]->constraints[0]->name->value // => 'positive'
  */
 final class ConstraintName implements ColumnConstraint, TableConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The constraint name
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

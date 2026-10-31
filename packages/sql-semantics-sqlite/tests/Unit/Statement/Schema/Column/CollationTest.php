@@ -20,13 +20,13 @@ final class CollationTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a COLLATE no_such_collation)', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheCollationName(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a text collate "RTRIM")');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(Collation::class, $statement->columns[0]->constraints[0]);

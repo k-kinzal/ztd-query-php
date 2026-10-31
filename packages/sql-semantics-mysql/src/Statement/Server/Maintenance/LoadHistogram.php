@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `UPDATE HISTOGRAM ON column USING DATA 'json'`: a request to store a histogram given as its JSON form (MySQL 8.0.31 and later).
@@ -22,14 +21,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the histogram request
  *     $analyze = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'");
- *     [$analyze->toString(), $analyze->statement->histogram->data->value === '{}'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'", true]
+ *     [$analyze->toString(), $analyze->histogram->data->value === '{}'] // => ["ANALYZE TABLE t UPDATE HISTOGRAM ON a USING DATA '{}'", true]
  */
 final class LoadHistogram implements Histogram
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<Name> The column names in written order; at least one
+     * @var non-empty-list<Name> The column names in written order; at least one
      */
     public readonly array $columns;
 
@@ -38,8 +37,9 @@ final class LoadHistogram implements Histogram
      * @param Text $data The JSON form of the histogram
      * @throws InvalidConstruction When the column list is empty
      */
-    public function __construct(array $columns, public readonly Text $data)
+    public function __construct(array $columns, public readonly Text $data, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input($data->radix === null, 'Histogram data is a quoted text string.');
         $this->columns = Check::listOf($columns, Name::class, 'A histogram request names at least one column.', 1);
     }
 

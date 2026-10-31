@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\ExplainFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -37,9 +36,9 @@ use SqlSemantics\Statement\Statement;
  *         [new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name('costs'))],
  *     ) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Explain implements Statement
+final class Explain extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<UtilityOption> The options in the order written
@@ -51,8 +50,11 @@ final class Explain implements Statement
      * @param list<UtilityOption> $options The options in the order written
      * @param OptionSyntax $syntax How the options are written
      */
-    public function __construct(public readonly Statement $statement, array $options = [], public readonly OptionSyntax $syntax = OptionSyntax::Words)
+    public function __construct(public readonly Statement $statement, array $options = [], public readonly OptionSyntax $syntax = OptionSyntax::Words, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, UtilityOption::class, 'The options of EXPLAIN are utility options.');
         Check::input((new OptionRules())->writable($this->options, $syntax, ['analyze', 'verbose']), 'The options cannot be written in that syntax.');
     }

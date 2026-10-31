@@ -23,8 +23,9 @@ final class ResetRuleTest extends TestCase
 
     public function testTargetReadsTheDeprecatedSpellingsAsSynonyms(): void
     {
-        self::assertSame('RESET REPLICA, BINARY LOGS AND GTIDS', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('reset slave, master')->toString());
-        self::assertSame('RESET REPLICA, MASTER', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset slave, master')->toString());
+        self::assertSame('RESET SLAVE, MASTER', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('reset slave, master')->toString());
+        self::assertSame('RESET SLAVE, MASTER', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset slave, master')->toString());
+        self::assertSame('RESET REPLICA', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset replica')->toString());
     }
 
     public function testFirstLowersTheFileNumber(): void
@@ -37,4 +38,16 @@ final class ResetRuleTest extends TestCase
         self::assertSame('RESET PERSIST IF EXISTS c.v', (new Semantics(Dialect::MySql))->analyze('reset persist if exists c.v')->toString());
         self::assertSame('RESET PERSIST v', (new Semantics(Dialect::MySql))->analyze('reset persist v')->toString());
     }
+    public function testTargetRejectsAnInvalidIndexBeforeConstructingAStatement(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('RESET BINARY LOGS AND GTIDS TO 0, BINARY LOGS AND GTIDS TO 9');
+            self::fail('An out-of-range binary log index cannot become a reset target.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::FileNumberOutOfRange, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0', inputSource: new \SqlSemantics\Statement\Source\Span(31, 1))), $failure->problem);
+            self::assertSame(32, $failure->end);
+            self::assertTrue($failure->aborts);
+        }
+    }
+
 }

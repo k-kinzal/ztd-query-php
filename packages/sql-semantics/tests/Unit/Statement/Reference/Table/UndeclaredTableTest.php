@@ -18,11 +18,11 @@ final class UndeclaredTableTest extends TestCase
     public function testMissingNamesTheRelationAnOpenContextDoesNotDeclare(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM s.t');
-        $fact = $query->facts->relation($query->singleNamedInput());
+        $fact = $query->singleNamedInput()->relationInformation();
 
         self::assertInstanceOf(UndeclaredTable::class, $fact->table);
         self::assertSame('the declaration of relation s.t', $fact->table->missing->describe());
         self::assertSame([$fact->table->missing], $fact->shape->missing);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 }

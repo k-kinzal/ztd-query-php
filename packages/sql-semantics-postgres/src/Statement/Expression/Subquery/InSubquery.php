@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -37,15 +36,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class InSubquery implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested value
      * @param bool $negated Whether NOT is written
      * @param Query $query The query inside the parentheses
      */
-    public function __construct(public readonly Scalar $operand, public readonly bool $negated, public readonly Query $query)
+    public function __construct(public readonly Scalar $operand, public readonly bool $negated, public readonly Query $query, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->before($operand, Precedence::PATTERN), 'The tested value needs parentheses to keep its place.');
     }
 

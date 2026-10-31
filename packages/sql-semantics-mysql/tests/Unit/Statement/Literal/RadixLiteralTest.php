@@ -14,11 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -27,55 +23,60 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class RadixLiteralTest extends TestCase
 {
+    public function testBytesPreservesLeadingZerosAndPadsPartialOctets(): void
+    {
+        self::assertSame(['000abc', '0100', '', ''], [bin2hex((new RadixLiteral(Radix::Hexadecimal, '00ABC'))->bytes()), bin2hex((new RadixLiteral(Radix::Bit, '100000000'))->bytes()), (new RadixLiteral(Radix::Hexadecimal, ''))->bytes(), (new RadixLiteral(Radix::Bit, ''))->bytes()]);
+    }
+
     public function testDeriveScalarAnswersVarBinaryWithoutAnIntroducer(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = X'1F'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
         self::assertInstanceOf(RadixLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertSame(Radix::Hexadecimal, $literal->radix);
         self::assertSame('1F', $literal->digits);
         self::assertNull($literal->introducer);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Binary::class, $fact->type->descriptor);
-        self::assertSame(BinaryKind::VarBinary, $fact->type->descriptor->kind);
-        self::assertNull($fact->type->descriptor->length);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARBINARY', 1, 'binary'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
     public function testDeriveScalarAnswersVarCharOfTheIntroducedCharacterSet(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _LATIN1 b'1'");
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(RadixLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertSame(Radix::Bit, $literal->radix);
         self::assertSame('1', $literal->digits);
         self::assertSame('latin1', $literal->introducer?->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharacterKind::VarChar, $fact->type->descriptor->kind);
-        self::assertFalse($fact->type->descriptor->national);
-        self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('latin1', $fact->type->descriptor->charset->charset?->value);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 1, 'latin1_swedish_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
-    public function testRenderQuotesAnEvenCountOfHexadecimalDigits(): void
+    public function testRenderRetainsTheNotationOfEvenHexadecimalDigits(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame("SELECT x'1F' AS v", $semantics->analyze('SELECT 0x1F AS v')->toString());
-        self::assertSame("SELECT x'1F' AS v", $semantics->analyze("SELECT X'1F' AS v")->toString());
+        self::assertSame('SELECT 0x1F AS v', $semantics->analyze('SELECT 0x1F AS v')->toString());
+        self::assertSame("SELECT X'1F' AS v", $semantics->analyze("SELECT X'1F' AS v")->toString());
         self::assertSame("SELECT x'' AS v", $semantics->analyze("SELECT x'' AS v")->toString());
         self::assertSame('SELECT 0x1F', $semantics->analyze('SELECT 0x1F')->toString());
     }
@@ -83,7 +84,9 @@ final class RadixLiteralTest extends TestCase
     public function testRenderPrefixesAnOddCountOfHexadecimalDigits(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0x1');
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -94,10 +97,12 @@ final class RadixLiteralTest extends TestCase
         self::assertSame('SELECT 0x1', $operation->toString());
     }
 
-    public function testRenderQuotesBitDigitsOfEitherSpelling(): void
+    public function testRenderRetainsTheNotationOfBitDigits(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 0b01 AS v');
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
@@ -105,13 +110,13 @@ final class RadixLiteralTest extends TestCase
         self::assertInstanceOf(RadixLiteral::class, $literal);
 
         self::assertSame('01', $literal->digits);
-        self::assertSame("SELECT b'01' AS v", $operation->toString());
-        self::assertSame("SELECT b'101' AS v", (new Semantics(Dialect::MySql))->analyze("SELECT B'101' AS v")->toString());
+        self::assertSame('SELECT 0b01 AS v', $operation->toString());
+        self::assertSame("SELECT B'101' AS v", (new Semantics(Dialect::MySql))->analyze("SELECT B'101' AS v")->toString());
     }
 
     public function testRenderWritesTheIntroducerInLowerCase(): void
     {
-        self::assertSame("SELECT _latin1 x'1F' AS v", (new Semantics(Dialect::MySql))->analyze('SELECT _Latin1 0x1F AS v')->toString());
+        self::assertSame('SELECT _latin1 0x1F AS v', (new Semantics(Dialect::MySql))->analyze('SELECT _Latin1 0x1F AS v')->toString());
     }
 
     public function testRejectsDigitsOutsideTheHexadecimalSystem(): void
@@ -140,5 +145,40 @@ final class RadixLiteralTest extends TestCase
         $this->expectExceptionMessage('An introducer names a character set of the server in lower case.');
 
         new RadixLiteral(Radix::Hexadecimal, '1F', new Name('UTF8MB4'));
+    }
+
+    public function testDeriveScalarWarnsAboutAUtf8mb3Introducer(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 X'41', _utf8mb3 b'1'");
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3)], $operation->warnings());
+    }
+
+
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRadixStatements(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $release) {
+            foreach (['0x01AF', "X'01AF'", "x'01af'", '0xA', "X''", '0b01', "B'01'", "b''"] as $literal) {
+                foreach (["SELECT $literal AS v", "SELECT _latin1 $literal AS v", "CREATE TABLE t (c ENUM($literal))", "GET DIAGNOSTICS CONDITION $literal @localhost = CLASS_ORIGIN"] as $sql) {
+                    yield "$release: $sql" => [$release, $sql];
+                }
+                if (str_contains(strtolower($literal), 'x')) {
+                    $sql = "ALTER TABLE t COALESCE PARTITION $literal";
+                    yield "$release: $sql" => [$release, $sql];
+                }
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRadixStatements')]
+    public function testReconstructionRetainsRadixNotationInEveryLiteralRole(string $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $release);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        self::assertSame($formatter->format($sql), $formatter->format($semantics->analyze($sql)->toString()));
     }
 }

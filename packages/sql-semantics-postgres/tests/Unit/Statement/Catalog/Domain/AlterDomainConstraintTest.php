@@ -24,19 +24,19 @@ final class AlterDomainConstraintTest extends TestCase
 
     public function testDeriveStatementReportsAUniqueConstraintOf16(): void
     {
-        self::assertSame('unique constraints not possible for domains', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6'))->analyze('ALTER DOMAIN d ADD UNIQUE (a)')->facts->diagnostics[0]->message());
+        self::assertSame('unique constraints not possible for domains', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6'))->analyze('ALTER DOMAIN d ADD UNIQUE (a)')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsAnImproperName(): void
     {
-        self::assertSame('improper qualified name (too many dotted names): a.b.c.d', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN a.b.c.d ADD CHECK (VALUE > 1)')->facts->diagnostics[0]->message());
+        self::assertSame('improper qualified name (too many dotted names): a.b.c.d', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN a.b.c.d ADD CHECK (VALUE > 1)')->diagnostics()[0]->message());
     }
 
     public function testDeriveRelationOffersAnEmptyRow(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD NOT NULL');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Domain\AlterDomainConstraint::class, $statement);
-        self::assertSame([], $operation->facts->relation($statement)->shape->slots);
+        self::assertSame([], $statement->relationInformation()->shape->slots);
     }
 }

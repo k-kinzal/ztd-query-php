@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A window specification in parentheses: an existing window to refine, a partition, an ordering and a frame.
@@ -35,7 +34,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WindowSpecification implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The partitioning expressions
@@ -53,7 +52,7 @@ final class WindowSpecification implements Clause
      * @param list<SortItem> $order The ordering within a partition
      * @param WindowFrame|null $frame The frame
      */
-    public function __construct(public readonly ?Name $existing = null, array $partition = [], array $order = [], public readonly ?WindowFrame $frame = null)
+    public function __construct(public readonly ?Name $existing = null, array $partition = [], array $order = [], public readonly ?WindowFrame $frame = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->partition = Check::listOf($partition, Scalar::class, 'Partitioning expressions are expressions.');
         $this->order = Check::listOf($order, SortItem::class, 'A window ordering is a list of sort items.');

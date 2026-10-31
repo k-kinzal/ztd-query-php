@@ -18,11 +18,11 @@ final class ColumnKeyTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE INDEX ON t (b)', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         $n2 = $n1->elements[0]->key;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ColumnKey::class, $n2);
-        $n3 = $statement->facts->scalar($n2)->resolution;
+        $n3 = $n2->scalarInformation()->resolution;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $n3);
         self::assertSame(true, $n3->slot->column === $context[0]->columns[1]);
     }

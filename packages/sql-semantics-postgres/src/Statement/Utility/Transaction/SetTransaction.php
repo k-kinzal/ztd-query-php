@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the modes of SET TRANSACTION
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TRANSACTION READ ONLY, DEFERRABLE');
- *     [$operation->statement->modes[1], $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode::Deferrable, 'SET TRANSACTION READ ONLY DEFERRABLE']
+ *     [$operation->modes[1], $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionMode::Deferrable, 'SET TRANSACTION READ ONLY DEFERRABLE']
  * @example Refusing a SET TRANSACTION without modes
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetTransaction(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::Transaction, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class SetTransaction implements Statement
+final class SetTransaction extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TransactionMode> The characteristics in the order written
@@ -40,8 +39,11 @@ final class SetTransaction implements Statement
      * @param list<TransactionMode> $modes The characteristics in the order written; at least one
      * @param bool $local Whether SET LOCAL is written
      */
-    public function __construct(public readonly TransactionScope $scope, array $modes, public readonly bool $local = false)
+    public function __construct(public readonly TransactionScope $scope, array $modes, public readonly bool $local = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->modes = Check::listOf($modes, TransactionMode::class, 'SET TRANSACTION takes at least one mode.', 1);
     }
 

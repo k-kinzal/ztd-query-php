@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The column, constraint or attribute ALTER ... RENAME renames: `COLUMN a`, `CONSTRAINT c` or `ATTRIBUTE a`.
@@ -24,13 +23,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RenamedMember implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RenamedPart $part What kind of part is renamed
      * @param Name $name The current name of the part
      */
-    public function __construct(public readonly RenamedPart $part, public readonly Name $name)
+    public function __construct(public readonly RenamedPart $part, public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

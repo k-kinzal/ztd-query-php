@@ -1,0 +1,45 @@
+<?php
+
+namespace Eris\Quantifier;
+
+/**
+ * @template T
+ */
+class ForAll
+{
+    /**
+     * @param list<\Eris\Generator<T>> $generators
+     * @param int $iterations
+     * @param \Eris\Shrinker\ShrinkerFactory $shrinkerFactory
+     * @param string $shrinkerFactoryMethod
+     */
+    public function __construct(array $generators, $iterations, $shrinkerFactory, $shrinkerFactoryMethod, \Eris\Random\RandomRange $rand) {}
+
+    /**
+     * @param int $maxSize
+     * @return $this
+     */
+    public function withMaxSize($maxSize) {}
+
+    /**
+     * @param callable(T, mixed...): void $assertion
+     * @return void
+     */
+    public function then(callable $assertion) {}
+}
+
+
+namespace Eris;
+
+/**
+ * @template-covariant T
+ */
+interface Generator {}
+
+namespace Eris\Random;
+
+class RandomRange {}
+
+namespace Eris\Shrinker;
+
+class ShrinkerFactory {}

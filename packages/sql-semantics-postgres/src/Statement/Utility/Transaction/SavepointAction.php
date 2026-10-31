@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * @visibility public
  * @example Reading the action of a ROLLBACK TO
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK TO s');
- *     $operation->statement->action // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointAction::RollbackTo
+ *     $operation->action // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointAction::RollbackTo
  */
 enum SavepointAction
 {

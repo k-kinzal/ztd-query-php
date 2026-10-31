@@ -16,7 +16,7 @@ final class ColumnCollationTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a text COLLATE "C")', []);
-        self::assertSame(0, count($statement->facts->diagnostics));
+        self::assertSame(0, count($statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

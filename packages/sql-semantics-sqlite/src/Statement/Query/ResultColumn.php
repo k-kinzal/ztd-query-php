@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Spelling\Layout;
 
 /**
@@ -31,11 +30,11 @@ use SqlSemantics\Statement\Spelling\Layout;
  * @visibility public
  * @example Reading a projected expression, its alias and its spelling
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS one, 1+1');
- *     [$query->statement->columns[0]->alias?->value, $query->statement->columns[1]->layout?->text(), $query->toString()] // => ['one', '1+1', 'SELECT 1 AS one, 1+1']
+ *     [$query->columns[0]->alias?->value, $query->columns[1]->layout?->text(), $query->toString()] // => ['one', '1+1', 'SELECT 1 AS one, 1+1']
  */
 final class ResultColumn implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The projected expression
@@ -44,7 +43,7 @@ final class ResultColumn implements Node
      * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias, an aliased column has a layout, or the layout does not spell one token per rendered token, keeps whitespace alone after the expression, or is the canonical spelling
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?Layout $layout = null, public readonly bool $as = true)
+    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?Layout $layout = null, public readonly bool $as = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($as || $alias !== null, 'AS is left out only before an alias.');
         Check::input($alias === null || $layout === null, 'An aliased result column is named by its alias and keeps no layout.');

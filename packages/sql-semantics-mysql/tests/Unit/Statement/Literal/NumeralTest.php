@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Literal;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -21,6 +22,27 @@ use SqlSemantics\Rendering\Output;
 #[Small]
 final class NumeralTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, bool, bool}>
+     */
+    public static function providerIntegerTokens(): iterable
+    {
+        yield 'zero' => ['0', false, true];
+        yield 'leading zeros' => ['0000000000002', false, true];
+        yield 'maximum' => ['2147483647', false, true];
+        yield 'long integer token' => ['2147483648', false, false];
+        yield 'beyond PHP integer' => ['184467440737095516160', false, false];
+        yield 'fraction' => ['1.5', false, false];
+        yield 'exponent' => ['1e2', false, false];
+        yield 'hexadecimal' => ['2', true, false];
+    }
+
+    #[DataProvider('providerIntegerTokens')]
+    public function testIsIntegerTokenRecognizesTheNarrowDecimalDomain(string $text, bool $hexadecimal, bool $expected): void
+    {
+        self::assertSame($expected, (new Numeral($text, $hexadecimal))->isIntegerToken());
+    }
+
     public function testRenderWritesTheExactDecimalText(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));

@@ -16,6 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\Field;
@@ -31,16 +33,25 @@ final class DerivedShapesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $derivation = new Derivation($semantics->context());
-        $fact = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull)), new Field(1, new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new NameConversion('latin2')]))], $semantics->context()->columnNames);
+        $fact = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull)), new Field(1, new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new NameConversion('latin2', 'é')]))], $semantics->context()->columnNames);
         $plain = (new DerivedShapes())->shape($fact, [], $derivation);
         $listed = (new DerivedShapes())->shape($fact, [new Name('x'), new Name('y')], $derivation);
 
         self::assertCount(2, $plain->slots);
         self::assertTrue($plain->complete());
-        self::assertEquals([new NameConversion('latin2')], $plain->slots[1]->unnamed);
+        self::assertEquals([new NameConversion('latin2', 'é')], $plain->slots[1]->unnamed);
         self::assertSame(['x', 'y'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $listed->slots));
         self::assertTrue($listed->complete());
         self::assertSame([], $derivation->facts()->diagnostics);
+    }
+
+    public function testMaterializedGivesARollupItemTheColumnOfATemporaryTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT, f TINYINT UNSIGNED)');
+        $operation = $semantics->analyze('SELECT * FROM (SELECT a, f, COUNT(*) FROM t GROUP BY a, f WITH ROLLUP) x', [$table]);
+
+        self::assertEquals([new Known(Domain::integer(ResolvedField::LongLong, 11)), new Known(Domain::integer(ResolvedField::Long, 3, true))], [$operation->field(0)->type, $operation->field(1)->type]);
     }
 
     public function testUniqueReportsADuplicateName(): void
@@ -52,5 +63,27 @@ final class DerivedShapesTest extends TestCase
         self::assertCount(1, $derivation->facts()->diagnostics);
         self::assertInstanceOf(Misuse::class, $derivation->facts()->diagnostics[0]);
         self::assertSame(MisuseRule::DuplicateColumn, $derivation->facts()->diagnostics[0]->rule);
+    }
+
+    public function testUniqueNamesTheSecondColumnOfTheName(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('a'))], $semantics->analyze('SELECT * FROM (SELECT 1 A, 2 a) d')->diagnostics());
+        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('x'))], $semantics->analyze('SELECT * FROM (SELECT 1, 2) d (x, x)')->diagnostics());
+    }
+
+    public function testMergedSendsATemporalValueInTheConnectionCollation(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (e DATE, n INT)');
+        $merged = $semantics->analyze('SELECT e, n FROM (SELECT e, n FROM t) AS d', [$t])->output()?->fields();
+        $limited = $semantics->analyze('SELECT e FROM (SELECT e FROM t LIMIT 1) AS d', [$t])->output()?->fields()?->at(0)->type;
+
+        self::assertInstanceOf(Known::class, $merged?->at(0)->type);
+        self::assertInstanceOf(Domain::class, $merged->at(0)->type->descriptor);
+        self::assertInstanceOf(Known::class, $limited);
+        self::assertInstanceOf(Domain::class, $limited->descriptor);
+        self::assertSame(['utf8mb4_0900_ai_ci', 'binary'], [$merged->at(0)->type->descriptor->collation->name, $limited->descriptor->collation->name]);
     }
 }

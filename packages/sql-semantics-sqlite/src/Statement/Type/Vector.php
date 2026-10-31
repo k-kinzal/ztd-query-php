@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * @visibility public
  * @example Reading the width of a row value
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT (1, 2) = (1, 2)');
- *     $query->facts->scalar($query->statement->columns[0]->expression->left)->type->descriptor->width // => 2
+ *     $query->columns[0]->expression->left->scalarInformation()->type->descriptor->width // => 2
  */
 final class Vector implements TypeDescriptor
 {

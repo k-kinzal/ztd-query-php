@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column default written as an expression in parentheses (MySQL 8.0.13 and later).
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the clause of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a TIMESTAMP DEFAULT (NOW()))');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression // => true
+ *     $create->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression // => true
  */
 final class DefaultExpression implements ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The default expression
      */
-    public function __construct(public readonly Scalar $expression)
+    public function __construct(public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

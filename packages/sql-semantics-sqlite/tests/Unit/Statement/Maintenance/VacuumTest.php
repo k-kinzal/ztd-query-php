@@ -20,8 +20,8 @@ final class VacuumTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('VACUUM INTO backup');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveStatementRecordsNothingWithoutATarget(): void
@@ -29,15 +29,15 @@ final class VacuumTest extends TestCase
         $operation = (new Semantics(Dialect::Sqlite))->analyze('VACUUM', []);
 
         self::assertNull($operation->shape());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheSchemaAndTheTarget(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("vacuum main into 'backup.db'");
 
-        self::assertInstanceOf(Vacuum::class, $operation->statement);
-        self::assertSame('main', $operation->statement->schema?->value);
+        self::assertInstanceOf(Vacuum::class, $operation);
+        self::assertSame('main', $operation->schema?->value);
         self::assertSame("VACUUM main INTO 'backup.db'", $operation->toString());
     }
 }

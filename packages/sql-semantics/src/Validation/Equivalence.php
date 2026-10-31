@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Validation;
 
 use ReflectionClass;
+use ReflectionNamedType;
 use ReflectionProperty;
+use SqlSemantics\Statement\Source\Span;
 use UnitEnum;
 
 /**
@@ -13,6 +15,16 @@ use UnitEnum;
  *
  * Two structures correspond when they have the same classes, the same scalar
  * values and enum cases, and lists of the same length and order, recursively.
+ * Source spans are locations rather than operands: formatting changes their byte offsets,
+ * and directly constructed values have no original source. Only properties explicitly
+ * typed as Span and the private occurrence bindings are excluded from operand
+ * comparison. Exact comparison includes those bindings and inherited private fields.
+ * Explicit SQL spelling choices remain comparison
+ * operands. A generated name whose quote choice is unspecified corresponds to
+ * the concrete choice made by its codec; two explicit choices must agree.
+ * Exact comparison also preserves object sharing: equal-looking occurrences or
+ * declarations cannot replace references to the same occurrence or declaration.
+ * Several roots may be compared together to retain references between them.
  * This is a comparison of actual operands, not of a fingerprint or of text.
  *
  * @visibility SqlSemantics
@@ -25,13 +37,26 @@ final class Equivalence
     private array $properties = [];
 
     /**
-     * Answers the path of the first difference, or null when the structures correspond.
+     * @var array<class-string, list<ReflectionProperty>>
      */
-    public function difference(object $left, object $right): ?string
+    private array $exactProperties = [];
+
+    /**
+     * Answers the path of the first difference, or null when the structures correspond.
+     *
+     * Exact comparison also checks source locations and unspecified quote choices;
+     * use it before sharing values, where reconstruction equivalence is insufficient.
+     * Related roots must be supplied together, such as a statement and its origins.
+     *
+     * @param object|array<array-key, object> $left The first graph or its related roots
+     * @param object|array<array-key, object> $right The second graph or its related roots
+     */
+    public function difference(object|array $left, object|array $right, bool $exact = false): ?string
     {
         $lefts = [$left];
         $rights = [$right];
         $paths = ['statement'];
+        $references = new ReferencePairs();
         while ($paths !== []) {
             $a = array_pop($lefts);
             $b = array_pop($rights);
@@ -56,7 +81,13 @@ final class Equivalence
             if ($a::class !== $b::class) {
                 return $path . ' (' . $a::class . ' against ' . $b::class . ')';
             }
-            foreach ($this->members($a) as $property) {
+            if ($exact && !$references->accept($a, $b)) {
+                return $path . ' (different reference sharing)';
+            }
+            if ($references->seen($a, $b)) {
+                continue;
+            }
+            foreach ($this->comparedMembers($a, $b, $exact) as $property) {
                 $lefts[] = $property->getValue($a);
                 $rights[] = $property->getValue($b);
                 $paths[] = $path . '->' . $property->getName();
@@ -67,13 +98,44 @@ final class Equivalence
     }
 
     /**
+     * Selects fields for reconstruction correspondence or exact immutable sharing.
+     *
+     * @return list<ReflectionProperty>
+     */
+    public function comparedMembers(object $left, object $right, bool $exact): array
+    {
+        if ($exact && !isset($this->exactProperties[$left::class])) {
+            $members = [];
+            for ($class = new ReflectionClass($left); $class !== false; $class = $class->getParentClass()) {
+                foreach ($class->getProperties() as $property) {
+                    if ($property->getDeclaringClass()->getName() === $class->getName()) {
+                        $members[] = $property;
+                    }
+                }
+            }
+            $this->exactProperties[$left::class] = $members;
+        }
+        $members = $exact ? $this->exactProperties[$left::class] : $this->members($left);
+        if (!$exact && $left instanceof \SqlSemantics\Statement\Identifier\Name && $right instanceof \SqlSemantics\Statement\Identifier\Name && ($left->quote === null || $right->quote === null)) {
+            return array_values(array_filter($members, static fn (ReflectionProperty $property): bool => $property->getName() !== 'quote'));
+        }
+        return $members;
+    }
+
+    /**
      * Answers the properties of a class, cached for one comparison.
      *
      * @return list<ReflectionProperty>
      */
     public function members(object $value): array
     {
-        return $this->properties[$value::class] ??= (new ReflectionClass($value))->getProperties();
+        return $this->properties[$value::class] ??= array_values(array_filter($this->comparedMembers($value, $value, true), static function (ReflectionProperty $property) use ($value): bool {
+            if ($value instanceof \SqlSemantics\Statement\Node && $property->isPrivate() && in_array($property->getName(), ['valueInformation', 'inputInformation', 'outputInformation', 'requestInformation'], true)) {
+                return false;
+            }
+            $type = $property->getType();
+            return !$type instanceof ReflectionNamedType || $type->getName() !== Span::class;
+        }));
     }
 
     /**

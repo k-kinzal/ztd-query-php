@@ -19,8 +19,8 @@ final class LockTest extends TestCase
 {
     public function testEffectiveModeIsTheWrittenModeOrAccessExclusive(): void
     {
-        $written = (new Semantics(Dialect::PostgreSql))->analyze('LOCK t IN SHARE MODE')->statement;
-        $default = (new Semantics(Dialect::PostgreSql))->analyze('LOCK t')->statement;
+        $written = (new Semantics(Dialect::PostgreSql))->analyze('LOCK t IN SHARE MODE');
+        $default = (new Semantics(Dialect::PostgreSql))->analyze('LOCK t');
         self::assertInstanceOf(Lock::class, $written);
         self::assertInstanceOf(Lock::class, $default);
         self::assertSame([LockMode::Share, LockMode::AccessExclusive], [$written->effectiveMode(), $default->effectiveMode()]);
@@ -29,8 +29,8 @@ final class LockTest extends TestCase
     public function testDeriveStatementResolvesEachTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('LOCK TABLE a, s.b *');
-        self::assertInstanceOf(Lock::class, $operation->statement);
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement->tables[1])->table);
+        self::assertInstanceOf(Lock::class, $operation);
+        self::assertInstanceOf(UndeclaredTable::class, $operation->tables[1]->relationInformation()->table);
     }
 
     public function testRenderDropsTheWordTable(): void
@@ -42,6 +42,6 @@ final class LockTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['cannot lock relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('LOCK v, s', $context)->facts->diagnostics));
+        self::assertSame(['cannot lock relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('LOCK v, s', $context)->diagnostics()));
     }
 }

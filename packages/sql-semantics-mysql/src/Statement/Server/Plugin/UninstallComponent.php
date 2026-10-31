@@ -8,9 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `UNINSTALL COMPONENT 'urn', …`: a request to unload server components (MySQL 8.0 and later).
@@ -24,12 +23,12 @@ use SqlSemantics\Statement\Statement;
  * @example Removing a component
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("uninstall component 'file://a'")->toString() // => "UNINSTALL COMPONENT 'file://a'"
  */
-final class UninstallComponent implements Statement
+final class UninstallComponent extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<Text> The component URNs in written order; at least one
+     * @var non-empty-list<Text> The component URNs in written order; at least one
      */
     public readonly array $components;
 
@@ -37,9 +36,16 @@ final class UninstallComponent implements Statement
      * @param list<Text> $components The component URNs in written order; at least one
      * @throws InvalidConstruction When no component is named
      */
-    public function __construct(array $components)
+    public function __construct(array $components, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->components = Check::listOf($components, Text::class, 'UNINSTALL COMPONENT names at least one component.', 1);
+        foreach ($this->components as $component) {
+            Check::input($component->radix === null, 'A component URN is a quoted string.');
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

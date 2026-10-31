@@ -38,7 +38,7 @@ final class WordScanner
                 return $dollar;
             }
         }
-        if (!Scan::isIdentifierByte($character) || \SqlParser\Lexer\Ascii::digit($character)) {
+        if (!Scan::isIdentifierByte($character, $scan->clientCharset) || \SqlParser\Lexer\Ascii::digit($character)) {
             return null;
         }
 
@@ -56,15 +56,15 @@ final class WordScanner
     public function word(Scan $scan, int $start): Lexeme
     {
         $cursor = $scan->cursor;
-        $text = $this->consume($cursor);
-        if ($cursor->peek() === '.' && Scan::isIdentifierByte($cursor->peek(1))) {
+        $text = $this->consume($cursor, $scan->clientCharset);
+        if ($cursor->peek() === '.' && Scan::isIdentifierByte($cursor->peek(1), $scan->clientCharset)) {
             $scan->next = LexerState::IdentifierSeparator;
 
             return $this->identifierLexeme($scan, $start, $text);
         }
         $end = $cursor->offset();
         if ($scan->mode->ignoreSpace) {
-            $cursor->match('\s+');
+            $cursor->match(strtolower($scan->clientCharset ?? '') === 'latin1' ? '[\s\xA0]+' : '\s+');
         }
         $function = $cursor->peek() === '(';
         $cursor->seek($end);
@@ -90,8 +90,8 @@ final class WordScanner
     public function identifier(Scan $scan, int $start): Lexeme
     {
         $cursor = $scan->cursor;
-        $text = $this->consume($cursor);
-        if ($cursor->peek() === '.' && Scan::isIdentifierByte($cursor->peek(1))) {
+        $text = $this->consume($cursor, $scan->clientCharset);
+        if ($cursor->peek() === '.' && Scan::isIdentifierByte($cursor->peek(1), $scan->clientCharset)) {
             $scan->next = LexerState::IdentifierSeparator;
         }
 
@@ -105,10 +105,10 @@ final class WordScanner
      *
      * @return string The bytes consumed
      */
-    public function consume(\SqlParser\Lexer\Cursor $cursor): string
+    public function consume(\SqlParser\Lexer\Cursor $cursor, ?string $clientCharset = null): string
     {
         $text = '';
-        while (Scan::isIdentifierByte($cursor->peek())) {
+        while (Scan::isIdentifierByte($cursor->peek(), $clientCharset)) {
             $text .= $cursor->take(1);
         }
 

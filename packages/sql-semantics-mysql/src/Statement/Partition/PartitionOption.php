@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of a partition or subpartition definition, such as `ENGINE = InnoDB` or `COMMENT = 'text'`.
@@ -28,20 +27,26 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionOptionKind $kind The option
      * @param Name|null $name The tablespace or engine name
      * @param Numeral|null $number The node group or row count
      * @param Text|null $text The directory or comment
+     * @param bool $storageKeyword Whether STORAGE precedes ENGINE
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
     public function __construct(
         public readonly PartitionOptionKind $kind,
         public readonly ?Name $name = null,
         public readonly ?Numeral $number = null,
         public readonly ?Text $text = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal,
+        public readonly bool $storageKeyword = false,
     ) {
+        Check::input(!$storageKeyword || $kind === PartitionOptionKind::Engine, 'Only ENGINE can be introduced by STORAGE.');
         Check::input(
             ($name !== null) === $kind->named() && ($number !== null) === $kind->numbered() && ($text !== null) === (!$kind->named() && !$kind->numbered()),
             'A partition option holds exactly the value its kind takes.',
@@ -53,7 +58,13 @@ final class PartitionOption implements Node
      */
     public function render(Output $out): void
     {
-        $out->keyword(...explode(' ', $this->kind->value))->symbol('=');
+        if ($this->storageKeyword) {
+            $out->keyword('STORAGE');
+        }
+        $out->keyword(...explode(' ', $this->kind->value));
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
+        }
         if ($this->name !== null) {
             $out->name($this->name, NameUse::Label);
         }

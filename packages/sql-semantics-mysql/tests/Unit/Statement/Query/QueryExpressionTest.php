@@ -32,6 +32,22 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class QueryExpressionTest extends TestCase
 {
+    public function testRejectsATailOutsideAnUnparenthesizedDeferredBlock(): void
+    {
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $selection = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection([new \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredProjection($row)]);
+        $body = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        $this->expectExceptionMessage('A deferred block retains its own ordering and limit.');
+        new QueryExpression(null, $body, [new OrderItem(new NumberLiteral('1.5'))]);
+    }
+
+    public function testRejectsASecondOrderingAfterAnOrderedDualBlock(): void
+    {
+        $body = new Select([], [new SelectExpression(new NumberLiteral('1'))], from: new \SqlSemantics\Platform\MySql\Statement\Relation\Dual(), orderBy: [new OrderItem(new NumberLiteral('1.5'))]);
+        $this->expectExceptionMessage('A second ordering after an ordered block requires an ordinary FROM relation.');
+        new QueryExpression(null, $body, [new OrderItem(new NumberLiteral('1.5'))]);
+    }
+
     public function testDeriveStatementRecordsTheRowsOfTheBody(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -45,19 +61,21 @@ final class QueryExpressionTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a FROM t UNION SELECT c FROM u ORDER BY a LIMIT 1', [$t, $u]);
 
-        self::assertInstanceOf(QueryExpression::class, $operation->statement);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->body);
-        self::assertSame($operation->facts->query($operation->statement->body), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryExpression::class, $operation->query);
+        self::assertInstanceOf(SetOperation::class, $operation->query->body);
+        self::assertSame($operation->query->body->queryInformation(), $operation->output());
     }
 
     public function testDeriveQueryResolvesOrdinalsAgainstTheOutput(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 ORDER BY 1');
-        $ordinal = $operation->statement instanceof QueryExpression ? $operation->statement->orderBy[0]->expression : null;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $ordinal = $operation->query instanceof QueryExpression ? $operation->query->orderBy[0]->expression : null;
 
         self::assertInstanceOf(OutputOrdinal::class, $ordinal);
-        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($ordinal)->resolution);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(AliasTarget::class, $ordinal->scalarInformation()->resolution);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveQueryBindsTheCommonTablesForTheBody(): void
@@ -65,10 +83,11 @@ final class QueryExpressionTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c', []);
 
-        self::assertInstanceOf(QueryExpression::class, $operation->statement);
-        self::assertNotNull($operation->statement->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryExpression::class, $operation->query);
+        self::assertNotNull($operation->query->with);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheWithClauseTheBodyTheOrderingAndTheLimit(): void

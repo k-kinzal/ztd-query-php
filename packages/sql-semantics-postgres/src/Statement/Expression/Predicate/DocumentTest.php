@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A test of whether an XML value is a document: `a IS [NOT] DOCUMENT`.
@@ -32,14 +31,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DocumentTest implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested XML value
      * @param bool $negated Whether NOT is written
      */
-    public function __construct(public readonly Scalar $operand, public readonly bool $negated)
+    public function __construct(public readonly Scalar $operand, public readonly bool $negated, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->before($operand, Precedence::IS), 'The tested value needs parentheses to keep its place.');
     }
 

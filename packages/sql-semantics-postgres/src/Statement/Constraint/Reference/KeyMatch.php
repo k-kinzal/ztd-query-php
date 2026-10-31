@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference;
  * @visibility public
  * @example Reading the match type of a foreign key
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int REFERENCES u MATCH FULL)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->match // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\KeyMatch::Full
+ *     $create->definition->elements[0]->qualifiers[0]->match // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\KeyMatch::Full
  */
 enum KeyMatch: string
 {

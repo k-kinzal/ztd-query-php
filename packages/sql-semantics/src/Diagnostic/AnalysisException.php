@@ -9,8 +9,8 @@ use RuntimeException;
 /**
  * SQL text that the selected grammar release does not accept.
  *
- * This is the only rejection of input SQL. Missing or ambiguous names and other
- * semantic problems of grammatical SQL are facts of a successfully built operation.
+ * Invalid operand domains are reported separately by Construction\RejectedInput.
+ * Missing or ambiguous names are facts of a successfully built operation.
  *
  * @visibility public
  * @example Rejecting text outside the grammar

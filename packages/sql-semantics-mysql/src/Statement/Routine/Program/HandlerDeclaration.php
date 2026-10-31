@@ -8,10 +8,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DECLARE ... HANDLER: the statement that runs when one of the listed conditions occurs in the block.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a handler
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR NOT FOUND, 1051 BEGIN END; END');
- *     $handler = $create->statement->body->declarations[0];
+ *     $handler = $create->body->declarations[0];
  *     [$handler->action, count($handler->conditions)] // => [\SqlSemantics\Platform\MySql\Statement\Routine\Program\HandlerAction::Continue, 2]
  */
 final class HandlerDeclaration implements Declaration
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Condition> The conditions in written order
@@ -44,7 +43,7 @@ final class HandlerDeclaration implements Declaration
      * @param Node $statement The statement the handler runs: a program statement or an SQL statement
      * @throws InvalidConstruction When there is no condition or the statement is of another class
      */
-    public function __construct(public readonly HandlerAction $action, array $conditions, Node $statement)
+    public function __construct(public readonly HandlerAction $action, array $conditions, Node $statement, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->conditions = Check::listOf($conditions, Condition::class, 'A handler names at least one condition.', 1);
         $this->statement = (new StatementSequence())->member($statement);

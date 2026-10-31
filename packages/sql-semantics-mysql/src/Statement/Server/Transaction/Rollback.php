@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Rendering\TransactionSql;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * `ROLLBACK [WORK] [AND [NO] CHAIN] [[NO] RELEASE]`: a request to end the transaction and undo its changes.
@@ -19,7 +22,7 @@ use SqlSemantics\Statement\Statement;
  * or RELEASE, false when written with NO, and null when absent: an absent
  * choice takes the completion_type of the session, so an explicit NO is a
  * request of its own. AND CHAIN together with RELEASE is a syntax error of
- * the server and cannot be constructed. WORK is optional and not written.
+ * the server and cannot be constructed. WORK is optional and retained as a spelling choice.
  * The statement names no relation and has no facts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
  * Status: Implemented.
@@ -27,20 +30,30 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Ending a transaction with explicit completion choices
  *     $end = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('rollback and chain no release');
- *     [$end->toString(), $end->statement->chain, $end->statement->release] // => ['ROLLBACK AND CHAIN NO RELEASE', true, false]
+ *     [$end->toString(), $end->chain, $end->release] // => ['ROLLBACK AND CHAIN NO RELEASE', true, false]
  */
-final class Rollback implements Statement
+final class Rollback extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements TransactionStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    use TransactionSql;
 
     /**
      * @param bool|null $chain Whether AND CHAIN (true) or AND NO CHAIN (false) is written; null when absent
      * @param bool|null $release Whether RELEASE (true) or NO RELEASE (false) is written; null when absent
+     * @param bool $work Whether the optional WORK keyword is written
      * @throws InvalidConstruction When both AND CHAIN and RELEASE are requested
+     * @param LanguageProfile $profile The selected grammar and lexical interpretation; MySQL 8.4.7 by default
+     * @param Charset|null $client The client encoding used to reconstruct identifiers
+     * @param Span|null $source The optional original statement location
      */
-    public function __construct(public readonly ?bool $chain = null, public readonly ?bool $release = null)
+    public function __construct(public readonly ?bool $chain = null, public readonly ?bool $release = null, public readonly bool $work = false, public readonly LanguageProfile $profile = new LanguageProfile(GrammarRelease::MySql847), public readonly ?Charset $client = null, public readonly ?Span $source = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        Check::input($profile->grammar->database() === 'mysql', 'A MySQL transaction statement uses a MySQL language profile.');
         Check::input($chain !== true || $release !== true, 'AND CHAIN and RELEASE exclude each other.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -56,6 +69,9 @@ final class Rollback implements Statement
     public function render(Output $out): void
     {
         $out->keyword('ROLLBACK');
+        if ($this->work) {
+            $out->keyword('WORK');
+        }
         if ($this->chain !== null) {
             $out->keyword(...($this->chain ? ['AND', 'CHAIN'] : ['AND', 'NO', 'CHAIN']));
         }

@@ -9,6 +9,8 @@ namespace SqlSemantics\Contract;
  *
  * `Identifier` is a position that reads a plain identifier token only: every
  * keyword must be quoted there.
+ * `Variable` is the name following a variable sigil, whose lexical alphabet may
+ * include characters that delimit ordinary identifiers.
  *
  * @visibility public
  * @example Naming the position of a relation name
@@ -23,4 +25,5 @@ enum NameUse
     case Routine;
     case Label;
     case Identifier;
+    case Variable;
 }

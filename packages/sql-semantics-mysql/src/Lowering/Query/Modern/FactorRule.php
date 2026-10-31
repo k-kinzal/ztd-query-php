@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
-use SqlSemantics\Statement\Relation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 
 /**
  * Lowers the table factors of the 8.0 and later grammars.
@@ -81,6 +81,7 @@ final class FactorRule
      * Lowers a derived table.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a complete derived relation lacks its required alias
      */
     public function derived(Node $derived): DerivedTable
     {
@@ -93,12 +94,24 @@ final class FactorRule
         $at = $lateral ? 1 : 0;
         $tables = new TableRule($this->lowering);
 
-        return new DerivedTable((new ExpressionRule($this->lowering))->subquery($form->node($at)), $tables->alias($form->node($at + 1)), $tables->columns($form->node($at + 2)), $lateral, $tables->mark($form->node($at + 1)));
+        $alias = $tables->alias($form->node($at + 1));
+        if ($alias === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DerivedWithoutAlias), (new \SqlSemantics\Construction\SourceRanges())->span($derived)[1] ?? 0, false);
+        }
+
+        $query = (new ExpressionRule($this->lowering))->subquery($form->node($at));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($query, $this->lowering->profile->grammar) ?? (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($query);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($derived)[1] ?? 0, false);
+        }
+
+        return new DerivedTable($query, $alias, $tables->columns($form->node($at + 2)), $lateral, $tables->mark($form->node($at + 1)));
     }
 
     /**
      * Lowers a JSON_TABLE table function.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the required alias is absent or empty
      * @throws ImplementationGap When the production has no rule
      */
     public function function(Node $function): JsonTable
@@ -108,11 +121,16 @@ final class FactorRule
             throw ImplementationGap::production($form);
         }
 
+        $alias = (new TableRule($this->lowering))->alias($form->node(7));
+        if ($alias === null || $alias->value === '') {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::TableFunctionWithoutAlias), (new \SqlSemantics\Construction\SourceRanges())->span($function)[1] ?? 0);
+        }
+
         return new JsonTable(
-            $this->lowering->expressions->expression($form->node(2)),
+            $this->lowering->expressions->operand($form->node(2)),
             $this->lowering->literals->string($form->node(4)),
             $this->lowering->calls->jsonTableColumns($form->node(5)),
-            (new TableRule($this->lowering))->alias($form->node(7)),
+            $alias,
             (new TableRule($this->lowering))->mark($form->node(7)),
         );
     }

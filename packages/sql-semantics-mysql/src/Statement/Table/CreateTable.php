@@ -5,22 +5,22 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ElementFacts;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
+use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a table from column, index and constraint definitions, a query, or both.
@@ -52,11 +52,20 @@ use SqlSemantics\Statement\Statement;
  *     [count($table->columns), $table->columns[0]->nullability, $table->columns[2]->nullability] // => [3, \SqlSemantics\Statement\Type\Nullability::NotNull, \SqlSemantics\Statement\Type\Nullability::Nullable]
  * @example The relation fact of the statement resolves to the declaration it provides
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
- *     $create->facts->scalar($create->statement->elements[1]->condition->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ *     $create->elements[1]->condition->left->scalarInformation()->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ * @example A definition the server executes only to refuse is not an executable statement
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() CREATE TABLE t (a INT, a INT)');
+ *     $create->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Definition\DeferredCreateTable // => true
  */
-final class CreateTable implements Statement, Relation
+final class CreateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * @var list<bool> The retained comma at each boundary between options
+     */
+    public readonly array $optionsCommas;
 
     /**
      * @var list<TableElement> The column, index and constraint definitions in order; empty when no parenthesized list is written
@@ -77,6 +86,7 @@ final class CreateTable implements Statement, Relation
      * @param int $temporaryWords How many times TEMPORARY is written; MySQL 8.0 and later accept it once
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      * @param bool $enclosed Whether the partitioning is written inside the parenthesis that opens the query (MySQL 5.x)
+     * @param list<bool>|null $optionsCommas Optional commas between adjacent options
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -87,15 +97,40 @@ final class CreateTable implements Statement, Relation
         public readonly int $temporaryWords = 0,
         public readonly bool $ifNotExists = false,
         public readonly bool $enclosed = false,
+        ?RelationFact $relationInformation = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?array $optionsCommas = null,
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
         $this->elements = Check::listOf($elements, TableElement::class, 'Table elements are an ordered list of table elements.');
         $this->options = Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
+        $this->optionsCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($optionsCommas, count($this->options), false);
         Check::input(
             !$enclosed || ($this->elements === [] && $this->options === [] && $partitioning !== null && $query !== null && $query->duplicate === null && (new EnclosedQuery())->accepts($query->query)),
             'Only a partitioning and a query that starts with a parenthesized query are written enclosed.',
         );
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->check($name, $this->elements);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+        $problem = (new TableProblems())->problem($this->elements, $query, \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        Check::input($problem === null, $problem === null ? '' : $problem->message());
+    }
+
+    /**
+     * Identifies intrinsic definition conditions whose outcome depends on preparation order and catalog state.
+     * The complete request remains representable even when no table can be installed.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Creation\CreationRoles())->deferred($this->elements, $this->options, $this->query, $this->partitioning, $this->temporary());
     }
 
     /**
@@ -120,6 +155,8 @@ final class CreateTable implements Statement, Relation
             $facts->element($element, $derivation, $scope, $table, $this->name);
         }
         $this->partitioning?->derivePartitioning($derivation, $scope);
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->notices($this, $derivation);
+        $derivation->orderWarnings($this);
     }
 
     /**
@@ -127,6 +164,16 @@ final class CreateTable implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
+        foreach ($this->elements as $element) {
+            (new ElementFacts())->names($element, $derivation, $this->name);
+            if ($element instanceof ColumnDefinition) {
+                (new TypeNotices())->type($element->specification->dataType(), $derivation);
+                (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation, $element);
+            } elseif ($element instanceof Key\IndexDefinition) {
+                (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->parsers($element->options, $derivation);
+            }
+        }
+        (new ElementFacts())->options($this->options, $derivation);
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());
         $table = (new TableDeclaration())->table($this, $output, $derivation);
         $derivation->declare($table);
@@ -144,29 +191,6 @@ final class CreateTable implements Statement, Relation
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE');
-        for ($word = 0; $word < $this->temporaryWords; $word++) {
-            $out->keyword('TEMPORARY');
-        }
-        $out->keyword('TABLE');
-        if ($this->ifNotExists) {
-            $out->keyword('IF', 'NOT', 'EXISTS');
-        }
-        if ($this->name->schema !== null) {
-            $out->name($this->name->schema, NameUse::Qualifier)->symbol('.');
-        }
-        $out->name($this->name->name, NameUse::Relation);
-        if ($this->enclosed && $this->partitioning !== null && $this->query !== null) {
-            (new EnclosedQuery())->write($out, $this->query->query, $this->partitioning);
-
-            return;
-        }
-        if ($this->elements !== []) {
-            $out->symbol('(')->list($this->elements)->symbol(')');
-        }
-        foreach ($this->options as $option) {
-            $out->node($option);
-        }
-        $out->node($this->partitioning)->node($this->query);
+        (new \SqlSemantics\Platform\MySql\Rules\Rendering\TableDefinitionText())->render($out, $this->name, $this->temporaryWords, $this->ifNotExists, $this->elements, $this->options, $this->optionsCommas, $this->partitioning, $this->query, $this->enclosed);
     }
 }

@@ -31,7 +31,7 @@ final class SourceRelationsTest extends TestCase
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('INSERT INTO t (a) SELECT x FROM u GROUP BY x ON DUPLICATE KEY UPDATE b = y', [$t, $u]);
 
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testMembersAnswersTheJoinedRelations(): void
@@ -41,7 +41,15 @@ final class SourceRelationsTest extends TestCase
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('INSERT INTO t (a) SELECT u.x FROM u JOIN (SELECT 1 AS z) AS d ON TRUE ON DUPLICATE KEY UPDATE b = z + u.y', [$t, $u]);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertNull((new SourceRelations())->members(new WriteTarget(new QualifiedName(new Name('t')))));
+    }
+
+    public function testVisibleOffersTheInvisibleColumnsOfASourceTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = [...$semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations(), ...$semantics->analyze('CREATE TABLE w (a INT, b INT)')->declarations()];
+
+        self::assertSame([], $semantics->analyze('INSERT INTO w SELECT a, 1 FROM v ON DUPLICATE KEY UPDATE b = v.e', $tables)->diagnostics());
     }
 }

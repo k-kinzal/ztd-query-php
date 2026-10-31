@@ -16,7 +16,7 @@ final class ColumnCheckTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a int CHECK (a > 0))', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns::class, $n2);
@@ -31,7 +31,7 @@ final class ColumnCheckTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a int CHECK (a > 0))', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns::class, $n2);
@@ -43,7 +43,7 @@ final class ColumnCheckTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation::class, $n5);
         $n6 = $n5->left;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference::class, $n6);
-        $n7 = $statement->facts->scalar($n6)->resolution;
+        $n7 = $n6->scalarInformation()->resolution;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $n7);
         self::assertSame(true, $n7->slot->column === $statement->declarations()[0]->columns[0]);
     }
@@ -54,7 +54,7 @@ final class ColumnCheckTest extends TestCase
         $statement = $semantics->analyze('CREATE TABLE t (a int CHECK (a + 1))', []);
         self::assertSame([
           0 => 'argument of CHECK must be type boolean',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

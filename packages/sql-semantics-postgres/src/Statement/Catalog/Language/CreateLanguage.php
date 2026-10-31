@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the handler of a new language
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR');
- *     [$operation->statement->handler->last()->value, $operation->toString()] // => ['plsample_call_handler', 'CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR']
+ *     [$operation->handler->last()->value, $operation->toString()] // => ['plsample_call_handler', 'CREATE TRUSTED LANGUAGE plsample HANDLER plsample_call_handler NO VALIDATOR']
  */
-final class CreateLanguage implements Statement
+final class CreateLanguage extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $orReplace Whether OR REPLACE is written
@@ -45,7 +44,12 @@ final class CreateLanguage implements Statement
         public readonly DottedName $handler,
         public readonly ?DottedName $inline = null,
         public readonly ?FunctionClause $validator = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($validator === null || $validator->role === FunctionRole::Validator, 'A language names a validator in its validator clause.');
     }
 

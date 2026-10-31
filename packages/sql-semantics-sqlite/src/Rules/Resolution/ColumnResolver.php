@@ -78,7 +78,7 @@ final class ColumnResolver
                     return new ConditionalColumn($column, $found, $relations, $missing);
                 }
 
-                return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found);
+                return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found, $qualifier);
             }
             if ($aliases !== []) {
                 return new AliasTarget($aliases[0]);

@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The INTO clause of SELECT INTO: the new table the rows are stored in.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the target of SELECT INTO
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS a INTO TEMP TABLE t');
- *     [$query->statement->into->table->name->value, $query->statement->into->persistence->value, $query->toString()] // => ['t', 'TEMP', 'SELECT 1 AS a INTO TEMP t']
+ *     [$query->into->table->name->value, $query->into->persistence->value, $query->toString()] // => ['t', 'TEMP', 'SELECT 1 AS a INTO TEMP t']
  */
 final class IntoClause implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The name of the new table
      * @param IntoPersistence $persistence The kind of table, as written
      */
-    public function __construct(public readonly QualifiedName $table, public readonly IntoPersistence $persistence = IntoPersistence::Permanent)
+    public function __construct(public readonly QualifiedName $table, public readonly IntoPersistence $persistence = IntoPersistence::Permanent, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

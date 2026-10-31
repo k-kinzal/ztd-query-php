@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the new owner
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REASSIGN OWNED BY joe, ann TO boss');
- *     [count($operation->statement->owners), $operation->statement->newOwner->name?->value] // => [2, 'boss']
+ *     [count($operation->owners), $operation->newOwner->name?->value] // => [2, 'boss']
  */
-final class ReassignOwned implements Statement
+final class ReassignOwned extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RoleSpec> The old owners in the order written
@@ -39,8 +38,11 @@ final class ReassignOwned implements Statement
      * @param list<RoleSpec> $owners The old owners in the order written, at least one
      * @param RoleSpec $newOwner The role that receives the objects
      */
-    public function __construct(array $owners, public readonly RoleSpec $newOwner)
+    public function __construct(array $owners, public readonly RoleSpec $newOwner, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->owners = Check::listOf($owners, RoleSpec::class, 'A role list names at least one role.', 1);
     }
 

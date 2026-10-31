@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER [ COLUMN ] ... [ SET DATA ] TYPE: changes the type of a column.
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TypeChange implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column
@@ -43,6 +42,7 @@ final class TypeChange implements AlterCommand
         public readonly TypeName $type,
         public readonly ?DottedName $collation = null,
         public readonly ?Scalar $using = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
     }
 

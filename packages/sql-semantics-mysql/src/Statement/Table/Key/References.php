@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The REFERENCES clause of a foreign key or of a column: the parent table, its columns, MATCH and the referential actions.
@@ -31,11 +30,12 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $parent = $semantics->analyze('CREATE TABLE p (id INT PRIMARY KEY)');
  *     $child = $semantics->analyze('CREATE TABLE c (p INT, FOREIGN KEY (p) REFERENCES p (id) ON DELETE CASCADE)', [$parent]);
- *     $child->facts->relation($child->statement->elements[1]->references)->table->table === $parent->declarations()[0] // => true
+ *     $child->elements[1]->references->relationInformation()->table->table === $parent->declarations()[0] // => true
  */
-final class References implements Node
+final class References implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name>|null The parent columns, or null when no column list is written
@@ -53,8 +53,12 @@ final class References implements Node
      * @param ReferenceMatch|null $match The MATCH clause, when written
      * @param list<ReferentialAction> $actions The ON UPDATE and ON DELETE clauses in written order, at most one per event
      */
-    public function __construct(public readonly QualifiedName $table, ?array $columns = null, public readonly ?ReferenceMatch $match = null, array $actions = [])
+    public function __construct(public readonly QualifiedName $table, ?array $columns = null, public readonly ?ReferenceMatch $match = null, array $actions = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table name has at most a database qualifier.');
         $this->columns = $columns === null ? null : Check::listOf($columns, Name::class, 'A written reference column list names at least one column.', 1);
         $this->actions = Check::listOf($actions, ReferentialAction::class, 'Referential actions are an ordered list.');

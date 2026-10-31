@@ -17,7 +17,7 @@ final class DropPartitionTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t DROP PARTITION p')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t DROP PARTITION p')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void

@@ -24,7 +24,7 @@ final class TableDeclarationTest extends TestCase
 {
     public function testDomainsRecordTheDeclaredTypeOfEachColumn(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a integer, b, c ANY) STRICT')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a integer, b, c ANY) STRICT');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $domains = (new TableDeclaration())->domains($statement);
@@ -89,7 +89,7 @@ final class TableDeclarationTest extends TestCase
     public function testTableBuildsTheDeclarationFromAnEstablishedKey(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('CREATE TABLE t (a, b)')->statement;
+        $statement = $semantics->analyze('CREATE TABLE t (a, b)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $rule = new TableDeclaration();

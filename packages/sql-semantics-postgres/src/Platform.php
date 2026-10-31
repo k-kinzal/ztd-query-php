@@ -44,6 +44,14 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
+     * Publishes the concrete statement with meaning owned by its SQL occurrences.
+     */
+    public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
+    {
+        return (new \SqlSemantics\Validation\Publication())->publish($context, $statement, $sources);
+    }
+
+    /**
      * @var array<string, SqlParser>
      */
     private array $parsers = [];
@@ -73,7 +81,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Answers the parser of a profile, created once per release and parameter style.
      */
-    public function parser(LanguageProfile $profile): SqlParser
+    public function parser(LanguageProfile $profile, ?\SqlSemantics\Contract\Session $session = null): SqlParser
     {
         $key = $profile->grammar->value . '/' . $profile->parameters->value;
 
@@ -94,7 +102,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Lowers a parse tree into its statements.
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?\SqlSemantics\Contract\Session $session = null, bool $canonicalNames = false): array
     {
         return (new Lowering($this->productions($profile), $leaves, $profile->grammar))->statements($tree);
     }
@@ -102,7 +110,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Answers the name codec.
      */
-    public function codec(LanguageProfile $profile): Codec
+    public function codec(LanguageProfile $profile, ?\SqlSemantics\Contract\Session $session = null): Codec
     {
         return new Codec($profile->grammar);
     }

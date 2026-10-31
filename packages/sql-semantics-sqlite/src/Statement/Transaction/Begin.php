@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,18 +22,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a transaction start
  *     $begin = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('BEGIN EXCLUSIVE TRANSACTION');
- *     [$begin->statement->behavior?->value, $begin->toString()] // => ['EXCLUSIVE', 'BEGIN EXCLUSIVE']
+ *     [$begin->behavior?->value, $begin->toString()] // => ['EXCLUSIVE', 'BEGIN EXCLUSIVE']
  */
-final class Begin implements Statement
+final class Begin extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TransactionBehavior|null $behavior The written behavior word; null requests the deferred default
      * @param Name|null $name The name written after TRANSACTION, which SQLite ignores
      */
-    public function __construct(public readonly ?TransactionBehavior $behavior = null, public readonly ?Name $name = null)
+    public function __construct(public readonly ?TransactionBehavior $behavior = null, public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

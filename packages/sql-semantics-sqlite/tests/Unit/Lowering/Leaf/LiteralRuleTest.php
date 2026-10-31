@@ -32,12 +32,12 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT NULL, 'it''s'");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[1]);
-        self::assertInstanceOf(NullLiteral::class, $operation->statement->columns[0]->expression);
-        self::assertInstanceOf(TextLiteral::class, $operation->statement->columns[1]->expression);
-        self::assertSame("it's", $operation->statement->columns[1]->expression->value);
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[1]);
+        self::assertInstanceOf(NullLiteral::class, $operation->columns[0]->expression);
+        self::assertInstanceOf(TextLiteral::class, $operation->columns[1]->expression);
+        self::assertSame("it's", $operation->columns[1]->expression->value);
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
         self::assertInstanceOf(Known::class, $operation->field(1)->type);
         self::assertSame(Storage::Text, $operation->field(1)->type->descriptor);
@@ -48,10 +48,10 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT x\'0aff\' AS c1, X\'AB\' AS c2');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(BlobLiteral::class, $operation->statement->columns[0]->expression);
-        self::assertSame('0AFF', $operation->statement->columns[0]->expression->hex);
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(BlobLiteral::class, $operation->columns[0]->expression);
+        self::assertSame('0AFF', $operation->columns[0]->expression->hex);
         self::assertInstanceOf(Known::class, $operation->field(0)->type);
         self::assertSame(Storage::Blob, $operation->field(0)->type->descriptor);
         self::assertSame('SELECT x\'0AFF\' AS c1, x\'AB\' AS c2', $operation->toString());
@@ -61,13 +61,13 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT current_time AS c1, CURRENT_DATE AS c2, Current_Timestamp AS c3');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([TimeKeyword::Time, TimeKeyword::Date, TimeKeyword::Timestamp], array_map(static function (object $column): TimeKeyword {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(CurrentTime::class, $column->expression);
 
             return $column->expression->keyword;
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT CURRENT_TIME AS c1, CURRENT_DATE AS c2, CURRENT_TIMESTAMP AS c3', $operation->toString());
     }
 
@@ -75,13 +75,13 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 42 AS c1, 1_000_000 AS c2');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame(['42', '1000000'], array_map(static function (object $column): string {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(IntegerLiteral::class, $column->expression);
 
             return $column->expression->digits;
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertInstanceOf(Known::class, $operation->field(0)->type);
         self::assertSame(Storage::Integer, $operation->field(0)->type->descriptor);
         self::assertSame('SELECT 42 AS c1, 1000000 AS c2', $operation->toString());
@@ -91,13 +91,13 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1.5, 2.');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([['1', '5', null], ['2', '', null]], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(RealLiteral::class, $column->expression);
 
             return [$column->expression->whole, $column->expression->fraction, $column->expression->exponent];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertInstanceOf(Known::class, $operation->field(0)->type);
         self::assertSame(Storage::Real, $operation->field(0)->type->descriptor);
         self::assertSame('SELECT 1.5, 2.', $operation->toString());
@@ -107,13 +107,13 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 0x1f AS c1, 0XaB_cd AS c2');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame(['1F', 'ABCD'], array_map(static function (object $column): string {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(HexLiteral::class, $column->expression);
 
             return $column->expression->digits;
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertInstanceOf(Known::class, $operation->field(0)->type);
         self::assertSame(Storage::Integer, $operation->field(0)->type->descriptor);
         self::assertSame('SELECT 0x1F AS c1, 0xABCD AS c2', $operation->toString());
@@ -123,13 +123,13 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT .5 AS c1, 1e5 AS c2, 1E+5 AS c3, 1.5e-3 AS c4, .5e2 AS c5, 1.e3 AS c6');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([['', '5', null], ['1', null, '5'], ['1', null, '+5'], ['1', '5', '-3'], ['', '5', '2'], ['1', '', '3']], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(RealLiteral::class, $column->expression);
 
             return [$column->expression->whole, $column->expression->fraction, $column->expression->exponent];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT .5 AS c1, 1e5 AS c2, 1e+5 AS c3, 1.5e-3 AS c4, .5e2 AS c5, 1.e3 AS c6', $operation->toString());
     }
 
@@ -137,13 +137,13 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1_000.5 AS c1, 1_0e1_0 AS c2');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([['1000', '5', null], ['10', null, '10']], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(RealLiteral::class, $column->expression);
 
             return [$column->expression->whole, $column->expression->fraction, $column->expression->exponent];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT 1000.5 AS c1, 10e10 AS c2', $operation->toString());
     }
 }

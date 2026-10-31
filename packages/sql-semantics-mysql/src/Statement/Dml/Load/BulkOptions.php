@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The trailing options of a bulk LOAD DATA: `PARALLEL = n`, `MEMORY = size` and `ALGORITHM = BULK`.
@@ -21,20 +20,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the options of a bulk load
  *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 4 ALGORITHM = BULK");
- *     [$load->statement->bulk->parallel->text, $load->statement->bulk->bulk] // => ['4', true]
+ *     [$load->bulk->parallel->text, $load->bulk->bulk] // => ['4', true]
  */
 final class BulkOptions implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral|null $parallel The number of threads
      * @param ByteSize|null $memory The memory the load may use
      * @param bool $bulk Whether ALGORITHM = BULK is written
      */
-    public function __construct(public readonly ?Numeral $parallel = null, public readonly ?ByteSize $memory = null, public readonly bool $bulk = false)
+    public function __construct(public readonly ?Numeral $parallel = null, public readonly ?ByteSize $memory = null, public readonly bool $bulk = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($parallel !== null || $memory !== null || $bulk, 'Bulk options hold at least one option.');
+        Check::input($parallel === null || $parallel->isIntegerToken(), 'LOAD parallelism is a decimal integer token no greater than 2147483647.');
     }
 
     /**

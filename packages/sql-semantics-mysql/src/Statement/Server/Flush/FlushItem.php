@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One item of FLUSH: what it flushes and, for RELAY LOGS, the replication channel.
@@ -23,16 +22,26 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FlushItem implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FlushOption $option What the item flushes
      * @param Text|null $channel The channel of FOR CHANNEL, written only after RELAY LOGS (MySQL 5.7 and later)
      * @throws InvalidConstruction When a channel follows another option
      */
-    public function __construct(public readonly FlushOption $option, public readonly ?Text $channel = null)
+    public function __construct(public readonly FlushOption $option, public readonly ?Text $channel = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($channel === null || $option === FlushOption::RelayLogs, 'FOR CHANNEL follows RELAY LOGS only.');
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
+    }
+
+    /**
+     * Answers the item's definition-time notice for the selected release.
+     */
+    public function deprecation(\SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::FlushQueryCache;
+        return $this->option === FlushOption::QueryCache && $notice->warnedIn($release) ? $notice : null;
     }
 
     /**

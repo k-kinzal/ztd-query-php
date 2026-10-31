@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Transaction;
  * @visibility public
  * @example Reading the behavior a transaction start requests
  *     $begin = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('BEGIN IMMEDIATE');
- *     $begin->statement->behavior // => \SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior::Immediate
+ *     $begin->behavior // => \SqlSemantics\Platform\Sqlite\Statement\Transaction\TransactionBehavior::Immediate
  */
 enum TransactionBehavior: string
 {

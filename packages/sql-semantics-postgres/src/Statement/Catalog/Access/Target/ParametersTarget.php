@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Configuration parameters named as the objects of a GRANT or REVOKE.
@@ -17,11 +16,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parameter of a grant
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SET ON PARAMETER work_mem TO joe');
- *     $operation->statement->target->parameters[0]->parameter() // => 'work_mem'
+ *     $operation->target->parameters[0]->parameter() // => 'work_mem'
  */
 final class ParametersTarget implements PrivilegeTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ParameterName> The parameters in the order written
@@ -31,7 +30,7 @@ final class ParametersTarget implements PrivilegeTarget
     /**
      * @param list<ParameterName> $parameters The parameters in the order written, at least one
      */
-    public function __construct(array $parameters)
+    public function __construct(array $parameters, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->parameters = Check::listOf($parameters, ParameterName::class, 'A grant names at least one parameter.', 1);
     }

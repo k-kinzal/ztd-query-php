@@ -29,6 +29,6 @@ final class SequencesTest extends TestCase
         $statement = $semantics->analyze('CREATE SEQUENCE s SEQUENCE NAME x', []);
         self::assertSame([
           0 => 'invalid sequence option SEQUENCE NAME',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 }

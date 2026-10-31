@@ -66,3 +66,24 @@ $select = $faker->selectStatement(maxDepth: 6);
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## MySQL operator modes
+
+Set `highNotPrecedence: true` or `pipesAsConcat: true` on `MySqlProvider` when the
+session executing the generated SQL enables `HIGH_NOT_PRECEDENCE` or
+`PIPES_AS_CONCAT`, respectively. The same flags may be combined. They select the
+operator spellings and lexical interpretation; the provider does not change a
+database session. Both flags default to `false`.
+
+```php
+$provider = new \SqlFaker\MySql\MySqlProvider(
+    \Faker\Factory::create(),
+    'mysql-8.4.7',
+    pipesAsConcat: true,
+);
+```
+
+The [grammar corpus](docs/algorithm.md#reproducible-grammar-seeds) includes explicit
+operator-mode profiles. Keep each profile's byte inputs with its mode when
+replaying or mutating them; replaying them with the default provider changes the
+syntax being exercised.

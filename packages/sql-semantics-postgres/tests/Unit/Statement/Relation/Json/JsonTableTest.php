@@ -23,7 +23,7 @@ final class JsonTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', 1 + 1 COLUMNS (n FOR ORDINALITY))");
-        self::assertSame('only string constants are supported in JSON_TABLE path specification', $query->facts->diagnostics[0]->message());
+        self::assertSame('only string constants are supported in JSON_TABLE path specification', $query->diagnostics()[0]->message());
     }
 
     public function testRenderWritesEveryClause(): void

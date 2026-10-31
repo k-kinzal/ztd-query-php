@@ -17,7 +17,7 @@ final class AlterDefaultRoleTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER USER u DEFAULT ROLE NONE')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER USER u DEFAULT ROLE NONE')->diagnostics());
     }
 
     public function testRenderWritesTheRoles(): void

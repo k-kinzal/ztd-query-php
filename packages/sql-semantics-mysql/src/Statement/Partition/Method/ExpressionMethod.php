@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Method;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RANGE (expression)` or `LIST (expression)`: partitioning by the value of an expression compared with the partition values.
@@ -22,17 +23,24 @@ use SqlSemantics\Statement\Snapshot;
  * @example Holding a range partitioning by an expression
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('id')));
  *     $method->kind // => \SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range
+ * @example Retaining a session-dependent request for execution validation
+ *     $expression = new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []);
+ *     (new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, $expression))->expression === $expression // => true
  */
 final class ExpressionMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionKind $kind RANGE or LIST
      * @param Scalar $expression The partitioning expression
      */
-    public function __construct(public readonly PartitionKind $kind, public readonly Scalar $expression)
+    public function __construct(public readonly PartitionKind $kind, public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        $rules = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions();
+        Check::input($rules->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A partition subquery needs a retained instruction.');
+        Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -40,7 +48,7 @@ final class ExpressionMethod implements PartitionMethod
      */
     public function deriveMethod(Derivation $derivation, Environment $scope): void
     {
-        $derivation->scalar($this->expression, $scope);
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->derive($this->expression, $derivation, $scope);
     }
 
     /**

@@ -6,8 +6,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SET CHARACTER SET: sets the client and result character sets and makes the connection use the database character set.
@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  * character_set_client and character_set_results to `cs` and
  * character_set_connection to the value of character_set_database;
  * `DEFAULT` restores the defaults. `CHARACTER SET`, `CHAR SET` and
- * `CHARSET` are the same keyword (LeafNoise); the writer emits CHARSET.
+ * `CHARSET` have the same effect; the selected form is retained for reconstruction.
  * Facts: none. Terminates: the part is a leaf.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-character-set.html.
  * Status: Implemented.
@@ -24,31 +24,35 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading SET CHARACTER SET
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET CHARACTER SET DEFAULT');
- *     [$set->statement->items[0]->charset->name, $set->toString()] // => [null, 'SET CHARSET DEFAULT']
+ *     [$set->items[0]->charset->name, $set->toString()] // => [null, 'SET CHARACTER SET DEFAULT']
  */
 final class SetCharacterSet implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharsetName $charset The character set, or DEFAULT
+     * @param CharsetForm $form The keyword introducing the named character set
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the form is a type-only charset modifier
      */
-    public function __construct(public readonly CharsetName $charset)
+    public function __construct(public readonly CharsetName $charset, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly CharsetForm $form = CharsetForm::Named)
     {
+        \SqlSemantics\Diagnostic\Check::input($form->named(), 'SET CHARACTER SET uses CHARSET, CHARACTER SET or CHAR SET.');
     }
 
     /**
-     * Derives nothing: the name is resolved by the server.
+     * Resolves an explicitly named character set before assignment preparation.
      */
     public function deriveItem(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Utility\SetEncoding())->derive($this, $derivation);
     }
 
     /**
-     * Writes CHARSET and the character set.
+     * Writes the retained keyword and the character set.
      */
     public function render(Output $out): void
     {
-        $out->keyword('CHARSET')->node($this->charset);
+        $out->keyword(...explode(' ', $this->form->value))->node($this->charset);
     }
 }

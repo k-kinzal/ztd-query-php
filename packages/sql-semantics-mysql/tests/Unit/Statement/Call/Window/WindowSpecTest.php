@@ -36,10 +36,11 @@ final class WindowSpecTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $offset = new NumberLiteral('1');
-        (new WindowSpec(null, [], [], new Frame(FrameUnit::Groups, new FrameBound(FrameBoundKind::Preceding, $offset), null, FrameExclusion::Ties)))->deriveWindow($derivation, $derivation->environment());
+        $window = new WindowSpec(null, [], [], new Frame(FrameUnit::Groups, new FrameBound(FrameBoundKind::Preceding, $offset), null, FrameExclusion::Ties));
+        $window->deriveWindow($derivation, $derivation->environment());
 
-        self::assertSame(Nullability::NotNull, $derivation->facts()->scalar($offset)->nullability);
-        self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupsUnit), new UnsupportedWindowing(WindowingLimit::Exclusion)], $derivation->facts()->diagnostics);
+        self::assertSame(Nullability::NotNull, $offset->scalarInformation()->nullability);
+        self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupsUnit, $window), new UnsupportedWindowing(WindowingLimit::Exclusion, $window)], $derivation->facts()->diagnostics);
     }
 
     public function testRenderWritesTheParts(): void

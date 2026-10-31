@@ -15,6 +15,6 @@ final class PriorityOutOfRangeTest extends TestCase
 {
     public function testMessageDescribesTheProblem(): void
     {
-        self::assertSame('Thread priority 3 is outside the range of a SYSTEM resource group (ER_INVALID_THREAD_PRIORITY).', (new PriorityOutOfRange('SYSTEM', '3'))->message());
+        self::assertSame('Thread priority 3 is outside the range of a SYSTEM resource group (ER_INVALID_THREAD_PRIORITY).', (new PriorityOutOfRange(new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName(new \SqlSemantics\Statement\Identifier\Name('g')), \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind::System, new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3'))))->message());
     }
 }

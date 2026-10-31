@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The TABLESAMPLE clause of a table reference (MySQL 9.x grammars): the sampling method and the percentage.
@@ -23,19 +22,19 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a sampling clause
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT a FROM t TABLESAMPLE BERNOULLI (10)');
- *     [$query->statement->from->sample->method, $query->statement->from->sample->percentage->text] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, '10']
+ *     [$query->query->from->sample->method, $query->query->from->sample->percentage->text] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::Bernoulli, '10']
  * @example Refusing an expression as the percentage
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample(\SqlSemantics\Platform\MySql\Statement\Relation\Hint\SamplingMethod::System, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class TableSample implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SamplingMethod $method The sampling method
      * @param Scalar $percentage The percentage of rows to sample
      */
-    public function __construct(public readonly SamplingMethod $method, public readonly Scalar $percentage)
+    public function __construct(public readonly SamplingMethod $method, public readonly Scalar $percentage, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($percentage instanceof NumberLiteral || $percentage instanceof UserVariable || $percentage instanceof Parameter, 'A sampling percentage is a number, a user variable or a parameter marker.');
     }

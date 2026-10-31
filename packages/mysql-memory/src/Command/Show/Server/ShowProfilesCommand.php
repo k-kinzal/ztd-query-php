@@ -1,0 +1,129 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Command\Show\Server;
+
+use MySqlMemory\Command\Command;
+use MySqlMemory\Command\Show\Heading;
+use MySqlMemory\Command\Show\Listing;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Evaluation\Compile\Connection;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Result\ColumnFlag;
+use MySqlMemory\Result\Reply;
+use MySqlMemory\Session\Session;
+use Override;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ProfileSection;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles;
+
+/**
+ * Executes SHOW PROFILES and SHOW PROFILE: the statements the session profiled, and the stages of one of them.
+ *
+ * SHOW PROFILES warns when defined. SHOW PROFILE warns when defined on 5.6,
+ * and during unprepared execution on 5.7 and later. SQL Semantics retains
+ * definition notices; prepared execution does not issue them again. Undeclared
+ * LIMIT variables precede the notice. A zero count with a zero or absent offset
+ * avoids reading profile rows and their execution warning from MySQL 5.7 on. Observed on 5.6, 5.7, 8.0, 8.4 and 9.1.
+ * The emulator does not profile statements, as a session that
+ * has not set profiling does not, so they list none. SHOW PROFILE answers the status and
+ * duration of each stage and the columns of the sections it names, read from
+ * INFORMATION_SCHEMA.PROFILING (verified on a live 8.4 server). MySQL 5.6 and 5.7 write the
+ * Query_ID and Duration of SHOW PROFILES one character narrower (verified on live 5.6.51 and
+ * 5.7.44 servers).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/show-profile.html,
+ * https://dev.mysql.com/doc/refman/8.4/en/show-profiles.html.
+ *
+ * @visibility MySqlMemory
+ */
+final class ShowProfilesCommand implements Command
+{
+    /**
+     * Answers true.
+     */
+    #[Override]
+    public function clearsDiagnostics(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Lists the profiles, or the stages of one.
+     */
+    #[Override]
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
+    {
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
+        assert($statement instanceof ShowProfiles || $statement instanceof ShowProfile);
+        if ($statement instanceof ShowProfile && (!$session->replayed || $session->program !== null) && $session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $limit = $statement->limit;
+            $bounds = new \MySqlMemory\Plan\Blocks(new \MySqlMemory\Plan\Planner($statement, $operation->statementInformation(), $session->settings(), $connection, $session->instance->dictionary, $session->temporaries, \MySqlMemory\Session\Statement\Catalog::snapshot($session)));
+            if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $bounds->bound($limit->count, null) !== 0 || ($limit->offset !== null && $bounds->bound($limit->offset, null) !== 0)) {
+                $context->warning(StatementError::DeprecatedSyntax, 'SHOW PROFILE', 'Performance Schema');
+            }
+        }
+        if ($statement instanceof ShowProfiles) {
+            $flags = ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value;
+            $headings = [
+                new Heading('Query_ID', Field::Long, $session->settings()->legacy() ? 10 : 11, $flags),
+                new Heading('Duration', Field::Double, $session->settings()->legacy() ? 8 : 9, $flags),
+                Heading::text('Query', Field::VarString, 40, ColumnFlag::NotNull->value, 31),
+            ];
+
+            return (new Listing($headings))->sent([], $context);
+        }
+
+        return (new Listing($this->headings($statement->sections, $session->settings()->legacy())))->sent([], $context);
+    }
+
+    /**
+     * Answers the columns of SHOW PROFILE: the status and duration, then the columns of the sections named, in the order of the table.
+     *
+     * @param list<ProfileSection> $sections
+     * @param bool $legacy Whether the release uses the 5.x counter width
+     * @return list<Heading>
+     */
+    public function headings(array $sections, bool $legacy = false): array
+    {
+        $table = 'PROFILING';
+        $schema = 'information_schema';
+        $time = static fn (string $name, string $original): Heading => new Heading($name, Field::NewDecimal, 11, 0, 6, false, $original, $table, $table, $schema);
+        $count = static fn (string $name, string $original): Heading => new Heading($name, Field::Long, $legacy ? 20 : 21, ColumnFlag::Numeric->value, 0, false, $original, $table, $table, $schema);
+        $all = [
+            2 => $time('CPU_user', 'CPU_USER'),
+            3 => $time('CPU_system', 'CPU_SYSTEM'),
+            4 => $count('Context_voluntary', 'CONTEXT_VOLUNTARY'),
+            5 => $count('Context_involuntary', 'CONTEXT_INVOLUNTARY'),
+            6 => $count('Block_ops_in', 'BLOCK_OPS_IN'),
+            7 => $count('Block_ops_out', 'BLOCK_OPS_OUT'),
+            8 => $count('Messages_sent', 'MESSAGES_SENT'),
+            9 => $count('Messages_received', 'MESSAGES_RECEIVED'),
+            10 => $count('Page_faults_major', 'PAGE_FAULTS_MAJOR'),
+            11 => $count('Page_faults_minor', 'PAGE_FAULTS_MINOR'),
+            12 => $count('Swaps', 'SWAPS'),
+            13 => Heading::text('Source_function', Field::VarString, 30, 0, 0, 'SOURCE_FUNCTION', $table, $table, $schema),
+            14 => Heading::text('Source_file', Field::VarString, 20, 0, 0, 'SOURCE_FILE', $table, $table, $schema),
+            15 => $count('Source_line', 'SOURCE_LINE'),
+        ];
+        $positions = [];
+        foreach ($sections as $section) {
+            foreach ($section->positions() as $position) {
+                $positions[$position] = true;
+            }
+        }
+        ksort($positions);
+        $headings = [
+            Heading::text('Status', Field::VarString, 30, ColumnFlag::NotNull->value, 0, 'STATE', $table, $table, $schema),
+            new Heading('Duration', Field::NewDecimal, 11, ColumnFlag::NotNull->value, 6, false, 'DURATION', $table, $table, $schema),
+        ];
+        foreach (array_keys($positions) as $position) {
+            $headings[] = $all[$position];
+        }
+
+        return $headings;
+    }
+}

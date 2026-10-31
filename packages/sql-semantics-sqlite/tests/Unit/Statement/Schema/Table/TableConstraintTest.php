@@ -22,14 +22,14 @@ final class TableConstraintTest extends TestCase
     public function testDeriveConstraintDerivesTheOperandsOfEachConstraint(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, PRIMARY KEY (a), CHECK (b > 0))', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertContainsOnlyInstancesOf(TableConstraint::class, [$statement->constraints[0]->items[0], $statement->constraints[1]->items[0]]);
         self::assertInstanceOf(TablePrimaryKey::class, $statement->constraints[0]->items[0]);
         self::assertInstanceOf(TableCheck::class, $statement->constraints[1]->items[0]);
-        self::assertTrue($operation->facts->covers($statement->constraints[0]->items[0]->terms[0]->expression));
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertTrue($statement->constraints[0]->items[0]->terms[0]->expression->hasBinding());
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 }

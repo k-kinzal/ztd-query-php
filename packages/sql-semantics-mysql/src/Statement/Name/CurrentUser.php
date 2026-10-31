@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Name;
 
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The account of the session, written `CURRENT_USER` or `CURRENT_USER()` at an account position.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CurrentUser implements Account
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param OptionalWords $parentheses Whether the optional empty parentheses are written
      */
-    public function __construct(public readonly OptionalWords $parentheses = OptionalWords::Omitted)
+    public function __construct(public readonly OptionalWords $parentheses = OptionalWords::Omitted, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

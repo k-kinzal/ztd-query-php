@@ -21,6 +21,8 @@ use SqlSemantics\Resolution\Environment;
  */
 enum Toggle: string implements OptionArgument
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case True = 'TRUE';
     case False = 'FALSE';
     case On = 'ON';

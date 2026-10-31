@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A prefix operation over one operand.
@@ -28,21 +27,25 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the operand of a negation
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT -a FROM t');
- *     $query->statement->columns[0]->expression->operand->name->value // => 'a'
+ *     $query->columns[0]->expression->operand->name->value // => 'a'
  * @example Refusing an operand that the prefix operator would not cover when written
- *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
+ *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Minus, $sum) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Unary implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param UnaryOperator $operator The operator
      * @param Scalar $operand The operand
      */
-    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand)
+    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->opening($operand) >= ($operator === UnaryOperator::Not ? Precedence::NEGATION : Precedence::PREFIX), 'The operand needs parentheses to keep its place.');
     }
 

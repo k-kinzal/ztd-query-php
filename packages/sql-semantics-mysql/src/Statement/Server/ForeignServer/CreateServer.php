@@ -8,10 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE SERVER name FOREIGN DATA WRAPPER wrapper OPTIONS (option, …)`: a request to define a server for the FEDERATED engine.
@@ -25,16 +24,18 @@ use SqlSemantics\Statement\Statement;
  * Status: Implemented.
  *
  * @visibility public
+ * @example Retaining a definition with an empty server name
+ *     (new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer(new \SqlSemantics\Statement\Identifier\Name(''), new \SqlSemantics\Statement\Identifier\Name('mysql'), [new \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption(\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('localhost'))]))->problem()->message() // => "Incorrect server name value: ''"
  * @example Defining a server
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("create server s foreign data wrapper mysql options (host 'db', port 3307)");
- *     [$create->toString(), $create->statement->options[1]->kind] // => ["CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'db', PORT 3307)", \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port]
+ *     [$create->toString(), $create->options[1]->kind] // => ["CREATE SERVER s FOREIGN DATA WRAPPER mysql OPTIONS (HOST 'db', PORT 3307)", \SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Port]
  */
-final class CreateServer implements Statement
+final class CreateServer extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<ServerOption> The options in written order; at least one
+     * @var non-empty-list<ServerOption> The options in written order; at least one
      */
     public readonly array $options;
 
@@ -44,16 +45,34 @@ final class CreateServer implements Statement
      * @param list<ServerOption> $options The options in written order; at least one
      * @throws InvalidConstruction When there is no option
      */
-    public function __construct(public readonly Name $name, public readonly Name $wrapper, array $options)
+    public function __construct(public readonly Name $name, public readonly Name $wrapper, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, ServerOption::class, 'CREATE SERVER takes at least one option.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: a server is no relation.
+     * Derives system-string conversions and the completed definition condition.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\ForeignStrings())->derive($this, $derivation);
+        $problem = $this->problem();
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this);
+        }
+    }
+
+    /**
+     * Answers the completed definition's name condition without losing its operands.
+     */
+    public function problem(): ?\SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName
+    {
+        return $this->name->value === '' ? new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Server) : null;
     }
 
     /**
@@ -61,7 +80,7 @@ final class CreateServer implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE', 'SERVER')->name($this->name, NameUse::Identifier)->keyword('FOREIGN', 'DATA', 'WRAPPER')->name($this->wrapper, NameUse::Identifier);
+        $out->keyword('CREATE', 'SERVER')->name($this->name, NameUse::Label)->keyword('FOREIGN', 'DATA', 'WRAPPER')->name($this->wrapper, NameUse::Label);
         $out->keyword('OPTIONS')->symbol('(')->list($this->options)->symbol(')');
     }
 }

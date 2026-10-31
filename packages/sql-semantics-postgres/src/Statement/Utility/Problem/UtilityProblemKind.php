@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem;
  * @visibility public
  * @example Reading which rule a command breaks
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET CATALOG 'd'");
- *     $operation->facts->diagnostics[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind::CatalogChange
+ *     $operation->diagnostics()[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind::CatalogChange
  */
 enum UtilityProblemKind: string
 {

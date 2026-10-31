@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A value passed to an SQL/JSON function, with an optional FORMAT clause.
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonValueExpression implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $value The value
      * @param JsonFormat|null $format The format written
      */
-    public function __construct(public readonly Scalar $value, public readonly ?JsonFormat $format = null)
+    public function __construct(public readonly Scalar $value, public readonly ?JsonFormat $format = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -6,12 +6,12 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A key part that names a column, with an optional prefix length and sort direction.
@@ -21,22 +21,33 @@ use SqlSemantics\Statement\Snapshot;
  * index is ascending without one. Source: https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-column-prefixes,
  * https://dev.mysql.com/doc/refman/8.4/en/descending-indexes.html.
  *
+ * A prefix length uses positive decimal digits no greater than 2147483647. Whether
+ * the length fits the column's data type is checked against its declaration.
+ *
  * @visibility public
  * @example Reading a prefix key part
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, KEY (a(10) DESC))');
- *     [$create->statement->elements[1]->parts[0]->column->value, $create->statement->elements[1]->parts[0]->length->text] // => ['a', '10']
+ *     [$create->elements[1]->parts[0]->column->value, $create->elements[1]->parts[0]->length->text] // => ['a', '10']
+ * @example Refusing a hexadecimal prefix length
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1', true)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a prefix length outside the integer token range
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2147483648')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an empty prefix independently of table state
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('000')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ColumnPart implements KeyPart
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column
      * @param Numeral|null $length The prefix length, when written
      * @param Direction|null $direction The sort direction, when written
      */
-    public function __construct(public readonly Name $column, public readonly ?Numeral $length = null, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Name $column, public readonly ?Numeral $length = null, public readonly ?Direction $direction = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input($length === null || $length->isIntegerToken(), 'A key prefix length is a decimal integer token no greater than 2147483647.');
+        Check::input($length === null || (int) $length->text > 0, 'A key prefix length must be positive.');
     }
 
     /**

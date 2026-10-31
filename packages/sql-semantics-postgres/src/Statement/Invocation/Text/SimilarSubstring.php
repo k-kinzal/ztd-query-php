@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SUBSTRING (string SIMILAR pattern ESCAPE escape)`: the part of a string a SQL regular expression marks.
@@ -34,15 +33,19 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SimilarSubstring implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $string The string
      * @param Scalar $pattern The SQL regular expression
      * @param Scalar $escape The escape character
      */
-    public function __construct(public readonly Scalar $string, public readonly Scalar $pattern, public readonly Scalar $escape)
+    public function __construct(public readonly Scalar $string, public readonly Scalar $pattern, public readonly Scalar $escape, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->before($string, Precedence::PATTERN), 'The string needs parentheses to keep its place before SIMILAR.');
         Check::input(!$precedence->takesEscape($pattern), 'A pattern ending in a pattern match without ESCAPE would take the escape; group it.');

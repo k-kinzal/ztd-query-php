@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The definition of one column: its name, type, storage, compression, foreign-data options and constraints.
@@ -32,12 +31,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a column definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 COLLATE "C" NOT NULL)');
- *     $column = $create->statement->definition->elements[0];
+ *     $column = $create->definition->elements[0];
  *     [$column->name->value, $column->storage->method->value, $column->compression->method->value, count($column->qualifiers)] // => ['a', 'external', 'lz4', 2]
  */
 final class ColumnDefinition implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<GenericOption> The foreign-data options
@@ -64,6 +63,7 @@ final class ColumnDefinition implements Clause
         public readonly ?ColumnCompression $compression = null,
         array $options = [],
         array $qualifiers = [],
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         $this->options = Check::listOf($options, GenericOption::class, 'Foreign-data options are generic options.');
         $this->qualifiers = (new Qualifiers())->checked($qualifiers);

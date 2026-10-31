@@ -24,7 +24,7 @@ final class DropRoleTest extends TestCase
 
     public function testDeriveStatementReportsEveryDesignation(): void
     {
-        self::assertSame(['cannot use special role specifier in DROP ROLE', 'cannot use special role specifier in DROP ROLE'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP ROLE joe, CURRENT_USER, public')->facts->diagnostics));
+        self::assertSame(['cannot use special role specifier in DROP ROLE', 'cannot use special role specifier in DROP ROLE'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP ROLE joe, CURRENT_USER, public')->diagnostics()));
     }
 
     public function testRejectsNoRole(): void

@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `COALESCE (values)`: the first value that is not NULL.
@@ -32,7 +31,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Coalesce implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The values in order
@@ -42,8 +42,11 @@ final class Coalesce implements Scalar, OutputNaming
     /**
      * @param list<Scalar> $values The values in order; at least one
      */
-    public function __construct(array $values)
+    public function __construct(array $values, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->values = Check::listOf($values, Scalar::class, 'COALESCE takes at least one value.', 1);
     }
 

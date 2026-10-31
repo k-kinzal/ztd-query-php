@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `filter = (value, …)` of CHANGE REPLICATION FILTER; an empty list clears the filter.
@@ -22,13 +21,15 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-filter.html.
  *
  * @visibility public
+ * @example Rejecting a line feed in a wildcard pattern
+ *     new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter(\SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind::WildDoTable, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text("d.a\nb")]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding the databases of a filter
  *     $filter = new \SqlSemantics\Platform\MySql\Statement\Replication\Filter\ReplicationFilter(\SqlSemantics\Platform\MySql\Statement\Replication\Filter\FilterKind::DoDb, [new \SqlSemantics\Statement\Identifier\Name('a')]);
  *     $filter->values[0]->value // => 'a'
  */
 final class ReplicationFilter implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name|QualifiedName|Text|DatabaseRewrite> The values in written order
@@ -39,10 +40,12 @@ final class ReplicationFilter implements Node
      * @param FilterKind $kind The filter
      * @param list<Name|QualifiedName|Text|DatabaseRewrite> $values The values in written order, of the class the filter lists
      */
-    public function __construct(public readonly FilterKind $kind, array $values)
+    public function __construct(public readonly FilterKind $kind, array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->values = Check::listOf($values, $kind->member(), 'The values of ' . $kind->value . ' are of the class the filter lists.');
         foreach ($this->values as $value) {
+            Check::input(!$value instanceof Text || (new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value), 'A replication wildcard pattern cannot contain a line feed before NUL.');
+            Check::input(!$value instanceof Text || $value->radix === null, 'A replication wildcard pattern is quoted text.');
             Check::input(!$value instanceof QualifiedName || ($value->schema !== null && $value->catalog === null), 'A filtered table is qualified by its database.');
         }
     }

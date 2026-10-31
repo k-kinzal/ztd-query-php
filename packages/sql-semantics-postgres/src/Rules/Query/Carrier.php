@@ -26,6 +26,9 @@ use SqlSemantics\Statement\Shape\RowShape;
  */
 final class Carrier implements Relation
 {
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
     /**
      * @param QueryExpression $expression The query expression whose clauses are handed down
      */

@@ -20,7 +20,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -40,7 +39,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class JsonObjectAggregate implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param JsonPair $pair The key and value aggregated
@@ -57,7 +57,12 @@ final class JsonObjectAggregate implements Scalar, OutputNaming
         public readonly ?JsonReturning $returning = null,
         public readonly ?Scalar $filter = null,
         public readonly WindowSpecification|Name|null $over = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($unique === null || $nulls !== null || $pair->value->format !== null || !(new Precedence())->takesUniqueness($pair->value->value), 'A value ending in IS JSON without a uniqueness clause would take the uniqueness clause; group it.');
     }
 

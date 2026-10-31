@@ -41,8 +41,8 @@ final class InsertFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $rows = $semantics->analyze('INSERT INTO t VALUES (1, 2)', [$t])->statement;
-        $listed = $semantics->analyze('INSERT INTO t (a) VALUES (1, 2)', [$t])->statement;
+        $rows = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO t VALUES (1, 2)', [$t]));
+        $listed = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO t (a) VALUES (1, 2)', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
         $facts = new InsertFacts();
 
@@ -70,10 +70,10 @@ final class InsertFactsTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
 
-        self::assertSame([], $semantics->analyze('INSERT INTO t VALUES (1)', [$t])->facts->diagnostics);
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(ArityMismatch::class, $operation->facts->diagnostics[0]);
-        self::assertSame([ArityRule::InsertedValues, 1, $actual], [$operation->facts->diagnostics[0]->rule, $operation->facts->diagnostics[0]->expected, $operation->facts->diagnostics[0]->actual]);
+        self::assertSame([], $semantics->analyze('INSERT INTO t VALUES (1)', [$t])->diagnostics());
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(ArityMismatch::class, $operation->diagnostics()[0]);
+        self::assertSame([ArityRule::InsertedValues, 1, $actual], [$operation->diagnostics()[0]->rule, $operation->diagnostics()[0]->expected, $operation->diagnostics()[0]->actual]);
         self::assertNotFalse($database->exec('INSERT INTO t VALUES (1)'));
         $this->expectException(PDOException::class);
         $this->expectExceptionMessage($message);
@@ -84,15 +84,15 @@ final class InsertFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $open = $semantics->analyze('INSERT INTO t SELECT * FROM u', [$t], );
-        $undeclared = $semantics->analyze('INSERT INTO u VALUES (1)', [$t], );
+        $open = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO t SELECT * FROM u', [$t], ));
+        $undeclared = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO u VALUES (1)', [$t], ));
         $derivation = new Derivation($semantics->context([$t], false));
         $facts = new InsertFacts();
 
-        self::assertInstanceOf(InsertSelect::class, $open->statement);
-        self::assertInstanceOf(InsertRows::class, $undeclared->statement);
-        $facts->derive($open->statement->into, $open->statement->query, [], [], $derivation, $derivation->environment());
-        $facts->derive($undeclared->statement->into, $undeclared->statement->rows, [], [], $derivation, $derivation->environment());
+        self::assertInstanceOf(InsertSelect::class, $open);
+        self::assertInstanceOf(InsertRows::class, $undeclared);
+        $facts->derive($open->into, $open->query, [], [], $derivation, $derivation->environment());
+        $facts->derive($undeclared->into, $undeclared->rows, [], [], $derivation, $derivation->environment());
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 
@@ -124,7 +124,7 @@ final class InsertFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w', [$t])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
         $returning = new ResultColumn(new ColumnUse(new Name('b')));
 

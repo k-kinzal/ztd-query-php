@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Literal;
  * @visibility public
  * @example Reading which keyword an expression is
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT current_date');
- *     $query->statement->columns[0]->expression->keyword // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword::Date
+ *     $query->columns[0]->expression->keyword // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TimeKeyword::Date
  */
 enum TimeKeyword: string
 {

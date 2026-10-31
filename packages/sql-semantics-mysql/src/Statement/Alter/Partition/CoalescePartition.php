@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `COALESCE PARTITION [NO_WRITE_TO_BINLOG] n`: a request to merge away n partitions of a HASH or KEY table.
@@ -19,25 +18,26 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Removing two hash partitions
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION 2')->statement->commands[0]->count->text // => '2'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION 2')->commands[0]->count->text // => '2'
  */
 final class CoalescePartition implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param bool $local Whether NO_WRITE_TO_BINLOG or LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param Numeral $count The number of partitions to remove
      */
-    public function __construct(public readonly bool $local, public readonly Numeral $count)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, public readonly Numeral $count, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 
     /**
-     * Derives nothing: the action holds no expression.
+     * Checks that the partition count is an integer token before table resolution.
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->count);
     }
 
     /**
@@ -46,8 +46,8 @@ final class CoalescePartition implements StandaloneCommand
     public function render(Output $out): void
     {
         $out->keyword('COALESCE', 'PARTITION');
-        if ($this->local) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($this->binlog !== null) {
+            $out->keyword($this->binlog->value);
         }
         $out->node($this->count);
     }

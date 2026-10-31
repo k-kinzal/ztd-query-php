@@ -15,6 +15,6 @@ final class UnaryOperatorTest extends TestCase
 {
     public function testCasesHoldTheWrittenOperators(): void
     {
-        self::assertSame(['+', '-', '~', '!'], array_column(UnaryOperator::cases(), 'value'));
+        self::assertSame(['+', '-', '~', '!', '!!'], array_column(UnaryOperator::cases(), 'value'));
     }
 }

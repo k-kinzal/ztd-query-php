@@ -16,7 +16,7 @@ final class IndexConstraintTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('ALTER TABLE t ADD UNIQUE USING INDEX i', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
         $n2 = $n1->commands[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AddConstraint::class, $n2);
@@ -32,7 +32,7 @@ final class IndexConstraintTest extends TestCase
         self::assertSame([
           0 => 'Relation t does not exist.',
           1 => 'PRIMARY KEY constraints cannot be marked NOT VALID',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

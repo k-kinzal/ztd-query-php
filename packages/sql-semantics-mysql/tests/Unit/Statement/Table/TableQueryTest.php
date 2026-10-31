@@ -20,10 +20,10 @@ final class TableQueryTest extends TestCase
     public function testRenderWritesTheDuplicateHandlingAndTheQuery(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t REPLACE SELECT 1 AS a');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
 
         self::assertSame(DuplicateHandling::Replace, $statement->query?->duplicate);
-        self::assertSame('CREATE TABLE t REPLACE AS SELECT 1 AS a', $create->toString());
+        self::assertSame('CREATE TABLE t REPLACE SELECT 1 AS a', $create->toString());
     }
 }

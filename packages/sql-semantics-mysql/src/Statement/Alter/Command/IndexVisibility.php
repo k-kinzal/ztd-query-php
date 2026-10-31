@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER INDEX i VISIBLE | INVISIBLE` (8.0 and later): a request to make an index visible to or hidden from the optimizer.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Hiding an index
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER INDEX i INVISIBLE');
- *     $alter->statement->commands[0]->visible // => false
+ *     $alter->commands[0]->visible // => false
  */
 final class IndexVisibility implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $index The index name
      * @param bool $visible Whether VISIBLE (true) or INVISIBLE (false) is written
      */
-    public function __construct(public readonly Name $index, public readonly bool $visible)
+    public function __construct(public readonly Name $index, public readonly bool $visible, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

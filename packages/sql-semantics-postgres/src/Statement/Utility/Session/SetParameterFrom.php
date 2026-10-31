@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -20,19 +19,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Restoring a default
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET work_mem = DEFAULT');
- *     [$operation->statement->source, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Default, 'SET work_mem TO DEFAULT']
+ *     [$operation->source, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource::Default, 'SET work_mem TO DEFAULT']
  */
-final class SetParameterFrom implements Statement
+final class SetParameterFrom extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ParameterName $parameter The parameter
      * @param ParameterSource $source Where the value comes from
      * @param bool $local Whether the change lasts for the current transaction only
      */
-    public function __construct(public readonly ParameterName $parameter, public readonly ParameterSource $source, public readonly bool $local = false)
+    public function __construct(public readonly ParameterName $parameter, public readonly ParameterSource $source, public readonly bool $local = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

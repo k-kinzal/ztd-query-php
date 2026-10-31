@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An operator applied to a left and a right operand: `a + b`, `a = b`, `a OPERATOR(s.@@) b`.
@@ -35,7 +34,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a comparison
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT a FROM t WHERE a >= 1');
- *     [$query->statement->where->operator->name->value, $query->statement->where->right->value->digits] // => ['>=', '1']
+ *     [$query->where->operator->name->value, $query->where->right->value->digits] // => ['>=', '1']
  * @example Reading the type of an arithmetic operation
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 + 2.5')->field(0)->type->descriptor->name() // => 'numeric'
  * @example Rejecting an operand that would need parentheses
@@ -47,15 +46,19 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class BinaryOperation implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param OperatorName $operator The operator
      * @param Scalar $left The left operand
      * @param Scalar $right The right operand
      */
-    public function __construct(public readonly OperatorName $operator, public readonly Scalar $left, public readonly Scalar $right)
+    public function __construct(public readonly OperatorName $operator, public readonly Scalar $left, public readonly Scalar $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($operator->explicit || $operator->qualifiers === [], 'An expression writes a qualified operator with OPERATOR(...).');
         $precedence = new Precedence();
         $level = $precedence->operator($operator);

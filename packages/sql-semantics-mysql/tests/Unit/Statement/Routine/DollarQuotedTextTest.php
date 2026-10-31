@@ -24,7 +24,7 @@ final class DollarQuotedTextTest extends TestCase
     public function testRenderKeepsTheTextBetweenTheDelimiters(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() LANGUAGE JAVASCRIPT AS $a$ $$ x $a$');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(ExternalBody::class, $statement->body);
 
@@ -77,14 +77,14 @@ final class DollarQuotedTextTest extends TestCase
 
     public function testATagWithADollarSignIsRejected(): void
     {
-        $this->expectExceptionMessage('The tag of a dollar-quoted string holds no dollar sign and no space.');
+        $this->expectExceptionMessage('A dollar-quote tag contains only letters, digits, underscores and multibyte characters.');
 
         new DollarQuotedText('x', 'a$b');
     }
 
     public function testATagWithASpaceIsRejected(): void
     {
-        $this->expectExceptionMessage('The tag of a dollar-quoted string holds no dollar sign and no space.');
+        $this->expectExceptionMessage('A dollar-quote tag contains only letters, digits, underscores and multibyte characters.');
 
         new DollarQuotedText('x', 'a b');
     }
@@ -102,4 +102,11 @@ final class DollarQuotedTextTest extends TestCase
 
         new DollarQuotedText('a $$ b');
     }
+
+    public function testTagRejectsAnApostrophe(): void
+    {
+        $this->expectExceptionMessage('A dollar-quote tag contains only letters, digits, underscores and multibyte characters.');
+        new DollarQuotedText('body', "'");
+    }
+
 }

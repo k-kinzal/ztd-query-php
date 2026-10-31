@@ -8,10 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER {DATABASE | SCHEMA} [name] option …`: a request to change the options of a database.
@@ -25,14 +24,14 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Altering the current database
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter schema character set latin1 read only default');
- *     [$alter->toString(), $alter->statement->name] // => ['ALTER DATABASE CHARACTER SET latin1 READ ONLY DEFAULT', null]
+ *     [$alter->toString(), $alter->name] // => ['ALTER SCHEMA CHARACTER SET latin1 READ ONLY DEFAULT', null]
  */
-final class AlterDatabase implements Statement
+final class AlterDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<DatabaseOption> The options in written order; at least one
+     * @var non-empty-list<DatabaseOption> The options in written order; at least one
      */
     public readonly array $options;
 
@@ -41,16 +40,22 @@ final class AlterDatabase implements Statement
      * @param list<DatabaseOption> $options The options in written order; at least one
      * @throws InvalidConstruction When there is no option
      */
-    public function __construct(public readonly ?Name $name, array $options)
+    public function __construct(public readonly ?Name $name, array $options, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseWord $databaseWord = DatabaseWord::Database)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, DatabaseOption::class, 'ALTER DATABASE changes at least one option.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($this->options) === null, 'ALTER DATABASE options do not conflict.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: a database is no relation.
+     * Resolves the character set and collation names without changing database state.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->derive($this->options, $derivation);
     }
 
     /**
@@ -58,7 +63,7 @@ final class AlterDatabase implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'DATABASE');
+        $out->keyword('ALTER', $this->databaseWord->value);
         if ($this->name !== null) {
             $out->name($this->name, NameUse::Qualifier);
         }

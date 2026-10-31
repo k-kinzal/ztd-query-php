@@ -30,16 +30,16 @@ final class MaintenanceFactsTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
         self::assertSame(
             ['column "b" of relation "t" does not exist'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('ANALYZE t (a, b)', [$table])->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('ANALYZE t (a, b)', [$table])->diagnostics()),
         );
     }
 
     public function testTargetsClaimsNothingAboutAnUndeclaredTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('VACUUM ANALYZE t (a), u');
-        self::assertInstanceOf(Vacuum::class, $operation->statement);
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement->targets[1])->table);
+        self::assertInstanceOf(Vacuum::class, $operation);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(UndeclaredTable::class, $operation->targets[1]->relationInformation()->table);
     }
 
     public function testHasComparesUnderTheContext(): void
@@ -47,7 +47,7 @@ final class MaintenanceFactsTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('A'), Builtin::Int4)]);
         self::assertSame(
             ['column "a" of relation "t" does not exist'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('ANALYZE t ("A", a)', [$table])->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('ANALYZE t ("A", a)', [$table])->diagnostics()),
         );
     }
 }

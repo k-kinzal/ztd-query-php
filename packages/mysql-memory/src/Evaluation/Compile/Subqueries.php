@@ -1,0 +1,349 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Evaluation\Compile;
+
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
+use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Evaluation\Subquery\Existence;
+use MySqlMemory\Evaluation\Subquery\Quantified;
+use MySqlMemory\Evaluation\Subquery\Rows;
+use MySqlMemory\Evaluation\Subquery\ScalarRead;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
+use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
+use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
+
+/**
+ * Compiles subqueries used as values and in predicates; each is planned in a scope inside the block that reads it.
+ *
+ * @visibility MySqlMemory\Evaluation
+ */
+final class Subqueries
+{
+    /**
+     * @param Compiler $compiler The compiler of the statement
+     */
+    public function __construct(public readonly Compiler $compiler)
+    {
+    }
+
+    /**
+     * Compiles a scalar subquery; one that depends on no row, assigns no variable and is not read as the expression of its one row (substituted()) runs once for the statement.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the subquery has more than one column
+     */
+    public function scalar(ScalarSubquery $node, Scope $scope): Evaluable
+    {
+        $plan = $this->compiler->planner->query($node->query, $scope);
+        if (count($plan->domains) !== 1) {
+            throw QueryError::OperandColumns->error(1);
+        }
+
+        $once = Constancy::of($node->query, $this->compiler->facts, release: $this->compiler->settings->release()) !== Constancy::Row && !$this->substituted($node->query) && (new Walker())->find($node->query, VariableAssignment::class) === [];
+
+        return new ScalarRead(new Rows($plan), $this->compiler->resolved($node) ?? $plan->domains[0]->withNullable(true), $once);
+    }
+
+    /**
+     * Plans a multi-column subquery used as one row, independently of scalar value types.
+     */
+    public function row(ScalarSubquery|\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery $node, Scope $scope): \MySqlMemory\Evaluation\Subquery\SingleRow
+    {
+        $plan = $this->compiler->planner->query($node->query, $scope);
+        $once = Constancy::of($node->query, $this->compiler->facts, variableReadsVary: $this->compiler->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651, release: $this->compiler->settings->release()) !== Constancy::Row && (new Walker())->find($node->query, VariableAssignment::class) === [];
+
+        $projection = new EmptyProjection($this->compiler);
+
+        return new \MySqlMemory\Evaluation\Subquery\SingleRow(new Rows($plan), $once, $projection->of($node->query, $plan), $projection->initial($plan), $projection->source($plan));
+    }
+
+    /**
+     * Compiles EXISTS.
+     */
+    public function exists(Exists $node, Scope $scope): Evaluable
+    {
+        return new Existence(new Rows($this->compiler->planner->query($node->query, $scope)), $this->compiler->domain($node));
+    }
+
+    /**
+     * Compiles [NOT] IN with a subquery.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the subquery has more than one column
+     */
+    public function in(InQuery $node, Scope $scope): Evaluable
+    {
+        return $this->quantified($node->operand, ComparisonOperator::Equal, false, $node->negated, $node->query, $scope, $node);
+    }
+
+    /**
+     * Compiles a comparison with ANY, SOME or ALL.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the subquery has more than one column
+     */
+    public function quantifiedComparison(QuantifiedComparison $node, Scope $scope): Evaluable
+    {
+        return $this->quantified($node->operand, $node->operator, $node->quantifier === Quantifier::All, false, $node->query, $scope, $node);
+    }
+
+    /**
+     * Compiles a quantified comparison of a value with the rows of a subquery.
+     *
+     * With `=` or `<>` over a subquery that is one row computed without a table, the server
+     * compares the value with the expression of the row as a plain comparison does; NOT IN
+     * compares with `<>`.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the subquery has more than one column
+     */
+    public function quantified(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, ComparisonOperator $operator, bool $all, bool $negated, \SqlSemantics\Statement\Query $query, Scope $scope, \SqlSemantics\Statement\Scalar $node): Evaluable
+    {
+        if ($this->compiler->rows->tuple($operand)) {
+            return $this->membership($operand, $query, $scope, $negated || $all);
+        }
+        $value = $this->compiler->compile($operand, $scope);
+        $plan = $this->compiler->planner->query($query, $scope);
+        if (count($plan->domains) !== 1) {
+            throw QueryError::OperandColumns->error(1);
+        }
+        $single = $operator === ComparisonOperator::Equal || $operator === ComparisonOperator::NotEqual ? $this->single($query) : null;
+        $comparison = $negated ? ComparisonOperator::NotEqual : $operator;
+        if ($single === null && ($operator === ComparisonOperator::Equal || $operator === ComparisonOperator::NotEqual)) {
+            $single = $this->filteredSingle($query);
+            if ($single !== null && !$this->compiler->settings->legacy() && ($negated || ($operator === ComparisonOperator::NotEqual && $all))) {
+                $comparison = ComparisonOperator::Equal;
+            }
+        }
+        if ($single !== null) {
+            return $this->compiler->operators->compare($comparison, $operand, $single, $scope, $node, $value);
+        }
+        $comparator = (new Projection\ComparedOutput($this->compiler))->comparator($value->domain(), $plan->domains[0], $query, $operator);
+
+        [$tableless, $filter] = $this->legacy($query, $scope);
+        $output = new Projection\ComparedOutput($this->compiler);
+        return new Quantified($value, new Rows($plan), $operator, $all, $negated, $comparator, $this->compiler->operators->truth(true), $output->constant($query, $scope), $tableless, $filter, $output->skipNull($query));
+    }
+
+    /**
+     * Retains MySQL 5.6's tableless comparison expression and only a constant WHERE.
+     * A NULL comparison remains NULL even when that WHERE excludes the single row.
+     *
+     * @return array{Evaluable|null, Evaluable|null} Inner expression and retained filter
+     */
+    public function legacy(\SqlSemantics\Statement\Query $query, Scope $scope): array
+    {
+        $body = $this->innermost($query);
+        if ($this->compiler->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || !$body instanceof Select || $body->where === null) {
+            return [null, null];
+        }
+        $expression = (new \SqlSemantics\Platform\MySql\Rules\Expression\ScalarReduction())->predicate($body, $this->compiler->settings->release());
+        return $expression === null ? [null, null] : [$this->compiler->compile($expression, $scope), $this->compiler->constancy($body->where) === Constancy::Resolved ? $this->compiler->compile($body->where, $scope) : null];
+    }
+
+    /**
+     * Reduces a modern tableless predicate after a known true WHERE disappears.
+     * Native 8.0 and 8.4 lose the NOT IN / <> ALL wrapper in this case and expose
+     * equality; an absent WHERE and a HAVING clause retain their ordinary roles.
+     */
+    public function filteredSingle(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Statement\Scalar
+    {
+        $body = $this->innermost($query);
+        return $body instanceof Select && $body->where !== null ? (new \SqlSemantics\Platform\MySql\Rules\Expression\ScalarReduction())->predicate($body, $this->compiler->settings->release()) : null;
+    }
+
+    /**
+     * Compiles row IN and its equivalent = ANY or <> ALL forms after semantic validation.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the subquery has a different number of columns
+     */
+    public function membership(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, \SqlSemantics\Statement\Query $query, Scope $scope, bool $negated): Evaluable
+    {
+        $values = $this->compiler->rows->operand($operand, $scope);
+        $domains = $values instanceof \MySqlMemory\Evaluation\Subquery\SingleRow ? $values->domains() : array_map(static fn (Evaluable $value): \MySqlMemory\Typing\Domain => $value->domain(), $values);
+        $plan = $this->compiler->planner->query($query, $scope);
+        if (count($domains) !== count($plan->domains)) {
+            throw QueryError::OperandColumns->error(count($domains));
+        }
+        $comparators = [];
+        foreach ($domains as $index => $domain) {
+            $comparators[] = Comparator::of($domain, $plan->domains[$index], '=', $this->compiler->settings->connectionCollation, $this->compiler->settings->release());
+        }
+
+        $key = $this->membershipKey($query, $comparators);
+        if ($key !== [] && $this->membershipUnknown($operand, $query, $scope)) {
+            return new \MySqlMemory\Evaluation\Leaf\Constant($this->compiler->operators->truth(true), null);
+        }
+        $once = $key !== [] && $this->membershipConstant($operand, $query);
+
+        $membership = new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $key, $once, $once && $this->compiler->settings->legacy(), $once && $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        if ($once) {
+            $scope->preparations[] = $membership;
+        }
+
+        return $membership;
+    }
+
+    /**
+     * Tells whether a legacy keyed membership has an impossible NULL comparison.
+     * MySQL 5.7 applies a statically false inner filter first; 5.6 keeps NULL even then.
+     * A missing key or a runtime filter does not change NULL in either release.
+     * Verified through SQL and EXPLAIN on MySQL 5.6 and 5.7.
+     */
+    public function membershipUnknown(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, \SqlSemantics\Statement\Query $query, Scope $scope): bool
+    {
+        $query = $this->innermost($query);
+        if (!$this->compiler->settings->legacy() || !$this->compiler->constancy($operand)->constant() || !$query instanceof Select) {
+            return false;
+        }
+        foreach ($query->queryInformation()->projection as $field) {
+            if ($field instanceof \SqlSemantics\Statement\Shape\Field && $field->slot->type instanceof \SqlSemantics\Statement\Type\NullOnly) {
+                return $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || !$this->compiler->planner->blocks->empty($query, $scope);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Tells whether a keyed membership result can be retained for the statement.
+     * Function calls in the subquery remain uncached until their execution dependency is known.
+     */
+    public function membershipConstant(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand $operand, \SqlSemantics\Statement\Query $query): bool
+    {
+        return $this->compiler->constancy($operand)->constant()
+            && Constancy::of($query, $this->compiler->facts, release: $this->compiler->settings->release()) !== Constancy::Row
+            && (new Walker())->find($query, VariableAssignment::class) === []
+            && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class) === []
+            && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Call\ClockCall::class) === []
+            && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class) === [];
+    }
+
+    /**
+     * Finds a complete integer primary key in a simple membership query's output.
+     * Its equality restricts candidate rows before the remaining comparisons can convert values.
+     *
+     * @param list<Comparator> $comparators The comparison rules in output order
+     * @return list<int> The output positions of the key, in index order
+     */
+    public function membershipKey(\SqlSemantics\Statement\Query $query, array $comparators): array
+    {
+        $query = $this->innermost($query);
+        if (!$query instanceof Select || !$query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $query->groupBy?->modifier !== null || $query->having !== null || $query->windows !== [] || $query->from->indexHints !== [] || $this->aggregated($query)) {
+            return [];
+        }
+        $table = $query->from->relationInformation()->table;
+        if (!$table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable) {
+            return [];
+        }
+        $columns = $this->membershipColumns($query, $comparators);
+        foreach ($table->table->keys as $key) {
+            $ids = array_map(spl_object_id(...), $key->columns);
+            if ($key->primary && array_diff($ids, array_keys($columns)) === []) {
+                return array_map(static fn (int $id): int => $columns[$id], $ids);
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Maps directly selected integer-comparable columns of the subquery's own table to output positions.
+     *
+     * @param list<Comparator> $comparators The comparison rules in output order
+     * @return array<int, int> Output positions by declared column identity
+     */
+    public function membershipColumns(Select $query, array $comparators): array
+    {
+        $columns = [];
+        foreach ($query->queryInformation()->projection as $field) {
+            if (!$field instanceof \SqlSemantics\Statement\Shape\Field || $field->expression === null || $comparators[$field->position]->mode !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) {
+                continue;
+            }
+            $column = (new \MySqlMemory\Plan\ConstantTables($this->compiler->facts))->column($field->expression);
+            if ($column !== null && $column->relation === $query->from && $column->declaration() !== null) {
+                $columns[spl_object_id($column->declaration())] = $field->position;
+            }
+        }
+
+        return $columns;
+    }
+
+    /**
+     * Tells whether the server reads a scalar subquery as the expression of its one row: a SELECT of one expression without a table, an aggregate, HAVING or a window.
+     */
+    public function substituted(\SqlSemantics\Statement\Query $query): bool
+    {
+        while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null)) {
+            $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
+        }
+        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || $query->having !== null || $query->windows !== [] || count($query->items) !== 1) {
+            return false;
+        }
+        $item = $query->items[0];
+
+        return $item instanceof SelectExpression && !$this->aggregated($item->expression);
+    }
+
+    /**
+     * Answers the expression of a subquery that is one row computed without a table, or null for any other subquery.
+     *
+     * It is a VALUES of one row, or a SELECT of one expression without a table, an aggregate,
+     * a WHERE or HAVING clause, a window or a LIMIT.
+     */
+    public function single(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Statement\Scalar
+    {
+        $query = $this->innermost($query);
+        if ($query instanceof ValuesQuery) {
+            return count($query->rows) === 1 && count($query->rows[0]->values) === 1 && $query->rows[0]->values[0] instanceof \SqlSemantics\Statement\Scalar ? $query->rows[0]->values[0] : null;
+        }
+
+        return $query instanceof Select ? $this->selected($query) : null;
+    }
+
+    /**
+     * Answers the query a subquery evaluates once the parentheses and the query expressions without a WITH or LIMIT clause around it are removed.
+     */
+    public function innermost(\SqlSemantics\Statement\Query $query): \SqlSemantics\Statement\Query
+    {
+        while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null && $query->limit === null)) {
+            $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
+        }
+
+        return $query;
+    }
+
+    /**
+     * Answers the expression of a SELECT of one expression without a table, an aggregate, a WHERE or HAVING clause, a window or a LIMIT, or null for any other SELECT.
+     */
+    public function selected(Select $query): ?\SqlSemantics\Statement\Scalar
+    {
+        if (($query->from !== null && !$query->from instanceof Dual) || $query->where !== null || $query->having !== null || $query->windows !== [] || $query->qualify !== null || $query->limit !== null || $query->into !== null || count($query->items) !== 1) {
+            return null;
+        }
+        $item = $query->items[0];
+
+        return $item instanceof SelectExpression && !$this->aggregated($item->expression) ? $item->expression : null;
+    }
+
+    /**
+     * Tells whether an expression or query holds an aggregate of its own block: a set function, GROUP_CONCAT or JSON_OBJECTAGG.
+     */
+    public function aggregated(\SqlSemantics\Statement\Scalar|\SqlSemantics\Statement\Query $expression): bool
+    {
+        return (new Walker())->find($expression, Aggregate::class, false) !== [] || (new Walker())->find($expression, GroupConcat::class, false) !== [] || (new Walker())->find($expression, JsonObjectAggregate::class, false) !== [];
+    }
+}

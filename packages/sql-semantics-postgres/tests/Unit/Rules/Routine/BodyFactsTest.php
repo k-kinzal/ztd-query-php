@@ -24,16 +24,16 @@ final class BodyFactsTest extends TestCase
     public function testDeriveReportsUtilityStatements(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC DROP TABLE t; SELECT 1 INTO x; (SELECT 1); END', []);
-        self::assertSame(['Relation t does not exist.'], [$operation->facts->diagnostics[1]->message()]);
-        self::assertEquals([new RoutineProblem(RoutineProblemKind::UtilityInBody), new RoutineProblem(RoutineProblemKind::UtilityInBody)], [$operation->facts->diagnostics[0], $operation->facts->diagnostics[2]]);
-        self::assertCount(3, $operation->facts->diagnostics);
+        self::assertSame(['Relation t does not exist.'], [$operation->diagnostics()[1]->message()]);
+        self::assertEquals([new RoutineProblem(RoutineProblemKind::UtilityInBody), new RoutineProblem(RoutineProblemKind::UtilityInBody)], [$operation->diagnostics()[0], $operation->diagnostics()[2]]);
+        self::assertCount(3, $operation->diagnostics());
         self::assertSame([], $operation->declarations());
     }
 
     public function testFirstFindsTheSelectionOfANestedQuery(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE FUNCTION f() RETURNS int4 BEGIN ATOMIC (SELECT 1 UNION SELECT 2); END');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateFunction::class, $statement);
         self::assertInstanceOf(AtomicBody::class, $statement->body);
         $query = $statement->body->statements[0];

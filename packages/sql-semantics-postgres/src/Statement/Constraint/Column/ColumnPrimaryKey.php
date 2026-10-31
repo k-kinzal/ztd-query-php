@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A PRIMARY KEY column constraint: the column is unique and never NULL.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnPrimaryKey implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Definition> The storage parameters of the index
@@ -40,7 +39,7 @@ final class ColumnPrimaryKey implements Constraint
      * @param Name|null $tablespace The tablespace of the index
      * @param Name|null $name The constraint name
      */
-    public function __construct(array $options = [], public readonly ?Name $tablespace = null, public readonly ?Name $name = null)
+    public function __construct(array $options = [], public readonly ?Name $tablespace = null, public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, Definition::class, 'Index storage parameters are definitions.');
     }

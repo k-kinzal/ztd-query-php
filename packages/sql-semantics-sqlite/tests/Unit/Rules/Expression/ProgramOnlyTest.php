@@ -25,7 +25,7 @@ final class ProgramOnlyTest extends TestCase
     public function testOutsideProgramReportsARaiseFunction(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('SELECT (SELECT RAISE(IGNORE))')->statement;
+        $statement = $semantics->analyze('SELECT (SELECT RAISE(IGNORE))');
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->outsideProgram($statement, $derivation);
         $diagnostics = $derivation->facts()->diagnostics;
@@ -39,7 +39,7 @@ final class ProgramOnlyTest extends TestCase
     public function testOutsideProgramReportsNothingWithoutRaise(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('SELECT ?, abs(1)')->statement;
+        $statement = $semantics->analyze('SELECT ?, abs(1)');
         $derivation = new Derivation($semantics->context());
         (new ProgramOnly())->outsideProgram($statement, $derivation);
 
@@ -52,10 +52,10 @@ final class ProgramOnlyTest extends TestCase
         $query = $semantics->analyze('SELECT RAISE(IGNORE)');
         $trigger = $semantics->analyze("CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT RAISE(ABORT, 'x'); END");
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
-        self::assertSame([], $trigger->facts->diagnostics);
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->diagnostics()[0]->rule);
+        self::assertSame([], $trigger->diagnostics());
     }
 
     public function testInsideProgramReportsABindParameterOnce(): void
@@ -87,17 +87,17 @@ final class ProgramOnlyTest extends TestCase
         $body = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT ?; SELECT ?2; END');
         $condition = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t WHEN ?1 = 1 BEGIN SELECT 1; END');
 
-        self::assertCount(1, $body->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $body->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::ParameterInTrigger, $body->facts->diagnostics[0]->rule);
-        self::assertCount(1, $condition->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $condition->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::ParameterInTrigger, $condition->facts->diagnostics[0]->rule);
+        self::assertCount(1, $body->diagnostics());
+        self::assertInstanceOf(Misuse::class, $body->diagnostics()[0]);
+        self::assertSame(MisuseRule::ParameterInTrigger, $body->diagnostics()[0]->rule);
+        self::assertCount(1, $condition->diagnostics());
+        self::assertInstanceOf(Misuse::class, $condition->diagnostics()[0]);
+        self::assertSame(MisuseRule::ParameterInTrigger, $condition->diagnostics()[0]->rule);
     }
 
     public function testHoldsFindsANodeOfAClassAnywhereInTheStructure(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT RAISE(IGNORE)) FROM t WHERE 1 IN (SELECT ?)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT RAISE(IGNORE)) FROM t WHERE 1 IN (SELECT ?)');
         $rules = new ProgramOnly();
 
         self::assertTrue($rules->holds($statement, Raise::class));

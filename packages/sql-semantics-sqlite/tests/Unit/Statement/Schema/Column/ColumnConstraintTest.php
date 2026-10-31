@@ -24,16 +24,16 @@ final class ColumnConstraintTest extends TestCase
     public function testDeriveConstraintDerivesEachKindOfOperandInItsOwnScope(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a CHECK (rowid > 0), b AS (rowid), c DEFAULT (a))', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertContainsOnlyInstancesOf(ColumnConstraint::class, [$statement->columns[0]->constraints[0], $statement->columns[1]->constraints[0], $statement->columns[2]->constraints[0]]);
         self::assertInstanceOf(ColumnCheck::class, $statement->columns[0]->constraints[0]);
         self::assertInstanceOf(Generated::class, $statement->columns[1]->constraints[0]);
         self::assertInstanceOf(DefaultExpression::class, $statement->columns[2]->constraints[0]);
-        self::assertCount(3, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[1]);
-        self::assertInstanceOf(DefaultNotConstant::class, $operation->facts->diagnostics[2]);
+        self::assertCount(3, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[1]);
+        self::assertInstanceOf(DefaultNotConstant::class, $operation->diagnostics()[2]);
     }
 }

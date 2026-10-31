@@ -14,9 +14,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Deallocate;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Execute;
 use SqlSemantics\Platform\MySql\Statement\Dml\Prepared\Prepare;
 use SqlSemantics\Platform\MySql\Statement\Dml\ProcedureCall;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers DO, CALL, IMPORT TABLE and the prepared statement commands.
@@ -45,21 +44,38 @@ final class InvocationRule
     }
 
     /**
+     * Answers a DO statement, refusing a standalone one that evaluates a wildcard: the server reports
+     * "No tables used" once the statement is read, while a stored program body keeps it.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone DO evaluates a wildcard
+     */
+    public function checked(Evaluation $evaluation, Form $form): Evaluation
+    {
+        $problem = $this->lowering->stored() ? null : $evaluation->problem();
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        return $evaluation;
+    }
+
+    /**
      * Lowers a node of `do` or `do_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone DO evaluates a wildcard
      */
     public function evaluation(Form $form): Evaluation
     {
         switch ($form->signature) {
             case 'do: DO_SYM expr_list':
-                return new Evaluation(array_map(static fn (Scalar $expression): SelectExpression => new SelectExpression($expression), $this->lowering->expressions->expressions($form->node(1))));
+                return $this->checked(new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1))), $form);
             case 'do_stmt: DO_SYM empty_select_options select_item_list':
                 $this->lowering->options->skip($form->node(1));
 
-                return new Evaluation($this->lowering->queries->selectItems($form->node(2)));
+                return $this->checked(new Evaluation((new EvaluationItems($this->lowering))->read($form->node(2))), $form);
             case 'do_stmt: DO_SYM select_item_list':
-                return new Evaluation($this->lowering->queries->selectItems($form->node(1)));
+                return $this->checked(new Evaluation((new EvaluationItems($this->lowering))->read($form->node(1))), $form);
             default:
                 throw ImplementationGap::production($form);
         }
@@ -76,7 +92,7 @@ final class InvocationRule
             throw ImplementationGap::production($form);
         }
 
-        return new ProcedureCall($this->lowering->names->qualified($form->node(1)), $this->arguments($form->node(2)));
+        return new ProcedureCall($this->lowering->names->qualified($form->node(1)), $this->arguments($form->node(2)), parentheses: $form->node(2)->children === [] ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
     }
 
     /**
@@ -151,7 +167,7 @@ final class InvocationRule
                     throw ImplementationGap::production($verb);
                 }
 
-                return new Deallocate($this->lowering->names->identifier($form->node(2)));
+                return new Deallocate($this->lowering->names->identifier($form->node(2)), word: \SqlSemantics\Platform\MySql\Statement\Dml\Prepared\DeallocationWord::from(strtoupper($verb->token(0)->text)));
             default:
                 throw ImplementationGap::production($form);
         }

@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -37,15 +36,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class JsonArrayQuery implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The query whose rows become the elements
      * @param JsonFormat|null $format The format written for the query's values
      * @param JsonReturning|null $returning The RETURNING clause
      */
-    public function __construct(public readonly Query $query, public readonly ?JsonFormat $format = null, public readonly ?JsonReturning $returning = null)
+    public function __construct(public readonly Query $query, public readonly ?JsonFormat $format = null, public readonly ?JsonReturning $returning = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

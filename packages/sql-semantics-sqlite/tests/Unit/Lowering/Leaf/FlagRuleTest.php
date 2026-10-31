@@ -19,9 +19,9 @@ final class FlagRuleTest extends TestCase
     public function testTemporaryIsTrueForTempAndTemporaryAndFalseWithoutEither(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $temp = $semantics->analyze('CREATE TEMP TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $temporary = $semantics->analyze('CREATE TEMPORARY TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
+        $temp = $semantics->analyze('CREATE TEMP TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
+        $temporary = $semantics->analyze('CREATE TEMPORARY TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $plain);
         self::assertInstanceOf(CreateTrigger::class, $temp);
@@ -41,8 +41,8 @@ final class FlagRuleTest extends TestCase
     public function testIfNotExistsIsTrueOnlyWhenTheClauseIsWritten(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $guarded = $semantics->analyze('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END')->statement;
+        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
+        $guarded = $semantics->analyze('CREATE TRIGGER IF NOT EXISTS tr INSERT ON t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $plain);
         self::assertInstanceOf(CreateTrigger::class, $guarded);

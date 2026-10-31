@@ -23,8 +23,8 @@ final class RepairTableTest extends TestCase
 
     public function testDeriveStatementReportsATableNamedTwice(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('REPAIR TABLE t, db.u, t');
+        $operation = (new Semantics(Dialect::MySql, searchPath: new \SqlSemantics\Contract\SearchPath('db')))->analyze('REPAIR TABLE t, db.u, db.t');
 
-        self::assertInstanceOf(NonUniqueTable::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(NonUniqueTable::class, $operation->diagnostics()[0]);
     }
 }

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RETURNING type [FORMAT JSON ...]`: the type an SQL/JSON function returns.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonReturning implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $type The type returned
      * @param JsonFormat|null $format The format written
      */
-    public function __construct(public readonly TypeName $type, public readonly ?JsonFormat $format = null)
+    public function __construct(public readonly TypeName $type, public readonly ?JsonFormat $format = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

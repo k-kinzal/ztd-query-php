@@ -9,6 +9,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
@@ -17,16 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
+use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * One query block: SELECT with its modifiers, select list, FROM clause, filters, grouping, windows, ordering, limit, INTO and locking clauses.
@@ -40,7 +41,8 @@ use SqlSemantics\Statement\Statement;
  * as one. An INTO clause after the query clauses needs one of them, because
  * otherwise it is written as the INTO after the select list. A block of a
  * 5.6 subquery may write its ORDER BY and LIMIT after its locking clauses,
- * or a LIMIT after its own LIMIT that replaces it (LateOrdering).
+ * or a LIMIT after its own LIMIT that replaces it (LateOrdering). The hints of
+ * the comment written right after SELECT are kept with the block.
  *
  * Rule: MYSQL-SELECT-001. The facts are derived by MYSQL-SELECT-FACTS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
@@ -49,16 +51,17 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t WHERE a > 1 GROUP BY a, b HAVING a > 2 ORDER BY a LIMIT 3');
- *     [count($query->statement->items), $query->statement->where !== null, $query->statement->having !== null, count($query->statement->orderBy)] // => [2, true, true, 1]
+ *     [count($query->query->items), $query->query->where !== null, $query->query->having !== null, count($query->query->orderBy)] // => [2, true, true, 1]
  * @example Depending on a table the context does not declare
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t');
  *     $query->field('a')->type instanceof \SqlSemantics\Statement\Type\Dependent // => true
  * @example Refusing a star after the first item
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')), new \SqlSemantics\Platform\MySql\Statement\Query\Star()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Select implements Statement, Query, Selection
+final class Select implements Query, Selection
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SelectOption> The modifiers in written order
@@ -76,7 +79,7 @@ final class Select implements Statement, Query, Selection
     public readonly array $windows;
 
     /**
-     * @var list<OrderItem> The ORDER BY items in written order
+     * @var list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> The ORDER BY items in written order
      */
     public readonly array $orderBy;
 
@@ -86,26 +89,32 @@ final class Select implements Statement, Query, Selection
     public readonly array $locking;
 
     /**
+     * @var list<OptimizerHint> The hints of the comment written right after SELECT, in written order
+     */
+    public readonly array $hints;
+
+    /**
      * @param list<SelectOption> $options The modifiers in written order
      * @param list<Node> $items The select list of expressions and qualified stars; at least one item, an unqualified star only first
-     * @param Relation|null $from The FROM clause
+     * @param TableSource|Dual|null $from The FROM clause
      * @param Scalar|null $where The row predicate
      * @param Grouping|null $groupBy The GROUP BY clause
      * @param Scalar|null $having The group predicate
      * @param list<WindowDefinition> $windows The named windows
      * @param Scalar|null $qualify The window predicate of QUALIFY
-     * @param list<OrderItem> $orderBy The ORDER BY items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The ORDER BY items
      * @param Limit|null $limit The LIMIT clause
      * @param ProcedureAnalyse|null $procedure The PROCEDURE ANALYSE clause of the 5.x grammars
      * @param list<LockingClause> $locking The locking clauses
      * @param IntoDestination|null $into The INTO destination
      * @param IntoPosition|null $intoPosition Where INTO is written; given exactly when there is a destination
      * @param LateOrdering|null $late The ORDER BY and LIMIT a 5.6 subquery writes after the locking clauses or the LIMIT of the block
+     * @param list<OptimizerHint> $hints The hints of the comment written right after SELECT, in written order
      */
     public function __construct(
         array $options,
         array $items,
-        public readonly ?Relation $from = null,
+        public readonly TableSource|Dual|null $from = null,
         public readonly ?Scalar $where = null,
         public readonly ?Grouping $groupBy = null,
         public readonly ?Scalar $having = null,
@@ -118,16 +127,18 @@ final class Select implements Statement, Query, Selection
         public readonly ?IntoDestination $into = null,
         public readonly ?IntoPosition $intoPosition = null,
         public readonly ?LateOrdering $late = null,
+        array $hints = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
-        $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
-        $list = [];
-        foreach (Check::listOf($items, Node::class, 'A selection projects at least one item.', 1) as $position => $item) {
-            Check::input($item instanceof SelectExpression || $item instanceof TableWildcard || ($item instanceof Star && $position === 0), 'A select list item is an expression or a qualified star, and an unqualified star comes first.');
-            $list[] = $item;
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
         }
-        $this->items = $list;
+        $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a query block are optimizer hints.');
+        $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
+        $this->items = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SelectItems())->checked($items, 'A selection projects at least one item.');
         $this->windows = Check::listOf($windows, WindowDefinition::class, 'The WINDOW clause holds window definitions.');
-        $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
+        $this->orderBy = (new SortScopes())->items($orderBy);
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses of a selection are locking clauses.');
         (new SortScopes())->check([...$this->orderBy, ...($groupBy === null ? [] : $groupBy->items)]);
         Check::input(($into === null) === ($intoPosition === null), 'An INTO destination is written at exactly one position.');
@@ -136,6 +147,9 @@ final class Select implements Statement, Query, Selection
         Check::input($late === null || $late->orderBy === [] || ($this->orderBy === [] && $limit === null), 'An ORDER BY written after a block that orders or limits its rows orders the rows of the block.');
         Check::input($late === null || $this->locking !== [] || $limit !== null, 'An ORDER BY or LIMIT of the block is written in place unless locking clauses or a LIMIT of the block precede it.');
         Check::input($late === null || ($into === null && $procedure === null), 'A block with a late ordering has no INTO or PROCEDURE ANALYSE.');
+        Check::input($late === null || $this->orderBy === [] || ($from !== null && !$from instanceof Dual), 'A late clause after an ordered block requires an ordinary FROM relation.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated([$from]) === null, 'A FROM clause names each relation once.');
     }
 
     /**
@@ -159,18 +173,9 @@ final class Select implements Statement, Query, Selection
     /**
      * Answers the input relation.
      */
-    public function input(): ?Relation
+    public function input(): TableSource|Dual|null
     {
         return $this->from;
-    }
-
-    /**
-     * Derives the selection as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        Check::input($this->late === null, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
-        $derivation->output($derivation->query($this, $derivation->environment()));
     }
 
     /**
@@ -189,6 +194,10 @@ final class Select implements Statement, Query, Selection
     public function render(Output $out): void
     {
         $out->keyword('SELECT');
+        $comment = (new HintComment($this->hints))->text();
+        if ($comment !== null) {
+            $out->comment($comment);
+        }
         foreach ($this->options as $option) {
             $out->keyword($option->value);
         }

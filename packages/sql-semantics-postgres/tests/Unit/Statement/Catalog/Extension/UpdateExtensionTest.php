@@ -19,6 +19,6 @@ final class UpdateExtensionTest extends TestCase
 
     public function testDeriveStatementReportsTwoVersions(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION hstore UPDATE TO \'2.0\' TO v')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION hstore UPDATE TO \'2.0\' TO v')->diagnostics()[0]->message());
     }
 }

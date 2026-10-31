@@ -24,6 +24,19 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 #[Medium]
 final class PrimaryRuleTest extends TestCase
 {
+    public function testPairedRecognizesAdjacentSymbolicNegations(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $rule = new PrimaryRule($lowering);
+        $adjacent = $lowering->form($platform->parser($profile)->parse('SELECT !!1')->find('simple_expr')[0]);
+        $separate = $lowering->form($platform->parser($profile)->parse('SELECT ! !1')->find('simple_expr')[0]);
+
+        self::assertTrue($rule->paired($adjacent, $lowering->form($adjacent->node(1))));
+        self::assertFalse($rule->paired($separate, $lowering->form($separate->node(1))));
+    }
+
     public function testSimpleExpressionAppliesCollateAndConcatenationFromTheLeft(): void
     {
         $platform = new Platform();
@@ -45,6 +58,7 @@ final class PrimaryRuleTest extends TestCase
 
         self::assertInstanceOf(Unary::class, $expression);
         self::assertSame(UnaryOperator::Not, $expression->operator);
+        self::assertTrue($expression->keyword);
     }
 
     public function testLeafLowersAColumnAndAParameter(): void
@@ -54,6 +68,7 @@ final class PrimaryRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $rule = new PrimaryRule($lowering);
         $tree = $platform->parser($profile)->parse('SELECT a = ?');
+        $lowering->parameters($tree->tokens());
 
         self::assertInstanceOf(ColumnUse::class, $rule->leaf('column', $tree->find('simple_ident')[0]));
         self::assertInstanceOf(Parameter::class, $rule->leaf('parameter', $tree->find('param_marker')[0]));
@@ -68,5 +83,16 @@ final class PrimaryRuleTest extends TestCase
         $this->expectExceptionMessage('No semantic rule is implemented for: comp_op: EQ');
 
         (new PrimaryRule($lowering))->negation($platform->parser($profile)->parse('SELECT 1 = 2')->find('comp_op')[0]);
+    }
+
+    public function testUnaryRetainsADeferredOperand(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT CAST(1 AT TIME ZONE '+00:00' AS DATETIME)")->find('simple_expr')[0];
+        $value = (new PrimaryRule($lowering))->unary(UnaryOperator::Minus, $node, false);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary::class, $value);
+        self::assertSame(UnaryOperator::Minus, $value->operator);
     }
 }

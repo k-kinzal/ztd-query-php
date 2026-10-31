@@ -29,8 +29,8 @@ final class MisuseTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT *');
 
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::StarWithoutTables, $query->facts->diagnostics[0]->rule);
-        self::assertSame('no tables specified', $query->facts->diagnostics[0]->message());
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::StarWithoutTables, $query->diagnostics()[0]->rule);
+        self::assertSame('no tables specified', $query->diagnostics()[0]->message());
     }
 }

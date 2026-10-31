@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the encodings of a conversion
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE DEFAULT CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc");
- *     [$operation->statement->isDefault, $operation->statement->source->value, $operation->statement->target->value] // => [true, 'UTF8', 'LATIN1']
+ *     [$operation->isDefault, $operation->source->value, $operation->target->value] // => [true, 'UTF8', 'LATIN1']
  */
-final class CreateConversion implements Statement
+final class CreateConversion extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $isDefault Whether DEFAULT is written
@@ -40,7 +39,12 @@ final class CreateConversion implements Statement
         public readonly StringConstant $source,
         public readonly StringConstant $target,
         public readonly DottedName $function,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

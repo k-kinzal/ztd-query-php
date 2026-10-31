@@ -14,7 +14,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownStorage;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A generated column constraint: the expression that computes the column.
@@ -37,17 +36,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a generated column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b GENERATED ALWAYS AS (a + 1) VIRTUAL)');
- *     [$create->statement->columns[1]->constraints[0]->storage(), $create->toString()] // => [\SqlSemantics\Platform\Sqlite\Statement\Schema\Column\GeneratedStorage::Virtual, 'CREATE TABLE t (a, b GENERATED ALWAYS AS (a + 1) VIRTUAL)']
+ *     [$create->columns[1]->constraints[0]->storage(), $create->toString()] // => [\SqlSemantics\Platform\Sqlite\Statement\Schema\Column\GeneratedStorage::Virtual, 'CREATE TABLE t (a, b GENERATED ALWAYS AS (a + 1) VIRTUAL)']
  */
 final class Generated implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The expression that computes the column
      * @param Word|null $word The word written after the expression
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Word $word = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?Word $word = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($word?->quote !== WordQuote::Single, 'The word after a generated column expression is an identifier, not a string.');
     }

@@ -9,6 +9,7 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowListing;
@@ -18,8 +19,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW COLUMNS (SHOW FIELDS): the columns of a table or view.
@@ -33,23 +32,38 @@ use SqlSemantics\Statement\Statement;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-columns.html.
  * Status: Implemented.
  *
+ * @example Rejecting an empty database operand
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), database: new \SqlSemantics\Statement\Identifier\Name('')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW FULL FIELDS IN t FROM shop LIKE 'a%'");
- *     [count($show->fields()), $show->toString()] // => [9, "SHOW FULL COLUMNS FROM t FROM shop LIKE 'a%'"]
+ *     [count($show->fields()), $show->toString()] // => [9, "SHOW FULL FIELDS IN t FROM shop LIKE 'a%'"]
  */
-final class ShowColumns implements Statement, Relation
+final class ShowColumns extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param InspectedTable $table The table
      * @param ?ShowListing $listing The FULL and EXTENDED keywords
      * @param ?Name $database The database written after FROM or IN; null for the current database
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
+     * @param bool $tableIn Whether IN introduces the table
+     * @param bool $databaseIn Whether IN introduces the database
+     * @param bool $fieldsKeyword Whether FIELDS is written instead of COLUMNS
      */
-    public function __construct(public readonly InspectedTable $table, public readonly ?ShowListing $listing = null, public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null)
+    public function __construct(public readonly InspectedTable $table, public readonly ?ShowListing $listing = null, public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $tableIn = false, public readonly bool $databaseIn = false, public readonly bool $fieldsKeyword = false)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        \SqlSemantics\Diagnostic\Check::input($database?->value !== '', 'A SHOW database operand is nonempty.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -78,9 +92,9 @@ final class ShowColumns implements Statement, Relation
         if ($this->listing !== null) {
             $out->keyword(...explode(' ', $this->listing->value));
         }
-        $out->keyword('COLUMNS', 'FROM')->node($this->table);
+        $out->keyword($this->fieldsKeyword ? 'FIELDS' : 'COLUMNS', $this->tableIn ? 'IN' : 'FROM')->node($this->table);
         if ($this->database !== null) {
-            $out->keyword('FROM')->name($this->database, NameUse::Qualifier);
+            $out->keyword($this->databaseIn ? 'IN' : 'FROM')->name($this->database, NameUse::Qualifier);
         }
         $out->node($this->filter);
     }

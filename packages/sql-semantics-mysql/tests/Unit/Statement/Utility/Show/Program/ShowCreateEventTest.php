@@ -18,12 +18,17 @@ final class ShowCreateEventTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE EVENT db.x');
-        self::assertInstanceOf(ShowCreateEvent::class, $show->statement);
+        self::assertInstanceOf(ShowCreateEvent::class, $show);
         self::assertSame('Event', $show->field(0)->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void
     {
         self::assertSame('SHOW CREATE EVENT db.x', (new Semantics(Dialect::MySql))->analyze('SHOW CREATE EVENT db.x')->toString());
+    }
+    public function testValueRejectsACatalogQualifier(): void
+    {
+        $this->expectExceptionMessage('An event name has at most a database qualifier.');
+        new ShowCreateEvent(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('e'), new \SqlSemantics\Statement\Identifier\Name('d'), new \SqlSemantics\Statement\Identifier\Name('catalog')));
     }
 }

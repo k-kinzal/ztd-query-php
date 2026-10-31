@@ -18,7 +18,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -40,7 +39,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class JsonObjectConstructor implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<JsonPair> The key and value pairs
@@ -53,8 +53,11 @@ final class JsonObjectConstructor implements Scalar, OutputNaming
      * @param JsonUniqueKeys|null $unique The uniqueness clause written
      * @param JsonReturning|null $returning The RETURNING clause
      */
-    public function __construct(array $pairs, public readonly ?JsonNullHandling $nulls = null, public readonly ?JsonUniqueKeys $unique = null, public readonly ?JsonReturning $returning = null)
+    public function __construct(array $pairs, public readonly ?JsonNullHandling $nulls = null, public readonly ?JsonUniqueKeys $unique = null, public readonly ?JsonReturning $returning = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->pairs = Check::listOf($pairs, JsonPair::class, 'JSON_OBJECT takes key and value pairs.');
         Check::input($this->pairs !== [] || ($nulls === null && $unique === null), 'JSON_OBJECT without pairs takes no NULL or uniqueness clause.');
         $last = $this->pairs === [] ? null : $this->pairs[count($this->pairs) - 1]->value;

@@ -24,6 +24,7 @@ final class CommonTablesTest extends TestCase
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
         $outer = $derivation->environment();
         $with = new class () implements CommonTables {
+            use \SqlSemantics\Statement\Semantics\Occurrence;
             public function deriveCommonTables(Derivation $derivation, Environment $outer): Environment
             {
                 return new Environment($derivation->context, $outer);

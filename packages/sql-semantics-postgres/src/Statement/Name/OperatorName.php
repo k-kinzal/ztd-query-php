@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The name of an operator, optionally schema-qualified with the `OPERATOR(...)` syntax.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the operator of a comparison
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT a FROM t WHERE a != 1');
- *     $query->statement->where->operator->name->value // => '<>'
+ *     $query->where->operator->name->value // => '<>'
  */
 final class OperatorName implements OptionArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The schema qualifiers written before the operator, outermost first
@@ -44,7 +43,7 @@ final class OperatorName implements OptionArgument
      * @param list<Name> $qualifiers The schema qualifiers, outermost first
      * @param bool $explicit Whether the operator is written with the `OPERATOR(...)` syntax
      */
-    public function __construct(public readonly Name $name, array $qualifiers = [], public readonly bool $explicit = false)
+    public function __construct(public readonly Name $name, array $qualifiers = [], public readonly bool $explicit = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->qualifiers = Check::listOf($qualifiers, Name::class, 'Operator qualifiers are names.');
         Check::input(preg_match('/\A[-+*\/<>=~!@#%^&|`?]{1,63}\z/', $name->value) === 1, 'An operator name is 1 to 63 operator characters.');

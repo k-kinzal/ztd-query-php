@@ -65,7 +65,7 @@ final class GeneratedColumns
     public function referenced(Derivation $derivation, Scalar $expression): ?Name
     {
         $facts = $derivation->facts();
-        foreach (array_reverse((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($expression)) as $object) {
+        foreach (array_reverse((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($expression, bindings: false)) as $object) {
             $resolution = $object instanceof Scalar && $facts->covers($object) ? $facts->scalar($object)->resolution : null;
             $column = $resolution instanceof ResolvedColumn ? $resolution->declaration() : null;
             if ($column !== null && $column->generated) {

@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query;
  * @visibility public
  * @example Reading the operator of a compound query
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 UNION ALL SELECT 2');
- *     $query->statement->steps[0]->operator // => \SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator::UnionAll
+ *     $query->steps[0]->operator // => \SqlSemantics\Platform\Sqlite\Statement\Query\CompoundOperator::UnionAll
  */
 enum CompoundOperator: string
 {

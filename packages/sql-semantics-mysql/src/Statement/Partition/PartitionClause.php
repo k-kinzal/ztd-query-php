@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PARTITION BY method [PARTITIONS n] [SUBPARTITION BY …] [(definitions)]`: how a table is partitioned.
@@ -33,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionClause implements Partitioning
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionDefinition> The partition definitions in order
@@ -51,8 +50,11 @@ final class PartitionClause implements Partitioning
         public readonly ?Numeral $partitions,
         public readonly ?Subpartitioning $subpartitioning,
         array $definitions,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'Partition definitions are a list of partition definitions.');
+        Check::input($partitions === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($partitions) || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($partitions, '0'), 'The explicit partition count is positive.');
+        (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions, $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count));
     }
 
     /**
@@ -60,10 +62,25 @@ final class PartitionClause implements Partitioning
      */
     public function derivePartitioning(Derivation $derivation, Environment $scope): void
     {
+        if ($this->partitions !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->partitions);
+        }
         $this->method->deriveMethod($derivation, $scope);
         $this->subpartitioning?->deriveSubpartitioning($derivation, $scope);
         foreach ($this->definitions as $definition) {
             $definition->derivePartition($derivation);
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->problem($definition, $this->method, null);
+            if ($problem !== null) {
+                $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization), $definition);
+            }
+        }
+        $kind = $this->method instanceof Method\ExpressionMethod || $this->method instanceof Method\ColumnsMethod || $this->method instanceof Method\DeferredMethod ? $this->method->kind : null;
+        if ($this->definitions === [] && $kind !== null) {
+            $problem = new Problem\MissingPartitions($kind);
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
         }
     }
 

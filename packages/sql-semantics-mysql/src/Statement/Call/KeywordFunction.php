@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
 /**
  * The built-in functions whose name is a keyword of the grammar and whose arguments are a plain list of expressions.
  *
- * Each case holds the keyword the function is written with. The grammar
+ * Each case holds the canonical function identity; KeywordAlias retains a chosen synonym. The grammar
  * names them in function_call_keyword, function_call_nonkeyword,
  * function_call_conflict, geometry_function and grouping_operation. SUBSTR
  * and MID are the keyword SUBSTRING, SCHEMA() is DATABASE(), SESSION_USER()
@@ -97,23 +97,20 @@ enum KeywordFunction: string
     public function result(): string
     {
         return match ($this) {
-            self::CurrentUser, self::User, self::Charset, self::Collation => 'TN',
+            self::CurrentUser, self::User, self::Charset, self::Collation, self::Database, self::Format, self::Password => 'TY',
             self::Date => 'AY',
-            self::Day, self::Hour, self::Minute, self::Month, self::Second, self::Year, self::Microsecond, self::Quarter, self::Week, self::Contains => 'IY',
-            self::Insert, self::Left, self::Right, self::Replace, self::Reverse, self::Substring => 'SP',
-            self::Interval, self::RowCount, self::Grouping => 'IN',
+            self::Day, self::Hour, self::Minute, self::Month, self::Second, self::Year, self::Microsecond, self::Quarter, self::Week, self::Contains, self::Grouping => 'IY',
+            self::Insert, self::Left, self::Right, self::Replace, self::Reverse, self::Substring, self::Repeat => 'SY',
+            self::Interval, self::RowCount => 'IN',
             self::Time => 'MY',
-            self::Timestamp => 'EY',
+            self::Timestamp, self::AddDate, self::SubDate => 'EY',
             self::Ascii => 'IP',
             self::Coalesce => '+C',
-            self::Database, self::Format, self::Password => 'TY',
             self::If => 'ZR',
             self::Mod => 'OY',
             self::OldPassword => 'TP',
-            self::Repeat => 'SY',
             self::Truncate => 'HP',
             self::GeometryCollection, self::LineString, self::MultiLineString, self::MultiPoint, self::MultiPolygon, self::Point, self::Polygon => 'GY',
-            self::AddDate, self::SubDate => 'EY',
             self::Log => 'DY',
         };
     }

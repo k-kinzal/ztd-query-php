@@ -1,6 +1,6 @@
 # Rendering
 
-`Operation::toString()` answers SQL rendered from the statement structure. It never answers the analyzed text, and the model keeps no copy of it. The text is produced once, when the operation is constructed, and is checked before the operation is returned. Written text is kept in one place only, a [spelled region](#spelled-regions): the expression of a result column that the database names after its text.
+`AnalyzedStatement::toString()` reconstructs SQL from the concrete statement and its operands. The result keeps no original parser tree or SQL-string cache. Analysis and direct semantic construction do not invoke the renderer or parse its output. Result-column spellings that affect column names are described under [spelled regions](#spelled-regions).
 
 ## How the text is produced
 
@@ -27,7 +27,7 @@ $semantics->analyze('SELECT 1 + (2 * 3)')->toString(); // => 'SELECT 1 + (2 * 3)
 
 The result is deterministic: the same structure always gives the same text. It is not a formatter; use [SQL Formatter](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-formatter/README.md) for layout.
 
-Only an operation has `toString()`. A part of a structure, such as an expression or a correlated subquery, is not a statement root, and its rendering would not be a safe SQL fragment for every position, so it is not offered.
+Standalone analyzed statement values implement `toString()`. A part of a structure, such as an expression or a correlated subquery, is not a statement root, and its rendering would not be a safe SQL fragment for every position, so it is not offered.
 
 ### Names
 
@@ -50,7 +50,7 @@ use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
 ### Literals
 
-Literals hold their exact value: digits as strings, decoded text, hexadecimal digits. They are never converted through a PHP float. A literal is written in a spelling of that value that the database reads back as the same value.
+Literals hold their exact value: digits as strings, decoded text, hexadecimal digits. They are never converted through a PHP float. A literal is written in a spelling of that value that the database reads back as the same value. MySQL `RadixLiteral`, `Text` and `Numeral` also retain their `RadixNotation`: quoted or prefixed hexadecimal and bit forms, including the letter case of the quoted prefix. The digits and leading zeroes remain separate from this notation.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -63,27 +63,19 @@ use SqlSemantics\Platform\Sqlite\Dialect as Sqlite;
 
 ## Checks before publication
 
-An operation is returned only after the following checks pass. They run on every analysis and every construction, independently of PHP assertion settings. A failure throws `InvariantViolation` (or `InvalidConstruction` for an input outside the closed value domain), and the candidate is discarded; it is never returned in a degraded form.
+Construction validates the admitted value graph and resolves every expression, relation and query occurrence. Public operands are readonly; local binding slots are completed once. Constructor violations are reported as `InvalidConstruction`, and missing semantic implementations remain failures rather than SQL outcomes.
 
-Every construction, `new Operation(...)` and `analyze()` alike:
+`analyze()` also checks that every input leaf retained by lowering is reachable in the semantic structure. This check runs against the temporary lowering result. Neither the parser tree nor the temporary source map becomes part of the published statement.
 
-1. **Value audit.** Every value reachable from the structure, and from the facts, is an enum case or an instance of a final class of the closed semantic namespaces that uses the `SqlSemantics\Statement\Snapshot` trait (which refuses cloning, dynamic properties and serialization), with initialised readonly properties only, holding no float, closure, resource or PHP reference. A node may occur at one position only.
-2. **Fact completeness.** Every expression, relation and query of the structure received exactly one fact. A rule cannot silently skip a region.
-3. **Spellings.** When the structure holds [layouts](#spelled-regions), the text as the layouts spell it and the text as the structure renders it without them are read by the lexer of the profile, and must have the same tokens: as many, and each written token an equivalent spelling of the rendered one.
-4. **Structure equivalence.** The rendered text is parsed with the same grammar release and lowered by the same rules, and the result must equal the structure operand by operand: the same classes, the same scalar values and enum cases, layouts included, and lists of the same length and order, recursively. This compares actual operands, not a fingerprint or text.
-
-`analyze()` additionally checks the model against the input:
-
-5. **Leaf embedding.** Every operand leaf lowered from the input (identifiers, literals, parameter markers, operators) must be reachable, by object identity, in the published structure. A rule cannot read an operand and then drop it.
-6. **Token correspondence.** The significant tokens of the input and of the rendered text must be equal, in order. Tokens are compared by key: keywords and punctuation by their terminal, names by their decoded value, literals by their exact decoded value. Whitespace and comments are not tokens.
-
-Checks 4 and 6 together tie the input, the structure and the rendered text to each other: the rendered text has the same structure as the model, and carries the same significant tokens as the input.
+Reconstruction is checked independently: SQL Faker generates input, SQL Semantics analyzes and renders it, and PHPFuzzer compares both strings after SQL Formatter's Compact formatting. Generated semantic values are separately passed directly to MemoryDB through Eris properties. The real-MySQL differential target compares execution replies. These are searches for counterexamples, not runtime reparsing gates or proofs of agreement for every SQL input.
 
 ### Noise tables
 
-Some tokens have no influence on meaning in the production they appear in: `WORK` or `TRANSACTION` after `BEGIN`, a statement terminator, in PostgreSQL an optional `AS` before an alias. Each database package lists such positions in noise tables (the classes of the `Rules\Noise` namespace in the MySQL and PostgreSQL packages, `Rules\Noise` and `Rules\DefinitionNoise` in the SQLite package), as pairs of a grammar production and a token position, each with a one-line reason and a citation of the database manual. Only these positions are skipped by the token correspondence check. A token that changes meaning must not be listed; if the writer cannot reproduce a significant token, the model is missing a distinction, and the fix belongs in the model. The tables are kept short so that every entry can be reviewed against its citation, and unit tests pin their content.
+Some tokens have no influence on meaning in the production they appear in: `WORK` or `TRANSACTION` after `BEGIN`, a statement terminator, in PostgreSQL an optional `AS` before an alias. Each database package lists such positions in noise tables (the classes of the `Rules\Noise` namespace in the MySQL and PostgreSQL packages, `Rules\Noise` and `Rules\DefinitionNoise` in the SQLite package), as pairs of a grammar production and a token position, each with a one-line reason and a citation of the database manual. The token-correspondence utility uses these entries when comparing grammar positions. The Compact reconstruction property does not discard differences through these tables. A token that changes meaning must not be listed; if the writer cannot reproduce a significant token, the model is missing a distinction, and the fix belongs in the model. The tables are kept short so that every entry can be reviewed against its citation, and unit tests pin their content.
 
 Some keywords are declared synonyms: different spellings that the database reads as the same request, such as MySQL `&&` and `AND`, or SQLite `TEMPORARY` and `TEMP`. They are compared as one key, listed in the same tables with the same kind of justification.
+
+MySQL index definitions, index hints, cache-index lists and index alterations retain `KEY` or `INDEX` as `IndexWord`. An optional omitted keyword remains absent. `IndexDefinition::$keyword` holds this enum or `null`, rather than a presence boolean. MySQL character type attributes and `SetCharacterSet` retain `CHARSET`, `CHARACTER SET` and `CHAR SET` through `CharsetForm`. The `BINARY` character-set name retains its bare form separately from a quoted `binary` identifier.
 
 ## What the rendered SQL does not preserve
 
@@ -93,7 +85,7 @@ The rendered text is SQL that requests the same thing as the input, in the spell
 - comments; MySQL version comments are read as the selected release reads them, and the rendered text writes that reading without the comment markers;
 - the letter case of keywords, which are written in upper case;
 - optional noise words listed in the noise tables, and statement terminators;
-- the spelling of declared synonyms, for example MySQL `VALUE` and `VALUES`, `CONVERT(a, CHAR)` and `CAST(a AS CHAR)`, `KEY` and `INDEX`; SQLite `TEMPORARY` and `TEMP`;
+- the spelling of declared synonyms, for example MySQL `VALUE` and `VALUES`, `CONVERT(a, CHAR)` and `CAST(a AS CHAR)`; SQLite `TEMPORARY` and `TEMP`;
 - the spelling of a name or a literal where the database reads several spellings as the same value: identifier quotes, string escapes, dollar quoting and Unicode escapes, digit separators, the case of hexadecimal digits.
 
 ```php
@@ -134,44 +126,30 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 
 $semantics = new Semantics(Dialect::Sqlite);
 $query = $semantics->analyze('select 1+1 /* sum */, 2 as two from t where a+1 > 2');
-$layout = $query->statement->columns[0]->layout;
+$layout = $query->columns[0]->layout;
 
 $layout->text(); // => '1+1'
 $layout->trail; // => ' /* sum */'
-$query->statement->columns[1]->layout; // => null
+$query->columns[1]->layout; // => null
 $query->field(0)->name?->value; // => '1+1 /* sum */'
 $query->toString(); // => 'SELECT 1+1 /* sum */, 2 AS two FROM t WHERE a + 1 > 2'
 ```
 
 A layout never stands for structure. The expression is still the structure: facts are derived from it, and it is what the rendering writes. A layout only chooses, for each token the expression renders, an equivalent spelling and the trivia before it; it cannot add, drop or change a token, and nothing is rendered from a layout alone. Inside a spelled region a nested layout has no effect. Apart from the trivia and the token spellings within the region, the rendered text is canonical, as described above.
 
-A layout is checked like any other operand:
-
-- The result column constructors refuse a layout they cannot hold with `InvalidConstruction`: one given together with an alias, in MySQL one with trailing trivia, and in SQLite one without one token per rendered token, with whitespace alone after the expression, or in the canonical spelling.
-- Before publication, the text as the layout spells it is compared token by token with the text the structure renders, using the lexer of the profile: every written token must be an equivalent spelling of the rendered token, such as another letter case of a keyword, and the gaps can hold only whitespace and comments.
-- The spelled text is then parsed and lowered again, and must give the same structure, layout included. A written spelling that the database would read as a different literal, for example, is refused here.
-
-These two checks run at publication, so a layout constructed with `new` that fails them is refused with `InvariantViolation`, and no operation is returned. In this case the exception reports a layout that does not fit its expression, not necessarily a defect of the library:
+Result-column constructors check the layout restrictions of their dialect, including alias conflicts and token counts. Direct semantic construction does not parse a layout back into SQL or use it to supply an omitted operand. `toString()` checks that layout spellings still request the canonical tokens under the dialect rules, rejecting changed tokens or SQL inserted into a gap. This check only validates the output: no parsed value is used to complete or replace semantic operands. Reconstruction properties independently compare analyzed input and rendered SQL.
 
 ```php
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
-use SqlSemantics\Statement\Spelling\Layout;
-use SqlSemantics\Statement\Spelling\Spelled;
 
 $context = (new Semantics(Dialect::Sqlite))->context([]);
-$sum = static fn (): Binary => new Binary(BinaryOperator::Add, new IntegerLiteral('1'), new IntegerLiteral('1'));
-$spelled = static fn (string $operator): Layout => new Layout([new Spelled('', '1'), new Spelled(' /* plus */ ', $operator), new Spelled(' ', '1')]);
-
-(new Operation($context, new Select([new ResultColumn($sum())])))->field(0)->name?->value; // => '1 + 1'
-(new Operation($context, new Select([new ResultColumn($sum(), null, $spelled('+'))])))->toString(); // => 'SELECT 1 /* plus */ + 1'
-new Operation($context, new Select([new ResultColumn($sum(), null, $spelled('-'))])); // throws InvariantViolation
+$statement = Semantics::fromStatement($context, new Select([new ResultColumn(new IntegerLiteral('12'))]));
+$statement->toString(); // => 'SELECT 12'
+$statement->field(0)->name?->value; // => '12'
 ```
 
-A result column constructed without a layout is written in the canonical spelling and named after that text, which is the text the database reads. Layouts are part of the structure, so `new Operation($otherContext, $operation->statement)` keeps them.
+A result column constructed without a layout uses the canonical expression spelling for its name. `Semantics::fromStatement($otherContext, $statement)` copies the operands, including any result-column layout, while deriving fresh local bindings.

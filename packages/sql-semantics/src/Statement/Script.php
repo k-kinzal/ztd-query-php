@@ -20,11 +20,11 @@ use SqlSemantics\Rendering\Output;
  * @visibility public
  * @example Keeping the statements of one input apart
  *     $script = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1; SELECT 2');
- *     [count($script->statement->statements), $script->toString()] // => [2, 'SELECT 1; SELECT 2']
+ *     [count($script->statements), $script->toString()] // => [2, 'SELECT 1; SELECT 2']
  */
-final class Script implements Statement
+final class Script extends SqlStatement implements Statement
 {
-    use Snapshot;
+    use Semantics\Occurrence;
 
     /**
      * @var list<Statement> The statements in input order
@@ -34,8 +34,11 @@ final class Script implements Statement
     /**
      * @param list<Statement> $statements The statements in input order; not exactly one
      */
-    public function __construct(array $statements)
+    public function __construct(array $statements, public readonly ?Source\Span $inputSource = null, ?StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->statements = Check::listOf($statements, Statement::class, 'A script holds statements.');
         Check::input(count($this->statements) !== 1, 'A script holds no statement or several; one statement is its own root.');
         foreach ($this->statements as $statement) {

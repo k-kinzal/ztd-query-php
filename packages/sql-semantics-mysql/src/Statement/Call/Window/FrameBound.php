@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One boundary of a window frame: UNBOUNDED, CURRENT ROW, or an offset PRECEDING or FOLLOWING.
@@ -30,16 +29,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FrameBound implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FrameBoundKind $kind The kind of boundary
      * @param Scalar|null $offset The distance from the current row; present exactly for PRECEDING and FOLLOWING
      * @param IntervalUnit|null $unit The unit of an INTERVAL offset
      */
-    public function __construct(public readonly FrameBoundKind $kind, public readonly ?Scalar $offset = null, public readonly ?IntervalUnit $unit = null)
+    public function __construct(public readonly FrameBoundKind $kind, public readonly ?Scalar $offset = null, public readonly ?IntervalUnit $unit = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($offset !== null) === $kind->offset(), 'A frame boundary has an offset exactly when it is PRECEDING or FOLLOWING.');
+        Check::input($unit === null || $offset !== null, 'An INTERVAL frame boundary retains its offset expression.');
         Check::input($offset === null || $unit !== null || $offset instanceof NumberLiteral || $offset instanceof Parameter, 'A frame offset is a number, a parameter marker or an interval.');
     }
 

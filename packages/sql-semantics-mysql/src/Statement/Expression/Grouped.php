@@ -9,7 +9,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An expression in grouping parentheses: `( expr )`.
@@ -25,17 +24,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping a grouping that changes the association
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a AND (b OR c)');
- *     $query->statement->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped // => true
+ *     $query->query->where->right instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped // => true
  */
 final class Grouped implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The grouped expression
      */
-    public function __construct(public readonly Scalar $operand)
+    public function __construct(public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -45,7 +49,7 @@ final class Grouped implements Scalar
     {
         $fact = $derivation->scalar($this->operand, $environment);
 
-        return new ScalarFact($fact->type, $fact->nullability);
+        return new ScalarFact($fact->type, $fact->nullability, $fact->resolution, $fact->replacement ?? $this->operand);
     }
 
     /**

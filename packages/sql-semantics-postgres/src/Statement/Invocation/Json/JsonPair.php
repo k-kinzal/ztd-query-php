@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A key and its value in JSON_OBJECT or JSON_OBJECTAGG.
@@ -27,14 +26,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonPair implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $key The key
      * @param JsonValueExpression $value The value
      * @param KeyValueSpelling $spelling How the key joins the value
      */
-    public function __construct(public readonly Scalar $key, public readonly JsonValueExpression $value, public readonly KeyValueSpelling $spelling = KeyValueSpelling::Colon)
+    public function __construct(public readonly Scalar $key, public readonly JsonValueExpression $value, public readonly KeyValueSpelling $spelling = KeyValueSpelling::Colon, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($spelling === KeyValueSpelling::Colon || (new Precedence())->primary($key), 'A key before VALUE is a primary expression; group it.');
     }

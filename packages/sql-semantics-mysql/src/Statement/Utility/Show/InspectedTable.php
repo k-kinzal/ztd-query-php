@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The table or view a SHOW or DESCRIBE reports on.
@@ -22,17 +21,22 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT)');
  *     $show = $semantics->analyze('SHOW CREATE TABLE t', [$table]);
- *     $show->facts->relation($show->statement->table)->table->table === $table->declarations()[0] // => true
+ *     $show->table->relationInformation()->table->table === $table->declarations()[0] // => true
  */
-final class InspectedTable implements Node
+final class InspectedTable implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The table name with its optional database
      */
-    public function __construct(public readonly QualifiedName $name)
+    public function __construct(public readonly QualifiedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A table name has at most a database qualifier.');
     }
 

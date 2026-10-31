@@ -24,13 +24,15 @@ final class CommonTableExpressionTest extends TestCase
         self::assertSame('WITH c AS ((SELECT 1)) SELECT 1', (new Semantics(Dialect::MySql))->analyze('with c as ((select 1)) select 1')->toString());
     }
 
-    public function testAColumnListOfAnotherLengthIsReported(): void
+    public function testACatalogDependentColumnListOfAnotherLengthIsReported(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c (x, y) AS (SELECT 1) SELECT x FROM c', []);
+        $semantics = new Semantics(Dialect::MySql);
+        $context = $semantics->context([$semantics->analyze('CREATE TABLE d.t(a INT)')]);
+        $operation = $semantics->analyze('WITH c (x, y) AS (SELECT * FROM d.t) SELECT x FROM c', $context);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(CountMismatch::class, $operation->diagnostics()[0]);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
-        self::assertInstanceOf(Invalid::class, (new Semantics(Dialect::MySql))->analyze('WITH c (x, y) AS (SELECT 1) SELECT y FROM c', [])->field('y')->type);
+        self::assertInstanceOf(Invalid::class, $semantics->analyze('WITH c (x, y) AS (SELECT * FROM d.t) SELECT y FROM c', $context)->field('y')->type);
     }
 }

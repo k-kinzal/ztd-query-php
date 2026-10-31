@@ -26,7 +26,7 @@ final class ConditionTest extends TestCase
     public function testImplementationsAreTheValuesAHandlerNames(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR SQLWARNING, 1052, SQLSTATE '42S02', c BEGIN END; END");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(Block::class, $body);

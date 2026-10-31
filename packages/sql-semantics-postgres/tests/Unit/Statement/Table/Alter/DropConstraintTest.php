@@ -18,7 +18,7 @@ final class DropConstraintTest extends TestCase
         $statement = $semantics->analyze('ALTER TABLE t DROP CONSTRAINT k', []);
         self::assertSame([
           0 => 'Relation t does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

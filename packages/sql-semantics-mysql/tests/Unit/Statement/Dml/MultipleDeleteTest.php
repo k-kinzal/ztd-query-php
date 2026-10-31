@@ -11,8 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm;
-use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
-use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -25,15 +24,11 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class MultipleDeleteTest extends TestCase
 {
-    public function testDeriveStatementReportsATableOutsideTheReferences(): void
+    public function testHasExecutionConditionRetainsAReadOnlyTarget(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('DELETE t, z FROM t WHERE a = 1', [$t]);
-
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(UnknownDeleteTable::class, $operation->facts->diagnostics[0]);
-        self::assertSame('z', $operation->facts->diagnostics[0]->table->name->value);
+        $delete = (new Semantics(Dialect::MySql))->analyze('DELETE q FROM (SELECT 1 AS a) q');
+        self::assertInstanceOf(MultipleDelete::class, $delete);
+        self::assertTrue($delete->hasExecutionCondition());
     }
 
     public function testDeriveStatementMatchesCorrelationNames(): void
@@ -43,12 +38,12 @@ final class MultipleDeleteTest extends TestCase
         $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int)), new Column(new Name('y'), new Integral(IntegralKind::Int))]);
         $operation = $semantics->analyze('DELETE FROM x USING t AS x JOIN u ON x.a = u.x', [$t, $u]);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesBothSpellings(): void
     {
-        self::assertSame('DELETE QUICK t, db.u FROM t JOIN db.u ON t.a = u.a', (new Semantics(Dialect::MySql))->analyze('delete quick t.*, db.u.* from t join db.u on t.a = u.a')->toString());
+        self::assertSame('DELETE QUICK t.*, db.u.* FROM t JOIN db.u ON t.a = u.a', (new Semantics(Dialect::MySql))->analyze('delete quick t.*, db.u.* from t join db.u on t.a = u.a')->toString());
         self::assertSame('DELETE FROM t USING t, u WHERE t.a = u.a', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete from t using t, u where t.a = u.a')->toString());
     }
 
@@ -56,6 +51,32 @@ final class MultipleDeleteTest extends TestCase
     {
         $this->expectExceptionMessage('A multiple-table DELETE names at least one table to delete from.');
 
-        new MultipleDelete(null, [], [], MultipleDeleteForm::Using, [new WriteTarget(new QualifiedName(new Name('t')))]);
+        new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([new TableReference(new QualifiedName(new Name('t')))], []), MultipleDeleteForm::Using);
     }
+
+    public function testRenderWritesTheHintCommentAfterTheVerb(): void
+    {
+        self::assertSame('DELETE /*+ BKA(`u`) */ t FROM t, u', (new Semantics(Dialect::MySql))->analyze('DELETE /*+ BKA(u) */ t FROM t, u')->toString());
+    }
+
+    public function testTablesFlattenOnlyUnparenthesizedCommaLists(): void
+    {
+        $first = new TableReference(new QualifiedName(new Name('a')));
+        $second = new TableReference(new QualifiedName(new Name('b')));
+        $third = new \SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation(new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([
+            new TableReference(new QualifiedName(new Name('c'))),
+            new TableReference(new QualifiedName(new Name('d'))),
+        ]));
+        $delete = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([$first, new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([$second, $third])], [new QualifiedName(new Name('a'))]), MultipleDeleteForm::BeforeFrom);
+
+        self::assertSame([$first, $second, $third], $delete->tables);
+        self::assertSame('DELETE a FROM a, b, (c, d)', ((new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context([]), $delete, new \SqlSemantics\Statement\Source\SourceMap()))->toString());
+    }
+    public function testHasExecutionConditionRetainsADerivedTarget(): void
+    {
+        $derived = new \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), new Name('q'));
+        $delete = new MultipleDelete(null, [], new \SqlSemantics\Platform\MySql\Statement\Dml\Target\DeletionInput([$derived]), MultipleDeleteForm::BeforeFrom);
+        self::assertTrue($delete->hasExecutionCondition());
+    }
+
 }

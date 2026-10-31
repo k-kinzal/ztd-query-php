@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ADD ATTRIBUTE name type [ COLLATE collation ] [ CASCADE | RESTRICT ]`.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the added attribute
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ADD ATTRIBUTE c int8 CASCADE');
- *     $operation->statement->changes[0]->attribute->name->value // => 'c'
+ *     $operation->changes[0]->attribute->name->value // => 'c'
  */
 final class AddAttribute implements AttributeChange
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypedColumn $attribute The new attribute
      * @param DropBehavior|null $behavior Whether typed tables are changed too, when written
      */
-    public function __construct(public readonly TypedColumn $attribute, public readonly ?DropBehavior $behavior = null)
+    public function __construct(public readonly TypedColumn $attribute, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

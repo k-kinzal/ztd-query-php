@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * @visibility public
  * @example Reading the spelling of an ABORT
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ABORT');
- *     $operation->statement->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\RollbackSpelling::Abort
+ *     $operation->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\RollbackSpelling::Abort
  */
 enum RollbackSpelling: string
 {

@@ -18,7 +18,7 @@ final class DefaultBoundTest extends TestCase
         $statement = $semantics->analyze('CREATE TABLE p0 PARTITION OF p DEFAULT', []);
         self::assertSame([
           0 => 'Relation p does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

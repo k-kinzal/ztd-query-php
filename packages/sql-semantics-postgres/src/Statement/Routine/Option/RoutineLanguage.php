@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LANGUAGE name`: the language the routine is written in.
@@ -26,12 +25,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RoutineLanguage implements RoutineOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Word|StringConstant $language The language name
      */
-    public function __construct(public readonly Word|StringConstant $language)
+    public function __construct(public readonly Word|StringConstant $language, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

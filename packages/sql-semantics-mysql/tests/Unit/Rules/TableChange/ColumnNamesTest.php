@@ -21,14 +21,14 @@ final class ColumnNamesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
 
-        self::assertSame(['Column x does not exist in the table.', 'Column y does not exist in the table.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t PARTITION BY KEY (a, x, y)', [$table])->facts->diagnostics));
+        self::assertSame(['Column x does not exist in the table.', 'Column y does not exist in the table.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t PARTITION BY KEY (a, x, y)', [$table])->diagnostics()));
     }
 
     public function testPresentLeavesAnUndeclaredTableUndecided(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t PARTITION BY KEY (x)')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE t PARTITION BY KEY (x)')->diagnostics()));
     }
 
     public function testCountComparesWithoutRegardToCase(): void
@@ -36,7 +36,7 @@ final class ColumnNamesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
 
-        self::assertSame([], $semantics->analyze('ALTER TABLE t PARTITION BY KEY (A)', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t PARTITION BY KEY (A)', [$table])->diagnostics());
     }
 
     public function testWriteWritesTheParenthesizedNames(): void

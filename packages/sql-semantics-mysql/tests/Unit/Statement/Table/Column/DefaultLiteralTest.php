@@ -20,16 +20,17 @@ final class DefaultLiteralTest extends TestCase
     public function testDeriveAttributeDerivesTheValue(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT DEFAULT -1)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
         $attribute = $column->specification->columnAttributes()[0];
 
         self::assertInstanceOf(DefaultLiteral::class, $attribute);
-        self::assertSame($create->facts->scalar($attribute->value)->nullability, \SqlSemantics\Statement\Type\Nullability::NotNull);
+        self::assertInstanceOf(\SqlSemantics\Statement\Operand::class, $attribute->value);
+        self::assertSame($attribute->value->scalarInformation()->nullability, \SqlSemantics\Statement\Type\Nullability::NotNull);
     }
 
     public function testRenderWritesTheAttribute(): void

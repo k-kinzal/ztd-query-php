@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Dropping a constraint if it exists
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d DROP CONSTRAINT IF EXISTS c CASCADE');
- *     [$operation->statement->ifExists, $operation->statement->behavior] // => [true, \SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior::Cascade]
+ *     [$operation->ifExists, $operation->behavior] // => [true, \SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior::Cascade]
  */
-final class DropDomainConstraint implements Statement
+final class DropDomainConstraint extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The domain name
@@ -35,8 +34,11 @@ final class DropDomainConstraint implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param DropBehavior|null $behavior The drop behavior, when written
      */
-    public function __construct(public readonly DottedName $name, public readonly Name $constraint, public readonly bool $ifExists = false, public readonly ?DropBehavior $behavior = null)
+    public function __construct(public readonly DottedName $name, public readonly Name $constraint, public readonly bool $ifExists = false, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

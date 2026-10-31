@@ -23,6 +23,8 @@ use SqlSemantics\Resolution\Environment;
  */
 enum RoutineAttribute: string implements RoutineOption
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case CalledOnNullInput = 'CALLED ON NULL INPUT';
     case ReturnsNullOnNullInput = 'RETURNS NULL ON NULL INPUT';
     case Strict = 'STRICT';

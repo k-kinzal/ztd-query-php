@@ -17,9 +17,11 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\OpenHandler;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers HANDLER of every release.
@@ -79,6 +81,7 @@ final class HandlerRule
      * Lowers a node of `handler` or `handler_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a read retains a non-scalar operand or subquery
      */
     public function statement(Form $form): Statement
     {
@@ -99,28 +102,37 @@ final class HandlerRule
      * Lowers a read of a handler.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a read retains a non-scalar operand or subquery
      */
     public function read(Form $form): Statement
     {
+        $rejected = (new SyntaxHandlerRead())->rejected($form->node, $this->lowering->profile->grammar);
+        if ($rejected !== null) {
+            throw $rejected;
+        }
         [$read, $where, $limit] = self::READS[$form->signature] ?? throw ImplementationGap::production($form);
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0;
         $name = $form->node(1)->name === 'table_ident_nodb' ? $this->lowering->names->qualified($form->node(1))->name : $this->lowering->names->identifier($form->node(1));
         $handler = new OpenHandler($name);
-        $condition = $this->lowering->queries->where($form->node($where));
+        $condition = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->where($form->node($where));
         $rows = $this->lowering->queries->limit($form->node($limit));
         $kind = $this->lowering->form($form->node($read));
         if ($kind->signature === 'handler_read_or_scan: handler_scan_function') {
             $kind = $this->lowering->form($kind->node(0));
         }
         if (isset(self::SCANS[$kind->signature])) {
+            if ($condition instanceof RowOperand || $condition instanceof DeferredOperand || $this->stored($condition === null ? [] : [$condition])) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead($handler, self::SCANS[$kind->signature], where: $condition, limit: $rows), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+            }
             return new HandlerScan($handler, self::SCANS[$kind->signature], $condition, $rows);
         }
         if ($kind->signature === 'handler_read_or_scan: ident handler_rkey_function') {
-            return $this->index($handler, $kind->node(0), $this->lowering->form($kind->node(1)), $condition, $rows);
+            return $this->index($handler, $kind->node(0), $this->lowering->form($kind->node(1)), $condition, $rows, $end);
         }
 
         $seek = $form->signature === 'handler_stmt: HANDLER_SYM ident READ_SYM ident handler_rkey_mode ( values ) opt_where_clause opt_limit_clause' ? $form : null;
 
-        return $this->index($handler, $form->node(3), $this->lowering->form($form->node(4)), $condition, $rows, $seek);
+        return $this->index($handler, $form->node(3), $this->lowering->form($form->node(4)), $condition, $rows, $end, $seek);
     }
 
     /**
@@ -128,11 +140,15 @@ final class HandlerRule
      *
      * @param Form|null $seek The 8.0 statement that writes the comparison and the values itself
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a read retains a non-scalar operand or subquery
      */
-    public function index(OpenHandler $handler, Node $index, Form $function, ?Scalar $where, ?Limit $limit, ?Form $seek = null): Statement
+    public function index(OpenHandler $handler, Node $index, Form $function, Scalar|RowOperand|DeferredOperand|null $where, ?Limit $limit, int $end, ?Form $seek = null): Statement
     {
         $name = $this->lowering->names->identifier($index);
         if ($seek === null && isset(self::DIRECTIONS[$function->signature])) {
+            if ($where instanceof RowOperand || $where instanceof DeferredOperand || $this->stored($where === null ? [] : [$where])) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead($handler, self::DIRECTIONS[$function->signature], $name, where: $where, limit: $limit), $end, false);
+            }
             return new HandlerIndexRead($handler, $name, self::DIRECTIONS[$function->signature], $where, $limit);
         }
         [$mode, $values] = match (true) {
@@ -142,6 +158,31 @@ final class HandlerRule
         };
         $comparison = self::MODES[$mode->signature] ?? throw ImplementationGap::production($mode);
 
-        return new HandlerIndexSeek($handler, $name, $comparison, $this->lowering->dml->rowValues($values), $where, $limit);
+        $operands = [];
+        foreach ((new ListRule($this->lowering))->items($values, ['values: values , expr_or_default', 'values: expr_or_default']) as $item) {
+            $value = $this->lowering->form($item);
+            $operands[] = $value->signature === 'expr_or_default: expr' ? $this->lowering->expressions->operand($value->node(0)) : (new ValueRule($this->lowering))->value($item);
+        }
+        if ($where instanceof RowOperand || $where instanceof DeferredOperand || array_filter($operands, static fn ($value): bool => $value instanceof RowOperand || $value instanceof DeferredOperand) !== [] || $this->stored([...$operands, ...($where === null ? [] : [$where])])) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Handler\RefusedRead($handler, $comparison, $name, $operands, $where, $limit), $end, false);
+        }
+        $ordinary = [];
+        foreach ($operands as $operand) {
+            \SqlSemantics\Diagnostic\Check::invariant($operand instanceof Scalar || $operand instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest, 'An ordinary handler key has scalar or DEFAULT operands.');
+            $ordinary[] = $operand;
+        }
+        return new HandlerIndexSeek($handler, $name, $comparison, $ordinary, $where, $limit);
+    }
+
+    /**
+     * Identifies stored calls whose complete read must remain a typed refusal.
+     *
+     * @param list<\SqlSemantics\Statement\Node> $operands The complete key and predicate operands
+     */
+    public function stored(array $operands): bool
+    {
+        $releases = (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->releases($operands);
+        $bit = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReleaseDomain())->bit($this->lowering->profile->grammar);
+        return ($releases & $bit) === 0;
     }
 }

@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Inspection;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ExplainRows;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -31,16 +30,19 @@ use SqlSemantics\Statement\Statement;
  *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('EXPLAIN CREATE TABLE t (a)');
  *     [$explain->declarations(), count($explain->fields())] // => [[], 8]
  */
-final class Explain implements Statement
+final class Explain extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ExplainMode $mode Which report is requested
      * @param Statement $statement The statement to report on
      */
-    public function __construct(public readonly ExplainMode $mode, public readonly Statement $statement)
+    public function __construct(public readonly ExplainMode $mode, public readonly Statement $statement, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

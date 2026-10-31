@@ -26,8 +26,8 @@ final class QueryColumnsTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS a, *, 2 AS b FROM undeclared');
 
-        self::assertNotNull($query->facts->output);
-        self::assertCount(1, (new QueryColumns())->settled($query->facts->output));
+        self::assertNotNull($query->output());
+        self::assertCount(1, (new QueryColumns())->settled($query->output()));
     }
 
     public function testUniqueRenamesARepeatedNameAsSqliteDoes(): void
@@ -68,11 +68,11 @@ final class QueryColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n NUMERIC, r REAL, b BLOB)');
         $query = $semantics->analyze('SELECT i, t, n, r, b, 1 AS one, CAST(i AS TEXT) AS c, (SELECT i FROM s) AS sq, * FROM s', [$table]);
-        $select = $query->statement;
+        $select = $query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($query->facts->output);
-        $columns = (new QueryColumns())->tableColumns($select, $query->facts->output, $query->facts, Comparison::AsciiInsensitive);
+        self::assertNotNull($query->output());
+        $columns = (new QueryColumns())->tableColumns($select, $query->output(), Comparison::AsciiInsensitive);
         self::assertSame(['INT', 'TEXT', 'NUM', 'REAL', '', '', 'TEXT', 'INT', 'INT', 'TEXT', 'NUM', 'REAL', ''], array_map(static fn (Column $column): string => $column->type->name(), $columns));
         self::assertSame(['i', 't', 'n', 'r', 'b', 'one', 'c', 'sq', 'i:1', 't:1', 'n:1', 'r:1', 'b:1'], array_map(static fn (Column $column): string => $column->name->value, $columns));
         self::assertSame(Nullability::Nullable, $columns[0]->nullability);
@@ -83,11 +83,11 @@ final class QueryColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t TEXT)');
         $query = $semantics->analyze("SELECT t AS x, i AS y, CAST(i AS INT) AS c, 1 AS one FROM s UNION ALL SELECT 1, 'a', 2, 2 FROM s", [$table]);
-        $compound = $query->statement;
+        $compound = $query;
 
         self::assertInstanceOf(Compound::class, $compound);
-        self::assertNotNull($query->facts->output);
-        $columns = (new QueryColumns())->tableColumns($compound, $query->facts->output, $query->facts, Comparison::AsciiInsensitive);
+        self::assertNotNull($query->output());
+        $columns = (new QueryColumns())->tableColumns($compound, $query->output(), Comparison::AsciiInsensitive);
         self::assertSame(['', '', 'NUM', ''], array_map(static fn (Column $column): string => $column->type->name(), $columns));
     }
 
@@ -99,12 +99,12 @@ final class QueryColumnsTest extends TestCase
         $undeclared = $semantics->analyze('SELECT s.i, u.x, s.t FROM s, u', [$table]);
         $columns = new QueryColumns();
 
-        self::assertInstanceOf(Select::class, $unnamed->statement);
-        self::assertInstanceOf(Select::class, $undeclared->statement);
-        self::assertNotNull($unnamed->facts->output);
-        self::assertNotNull($undeclared->facts->output);
-        self::assertSame(['i', 'i:1', 'i:2', 'i:3', 'i:4'], array_map(static fn (Column $column): string => $column->name->value, $columns->tableColumns($unnamed->statement, $unnamed->facts->output, $unnamed->facts, Comparison::AsciiInsensitive)));
-        self::assertCount(1, $columns->tableColumns($undeclared->statement, $undeclared->facts->output, $undeclared->facts, Comparison::AsciiInsensitive));
+        self::assertInstanceOf(Select::class, $unnamed);
+        self::assertInstanceOf(Select::class, $undeclared);
+        self::assertNotNull($unnamed->output());
+        self::assertNotNull($undeclared->output());
+        self::assertSame(['i', 'i:1', 'i:2', 'i:3', 'i:4'], array_map(static fn (Column $column): string => $column->name->value, $columns->tableColumns($unnamed, $unnamed->output(), Comparison::AsciiInsensitive)));
+        self::assertCount(1, $columns->tableColumns($undeclared, $undeclared->output(), Comparison::AsciiInsensitive));
     }
 
     public function testNamedGivesTheNamesSqliteGivesAfterResolution(): void
@@ -115,15 +115,15 @@ final class QueryColumnsTest extends TestCase
         $values = $semantics->analyze('VALUES (1, i) UNION SELECT 2, 3');
         $conditional = $semantics->analyze('SELECT s.i, "zz" FROM s, u', $semantics->context([$table], false));
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(Compound::class, $values->statement);
-        self::assertInstanceOf(Select::class, $conditional->statement);
-        self::assertNotNull($query->facts->output);
-        self::assertNotNull($values->facts->output);
-        self::assertNotNull($conditional->facts->output);
-        self::assertSame(['i', 't', '1+1', '"zz"', 'column5', 'x', 'i', 't'], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($query->statement, $query->facts->output, $query->facts)));
-        self::assertSame(['column1', 'column2'], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($values->statement, $values->facts->output, $values->facts)));
-        self::assertSame(['i', null], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($conditional->statement, $conditional->facts->output, $conditional->facts)));
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(Compound::class, $values);
+        self::assertInstanceOf(Select::class, $conditional);
+        self::assertNotNull($query->output());
+        self::assertNotNull($values->output());
+        self::assertNotNull($conditional->output());
+        self::assertSame(['i', 't', '1+1', '"zz"', 'column5', 'x', 'i', 't'], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($query, $query->output())));
+        self::assertSame(['column1', 'column2'], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($values, $values->output())));
+        self::assertSame(['i', null], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($conditional, $conditional->output())));
     }
 
     public function testViewColumnsKeepTheDeclaredTypeAndTheNullFactOfAReferencedColumn(): void
@@ -131,11 +131,11 @@ final class QueryColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (i INTEGER NOT NULL, t VARCHAR(5), n)');
         $query = $semantics->analyze('SELECT i, t, CAST(t AS INTEGER) AS c, 1 AS one, n FROM s', [$table]);
-        $select = $query->statement;
+        $select = $query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($query->facts->output);
-        $columns = (new QueryColumns())->viewColumns($select, $query->facts->output, $query->facts, null, Comparison::AsciiInsensitive);
+        self::assertNotNull($query->output());
+        $columns = (new QueryColumns())->viewColumns($select, $query->output(), null, Comparison::AsciiInsensitive);
         self::assertSame(['INTEGER', 'VARCHAR(5)', 'INT', '', 'BLOB'], array_map(static fn (Column $column): string => $column->type->name(), $columns));
         self::assertInstanceOf(NoAffinity::class, $columns[3]->type);
         self::assertSame(Nullability::NotNull, $columns[0]->nullability);
@@ -147,11 +147,11 @@ final class QueryColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t VARCHAR(5))');
         $query = $semantics->analyze('SELECT t AS x, i AS y, t AS z FROM s UNION ALL SELECT 1, i, t FROM s', [$table]);
-        $compound = $query->statement;
+        $compound = $query;
 
         self::assertInstanceOf(Compound::class, $compound);
-        self::assertNotNull($query->facts->output);
-        $columns = (new QueryColumns())->viewColumns($compound, $query->facts->output, $query->facts, null, Comparison::AsciiInsensitive);
+        self::assertNotNull($query->output());
+        $columns = (new QueryColumns())->viewColumns($compound, $query->output(), null, Comparison::AsciiInsensitive);
         self::assertSame(['BLOB', 'INTEGER', 'VARCHAR(5)'], array_map(static fn (Column $column): string => $column->type->name(), $columns));
     }
 
@@ -160,11 +160,11 @@ final class QueryColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (i INTEGER)');
         $query = $semantics->analyze('SELECT i FROM s', [$table]);
-        $select = $query->statement;
+        $select = $query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($query->facts->output);
-        $columns = (new QueryColumns())->viewColumns($select, $query->facts->output, $query->facts, [new Name('x'), new Name('y')], Comparison::AsciiInsensitive, false);
+        self::assertNotNull($query->output());
+        $columns = (new QueryColumns())->viewColumns($select, $query->output(), [new Name('x'), new Name('y')], Comparison::AsciiInsensitive, false);
         self::assertContainsOnlyInstancesOf(NoAffinity::class, array_map(static fn (Column $column): object => $column->type, $columns));
         self::assertSame(['x', 'y'], array_map(static fn (Column $column): string => $column->name->value, $columns));
         self::assertSame(Nullability::Nullable, $columns[0]->nullability);
@@ -175,11 +175,11 @@ final class QueryColumnsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT 1 AS a, 2 AS b');
-        $select = $query->statement;
+        $select = $query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($query->facts->output);
-        $columns = (new QueryColumns())->viewColumns($select, $query->facts->output, $query->facts, [new Name('x'), new Name('X'), new Name('z')], Comparison::AsciiInsensitive);
+        self::assertNotNull($query->output());
+        $columns = (new QueryColumns())->viewColumns($select, $query->output(), [new Name('x'), new Name('X'), new Name('z')], Comparison::AsciiInsensitive);
         self::assertSame(['x', 'X:1'], array_map(static fn (Column $column): string => $column->name->value, $columns));
     }
 }

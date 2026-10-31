@@ -19,11 +19,36 @@ final class DeallocateTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DEALLOCATE PREPARE s');
 
-        self::assertNull($operation->facts->output);
+        self::assertNull($operation->output());
     }
 
-    public function testRenderWritesDeallocate(): void
+    public function testRenderPreservesTheDropVerb(): void
     {
-        self::assertSame('DEALLOCATE PREPARE s', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('drop prepare s')->toString());
+        self::assertSame('DROP PREPARE s', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('drop prepare s')->toString());
     }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['DEALLOCATE PREPARE p', 'DROP PREPARE p'] as $sql) {
+                yield "$release->value/statement/$sql" => [$release, $sql];
+                yield "$release->value/program/$sql" => [$release, 'CREATE PROCEDURE wrapper() ' . $sql];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerWrittenForms')]
+    public function testRenderPreservesWrittenFormsThroughPublication(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
+
 }

@@ -21,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\GlobalLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectLevel;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\PrivilegeLevel;
-use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 
@@ -48,6 +47,21 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  */
 final class PrivilegeRule
 {
+    /**
+     * Refuses a column list on a routine before constructing the grant.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege> $items The lowered privileges
+     * @throws \SqlSemantics\Construction\RejectedInput When a routine kind carries column privileges
+     */
+    public function columnKind(array $items, ObjectKind $kind, PrivilegeLevel $level, int $end): void
+    {
+        foreach ($items as $item) {
+            if ($kind !== ObjectKind::Table && $item instanceof StaticPrivilege && $item->columns !== []) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoutineColumnPrivilege($end, $level), $end);
+            }
+        }
+    }
+
     /**
      * The static privilege productions of every release, by the privilege they write.
      */
@@ -151,6 +165,51 @@ final class PrivilegeRule
     }
 
     /**
+     * Publishes only role operands, refusing privileges at the input boundary.
+     *
+     * @return non-empty-list<GrantedRole>
+     * @throws \SqlSemantics\Construction\RejectedInput When the input names a privilege
+     */
+    public function roles(Node $list, int $end): array
+    {
+        $roles = [];
+        foreach ($this->spine($list) as $node) {
+            $role = $this->item($node, true);
+            if (!$role instanceof GrantedRole) {
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch((new \SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks())->describe($role), true, (new \SqlSemantics\Construction\SourceRanges())->span($node)[0] ?? 0);
+                throw new \SqlSemantics\Construction\RejectedInput($problem, $end, false);
+            }
+            $roles[] = $role;
+        }
+        Check::invariant($roles !== [], 'A role list holds at least one role.');
+
+        return $roles;
+    }
+
+    /**
+     * Publishes privilege operands, rejecting a role with a host at the input boundary.
+     *
+     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege>
+     * @throws \SqlSemantics\Construction\RejectedInput When a role is used as a privilege
+     */
+    public function granted(Node $list, int $end): array
+    {
+        $privileges = [];
+        foreach ($this->spine($list) as $node) {
+            $item = $this->item($node, false);
+            if ($item instanceof GrantedRole) {
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Account\Problem\RoleOrPrivilegeMismatch((new \SqlSemantics\Platform\MySql\Rules\Account\PrivilegeChecks())->describe($item), false, (new \SqlSemantics\Construction\SourceRanges())->span($node)[0] ?? 0);
+                throw new \SqlSemantics\Construction\RejectedInput($problem, $end, true);
+            }
+            Check::invariant($item instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege, 'A non-role item is a privilege.');
+            $privileges[] = $item;
+        }
+        Check::invariant($privileges !== [], 'A privilege list holds at least one privilege.');
+
+        return $privileges;
+    }
+
+    /**
      * Lowers one role_or_privilege or object_privilege.
      *
      * @throws ImplementationGap When the production has no rule
@@ -163,13 +222,14 @@ final class PrivilegeRule
         }
         $kind = self::STATIC[$form->signature] ?? null;
         if ($kind !== null) {
-            return new StaticPrivilege($kind, $kind->columns() ? $this->columns($form->node(1)) : []);
+            $privilege = new StaticPrivilege($kind, $kind->columns() ? $this->columns($form->node(1)) : [], schemas: $kind === PrivilegeKind::ShowDatabases && strtoupper($form->node->tokens()[1]->text) === 'SCHEMAS');
+            return $this->lowering->origins->record($privilege, $form->node);
         }
         $names = $this->lowering->names;
 
         return match ($form->signature) {
-            'role_or_privilege: role_ident_or_text @ ident_or_text' => new GrantedRole($this->lowering->leaves->record(new AccountName($names->identifier($form->node(0)), $names->identifier($form->node(2))))),
-            'role_or_privilege: role_ident_or_text opt_column_list' => $this->named($names->identifier($form->node(0)), $this->columns($form->node(1)), $roles),
+            'role_or_privilege: role_ident_or_text @ ident_or_text' => new GrantedRole($this->lowering->leaves->record($this->lowering->users->named($names->identifier($form->node(0)), $names->identifier($form->node(2)), $form->node))),
+            'role_or_privilege: role_ident_or_text opt_column_list' => $this->named($names->identifier($form->node(0)), $this->columns($form->node(1)), $roles, $form->node),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -179,15 +239,15 @@ final class PrivilegeRule
      *
      * @param list<Name> $columns
      */
-    public function named(Name $name, array $columns, bool $roles): Grantable
+    public function named(Name $name, array $columns, bool $roles, ?Node $source = null): Grantable
     {
-        return $roles && $columns === [] ? new GrantedRole($this->lowering->leaves->record(new AccountName($name))) : new DynamicPrivilege($name, $columns);
+        return $roles && $columns === [] ? new GrantedRole($this->lowering->leaves->record($this->lowering->users->named($name, null, $source))) : new DynamicPrivilege($name, $columns);
     }
 
     /**
      * Lowers a MySQL 5.x grant_privileges: ALL [PRIVILEGES] or a list of privileges.
      *
-     * @return non-empty-list<Grantable>
+     * @return non-empty-list<\SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\Privilege>
      * @throws ImplementationGap When a production has no rule
      */
     public function privileges(Node $privileges): array
@@ -196,13 +256,13 @@ final class PrivilegeRule
         if ($form->signature === 'grant_privileges: ALL opt_privileges') {
             $this->words($form->node(1));
 
-            return [new AllPrivileges()];
+            return [new AllPrivileges(privileges: $form->node(1)->children !== [])];
         }
         if ($form->signature !== 'grant_privileges: object_privilege_list') {
             throw ImplementationGap::production($form);
         }
 
-        return $this->items($form->node(0), false);
+        return $this->granted($form->node(0), (new \SqlSemantics\Construction\SourceRanges())->span($privileges)[1] ?? 0);
     }
 
     /**
@@ -264,7 +324,7 @@ final class PrivilegeRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function level(Node $level): PrivilegeLevel
+    public function level(Node $level): CurrentDatabaseLevel|DatabaseLevel|GlobalLevel|ObjectLevel
     {
         $form = $this->lowering->form($level);
         $names = $this->lowering->names;

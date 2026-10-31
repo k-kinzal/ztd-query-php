@@ -20,7 +20,7 @@ final class CreateStatisticsTest extends TestCase
         $statement = $semantics->analyze('CREATE STATISTICS s ON a, (b + zz) FROM t', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
@@ -34,7 +34,7 @@ final class CreateStatisticsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
-        self::assertSame(['cannot define statistics for relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE STATISTICS st ON a, (a + 1) FROM v', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE STATISTICS st ON a, (a + 1) FROM m', $context)->facts->diagnostics));
+        self::assertSame(['cannot define statistics for relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE STATISTICS st ON a, (a + 1) FROM v', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE STATISTICS st ON a, (a + 1) FROM m', $context)->diagnostics()));
     }
 }

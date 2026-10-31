@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Dictionary;
+
+use Closure;
+use MySqlMemory\Storage\Heap;
+
+/**
+ * A table of a database: its definition and its rows.
+ *
+ * @visibility MySqlMemory
+ */
+final class StoredTable
+{
+    /**
+     * @var array<string, true> Detached InnoDB partition files; the empty name denotes an unpartitioned table
+     */
+    public array $discardedTablespaces = [];
+
+    /**
+     * @var array<string, list<int|string|null>> The statistics the data dictionary cached for the table when they were first read, by kind
+     *
+     * INFORMATION_SCHEMA keeps the statistics of a table it reads for information_schema_stats_expiry
+     * seconds, a day by default, so SHOW TABLE STATUS and SHOW INDEX report what they read first.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_information_schema_stats_expiry.
+     */
+    public array $statistics = [];
+
+    /**
+     * Index-maintenance estimates, independent of the information_schema statistics cache.
+     */
+    public ?\MySqlMemory\Storage\IndexStatistics $indexStatistics = null;
+
+    /**
+     * The session-clock second at which the cached table statistics were read.
+     */
+    public ?int $statisticsRead = null;
+
+    /**
+     * The creation time in Unix seconds, independent of the time zone of a reader.
+     */
+    public int $created;
+
+    /**
+     * The wall-clock second of the latest committed change, or null before any change.
+     */
+    public ?int $updated = null;
+
+    /**
+     * Whether this InnoDB table has acquired a full-text document identity.
+     * Dropping a full-text index retains it until the table is recreated.
+     */
+    public bool $fullTextDocumentId;
+
+    /**
+     * @param TableDefinition $definition The definition
+     * @param Heap $data The rows
+     * @param array<string, string> $histograms The columns that have histogram statistics, by lowercase name
+     * @param int|null $created The creation time; the actual clock when no statement clock is supplied
+     * @param int|null $clock The server-clock second at creation, including simulated elapsed time
+     * @param Closure(): Heap|null $loader Deferred system rows, loaded once per table occurrence
+     */
+    public function __construct(public TableDefinition $definition, public Heap $data, public array $histograms = [], ?int $created = null, ?int $clock = null, public ?Closure $loader = null)
+    {
+        $this->fullTextDocumentId = strcasecmp($definition->engine, 'InnoDB') === 0 && ($definition->position('FTS_DOC_ID') !== null || array_filter($definition->keys, static fn (Key $key): bool => $key->kind === KeyKind::FullText) !== []);
+        $clock ??= time();
+        $this->created = $created ?? $clock;
+        $this->updated = strcasecmp($definition->engine, 'MyISAM') === 0 ? $clock : null;
+    }
+
+    /**
+     * Materializes deferred system rows once, leaving ordinary stored tables unchanged.
+     */
+    public function materialize(): void
+    {
+        if ($this->loader !== null) {
+            $this->data = ($this->loader)();
+            $this->loader = null;
+        }
+    }
+}

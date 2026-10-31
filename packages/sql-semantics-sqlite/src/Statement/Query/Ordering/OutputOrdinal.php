@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
@@ -35,19 +34,23 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the result column an ordinal denotes
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT 'x' AS a, 2 AS b ORDER BY 2");
- *     $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution->field->name->value // => 'b'
+ *     $query->orderBy[0]->expression->scalarInformation()->resolution->field->name->value // => 'b'
  * @example Refusing an expression that is no integer constant
  *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('1')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class OutputOrdinal implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $constant The integer constant as written
      */
-    public function __construct(public readonly Scalar $constant)
+    public function __construct(public readonly Scalar $constant, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Ordinals())->value($constant) !== null, 'A result column position is written as an integer constant.');
     }
 

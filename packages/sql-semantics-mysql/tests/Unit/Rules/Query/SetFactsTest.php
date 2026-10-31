@@ -11,13 +11,14 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\SetFacts;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -30,10 +31,17 @@ final class SetFactsTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze("WITH RECURSIVE c AS (SELECT 1 AS n UNION ALL SELECT CONCAT(n, 'x') FROM c) SELECT n FROM c", []);
         $type = $operation->field('n')->type;
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertInstanceOf(Known::class, $type);
         self::assertSame('BIGINT', $type->descriptor->name());
         self::assertSame(Nullability::Nullable, $operation->field('n')->nullability);
+    }
+
+    public function testDeriveWarnsAboutIntoInsideTheLastOperand(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION (SELECT 2 INTO @x)');
+
+        self::assertEquals([new Deprecation(Deprecated::IntoInsideQuery)], $operation->warnings());
     }
 
     public function testOperandsCombinesTheColumnsOfBothOperands(): void
@@ -43,10 +51,21 @@ final class SetFactsTest extends TestCase
         $operation = $semantics->analyze('SELECT * FROM (SELECT a AS x FROM t UNION SELECT NULL FROM DUAL LIMIT 1 ORDER BY x) AS d', [$table]);
         $type = $operation->field('x')->type;
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertInstanceOf(Known::class, $type);
         self::assertSame('INT', $type->descriptor->name());
         self::assertSame(Nullability::Nullable, $operation->field('x')->nullability);
+    }
+
+    public function testCombinedHoldsForASetOperationInParentheses(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $nested = $semantics->analyze('(SELECT 1 UNION SELECT 2) UNION SELECT 3');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $nested);
+        $nested = $nested->query;
+        self::assertInstanceOf(SetOperation::class, $nested);
+
+        self::assertSame([true, false], [(new SetFacts())->combined($nested->left), (new SetFacts())->combined($nested->right)]);
     }
 
     public function testLeadingCombinesTheOperandsBeforeALaterUnion(): void
@@ -55,7 +74,7 @@ final class SetFactsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
         $operation = $semantics->analyze('SELECT a AS x FROM t UNION SELECT NULL LIMIT 1 UNION SELECT 2', [$table]);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame(Nullability::Nullable, $operation->field('x')->nullability);
         self::assertSame('BIGINT', $operation->field('x')->type instanceof Known ? $operation->field('x')->type->descriptor->name() : null);
     }
@@ -67,6 +86,17 @@ final class SetFactsTest extends TestCase
 
         $this->expectExceptionMessage('A SELECT that keeps its own LIMIT before a later UNION needs MySQL 5.6.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), $union);
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new \SqlSemantics\Platform\MySql\Statement\QueryRoot($union), new \SqlSemantics\Statement\Source\SourceMap());
     }
+    public function testDerivePublishesTheLegacyConditionFromDirectOperands(): void
+    {
+        $one = new Select([], [new SelectExpression(new NumberLiteral('1'))]);
+        $query = new SetOperation(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one), SetOperator::Union, null, new Select([], [new SelectExpression(new NumberLiteral('2'))]));
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context());
+        $derivation->query($query, $derivation->environment());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\UnenclosedUnion::class, $derivation->facts()->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $derivation->facts()->warnings[0]);
+    }
+
 }

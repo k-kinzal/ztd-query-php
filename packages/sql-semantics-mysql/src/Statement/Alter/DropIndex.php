@@ -8,11 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP INDEX name ON t [ALGORITHM = …] [LOCK = …]`: a request to remove an index of a table.
@@ -29,11 +28,12 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Removing an index while allowing reads
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP INDEX i ON t LOCK SHARED');
- *     [$drop->statement->index->value, $drop->toString()] // => ['i', 'DROP INDEX i ON t LOCK = SHARED']
+ *     [$drop->index->value, $drop->toString()] // => ['i', 'DROP INDEX i ON t LOCK SHARED']
  */
-final class DropIndex implements Statement
+final class DropIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<AlterOption> The ALGORITHM and LOCK options in order
@@ -45,10 +45,18 @@ final class DropIndex implements Statement
      * @param QualifiedName $table The table with its optional database
      * @param list<AlterOption> $options The ALGORITHM and LOCK options in order
      */
-    public function __construct(public readonly Name $index, public readonly QualifiedName $table, array $options = [])
+    public function __construct(public readonly Name $index, public readonly QualifiedName $table, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
-        $this->options = Check::listOf($options, AlterOption::class, 'The options of DROP INDEX are a list of ALGORITHM and LOCK options.');
+        $this->options = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($options);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

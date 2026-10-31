@@ -23,7 +23,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testBeginLowersBeginWork(): void
     {
-        self::assertSame('BEGIN', (new Semantics(Dialect::MySql))->analyze('begin work')->toString());
+        self::assertSame('BEGIN WORK', (new Semantics(Dialect::MySql))->analyze('begin work')->toString());
     }
 
     public function testStartRejectsReadOnlyWithReadWrite(): void
@@ -42,7 +42,7 @@ final class TransactionRuleTest extends TestCase
 
     public function testRollbackToLowersTheSavepoint(): void
     {
-        self::assertSame('ROLLBACK TO SAVEPOINT s', (new Semantics(Dialect::MySql))->analyze('rollback work to savepoint s')->toString());
+        self::assertSame('ROLLBACK WORK TO SAVEPOINT s', (new Semantics(Dialect::MySql))->analyze('rollback work to savepoint s')->toString());
     }
 
     public function testChoiceLowersExplicitNo(): void

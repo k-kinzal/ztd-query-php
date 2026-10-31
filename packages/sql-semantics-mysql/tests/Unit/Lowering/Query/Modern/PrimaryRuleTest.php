@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Lowering\Expression\PrimaryRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Modern\PrimaryRule;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
@@ -19,8 +19,12 @@ final class PrimaryRuleTest extends TestCase
 {
     public function testPrimaryLowersEveryPrimary(): void
     {
-        self::assertInstanceOf(ExplicitTable::class, (new Semantics(Dialect::MySql))->analyze('TABLE t')->statement);
-        self::assertInstanceOf(Select::class, (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement);
+        $root = (new Semantics(Dialect::MySql))->analyze('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(ExplicitTable::class, $root->query);
+        $root = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(Select::class, $root->query);
     }
 
     public function testSpecificationLowersEveryClause(): void
@@ -39,8 +43,20 @@ final class PrimaryRuleTest extends TestCase
         self::assertSame('TABLE db.t', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('table db.t')->toString());
     }
 
+    public function testDefinitionPreservesAllDefinitionsWithoutDanglingOrigins(): void
+    {
+        self::assertSame('WITH b AS (SELECT 1 AS x), c AS (SELECT ROW(x, 2) FROM b) SELECT 1', (new Semantics(Dialect::MySql))->analyze('WITH b AS (SELECT 1 AS x), c AS (SELECT ROW(x,2) FROM b) SELECT 1')->toString());
+    }
+
     public function testWithLowersTheCommonTables(): void
     {
         self::assertSame('WITH RECURSIVE a (x) AS (SELECT 1), b AS (SELECT 2) SELECT 3', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('with recursive a (x) as (select 1), b as (select 2) select 3')->toString());
     }
+    public function testValueRowRetainsAllDependenciesOfAnUnusedDefinition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@autocommit)))) SELECT 9');
+        self::assertSame('WITH c AS (VALUES ROW(7), ROW(CHAR((SELECT * WHERE @@autocommit)))) SELECT 9', $operation->toString());
+        self::assertSame([], $operation->diagnostics());
+    }
+
 }

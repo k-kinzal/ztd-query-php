@@ -22,30 +22,30 @@ final class RelationsTargetTest extends TestCase
         $semantics = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql));
         $table = $semantics->analyze('CREATE TABLE items (id int4, price int4)');
         $operation = $semantics->analyze('GRANT SELECT (id) ON items TO joe', [$table]);
-        $target = $operation->statement instanceof \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant ? $operation->statement->target : null;
+        $target = $operation instanceof \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant ? $operation->target : null;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\RelationsTarget::class, $target);
-        $resolution = $operation->facts->relation($target->relations[0])->table;
+        $resolution = $target->relations[0]->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $resolution);
         self::assertSame($table->declarations()[0], $resolution->table);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveTargetReportsAColumnTheTableLacks(): void
     {
-        self::assertSame(['Column items.cost does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT (cost), update (price) ON items TO joe', [(new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE items (id int4, price int4)')])->facts->diagnostics));
+        self::assertSame(['Column items.cost does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT (cost), update (price) ON items TO joe', [(new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE items (id int4, price int4)')])->diagnostics()));
     }
 
     public function testDeriveTargetKeepsANameThatMayBeASequenceOpen(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON counters TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON counters TO joe', [])->diagnostics()));
     }
 
     public function testDeriveTargetDoesNotResolveSequences(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT USAGE ON SEQUENCE counters TO joe', []);
-        $target = $operation->statement instanceof \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant ? $operation->statement->target : null;
+        $target = $operation instanceof \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant ? $operation->target : null;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\RelationsTarget::class, $target);
-        self::assertFalse($operation->facts->covers($target->relations[0]));
+        self::assertFalse($target->relations[0]->hasBinding());
     }
 
     public function testRenderAlwaysWritesTable(): void
@@ -74,7 +74,7 @@ final class RelationsTargetTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('GRANT USAGE ON SEQUENCE t TO r', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('GRANT USAGE ON SEQUENCE s, serial_seq TO r', $context)->facts->diagnostics));
+        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('GRANT USAGE ON SEQUENCE t TO r', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('GRANT USAGE ON SEQUENCE s, serial_seq TO r', $context)->diagnostics()));
     }
 }

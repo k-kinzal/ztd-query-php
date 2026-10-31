@@ -36,11 +36,32 @@ final class OdbcJoinTest extends TestCase
         $operation = $semantics->analyze('SELECT c FROM { OJ t LEFT JOIN u ON t.a = u.a }', [$t, $u]);
 
         self::assertSame(Nullability::Nullable, $operation->field('c')->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheEscape(): void
     {
         self::assertSame('SELECT 1 FROM { OJ t LEFT JOIN u ON t.a = u.a }', (new Semantics(Dialect::MySql))->analyze('select 1 from {oj t left join u on t.a=u.a}')->toString());
     }
+
+    public function testValueRejectsAnUnparenthesizedCommaList(): void
+    {
+        $this->expectExceptionMessage('An ODBC escape holds a table factor or join; a comma list or nested escape requires parentheses.');
+        new OdbcJoin(new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([
+            new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t'))),
+            new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('u'))),
+        ]));
+    }
+
+    public function testValueRejectsAnUnparenthesizedNestedEscape(): void
+    {
+        $this->expectExceptionMessage('An ODBC escape holds a table factor or join; a comma list or nested escape requires parentheses.');
+        new OdbcJoin(new OdbcJoin(new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new QualifiedName(new Name('t')))));
+    }
+
+    public function testRenderRetainsAParenthesizedCommaList(): void
+    {
+        self::assertSame('SELECT 1 FROM { OJ (t, u) }', (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM { OJ (t, u) }')->toString());
+    }
+
 }

@@ -121,7 +121,7 @@ final class TypeAggregation
         if ($left instanceof Spatial && $right instanceof Spatial) {
             return new Spatial(SpatialKind::Geometry);
         }
-        if ($left instanceof Binary || $right instanceof Binary) {
+        if ($left instanceof Binary || $right instanceof Binary || ($left instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily && $left->binary) || ($right instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily && $right->binary)) {
             return $this->binary($left, $right);
         }
         if ($this->textual($left) || $this->textual($right)) {
@@ -147,19 +147,18 @@ final class TypeAggregation
      */
     public function textual(TypeDescriptor $type): bool
     {
-        return $type instanceof Character || $type instanceof Enumeration;
+        return $type instanceof Character || $type instanceof Enumeration || ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily && !$type->binary);
     }
 
     /**
      * Answers the binary string type two types merge to when one is a binary string.
      */
-    public function binary(TypeDescriptor $left, TypeDescriptor $right): Binary
+    public function binary(TypeDescriptor $left, TypeDescriptor $right): Binary|\SqlSemantics\Platform\MySql\Statement\Type\StringFamily
     {
         $size = max($left instanceof Binary ? self::BLOBS[$left->kind->value] ?? 0 : 0, $right instanceof Binary ? self::BLOBS[$right->kind->value] ?? 0 : 0);
         $size = max($size, $this->textSize($left), $this->textSize($right));
 
-        return new Binary(match ($size) {
-            0 => BinaryKind::VarBinary,
+        return $size === 0 ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : new Binary(match ($size) {
             1 => BinaryKind::TinyBlob,
             2 => BinaryKind::Blob,
             3 => BinaryKind::MediumBlob,
@@ -170,10 +169,11 @@ final class TypeAggregation
     /**
      * Answers the character string type two types merge to when one is a character string.
      */
-    public function character(TypeDescriptor $left, TypeDescriptor $right): Character
+    public function character(TypeDescriptor $left, TypeDescriptor $right): Character|\SqlSemantics\Platform\MySql\Statement\Type\StringFamily
     {
-        return new Character(match (max($this->textSize($left), $this->textSize($right))) {
-            0 => CharacterKind::VarChar,
+        $size = max($this->textSize($left), $this->textSize($right));
+
+        return $size === 0 ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily() : new Character(match ($size) {
             1 => CharacterKind::TinyText,
             2 => CharacterKind::Text,
             3 => CharacterKind::MediumText,

@@ -8,8 +8,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Operand;
 
 /**
  * `INTO var, ...`: the user variables and stored program variables that receive the columns of the one result row.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the targets
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t INTO @x, y');
- *     [$query->statement->into->targets[0]->name->value, $query->statement->into->targets[1]->name->value] // => ['x', 'y']
+ *     [$query->query->into->targets[0]->name->value, $query->query->into->targets[1]->name->value] // => ['x', 'y']
  */
 final class IntoVariables implements IntoDestination
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<UserVariable|ProgramVariable> The targets in written order
@@ -33,12 +32,12 @@ final class IntoVariables implements IntoDestination
     public readonly array $targets;
 
     /**
-     * @param list<Scalar> $targets The targets in written order, each a user or stored program variable; at least one
+     * @param list<Operand> $targets The targets in written order, each a user or stored program variable; at least one
      */
-    public function __construct(array $targets)
+    public function __construct(array $targets, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $list = [];
-        foreach (Check::listOf($targets, Scalar::class, 'INTO names at least one variable.', 1) as $target) {
+        foreach (Check::listOf($targets, Operand::class, 'INTO names at least one variable.', 1) as $target) {
             Check::input($target instanceof UserVariable || $target instanceof ProgramVariable, 'An INTO target is a user variable or a stored program variable.');
             $list[] = $target;
         }

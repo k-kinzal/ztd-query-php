@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reporting a dropped column that does not exist
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a, b)');
- *     $semantics->analyze('ALTER TABLE t DROP COLUMN c', [$table])->facts->diagnostics[0]->message() // => 'Column c does not exist in the table.'
+ *     $semantics->analyze('ALTER TABLE t DROP COLUMN c', [$table])->diagnostics()[0]->message() // => 'Column c does not exist in the table.'
  */
 final class UnknownColumn implements Diagnostic
 {

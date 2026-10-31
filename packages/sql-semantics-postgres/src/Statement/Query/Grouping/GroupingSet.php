@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A grouping set of GROUP BY: the empty set `()`, ROLLUP, CUBE or GROUPING SETS.
@@ -24,13 +23,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a ROLLUP
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 GROUP BY ROLLUP (1), ()');
- *     [$query->statement->groupBy[0]->kind->value, count($query->statement->groupBy[1]->members)] // => ['ROLLUP', 0]
+ *     [$query->groupBy[0]->kind->value, count($query->groupBy[1]->members)] // => ['ROLLUP', 0]
  * @example Refusing an empty ROLLUP
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSetKind::Rollup) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class GroupingSet implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar|GroupingRow|GroupingSet> The members in written order
@@ -41,7 +40,7 @@ final class GroupingSet implements Node
      * @param GroupingSetKind $kind The kind of set
      * @param list<Scalar|GroupingRow|GroupingSet> $members The members in written order: none for the empty set, expressions and rows for ROLLUP and CUBE, expressions, rows and sets for GROUPING SETS
      */
-    public function __construct(public readonly GroupingSetKind $kind, array $members = [])
+    public function __construct(public readonly GroupingSetKind $kind, array $members = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $message = 'ROLLUP and CUBE hold expressions and grouping rows; GROUPING SETS also holds grouping sets.';
         $this->members = (new ClosedList())->of($members, $kind === GroupingSetKind::Sets ? [Scalar::class, GroupingRow::class, self::class] : [Scalar::class, GroupingRow::class], $message);

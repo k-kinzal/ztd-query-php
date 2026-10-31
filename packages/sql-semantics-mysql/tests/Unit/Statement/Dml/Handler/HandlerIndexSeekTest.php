@@ -22,9 +22,9 @@ final class HandlerIndexSeekTest extends TestCase
     public function testDeriveStatementDerivesTheKeyValues(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i >= (1, 2)');
-        self::assertInstanceOf(HandlerIndexSeek::class, $operation->statement);
+        self::assertInstanceOf(HandlerIndexSeek::class, $operation);
 
-        self::assertEquals(Nullability::NotNull, $operation->facts->scalar($operation->statement->values[0])->nullability);
+        self::assertEquals(Nullability::NotNull, $operation->values[0]->scalarInformation()->nullability);
     }
 
     public function testRenderWritesTheSeek(): void

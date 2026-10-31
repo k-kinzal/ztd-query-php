@@ -11,7 +11,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -28,18 +27,22 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reporting the predicate
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)')->facts->diagnostics[0]->message() // => 'UNIQUE predicate is not yet implemented.'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)')->diagnostics()[0]->message() // => 'UNIQUE predicate is not yet implemented.'
  */
 final class UniquePredicate implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool|null $nullsDistinct Whether NULLS DISTINCT (true) or NULLS NOT DISTINCT (false) is written, or null when neither is
      * @param Query $query The query inside the parentheses
      */
-    public function __construct(public readonly ?bool $nullsDistinct, public readonly Query $query)
+    public function __construct(public readonly ?bool $nullsDistinct, public readonly Query $query, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

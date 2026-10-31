@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\PartitionRule;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The entry rules of the table change family: the methods other families and the statement dispatcher call.
@@ -40,9 +40,55 @@ final class TableChangeRules
     }
 
     /**
+     * Retains the legacy IGNORE notice after the alteration target is complete.
+     *
+     * @param list<\SqlParser\Lexer\Token> $tokens Transient tokens used only to locate the target's command role
+     */
+    public function ignored(Node $node, array $tokens): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        if ($node->name !== 'table_ident' || $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return null;
+        }
+        $start = $node->tokens()[0]->offset ?? -1;
+        foreach ($tokens as $index => $token) {
+            if ($token->offset === $start && $index >= 3 && array_column(array_slice($tokens, $index - 3, 3), 'name') === ['ALTER', 'IGNORE_SYM', 'TABLE_SYM']) {
+                return \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AlterIgnore;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns an aborting notice for a completed option before publishing a statement.
+     *
+     * @param bool $partitionNames Whether a partial parse needs partition-name notices; complete definitions check their own names
+     */
+    public function completed(Node $node, bool $partitionNames = true): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        $notice = (new PartitionRule($this->lowering))->completed($node) ?? ($partitionNames ? (new Partition\DefinitionRule($this->lowering))->completed($node) : null) ?? (new ModifierRule($this->lowering))->completed($node);
+        if ($notice !== null || $node->name !== 'alter_list_item' || !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            return $notice;
+        }
+        $rule = new Alter\ColumnItemRule($this->lowering);
+        $form = $this->lowering->form($node);
+        try {
+            if ($rule->claims($form->signature)) {
+                return (new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\Column\SyntaxColumns())->attributes($rule->item($form), $this->lowering, true);
+            }
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, $failure->aborts);
+        } catch (\SqlSemantics\Diagnostic\AnalysisException) {
+            // Other refusals retain their ordinary input formatting.
+        }
+        return null;
+    }
+
+    /**
      * Lowers a table change statement: a node of one of the statement rules this family owns.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Node $statement): Statement
     {
@@ -53,6 +99,8 @@ final class TableChangeRules
      * Lowers a production of `alter` or `drop` that MYSQL-DEFINITION-ROUTES-001 routes to this family.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function definition(Form $form): Statement
     {
@@ -67,7 +115,7 @@ final class TableChangeRules
      */
     public function partitioning(Node $clause): ?Partitioning
     {
-        return (new PartitionRule($this->lowering))->partitioning($clause);
+        return (new PartitionRule($this->lowering, true))->partitioning($clause);
     }
 
     /**

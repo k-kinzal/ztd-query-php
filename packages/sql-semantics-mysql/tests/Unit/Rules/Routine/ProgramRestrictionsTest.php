@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramRestrictions;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Query;
 
 #[CoversClass(ProgramRestrictions::class)]
 #[Medium]
@@ -26,9 +25,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementNoStoredProgramMayContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -36,6 +39,8 @@ final class ProgramRestrictionsTest extends TestCase
      */
     public static function providerCheckReportsAStatementNoStoredProgramMayContain(): iterable
     {
+        yield 'CHECK TABLE in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CHECK TABLE t', ['CHECK is not allowed in stored procedures']];
+        yield 'CHECK TABLE in a procedure' => ['CREATE PROCEDURE p() CHECK TABLE t', ['CHECK is not allowed in stored procedures']];
         yield 'LOCK TABLES in a procedure' => ['CREATE PROCEDURE p() LOCK TABLES t READ', ['LOCK is not allowed in stored procedures']];
         yield 'LOCK TABLES in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN LOCK TABLES t READ; RETURN 1; END', ['LOCK is not allowed in stored procedures']];
         yield 'LOCK TABLES in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW LOCK TABLES t READ', ['LOCK is not allowed in stored procedures']];
@@ -48,13 +53,6 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'LOAD XML in a function' => ["CREATE FUNCTION f() RETURNS INT BEGIN LOAD XML INFILE 'f' INTO TABLE t; RETURN 1; END", ['LOAD XML is not allowed in stored procedures']];
         yield 'USE in a procedure' => ['CREATE PROCEDURE p() USE db', ['USE is not allowed in stored procedures']];
         yield 'USE in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO USE db', ['USE is not allowed in stored procedures']];
-        yield 'CREATE PROCEDURE in a procedure' => ['CREATE PROCEDURE p() CREATE PROCEDURE q() SELECT 1', ["Can't create a PROCEDURE from within another stored routine"]];
-        yield 'CREATE FUNCTION in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CREATE FUNCTION g() RETURNS INT RETURN 1; RETURN 1; END', ["Can't create a FUNCTION from within another stored routine"]];
-        yield 'CREATE TRIGGER in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW CREATE TRIGGER tr2 BEFORE INSERT ON t FOR EACH ROW SET @a = 1', ["Can't create a TRIGGER from within another stored routine"]];
-        yield 'CREATE TRIGGER in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1', ["Can't create a TRIGGER from within another stored routine"]];
-        yield 'CREATE EVENT in a procedure' => ['CREATE PROCEDURE p() CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1', ['Recursion of EVENT DDL statements is forbidden when body is present']];
-        yield 'CREATE EVENT in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CREATE EVENT e2 ON SCHEDULE EVERY 1 DAY DO SELECT 1', ['Recursion of EVENT DDL statements is forbidden when body is present']];
-        yield 'ALTER EVENT with a body in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW ALTER EVENT e DO SET @a = 1', ['Recursion of EVENT DDL statements is forbidden when body is present']];
         yield 'ALTER PROCEDURE in a function' => ["CREATE FUNCTION f() RETURNS INT BEGIN ALTER PROCEDURE q COMMENT 'x'; RETURN 1; END", ["Can't drop or alter a PROCEDURE from within another stored routine"]];
         yield 'ALTER FUNCTION in a procedure' => ["CREATE PROCEDURE p() ALTER FUNCTION g COMMENT 'x'", ["Can't drop or alter a FUNCTION from within another stored routine"]];
         yield 'DROP PROCEDURE in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO DROP PROCEDURE q', ["Can't drop or alter a PROCEDURE from within another stored routine"]];
@@ -66,7 +64,9 @@ final class ProgramRestrictionsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -91,9 +91,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsAStatementAStoredFunctionOrTriggerMayNotContain(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -109,10 +113,10 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'SHOW in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SHOW VARIABLES; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'SHOW in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SHOW TABLES', ['Not allowed to return a result set from a trigger']];
         yield 'EXPLAIN in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW EXPLAIN SELECT 1', ['Not allowed to return a result set from a trigger']];
-        yield 'EXPLAIN FOR CONNECTION in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN EXPLAIN FOR CONNECTION 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
+        yield 'EXPLAIN in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN EXPLAIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'DESCRIBE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN DESCRIBE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'HELP in a trigger' => ["CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW HELP 'x'", ['Not allowed to return a result set from a trigger']];
-        yield 'CHECK TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CHECK TABLE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
+        yield 'CHECK TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CHECK TABLE t; RETURN 1; END', ['CHECK is not allowed in stored procedures']];
         yield 'ANALYZE TABLE in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW ANALYZE TABLE t', ['Not allowed to return a result set from a trigger']];
         yield 'OPTIMIZE TABLE in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN OPTIMIZE TABLE t; RETURN 1; END', ['Not allowed to return a result set from a function']];
         yield 'REPAIR TABLE in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW REPAIR TABLE t', ['Not allowed to return a result set from a trigger']];
@@ -136,7 +140,9 @@ final class ProgramRestrictionsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')])->facts->diagnostics);
+        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame([], $operation->diagnostics());
     }
 
     /**
@@ -149,7 +155,6 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'SHOW in a procedure' => ['CREATE PROCEDURE p() SHOW TABLES'];
         yield 'EXPLAIN in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO EXPLAIN SELECT 1'];
         yield 'DESCRIBE in a procedure' => ['CREATE PROCEDURE p() DESCRIBE t'];
-        yield 'CHECK TABLE in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CHECK TABLE t'];
         yield 'COMMIT in a procedure' => ['CREATE PROCEDURE p() COMMIT'];
         yield 'START TRANSACTION in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO START TRANSACTION'];
         yield 'PREPARE in a procedure' => ["CREATE PROCEDURE p() PREPARE s FROM 'SELECT 1'"];
@@ -169,9 +174,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementWhereverItIsNested(string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -185,7 +194,6 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'in a loop of a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN WHILE 1 DO FLUSH TABLES; END WHILE; END', ['FLUSH is not allowed in stored function or trigger']];
         yield 'in a block of an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN BEGIN USE db; END; END', ['USE is not allowed in stored procedures']];
         yield 'twice in one body' => ['CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1; COMMIT; RETURN 1; END', ['Not allowed to return a result set from a function', 'Explicit or implicit commit is not allowed in stored function or trigger.']];
-        yield 'once when two rules apply' => ['CREATE FUNCTION f() RETURNS INT BEGIN CREATE PROCEDURE q() SELECT 1; RETURN 1; END', ["Can't create a PROCEDURE from within another stored routine"]];
     }
 
     /**
@@ -195,9 +203,13 @@ final class ProgramRestrictionsTest extends TestCase
     public function testCheckReportsTheStatementInEveryRelease(string $release, string $sql, array $messages): void
     {
         $semantics = new Semantics(Dialect::MySql, $release);
-        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        try {
+            $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -207,18 +219,39 @@ final class ProgramRestrictionsTest extends TestCase
     {
         yield 'RESET MASTER in a 5.6 function' => ['mysql-5.6.51', 'CREATE FUNCTION f() RETURNS INT BEGIN RESET MASTER; RETURN 1; END', ['RESET is not allowed in stored function or trigger']];
         yield 'RESET QUERY CACHE in a 5.7 trigger' => ['mysql-5.7.44', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RESET QUERY CACHE', ['RESET is not allowed in stored function or trigger']];
-        yield 'RESET SLAVE in a 5.7 procedure' => ['mysql-5.7.44', 'CREATE PROCEDURE p() RESET SLAVE', []];
         yield 'a SELECT in an 8.0 trigger' => ['mysql-8.0.44', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT a FROM t', ['Not allowed to return a result set from a trigger']];
         yield 'LOCK TABLES in a 5.6 procedure' => ['mysql-5.6.51', 'CREATE PROCEDURE p() LOCK TABLES t WRITE', ['LOCK is not allowed in stored procedures']];
         yield 'a 5.7 union with a locked middle operand in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3; RETURN 1; END', ['Not allowed to return a result set from a function']];
-        yield 'a 5.7 union with a locked middle operand INTO in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3 INTO @a; RETURN 1; END', []];
         yield 'LOAD XML in an 8.4 event' => ['mysql-8.4.7', "CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO LOAD XML INFILE 'f' INTO TABLE t", ['LOAD XML is not allowed in stored procedures']];
+    }
+
+    /**
+     * @return iterable<string, array{string, string, list<string>}>
+     */
+    public static function providerCheckAcceptsReleaseSpecificBodies(): iterable
+    {
+        yield 'RESET SLAVE in a 5.7 procedure' => ['mysql-5.7.44', 'CREATE PROCEDURE p() RESET SLAVE', []];
+        yield 'a 5.7 union with a locked middle operand INTO in a function' => ['mysql-5.7.44', 'CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1 UNION SELECT 2 FROM t FOR UPDATE UNION SELECT 3 INTO @a; RETURN 1; END', []];
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerCheckAcceptsReleaseSpecificBodies')]
+    public function testCheckAcceptsReleaseSpecificBodies(string $release, string $sql, array $messages): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     #[DataProvider('providerAnywhereAnswersTheProblemOfTheStatement')]
     public function testAnywhereAnswersTheProblemOfTheStatement(string $sql, ?string $message): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $analyzed = (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = $analyzed instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $analyzed : $analyzed;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->anywhere($statement)?->message());
     }
@@ -228,6 +261,9 @@ final class ProgramRestrictionsTest extends TestCase
      */
     public static function providerAnywhereAnswersTheProblemOfTheStatement(): iterable
     {
+        foreach (['HANDLER t OPEN', 'HANDLER t CLOSE', 'HANDLER t READ NEXT', 'HANDLER t READ a FIRST', 'HANDLER t READ a = (1)'] as $statement) {
+            yield $statement => [$statement, 'HANDLER is not allowed in stored procedures'];
+        }
         yield 'LOCK TABLES' => ['LOCK TABLES t READ', 'LOCK is not allowed in stored procedures'];
         yield 'UNLOCK TABLES' => ['UNLOCK TABLES', 'UNLOCK is not allowed in stored procedures'];
         yield 'ALTER VIEW' => ['ALTER VIEW v AS SELECT 1', 'ALTER VIEW is not allowed in stored procedures'];
@@ -253,7 +289,9 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerFunctionAnswersTheProblemOfTheStatement')]
     public function testFunctionAnswersTheProblemOfTheStatement(string $sql, ProgramKind $kind, ?string $message): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $analyzed = (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = $analyzed instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $analyzed : $analyzed;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($message, (new ProgramRestrictions())->function($statement, $kind)?->message());
     }
@@ -267,6 +305,8 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'a SELECT of a trigger' => ['SELECT 1', ProgramKind::Trigger, 'Not allowed to return a result set from a trigger'];
         yield 'a SELECT INTO' => ['SELECT 1 INTO @a', ProgramKind::Function, null];
         yield 'SHOW' => ['SHOW TABLES', ProgramKind::Trigger, 'Not allowed to return a result set from a trigger'];
+        yield 'unannounced profiling in a function' => ['SHOW PROFILE', ProgramKind::Function, null];
+        yield 'unannounced profile list in a trigger' => ['SHOW PROFILES', ProgramKind::Trigger, null];
         yield 'COMMIT' => ['COMMIT', ProgramKind::Function, 'Explicit or implicit commit is not allowed in stored function or trigger.'];
         yield 'ROLLBACK' => ['ROLLBACK', ProgramKind::Trigger, 'Explicit or implicit commit is not allowed in stored function or trigger.'];
         yield 'START TRANSACTION' => ['START TRANSACTION', ProgramKind::Function, 'Explicit or implicit commit is not allowed in stored function or trigger.'];
@@ -284,7 +324,9 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerResultsTellsWhetherTheStatementReturnsRows')]
     public function testResultsTellsWhetherTheStatementReturnsRows(string $sql, bool $expected): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
+        $analyzed = (new Semantics(Dialect::MySql))->analyze($sql);
+        $statement = $analyzed instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $analyzed : $analyzed;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $statement);
 
         self::assertSame($expected, (new ProgramRestrictions())->results($statement));
     }
@@ -316,8 +358,11 @@ final class ProgramRestrictionsTest extends TestCase
     #[DataProvider('providerIntoTellsWhetherTheQueryWritesItsRows')]
     public function testIntoTellsWhetherTheQueryWritesItsRows(string $sql, bool $expected): void
     {
-        $query = (new Semantics(Dialect::MySql))->analyze($sql)->statement;
-        self::assertInstanceOf(Query::class, $query);
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        $query = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $query);
+        $query = $query->query;
 
         self::assertSame($expected, (new ProgramRestrictions())->into($query));
     }
@@ -343,4 +388,45 @@ final class ProgramRestrictionsTest extends TestCase
         yield 'a TABLE statement' => ['TABLE t', false];
         yield 'a VALUES statement' => ['VALUES ROW(1)', false];
     }
+    public function testFunctionRefusesViewDefinitionTransactionBoundaries(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $createOperation = $semantics->analyze('CREATE VIEW v AS SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $createOperation);
+        $create = $createOperation;
+        $dropOperation = $semantics->analyze('DROP VIEW v');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $dropOperation);
+        $drop = $dropOperation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\CreateView::class, $create);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\View\DropView::class, $drop);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, (new ProgramRestrictions())->function($create, ProgramKind::Function)?->rule);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::CommitInFunction, (new ProgramRestrictions())->function($drop, ProgramKind::Trigger)?->rule);
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $sql, array $messages): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'CREATE PROCEDURE in a procedure' => ['CREATE PROCEDURE p() CREATE PROCEDURE q() SELECT 1', ["Can't create a PROCEDURE from within another stored routine"]];
+        yield 'CREATE FUNCTION in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN CREATE FUNCTION g() RETURNS INT RETURN 1; RETURN 1; END', ["Can't create a FUNCTION from within another stored routine"]];
+        yield 'CREATE TRIGGER in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW CREATE TRIGGER tr2 BEFORE INSERT ON t FOR EACH ROW SET @a = 1', ["Can't create a TRIGGER from within another stored routine"]];
+        yield 'CREATE TRIGGER in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1', ["Can't create a TRIGGER from within another stored routine"]];
+        yield 'CREATE EVENT in a procedure' => ['CREATE PROCEDURE p() CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1', ['Recursion of EVENT DDL statements is forbidden when body is present']];
+        yield 'CREATE EVENT in an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO CREATE EVENT e2 ON SCHEDULE EVERY 1 DAY DO SELECT 1', ['Recursion of EVENT DDL statements is forbidden when body is present']];
+        yield 'ALTER EVENT with a body in a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW ALTER EVENT e DO SET @a = 1', ['Recursion of EVENT DDL statements is forbidden when body is present']];
+        yield 'once when two rules apply' => ['CREATE FUNCTION f() RETURNS INT BEGIN CREATE PROCEDURE q() SELECT 1; RETURN 1; END', ["Can't create a PROCEDURE from within another stored routine"]];
+    }
+
 }

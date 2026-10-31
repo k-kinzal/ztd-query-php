@@ -43,4 +43,10 @@ final class UserSpecificationTest extends TestCase
         self::assertSame("CREATE USER u IDENTIFIED WITH p INITIAL AUTHENTICATION IDENTIFIED WITH q AS 'h'", (new Semantics(Dialect::MySql))->analyze("create user u identified with p initial authentication identified with q as 'h'")->toString());
         self::assertSame("ALTER USER u IDENTIFIED BY RANDOM PASSWORD REPLACE 'c' RETAIN CURRENT PASSWORD", (new Semantics(Dialect::MySql))->analyze("alter user u identified by random password replace 'c' retain current password")->toString());
     }
+
+    public function testRenderExcludesRadixReplacementPasswords(): void
+    {
+        $this->expectExceptionMessage('A replacement password is a quoted string.');
+        new UserSpecification(new CurrentUser(), new Identification(null, Credential::Password, new Text('new')), replace: new Text('A', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

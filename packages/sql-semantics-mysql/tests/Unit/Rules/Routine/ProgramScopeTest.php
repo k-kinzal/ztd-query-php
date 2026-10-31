@@ -20,7 +20,6 @@ use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ProgramScope::class)]
@@ -46,9 +45,14 @@ final class ProgramScopeTest extends TestCase
     public function testVariableFindsAParameterInAnyLetterCase(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-
-        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS X = NUMBER')->facts->diagnostics);
-        self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER')->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS X = NUMBER')->diagnostics());
+        try {
+            $semantics->analyze('CREATE PROCEDURE p(x INT) GET DIAGNOSTICS y = NUMBER');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undeclared variable: y', $failure->problem->message());
+        }
     }
 
     public function testConditionFindsTheInnermostDeclarationOfTheName(): void
@@ -65,10 +69,14 @@ final class ProgramScopeTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $hidden = $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; SIGNAL c; END; END");
-        $hiding = $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
-
-        self::assertSame([], $hidden->facts->diagnostics);
-        self::assertSame(['SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE'], array_map(static fn (Diagnostic $problem): string => $problem->message(), $hiding->facts->diagnostics));
+        self::assertSame([], $hidden->diagnostics());
+        try {
+            $semantics->analyze("CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '45000'; BEGIN DECLARE c CONDITION FOR 1051; SIGNAL c; END; END");
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE', $failure->problem->message());
+        }
     }
 
     public function testLabeledAddsTheLabelOfABlockOrALoop(): void
@@ -114,11 +122,16 @@ final class ProgramScopeTest extends TestCase
         $condition = new ConditionDeclaration(new Name('c'), new ErrorCode(new Numeral('1051')));
         $scope = (new ProgramScope(new Environment(new AnalysisContext((new Semantics(Dialect::MySql))->profile(), [new Name('db')])), ProgramKind::Procedure, conditions: [$condition], cursors: [new Name('cur')]))->labeled(new Name('b'), false)->labeled(new Name('l'), true);
         $handler = $scope->handler();
-
         self::assertSame([], $handler->blocks);
         self::assertSame([], $handler->loops);
         self::assertSame([$condition], $handler->conditions);
         self::assertEquals([new Name('cur')], $handler->cursors);
-        self::assertSame(['LEAVE with no matching label: l'], array_map(static fn (Diagnostic $problem): string => $problem->message(), (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END')->facts->diagnostics));
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() l: BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION LEAVE l; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('LEAVE with no matching label: l', $failure->problem->message());
+        }
     }
 }

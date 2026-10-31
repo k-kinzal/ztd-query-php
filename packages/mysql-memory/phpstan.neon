@@ -1,0 +1,48 @@
+includes:
+    - rules/unused-classes.neon
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/k-kinzal/php-ai-toolkit/extension.neon
+    - vendor/k-kinzal/php-ai-toolkit/rules.neon
+
+parameters:
+    stubFiles:
+        - rules/eris.stub
+    unusedClasses: []
+    toolkit:
+        visibilityExemptNamespacePrefixes: ['Tests', 'Fuzz', 'Rules']
+        broadCatchAllowedPaths:
+            - src/Server/Process.php
+            - src/Session/Session.php
+    phpVersion: 80100
+    level: max
+    parallel:
+        processTimeout: 14400.0
+    paths: [src, tests, fuzz, rules]
+
+services:
+    -
+        class: Rules\ErisForAllComposition
+        tags: [phpstan.broker.dynamicMethodReturnTypeExtension]
+    -
+        class: Rules\ErisTupleComposition
+        tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]
+    -
+        class: Rules\AnalysisFileCollector
+        tags: [phpstan.collector]
+    -
+        class: Rules\SemanticCatalogue
+    -
+        class: Rules\GeneratorDeclarationCollector
+        tags: [phpstan.collector]
+    -
+        class: Rules\SemanticGeneratorCoverageRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Rules\PropertyRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Rules\GeneratorShapeRule
+        tags: [phpstan.rules.rule]
+    -
+        class: Rules\SemanticCache
+        tags: [phpstan.resultCacheMetaExtension]

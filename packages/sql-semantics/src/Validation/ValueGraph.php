@@ -12,11 +12,11 @@ use SqlSemantics\Statement\Snapshot;
 use UnitEnum;
 
 /**
- * Audits that a value graph is deeply immutable and made of the closed value domain only.
+ * Checks that SQL operands belong to the semantic value domain.
  *
  * Every reachable object must be an enum case or an instance of a final
  * class of the admitted namespaces that uses the Snapshot trait and whose
- * properties are all initialised readonly properties. Properties hold null, booleans, integers, strings,
+ * public operands are initialized readonly properties. Private binding state is completed once by the occurrence APIs. Properties hold null, booleans, integers, strings,
  * arrays without references, or such objects. Floats, closures, resources and
  * classes of any other origin are rejected, whatever interface they implement.
  *
@@ -39,10 +39,12 @@ final class ValueGraph
     /**
      * Answers every object reachable from a root, the root included, after auditing each.
      *
+     * @param bool $reuse Retained for callers; binding state requires a fresh traversal
+     * @param bool $bindings Include private binding edges when auditing the complete retained graph
      * @return list<object>
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a reachable value is outside the closed immutable domain
      */
-    public function objects(object $root): array
+    public function objects(object $root, bool $reuse = false, bool $complete = true, bool $bindings = true): array
     {
         $objects = [];
         $seen = [];
@@ -66,6 +68,12 @@ final class ValueGraph
             $seen[spl_object_id($value)] = true;
             $objects[] = $value;
             foreach ($this->members($value) as $property) {
+                if (!$bindings && $property->isPrivate()) {
+                    continue;
+                }
+                if (!$complete && !$property->isInitialized($value)) {
+                    continue;
+                }
                 Check::input($property->isInitialized($value), 'A semantic value has no uninitialised property.');
                 $pending[] = $property->getValue($value);
             }
@@ -97,11 +105,18 @@ final class ValueGraph
         $reflection = new ReflectionClass($value);
         Check::input($reflection->isFinal(), 'Semantic value class ' . $class . ' must be final.');
         $properties = [];
-        foreach ($reflection->getProperties() as $property) {
-            Check::input($property->isReadOnly() && !$property->isStatic(), 'Semantic value class ' . $class . ' must have readonly properties only.');
-            $properties[] = $property;
-        }
-        Check::input(in_array(Snapshot::class, $reflection->getTraitNames(), true), 'Semantic value class ' . $class . ' must close cloning, dynamic properties and unserialization with the Snapshot trait.');
+        $traits = $reflection->getTraitNames();
+        do {
+            foreach ($reflection->getProperties() as $property) {
+                if ($property->getDeclaringClass()->getName() !== $reflection->getName()) {
+                    continue;
+                }
+                Check::input(($property->isReadOnly() || $property->isPrivate()) && !$property->isStatic(), 'Semantic value class ' . $class . ' exposes readonly operands only.');
+                $properties[] = $property;
+            }
+            $reflection = $reflection->getParentClass();
+        } while ($reflection !== false);
+        Check::input(in_array(Snapshot::class, $traits, true) || in_array(\SqlSemantics\Statement\Semantics\Occurrence::class, $traits, true), 'Semantic value class ' . $class . ' must close cloning, dynamic properties and unserialization with the Snapshot trait.');
 
         return $this->properties[$class] = $properties;
     }

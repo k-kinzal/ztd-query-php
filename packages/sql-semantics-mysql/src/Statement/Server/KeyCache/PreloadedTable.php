@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One table whose indexes LOAD INDEX INTO CACHE preloads: `t [PARTITION (…)] [INDEX (…)] [IGNORE LEAVES]`.
@@ -27,9 +26,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $table = new \SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), null, [new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex()], true);
  *     [count($table->indexes ?? []), $table->ignoreLeaves] // => [1, true]
  */
-final class PreloadedTable implements Node
+final class PreloadedTable implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name|PrimaryIndex>|null The indexes, when an index list is written
@@ -37,14 +37,25 @@ final class PreloadedTable implements Node
     public readonly ?array $indexes;
 
     /**
+     * The keyword introducing the index list, absent when no list is written.
+     */
+    public readonly ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword;
+
+    /**
      * @param QualifiedName $table The table name with its optional database
      * @param PartitionSelection|null $partitions The partitions, when written
      * @param list<Name|PrimaryIndex>|null $indexes The indexes, when an index list is written
      * @param bool $ignoreLeaves Whether IGNORE LEAVES is written
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ?PartitionSelection $partitions = null, ?array $indexes = null, public readonly bool $ignoreLeaves = false)
+    public function __construct(public readonly QualifiedName $table, public readonly ?PartitionSelection $partitions = null, ?array $indexes = null, public readonly bool $ignoreLeaves = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord $keyword = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         $this->indexes = (new CachedIndexes())->checked($table, $indexes);
+        \SqlSemantics\Diagnostic\Check::input($indexes !== null || $keyword === null, 'Only a written index list has an index keyword.');
+        $this->keyword = $indexes === null ? null : ($keyword ?? \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index);
     }
 
     /**
@@ -52,7 +63,7 @@ final class PreloadedTable implements Node
      */
     public function render(Output $out): void
     {
-        (new CachedIndexes())->render($out, $this->table, $this->partitions, $this->indexes);
+        (new CachedIndexes())->render($out, $this->table, $this->partitions, $this->indexes, $this->keyword);
         if ($this->ignoreLeaves) {
             $out->keyword('IGNORE', 'LEAVES');
         }

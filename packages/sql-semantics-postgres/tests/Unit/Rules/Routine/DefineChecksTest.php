@@ -28,7 +28,7 @@ final class DefineChecksTest extends TestCase
     public function testDeriveAcceptsTheAlternativeSpellings(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
-        self::assertSame([[], []], [$semantics->analyze('CREATE AGGREGATE a (basetype = int4, SFUNC1 = f, stype1 = int4)')->facts->diagnostics, $semantics->analyze('CREATE OPERATOR + (rightarg = int4, procedure = f)')->facts->diagnostics]);
+        self::assertSame([[], []], [$semantics->analyze('CREATE AGGREGATE a (basetype = int4, SFUNC1 = f, stype1 = int4)')->diagnostics(), $semantics->analyze('CREATE OPERATOR + (rightarg = int4, procedure = f)')->diagnostics()]);
     }
 
     public function testDeriveReportsTheProblemsOfEachKind(): void
@@ -45,20 +45,20 @@ final class DefineChecksTest extends TestCase
                 [],
             ],
             [
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a(int4) (initcond = 0)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TYPE t (output = o, typmod_out = m)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (rules = '')")->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TEXT SEARCH PARSER p (gettoken = g, "end" = e)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TEXT SEARCH TEMPLATE t (init = i)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TEXT SEARCH DICTIONARY d (stopwords = english)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TYPE t')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a(int4) (initcond = 0)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TYPE t (output = o, typmod_out = m)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (rules = '')")->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TEXT SEARCH PARSER p (gettoken = g, "end" = e)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TEXT SEARCH TEMPLATE t (init = i)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TEXT SEARCH DICTIONARY d (stopwords = english)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TYPE t')->diagnostics()),
             ],
         );
     }
 
     public function testRangeReportsTheMissingSubtype(): void
     {
-        self::assertSame(['type attribute "subtype" is required'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('CREATE TYPE r AS RANGE (subtype_diff = float8mi)')->facts->diagnostics));
+        self::assertSame(['type attribute "subtype" is required'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('CREATE TYPE r AS RANGE (subtype_diff = float8mi)')->diagnostics()));
     }
 
     public function testPresentKeepsTheLastRecognizedAttributeOfEachName(): void
@@ -86,9 +86,9 @@ final class DefineChecksTest extends TestCase
                 [],
             ],
             [
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a(int4) (sfunc = f, stype = int4, msfunc = m, msspace = 4, hypothetical, basetype = int4, serialfunc = s)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a (sfunc = f, stype = int4, mstype = int4, msfunc = m)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a(int4 ORDER BY int4) (sfunc = f, stype = int4, hypothetical, msspace = 0)')->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a(int4) (sfunc = f, stype = int4, msfunc = m, msspace = 4, hypothetical, basetype = int4, serialfunc = s)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a (sfunc = f, stype = int4, mstype = int4, msfunc = m)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE AGGREGATE a(int4 ORDER BY int4) (sfunc = f, stype = int4, hypothetical, msspace = 0)')->diagnostics()),
             ],
         );
         self::assertSame([], (new DefineChecks())->aggregate(['stype' => new Attribute(new Name('hashes'), OperatorAttribute::Hashes, new BooleanArgument()), 'sfunc' => new Attribute(new Name('hashes'), OperatorAttribute::Hashes, new BooleanArgument())], new AggregateArguments([])));
@@ -105,11 +105,11 @@ final class DefineChecksTest extends TestCase
         self::assertSame(
             [['conflicting or redundant options'], ['conflicting or redundant options'], ['nondeterministic collations not supported with this provider'], ['parameter "locale" must be specified'], []],
             [
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (locale = 'C', lc_ctype = 'C')")->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (from = \"C\", locale = 'C')")->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (locale = 'C', deterministic = false)")->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE COLLATION c (provider = builtin)')->facts->diagnostics),
-                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (provider = icu, locale = 'und', deterministic = false, rules = '')")->facts->diagnostics),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (locale = 'C', lc_ctype = 'C')")->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (from = \"C\", locale = 'C')")->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (locale = 'C', deterministic = false)")->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE COLLATION c (provider = builtin)')->diagnostics()),
+                array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze("CREATE COLLATION c (provider = icu, locale = 'und', deterministic = false, rules = '')")->diagnostics()),
             ],
         );
         self::assertSame([], (new DefineChecks())->collation(['provider' => new Attribute(new Name('hashes'), OperatorAttribute::Hashes, new BooleanArgument())], 1, GrammarRelease::PostgreSql166));

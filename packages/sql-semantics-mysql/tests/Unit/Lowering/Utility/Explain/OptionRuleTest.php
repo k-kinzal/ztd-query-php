@@ -27,11 +27,24 @@ final class OptionRuleTest extends TestCase
 
     public function testIntoLowersTheVariable(): void
     {
-        self::assertSame('EXPLAIN FORMAT = `json` INTO @x SELECT 1', (new Semantics(Dialect::MySql))->analyze('explain format = json into @x select 1')->toString());
+        self::assertSame('EXPLAIN FORMAT = json INTO @x SELECT 1', (new Semantics(Dialect::MySql))->analyze('explain format = json into @x select 1')->toString());
     }
 
     public function testDatabaseLowersTheDatabase(): void
     {
         self::assertSame('EXPLAIN FOR DATABASE `d b` DELETE FROM t', (new Semantics(Dialect::MySql))->analyze('explain for database `d b` delete from t')->toString());
     }
+    public function testEmptyIntoRetainsTheIgnoredDestinationInTheIntermediateReleases(): void
+    {
+        self::assertSame("EXPLAIN INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("EXPLAIN INTO @'' SELECT 1")->toString());
+        self::assertSame("EXPLAIN FORMAT = JSON INTO @'' SELECT 1", (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze("EXPLAIN FORMAT=JSON INTO @'' SELECT 1")->toString());
+    }
+
+    public function testDatabaseNameRefusesAnOversizedOperandAsANameDiagnostic(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Identifier name');
+        (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR SCHEMA `' . str_repeat('a', 65) . '` SELECT 1');
+    }
+
 }

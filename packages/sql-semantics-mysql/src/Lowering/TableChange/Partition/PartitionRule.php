@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionEntry;
 use SqlSemantics\Platform\MySql\Statement\Partition\Subpartitioning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
@@ -35,7 +34,7 @@ use SqlSemantics\Statement\Scalar;
  * over an expression or over columns become the method classes of
  * PT_part_type_def; the parenthesized function of 5.6 and 5.7 is the bit
  * expression it encloses. Constructs: PartitionClause, Subpartitioning,
- * KeyMethod, HashMethod, ExpressionMethod, ColumnsMethod, PartitionEntry.
+ * KeyMethod, HashMethod, ExpressionMethod, ColumnsMethod. Standalone partitioning is rejected during lowering.
  * Terminates: lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  * Status: Implemented.
@@ -93,8 +92,9 @@ final class PartitionRule
 
     /**
      * @param Lowering $lowering The lowering this rule belongs to
+     * @param bool $retainDeferredOperands Whether a completed table instruction retains refused partition operands
      */
-    public function __construct(private readonly Lowering $lowering)
+    public function __construct(private readonly Lowering $lowering, private readonly bool $retainDeferredOperands = false)
     {
     }
 
@@ -130,40 +130,51 @@ final class PartitionRule
     }
 
     /**
-     * Lowers the statement that is only a partitioning clause: a node of `partition_entry`.
+     * Refuses a standalone partitioning entry before constructing any semantic statement.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput Always: this entry cannot denote a client statement
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function entry(Node $entry): PartitionEntry
+    public function entry(Node $entry): never
     {
         $form = $this->lowering->form($entry);
         if ($form->signature !== 'partition_entry: PARTITION_SYM partition') {
             throw ImplementationGap::production($form);
         }
 
-        return new PartitionEntry($this->clause($form->node(1)));
+        throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Alter\Problem\PartitionEntryRefused(), $form->token(0)->end());
     }
 
     /**
      * Lowers the method, counts, subpartitioning and definitions: a node of `partition` or `partition_clause`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a partition count is zero in the selected release
      */
     public function clause(Node $clause): PartitionClause
     {
         $form = $this->lowering->form($clause);
         $positions = self::CLAUSES[$form->signature] ?? throw ImplementationGap::production($form);
 
+        $method = $this->method($this->lowering->form($form->node($positions[0])));
+        $count = $this->count($form->node($positions[1]));
+        if ($count !== null && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count) && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
+            throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroPartitions, (new \SqlSemantics\Construction\SourceRanges())->span($form->node($positions[1]))[1] ?? 0);
+        }
+        $subpartitioning = $this->subpartitioning($form->node($positions[2]));
         return new PartitionClause(
-            $this->method($this->lowering->form($form->node($positions[0]))),
-            $this->count($form->node($positions[1])),
-            $this->subpartitioning($form->node($positions[2])),
-            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3])),
+            $method,
+            $count,
+            $subpartitioning,
+            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count)),
         );
     }
 
     /**
      * Lowers a method production of `part_type_def` or `opt_sub_part`.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a partition operand cannot occupy the requested role
      *
      * @throws ImplementationGap When a production has no rule
      */
@@ -172,16 +183,28 @@ final class PartitionRule
         [$kind, $linear, $algorithm, $operand] = self::METHODS[$form->signature] ?? throw ImplementationGap::production($form);
         $isLinear = $linear !== null && $this->linear($form->node($linear));
 
-        return match ($kind) {
-            'key' => new KeyMethod($isLinear, $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->columns($form->node($operand))),
-            'hash' => new HashMethod($isLinear, $this->expression($form->node($operand))),
-            'RANGE', 'LIST' => new ExpressionMethod(PartitionKind::from($kind), $this->expression($form->node($operand))),
-            'RANGE COLUMNS' => new ColumnsMethod(PartitionKind::Range, $this->columns($form->node($operand))),
-            'LIST COLUMNS' => new ColumnsMethod(PartitionKind::List, $this->columns($form->node($operand))),
-        };
+        try {
+            return match ($kind) {
+                'key' => new KeyMethod($isLinear, $algorithm === null ? null : $this->algorithm($form->node($algorithm)), $this->columns($form->node($operand))),
+                'hash' => new HashMethod($isLinear, $this->expression($form->node($operand))),
+                'RANGE', 'LIST' => new ExpressionMethod(PartitionKind::from($kind), $this->expression($form->node($operand))),
+                'RANGE COLUMNS' => new ColumnsMethod(PartitionKind::Range, $this->columns($form->node($operand))),
+                'LIST COLUMNS' => new ColumnsMethod(PartitionKind::List, $this->columns($form->node($operand))),
+            };
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$this->retainDeferredOperands || !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar) {
+                throw $failure;
+            }
+            if ($failure->problem->condition === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery && !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                throw $failure;
+            }
+            return new \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod($failure->problem->operand, $kind === 'hash' ? null : PartitionKind::from($kind), $isLinear);
+        }
     }
 
     /**
+     * @throws \SqlSemantics\Construction\RejectedInput When the explicit count is zero
+     *
      * Lowers the subpartitioning: a node of `opt_sub_part`; an absent clause is null.
      *
      * @throws ImplementationGap When a production has no rule
@@ -193,7 +216,12 @@ final class PartitionRule
             return null;
         }
 
-        return new Subpartitioning($this->method($form), $this->count($form->node(count($form->node->children) - 1)));
+        $countNode = $form->node(count($form->node->children) - 1);
+        $count = $this->count($countNode);
+        if ($count !== null && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count) && ((new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0') || in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($count) === 0)) {
+            throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroSubpartitions, (new \SqlSemantics\Construction\SourceRanges())->span($countNode)[1] ?? 0);
+        }
+        return new Subpartitioning($this->method($form), $count);
     }
 
     /**
@@ -223,9 +251,32 @@ final class PartitionRule
 
         return match ($form->signature) {
             'opt_key_algo:' => null,
-            'opt_key_algo: ALGORITHM_SYM EQ real_ulong_num' => $this->lowering->numbers->numeral($form->node(2)),
+            'opt_key_algo: ALGORITHM_SYM EQ real_ulong_num' => $this->keyAlgorithm($form->node(2)),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Retains every numeric algorithm for its integer and hash conditions.
+     *
+     */
+    public function keyAlgorithm(Node $node): Numeral
+    {
+        $number = $this->lowering->numbers->numeral($node);
+        return $number;
+    }
+
+    /**
+     * Preserves an invalid algorithm before any later malformed partition clause.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($node->name !== 'opt_key_algo') {
+            return null;
+        }
+        $number = $this->algorithm($node);
+        $problem = $number === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->problem($number);
+        return $problem === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
     }
 
     /**
@@ -248,18 +299,32 @@ final class PartitionRule
      * Lowers a partitioning function: a node of `part_func`, `sub_part_func`, `part_func_expr` or `bit_expr`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the function has no scalar interpretation
      */
     public function expression(Node $function): Scalar
     {
         if ($function->name === 'bit_expr') {
-            return $this->lowering->expressions->bitExpression($function);
+            try {
+                $expression = $this->lowering->origins->record($this->lowering->expressions->bitExpression($function), $function);
+                if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($expression, $this->lowering->profile->grammar) === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery) {
+                    throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($expression, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, (new \SqlSemantics\Construction\SourceRanges())->span($function)[0] ?? 0), (new \SqlSemantics\Construction\SourceRanges())->span($function)[1] ?? 0, true, $this->lowering->origins->publish());
+                }
+                return $expression;
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar) {
+                    $this->lowering->origins->record($failure->problem->operand, $function);
+                }
+                throw $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar
+                    ? new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\RefusedScalar($failure->problem->operand, (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->condition($failure->problem->operand, $this->lowering->profile->grammar), (new \SqlSemantics\Construction\SourceRanges())->span($function)[0] ?? 0), $failure->end, $failure->aborts, $this->lowering->origins->publish())
+                    : $failure;
+            }
         }
         $form = $this->lowering->form($function);
 
         return match ($form->signature) {
             'part_func: ( remember_name part_func_expr remember_end )', 'sub_part_func: ( remember_name part_func_expr remember_end )' => $this->remembered($form),
             'part_func: ( part_func_expr )', 'sub_part_func: ( part_func_expr )' => $this->expression($form->node(1)),
-            'part_func_expr: bit_expr' => $this->lowering->expressions->bitExpression($form->node(0)),
+            'part_func_expr: bit_expr' => $this->expression($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
     }

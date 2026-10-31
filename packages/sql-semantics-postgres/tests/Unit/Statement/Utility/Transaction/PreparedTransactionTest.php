@@ -14,7 +14,7 @@ final class PreparedTransactionTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('PREPARE TRANSACTION \'x\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('PREPARE TRANSACTION \'x\'')->diagnostics());
     }
 
     public function testRenderWritesTheIdentifierAsAString(): void

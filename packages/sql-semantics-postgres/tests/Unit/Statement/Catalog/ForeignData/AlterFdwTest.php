@@ -19,7 +19,7 @@ final class AlterFdwTest extends TestCase
 
     public function testDeriveStatementAcceptsOneOfEach(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->diagnostics());
     }
 
     public function testRejectsAnEmptyChange(): void

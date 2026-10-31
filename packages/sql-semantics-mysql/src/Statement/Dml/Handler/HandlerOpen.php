@@ -10,12 +10,11 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... OPEN: opens a table for direct reads under its name or an alias.
@@ -29,21 +28,30 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a HANDLER ... OPEN
  *     $open = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER shop.t OPEN AS h');
- *     [$open->statement->table->name->value, $open->statement->alias?->value, $open->toString()] // => ['t', 'h', 'HANDLER shop.t OPEN AS h']
+ *     [$open->table->name->value, $open->alias?->value, $open->toString()] // => ['t', 'h', 'HANDLER shop.t OPEN AS h']
  */
-final class HandlerOpen implements Statement
+final class HandlerOpen extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table with its optional database
      * @param Name|null $alias The name of the handler; the table name when absent
      * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
+    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

@@ -24,6 +24,18 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 #[Medium]
 final class PredicateRuleTest extends TestCase
 {
+    public function testLikeRetainsNonScalarPatternOperands(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new PredicateRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new NumberLiteral('1'), new NumberLiteral('2')]);
+        $like = $rule->like(new NumberLiteral('0'), $row, null, true);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredLike::class, $like);
+        self::assertSame($row, $like->pattern);
+        self::assertTrue($like->negated);
+    }
+
     public function testPredicateLowersANegatedRangeWithARangeInTheUpperBound(): void
     {
         $platform = new Platform();
@@ -84,4 +96,26 @@ final class PredicateRuleTest extends TestCase
         self::assertInstanceOf(StringLiteral::class, $rule->escape($platform->parser($profile)->parse("SELECT 'a' LIKE 'b' ESCAPE '!'")->find('opt_escape')[0]));
         self::assertNull($rule->escape($platform->parser($profile)->parse("SELECT 'a' LIKE 'b'")->find('opt_escape')[0]));
     }
+    public function testRegexpRetainsARowOperandInsideAnUnusedDefinition(): void
+    {
+        $sql = 'WITH x AS (SELECT ROW(1, 2) REGEXP 1) SELECT 7';
+        self::assertSame($sql, (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze($sql)->toString());
+    }
+
+    public function testBetweenRetainsDeferredDependenciesOfAnUnusedCte(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT ROW(1,2) BETWEEN 3 AND 4) SELECT 7');
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+        self::assertSame([], $operation->diagnostics());
+    }
+
+    public function testSoundsRetainsDeferredDependenciesOfAnUnusedCte(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('WITH x AS (SELECT ROW(1,2) SOUNDS LIKE 3) SELECT 7');
+        self::assertSame($operation->toString(), $semantics->analyze($operation->toString())->toString());
+        self::assertSame([], $operation->diagnostics());
+    }
+
 }

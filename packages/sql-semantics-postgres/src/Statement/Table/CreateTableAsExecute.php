@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,9 +27,9 @@ use SqlSemantics\Statement\Statement;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t AS EXECUTE q (1) WITH DATA');
  *     [$create->declarations()[0]->complete, $create->toString()] // => [false, 'CREATE TABLE t AS EXECUTE q (1) WITH DATA']
  */
-final class CreateTableAsExecute implements Statement
+final class CreateTableAsExecute extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CreateTarget $target The new table
@@ -45,7 +44,12 @@ final class CreateTableAsExecute implements Statement
         public readonly Persistence $persistence = Persistence::Permanent,
         public readonly bool $ifNotExists = false,
         public readonly ?bool $withData = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

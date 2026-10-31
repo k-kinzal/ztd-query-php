@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
 
 /**
  * Lowers the number productions of positions that are not expressions.
@@ -71,7 +72,23 @@ final class NumberRule
         $hexadecimal = self::TOKENS[$form->signature] ?? throw ImplementationGap::production($form);
         $text = $form->token(0)->text;
 
-        return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal));
+        return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal, inputSource: new \SqlSemantics\Statement\Source\Span($form->token(0)->offset, strlen($text)), notation: $hexadecimal ? (new RadixSpelling())->notation($text) : null));
+    }
+
+    /**
+     * Preserves numeric input refusals before any later malformed input.
+     *
+     * MySQL 5.6 stops at an overflowing DOUBLE literal; subsequent releases
+     * record it and continue reading the statement.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($node->name === 'NUM_literal' && $this->lowering->form($node)->signature === 'NUM_literal: FLOAT_NUM') {
+            $text = $this->lowering->form($node)->token(0)->text;
+            return is_finite((float) $text) ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedNumberLiteral($text), $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        }
+
+        return $node->name === 'dec_num_error' ? new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new FractionalNumber($this->numeral($node)), true) : null;
     }
 
     /**
@@ -85,7 +102,7 @@ final class NumberRule
     {
         Check::invariant($token->is('NUM'), 'A bare number is a NUM token.');
 
-        return $this->lowering->leaves->record(new Numeral($token->text));
+        return $this->lowering->leaves->record(new Numeral($token->text, inputSource: new \SqlSemantics\Statement\Source\Span($token->offset, strlen($token->text))));
     }
 
     /**
@@ -97,12 +114,15 @@ final class NumberRule
     {
         $form = $this->lowering->productions->form($size);
 
-        return match ($form->signature) {
-            'size_number: real_ulonglong_num' => $this->lowering->leaves->record(new ByteSize($this->numeral($form->node(0)))),
-            'size_number: IDENT_sys' => $this->lowering->leaves->record(new ByteSize(null, $this->lowering->names->identifier($form->node(0)))),
-            'option_autoextend_size: AUTOEXTEND_SIZE_SYM opt_equal size_number' => $this->size($form->node(2)),
+        if ($form->signature === 'option_autoextend_size: AUTOEXTEND_SIZE_SYM opt_equal size_number') {
+            return $this->size($form->node(2));
+        }
+        [$number, $word] = match ($form->signature) {
+            'size_number: real_ulonglong_num' => [$this->numeral($form->node(0)), null],
+            'size_number: IDENT_sys' => [null, $this->lowering->names->identifier($form->node(0))],
             default => throw ImplementationGap::production($form),
         };
+        return $this->lowering->leaves->record(new ByteSize($number, $word));
     }
 
     /**

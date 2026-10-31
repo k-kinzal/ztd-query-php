@@ -23,7 +23,7 @@ final class NullAllowedTest extends TestCase
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT NULL)', []);
 
         self::assertSame(Nullability::Nullable, $operation->declarations()[0]->columns[0]->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveConstraintDoesNotUndoNotNull(): void
@@ -36,7 +36,7 @@ final class NullAllowedTest extends TestCase
     public function testRenderKeepsTheConflictResolution(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a null on conflict fail)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(NullAllowed::class, $statement->columns[0]->constraints[0]);

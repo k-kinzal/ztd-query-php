@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Account\Password;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A password assignment among other assignments of a MySQL 5.6 SET: `SET @a = 1, PASSWORD FOR u = PASSWORD('x')`.
@@ -17,8 +16,8 @@ use SqlSemantics\Statement\Snapshot;
  * as one item of the SET list; it assigns the password of the account, or
  * of the current user without FOR, in order with the other items. A SET
  * whose only item is a password is the account statement SET PASSWORD of
- * the account family. Facts: none; the password is a literal or a hashing
- * call the account family models. Terminates: the parts are leaves.
+ * the account family. Facts retain the password function notice; the password is a literal
+ * or a hashing call the account family models. Terminates: the parts are leaves.
  * Source: https://dev.mysql.com/doc/refman/5.6/en/set-password.html,
  * https://dev.mysql.com/doc/refman/5.6/en/set-variable.html.
  * Status: Implemented.
@@ -26,29 +25,32 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a password item of a list
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze("SET @a = 1, PASSWORD FOR u = 'x'");
- *     [$set->statement->items[1]->user?->user->value, $set->toString()] // => ['u', "SET @a = 1, PASSWORD FOR u = 'x'"]
+ *     [$set->items[1]->user?->user->value, $set->toString()] // => ['u', "SET @a = 1, PASSWORD FOR u = 'x'"]
  */
 final class PasswordAssignment implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Password $password The new password
      * @param Account|null $user The account, or null for the current user
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly Password $password, public readonly ?Account $user = null)
+    public function __construct(public readonly Password $password, public readonly ?Account $user = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
     }
 
     /**
-     * Derives nothing: the parts are literals and account names.
+     * Derives the retained password function notice.
      */
     public function deriveItem(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user]);
+        $this->password->derivePassword($derivation);
     }
 
     /**
-     * Writes PASSWORD, the account, an equals sign and the password.
+     * Writes PASSWORD, the account, the chosen assignment sign and the password.
      */
     public function render(Output $out): void
     {
@@ -56,6 +58,6 @@ final class PasswordAssignment implements SetItem
         if ($this->user !== null) {
             $out->keyword('FOR')->node($this->user);
         }
-        $out->symbol('=')->node($this->password);
+        $out->symbol($this->operator->value)->node($this->password);
     }
 }

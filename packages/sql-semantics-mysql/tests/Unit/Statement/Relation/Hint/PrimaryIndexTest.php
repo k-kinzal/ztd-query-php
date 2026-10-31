@@ -17,6 +17,6 @@ final class PrimaryIndexTest extends TestCase
 {
     public function testRenderWritesTheKeyword(): void
     {
-        self::assertSame('SELECT a FROM t USE INDEX (PRIMARY, i)', (new Semantics(Dialect::MySql))->analyze('select a from t use key (primary, i)')->toString());
+        self::assertSame('SELECT a FROM t USE KEY (PRIMARY, i)', (new Semantics(Dialect::MySql))->analyze('select a from t use key (primary, i)')->toString());
     }
 }

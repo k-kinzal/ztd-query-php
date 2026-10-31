@@ -20,6 +20,6 @@ final class PseudoRelationsTest extends TestCase
         $statement = $semantics->analyze('CREATE TRIGGER g AFTER UPDATE ON t FOR EACH ROW WHEN (old.a = new.a AND a > 0) EXECUTE FUNCTION f()', $context);
         self::assertSame([
           0 => 'Column a is ambiguous.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 }

@@ -25,38 +25,38 @@ final class TablePrimaryKeyTest extends TestCase
     public function testDeriveConstraintResolvesTheKeyColumns(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, PRIMARY KEY (b, a))', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = $statement->constraints[0]->items[0];
         self::assertInstanceOf(TablePrimaryKey::class, $key);
-        $resolution = $operation->facts->scalar($key->terms[0]->expression)->resolution;
+        $resolution = $key->terms[0]->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($operation->declarations()[0]->columns[1], $resolution->slot->column);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveConstraintReportsAMissingKeyColumn(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, PRIMARY KEY (zz))', []);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveConstraintReportsATermThatIsNoColumnName(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, PRIMARY KEY (a + 1))', []);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(PrimaryKeyProblem::class, $operation->facts->diagnostics[0]);
-        self::assertSame(PrimaryKeyFlaw::ExpressionTerm, $operation->facts->diagnostics[0]->flaw);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(PrimaryKeyProblem::class, $operation->diagnostics()[0]);
+        self::assertSame(PrimaryKeyFlaw::ExpressionTerm, $operation->diagnostics()[0]->flaw);
     }
 
     public function testRenderWritesAutoincrementInsideTheParentheses(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (id integer, primary key (id desc autoincrement) on conflict replace)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = $statement->constraints[0]->items[0];

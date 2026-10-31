@@ -12,8 +12,6 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -29,19 +27,27 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class GroupConcatTest extends TestCase
 {
+    public function testRenderRejectsAnIntrinsicNestedWindow(): void
+    {
+        $this->expectExceptionMessage('An ordinary concatenation excludes fixed group and window nesting contradictions.');
+        new GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Rank, [], new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec())]);
+    }
+
     public function testAggregatesTellsWhetherTheCallHasNoWindow(): void
     {
         self::assertTrue((new GroupConcat([new NumberLiteral('1')]))->aggregates());
     }
 
-    public function testDeriveScalarReportsAWindow(): void
+    public function testDeriveScalarTypesTheOrdinaryAggregate(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
-        $fact = $derivation->scalar(new GroupConcat([new StringLiteral(['x'])], false, [], null, new Name('w')), $derivation->environment());
+        $call = new GroupConcat([new StringLiteral(['x'])]);
+        $fact = $derivation->scalar($call, $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Character->descriptor()), $fact->type);
-        self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupConcat)], $derivation->facts()->diagnostics);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame(TypeClass::Character, TypeClass::of($fact->type->descriptor));
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testRenderWritesTheOrderingAndTheSeparator(): void
@@ -52,5 +58,10 @@ final class GroupConcatTest extends TestCase
         (new GroupConcat([new ColumnUse(new Name('a'))], true, [new OrderItem(new ColumnUse(new Name('a')), Direction::Descending)], new Text(';')))->render($out);
 
         self::assertSame("GROUP_CONCAT(DISTINCT a ORDER BY a DESC SEPARATOR ';')", (new Lexical())->join($out->pieces()));
+    }
+
+    public function testOverAnswersTheWindowWrittenAfterOver(): void
+    {
+        self::assertNull((new GroupConcat([new NumberLiteral('1')]))->over());
     }
 }

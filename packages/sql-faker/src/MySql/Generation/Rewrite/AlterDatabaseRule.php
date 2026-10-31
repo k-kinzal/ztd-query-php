@@ -28,7 +28,7 @@ final class AlterDatabaseRule implements RewriteRule
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
         foreach ([...$sequence->occurrences('alter_database_stmt'), ...$sequence->occurrences('alter')] as $occurrence) {
-            $name = $sequence->child($occurrence, 'ident_or_empty');
+            $name = $sequence->child($occurrence, 'ident_or_empty') ?? $sequence->child($occurrence, 'ident');
             if ($name !== null && $sequence->range($name->id) !== null) {
                 continue;
             }

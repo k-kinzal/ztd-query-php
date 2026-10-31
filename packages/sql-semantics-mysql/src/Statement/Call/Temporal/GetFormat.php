@@ -7,11 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of GET_FORMAT(kind, standard): a format string for DATE_FORMAT and STR_TO_DATE.
@@ -29,14 +29,19 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class GetFormat implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TemporalFormat $format The kind of value
      * @param Scalar $standard The name of the standard
      */
-    public function __construct(public readonly TemporalFormat $format, public readonly Scalar $standard)
+    public function __construct(public readonly TemporalFormat $format, public readonly Scalar $standard, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -44,7 +49,9 @@ final class GetFormat implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('TY', [(new Arguments())->one($this->standard, $derivation, $environment)]);
+        $standard = (new Arguments())->one($this->standard, $derivation, $environment);
+
+        return (new Results())->refine('GET_FORMAT', [$this->standard], [$standard], (new ResultTyping())->fact('TY', [$standard]), $derivation);
     }
 
     /**

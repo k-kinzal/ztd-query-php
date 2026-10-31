@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,17 +20,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Leaving every channel
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('UNLISTEN *');
- *     [$operation->statement->channel, $operation->toString()] // => [null, 'UNLISTEN *']
+ *     [$operation->channel, $operation->toString()] // => [null, 'UNLISTEN *']
  */
-final class Unlisten implements Statement
+final class Unlisten extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $channel The channel name; null for every channel
      */
-    public function __construct(public readonly ?Name $channel = null)
+    public function __construct(public readonly ?Name $channel = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

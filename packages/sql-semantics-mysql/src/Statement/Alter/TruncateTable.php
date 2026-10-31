@@ -9,11 +9,10 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `TRUNCATE [TABLE] t`: a request to remove every row of a table.
@@ -22,25 +21,35 @@ use SqlSemantics\Statement\Statement;
  * resolves by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact
  * of the statement node; a declared view is refused
  * (MYSQL-RELATION-KIND-001). The statement changes no declaration and provides
- * none. The word TABLE is optional and always written.
+ * none. The optional TABLE keyword is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Resolving the emptied table
  *     $truncate = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('TRUNCATE shop.t');
- *     [$truncate->toString(), $truncate->statement->table->schema?->value] // => ['TRUNCATE TABLE shop.t', 'shop']
+ *     [$truncate->toString(), $truncate->table->schema?->value] // => ['TRUNCATE shop.t', 'shop']
  */
-final class TruncateTable implements Statement
+final class TruncateTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table with its optional database
+     * @param \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $tableWord Whether TABLE is written
      */
-    public function __construct(public readonly QualifiedName $table)
+    public function __construct(public readonly QualifiedName $table, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null, public readonly \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords $tableWord = \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -57,7 +66,10 @@ final class TruncateTable implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('TRUNCATE', 'TABLE');
+        $out->keyword('TRUNCATE');
+        if ($this->tableWord === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+            $out->keyword('TABLE');
+        }
         if ($this->table->schema !== null) {
             $out->name($this->table->schema, NameUse::Qualifier)->symbol('.');
         }

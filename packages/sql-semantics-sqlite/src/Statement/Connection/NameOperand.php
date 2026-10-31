@@ -12,7 +12,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -30,17 +29,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a schema name written as an identifier
  *     $attach = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("ATTACH 'file.db' AS aux");
- *     [$attach->statement->schema->name->value, $attach->facts->scalar($attach->statement->schema)->type->descriptor] // => ['aux', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
+ *     [$attach->schema->name->value, $attach->schema->scalarInformation()->type->descriptor] // => ['aux', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
  */
 final class NameOperand implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The identifier whose name is the text value
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

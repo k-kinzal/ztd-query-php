@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineLanguage;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
-use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -37,7 +36,7 @@ final class RoutineLanguageTest extends TestCase
     public function testRenderWritesTheKeywordSql(string $release): void
     {
         $alter = (new Semantics(Dialect::MySql, $release))->analyze('alter procedure p language sql');
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(RoutineLanguage::class, $characteristic);
@@ -59,7 +58,7 @@ final class RoutineLanguageTest extends TestCase
     public function testRenderWritesTheNameOfAnExternalLanguage(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze('create function f() returns int language javascript as $$ return 1 $$');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(RoutineLanguage::class, $characteristic);
@@ -68,16 +67,16 @@ final class RoutineLanguageTest extends TestCase
         self::assertSame('CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS $$ return 1 $$', $create->toString());
     }
 
-    public function testRenderQuotesALanguageNameThatNeedsQuoting(): void
+    public function testRenderIsNeverReachedForALanguageOtherThanJavaScript(): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze("create procedure p() language `java script` as 'x'");
-        $statement = $create->statement;
-        self::assertInstanceOf(CreateProcedure::class, $statement);
-        $characteristic = $statement->characteristics[0] ?? null;
-        self::assertInstanceOf(RoutineLanguage::class, $characteristic);
-
-        self::assertSame('java script', $characteristic->external?->value);
-        self::assertSame("CREATE PROCEDURE p() LANGUAGE `java script` AS 'x'", $create->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze("create procedure p() language `java script` as 'x'");
+            self::fail('The grammar accepts only SQL and JAVASCRIPT.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedLanguage::class, $failure->problem);
+            self::assertSame('java script', $failure->problem->language->value);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     public function testRenderWritesAConstructedCharacteristic(): void

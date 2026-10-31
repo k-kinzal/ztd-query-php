@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column attribute written as keywords alone, such as NOT NULL, AUTO_INCREMENT, PRIMARY KEY or INVISIBLE.
@@ -23,13 +22,15 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class KeywordAttribute implements ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnKeyword $keyword The attribute
+     * @param bool $keyAlternative Whether primary-key or unique syntax uses the KEY alternative
      */
-    public function __construct(public readonly ColumnKeyword $keyword)
+    public function __construct(public readonly ColumnKeyword $keyword, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $keyAlternative = false)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$keyAlternative || in_array($keyword, [ColumnKeyword::PrimaryKey, ColumnKeyword::Unique], true), 'Only PRIMARY KEY and UNIQUE have a KEY alternative.');
     }
 
     /**
@@ -44,6 +45,7 @@ final class KeywordAttribute implements ColumnAttribute
      */
     public function render(Output $out): void
     {
-        $out->keyword(...explode(' ', $this->keyword->value));
+        $words = $this->keyAlternative ? ($this->keyword === ColumnKeyword::PrimaryKey ? 'KEY' : 'UNIQUE KEY') : $this->keyword->value;
+        $out->keyword(...explode(' ', $words));
     }
 }

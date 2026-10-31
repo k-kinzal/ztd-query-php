@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Routine\Option;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,12 +25,12 @@ use SqlSemantics\Statement\Statement;
  */
 final class ConfigurationSetting implements RoutineOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Statement $clause The SET or RESET clause
      */
-    public function __construct(public readonly Statement $clause)
+    public function __construct(public readonly Statement $clause, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

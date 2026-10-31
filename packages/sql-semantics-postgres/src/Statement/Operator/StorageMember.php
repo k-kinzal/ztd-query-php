@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `STORAGE type`: the data type actually stored in an index of the operator class.
@@ -22,12 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class StorageMember implements OperatorClassItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $type The stored type
      */
-    public function __construct(public readonly TypeName $type)
+    public function __construct(public readonly TypeName $type, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

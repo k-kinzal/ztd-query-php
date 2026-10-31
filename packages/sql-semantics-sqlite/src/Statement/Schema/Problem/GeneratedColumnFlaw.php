@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
  * @visibility public
  * @example Naming the flaw of a generated column with a default
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b AS (a) DEFAULT 1)');
- *     $create->facts->diagnostics[0]->flaw // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw::WithDefault
+ *     $create->diagnostics()[0]->flaw // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw::WithDefault
  */
 enum GeneratedColumnFlaw: string
 {

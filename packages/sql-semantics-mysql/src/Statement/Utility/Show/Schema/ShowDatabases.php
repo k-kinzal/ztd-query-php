@@ -7,14 +7,13 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW DATABASES (SHOW SCHEMAS): the databases the account can see.
@@ -29,17 +28,25 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the column named by the pattern
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW SCHEMAS LIKE 'a%'");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Database (a%)', "SHOW DATABASES LIKE 'a%'"]
+ *     [$show->field(0)->name?->value, $show->toString()] // => ['Database (a%)', "SHOW SCHEMAS LIKE 'a%'"]
  */
-final class ShowDatabases implements Statement, Relation
+final class ShowDatabases extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
      */
-    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null)
+    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseListing $listing = DatabaseListing::Databases)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -55,7 +62,10 @@ final class ShowDatabases implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return (new ShowFacts())->fact($derivation, Report::Databases, $this->filter instanceof ShowLike ? 'Database (' . $this->filter->pattern->value . ')' : null);
+        $heading = new \SqlSemantics\Platform\MySql\Rules\Utility\ShowHeading();
+        $name = $this->filter instanceof ShowLike ? 'Database (' . $heading->pattern($derivation, $this->filter->pattern, false) . ')' : 'Database';
+
+        return (new ShowFacts())->fact($derivation, Report::Databases, $heading->name($derivation, $name, false));
     }
 
     /**
@@ -63,6 +73,6 @@ final class ShowDatabases implements Statement, Relation
      */
     public function render(Output $out): void
     {
-        $out->keyword('SHOW', 'DATABASES')->node($this->filter);
+        $out->keyword('SHOW', $this->listing->value)->node($this->filter);
     }
 }

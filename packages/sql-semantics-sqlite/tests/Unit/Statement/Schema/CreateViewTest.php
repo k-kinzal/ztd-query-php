@@ -54,7 +54,7 @@ final class CreateViewTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE VIEW v (x) AS SELECT 1, 2');
 
-        self::assertInstanceOf(ColumnCountMismatch::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(ColumnCountMismatch::class, $operation->diagnostics()[0]);
         self::assertFalse($operation->declarations()[0]->complete);
     }
 
@@ -62,7 +62,7 @@ final class CreateViewTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE VIEW v (x DESC) AS SELECT 1');
 
-        self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(DecoratedColumnName::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveStatementMarksTheDeclarationIncompleteWhenTheQueryShapeIsOpen(): void
@@ -106,8 +106,8 @@ final class CreateViewTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create view if not exists main.v (x, y) as select 1, 2');
 
-        self::assertInstanceOf(CreateView::class, $operation->statement);
-        self::assertCount(2, $operation->statement->columns ?? []);
+        self::assertInstanceOf(CreateView::class, $operation);
+        self::assertCount(2, $operation->columns ?? []);
         self::assertSame('CREATE VIEW IF NOT EXISTS main.v (x, y) AS SELECT 1, 2', $operation->toString());
     }
 }

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * TABLESAMPLE method (arguments) [REPEATABLE (seed)]: a sample of the rows of a table.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table sample
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 FROM t TABLESAMPLE bernoulli (10) REPEATABLE (1)');
- *     [$query->statement->from->sample->method->parts[0]->value, $query->statement->from->sample->seed !== null] // => ['bernoulli', true]
+ *     [$query->from->sample->method->parts[0]->value, $query->from->sample->seed !== null] // => ['bernoulli', true]
  */
 final class TableSample implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The arguments of the sampling method
@@ -39,7 +38,7 @@ final class TableSample implements Clause
      * @param list<Scalar> $arguments The arguments of the method; at least one
      * @param Scalar|null $seed The seed written after REPEATABLE
      */
-    public function __construct(public readonly DottedName $method, array $arguments, public readonly ?Scalar $seed = null)
+    public function __construct(public readonly DottedName $method, array $arguments, public readonly ?Scalar $seed = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->arguments = Check::listOf($arguments, Scalar::class, 'A sampling method takes at least one argument.', 1);
     }

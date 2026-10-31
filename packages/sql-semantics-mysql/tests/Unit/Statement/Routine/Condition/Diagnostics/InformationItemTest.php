@@ -44,18 +44,18 @@ final class InformationItemTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE `select` TEXT; DECLARE n INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n `select` = MESSAGE_TEXT, @e = MYSQL_ERRNO; END', $create->toString());
     }
 
     public function testRenderWritesTheTargetsOfAStatement(): void
     {
         $get = (new Semantics(Dialect::MySql))->analyze('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
-        $statement = $get->statement;
+        $statement = $get;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         $item = $statement->information->items[1];
 
-        self::assertEquals(new UserVariable(new Name('r')), $item->target);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new UserVariable(new Name('r')), $item->target));
         self::assertSame(StatementItemName::RowCount, $item->item);
         self::assertSame('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT', $get->toString());
     }

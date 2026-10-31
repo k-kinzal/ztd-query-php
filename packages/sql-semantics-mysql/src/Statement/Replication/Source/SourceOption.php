@@ -12,36 +12,50 @@ use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `option = value` of CHANGE REPLICATION SOURCE TO, or one log position of the UNTIL condition of START REPLICA.
  *
- * Mirrors one field of the server's LEX_SOURCE_INFO. The value is typed by
+ * The value is typed by
  * the option (SourceOptionKind::accepts); NULL is the value null, accepted by
  * PRIVILEGE_CHECKS_USER and SOURCE_TLS_CIPHERSUITES. The option is written in
- * the vocabulary of its statement.
+ * the vocabulary of its statement; in 8.0 to 8.3 an option of the current
+ * vocabulary may be spelled with MASTER, its synonym ($synonym). The three
+ * Boolean switch options retain their written numerals. Their 0/1 bounds and
+ * anonymous-GTID UUID validation are diagnostics on the complete request.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
  *
  * @visibility public
+ * @example Rejecting a forbidden line feed before deriving an operation
+ *     new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Host, new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Retaining the requested heartbeat beside its definition condition
+ *     $change = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD = 4294967.5');
+ *     [$change->options[0]->value->text, $change->warnings()[0]->message()] // => ['4294967.5', 'The heartbeat period is greater than 4294967 seconds (ER_REPLICA_HEARTBEAT_VALUE_OUT_OF_RANGE).']
  * @example Holding a typed option value
  *     $option = new \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption(\SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Current, \SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind::Port, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3306'));
  *     $option->kind->value // => 'SOURCE_PORT'
  */
 final class SourceOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Terminology $terminology The vocabulary of the statement the option belongs to
      * @param SourceOptionKind $kind The option
      * @param Text|Numeral|NumberLiteral|ServerIds|AccountName|PrimaryKeyCheck|AnonymousGtids|null $value The value, of the domain of the option
+     * @param bool $synonym Whether the option is written with MASTER where the release reads it as its SOURCE synonym, which MySQL 8.0 to 8.3 warn deprecated
      */
     public function __construct(
         public readonly Terminology $terminology,
         public readonly SourceOptionKind $kind,
         public readonly Text|Numeral|NumberLiteral|ServerIds|AccountName|PrimaryKeyCheck|AnonymousGtids|null $value,
+        public readonly bool $synonym = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        Check::input($terminology !== Terminology::Legacy || (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->option(\SqlSemantics\Contract\GrammarRelease::MySql5744, $kind), 'A legacy replication option exists in MySQL 5.6 or 5.7.');
+        Check::input(!$synonym || ($terminology === Terminology::Current && $kind->renamed()), 'A replication option synonym is a MASTER spelling of a current SOURCE option.');
+        Check::input(!$value instanceof Text || $value->radix === null, 'A replication option string is quoted text.');
+        Check::input(!$value instanceof Text || in_array($kind, [SourceOptionKind::CompressionAlgorithms, SourceOptionKind::AssignGtidsToAnonymousTransactions], true) || (new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value), 'This replication option cannot contain a line feed before NUL.');
         Check::input($kind->accepts($value), 'The value of ' . $kind->value . ' is outside the domain of the option.');
     }
 
@@ -50,7 +64,7 @@ final class SourceOption implements Node
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->kind->keyword($this->terminology))->symbol('=');
+        $out->keyword($this->kind->keyword($this->synonym ? Terminology::Legacy : $this->terminology))->symbol('=');
         if ($this->value instanceof PrimaryKeyCheck || $this->value instanceof AnonymousGtids) {
             $out->keyword($this->value->value);
         } elseif ($this->value === null) {

@@ -28,4 +28,18 @@ final class JsonResponseTest extends TestCase
 
         self::assertSame('DEFAULT 1', (new Lexical())->join($out->pieces()));
     }
+
+    public function testValueRejectsNullAsADefaultLiteral(): void
+    {
+        $this->expectExceptionMessage('A JSON DEFAULT response holds a non-NULL literal; NULL is its own response.');
+        new JsonResponse(JsonResponseKind::Default, new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral());
+    }
+
+    public function testValueRetainsTheNullResponseWithoutADefault(): void
+    {
+        $response = new JsonResponse(JsonResponseKind::Null);
+        self::assertSame(JsonResponseKind::Null, $response->kind);
+        self::assertNull($response->default);
+    }
+
 }

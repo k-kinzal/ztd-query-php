@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Changing a dictionary option
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH DICTIONARY my_dict (StopWords = newrussian)');
- *     $operation->statement->options[0]->name->value // => 'stopwords'
+ *     $operation->options[0]->name->value // => 'stopwords'
  */
-final class AlterTextSearchDictionary implements Statement
+final class AlterTextSearchDictionary extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Definition> The options
@@ -37,8 +36,11 @@ final class AlterTextSearchDictionary implements Statement
      * @param DottedName $name The dictionary name
      * @param list<Definition> $options The options; at least one
      */
-    public function __construct(public readonly DottedName $name, array $options)
+    public function __construct(public readonly DottedName $name, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, Definition::class, 'A dictionary change has at least one option.', 1);
     }
 

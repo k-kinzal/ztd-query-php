@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\TypeChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,17 +23,20 @@ use SqlSemantics\Statement\Statement;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER TYPE mood RENAME VALUE 'sad' TO 'blue'");
  *     $operation->toString() // => "ALTER TYPE mood RENAME VALUE 'sad' TO 'blue'"
  */
-final class RenameEnumLabel implements Statement
+final class RenameEnumLabel extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $type The enum type
      * @param StringConstant $label The existing label
      * @param StringConstant $newLabel The new label
      */
-    public function __construct(public readonly DottedName $type, public readonly StringConstant $label, public readonly StringConstant $newLabel)
+    public function __construct(public readonly DottedName $type, public readonly StringConstant $label, public readonly StringConstant $newLabel, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

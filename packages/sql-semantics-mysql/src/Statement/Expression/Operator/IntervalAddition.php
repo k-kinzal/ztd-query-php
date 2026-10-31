@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Expression\TemporalResult;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -30,21 +34,29 @@ use SqlSemantics\Statement\Type\Nullability;
  * Status: Implemented.
  *
  * @visibility public
+ * @example Refusing a row as an interval quantity
+ *     $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval($row, \SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Day), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')) // throws \TypeError
  * @example Adding an interval written first
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE INTERVAL 1 DAY + DATE '2024-01-31'");
- *     $query->facts->scalar($query->statement->where)->type->descriptor->name() // => 'DATE'
+ *     $query->query->where->scalarInformation()->type->descriptor->name() // => 'DATE'
  */
 final class IntervalAddition implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Interval $interval The interval added
      * @param Scalar $operand The date or time value
      */
-    public function __construct(public readonly Interval $interval, public readonly Scalar $operand)
+    public function __construct(public readonly Interval $interval, public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->opening($operand) >= Precedence::NEGATION, 'The operand of a leading interval needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -53,10 +65,13 @@ final class IntervalAddition implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $operands->single($derivation->scalar($this->interval->quantity, $environment), $derivation);
+        $quantity = $operands->single($derivation->scalar($this->interval->quantity, $environment), $derivation);
         $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
 
-        return new ScalarFact((new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar), Nullability::Nullable);
+        $domain = (new Precision())->domain($operand->type);
+        $type = $domain === null ? (new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar) : new Known(($moments = new Moments(Settings::of($derivation->context)))->shifted($domain, $this->interval->unit, $moments->quantity((new Precision())->domain($quantity->type)), in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
+
+        return new ScalarFact($type, Nullability::Nullable);
     }
 
     /**

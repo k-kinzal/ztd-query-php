@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
@@ -30,14 +29,14 @@ final class RoutineCommentTest extends TestCase
     {
         yield 'MySQL 5.6 plain text' => ['mysql-5.6.51', "alter procedure p comment 'adds'", "ALTER PROCEDURE p COMMENT 'adds'", 'adds'];
         yield 'MySQL 8.0 doubled quote' => ['mysql-8.0.44', "alter function f comment 'it''s'", "ALTER FUNCTION f COMMENT 'it''s'", "it's"];
-        yield 'MySQL 9.1 double-quoted text' => ['mysql-9.1.0', 'alter function f comment "two words"', "ALTER FUNCTION f COMMENT 'two words'", 'two words'];
+        yield 'MySQL 9.1 double-quoted text' => ['mysql-9.1.0', 'alter function f comment "two words"', 'ALTER FUNCTION f COMMENT "two words"', 'two words'];
     }
 
     #[DataProvider('providerRenderWritesTheCommentText')]
     public function testRenderWritesTheCommentText(string $release, string $sql, string $expected, string $text): void
     {
         $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(RoutineComment::class, $characteristic);
@@ -58,13 +57,13 @@ final class RoutineCommentTest extends TestCase
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new RoutineComment(new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new RoutineComment(new Text('41', Radix::Hexadecimal));
     }
 
     public function testABitTextIsRejected(): void
     {
         $this->expectExceptionMessage('A comment is written as a quoted string.');
 
-        new RoutineComment(new Text('01', EscapeRule::Backslash, Radix::Bit));
+        new RoutineComment(new Text('01', Radix::Bit));
     }
 }

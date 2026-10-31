@@ -7,28 +7,35 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DELETE from one table, with WHERE, ORDER BY and LIMIT.
  *
- * The facts follow MYSQL-DELETE-001.
+ * The facts follow MYSQL-DELETE-001. The hints of the comment written right
+ * after DELETE are kept with the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/delete.html.
  *
  * @visibility public
  * @example Reading a single-table DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5');
- *     [$delete->statement->options, $delete->toString()] // => [[\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::Quick], 'DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5']
+ *     [$delete->options, $delete->toString()] // => [[\SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption::Quick], 'DELETE QUICK FROM t WHERE a = 1 ORDER BY b LIMIT 5']
  */
-final class Delete implements Statement
+final class Delete extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
+     */
+    public readonly array $hints;
 
     /**
      * @var list<DeleteOption> The modifiers in written order
@@ -47,6 +54,7 @@ final class Delete implements Statement
      * @param Scalar|null $where The row predicate
      * @param list<OrderItem> $orderBy The order the rows are deleted in
      * @param Limit|null $limit The most rows deleted
+     * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
      */
     public function __construct(
         public readonly ?WithClause $with,
@@ -55,9 +63,33 @@ final class Delete implements Statement
         public readonly ?Scalar $where = null,
         array $orderBy = [],
         public readonly ?Limit $limit = null,
+        array $hints = [],
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
+        Check::input(!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null, 'DELETE limits rows without an offset.');
+        foreach ($this->orderBy as $item) {
+            Check::input($item->expression instanceof Scalar, 'DELETE ordering uses expressions, not output-column positions.');
+        }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$table, $where, $this->orderBy, $limit]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Whether preparation must resolve a retained target or operand condition.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Ordering())->problem($this->orderBy) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\CommonTargets())->contains($this->with, $this->table->name)
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null;
     }
 
     /**
@@ -74,6 +106,10 @@ final class Delete implements Statement
     public function render(Output $out): void
     {
         $out->node($this->with)->keyword('DELETE');
+        $comment = (new HintComment($this->hints))->text();
+        if ($comment !== null) {
+            $out->comment($comment);
+        }
         foreach ($this->options as $option) {
             $out->keyword($option->value);
         }

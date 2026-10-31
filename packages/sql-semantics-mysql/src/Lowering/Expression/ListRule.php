@@ -56,4 +56,31 @@ final class ListRule
 
         return $expressions;
     }
+
+    /**
+     * Lowers a node of expr_list or opt_expr_list.
+     *
+     * @return list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand>
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function operands(Node $list): array
+    {
+        $form = $this->lowering->form($list);
+        if ($form->signature === 'opt_expr_list:') {
+            return [];
+        }
+        if ($form->signature === 'opt_expr_list: expr_list') {
+            $list = $form->node(0);
+            $form = $this->lowering->form($list);
+        }
+        if ($form->signature !== 'expr_list: expr' && $form->signature !== 'expr_list: expr_list , expr') {
+            throw ImplementationGap::production($form);
+        }
+        $expressions = [];
+        foreach ((new Lists())->items($list) as $item) {
+            $expressions[] = $this->lowering->expressions->operand($item);
+        }
+
+        return $expressions;
+    }
 }

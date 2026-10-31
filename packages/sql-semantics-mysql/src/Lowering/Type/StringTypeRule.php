@@ -10,11 +10,12 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
+use SqlSemantics\Platform\MySql\Statement\Type\Keyword\CharacterAlias;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 
 /**
  * Lowers the character string, binary string and enumeration type productions.
@@ -114,7 +115,7 @@ final class StringTypeRule
      *
      * @throws ImplementationGap When a part has no rule
      */
-    public function type(Form $form): ?TypeName
+    public function type(Form $form): ?DeclaredName
     {
         if (isset(self::CHARACTERS[$form->signature])) {
             [$kind, $length, $charset] = self::CHARACTERS[$form->signature];
@@ -122,12 +123,18 @@ final class StringTypeRule
                 $this->keyword($form->node(0));
             }
 
-            return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)));
+            $size = $length === null ? null : $this->parts->length($form->node($length));
+            $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->characterLength($kind, $size, $this->lowering->types->name), $form);
+
+            return new Character($kind, $size, false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($form->node->tokens()[0]->text)));
         }
         if (isset(self::BINARIES[$form->signature])) {
             [$kind, $length] = self::BINARIES[$form->signature];
 
-            return new Binary($kind, $length === null ? null : $this->parts->length($form->node($length)));
+            $size = $length === null ? null : $this->parts->length($form->node($length));
+            $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->binaryLength($kind, $size, $this->lowering->types->name), $form);
+
+            return new Binary($kind, $size);
         }
         if (isset(self::ENUMERATIONS[$form->signature])) {
             return new Enumeration(self::ENUMERATIONS[$form->signature], $this->lowering->literals->texts($form->node(2)), $this->parts->charset($form->node(4)));
@@ -159,7 +166,12 @@ final class StringTypeRule
             default => CharacterKind::VarChar,
         };
 
-        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), false, $this->parts->charset($form->node($charset)));
+        $words = ($long ? 'LONG ' : '') . implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $keyword->node->tokens()));
+
+        $size = $length === null ? null : $this->parts->length($form->node($length));
+        $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->characterLength($kind, $size, $this->lowering->types->name), $form);
+
+        return new Character($kind, $size, false, $this->parts->charset($form->node($charset)), alias: CharacterAlias::tryFrom(strtoupper($words)));
     }
 
     /**
@@ -175,7 +187,12 @@ final class StringTypeRule
         [$kind, $length, $binary] = self::NATIONALS[$form->signature];
         $this->keyword($form->node(0));
 
-        return new Character($kind, $length === null ? null : $this->parts->length($form->node($length)), true, $this->parts->nationalAttribute($form->node($binary)));
+        $words = implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(0)->tokens()));
+
+        $size = $length === null ? null : $this->parts->length($form->node($length));
+        $this->lowering->types->sized((new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->characterLength($kind, $size, $this->lowering->types->name), $form);
+
+        return new Character($kind, $size, true, $this->parts->nationalAttribute($form->node($binary)), alias: CharacterAlias::tryFrom(strtoupper($words)));
     }
 
     /**

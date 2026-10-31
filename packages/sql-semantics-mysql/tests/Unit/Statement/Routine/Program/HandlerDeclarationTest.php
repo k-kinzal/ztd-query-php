@@ -27,7 +27,7 @@ final class HandlerDeclarationTest extends TestCase
     public function testRenderWritesTheActionTheConditionsAndTheStatement(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -37,7 +37,7 @@ final class HandlerDeclarationTest extends TestCase
         self::assertSame(HandlerAction::Continue, $handler->action);
         self::assertCount(3, $handler->conditions);
         self::assertInstanceOf(Block::class, $handler->statement);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR e, NOT FOUND, 1146 BEGIN END; END', $operation->toString());
     }
 
@@ -52,7 +52,7 @@ final class HandlerDeclarationTest extends TestCase
      */
     public static function providerRenderWritesTheHandler(): iterable
     {
-        yield 'EXIT with an SQL statement in 5.6' => ['mysql-5.6.51', "create procedure p() begin declare exit handler for sqlstate value '42S02', sqlwarning select 1; end", "CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLSTATE '42S02', SQLWARNING SELECT 1; END"];
+        yield 'EXIT with an SQL statement in 5.6' => ['mysql-5.6.51', "create procedure p() begin declare exit handler for sqlstate value '42S02', sqlwarning select 1; end", "CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLSTATE VALUE '42S02', SQLWARNING SELECT 1; END"];
         yield 'CONTINUE with SET in 5.7' => ['mysql-5.7.44', 'create procedure p() begin declare x int; declare continue handler for sqlexception set x = 1; end', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET x = 1; END'];
         yield 'a labeled block in 9.1' => ['mysql-9.1.0', 'create procedure p() begin declare exit handler for not found h: begin leave h; end h; end', 'CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR NOT FOUND h: BEGIN LEAVE h; END h; END'];
     }

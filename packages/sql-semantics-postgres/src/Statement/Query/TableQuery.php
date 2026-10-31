@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -36,16 +35,23 @@ use SqlSemantics\Statement\Statement;
  * @example Refusing a table with an alias
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), new \SqlSemantics\Statement\Identifier\Name('x'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class TableQuery implements Statement, Query, Selection, OutputNaming
+final class TableQuery extends \SqlSemantics\Statement\SqlStatement implements Statement, Query, Selection, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TableInput $table The table, without alias or sample
      * @param SelectOptions|null $options The ORDER BY, LIMIT and locking clauses written after it
      */
-    public function __construct(public readonly TableInput $table, public readonly ?SelectOptions $options = null)
+    public function __construct(public readonly TableInput $table, public readonly ?SelectOptions $options = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         Check::input($table->alias === null && $table->columns === [] && $table->sample === null, 'TABLE names a table without alias or sample.');
     }
 

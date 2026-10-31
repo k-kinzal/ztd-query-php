@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Query;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
@@ -27,6 +28,57 @@ use SqlSemantics\Platform\MySql\Statement\Query\Star;
 #[Medium]
 final class QueryRulesTest extends TestCase
 {
+    public function testStatementRetainsTheTablelessQualifySeed(): void
+    {
+        $sql = "SELECT * INTO DUMPFILE 'text' QUALIFY ((((USER()))))";
+        $statement = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertSame($sql, $statement->toString());
+        self::assertSame('No tables used', $statement->diagnostics()[0]->message());
+    }
+
+    public function testNamedRetainsTheSpellingOfAnAlreadyLoweredCallArgument(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT ABS(cast('123' as decimal(1))) AS result");
+
+        self::assertSame("SELECT ABS(cast('123' as decimal(1))) AS result", $operation->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class, $operation->query->items[0]->expression);
+        $arguments = $operation->query->items[0]->expression->arguments;
+        self::assertCount(1, $arguments);
+        self::assertSame("cast('123' as decimal(1))", $arguments[0]->layout?->text());
+    }
+
+    public function testLegacyParenthesizedQueryRetainsItsCompleteWriteSource(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t (SELECT ROW(1,2) FROM missing)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->body);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->body->source);
+        self::assertSame('CREATE PROCEDURE p() INSERT INTO t (SELECT ROW(1, 2) FROM missing)', $operation->toString());
+    }
+
+    public function testLegacyQueryRetainsTheWriteSourceBeforeItsDestinationIsAvailable(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() INSERT INTO t SELECT ROW(1, 2) FROM missing');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery::class, $operation->body);
+        self::assertSame('t', $operation->body->into->table->name->name->value);
+        self::assertSame('Operand should contain 1 column(s), not 2.', $operation->body->problem()->message());
+    }
+
+    public function testEmbeddedKeepsOnlyThePublishedQueryInTheSourceMap(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a INT) AS SELECT 1 AS b');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable::class, $operation);
+        self::assertNotNull($operation->query);
+        self::assertInstanceOf(Select::class, $operation->query->query);
+        self::assertSame('CREATE TABLE t (a INT) AS SELECT 1 AS b', $operation->toString());
+    }
+
     public function testStatementLowersASelectOfEveryGrammarGeneration(): void
     {
         self::assertSame('SELECT a x FROM db.t u WHERE a = 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('select a x from db.t u where a=1')->toString());
@@ -38,6 +90,27 @@ final class QueryRulesTest extends TestCase
     {
         self::assertSame('SELECT (SELECT 1) AS v, a IN (SELECT 2) AS w FROM (SELECT 3) d WHERE EXISTS (SELECT 4)', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select (select 1) as v, a in (select 2) as w from (select 3) d where exists (select 4)')->toString());
         self::assertSame('SELECT (SELECT 1) AS v FROM t WHERE EXISTS (SELECT 2)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select (select 1) as v from t where exists (select 2)')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRestrictedSubqueries(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.4.7'] as $release) {
+            foreach (['SELECT (SELECT SQL_BUFFER_RESULT 1)', 'SELECT EXISTS (SELECT SQL_BUFFER_RESULT 1)', 'SELECT 1 IN (SELECT SQL_BUFFER_RESULT 1)', 'SELECT 1 = ANY (SELECT SQL_BUFFER_RESULT 1)'] as $sql) {
+                yield $release . ' ' . $sql => [$release, $sql];
+            }
+        }
+    }
+
+    #[DataProvider('providerRestrictedSubqueries')]
+    public function testQueryRejectsModifiersBeforePublishingANestedQuery(string $release, string $sql): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect usage/placement of 'SQL_BUFFER_RESULT'");
+
+        (new Semantics(Dialect::MySql, $release))->analyze($sql);
     }
 
     public function testLegacyQueryLowersCreateSelectWithItsUnion(): void
@@ -177,10 +250,11 @@ final class QueryRulesTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT a AS `x y`, b 'z' FROM t AS u");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        self::assertSame('x y', $operation->statement->items[0]->alias?->value);
-        self::assertSame('SELECT a AS `x y`, b z FROM t AS u', $operation->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertSame('x y', $operation->query->items[0]->alias?->value);
+        self::assertSame('SELECT a AS `x y`, b \'z\' FROM t AS u', $operation->toString());
     }
 
     public function testColumnAliasesAnswersNothingForNoList(): void
@@ -230,5 +304,27 @@ final class QueryRulesTest extends TestCase
     {
         self::assertSame('SELECT a x, b AS y FROM t u', (new Semantics(Dialect::MySql))->analyze('select a x, b as y from t u')->toString());
         self::assertSame('SELECT f(a b, c AS d) AS e FROM t', (new Semantics(Dialect::MySql))->analyze('select f(a b, c as d) as e from t')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerQuantifiedSubqueryReleases(): iterable
+    {
+        yield '8.4' => ['mysql-8.4.7'];
+        yield '5.7' => ['mysql-5.7.44'];
+    }
+
+    #[DataProvider('providerQuantifiedSubqueryReleases')]
+    public function testQueryRefusesAllWithDistinctInAnExpressionSubqueryOutsideMySql56(string $release): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze('SELECT (SELECT ALL DISTINCT 1)');
+            self::fail('The release refuses ALL with DISTINCT in a subquery.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\SelectOptionConflict::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('SELECT (SELECT ALL DISTINCT 1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT (SELECT ALL DISTINCT 1)')->toString());
     }
 }

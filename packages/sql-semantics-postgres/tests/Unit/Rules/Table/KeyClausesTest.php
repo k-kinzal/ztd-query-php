@@ -21,7 +21,7 @@ final class KeyClausesTest extends TestCase
         self::assertSame([
           0 => 'column "zz" named in key does not exist',
           1 => 'column "yy" named in key does not exist',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testWriteWritesTheColumnsAndParameters(): void

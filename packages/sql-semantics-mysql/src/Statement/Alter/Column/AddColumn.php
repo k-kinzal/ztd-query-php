@@ -10,30 +10,28 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ADD [COLUMN] definition [FIRST | AFTER column]`: a request to add one column.
  *
  * Mirrors PT_alter_table_add_column. The expressions of the definition are
- * derived in the scope of the changed table. The word COLUMN is optional
- * and always written.
+ * derived in the scope of the changed table. The presence of the optional COLUMN keyword is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-add-drop-column.
  *
  * @visibility public
  * @example Adding a column after the first one
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ADD b INT AFTER a');
- *     [$alter->statement->commands[0]->column->name->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t ADD COLUMN b INT AFTER a']
+ *     [$alter->commands[0]->column->name->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t ADD b INT AFTER a']
  */
 final class AddColumn implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnDefinition $column The new column
      * @param ColumnPosition|null $position Where the column goes, when written
      */
-    public function __construct(public readonly ColumnDefinition $column, public readonly ?ColumnPosition $position = null)
+    public function __construct(public readonly ColumnDefinition $column, public readonly ?ColumnPosition $position = null, public readonly bool $columnWritten = true, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 
@@ -42,7 +40,7 @@ final class AddColumn implements AlterCommand
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
-        (new ElementFacts())->element($this->column, $derivation, $scope);
+        (new ElementFacts())->element($this->column, $derivation, $scope, typeNotices: true);
     }
 
     /**
@@ -50,6 +48,10 @@ final class AddColumn implements AlterCommand
      */
     public function render(Output $out): void
     {
-        $out->keyword('ADD', 'COLUMN')->node($this->column)->node($this->position);
+        $out->keyword('ADD');
+        if ($this->columnWritten) {
+            $out->keyword('COLUMN');
+        }
+        $out->node($this->column)->node($this->position);
     }
 }

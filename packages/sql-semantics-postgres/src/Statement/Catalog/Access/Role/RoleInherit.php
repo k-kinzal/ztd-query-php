@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The role option INHERIT: the role inherits the privileges of the roles it is a member of.
@@ -21,7 +20,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RoleInherit implements RoleOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    /**
+ * Constructs a SQL occurrence with optional publication information.
+ */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+    }
 
     /**
      * Answers the option INHERIT fills.

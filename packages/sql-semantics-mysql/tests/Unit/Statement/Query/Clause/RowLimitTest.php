@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
@@ -33,19 +32,20 @@ final class RowLimitTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t LIMIT 5, 10');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
-        self::assertInstanceOf(NumberLiteral::class, $operation->statement->limit->count);
-        self::assertSame('10', $operation->statement->limit->count->text);
-        self::assertSame(OffsetSpelling::Comma, $operation->statement->limit->spelling);
-        self::assertInstanceOf(Known::class, $operation->facts->scalar($operation->statement->limit->count)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(RowLimit::class, $operation->query->limit);
+        self::assertInstanceOf(NumberLiteral::class, $operation->query->limit->count);
+        self::assertSame('10', $operation->query->limit->count->text);
+        self::assertSame(OffsetSpelling::Comma, $operation->query->limit->spelling);
+        self::assertInstanceOf(Known::class, $operation->query->limit->count->scalarInformation()->type);
     }
 
     public function testAnExpressionAsAnOperandIsRejected(): void
     {
         $this->expectExceptionMessage('A LIMIT operand is an unsigned integer, a parameter marker or a stored program variable.');
 
-        new RowLimit(new NullLiteral());
+        new RowLimit(new NumberLiteral('1.5'));
     }
 
     public function testAnOffsetWithoutSpellingIsRejected(): void

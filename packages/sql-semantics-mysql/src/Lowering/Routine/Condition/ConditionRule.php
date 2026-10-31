@@ -19,8 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
  * Lowers condition values: error codes, SQLSTATE values, condition names and condition classes.
  *
  * Rule: MYSQL-CONDITION-LOWERING-001. Scope: sp_cond, sqlstate, opt_value,
- * sp_hcond, sp_hcond_element, sp_hcond_list. The optional word VALUE holds
- * no operand. Constructs: ErrorCode, SqlState, ConditionName,
+ * sp_hcond, sp_hcond_element, sp_hcond_list. The optional word VALUE is retained for reconstruction. Constructs: ErrorCode, SqlState, ConditionName,
  * GeneralCondition. Terminates: the list is flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html,
  * https://dev.mysql.com/doc/refman/8.4/en/declare-handler.html.
@@ -49,7 +48,8 @@ final class ConditionRule
             $form = $this->lowering->form($form->node(0));
         }
         if ($form->signature === 'sp_cond: ulong_num') {
-            return new ErrorCode($this->lowering->numbers->numeral($form->node(0)));
+            $code = $this->lowering->numbers->numeral($form->node(0));
+            return $this->lowering->origins->record(new ErrorCode($code), $condition);
         }
         if ($form->signature !== 'sqlstate: SQLSTATE_SYM opt_value TEXT_STRING_literal') {
             throw ImplementationGap::production($form);
@@ -59,7 +59,8 @@ final class ConditionRule
             throw ImplementationGap::production($word);
         }
 
-        return new SqlState($this->lowering->literals->text($form->node(2)));
+        $text = $this->lowering->literals->text($form->node(2));
+        return $this->lowering->origins->record(new SqlState($text, valueWord: $word->signature === 'opt_value: VALUE_SYM' ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), $condition);
     }
 
     /**

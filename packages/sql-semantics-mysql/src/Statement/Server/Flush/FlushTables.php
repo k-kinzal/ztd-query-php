@@ -9,9 +9,8 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\MaintainedTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `FLUSH [NO_WRITE_TO_BINLOG | LOCAL] TABLES [t, …] [WITH READ LOCK | FOR EXPORT]`: a request to close open tables.
@@ -21,18 +20,18 @@ use SqlSemantics\Statement\Statement;
  * MYSQL-SERVER-TABLES-001 and its resolution is the relation fact of its
  * MaintainedTable; a table named twice is NonUniqueTable. FOR EXPORT
  * without a table list is a syntax error of the server and cannot be
- * constructed. TABLE and TABLES are synonyms; TABLE is written.
+ * constructed. TABLE and TABLES are synonyms; the written keyword is retained.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Flushing tables for export
  *     $flush = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('flush tables t, u for export');
- *     [$flush->toString(), $flush->statement->lock] // => ['FLUSH TABLE t, u FOR EXPORT', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport]
+ *     [$flush->toString(), $flush->lock] // => ['FLUSH TABLES t, u FOR EXPORT', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock::ForExport]
  */
-final class FlushTables implements Statement
+final class FlushTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<MaintainedTable> The tables in written order; empty for every open table
@@ -40,15 +39,20 @@ final class FlushTables implements Statement
     public readonly array $tables;
 
     /**
-     * @param bool $noWriteToBinlog Whether NO_WRITE_TO_BINLOG or its synonym LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param list<MaintainedTable> $tables The tables in written order; empty for every open table
      * @param FlushLock|null $lock WITH READ LOCK or FOR EXPORT, when written
      * @throws InvalidConstruction When FOR EXPORT has no table list
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $tables = [], public readonly ?FlushLock $lock = null)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, array $tables = [], public readonly ?FlushLock $lock = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\TableWord $tableWord = \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = Check::listOf($tables, MaintainedTable::class, 'FLUSH TABLES takes a list of tables.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (MaintainedTable $table): array => [$table->name, null, $table], $this->tables)) === null, 'FLUSH TABLES names each table once.');
         Check::input($lock !== FlushLock::ForExport || $this->tables !== [], 'FLUSH TABLES ... FOR EXPORT names at least one table.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -64,7 +68,7 @@ final class FlushTables implements Statement
      */
     public function render(Output $out): void
     {
-        (new MaintainedTables())->render($out, ['FLUSH', 'TABLE'], $this->noWriteToBinlog, $this->tables);
+        (new MaintainedTables())->render($out, ['FLUSH', $this->tableWord->value], $this->binlog, $this->tables);
         if ($this->lock !== null) {
             $out->keyword(...explode(' ', $this->lock->value));
         }

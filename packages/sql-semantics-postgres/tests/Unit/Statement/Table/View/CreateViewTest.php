@@ -16,7 +16,7 @@ final class CreateViewTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE VIEW s.v AS SELECT 1', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView::class, $n1);
         self::assertSame('s', $n1->createdSchema()?->value);
     }
@@ -25,11 +25,11 @@ final class CreateViewTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE RECURSIVE VIEW v (n) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView::class, $n1);
         $n2 = $n1->recursiveQuery();
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation::class, $n2);
-        $n3 = $statement->statement;
+        $n3 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView::class, $n3);
         $n4 = $n3->query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation::class, $n4);
@@ -40,7 +40,7 @@ final class CreateViewTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE RECURSIVE VIEW v (n) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView::class, $n1);
         self::assertSame('n', $n1->recursiveColumns()[0]->value);
     }
@@ -59,10 +59,10 @@ final class CreateViewTest extends TestCase
 
     public function testDeriveElementDeclaresTheViewInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE VIEW v AS SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $statement->statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE VIEW v AS SELECT 1'));
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement);
+        $derivation = new \SqlSemantics\Construction\Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context([]));
+        $statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
         self::assertSame('s', $derivation->facts()->declarations[0]->name->schema?->value);
     }
 
@@ -75,7 +75,7 @@ final class CreateViewTest extends TestCase
 
     public function testRejectsACheckOptionAfterAnOpenIsJsonTest(): void
     {
-        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT a FROM t WHERE b IS JSON')->statement;
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT a FROM t WHERE b IS JSON');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $query);
         $this->expectExceptionMessage('A query ending in IS JSON without a uniqueness clause would take WITH CHECK OPTION; group it.');
         new \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), $query, checkOption: \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CheckOption::Local);

@@ -8,11 +8,16 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\BranchInference;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -23,9 +28,10 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * Rule: MYSQL-CASE-001. Facts: the type is the aggregate of the results
  * (MYSQL-TYPE-AGGREGATION-001); the value is NULL when a result can be
- * NULL or when there is no ELSE. In the simple form the operand and every
- * value must have the same number of columns (MYSQL-OPERAND-COLUMNS-001);
- * conditions and results take single values. Terminates: the parts are
+ * NULL or when there is no ELSE. The compared operand, conditions and results
+ * all take single values (MYSQL-OPERAND-COLUMNS-001), including the simple form.
+ * WHEN/result pairs are resolved before the compared operand and ELSE.
+ * Verified on MySQL 8.0, 8.4 and 9.1. Terminates: the parts are
  * strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flow-control-functions.html#operator_case.
  * Status: Implemented.
@@ -33,11 +39,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing a CASE by its results
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE CASE a WHEN 1 THEN 'x' ELSE 'y' END");
- *     [$query->facts->scalar($query->statement->where)->type->descriptor->name(), $query->facts->scalar($query->statement->where)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->query->where->scalarInformation()->type->descriptor->name(), $query->query->where->scalarInformation()->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
  */
 final class CaseExpression implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CaseBranch> The branches in order
@@ -49,9 +56,13 @@ final class CaseExpression implements Scalar
      * @param list<CaseBranch> $branches The branches in order; at least one
      * @param Scalar|null $else The result after ELSE, when written
      */
-    public function __construct(public readonly ?Scalar $operand, array $branches, public readonly ?Scalar $else = null)
+    public function __construct(public readonly ?Scalar $operand, array $branches, public readonly ?Scalar $else = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->branches = Check::listOf($branches, CaseBranch::class, 'A CASE expression has at least one WHEN branch.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -60,28 +71,32 @@ final class CaseExpression implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $compared = $this->operand === null ? [] : [$derivation->scalar($this->operand, $environment)];
         $types = [];
+        $results = [];
         $nullability = $this->else === null ? Nullability::Nullable : Nullability::NotNull;
         foreach ($this->branches as $branch) {
-            $condition = $derivation->scalar($branch->condition, $environment);
-            if ($this->operand === null) {
-                $operands->single($condition, $derivation);
-            } else {
-                $compared[] = $condition;
-            }
+            $operands->single($derivation->scalar($branch->condition, $environment), $derivation);
             $result = $operands->single($derivation->scalar($branch->result, $environment), $derivation);
             $types[] = $result->type;
+            $results[] = $branch->result;
             $nullability = $nullability->propagate($result->nullability);
         }
-        $operands->comparable($compared, $derivation);
+        if ($this->operand !== null) {
+            $operands->single($derivation->scalar($this->operand, $environment), $derivation);
+        }
         if ($this->else !== null) {
             $result = $operands->single($derivation->scalar($this->else, $environment), $derivation);
             $types[] = $result->type;
+            $results[] = $this->else;
             $nullability = $nullability->propagate($result->nullability);
         }
 
-        return new ScalarFact((new TypeAggregation())->aggregate($types), $nullability);
+        $domains = (new Precision())->all($types);
+        $settings = Settings::of($derivation->context);
+        $inferred = $domains === null ? null : (new BranchInference())->resolve($domains, $results, $derivation);
+        $domain = $inferred === null ? null : (new Aggregation(new Collations($settings->connection)))->of($inferred, 'case', $derivation);
+
+        return new ScalarFact($domain === null ? (new TypeAggregation())->aggregate($types) : new Known($domain), $nullability);
     }
 
     /**

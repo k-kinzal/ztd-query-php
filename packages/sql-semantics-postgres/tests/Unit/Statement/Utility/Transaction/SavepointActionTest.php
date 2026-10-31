@@ -14,7 +14,7 @@ final class SavepointActionTest extends TestCase
 {
     public function testEachCommandHasItsAction(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('RELEASE s')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('RELEASE s');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointCommand::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SavepointAction::Release, $statement->action);
     }

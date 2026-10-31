@@ -55,6 +55,7 @@ final class SourceValueRule
      * Lowers the value of an option production: the child after `=`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a restricted system string contains a line feed
      */
     public function value(Form $option): Text|Numeral|NumberLiteral|ServerIds|AccountName|PrimaryKeyCheck|AnonymousGtids|null
     {
@@ -92,7 +93,7 @@ final class SourceValueRule
             $ids[] = $this->lowering->numbers->numeral($form->node(0));
         }
 
-        return new ServerIds($ids);
+        return new ServerIds($ids, leadingComma: ($list->tokens()[0]->text ?? null) === ',');
     }
 
     /**
@@ -139,12 +140,13 @@ final class SourceValueRule
         $form = $this->lowering->form($value);
         $literals = $this->lowering->literals;
 
-        return match ($form->signature) {
+        $setting = match ($form->signature) {
             'assign_gtids_to_anonymous_transactions_def: OFF_SYM' => AnonymousGtids::Off,
             'assign_gtids_to_anonymous_transactions_def: LOCAL_SYM' => AnonymousGtids::Local,
-            'assign_gtids_to_anonymous_transactions_def: TEXT_STRING' => $this->lowering->leaves->record(new Text($literals->decode($form->token(0)->text), $literals->escapes())),
+            'assign_gtids_to_anonymous_transactions_def: TEXT_STRING' => $this->lowering->leaves->record(new Text($literals->decode($form->token(0)->text), quotation: $literals->quotation($form->token(0)->text))),
             default => throw ImplementationGap::production($form),
         };
+        return $setting;
     }
 
     /**

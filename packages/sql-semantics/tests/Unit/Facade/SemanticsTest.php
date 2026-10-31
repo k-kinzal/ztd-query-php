@@ -7,6 +7,7 @@ namespace Tests\Unit\Facade;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlParser\Lexer\SourceException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -15,8 +16,8 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Statement\AnalyzedStatement as Operation;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
@@ -32,6 +33,23 @@ final class SemanticsTest extends TestCase
         self::assertSame(GrammarRelease::Sqlite3472, $semantics->profile()->grammar);
         self::assertSame(ParameterStyle::Named, $semantics->profile()->parameters);
         self::assertSame($semantics->profile(), $semantics->profile());
+    }
+
+    public function testParserAnswersOneParserWhoseTreesTheFacadeAnalyzes(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+
+        $tree = $semantics->parser()->parse('select   2');
+
+        self::assertSame($semantics->parser(), $semantics->parser());
+        self::assertSame('SELECT 2', $semantics->analyze($tree)->toString());
+    }
+
+    public function testParserRefusesSqlOutsideTheGrammarOfTheProfile(): void
+    {
+        $this->expectException(SourceException::class);
+
+        (new Semantics(Dialect::Sqlite))->parser()->parse('SELECT FROM WHERE');
     }
 
     public function testContextIsOpenWithoutDeclarationsAndCompleteWithAList(): void
@@ -55,15 +73,22 @@ final class SemanticsTest extends TestCase
         self::assertSame([$operation->declarations()[0], $table], $context->tables);
     }
 
-    public function testContextRefusesAnOperationOfAnotherProfile(): void
+    public function testContextAcceptsAnOperationOfAnotherParameterStyle(): void
     {
         $native = new Semantics(Dialect::Sqlite);
         $named = new Semantics(Dialect::Sqlite, null, null, ParameterStyle::Named);
         $operation = $named->analyze('CREATE TABLE t (a INTEGER)');
 
-        $this->expectExceptionMessage('A declaring operation must belong to the selected language profile.');
+        self::assertSame($operation->declarations(), $native->context([$operation])->tables);
+    }
 
-        $native->context([$operation]);
+    public function testContextRefusesAnOperationOfAnotherRelease(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE TABLE t (a INT)');
+
+        $this->expectExceptionMessage('A declaring operation must belong to the grammar release of the selected language profile.');
+
+        (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7'))->context([$operation]);
     }
 
     public function testAnalyzeReturnsAnOperationBoundToTheGivenDeclarations(): void
@@ -76,10 +101,10 @@ final class SemanticsTest extends TestCase
         $open = $semantics->analyze('SELECT a FROM t');
         $missing = $semantics->analyze('SELECT a FROM t', []);
 
-        self::assertInstanceOf(DeclaredTable::class, $declared->facts->relation($declared->singleNamedInput())->table);
-        self::assertInstanceOf(DeclaredTable::class, $prepared->facts->relation($prepared->singleNamedInput())->table);
-        self::assertInstanceOf(UndeclaredTable::class, $open->facts->relation($open->singleNamedInput())->table);
-        self::assertInstanceOf(MissingTable::class, $missing->facts->relation($missing->singleNamedInput())->table);
+        self::assertInstanceOf(DeclaredTable::class, $declared->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(DeclaredTable::class, $prepared->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(UndeclaredTable::class, $open->singleNamedInput()->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $missing->singleNamedInput()->relationInformation()->table);
         self::assertSame('SELECT a FROM t', $declared->toString());
     }
 
@@ -119,7 +144,7 @@ final class SemanticsTest extends TestCase
         self::assertCount(3, $operations);
         self::assertContainsOnlyInstancesOf(Operation::class, $operations);
         self::assertSame(['CREATE TABLE t (a INTEGER)', 'SELECT a FROM t', 'DELETE FROM t'], array_map(static fn (Operation $operation): string => $operation->toString(), $operations));
-        self::assertInstanceOf(MissingTable::class, $operations[1]->facts->relation($operations[1]->singleNamedInput())->table);
+        self::assertInstanceOf(MissingTable::class, $operations[1]->singleNamedInput()->relationInformation()->table);
         self::assertSame([], $semantics->analyzeAll(''));
     }
 
@@ -137,4 +162,33 @@ final class SemanticsTest extends TestCase
 
         (new Semantics(Dialect::Sqlite))->split('SELECT 1; SELECT');
     }
+    public function testParserAndAnalyzeUseTheSameExplicitClientCharacterSet(): void
+    {
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, session: $settings);
+        $sql = "SELECT 1\xA0AS x";
+        self::assertSame($settings, $semantics->context()->session);
+        self::assertSame($semantics->parser(), $semantics->parser($settings));
+        self::assertSame('SELECT 1 AS x', $semantics->analyze($sql)->toString());
+        self::assertSame('SELECT 1 AS x', $semantics->analyze($semantics->parser()->parse($sql))->toString());
+        self::assertCount(2, $semantics->analyzeAll($sql . ';' . $sql));
+        $unbound = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        self::assertSame('SELECT 1 AS x', $unbound->analyze($sql, $unbound->context(session: $settings))->toString());
+        self::assertCount(2, $unbound->analyzeAll($sql . ';' . $sql, $unbound->context(session: $settings)));
+    }
+
+
+    public function testFromStatementBindsFreshOccurrencesAndPreservesTheInput(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $column = new \SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse(new Name('a'));
+        $query = new \SqlSemantics\Platform\Sqlite\Statement\Query\Select([new \SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn($column)]);
+        $constructed = Semantics::fromStatement($semantics->context([]), $query);
+        self::assertFalse($column->hasBinding());
+        self::assertFalse($query->hasStatementInformation());
+        self::assertNotSame($query, $constructed);
+        self::assertTrue($constructed->hasStatementInformation());
+        self::assertSame('Column a does not exist.', $constructed->diagnostics()[0]->message());
+    }
+
 }

@@ -1,0 +1,324 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Command\Maintenance;
+
+use MySqlMemory\Command\Maintenance\AdministrationCommand;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CacheIndex;
+use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
+
+#[CoversClass(AdministrationCommand::class)]
+#[Small]
+final class AdministrationCommandTest extends TestCase
+{
+    public function testPartitionsReportsMissingTablesWithoutSqlErrors(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $result = $session->query('ALTER TABLE missing CHECK PARTITION ALL')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['d.missing', 'check', 'Error', "Table 'd.missing' doesn't exist"], ['d.missing', 'check', 'status', 'Operation failed']], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testPartitionsValidatesPartitionNamesAndAcceptsExistingPartitions(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT) PARTITION BY HASH(a) PARTITIONS 2');
+        $invalid = $session->query('ALTER TABLE t CHECK PARTITION absent')[0];
+        $valid = $session->query('ALTER TABLE t REPAIR PARTITION P0')[0];
+
+        self::assertInstanceOf(ResultSet::class, $invalid);
+        self::assertSame([['d.t', 'check', 'Error', 'Error in list of partitions to d.t'], ['d.t', 'check', 'status', 'Operation failed']], $invalid->rows);
+        self::assertInstanceOf(ResultSet::class, $valid);
+        self::assertSame([['d.t', 'repair', 'status', 'OK']], $valid->rows);
+    }
+
+    public function testPartitionsRequiresABaseTableEvenForCheck(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE VIEW v AS SELECT 1 AS a');
+        $result = $session->query('ALTER TABLE v CHECK PARTITION ALL')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['d.v', 'check', 'Error', "'d.v' is not BASE TABLE"], ['d.v', 'check', 'status', 'Operation failed']], $result->rows);
+    }
+
+    public function testNoticesTurnsModernInputWarningsIntoRowsOfTheFirstTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
+        $result = $session->query('ANALYZE TABLE t, full')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([
+            ['d.t', 'analyze', 'Warning', 'Using FULL as unquoted identifier is deprecated, please use quotes or rename the identifier.'],
+            ['d.t', 'analyze', 'status', 'OK'],
+            ['d.full', 'analyze', 'Error', "Table 'd.full' doesn't exist"],
+            ['d.full', 'analyze', 'status', 'Operation failed'],
+        ], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testHistogramTargetFailurePreservesInputWarningsAsRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $result = $session->query('ANALYZE TABLE full, t UPDATE HISTOGRAM ON a')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([
+            ['d.full', 'histogram', 'Warning', 'Using FULL as unquoted identifier is deprecated, please use quotes or rename the identifier.'],
+            ['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.'],
+        ], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testClearsDiagnosticsAnswersTrue(): void
+    {
+        self::assertTrue((new AdministrationCommand())->clearsDiagnostics());
+    }
+
+    public function testExecuteChecksEachTableInWrittenOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        $result = $session->query('CHECK TABLE nope, t, abc.q')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([
+            ['d.nope', 'check', 'Error', "Table 'd.nope' doesn't exist"],
+            ['d.nope', 'check', 'status', 'Operation failed'],
+            ['d.t', 'check', 'status', 'OK'],
+            ['abc.q', 'check', 'Error', "Unknown database 'abc'"],
+            ['abc.q', 'check', 'error', 'Corrupt'],
+        ], $result->rows);
+        self::assertSame([['Table', 512], ['Op', 40], ['Msg_type', 40], ['Msg_text', 1572864]], array_map(static fn ($column): array => [$column->name, $column->length], $result->columns));
+    }
+
+    public function testExecuteAnswersTheNotesOfAnInnoDbTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        $optimize = $session->query('OPTIMIZE TABLE t')[0];
+        $repair = $session->query('REPAIR TABLE t QUICK')[0];
+        $cache = $session->query('CACHE INDEX t IN DEFAULT')[0];
+        $load = $session->query('LOAD INDEX INTO CACHE t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $optimize);
+        self::assertSame([['d.t', 'optimize', 'note', 'Table does not support optimize, doing recreate + analyze instead'], ['d.t', 'optimize', 'status', 'OK']], $optimize->rows);
+        self::assertInstanceOf(ResultSet::class, $repair);
+        self::assertSame([['d.t', 'repair', 'note', "The storage engine for the table doesn't support repair"]], $repair->rows);
+        self::assertInstanceOf(ResultSet::class, $cache);
+        self::assertSame([['d.t', 'assign_to_keycache', 'note', "The storage engine for the table doesn't support assign_to_keycache"]], $cache->rows);
+        self::assertInstanceOf(ResultSet::class, $load);
+        self::assertSame([['d.t', 'preload_keys', 'note', "The storage engine for the table doesn't support preload_keys"]], $load->rows);
+    }
+
+    public function testExecuteRefusesAPartitionOfATableThatIsNotPartitioned(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        $result = $session->query('CACHE INDEX t PARTITION (ALL) IN DEFAULT')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['d.t', 'assign_to_keycache', 'Error', 'Partition management on a not partitioned table is not possible'], ['d.t', 'assign_to_keycache', 'status', 'Operation failed']], $result->rows);
+    }
+
+    public function testExecuteRefusesAnUnknownKeyCache(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1284);
+        $this->expectExceptionMessage("Unknown key cache 'hot'");
+
+        $session->query('CACHE INDEX t IN hot');
+    }
+
+    public function testExecuteUsesTheSharedNamedCacheAfterItsBufferWasRemoved(): void
+    {
+        $instance = new Instance();
+        $instance->connect()->query('CREATE DATABASE d; CREATE TABLE d.t(a INT, KEY(a)) ENGINE=MyISAM; INSERT INTO d.t VALUES(1),(2); SET GLOBAL hot.key_buffer_size=1048576; SET GLOBAL hot.key_buffer_size=0');
+        $session = $instance->connect();
+        $cached = $session->query('CACHE INDEX d.t IN hot')[0];
+        $loaded = $session->query('LOAD INDEX INTO CACHE d.t')[0];
+        self::assertInstanceOf(ResultSet::class, $cached);
+        self::assertInstanceOf(ResultSet::class, $loaded);
+        self::assertSame([['d.t', 'assign_to_keycache', 'status', 'OK']], $cached->rows);
+        self::assertSame([['d.t', 'preload_keys', 'status', 'OK']], $loaded->rows);
+    }
+
+    public function testKeyFailureResolvesMyIsamKeysBeforeReportingSuccess(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t(a INT PRIMARY KEY, KEY selected(a)) ENGINE=MyISAM');
+        $table = $session->instance->dictionary->table('d', 't');
+        $command = new AdministrationCommand();
+        self::assertNull($command->keyFailure($table, [new \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex(), new \SqlSemantics\Statement\Identifier\Name('SELECTED')]));
+        self::assertSame("Key 'missing' doesn't exist in table 't'", $command->keyFailure($table, [new \SqlSemantics\Statement\Identifier\Name('missing')]));
+    }
+
+    public function testExecuteNeedsADatabaseForAnUnqualifiedTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+
+        $session->query('CHECK TABLE d.t, t');
+    }
+
+    public function testExecuteAnswersOneRowForAHistogramOfSeveralTables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        $result = $session->query('ANALYZE TABLE t, nope DROP HISTOGRAM ON a')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.']], $result->rows);
+    }
+
+    public function testExecuteChangesTheHistogramsOfATable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY, b INT)');
+
+        $created = $session->query('ANALYZE TABLE t UPDATE HISTOGRAM ON b, a')[0];
+        $missing = $session->query('ANALYZE TABLE nope UPDATE HISTOGRAM ON b')[0];
+
+        self::assertInstanceOf(ResultSet::class, $created);
+        self::assertSame([['d.t', 'histogram', 'Error', "The column 'a' is covered by a single-part unique index."], ['d.t', 'histogram', 'status', "Histogram statistics created for column 'b'."]], $created->rows);
+        self::assertInstanceOf(ResultSet::class, $missing);
+        self::assertSame([['d.nope', 'histogram', 'Error', "Table 'd.nope' doesn't exist"]], $missing->rows);
+    }
+
+    public function testNamesAnswersTheTablesAndWhetherTheySelectPartitions(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('LOAD INDEX INTO CACHE t PARTITION (ALL)');
+        self::assertInstanceOf(LoadIndex::class, $statement);
+
+        self::assertSame([['t', true]], array_map(static fn (array $name): array => [$name[0]->name->value, $name[1]], (new AdministrationCommand())->names($statement)));
+    }
+
+    public function testOperationAnswersTheOpColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CACHE INDEX t IN DEFAULT');
+        self::assertInstanceOf(CacheIndex::class, $statement);
+
+        self::assertSame('assign_to_keycache', (new AdministrationCommand())->operation($statement));
+    }
+
+    public function testFailureAnswersNullForATableThatExists(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $statement = $session->analyze('CHECK TABLE t');
+        self::assertInstanceOf(CheckTable::class, $statement);
+
+        self::assertNull((new AdministrationCommand())->failure($session, 'd', $statement->tables[0]->name, $session->instance->dictionary->table('d', 't')));
+    }
+
+    public function testViewChecksAViewAndRefusesTheOtherOperations(): void
+    {
+        $command = new AdministrationCommand();
+
+        self::assertSame([
+            [['status', 'OK']],
+            [['Error', "'d.v' is not BASE TABLE"], ['status', 'Operation failed']],
+            [['Error', 'Cannot create histogram statistics for a view.']],
+        ], [$command->view('check', 'd.v', false), $command->view('optimize', 'd.v', false), $command->view('analyze', 'd.v', true)]);
+    }
+
+    public function testExecuteChecksAView(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE VIEW v AS SELECT a FROM t');
+
+        $check = $session->query('CHECK TABLE v')[0];
+        $repair = $session->query('REPAIR TABLE v')[0];
+
+        self::assertInstanceOf(ResultSet::class, $check);
+        self::assertSame([['d.v', 'check', 'status', 'OK']], $check->rows);
+        self::assertInstanceOf(ResultSet::class, $repair);
+        self::assertSame([['d.v', 'repair', 'Error', "'d.v' is not BASE TABLE"], ['d.v', 'repair', 'status', 'Operation failed']], $repair->rows);
+    }
+
+    public function testValidateRequiresADatabaseBeforeLookingUpTheKeyCache(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CACHE INDEX t IN other');
+        self::assertInstanceOf(CacheIndex::class, $statement);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+
+        (new AdministrationCommand())->validate($statement, (new AdministrationCommand())->names($statement), $session);
+    }
+
+    public function testReportAnswersTheRowsOfAMissingTableAndOfAMissingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $statement = $session->analyze('REPAIR TABLE nope, x.nope');
+        self::assertInstanceOf(RepairTable::class, $statement);
+
+        self::assertSame(
+            [
+                [['d.nope', 'repair', 'Error', "Table 'd.nope' doesn't exist"], ['d.nope', 'repair', 'status', 'Operation failed']],
+                [['x.nope', 'repair', 'Error', "Unknown database 'x'"], ['x.nope', 'repair', 'error', 'Corrupt']],
+            ],
+            [(new AdministrationCommand())->report('repair', null, $statement->tables[0]->name, false, $session), (new AdministrationCommand())->report('repair', null, $statement->tables[1]->name, false, $session)],
+        );
+    }
+
+    public function testRowsPutsTheLabelAndTheOpColumnBeforeEachMessage(): void
+    {
+        self::assertSame([['d.t', 'check', 'status', 'OK'], ['d.t', 'check', 'note', 'n']], (new AdministrationCommand())->rows('d.t', 'check', [['status', 'OK'], ['note', 'n']]));
+    }
+
+    public function testOutcomeAnswersOkForCheck(): void
+    {
+        self::assertSame([['status', 'OK']], (new AdministrationCommand())->outcome('check'));
+    }
+
+    public function testColumnsAnswersTheColumnsInTheCharacterSetOfTheResults(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET character_set_results = 'latin1'");
+
+        self::assertSame([128, 10, 10, 393216], array_map(static fn ($column): int => $column->length, AdministrationCommand::columns($session)));
+    }
+
+    public function testExecuteReportsParseWarningsAndMissingDatabasesAs57Does(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $dotted = $session->query('CHECK TABLE .t')[0];
+        $missing = $session->query('CHECK TABLE nodb.t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $dotted);
+        self::assertInstanceOf(ResultSet::class, $missing);
+        self::assertSame([['d.t', 'check', 'Warning', "'.<table>' is deprecated and will be removed in a future release. Please use the table name without a dot prefix instead"], ['d.t', 'check', 'status', 'OK']], $dotted->rows);
+        self::assertSame([['nodb.t', 'check', 'Error', "Table 'nodb.t' doesn't exist"], ['nodb.t', 'check', 'status', 'Operation failed']], $missing->rows);
+    }
+}

@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the statements of stored programs and routes each to its rule.
@@ -68,6 +68,7 @@ final class StatementRule
      * Lowers one statement of a program: a node of `sp_proc_stmt` or `ev_sql_stmt_inner`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
      */
     public function statement(Node $statement): ProgramStatement|Statement
     {
@@ -79,8 +80,8 @@ final class StatementRule
         $flow = new FlowRule($this->lowering);
         $blocks = new BlockRule($this->lowering);
 
-        return match ($inner->signature) {
-            'sp_proc_stmt_statement: statement', 'sp_proc_stmt_statement: simple_statement' => $this->lowering->statement($inner->node(0)),
+        $meaning = match ($inner->signature) {
+            'sp_proc_stmt_statement: statement', 'sp_proc_stmt_statement: simple_statement' => $this->sql($inner->node(0)),
             'sp_proc_stmt_unlabeled: sp_unlabeled_control' => $flow->loop($inner->node(0), null, null),
             default => match ($inner->node->name) {
                 'sp_proc_stmt_return', 'sp_proc_stmt_leave', 'sp_proc_stmt_iterate' => $flow->jump($inner),
@@ -92,6 +93,106 @@ final class StatementRule
                 default => throw ImplementationGap::production($inner),
             },
         };
+        return $this->lowering->origins->record($meaning, $statement);
+    }
+
+    /**
+     * Lowers an SQL program member, refusing client-only connection explanations.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the statement has no stored-program form
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a completed operand is outside the selected SQL grammar
+     */
+    public function sql(Node $node): ProgramStatement|Statement
+    {
+        $process = (new \SqlSemantics\Platform\MySql\Lowering\Server\ProcessOperand($this->lowering))->program($node);
+        if ($process !== null) {
+            return $process;
+        }
+        $selection = (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->read($node);
+        if ($selection !== null) {
+            return $selection;
+        }
+        $assignments = (new \SqlSemantics\Platform\MySql\Lowering\Utility\Set\StoredAssignments($this->lowering))->read($node);
+        if ($assignments !== null) {
+            return $assignments;
+        }
+        $evaluation = (new \SqlSemantics\Platform\MySql\Lowering\Dml\EvaluationItems($this->lowering))->program($node);
+        if ($evaluation !== null) {
+            return $evaluation;
+        }
+        try {
+            $statement = $this->lowering->statement($node);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return $this->rejected($failure);
+        }
+        return $this->retained($statement, $node);
+    }
+
+    /**
+     * Retains complete writes and reads in their stored invocation roles.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a connection explanation is not standalone
+     */
+    public function retained(Statement $statement, Node $node): ProgramStatement|Statement
+    {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication && (new \SqlSemantics\Platform\MySql\Rules\Replication\GroupCredentials())->problem($statement->options)?->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing) {
+            $this->lowering->origins->forget($statement);
+            return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredGroupStart($statement->options), $node);
+        }
+        if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery) && $statement->hasExecutionCondition()) {
+            $this->lowering->origins->forget($statement);
+            $retained = match (true) {
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows($statement->into, $statement->rows, $statement->alias, $statement->onDuplicate, keyword: $statement->keyword),
+                $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet($statement->into, $statement->assignments, $statement->alias, $statement->onDuplicate),
+                default => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery($statement->into, $statement->source, $statement->onDuplicate),
+            };
+            return $this->lowering->origins->record($retained, $node);
+        }
+        if (($statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete) && $statement->hasExecutionCondition()) {
+            $this->lowering->origins->forget($statement);
+            $retained = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Delete
+                ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete($statement->with, $statement->options, $statement->table, $statement->where, $statement->orderBy, $statement->limit, $statement->hints)
+                : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete($statement->with, $statement->options, $statement->input, $statement->form, $statement->where, $statement->hints);
+            return $this->lowering->origins->record($retained, $node);
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\QueryRoot && $statement->hasExecutionCondition()) {
+            $this->lowering->origins->forget($statement);
+            return $this->lowering->origins->record((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($statement->query, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, true), $node);
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
+        }
+        return $statement;
+    }
+
+    /**
+     * Retains deferred SQL members and maps refusals that have no program form.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the refusal cannot be deferred
+     */
+    public function rejected(\SqlSemantics\Construction\RejectedInput $failure): ProgramStatement|Statement
+    {
+        $administrative = $this->administrativeRefusal($failure->problem);
+        if ($administrative !== null) {
+            return $administrative;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplain) {
+            return $failure->problem->explanation;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery) {
+            return $failure->problem->query;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable) {
+            return $failure->problem->definition;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidUpgradeName) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::NestedAlterOrDrop, 'DATABASE'), $failure->end, false);
+        }
+
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('non-standalone EXPLAIN FOR CONNECTION'), $failure->end);
+        }
+        throw $failure;
     }
 
     /**
@@ -157,4 +258,15 @@ final class StatementRule
 
         return $this->lowering->leaves->record(new DollarQuotedText(substr($token->text, $length, strlen($token->text) - 2 * $length), substr($token->text, 1, $length - 2)));
     }
+    /**
+     * Retains administrative requests whose conditions belong to invocation.
+     */
+    public function administrativeRefusal(\SqlSemantics\Statement\Fact\Diagnostic $problem): ?ProgramStatement
+    {
+        return match (true) {
+            $problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand => new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Server\DeferredPurge($problem->moment, masterLogs: $problem->masterLogs),
+            default => null,
+        };
+    }
+
 }

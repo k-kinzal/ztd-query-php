@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Overriding;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The action INSERT ... VALUES of a MERGE WHEN clause: one row is inserted from the source row.
@@ -23,13 +22,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an insert action
  *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)');
- *     [count($merge->statement->clauses[0]->action->values), $merge->toString()] // => [1, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)']
+ *     [count($merge->clauses[0]->action->values), $merge->toString()] // => [1, 'MERGE INTO t USING u ON t.a = u.a WHEN NOT MATCHED THEN INSERT (a) OVERRIDING USER VALUE VALUES (u.a)']
  * @example Refusing an insert without value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert([], null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class MergeInsert implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnTarget> The column list in written order
@@ -48,7 +47,7 @@ final class MergeInsert implements Node
      *
      * @throws InvalidConstruction When there is no value, or a list holds a foreign item
      */
-    public function __construct(array $columns, public readonly ?Overriding $overriding, array $values)
+    public function __construct(array $columns, public readonly ?Overriding $overriding, array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, ColumnTarget::class, 'The column list of an INSERT holds column targets.');
         $this->values = Check::listOf($values, Scalar::class, 'An INSERT action holds at least one value.', 1);

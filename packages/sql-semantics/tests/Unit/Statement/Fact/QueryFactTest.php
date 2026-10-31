@@ -28,6 +28,17 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class QueryFactTest extends TestCase
 {
+    public function testFieldsPreservesTheResolvedAggregateOccurrences(): void
+    {
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT SUM(1)');
+        $expression = $operation->field(0)->expression;
+        self::assertNotNull($expression);
+        $fact = new QueryFact([], Comparison::Sensitive, [$expression]);
+
+        self::assertSame([$expression], $fact->aggregates);
+        self::assertSame([], $fact->fields()?->items);
+    }
+
     public function testFieldsListsACompleteProjectionInOrder(): void
     {
         $first = new Field(0, new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull));
@@ -55,7 +66,7 @@ final class QueryFactTest extends TestCase
 
     public function testFieldsOfAnAnalyzedOpenStarStayNull(): void
     {
-        $fact = (new Semantics(Dialect::Sqlite))->analyze('SELECT *, 1 AS one FROM t')->facts->output;
+        $fact = (new Semantics(Dialect::Sqlite))->analyze('SELECT *, 1 AS one FROM t')->output();
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);

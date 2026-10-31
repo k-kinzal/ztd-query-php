@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `REBUILD | OPTIMIZE | ANALYZE | CHECK | REPAIR | TRUNCATE PARTITION ALL | p, …`: a maintenance operation on partitions.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Rebuilding every partition
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t REBUILD PARTITION ALL');
- *     [$alter->statement->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild, 'ALTER TABLE t REBUILD PARTITION ALL']
+ *     [$alter->commands[0]->kind, $alter->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild, 'ALTER TABLE t REBUILD PARTITION ALL']
  */
 final class MaintainPartitions implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CheckOption>|list<RepairOption> The options of CHECK or REPAIR in order
@@ -41,20 +40,21 @@ final class MaintainPartitions implements StandaloneCommand
 
     /**
      * @param MaintenanceKind $kind The operation
-     * @param bool $local Whether NO_WRITE_TO_BINLOG or LOCAL is written before the partitions
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword before the partitions, or null
      * @param PartitionSelection $partitions The partitions
      * @param list<CheckOption>|list<RepairOption> $options The options of CHECK or REPAIR in order
-     * @param bool $ignoredLocal Whether NO_WRITE_TO_BINLOG or LOCAL is written after the partitions of OPTIMIZE (5.6, 5.7)
+     * @param \SqlSemantics\Platform\MySql\Statement\Server\BinlogOption|null $ignoredBinlog The ignored suppression keyword after OPTIMIZE partitions (5.6, 5.7)
      */
     public function __construct(
         public readonly MaintenanceKind $kind,
-        public readonly bool $local,
+        public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog,
         public readonly PartitionSelection $partitions,
         array $options = [],
-        public readonly bool $ignoredLocal = false,
+        public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $ignoredBinlog = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
-        Check::input($kind->logged() || !$local, 'CHECK and TRUNCATE PARTITION take no NO_WRITE_TO_BINLOG.');
-        Check::input(!$ignoredLocal || $kind === MaintenanceKind::Optimize, 'Only OPTIMIZE PARTITION reads NO_WRITE_TO_BINLOG after the partitions.');
+        Check::input($kind->logged() || $binlog === null, 'CHECK and TRUNCATE PARTITION take no NO_WRITE_TO_BINLOG.');
+        Check::input($ignoredBinlog === null || $kind === MaintenanceKind::Optimize, 'Only OPTIMIZE PARTITION reads NO_WRITE_TO_BINLOG after the partitions.');
         Check::input($options === [] || $kind === MaintenanceKind::Check || $kind === MaintenanceKind::Repair, 'Only CHECK and REPAIR PARTITION take options.');
         $this->options = $kind === MaintenanceKind::Repair
             ? Check::listOf($options, RepairOption::class, 'REPAIR PARTITION takes repair options.')
@@ -74,15 +74,15 @@ final class MaintainPartitions implements StandaloneCommand
     public function render(Output $out): void
     {
         $out->keyword($this->kind->value, 'PARTITION');
-        if ($this->local) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($this->binlog !== null) {
+            $out->keyword($this->binlog->value);
         }
         $out->node($this->partitions);
         foreach ($this->options as $option) {
             $out->keyword(...explode(' ', $option->value));
         }
-        if ($this->ignoredLocal) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($this->ignoredBinlog !== null) {
+            $out->keyword($this->ignoredBinlog->value);
         }
     }
 }

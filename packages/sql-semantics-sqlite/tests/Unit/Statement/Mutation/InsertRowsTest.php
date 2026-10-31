@@ -42,13 +42,13 @@ final class InsertRowsTest extends TestCase
         $listed = $semantics->analyze('INSERT INTO t (a, b) VALUES (1, 2)', [$t]);
         $open = $semantics->analyze('INSERT INTO t VALUES (1)');
 
-        self::assertInstanceOf(ArityMismatch::class, $short->facts->diagnostics[0]);
-        self::assertSame(ArityRule::InsertedValues, $short->facts->diagnostics[0]->rule);
-        self::assertSame(3, $short->facts->diagnostics[0]->expected);
-        self::assertSame(1, $short->facts->diagnostics[0]->actual);
-        self::assertSame('1 values for 3 columns.', $short->facts->diagnostics[0]->message());
-        self::assertSame([], $listed->facts->diagnostics);
-        self::assertSame([], $open->facts->diagnostics);
+        self::assertInstanceOf(ArityMismatch::class, $short->diagnostics()[0]);
+        self::assertSame(ArityRule::InsertedValues, $short->diagnostics()[0]->rule);
+        self::assertSame(3, $short->diagnostics()[0]->expected);
+        self::assertSame(1, $short->diagnostics()[0]->actual);
+        self::assertSame('1 values for 3 columns.', $short->diagnostics()[0]->message());
+        self::assertSame([], $listed->diagnostics());
+        self::assertSame([], $open->diagnostics());
         self::assertNull($short->shape());
     }
 
@@ -58,9 +58,9 @@ final class InsertRowsTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('INSERT INTO t (zz, rowid) VALUES (1, 2)', [$t]);
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $query->facts->diagnostics[0]);
-        self::assertSame('zz', $query->facts->diagnostics[0]->name->value);
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $query->diagnostics()[0]);
+        self::assertSame('zz', $query->diagnostics()[0]->name->value);
     }
 
     public function testDeriveWithinLetsDoUpdateSeeTheTableAndExcluded(): void
@@ -70,28 +70,28 @@ final class InsertRowsTest extends TestCase
         $query = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.a, b = b WHERE a > 1 RETURNING *', [$t]);
         $missing = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = excluded.zz', [$t]);
 
-        self::assertInstanceOf(InsertRows::class, $query->statement);
-        self::assertInstanceOf(Assignment::class, $query->statement->upserts[0]->assignments[0]);
-        self::assertInstanceOf(Assignment::class, $query->statement->upserts[0]->assignments[1]);
-        $excluded = $query->facts->scalar($query->statement->upserts[0]->assignments[0]->value)->resolution;
-        $bare = $query->facts->scalar($query->statement->upserts[0]->assignments[1]->value)->resolution;
+        self::assertInstanceOf(InsertRows::class, $query);
+        self::assertInstanceOf(Assignment::class, $query->upserts[0]->assignments[0]);
+        self::assertInstanceOf(Assignment::class, $query->upserts[0]->assignments[1]);
+        $excluded = $query->upserts[0]->assignments[0]->value->scalarInformation()->resolution;
+        $bare = $query->upserts[0]->assignments[1]->value->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $excluded);
         self::assertInstanceOf(ResolvedColumn::class, $bare);
-        self::assertSame($query->statement->into->target, $excluded->relation);
+        self::assertSame($query->into->target, $excluded->relation);
         self::assertSame($t->declarations()[0]->columns[1], $excluded->declaration());
         self::assertSame($t->declarations()[0]->columns[2], $bare->declaration());
         self::assertSame(['id', 'a', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $query->fields()->items ?? []));
-        self::assertSame([], $query->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $missing->facts->diagnostics[0]);
-        self::assertSame('excluded', $missing->facts->diagnostics[0]->qualifier?->name->value);
+        self::assertSame([], $query->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $missing->diagnostics()[0]);
+        self::assertSame('excluded', $missing->diagnostics()[0]->qualifier?->name->value);
     }
 
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3)', [$t])->statement;
-        $returning = $semantics->analyze('INSERT INTO t VALUES (1, 2, 3) RETURNING b', [$t])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO t VALUES (1, 2, 3)', [$t]));
+        $returning = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO t VALUES (1, 2, 3) RETURNING b', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(InsertRows::class, $statement);
@@ -105,8 +105,8 @@ final class InsertRowsTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('INSERT INTO t VALUES (RAISE(IGNORE))');
 
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->diagnostics()[0]->rule);
     }
 
     public function testRenderWritesIntoRowsUpsertsAndReturning(): void
@@ -114,10 +114,10 @@ final class InsertRowsTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze('insert into t (id, a) values (1, 2), (3, 4) on conflict (id) do update set a = excluded.a on conflict do nothing returning id');
 
         self::assertSame('INSERT INTO t (id, a) VALUES (1, 2), (3, 4) ON CONFLICT (id) DO UPDATE SET a = excluded.a ON CONFLICT DO NOTHING RETURNING id', $query->toString());
-        self::assertInstanceOf(InsertRows::class, $query->statement);
-        self::assertCount(2, $query->statement->rows->rows);
-        self::assertCount(2, $query->statement->upserts);
-        self::assertCount(1, $query->statement->returning);
+        self::assertInstanceOf(InsertRows::class, $query);
+        self::assertCount(2, $query->rows->rows);
+        self::assertCount(2, $query->upserts);
+        self::assertCount(1, $query->returning);
     }
 
     public function testRejectsANonLastUpsertWithoutAConflictTarget(): void

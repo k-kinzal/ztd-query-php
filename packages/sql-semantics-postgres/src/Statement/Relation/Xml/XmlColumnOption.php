@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of an XMLTABLE column: its path, its default, or whether it can be NULL.
@@ -29,14 +28,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class XmlColumnOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param XmlColumnOptionKind $kind The option
      * @param Scalar|null $value The value of PATH, DEFAULT or a named option, an expression of the restricted form `b_expr`
      * @param Name|null $word The identifier a named option is written with
      */
-    public function __construct(public readonly XmlColumnOptionKind $kind, public readonly ?Scalar $value = null, public readonly ?Name $word = null)
+    public function __construct(public readonly XmlColumnOptionKind $kind, public readonly ?Scalar $value = null, public readonly ?Name $word = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($kind->valued() === ($value !== null), 'PATH, DEFAULT and named options have a value; NULL and NOT NULL have none.');
         Check::input(($kind === XmlColumnOptionKind::Named) === ($word !== null), 'Only a named option has a word.');

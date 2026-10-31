@@ -21,21 +21,21 @@ final class IfStatementTest extends TestCase
     public function testDeriveProgramDerivesEveryBranch(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) IF b THEN SELECT c; ELSEIF a THEN SELECT d; ELSE SELECT e; END IF');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $if = $create->body;
         self::assertInstanceOf(IfStatement::class, $if);
 
         self::assertCount(2, $if->branches);
         self::assertCount(1, $if->otherwise);
-        self::assertSame(['Column b does not exist.', 'Column c does not exist.', 'Column d does not exist.', 'Column e does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Column b does not exist.', 'Column c does not exist.', 'Column d does not exist.', 'Column e does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testDeriveProgramResolvesTheVariablesInScope(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; l: LOOP IF x > 1 THEN LEAVE l; ELSE SET x = x + 1; ITERATE l; END IF; END LOOP; END');
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]

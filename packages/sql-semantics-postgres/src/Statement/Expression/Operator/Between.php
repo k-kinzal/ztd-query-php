@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A range test: `a [NOT] BETWEEN [SYMMETRIC] low AND high`.
@@ -36,7 +35,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Between implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested value
@@ -51,7 +51,12 @@ final class Between implements Scalar
         public readonly bool $symmetric,
         public readonly Scalar $low,
         public readonly Scalar $high,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->before($operand, Precedence::PATTERN), 'The tested value needs parentheses to keep its place.');
         Check::input($precedence->restricted($low), 'The low bound of BETWEEN needs parentheses: it is a b_expr.');

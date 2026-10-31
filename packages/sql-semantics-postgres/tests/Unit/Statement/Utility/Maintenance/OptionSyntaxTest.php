@@ -18,8 +18,8 @@ final class OptionSyntaxTest extends TestCase
 {
     public function testCasesTellTheTwoSyntaxesApart(): void
     {
-        $words = (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER VERBOSE t')->statement;
-        $list = (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE) t')->statement;
+        $words = (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER VERBOSE t');
+        $list = (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE) t');
         self::assertInstanceOf(Cluster::class, $words);
         self::assertInstanceOf(Cluster::class, $list);
         self::assertSame([OptionSyntax::Words, OptionSyntax::Parenthesized], [$words->syntax, $list->syntax]);

@@ -28,7 +28,7 @@ final class BodyFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN SELECT y; SELECT 1; SELECT z; END');
 
-        self::assertSame(['Column y does not exist.', 'Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Column y does not exist.', 'Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     public function testStatementResolvesAVariableInANestedQuery(): void
@@ -36,20 +36,22 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $operation = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = x; END', [$table]);
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $where = $select->where;
         self::assertInstanceOf(Comparison::class, $where);
-        $resolution = $operation->facts->scalar($where->right)->resolution;
+        $resolution = $where->right->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
-        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->facts->diagnostics));
+        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT a FROM t WHERE a = y; END', [$table])->diagnostics()));
     }
 
     public function testStatementResolvesAVariableInAnInspectedStatement(): void
@@ -57,16 +59,16 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $operation = $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO BEGIN DECLARE x INT; UPDATE t SET a = x; END', [$table]);
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateEvent::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $update = $block->statements[0];
         self::assertInstanceOf(Update::class, $update);
-        $resolution = $operation->facts->scalar($update->assignments[0]->value)->resolution;
+        $resolution = $update->assignments[0]->value->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -79,7 +81,7 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -103,7 +105,7 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -111,10 +113,6 @@ final class BodyFactsTest extends TestCase
      */
     public static function providerStatementChecksTheRestrictionsOfTheProgramKind(): iterable
     {
-        yield 'a result set of a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
-        yield 'a commit in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN COMMIT; RETURN 1; END', ['Explicit or implicit commit is not allowed in stored function or trigger.']];
-        yield 'a result set of a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT 1', ['Not allowed to return a result set from a trigger']];
-        yield 'a procedure created in a procedure' => ['CREATE PROCEDURE p() BEGIN CREATE PROCEDURE q() BEGIN END; END', ["Can't create a PROCEDURE from within another stored routine"]];
         yield 'a result set of a procedure' => ['CREATE PROCEDURE p() SELECT 1', []];
     }
 
@@ -127,7 +125,7 @@ final class BodyFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -136,9 +134,100 @@ final class BodyFactsTest extends TestCase
     public static function providerStatementChecksTheAssignmentsOfATrigger(): iterable
     {
         yield 'NEW in a BEFORE INSERT trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.a = 1', []];
-        yield 'NEW in an AFTER INSERT trigger' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', ['Updating of NEW row is not allowed in after trigger']];
-        yield 'NEW in a DELETE trigger' => ['CREATE TRIGGER tr BEFORE DELETE ON t FOR EACH ROW SET NEW.a = 1', ['There is no NEW row in on DELETE trigger']];
-        yield 'OLD in a nested statement' => ['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW BEGIN DECLARE x INT; SET NEW.a = x; IF NEW.a > 0 THEN SET OLD.a = 1; END IF; END', ['Updating of OLD row is not allowed in trigger']];
-        yield 'NEW in a block of an AFTER trigger' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW BEGIN SET NEW.a = 1; END', ['Updating of NEW row is not allowed in after trigger']];
+        yield 'a column the NEW row lacks' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1', ['Column NEW.zz does not exist.']];
     }
+
+    /**
+     * @return iterable<string, array{string, non-empty-list<string>}>
+     */
+    public static function providerRefusesIntrinsicBodyConditions(): iterable
+    {
+        yield 'a result set of a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN SELECT 1; RETURN 1; END', ['Not allowed to return a result set from a function']];
+        yield 'a commit in a function' => ['CREATE FUNCTION f() RETURNS INT BEGIN COMMIT; RETURN 1; END', ['Explicit or implicit commit is not allowed in stored function or trigger.']];
+        yield 'a result set of a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SELECT 1', ['Not allowed to return a result set from a trigger']];
+    }
+
+    /**
+     * @param non-empty-list<string> $messages
+     */
+    #[DataProvider('providerRefusesIntrinsicBodyConditions')]
+    public function testRefusesIntrinsicBodyConditions(string $sql, array $messages): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
+    }
+    /**
+     * @param list<string> $messages
+     */
+    #[DataProvider('providerNestedDeclarationRefusals')]
+    public function testNestedDeclarationsRetainTheirInputRefusal(string $sql, array $messages): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage($messages[0]);
+        (new Semantics(Dialect::MySql))->analyze($sql);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function providerNestedDeclarationRefusals(): iterable
+    {
+        yield 'a procedure created in a procedure' => ['CREATE PROCEDURE p() BEGIN CREATE PROCEDURE q() BEGIN END; END', ["Can't create a PROCEDURE from within another stored routine"]];
+    }
+
+
+    public function testStatementIsNeverReachedForAnAssignmentToANameNothingDeclares(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze("CREATE PROCEDURE p() BEGIN SET missing=1; DO WEIGHT_STRING('value' AS CHAR(1.5)); END");
+            self::fail('No declaration and no system variable supplies the name.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class, $failure->problem);
+            self::assertSame('missing', $failure->problem->name);
+            self::assertSame(40, $failure->end);
+            self::assertTrue($failure->aborts);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerStatementOrdersAssignedOperands(): iterable
+    {
+        yield '5.6 reads the target before its value' => ['mysql-5.6.51', 25];
+        yield '5.7 reads the target before its value' => ['mysql-5.7.44', 25];
+        yield '8.4 reads the whole assignment first' => ['mysql-8.4.7', 68];
+    }
+
+    #[DataProvider('providerStatementOrdersAssignedOperands')]
+    public function testStatementOrdersAssignedOperands(string $release, int $end): void
+    {
+        $sql = "CREATE PROCEDURE p() SET missing=WEIGHT_STRING('value' AS CHAR(1.5))";
+        self::assertSame(68, strlen($sql));
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('No declaration and no system variable supplies the name.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class, $failure->problem);
+            self::assertSame($end, $failure->end);
+        }
+    }
+
+    public function testTargetsIsNeverReachedForMixedAssignmentItemsNamingNothing(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE PROCEDURE p() SET missing=1, @v=WEIGHT_STRING(ROW(1,2) AS CHAR(1.5))');
+            self::fail('No declaration and no system variable supplies the name.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable::class, $failure->problem);
+            self::assertSame('missing', $failure->problem->name);
+        }
+    }
+
 }

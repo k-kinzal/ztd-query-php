@@ -16,7 +16,7 @@ final class SourcesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('SELECT 1 UNION SELECT 2');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation::class, $statement);
         self::assertTrue((new \SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Sources())->statement($statement));
     }
@@ -28,7 +28,7 @@ final class SourcesTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t', [$t, $u]);
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);
         self::assertFalse((new \SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Sources())->statement($statement));
     }
@@ -37,9 +37,9 @@ final class SourcesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('VALUES (1) ORDER BY 1');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression::class, $statement);
-        $other = $semantics->analyze('((VALUES (1)))')->statement;
+        $other = $semantics->analyze('((VALUES (1)))');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery::class, $other);
         self::assertSame([true, false], [(new \SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Sources())->insertable($statement), (new \SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Sources())->insertable($other)]);
     }

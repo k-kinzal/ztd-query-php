@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\NullOnly;
 
@@ -42,13 +41,13 @@ use SqlSemantics\Statement\Type\NullOnly;
  */
 final class ExpressionTarget implements Target
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The projected expression
      * @param Name|null $alias The output name written for it
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -15,19 +15,19 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption;
 #[Medium]
 final class AlgorithmOptionTest extends TestCase
 {
-    public function testDeriveOptionReportsAnAlgorithmTheReleaseDoesNotKnow(): void
+    public function testDeriveOptionAcceptsTheKnownAlgorithm(): void
     {
-        self::assertSame('INSTANT is not an ALGORITHM the server knows.', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t ALGORITHM = INSTANT')->facts->diagnostics[0]->message());
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = instant')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP INDEX i ON t ALGORITHM = COPY')->diagnostics());
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t ALGORITHM = instant')->diagnostics());
     }
 
     public function testDeriveCommandChecksTheAlgorithm(): void
     {
-        self::assertSame('NOCOPY is not an ALGORITHM the server knows.', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM = NOCOPY')->facts->diagnostics[0]->message());
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM = INPLACE')->diagnostics());
     }
 
     public function testRenderWritesTheAlgorithmOrDefault(): void
     {
-        self::assertSame('ALTER TABLE t ALGORITHM = DEFAULT, ALGORITHM = INPLACE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE')->toString());
+        self::assertSame('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM DEFAULT, ALGORITHM INPLACE')->toString());
     }
 }

@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a position past the select list
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 ORDER BY 2');
- *     $query->facts->diagnostics[0]->message() // => 'ORDER BY position 2 is not in select list'
+ *     $query->diagnostics()[0]->message() // => 'ORDER BY position 2 is not in select list'
  */
 final class PositionOutOfRange implements Diagnostic
 {

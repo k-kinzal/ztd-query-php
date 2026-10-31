@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\RowShape;
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Shape\RowShape;
  * away (MissingTable); otherwise the table the context resolves
  * (MYSQL-CHANGE-TARGET-001). The new name of a rename already exists when a
  * moved table has it, or when the context declares a table of that name
- * (DeclaredTable or ConflictingTables) that no earlier rename moved away;
+ * (DeclaredTable) that no earlier rename moved away;
  * that is the diagnostic TableExists. Names are compared as by
  * MYSQL-CHANGE-TARGET-001. Terminates: one pass over the renames, each
  * comparing with the earlier ones.
@@ -101,6 +100,6 @@ final class Renamings
         }
         $resolution = $derivation->table($name, $derivation->environment());
 
-        return $resolution instanceof DeclaredTable || $resolution instanceof ConflictingTables;
+        return $resolution instanceof DeclaredTable;
     }
 }

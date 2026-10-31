@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -35,7 +34,7 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class BitDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The modifier expressions in order
@@ -46,7 +45,7 @@ final class BitDesignation implements TypeDesignation
      * @param bool $varying Whether VARYING is written
      * @param list<Scalar> $modifiers The modifier expressions in order
      */
-    public function __construct(public readonly bool $varying, array $modifiers = [])
+    public function __construct(public readonly bool $varying, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->modifiers = Check::listOf($modifiers, Scalar::class, 'Type modifiers are expressions.');
     }

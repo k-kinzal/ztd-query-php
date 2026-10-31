@@ -11,15 +11,12 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash;
 use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
-use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER USER [IF EXISTS] account [auth], … [REQUIRE …] [WITH limits] [options] [ATTRIBUTE|COMMENT '…']`: a request to change accounts.
@@ -30,21 +27,24 @@ use SqlSemantics\Statement\Statement;
  * factors (8.0.27+). `ALTER USER USER() …` changes the session's own
  * account and is written alone, with a new password or DISCARD OLD
  * PASSWORD. The problems of the clauses are reported by
- * MYSQL-ACCOUNT-CHECKS-001; MySQL 5.7, whose grammar shares the account list
- * of GRANT, rejects IDENTIFIED BY PASSWORD here (RejectedPasswordHash).
+ * MYSQL-ACCOUNT-CHECKS-001. IDENTIFIED BY PASSWORD belongs to legacy CREATE
+ * USER and GRANT; ALTER USER retains it with an execution condition.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html,
  * https://dev.mysql.com/doc/refman/5.7/en/alter-user.html. Status: Implemented.
  *
  * @visibility public
  * @example Changing a password and keeping the old one
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("alter user if exists u identified by 'new' replace 'old' retain current password")->toString() // => "ALTER USER IF EXISTS u IDENTIFIED BY 'new' REPLACE 'old' RETAIN CURRENT PASSWORD"
+ * @example Retaining a legacy authentication form in the wrong statement role
+ *     $user = new \SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification(new \SqlSemantics\Platform\MySql\Statement\Name\AccountName(new \SqlSemantics\Statement\Identifier\Name('u')), new \SqlSemantics\Platform\MySql\Statement\Account\User\Identification(null, \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('*0123456789012345678901234567890123456789')));
+ *     (new \SqlSemantics\Platform\MySql\Statement\Account\AlterUser(false, [$user]))->users[0] === $user // => true
  */
-final class AlterUser implements Statement
+final class AlterUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<UserAlteration> The account entries in order
+     * @var non-empty-list<UserAlteration> The account entries in order
      */
     public readonly array $users;
 
@@ -73,7 +73,12 @@ final class AlterUser implements Statement
         array $resources = [],
         array $options = [],
         public readonly ?UserComment $comment = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->users = Check::listOf($users, UserAlteration::class, 'ALTER USER names at least one account.', 1);
         $this->resources = Check::listOf($resources, ResourceLimit::class, 'The WITH clause lists resource limits.');
         $this->options = Check::listOf($options, AccountOption::class, 'The account options are a list.');
@@ -85,6 +90,7 @@ final class AlterUser implements Statement
                 'ALTER USER USER() is written alone.',
             );
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -92,15 +98,15 @@ final class AlterUser implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $checks = new AccountChecks();
         foreach ($this->users as $user) {
-            if ($user instanceof FactorChange) {
-                $checks->factors($derivation, $user);
-            } elseif ($user instanceof UserSpecification && $user->identification?->credential === Credential::PasswordHash) {
-                $derivation->report(new RejectedPasswordHash());
+            (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$user]);
+            if ($user instanceof UserSpecification && $user->identification?->credential === Credential::PasswordHash) {
+                $problem = new Problem\RejectedPasswordHash();
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $user->identification->secret, false);
             }
         }
-        $checks->tls($derivation, $this->tls);
+        $checks = new AccountChecks();
         $checks->options($derivation, $this->options);
         $checks->comment($derivation, $this->comment);
     }

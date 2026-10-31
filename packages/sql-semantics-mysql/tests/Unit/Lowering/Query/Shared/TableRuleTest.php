@@ -30,9 +30,10 @@ final class TableRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t PARTITION (p0, p1)');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        self::assertSame(['p0', 'p1'], array_map(static fn (Name $name): string => $name->value, $operation->statement->from->partitions));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        self::assertSame(['p0', 'p1'], array_map(static fn (Name $name): string => $name->value, $operation->query->from->partitions));
     }
 
     public function testNamesLowersTheUsingList(): void
@@ -58,7 +59,7 @@ final class TableRuleTest extends TestCase
 
     public function testHintLowersOneHint(): void
     {
-        self::assertSame('SELECT 1 FROM t USE INDEX FOR JOIN ()', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from t use key for join ()')->toString());
+        self::assertSame('SELECT 1 FROM t USE KEY FOR JOIN ()', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from t use key for join ()')->toString());
     }
 
     public function testIndexesLowersNamesAndPrimary(): void
@@ -75,9 +76,10 @@ final class TableRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 from t = x, u as y, v z, .w');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableList::class, $operation->statement->from);
-        self::assertSame([AliasMark::Equals, AliasMark::As, AliasMark::Bare, AliasMark::As], array_map(static fn (object $table): AliasMark => $table instanceof TableReference ? $table->mark : AliasMark::As, $operation->statement->from->members));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableList::class, $operation->query->from);
+        self::assertSame([AliasMark::Equals, AliasMark::As, AliasMark::Bare, AliasMark::As], array_map(static fn (object $table): AliasMark => $table instanceof TableReference ? $table->mark : AliasMark::As, $operation->query->from->members));
         self::assertSame('SELECT 1 FROM t = x, u AS y, v z, .w', $operation->toString());
     }
 }

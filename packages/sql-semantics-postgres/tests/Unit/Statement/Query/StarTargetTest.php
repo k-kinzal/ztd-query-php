@@ -26,7 +26,7 @@ final class StarTargetTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT * FROM v');
-        self::assertInstanceOf(\SqlSemantics\Statement\Shape\OpenStar::class, $query->facts->output?->projection[0]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Shape\OpenStar::class, $query->output()?->projection[0]);
     }
 
     public function testRenderWritesTheStar(): void

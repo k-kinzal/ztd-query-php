@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -34,9 +33,9 @@ use SqlSemantics\Statement\Statement;
  *     $table = $create->declarations()[0];
  *     [$table->name->schema->value, array_map(static fn ($column) => $column->name->value . ' ' . $column->type->name(), $table->columns)] // => ['pg_temp', ['n integer', 's text']]
  */
-final class CreateTableAs implements Statement
+final class CreateTableAs extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CreateTarget $target The new table
@@ -51,7 +50,12 @@ final class CreateTableAs implements Statement
         public readonly Persistence $persistence = Persistence::Permanent,
         public readonly bool $ifNotExists = false,
         public readonly ?bool $withData = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($withData === null || !(new Trailing())->takesWith($query), 'A query ending in IS JSON without a uniqueness clause would take WITH DATA; group it.');
     }
 

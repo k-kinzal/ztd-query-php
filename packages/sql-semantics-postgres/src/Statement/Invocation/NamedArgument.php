@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An argument passed by parameter name: `name => value` or `name := value`.
@@ -29,14 +28,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class NamedArgument implements Argument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $parameter The parameter name
      * @param Scalar $value The value passed
      * @param ArgumentSpelling $spelling How the name joins the value
      */
-    public function __construct(public readonly Name $parameter, public readonly Scalar $value, public readonly ArgumentSpelling $spelling = ArgumentSpelling::Arrow)
+    public function __construct(public readonly Name $parameter, public readonly Scalar $value, public readonly ArgumentSpelling $spelling = ArgumentSpelling::Arrow, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

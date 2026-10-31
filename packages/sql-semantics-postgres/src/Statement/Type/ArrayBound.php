@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Type;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One dimension of an array type, with the size written for it.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ArrayBound implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntegerConstant|null $size The declared size
      */
-    public function __construct(public readonly ?IntegerConstant $size = null)
+    public function __construct(public readonly ?IntegerConstant $size = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

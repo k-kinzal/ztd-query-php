@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Type;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The array part of a type name: bracket pairs, or the keyword ARRAY with at most one size.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ArraySpecifier implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ArrayBound> The dimensions written with brackets
@@ -38,7 +37,7 @@ final class ArraySpecifier implements Node
      * @param list<ArrayBound> $bounds The dimensions written with brackets
      * @param bool $keyword Whether the keyword ARRAY is written
      */
-    public function __construct(array $bounds, public readonly bool $keyword = false)
+    public function __construct(array $bounds, public readonly bool $keyword = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->bounds = Check::listOf($bounds, ArrayBound::class, 'Array dimensions are array bounds.');
         Check::input($keyword ? count($this->bounds) <= 1 && ($this->bounds === [] || $this->bounds[0]->size !== null) : $this->bounds !== [], 'The ARRAY keyword takes at most one sized dimension; brackets take at least one dimension.');

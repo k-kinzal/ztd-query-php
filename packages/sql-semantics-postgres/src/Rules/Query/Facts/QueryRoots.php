@@ -48,7 +48,7 @@ final class QueryRoots
         $modifying = new ModifyingCommonTables();
         $modifying->check($root, $modifying->top($root), $derivation);
         $first = $this->first($root);
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($root) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($root, bindings: false) as $object) {
             if ($object instanceof Select && $object->into !== null && $object !== $first) {
                 $derivation->report(new QueryMisuse(QueryMisuseRule::IntoNotAllowed));
             }

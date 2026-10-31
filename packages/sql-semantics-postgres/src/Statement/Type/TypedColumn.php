@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column given by name, type and optional collation, as a composite type or a column definition list writes it.
@@ -28,14 +27,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TypedColumn implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
      * @param TypeName $type The column type
      * @param DottedName|null $collation The collation of the column
      */
-    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?DottedName $collation = null)
+    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?DottedName $collation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

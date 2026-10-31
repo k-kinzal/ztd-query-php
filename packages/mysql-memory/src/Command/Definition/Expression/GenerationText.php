@@ -1,0 +1,252 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Command\Definition\Expression;
+
+use SqlSemantics\Platform\MySql\Statement as M;
+use SqlSemantics\Rendering\Lexical;
+use SqlSemantics\Rendering\Output;
+use SqlSemantics\Rendering\Piece;
+use SqlSemantics\Rendering\PieceKind;
+use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Scalar;
+
+/**
+ * Writes the canonical expression excerpt reported by legacy generated-column validation.
+ *
+ * Query boundaries are retained separately from literal text, so a string containing
+ * SELECT cannot become the reported boundary. This renders semantic operands only.
+ * Verified through SQL on MySQL 5.7.44.
+ *
+ * @visibility MySqlMemory
+ */
+final class GenerationText
+{
+    /**
+     * @param ItemText|null $items The column-name and character-set context of a stored definition
+     * @param array<int, Scalar> $parameters Bound values by marker occurrence identity
+     */
+    public function __construct(public readonly ?ItemText $items = null, public readonly array $parameters = [])
+    {
+    }
+
+    /**
+     * Writes the suffix beginning at the first nested query, with its enclosing expression.
+     */
+    public function tail(Node $expression): string
+    {
+        $tail = '';
+        $found = false;
+        foreach ($this->parts($expression) as [$text, $query]) {
+            $found = $found || $query;
+            if ($found) {
+                $tail .= $text;
+            }
+        }
+        return mb_strcut($tail . ')', 0, 80, 'UTF-8');
+    }
+
+    /**
+     * Reports a missing system-variable operand in the legacy stored expression.
+     * The suffix comes from semantic operands, never from the input request.
+     */
+    public function systemTail(Node $expression): ?string
+    {
+        while ($expression instanceof M\Expression\Grouped || $expression instanceof M\Expression\GroupedRow || $expression instanceof M\Routine\Program\Expression\DeferredGrouped) {
+            $expression = $expression->operand;
+        }
+        $suffix = $this->systemSuffix($expression);
+        if ($suffix !== null) {
+            return mb_strcut($suffix . ')', 0, 80, 'UTF-8');
+        }
+        if ($expression instanceof M\Expression\Row) {
+            foreach ($expression->elements as $index => $element) {
+                while ($element instanceof M\Expression\Grouped) {
+                    $element = $element->operand;
+                }
+                if ($element instanceof M\Variable\SystemVariable) {
+                    $following = array_slice($expression->elements, $index + 1);
+                    $text = array_map(static fn ($value): string => (new ItemText([], 'utf8mb4', \SqlSemantics\Contract\GrammarRelease::MySql5744))->text($value), $following);
+                    return mb_strcut(implode(',', $text) . '))', 0, 80, 'UTF-8');
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Locates an omitted operand through nested arithmetic and function arguments.
+     * Enclosing punctuation is reconstructed from semantic operand positions.
+     */
+    public function systemSuffix(Node $node): ?string
+    {
+        if ($node instanceof M\Expression\Grouped || $node instanceof M\Routine\Program\Expression\DeferredGrouped) {
+            return $this->systemSuffix($node->operand);
+        }
+        if ($node instanceof M\Expression\Operator\Arithmetic || $node instanceof M\Routine\Program\Expression\DeferredArithmetic) {
+            $left = $node->left;
+            $right = $node->right;
+            while ($left instanceof M\Expression\Grouped) {
+                $left = $left->operand;
+            }
+            while ($right instanceof M\Expression\Grouped) {
+                $right = $right->operand;
+            }
+            $following = $node->operator->value . ' ' . implode('', array_column($this->parts($right), 0)) . ')';
+            $suffix = $this->systemSuffix($left);
+            if ($suffix !== null) {
+                return $suffix . ' ' . $following;
+            }
+            if ($left instanceof M\Variable\SystemVariable && !in_array($node->operator, [M\Expression\Operator\ArithmeticOperator::Plus, M\Expression\Operator\ArithmeticOperator::Minus], true)) {
+                return $following;
+            }
+            $suffix = $this->systemSuffix($right);
+            return $suffix !== null ? $suffix . ')' : ($right instanceof M\Variable\SystemVariable ? ')' : null);
+        }
+        if ($node instanceof M\Call\FunctionCall || $node instanceof M\Call\KeywordCall) {
+            $arguments = $node instanceof M\Call\FunctionCall ? array_map(static fn (M\Call\CallArgument $argument): Scalar => $argument->expression, $node->arguments) : $node->arguments;
+            foreach ($arguments as $index => $argument) {
+                $suffix = $this->systemSuffix($argument);
+                if ($suffix !== null) {
+                    foreach (array_slice($arguments, $index + 1) as $following) {
+                        $suffix .= ',' . implode('', array_column($this->parts($following), 0));
+                    }
+                    return $suffix . ')';
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Writes expression pieces while marking actual query boundaries.
+     *
+     * @return list<array{string, bool}>
+     */
+    public function parts(Node $node): array
+    {
+        if ($node instanceof M\Literal\Parameter && isset($this->parameters[spl_object_id($node)])) {
+            return [[$this->parameter($this->parameters[spl_object_id($node)]), false]];
+        }
+        if ($node instanceof M\Variable\SystemVariable) {
+            return [['', false]];
+        }
+        if ($node instanceof M\Expression\Grouped || $node instanceof M\Expression\GroupedRow || $node instanceof M\Routine\Program\Expression\DeferredGrouped) {
+            return $this->parts($node->operand);
+        }
+        if ($node instanceof M\Expression\Subquery\ScalarSubquery || $node instanceof M\Expression\Subquery\RowSubquery || $node instanceof M\Routine\Program\Expression\DeferredSubquery) {
+            return [['(', false], [$this->query($node->query), true], [')', false]];
+        }
+        if ($node instanceof M\Expression\Operator\Arithmetic || $node instanceof M\Routine\Program\Expression\DeferredArithmetic || $node instanceof M\Expression\Comparison) {
+            return $this->joined([$this->parts($node->left), $this->parts($node->right)], '(', ' ' . $node->operator->value . ' ', ')');
+        }
+        if ($node instanceof M\Call\FunctionCall || $node instanceof M\Call\KeywordCall) {
+            $name = $node instanceof M\Call\FunctionCall ? $node->name->value : $node->function->value;
+            $arguments = $node instanceof M\Call\FunctionCall ? array_map(static fn (M\Call\CallArgument $argument): Scalar => $argument->expression, $node->arguments) : $node->arguments;
+            return $this->joined(array_map($this->parts(...), $arguments), strtolower($name) . '(', ',', ')');
+        }
+        $wrapped = $this->wrapped($node);
+        if ($wrapped !== null) {
+            return $wrapped;
+        }
+        \SqlSemantics\Diagnostic\Check::invariant($node instanceof Scalar || $node instanceof M\Expression\RowOperand, 'A legacy generation leaf retains its expression role.');
+        return [[($this->items ?? new ItemText([], 'utf8mb4', \SqlSemantics\Contract\GrammarRelease::MySql5744))->text($node), false]];
+    }
+
+    /**
+     * Displays a captured value without the spelling of a written literal expression.
+     * Bound negative values and strings retain no unary parentheses or introducer.
+     */
+    public function parameter(Scalar $value): string
+    {
+        if ($value instanceof M\Literal\StringLiteral) {
+            return (new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql5744))->quote($value->value());
+        }
+        if ($value instanceof M\Expression\Operator\Unary && $value->operator === M\Expression\Operator\UnaryOperator::Minus && $value->operand instanceof M\Literal\NumberLiteral) {
+            return '-' . $value->operand->text;
+        }
+        return implode('', array_column($this->parts($value), 0));
+    }
+
+    /**
+     * Formats unary and predicate wrappers around their retained operands.
+     *
+     * @return list<array{string, bool}>|null Null for an expression outside these wrappers
+     */
+    public function wrapped(Node $node): ?array
+    {
+        if ($node instanceof M\Expression\Access\FullTextSearch || $node instanceof M\Routine\Program\Expression\Access\DeferredFullTextSearch) {
+            $mode = match ($node->mode) {
+                M\Expression\Access\FullTextMode::NaturalLanguage => '',
+                M\Expression\Access\FullTextMode::QueryExpansion => ' with query expansion',
+                M\Expression\Access\FullTextMode::Boolean => ' in boolean mode',
+            };
+            $columns = implode(',', array_map(fn ($column): string => implode('', array_column($this->parts($column), 0)), $node->columns));
+            return $this->joined([$this->parts($node->against)], '(match ' . $columns . ' against (', '', $mode . '))');
+        }
+        if ($node instanceof M\Expression\Operator\Unary) {
+            return $this->joined([$this->parts($node->operand)], $node->operator->value . '(', '', ')');
+        }
+        if ($node instanceof M\Expression\Not) {
+            return $this->joined([$this->parts($node->operand)], '(not(', '', '))');
+        }
+        if ($node instanceof M\Expression\NullTest) {
+            return $this->joined([$this->parts($node->operand)], $node->negated ? '(not(isnull(' : 'isnull(', '', $node->negated ? ')))' : ')');
+        }
+        if ($node instanceof M\Expression\Predicate\InList && count($node->elements) === 1) {
+            return $this->joined([$this->parts($node->operand), $this->parts($node->elements[0])], '(', $node->negated ? ' <> ' : ' = ', ')');
+        }
+        if ($node instanceof M\Variable\UserVariable) {
+            return [['(@`' . str_replace('`', '``', $node->name->value) . '`)', false]];
+        }
+        return null;
+    }
+
+    /**
+     * Joins expression parts without losing nested-query positions.
+     *
+     * @param list<list<array{string, bool}>> $parts Child expressions
+     * @return list<array{string, bool}>
+     */
+    public function joined(array $parts, string $before, string $separator, string $after): array
+    {
+        $result = [[$before, false]];
+        foreach ($parts as $index => $part) {
+            if ($index > 0) {
+                $result[] = [$separator, false];
+            }
+            array_push($result, ...$part);
+        }
+        $result[] = [$after, false];
+        return $result;
+    }
+
+    /**
+     * Writes a retained query with legacy identifier and punctuation spelling.
+     */
+    public function query(\SqlSemantics\Statement\Query $query): string
+    {
+        $out = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql5744));
+        $out->layout(null, $query);
+        $pieces = $out->pieces();
+        $result = [];
+        foreach ($pieces as $index => $piece) {
+            $text = $piece->text;
+            if ($piece->kind === PieceKind::Keyword) {
+                $text = strtolower($text);
+            } elseif ($piece->kind === PieceKind::Name && !str_starts_with($text, '`')) {
+                $text = ($pieces[$index + 1]->text ?? '') === '(' && (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->exists(\SqlSemantics\Contract\GrammarRelease::MySql5744, $text) ? strtolower($text) : '`' . str_replace('`', '``', $text) . '`';
+            } elseif ($text === '*' && ($pieces[$index - 1]->text ?? '') === 'SELECT') {
+                $text = '`*`';
+            }
+            if ($piece->text === '@') {
+                $text = '(@';
+            } elseif (($pieces[$index - 1]->text ?? '') === '@') {
+                $text .= ')';
+            }
+            $result[] = new Piece($piece->kind, $text, $piece->glued || ($pieces[$index - 1]->text ?? '') === ',');
+        }
+        return (new Lexical())->join($result);
+    }
+}

@@ -6,9 +6,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication\Log;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `BINLOG 'str'`: applies binary log events written in base64 by mysqlbinlog.
@@ -21,17 +20,22 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Holding the encoded events
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("binlog 'AAAA'")->statement->events->value // => 'AAAA'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("binlog 'AAAA'")->events->value // => 'AAAA'
  */
-final class BinlogEvent implements Statement
+final class BinlogEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $events The base64 text of the events
      */
-    public function __construct(public readonly Text $events)
+    public function __construct(public readonly Text $events, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        \SqlSemantics\Diagnostic\Check::input($events->radix === null, 'Encoded binary log events are quoted text.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

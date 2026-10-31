@@ -6,11 +6,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ODBC escape `{ OJ table_reference }` of the 8.0 and later grammars.
@@ -23,17 +22,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an ODBC escape
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM { OJ t LEFT JOIN u ON t.a = u.a }');
- *     $query->statement->from->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable // => true
+ *     $query->query->from->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable // => true
  */
-final class OdbcJoin implements Relation
+final class OdbcJoin implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Relation $relation The escaped reference
      */
-    public function __construct(public readonly Relation $relation)
+    public function __construct(public readonly Relation $relation, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        \SqlSemantics\Diagnostic\Check::input(!$relation instanceof TableList && !$relation instanceof self, 'An ODBC escape holds a table factor or join; a comma list or nested escape requires parentheses.');
     }
 
     /**

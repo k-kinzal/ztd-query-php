@@ -248,13 +248,14 @@ final class TableRule
         } else {
             throw ImplementationGap::production($form);
         }
-        $this->lowering->options->skip($form->node(1));
+        $keyword = $this->lowering->options->indexWord($form->node(1));
+        \SqlSemantics\Diagnostic\Check::invariant($keyword !== null, 'An index hint has a KEY or INDEX keyword.');
         $scope = $this->lowering->form($form->node(2));
         if (!array_key_exists($scope->signature, self::SCOPES)) {
             throw ImplementationGap::production($scope);
         }
 
-        return new IndexHint($action, self::SCOPES[$scope->signature], $this->indexes($form->node(4)));
+        return new IndexHint($action, self::SCOPES[$scope->signature], $this->indexes($form->node(4)), keyword: $keyword);
     }
 
     /**

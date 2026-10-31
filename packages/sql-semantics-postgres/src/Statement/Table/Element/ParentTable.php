@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A parent table named by INHERITS or PARTITION OF.
@@ -20,17 +19,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Resolving a parent table
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t () INHERITS (p)', []);
- *     $create->facts->relation($create->statement->definition->parents[0])->table::class // => 'SqlSemantics\Statement\Reference\Table\MissingTable'
+ *     $create->definition->parents[0]->relationInformation()->table::class // => 'SqlSemantics\Statement\Reference\Table\MissingTable'
  */
-final class ParentTable implements Node
+final class ParentTable implements Node, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The parent table
      */
-    public function __construct(public readonly QualifiedName $name)
+    public function __construct(public readonly QualifiedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 
     /**

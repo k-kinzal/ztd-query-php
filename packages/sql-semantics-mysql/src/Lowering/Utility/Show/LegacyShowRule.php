@@ -8,6 +8,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEvents;
@@ -20,7 +21,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarningCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 5.6 and 5.7: `show: SHOW show_param`.
@@ -119,8 +119,8 @@ final class LegacyShowRule
      */
     public function binaryLogs(Form $form): ShowBinaryLogs
     {
-        $this->lowering->utility->binaryLogsWord($form->node(0));
+        $master = $this->lowering->utility->binaryLogsWord($form->node(0));
 
-        return new ShowBinaryLogs();
+        return new ShowBinaryLogs(masterLogs: $master);
     }
 }

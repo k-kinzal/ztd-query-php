@@ -33,8 +33,9 @@ final class ResolvedColumnTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($query->inputRelation(), $resolution->relation);
         self::assertSame($table->declarations()[0]->columns[0], $resolution->declaration());
-        self::assertSame($query->facts->relation($query->singleNamedInput())->shape->slots[0], $resolution->slot);
+        self::assertSame($query->singleNamedInput()->relationInformation()->shape->slots[0], $resolution->slot);
         self::assertSame(0, $resolution->depth);
+        self::assertFalse($resolution->resultReference);
     }
 
     public function testDeclarationIsNullForASlotOfADerivedQuery(): void

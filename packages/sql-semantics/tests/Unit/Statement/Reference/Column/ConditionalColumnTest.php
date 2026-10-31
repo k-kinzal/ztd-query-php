@@ -30,7 +30,7 @@ final class ConditionalColumnTest extends TestCase
         self::assertSame([$query->inputRelation()], $resolution->relations);
         self::assertInstanceOf(UndeclaredRelation::class, $resolution->missing[0]);
         self::assertSame('the declaration of relation t', $resolution->missing[0]->describe());
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testCandidatesKeepAKnownSlotWhileANearerOccurrenceIsUnknown(): void

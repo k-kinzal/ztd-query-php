@@ -105,7 +105,7 @@ final class TriggerFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; UPDATE t SET a = :x; END', [$t])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; UPDATE t SET a = :x; END', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(CreateTrigger::class, $statement);
@@ -127,7 +127,7 @@ final class TriggerFactsTest extends TestCase
         $database = new PDO('sqlite::memory:');
         $database->exec($schema);
 
-        self::assertSame(['cannot UPDATE generated column "b"', 'cannot INSERT into generated column "b"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['cannot UPDATE generated column "b"', 'cannot INSERT into generated column "b"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
         self::assertNotFalse($database->exec($trigger));
         $this->expectException(PDOException::class);
         $this->expectExceptionMessage('cannot UPDATE generated column "b"');

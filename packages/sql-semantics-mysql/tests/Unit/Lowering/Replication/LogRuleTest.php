@@ -18,7 +18,14 @@ final class LogRuleTest extends TestCase
     public function testPurgeLowersBothForms(): void
     {
         self::assertSame("PURGE BINARY LOGS TO 'f'", (new Semantics(Dialect::MySql))->analyze("purge binary logs to 'f'")->toString());
-        self::assertSame('PURGE BINARY LOGS BEFORE NOW()', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('purge master logs before now()')->toString());
+        self::assertSame('PURGE MASTER LOGS BEFORE NOW()', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('purge master logs before now()')->toString());
+    }
+
+    public function testMomentRetainsTheRoleOfANonScalarCutoff(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('A standalone PURGE BINARY LOGS BEFORE requires a scalar log cutoff operand.');
+        (new Semantics(Dialect::MySql))->analyze('PURGE BINARY LOGS BEFORE ROW(1,2)');
     }
 
     public function testBinlogLowersTheEvents(): void

@@ -99,6 +99,38 @@ final class OperatorScannerTest extends TestCase
         self::assertNull($scanner->multiCharacter($modern, 'ab'));
     }
 
+    public function testComparisonKeepsRecognizedPunctuationAndOperandBoundaries(): void
+    {
+        $scanner = new OperatorScanner();
+        $keywords = new KeywordTable(['<=>' => 'EQUAL_SYM', '>=' => 'GE', '<<' => 'SHIFT_LEFT'], []);
+        $scan = static fn (string $sql): Scan => new Scan(new Cursor($sql), $keywords, new SqlMode(), MySqlVersion::resolve());
+
+        self::assertSame('<=>', $scanner->comparison($scan('<=>!1'))?->text);
+        self::assertSame('>=', $scanner->comparison($scan('>=!1'))?->text);
+        self::assertSame('<<', $scanner->comparison($scan('<<<1'))?->text);
+        self::assertNull($scanner->comparison($scan('= !1')));
+        self::assertNull($scanner->comparison($scan('!!1')));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerInvalidComparisons(): iterable
+    {
+        foreach (['<!', '><', '>!', '=<', '=>', '==', '=!', '<<>', '<<=', '<<!', '<>>', '<>=', '<>!', '<==', '<=!'] as $operator) {
+            yield $operator => [$operator];
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidComparisons')]
+    public function testComparisonRejectsAnInvalidCandidateAtItsFirstByte(string $operator): void
+    {
+        $scan = new Scan(new Cursor($operator . '1'), new KeywordTable(['<' => 'LT', '>' => 'GT', '=' => 'EQ', '<=' => 'LE', '<>' => 'NE', '<<' => 'SHIFT_LEFT'], []), new SqlMode(), MySqlVersion::resolve());
+        $this->expectException(LexicalException::class);
+
+        (new OperatorScanner())->comparison($scan);
+    }
+
     public function testSeparator(): void
     {
         $scanner = new OperatorScanner();

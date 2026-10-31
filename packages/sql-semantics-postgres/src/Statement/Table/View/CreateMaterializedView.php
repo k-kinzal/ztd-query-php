@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -36,9 +35,9 @@ use SqlSemantics\Statement\Statement;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE UNLOGGED MATERIALIZED VIEW IF NOT EXISTS m (n) USING heap WITH (fillfactor = 70) TABLESPACE s AS SELECT 1 WITH NO DATA');
  *     [$create->declarations()[0]->columns[0]->nullability, $create->toString()] // => [\SqlSemantics\Statement\Type\Nullability::NotNull, 'CREATE UNLOGGED MATERIALIZED VIEW IF NOT EXISTS m (n) USING heap WITH (fillfactor = 70) TABLESPACE s AS SELECT 1 WITH NO DATA']
  */
-final class CreateMaterializedView implements Statement
+final class CreateMaterializedView extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names
@@ -71,7 +70,12 @@ final class CreateMaterializedView implements Statement
         array $options = [],
         public readonly ?Name $tablespace = null,
         public readonly ?bool $withData = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'Column names are names.');
         $this->options = Check::listOf($options, Definition::class, 'Storage parameters are definitions.');
         Check::input($withData === null || !(new Trailing())->takesWith($query), 'A query ending in IS JSON without a uniqueness clause would take WITH DATA; group it.');

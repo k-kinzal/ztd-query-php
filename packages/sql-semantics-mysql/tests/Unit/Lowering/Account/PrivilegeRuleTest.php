@@ -5,24 +5,83 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Account;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Account\PrivilegeRule;
+use SqlSemantics\Statement\Fact\Warning;
 
 #[CoversClass(PrivilegeRule::class)]
 #[Medium]
 final class PrivilegeRuleTest extends TestCase
 {
+    public function testColumnKindRejectsAColumnListOnARoutine(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Column privileges apply only to tables.');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT(a) ON PROCEDURE d.p TO u');
+    }
+
+    public function testRolesRefusesAnOperandBeforePublishingTheStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('UPDATE is not a role');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT r, UPDATE TO u');
+    }
+
+    public function testGrantedRefusesARoleBeforePublishingTheStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('r@h is not a privilege');
+
+        (new Semantics(Dialect::MySql))->analyze('GRANT SELECT, r@h ON *.* TO u');
+    }
+
     public function testItemsLowersTheList(): void
     {
-        self::assertSame('GRANT SELECT, INSERT (a), CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert (a), create role, drop role on *.* to u')->toString());
+        self::assertSame('GRANT SELECT, INSERT, CREATE ROLE, DROP ROLE ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select, insert, create role, drop role on *.* to u')->toString());
+    }
+
+    public function testItemsRetainsAColumnListInAStoredRequest(): void
+    {
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() grant select, insert (a), create role, drop role on *.* to u');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        $statement = $stored->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges::class, $statement);
+        self::assertSame('ER_ILLEGAL_GRANT_FOR_TABLE', $statement->condition()?->error);
+        self::assertCount(4, $statement->privileges);
+        self::assertSame('GRANT SELECT, INSERT (a), CREATE ROLE, DROP ROLE ON *.* TO u', $statement->toString());
     }
 
     public function testItemLowersEveryStaticPrivilege(): void
     {
         self::assertSame('GRANT CREATE TABLESPACE, CREATE USER, EVENT, TRIGGER, SHOW VIEW ON *.* TO u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant create tablespace, create user, event, trigger, show view on *.* to u')->toString());
+    }
+
+    #[DataProvider('providerSuperReleases')]
+    public function testItemRetainsEachSuperDeprecationBeforePrivilegeValidation(string $release, int $count): void
+    {
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze('GRANT SUPER,SUPER ON *.* TO u');
+
+        self::assertSame(array_fill(0, $count, 'The SUPER privilege identifier is deprecated'), array_map(static fn (Warning $warning): string => $warning->message(), $operation->warnings()));
+    }
+
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function providerSuperReleases(): array
+    {
+        return [
+            '5.6' => ['mysql-5.6.51', 0],
+            '5.7' => ['mysql-5.7.44', 0],
+            '8.0' => ['mysql-8.0.44', 2],
+            '8.4' => ['mysql-8.4.7', 2],
+            '9.1' => ['mysql-9.1.0', 2],
+        ];
     }
 
     public function testNamedReadsANameByTheStatement(): void
@@ -33,12 +92,12 @@ final class PrivilegeRuleTest extends TestCase
 
     public function testPrivilegesLowersTheLegacyList(): void
     {
-        self::assertSame('GRANT ALL ON *.* TO u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant all privileges on *.* to u')->toString());
+        self::assertSame('GRANT ALL PRIVILEGES ON *.* TO u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant all privileges on *.* to u')->toString());
     }
 
     public function testWordsConfirmsTheOptionalWord(): void
     {
-        self::assertSame('REVOKE ALL ON *.* FROM u', (new Semantics(Dialect::MySql))->analyze('revoke all privileges on *.* from u')->toString());
+        self::assertSame('REVOKE ALL PRIVILEGES ON *.* FROM u', (new Semantics(Dialect::MySql))->analyze('revoke all privileges on *.* from u')->toString());
     }
 
     public function testColumnsLowersTheColumnList(): void

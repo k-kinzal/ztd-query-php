@@ -20,8 +20,12 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
+use SqlSemantics\Platform\MySql\Statement\Table\TableQuery;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\QueryFact;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Reports the problems of a table definition that the server rejects.
@@ -29,10 +33,12 @@ use SqlSemantics\Statement\Fact\QueryFact;
  * Rule: MYSQL-TABLE-PROBLEMS-001. Diagnostics: two columns of the declared
  * table with one name (ER_DUP_FIELDNAME); more than one primary key, counting
  * each column with a PRIMARY KEY attribute and each PRIMARY KEY element
- * (ER_MULTIPLE_PRI_KEY); from MySQL 5.7 on, a primary key column whose NULL
- * attribute is still in force (ER_PRIMARY_CANT_HAVE_NULL; 5.6 makes it NOT
+ * (ER_MULTIPLE_PRI_KEY); from MySQL 5.7 on, a primary key column with any explicit NULL
+ * attribute (ER_PRIMARY_CANT_HAVE_NULL; 5.6 makes it NOT
  * NULL silently); a key part or foreign key column that names no column of
  * the table, when its column list is complete (ER_KEY_COLUMN_DOES_NOT_EXITS);
+ * an index that names one column twice, reported at the second part that
+ * names it (ER_DUP_FIELDNAME);
  * a table without columns and without a query (ER_TABLE_MUST_HAVE_COLUMNS);
  * a column name that is not valid, among them the name a selected column
  * gets after its text (ER_WRONG_COLUMN_NAME, MYSQL-COLUMN-NAME-001); a
@@ -53,30 +59,166 @@ final class TableProblems
      */
     public function report(CreateTable $definition, Table $table, Derivation $derivation): void
     {
+        $this->collations($definition->elements, $derivation);
         $this->duplicates($table, $derivation);
         $this->names($table, $derivation);
-        $declaration = new TableDeclaration();
-        $primary = $declaration->primaryColumns($definition);
-        $keys = 0;
-        $columns = 0;
         foreach ($definition->elements as $element) {
-            if ($element instanceof ColumnDefinition) {
-                $columns++;
-                [$notNull, $explicit, $attribute] = (new ColumnFlags())->flags($element->specification);
-                $keys += $attribute ? 1 : 0;
-                $keyed = $attribute || $declaration->named($element->name->column, $primary, $derivation->context->columnNames);
-                if ($keyed && $explicit && !$notNull && $derivation->context->profile->grammar !== GrammarRelease::MySql5651) {
-                    $derivation->report(new NullablePrimaryKey($element->name->column));
+            $this->keyColumns($element instanceof IndexDefinition ? $element->parts : ($element instanceof ForeignKey ? $element->columns : []), $table, $derivation, $element instanceof IndexDefinition);
+        }
+    }
+
+    /**
+     * Answers the first problem of a written definition the server reports, in the order it
+     * checks a definition it executes: a column name written twice (ER_DUP_FIELDNAME), then from
+     * 5.7 on a primary key column with an explicit NULL attribute (ER_PRIMARY_CANT_HAVE_NULL), then a
+     * second PRIMARY KEY attribute (ER_MULTIPLE_PRI_KEY); on MySQL 5.6, 5.7 and from 9.0 on a
+     * definition without columns and without a query (ER_TABLE_MUST_HAVE_COLUMNS) before its
+     * keys, on 8.x after them; then each key element in order: on 5.x a key column no written
+     * column has (ER_KEY_COLUMN_DOES_NOT_EXITS) before a second primary key, on 8.0 and later
+     * the second primary key first. Key columns are checked against the written columns only
+     * when no query supplies columns (verified on 8.4.7, 5.7.44 and 5.6.51). Null when the
+     * definition has none of these problems; the problems of a query's columns and of a routine
+     * body are not written problems. A spatial key with more than one part (ER_TOO_MANY_KEY_PARTS)
+     * and a primary, full-text or spatial key with a functional part (ER_FUNCTIONAL_INDEX_PRIMARY_KEY
+     * and its kin) are refused before the parts of the key. Within a key the parts are checked in order: a part naming
+     * no written column (ER_KEY_COLUMN_DOES_NOT_EXITS), or a part naming a column an earlier part
+     * of the same key named (ER_DUP_FIELDNAME), whichever comes first.
+     *
+     * @param list<TableElement> $elements The written elements
+     * @param GrammarRelease $release The release whose order of checks applies
+     */
+    public function problem(array $elements, ?TableQuery $query, GrammarRelease $release): ?Diagnostic
+    {
+        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $emptyFirst = $legacy || in_array($release, [GrammarRelease::MySql901, GrammarRelease::MySql910], true);
+        $columns = [];
+        $primaryAttributes = 0;
+        $primaryParts = [];
+        foreach ($elements as $element) {
+            if ($element instanceof IndexDefinition && $element->kind === IndexKind::Primary) {
+                foreach ($element->parts as $part) {
+                    if ($part instanceof ColumnPart) {
+                        $primaryParts[] = $part->column;
+                    }
                 }
             }
-            $keys += $element instanceof IndexDefinition && $element->kind === IndexKind::Primary ? 1 : 0;
-            $this->keyColumns($element instanceof IndexDefinition ? $element->parts : ($element instanceof ForeignKey ? $element->columns : []), $table, $derivation);
         }
-        if ($keys > 1) {
-            $derivation->report(new MultiplePrimaryKeys());
+        $nullable = null;
+        foreach ($elements as $element) {
+            if (!$element instanceof ColumnDefinition) {
+                continue;
+            }
+            foreach ($columns as $column) {
+                if (mb_strtolower($column->value, 'UTF-8') === mb_strtolower($element->name->column->value, 'UTF-8')) {
+                    return new DuplicateColumn($element->name->column);
+                }
+            }
+            $columns[] = $element->name->column;
+            [, $explicit, $attribute] = (new ColumnFlags())->flags($element->specification);
+            $primaryAttributes += $attribute ? 1 : 0;
+            if ($explicit && ($attribute || $this->written($element->name->column, $primaryParts)) && $release !== GrammarRelease::MySql5651) {
+                $nullable ??= new NullablePrimaryKey($element->name->column);
+            }
         }
-        if ($columns === 0 && $definition->query === null) {
-            $derivation->report(new NoColumns());
+        if ($nullable !== null) {
+            return $nullable;
+        }
+        if ($primaryAttributes > 1) {
+            return new MultiplePrimaryKeys();
+        }
+        if ($emptyFirst && $columns === [] && $query === null) {
+            return new NoColumns();
+        }
+        $primaryKeys = $primaryAttributes;
+        foreach ($elements as $element) {
+            if (!$element instanceof IndexDefinition && !$element instanceof ForeignKey) {
+                continue;
+            }
+            $primary = $element instanceof IndexDefinition && $element->kind === IndexKind::Primary;
+            if (!$legacy && $primary && ++$primaryKeys > 1) {
+                return new MultiplePrimaryKeys();
+            }
+            if ($element instanceof IndexDefinition && $element->kind === IndexKind::Spatial && count($element->parts) > 1) {
+                return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\SpatialKeyArity($element->parts[0]);
+            }
+            if ($element instanceof IndexDefinition && in_array($element->kind, [IndexKind::Primary, IndexKind::FullText, IndexKind::Spatial], true)) {
+                foreach ($element->parts as $part) {
+                    if (!$part instanceof ColumnPart) {
+                        return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\FunctionalIndexKind($element->kind, $part);
+                    }
+                }
+            }
+            $seen = [];
+            foreach ($element instanceof IndexDefinition ? $element->parts : $element->columns as $part) {
+                if (!$part instanceof ColumnPart) {
+                    continue;
+                }
+                if ($query === null && !$this->written($part->column, $columns)) {
+                    return new UnknownKeyColumn($part->column);
+                }
+                if ($this->written($part->column, $seen)) {
+                    return new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn($part->column);
+                }
+                $seen[] = $part->column;
+            }
+            if ($legacy && $primary && ++$primaryKeys > 1) {
+                return new MultiplePrimaryKeys();
+            }
+        }
+        if (!$emptyFirst && $columns === [] && $query === null) {
+            return new NoColumns();
+        }
+
+        return null;
+    }
+
+    /**
+     * Tells whether a written column list holds a name, compared as MySQL compares column names.
+     *
+     * @param list<Name> $columns
+     */
+    public function written(Name $name, array $columns): bool
+    {
+        foreach ($columns as $column) {
+            if (mb_strtolower($column->value, 'UTF-8') === mb_strtolower($name->value, 'UTF-8')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Reports explicit column collations that the selected release does not provide.
+     *
+     * @param list<TableElement> $elements
+     */
+    public function collations(array $elements, Derivation $derivation): void
+    {
+        $names = [];
+        foreach ($elements as $element) {
+            if (!$element instanceof ColumnDefinition) {
+                continue;
+            }
+            $specification = $element->specification;
+            if ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn || ($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn)) {
+                foreach ($specification->attributes as $attribute) {
+                    if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute) {
+                        $names[] = $attribute->collation;
+                    }
+                }
+            }
+            if (($specification instanceof GeneratedColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn)) {
+                $names[] = $specification->collation;
+            }
+        }
+        foreach ($names as $collation) {
+            $name = $collation?->name;
+            if ($name !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($name->value)?->availableIn($derivation->context->profile->grammar) ?? false)) {
+                $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($name->value);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $collation);
+            }
         }
     }
 
@@ -119,7 +261,7 @@ final class TableProblems
         $comparison = $derivation->context->columnNames;
         foreach ((new TableDeclaration())->settled($output) as $field) {
             foreach ($definition->elements as $element) {
-                if ($field->name !== null && $element instanceof ColumnDefinition && $element->specification instanceof GeneratedColumn && $comparison->equal($element->name->column->value, $field->name->value)) {
+                if ($field->name !== null && $element instanceof ColumnDefinition && ($element->specification instanceof GeneratedColumn || $element->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn) && $comparison->equal($element->name->column->value, $field->name->value)) {
                     $derivation->report(new GeneratedColumnWrite($field->name, $definition->name->name));
                 }
             }
@@ -127,19 +269,26 @@ final class TableProblems
     }
 
     /**
-     * Reports the key parts that name no column of a complete table.
+     * Reports the key parts that name no column of a complete table, and the first column an index names twice.
      *
      * @param list<object> $parts The key parts
+     * @param bool $index Whether the parts are those of an index, which names each column once
      */
-    public function keyColumns(array $parts, Table $table, Derivation $derivation): void
+    public function keyColumns(array $parts, Table $table, Derivation $derivation, bool $index = false): void
     {
-        if (!$table->complete) {
-            return;
-        }
+        $seen = [];
         foreach ($parts as $part) {
-            if ($part instanceof ColumnPart && $table->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
-                $derivation->report(new UnknownKeyColumn($part->column));
+            if (!$part instanceof ColumnPart) {
+                continue;
             }
+            if ($table->complete && $table->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
+                $derivation->report(new UnknownKeyColumn($part->column));
+            } elseif ($index && (new TableDeclaration())->named($part->column, $seen, $derivation->context->columnNames)) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\DuplicateKeyColumn($part->column));
+
+                return;
+            }
+            $seen[] = $part->column;
         }
     }
 }

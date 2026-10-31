@@ -18,9 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
 use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -37,8 +36,8 @@ final class ArithmeticTest extends TestCase
         $sum = $derivation->scalar(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('2.5')), $derivation->environment());
         $quotient = $derivation->scalar(new Arithmetic(ArithmeticOperator::IntegerDivide, new NumberLiteral('1'), new NumberLiteral('2')), $derivation->environment());
 
-        self::assertEquals([new Known(new Decimal()), Nullability::NotNull], [$sum->type, $sum->nullability]);
-        self::assertEquals([new Known(new Integral(IntegralKind::BigInt)), Nullability::Nullable], [$quotient->type, $quotient->nullability]);
+        self::assertEquals([new Known(Domain::decimal(3, 1)), Nullability::NotNull], [$sum->type, $sum->nullability]);
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 2)), Nullability::Nullable], [$quotient->type, $quotient->nullability]);
     }
 
     public function testRenderWritesDivAsAKeywordAndKeepsTheLeftAssociation(): void
@@ -70,4 +69,38 @@ final class ArithmeticTest extends TestCase
 
         new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new Arithmetic(ArithmeticOperator::Multiply, new IntervalAddition(new Interval(new NumberLiteral('2'), IntervalUnit::Day), new TruthTest(new NumberLiteral('3'), Truth::True)), new NumberLiteral('4')));
     }
+
+    public function testDeriveScalarCountsTheSignOfAnIntegerLiteralOperandIn57(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $sum = $derivation->scalar(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1')), $derivation->environment());
+        $product = $derivation->scalar(new Arithmetic(ArithmeticOperator::Multiply, new NumberLiteral('12'), new NumberLiteral('34')), $derivation->environment());
+        $quotient = $derivation->scalar(new Arithmetic(ArithmeticOperator::IntegerDivide, new NumberLiteral('1'), new NumberLiteral('2')), $derivation->environment());
+
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 3)), new Known(Domain::integer(Field::LongLong, 5)), new Known(Domain::integer(Field::LongLong, 1))], [$sum->type, $product->type, $quotient->type]);
+    }
+    public function testInitializeDivisionPrecisionRetainsTheConstructionSetting(): void
+    {
+        $division = new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('6'));
+        $division->initializeDivisionPrecision(8);
+        self::assertSame(8, $division->divisionPrecision());
+        $this->expectExceptionMessage('Division precision is resolved once.');
+        $division->initializeDivisionPrecision(4);
+    }
+
+    public function testDivisionPrecisionRequiresResolvedInformation(): void
+    {
+        $division = new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('6'));
+        $this->expectExceptionMessage('A division must have calculation precision before execution.');
+        $division->divisionPrecision();
+    }
+
+    public function testPreparedTypeKeepsTheTypeOfOrdinaryArithmetic(): void
+    {
+        $expression = new Arithmetic(ArithmeticOperator::Divide, new NumberLiteral('1'), new NumberLiteral('2'));
+        $type = new Known(Domain::decimal(5, 4));
+        self::assertSame($type, $expression->preparedType($type, [Domain::integer(), Domain::integer()], \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
 }

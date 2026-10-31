@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * CLOSE: closes an open cursor.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the cursor a CLOSE names
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; CLOSE c; END');
- *     [$create->statement->body->statements[0]->cursor->value, $create->facts->diagnostics] // => ['c', []]
+ *     [$create->body->statements[0]->cursor->value, $create->diagnostics()] // => ['c', []]
  */
 final class CloseCursor implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $cursor The cursor name
      */
-    public function __construct(public readonly Name $cursor)
+    public function __construct(public readonly Name $cursor, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

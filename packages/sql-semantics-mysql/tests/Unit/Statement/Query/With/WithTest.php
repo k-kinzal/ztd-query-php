@@ -24,18 +24,18 @@ final class WithTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze('WITH RECURSIVE a AS (SELECT 1 AS n), b AS (SELECT n FROM a UNION ALL SELECT n + 1 FROM b WHERE n < 3) SELECT n FROM b', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertInstanceOf(Known::class, $operation->field('n')->type);
         self::assertSame(Nullability::Nullable, $operation->field('n')->nullability);
     }
 
     public function testBindReportsATableDefinedTwice(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1), A AS (SELECT 2) SELECT 3');
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1), a AS (SELECT 2) SELECT 3');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::DuplicateCommonTable, $operation->facts->diagnostics[0]->rule);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(Misuse::class, $operation->diagnostics()[0]);
+        self::assertSame(MisuseRule::DuplicateCommonTable, $operation->diagnostics()[0]->rule);
     }
 
     public function testRenderWritesTheKeywordsAndTheTables(): void

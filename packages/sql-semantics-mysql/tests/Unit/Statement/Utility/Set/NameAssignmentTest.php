@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -22,20 +23,33 @@ final class NameAssignmentTest extends TestCase
     public function testDeriveItemLeavesAnUnscopedWordToTheProgram(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET x = y, GLOBAL z = w');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
-        self::assertInstanceOf(NameAssignment::class, $set->statement->items[0]);
-        self::assertInstanceOf(NameAssignment::class, $set->statement->items[1]);
-        self::assertInstanceOf(BareName::class, $set->statement->items[0]->value);
-        self::assertInstanceOf(BareName::class, $set->statement->items[1]->value);
-        self::assertInstanceOf(Dependent::class, $set->facts->scalar($set->statement->items[0]->value)->type);
-        self::assertInstanceOf(Known::class, $set->facts->scalar($set->statement->items[1]->value)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set);
+        self::assertInstanceOf(NameAssignment::class, $set->items[0]);
+        self::assertInstanceOf(NameAssignment::class, $set->items[1]);
+        self::assertInstanceOf(BareName::class, $set->items[0]->value);
+        self::assertInstanceOf(BareName::class, $set->items[1]->value);
+        self::assertInstanceOf(Dependent::class, $set->items[0]->value->scalarInformation()->type);
+        self::assertInstanceOf(Known::class, $set->items[1]->value->scalarInformation()->type);
     }
 
     public function testDeriveItemReportsARowAsTheValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SET SESSION x = (1, 2)');
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('Operand should contain 1 column(s), not 2.');
+        (new Semantics(Dialect::MySql))->analyze('SET SESSION sort_buffer_size = (1, 2)');
+    }
 
-        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    public function testDeriveItemIsNeverReachedForAnUnknownLegacyTarget(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET unknown_target = @@unknown_value');
+            self::fail('5.6 resolves the target before its value.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(UnknownSystemVariable::class, $failure->problem);
+            self::assertSame('unknown_target', $failure->problem->name);
+            self::assertTrue($failure->problem->assigned);
+            self::assertFalse($failure->problem->structured);
+        }
     }
 
     public function testRenderWritesTheScopeAndTheQualifier(): void
@@ -47,5 +61,18 @@ final class NameAssignmentTest extends TestCase
     {
         $this->expectExceptionMessage('A bare name value is known to be text exactly when a scope keyword names a system variable.');
         new NameAssignment(new Name('x'), new BareName(new Name('y')));
+    }
+
+    public function testDeriveItemReportsAQualifiedNameThatIsNoKeyCacheVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $unknown = $semantics->analyze('SET SESSION a.b = 1')->diagnostics();
+
+        self::assertCount(1, $unknown);
+        self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
+        self::assertSame('a.b', $unknown[0]->name);
+        self::assertTrue($unknown[0]->assigned);
+        self::assertTrue($unknown[0]->structured);
+        self::assertSame([], $semantics->analyze('SET GLOBAL hot.key_buffer_size = 0')->diagnostics());
     }
 }

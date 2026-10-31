@@ -8,14 +8,14 @@ use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A name that resolves to an output field of the same query by its alias.
+ * A name that resolves to an output field of a query by its alias.
  *
  * The reference stays a reference: the aliased expression is not copied to the use position.
  *
  * @visibility public
  * @example Resolving an ORDER BY name to an output alias
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS x ORDER BY x');
- *     $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution->field === $query->field('x') // => true
+ *     $query->orderBy[0]->expression->scalarInformation()->resolution->field === $query->field('x') // => true
  */
 final class AliasTarget implements Resolution
 {
@@ -23,8 +23,9 @@ final class AliasTarget implements Resolution
 
     /**
      * @param Field $field The output field the alias names
+     * @param int $depth The number of enclosing query scopes between the use and the field
      */
-    public function __construct(public readonly Field $field)
+    public function __construct(public readonly Field $field, public readonly int $depth = 0)
     {
     }
 }

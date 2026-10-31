@@ -9,8 +9,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A query written in parentheses where the parentheses group it.
@@ -28,25 +26,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a parenthesized operand
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('(SELECT a FROM t ORDER BY a LIMIT 1) UNION SELECT b FROM u');
- *     $query->statement->left->query->limit !== null // => true
+ *     $query->query->left->query->limit !== null // => true
  */
-final class ParenthesizedQuery implements Statement, Query
+final class ParenthesizedQuery implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The query inside the parentheses
      */
-    public function __construct(public readonly Query $query)
+    public function __construct(public readonly Query $query, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-    }
-
-    /**
-     * Derives the query as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

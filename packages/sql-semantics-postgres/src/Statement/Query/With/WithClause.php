@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\CommonTableFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * WITH [RECURSIVE] and its common table expressions.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WithClause implements CommonTables
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<CommonTableExpression> The common table expressions in written order
@@ -38,7 +37,7 @@ final class WithClause implements CommonTables
      * @param list<CommonTableExpression> $tables The common table expressions in written order; at least one
      * @param bool $recursive Whether RECURSIVE is written
      */
-    public function __construct(array $tables, public readonly bool $recursive = false)
+    public function __construct(array $tables, public readonly bool $recursive = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->tables = Check::listOf($tables, CommonTableExpression::class, 'A WITH clause holds at least one common table expression.', 1);
     }

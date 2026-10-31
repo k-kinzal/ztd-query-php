@@ -23,7 +23,7 @@ final class PreparedParametersTest extends TestCase
 {
     public function testInfersUndeclaredIsTrue(): void
     {
-        $prepare = (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer) AS SELECT $1')->statement;
+        $prepare = (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer) AS SELECT $1');
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertTrue($prepare->parameters?->infersUndeclared());
     }
@@ -31,10 +31,10 @@ final class PreparedParametersTest extends TestCase
     public function testDeriveRelationAnswersOneUnnamedSlotPerType(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer, pg_catalog.text) AS SELECT 1');
-        $prepare = $operation->statement;
+        $prepare = $operation;
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertInstanceOf(PreparedParameters::class, $prepare->parameters);
-        $slots = $operation->facts->relation($prepare->parameters)->shape->slots;
+        $slots = $prepare->parameters->relationInformation()->shape->slots;
         self::assertSame([null, null], [$slots[0]->name, $slots[1]->name]);
         self::assertInstanceOf(Known::class, $slots[1]->type);
         self::assertSame(Builtin::Text, $slots[1]->type->descriptor);
@@ -44,9 +44,9 @@ final class PreparedParametersTest extends TestCase
     public function testDeriveRelationTypesTheParametersOfThePreparedStatement(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('PREPARE p (integer) AS SELECT $1, $2');
-        $prepare = $operation->statement;
+        $prepare = $operation;
         self::assertInstanceOf(Prepare::class, $prepare);
-        $projection = $operation->facts->query($prepare->statement)->projection;
+        $projection = $prepare->statement->queryInformation()->projection;
         self::assertInstanceOf(Field::class, $projection[0]);
         self::assertInstanceOf(Field::class, $projection[1]);
         self::assertInstanceOf(Known::class, $projection[0]->type);

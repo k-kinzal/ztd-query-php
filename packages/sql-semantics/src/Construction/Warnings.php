@@ -1,0 +1,218 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Construction;
+
+use Closure;
+use SqlSemantics\Statement\Fact\Notice;
+use SqlSemantics\Statement\Fact\Warning;
+use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Source\SourceMap;
+use SqlSemantics\Statement\Source\Span;
+
+/**
+ * Collects derivation warnings with the input boundaries that order parsing notices.
+ *
+ * A statement can order its own located warnings after deriving dependencies out of input
+ * order. Warnings outside that statement and warnings without a location keep their places.
+ *
+ * @visibility SqlSemantics
+ */
+final class Warnings
+{
+    /**
+     * @var list<array{Warning, int|null, Node|null, Node|null, bool}> Warnings, input boundaries, enclosing instructions, subjects and completion positions
+     */
+    private array $entries = [];
+
+    /**
+     * @var list<Closure(Warning): bool> Filters of the current derivation scopes
+     */
+    private array $filters = [];
+
+    /**
+     * @param SourceMap $sources The original input locations and spelling notices
+     */
+    public function __construct(public readonly SourceMap $sources)
+    {
+    }
+
+    /**
+     * Records a warning before or after its occurrence, when a location is available.
+     */
+    public function append(Warning $warning, ?Node $at, bool $after = true, ?Node $instruction = null): void
+    {
+        foreach ($this->filters as $keep) {
+            if (!$keep($warning)) {
+                return;
+            }
+        }
+        $origin = $at === null ? null : $this->sources->of($at);
+        $this->entries[] = [$warning, $origin === null ? null : $origin->offset + ($after ? $origin->length : 0), $instruction, $at, $after];
+    }
+
+    /**
+     * Records only the warnings belonging to a selected semantic role.
+     * Input spelling notices are independent and remain unchanged.
+     *
+     * @template T
+     * @param Closure(): T $derive The nested derivation
+     * @param Closure(Warning): bool $keep The warnings that belong to this role
+     * @return T
+     */
+    public function filtered(Closure $derive, Closure $keep): mixed
+    {
+        $this->filters[] = $keep;
+        try {
+            return $derive();
+        } finally {
+            array_pop($this->filters);
+        }
+    }
+
+    /**
+     * Keeps instruction ownership independent of input locations and warning order.
+     *
+     * @return list<array{Warning, Node}>
+     */
+    public function instructions(): array
+    {
+        $instructions = [];
+        foreach ($this->entries as [$warning, , $instruction]) {
+            if ($instruction !== null) {
+                $instructions[] = [$warning, $instruction];
+            }
+        }
+
+        return $instructions;
+    }
+
+    /**
+     * Retains semantic subjects independently of source locations.
+     *
+     * @return list<array{Warning, Node}>
+     */
+    public function subjects(): array
+    {
+        $subjects = [];
+        foreach ($this->entries as [$warning, , , $subject]) {
+            if ($subject !== null) {
+                $subjects[] = [$warning, $subject];
+            }
+        }
+        return $subjects;
+    }
+
+    /**
+     * Preserves each warning's subject, stored instruction and input boundary.
+     *
+     * @return list<Notice>
+     */
+    public function notices(): array
+    {
+        $located = [];
+        foreach ($this->sources->notices as $notice) {
+            $located[spl_object_id($notice->warning)] = new Notice($notice->warning, $notice->subject, inputSource: new Span($notice->offset, 0), fromInput: true);
+        }
+        foreach ($this->entries as [$warning, $offset, $instruction, $subject]) {
+            $located[spl_object_id($warning)] = new Notice($warning, $subject, $instruction, $offset === null ? null : new Span($offset, 0));
+        }
+        return array_map(static fn (Warning $warning): Notice => $located[spl_object_id($warning)], $this->all());
+    }
+
+    /**
+     * Orders the located warnings within a statement while preserving all other positions.
+     * A directly constructed statement uses an explicit semantic completion order,
+     * when supplied; otherwise its derivation order is retained.
+     *
+     * @param list<Node> $completed Semantic completion order, independent of SQL source
+     */
+    public function order(Node $scope, array $completed = []): void
+    {
+        $origin = $this->sources->of($scope);
+        if ($origin === null) {
+            $this->semantic($completed);
+            return;
+        }
+        $indices = [];
+        $ordered = [];
+        foreach ($this->entries as $index => $entry) {
+            $offset = $entry[1];
+            if ($offset !== null && $offset >= $origin->offset && $offset <= $origin->offset + $origin->length) {
+                $indices[] = $index;
+                $ordered[] = $entry;
+            }
+        }
+        usort($ordered, static fn (array $left, array $right): int => $left[1] <=> $right[1]);
+        foreach ($indices as $position => $index) {
+            $this->entries[$index] = $ordered[$position];
+        }
+    }
+
+    /**
+     * Orders only notices whose subjects belong to the given semantic completions.
+     * A prefix notice precedes the completed operands owned by its subject.
+     * Warnings outside this scope retain their original positions.
+     *
+     * @param list<Node> $completed Ordered occurrences from the dialect's dependency rules
+     */
+    public function semantic(array $completed): void
+    {
+        $ranks = [];
+        $beginnings = [];
+        foreach ($completed as $rank => $node) {
+            $id = spl_object_id($node);
+            $ranks[$id] = $rank;
+            $beginning = $rank;
+            foreach (get_object_vars($node) as $value) {
+                foreach (is_array($value) ? $value : [$value] as $child) {
+                    if ($child instanceof Node) {
+                        $beginning = min($beginning, $beginnings[spl_object_id($child)] ?? $rank);
+                    }
+                }
+            }
+            $beginnings[$id] = $beginning;
+        }
+        $indices = [];
+        $ordered = [];
+        foreach ($this->entries as $index => $entry) {
+            $subject = $entry[3];
+            if ($subject === null) {
+                continue;
+            }
+            $rank = $ranks[spl_object_id($subject)] ?? null;
+            if ($rank !== null) {
+                $indices[] = $index;
+                $ordered[] = [$entry, $entry[4] ? [$rank, 1, 0] : [$beginnings[spl_object_id($subject)], 0, -$rank]];
+            }
+        }
+        usort($ordered, static fn (array $left, array $right): int => $left[1] <=> $right[1]);
+        foreach ($indices as $position => $index) {
+            $this->entries[$index] = $ordered[$position][0];
+        }
+    }
+
+    /**
+     * Merges original spelling notices at their input boundaries, when any were recorded.
+     * Without spelling notices, the recorded derivation or scoped ordering is retained.
+     *
+     * @return list<Warning>
+     */
+    public function all(): array
+    {
+        if ($this->sources->notices === []) {
+            return array_column($this->entries, 0);
+        }
+        $ordered = [];
+        foreach ($this->sources->notices as $notice) {
+            $ordered[] = [$notice->warning, $notice->offset];
+        }
+        foreach ($this->entries as [$warning, $offset]) {
+            $ordered[] = [$warning, $offset ?? PHP_INT_MAX];
+        }
+        usort($ordered, static fn (array $left, array $right): int => $left[1] <=> $right[1]);
+
+        return array_column($ordered, 0);
+    }
+}

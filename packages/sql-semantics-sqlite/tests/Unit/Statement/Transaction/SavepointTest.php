@@ -20,15 +20,15 @@ final class SavepointTest extends TestCase
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SAVEPOINT s1', []);
 
         self::assertNull($operation->shape());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheDecodedName(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("savepoint 'before import'");
 
-        self::assertInstanceOf(Savepoint::class, $operation->statement);
-        self::assertSame('before import', $operation->statement->name->value);
+        self::assertInstanceOf(Savepoint::class, $operation);
+        self::assertSame('before import', $operation->name->value);
         self::assertSame('SAVEPOINT `before import`', $operation->toString());
     }
 }

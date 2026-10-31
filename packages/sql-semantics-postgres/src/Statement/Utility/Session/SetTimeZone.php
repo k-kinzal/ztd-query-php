@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -33,23 +32,26 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a time zone set by an interval
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE");
- *     [$operation->statement->zone->value->value, $operation->toString()] // => ['-08:00', "SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE"]
+ *     [$operation->zone->value->value, $operation->toString()] // => ['-08:00', "SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE"]
  * @example Refusing a constant of another type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('date')]))),
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('1'),
  *     )) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class SetTimeZone implements Statement
+final class SetTimeZone extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param StringConstant|Name|SignedNumber|TypedLiteral|ZoneKeyword $zone The zone: a name, an offset in hours, an interval constant, or a keyword
      * @param bool $local Whether the change lasts for the current transaction only
      */
-    public function __construct(public readonly StringConstant|Name|SignedNumber|TypedLiteral|ZoneKeyword $zone, public readonly bool $local = false)
+    public function __construct(public readonly StringConstant|Name|SignedNumber|TypedLiteral|ZoneKeyword $zone, public readonly bool $local = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(!$zone instanceof TypedLiteral || $zone->type->designation instanceof IntervalDesignation, 'The constant of SET TIME ZONE is an interval.');
     }
 

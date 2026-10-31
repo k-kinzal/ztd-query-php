@@ -54,7 +54,7 @@ final class CallRules
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function call(Node $call): Scalar
+    public function call(Node $call): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $form = $this->lowering->form($call);
         if (in_array($form->signature, ['function_call_conflict: geometry_function', 'set_function_specification: sum_expr', 'set_function_specification: grouping_operation'], true)) {
@@ -76,7 +76,7 @@ final class CallRules
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function function(Form $form): Scalar
+    public function function(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $functions = new FunctionRule($this->lowering);
         if ($functions->claims($form->signature)) {
@@ -102,9 +102,10 @@ final class CallRules
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function currentTimestamp(Node $now): Scalar
+    public function currentTimestamp(Node $now): \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp
     {
-        return (new TemporalRule($this->lowering))->currentTimestamp($now);
+        $call = (new TemporalRule($this->lowering))->currentTimestamp($now);
+        return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Value\CurrentTimestamp($call->precision, $call instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall ? $call->parentheses : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, alias: $call->alias);
     }
 
     /**

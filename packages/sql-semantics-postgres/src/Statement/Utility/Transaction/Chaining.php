@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * @visibility public
  * @example Reading the chaining of a COMMIT
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COMMIT AND NO CHAIN');
- *     $operation->statement->chaining // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::NoChain
+ *     $operation->chaining // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Chaining::NoChain
  */
 enum Chaining: string
 {

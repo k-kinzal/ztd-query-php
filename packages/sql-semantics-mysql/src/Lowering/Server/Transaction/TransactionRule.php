@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server\Transaction;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
@@ -18,7 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\StartTransaction;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\TransactionCharacteristic;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
+use SqlSemantics\Statement\Source\Span;
 
 /**
  * Lowers the transaction statements: BEGIN, START TRANSACTION, COMMIT, ROLLBACK and the savepoint statements.
@@ -62,7 +64,7 @@ final class TransactionRule
     /**
      * The optional words that hold no operand.
      */
-    private const WORDS = ['opt_work:' => true, 'opt_work: WORK_SYM' => true, 'opt_savepoint:' => true, 'opt_savepoint: SAVEPOINT_SYM' => true];
+    private const WORDS = ['opt_work:' => false, 'opt_work: WORK_SYM' => true, 'opt_savepoint:' => false, 'opt_savepoint: SAVEPOINT_SYM' => true];
 
     /**
      * @param Lowering $lowering The lowering this rule belongs to
@@ -79,16 +81,18 @@ final class TransactionRule
      */
     public function statement(Form $form): Statement
     {
+        $range = (new SourceRanges())->span($form->node);
+        $source = $range === null ? null : new Span($range[0], $range[1] - $range[0]);
         $names = $this->lowering->names;
 
         return match ($form->signature) {
-            'begin: BEGIN_SYM opt_work', 'begin_stmt: BEGIN_SYM opt_work' => $this->begin($form->node(1)),
-            'start: START_SYM TRANSACTION_SYM opt_start_transaction_option_list' => $this->start($form->node(2)),
-            'commit: COMMIT_SYM opt_work opt_chain opt_release' => $this->completion($form, true),
-            'rollback: ROLLBACK_SYM opt_work opt_chain opt_release' => $this->completion($form, false),
-            'rollback: ROLLBACK_SYM opt_work TO_SYM opt_savepoint ident' => $this->rollbackTo($form),
-            'savepoint: SAVEPOINT_SYM ident' => new Savepoint($names->identifier($form->node(1))),
-            'release: RELEASE_SYM SAVEPOINT_SYM ident' => new ReleaseSavepoint($names->identifier($form->node(2))),
+            'begin: BEGIN_SYM opt_work', 'begin_stmt: BEGIN_SYM opt_work' => $this->begin($form->node(1), $source),
+            'start: START_SYM TRANSACTION_SYM opt_start_transaction_option_list' => $this->start($form->node(2), $source),
+            'commit: COMMIT_SYM opt_work opt_chain opt_release' => $this->completion($form, true, $source),
+            'rollback: ROLLBACK_SYM opt_work opt_chain opt_release' => $this->completion($form, false, $source),
+            'rollback: ROLLBACK_SYM opt_work TO_SYM opt_savepoint ident' => $this->rollbackTo($form, $source),
+            'savepoint: SAVEPOINT_SYM ident' => new Savepoint($names->identifier($form->node(1)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
+            'release: RELEASE_SYM SAVEPOINT_SYM ident' => new ReleaseSavepoint($names->identifier($form->node(2)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -98,11 +102,9 @@ final class TransactionRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function begin(Node $work): Begin
+    public function begin(Node $work, ?Span $source = null): Begin
     {
-        $this->word($work);
-
-        return new Begin();
+        return new Begin($this->word($work), profile: $this->lowering->profile, client: $this->lowering->client, source: $source);
     }
 
     /**
@@ -111,7 +113,7 @@ final class TransactionRule
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When READ ONLY and READ WRITE are both written
      */
-    public function start(Node $options): StartTransaction
+    public function start(Node $options, ?Span $source = null): StartTransaction
     {
         $form = $this->lowering->form($options);
         $characteristics = [];
@@ -131,7 +133,7 @@ final class TransactionRule
             throw new AnalysisException('Syntax error: READ ONLY and READ WRITE exclude each other in START TRANSACTION.');
         }
 
-        return new StartTransaction($characteristics);
+        return new StartTransaction($characteristics, profile: $this->lowering->profile, client: $this->lowering->client, source: $source);
     }
 
     /**
@@ -140,16 +142,16 @@ final class TransactionRule
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When AND CHAIN and RELEASE are both written
      */
-    public function completion(Form $form, bool $commit): Commit|Rollback
+    public function completion(Form $form, bool $commit, ?Span $source = null): Commit|Rollback
     {
-        $this->word($form->node(1));
+        $work = $this->word($form->node(1));
         $chain = $this->choice($form->node(2));
         $release = $this->choice($form->node(3));
         if ($chain === true && $release === true) {
             throw new AnalysisException('Syntax error: AND CHAIN and RELEASE exclude each other.');
         }
 
-        return $commit ? new Commit($chain, $release) : new Rollback($chain, $release);
+        return $commit ? new Commit($chain, $release, $work, profile: $this->lowering->profile, client: $this->lowering->client, source: $source) : new Rollback($chain, $release, $work, profile: $this->lowering->profile, client: $this->lowering->client, source: $source);
     }
 
     /**
@@ -157,12 +159,9 @@ final class TransactionRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function rollbackTo(Form $form): RollbackToSavepoint
+    public function rollbackTo(Form $form, ?Span $source = null): RollbackToSavepoint
     {
-        $this->word($form->node(1));
-        $this->word($form->node(3));
-
-        return new RollbackToSavepoint($this->lowering->names->identifier($form->node(4)));
+        return new RollbackToSavepoint($this->lowering->names->identifier($form->node(4)), $this->word($form->node(1)), $this->word($form->node(3)), profile: $this->lowering->profile, client: $this->lowering->client, source: $source);
     }
 
     /**
@@ -181,15 +180,16 @@ final class TransactionRule
     }
 
     /**
-     * Confirms an optional word that holds no operand: a node of `opt_work` or `opt_savepoint`.
+     * Retains the presence of an optional word: a node of `opt_work` or `opt_savepoint`.
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function word(Node $word): void
+    public function word(Node $word): bool
     {
         $form = $this->lowering->form($word);
-        if (!isset(self::WORDS[$form->signature])) {
+        if (!array_key_exists($form->signature, self::WORDS)) {
             throw ImplementationGap::production($form);
         }
+        return self::WORDS[$form->signature];
     }
 }

@@ -17,6 +17,6 @@ final class SubpartitionDefinitionTest extends TestCase
 {
     public function testRenderWritesTheNameAndTheOptions(): void
     {
-        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p (SUBPARTITION s0 COMMENT = 'c', SUBPARTITION s1))", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p (SUBPARTITION s0 COMMENT 'c', SUBPARTITION s1))")->toString());
+        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p (SUBPARTITION s0 COMMENT 'c', SUBPARTITION s1))", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p (SUBPARTITION s0 COMMENT 'c', SUBPARTITION s1))")->toString());
     }
 }

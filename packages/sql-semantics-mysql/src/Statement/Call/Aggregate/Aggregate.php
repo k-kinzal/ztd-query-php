@@ -9,15 +9,22 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\AggregateResults;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * A call of an aggregate function with one argument, COUNT(*), or COUNT(DISTINCT ...) with several arguments.
@@ -36,17 +43,24 @@ use SqlSemantics\Statement\Snapshot;
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['BIGINT', \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing several arguments without DISTINCT
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum, [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a fixed frame in an ordinary scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate(\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Sum, [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')], over: $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Aggregate implements SetFunction
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The arguments in order; none for COUNT(*)
      */
     public readonly array $arguments;
 
+    private ?int $precisionIncrement = null;
+
     /**
+     * @param int|null $divisionPrecision The resolved increment, required with a bound average
      * @param AggregateFunction $function The function
      * @param list<Scalar> $arguments The arguments in order; none for COUNT(*)
      * @param bool $distinct Whether DISTINCT is written
@@ -59,13 +73,28 @@ final class Aggregate implements SetFunction
         public readonly bool $distinct = false,
         public readonly bool $all = false,
         public readonly Name|WindowSpecification|null $over = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?AggregateAlias $alias = null,
+        ?int $divisionPrecision = null,
     ) {
+        if ($divisionPrecision !== null) {
+            $this->initializeDivisionPrecision($divisionPrecision);
+        }
+        Check::input($alias === null || $alias->function() === $function, 'An aggregate synonym identifies its aggregate operation.');
+        if ($scalarInformation !== null) {
+            Check::input($function !== AggregateFunction::Average || $divisionPrecision !== null, 'A bound average supplies its calculation precision.');
+            $this->initializeScalarInformation($scalarInformation);
+        }
+        Check::input($over === null || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($function, $distinct) === null, 'An ordinary aggregate uses a supported window quantifier.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Aggregate arguments are expressions.');
         $star = $arguments === [];
         Check::input(!$star || ($function === AggregateFunction::Count && !$distinct), 'Only COUNT takes the star, and not with DISTINCT.');
         Check::input(count($arguments) <= 1 || ($function === AggregateFunction::Count && $distinct && !$all), 'Only COUNT(DISTINCT ...) takes several arguments.');
         Check::input(!$distinct || $function->distinctive(), 'The grammar does not accept DISTINCT for ' . $function->value . '.');
         Check::input(!($distinct && $all && $function === AggregateFunction::Count), 'COUNT(DISTINCT ...) takes no ALL.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -85,18 +114,62 @@ final class Aggregate implements SetFunction
     }
 
     /**
+     * Answers the window written after OVER, or null when the call aggregates its query block.
+     */
+    public function over(): Name|WindowSpecification|null
+    {
+        return $this->over;
+    }
+
+    /**
      * Derives the arguments, the window and the result.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
+        $environment = $this->aggregates() ? (new HavingScope())->arguments($environment) : $environment;
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        (new AggregateOwnership())->register($this, $derivation, $environment);
 
-        return (new AggregateResults())->aggregate($this, $facts, $derivation);
+        if ($this->function === AggregateFunction::Average) {
+            $this->initializeDivisionPrecision(Settings::of($derivation->context)->divPrecisionIncrement);
+        }
+        $fact = (new AggregateResults())->aggregate($this, $facts, $derivation);
+        $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
+        $argument = $this->arguments[0] ?? null;
+        while ($argument instanceof Grouped) {
+            $argument = $argument->operand;
+        }
+        $column = $this->over === null && $argument !== null && $argument->scalarInformation()->resolution instanceof ResolvedColumn;
+        $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->result($this->function, $arguments[0] ?? null, $derivation->context->profile->grammar, $column);
+        if ($domain !== null && $domain->kind->temporal() && $domain->collation->bytes()) {
+            $domain = $domain->withCollation(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), $domain->coercibility);
+        }
+
+        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
+    }
+
+    /**
+     * Retains the average's calculation precision independently of its displayed scale.
+     * Source: MySQL 8.4.7 Item_sum_avg::resolve_type and Item_sum_avg::val_decimal.
+     */
+    public function initializeDivisionPrecision(int $increment): void
+    {
+        Check::input($this->function === AggregateFunction::Average && $increment >= 0 && $increment <= 30, 'Average division precision is between zero and thirty.');
+        Check::input($this->precisionIncrement === null || $this->precisionIncrement === $increment, 'Average division precision is resolved once.');
+        $this->precisionIncrement = $increment;
+    }
+
+    /**
+     * Returns the calculation precision owned by this average occurrence.
+     */
+    public function divisionPrecision(): int
+    {
+        Check::input($this->precisionIncrement !== null, 'An average must have calculation precision before execution.');
+        return $this->precisionIncrement;
     }
 
     /**
@@ -104,7 +177,7 @@ final class Aggregate implements SetFunction
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value)->glue()->symbol('(');
+        $out->keyword($this->alias->value ?? $this->function->value)->glue()->symbol('(');
         if ($this->distinct) {
             $out->keyword('DISTINCT');
         }

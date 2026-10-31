@@ -19,9 +19,9 @@ final class IndexCommentTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY (a) COMMENT \'c\')');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $index = $statement->elements[1];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class, $index);
@@ -29,6 +29,13 @@ final class IndexCommentTest extends TestCase
 
         self::assertInstanceOf(IndexComment::class, $option);
         self::assertSame('c', $option->comment->value);
-        self::assertSame('CREATE TABLE t (a INT, INDEX (a) COMMENT \'c\')', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) COMMENT \'c\')', $create->toString());
     }
+
+    public function testCommentDomainRequiresQuotedText(): void
+    {
+        $this->expectExceptionMessage('An index comment is a quoted text string.');
+        new IndexComment(new \SqlSemantics\Platform\MySql\Statement\Literal\Text('0', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Bit));
+    }
+
 }

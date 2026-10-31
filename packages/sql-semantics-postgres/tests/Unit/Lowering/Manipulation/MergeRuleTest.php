@@ -16,7 +16,7 @@ final class MergeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('MERGE INTO t USING u ON true WHEN MATCHED THEN DELETE RETURNING *');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge::class, $statement);
         self::assertCount(1, $statement->returning);
     }
@@ -25,7 +25,7 @@ final class MergeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6');
         $query = $semantics->analyze('MERGE INTO t USING u ON true WHEN MATCHED THEN DO NOTHING WHEN NOT MATCHED THEN DO NOTHING');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge::class, $statement);
         self::assertSame([\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch::Matched, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeMatch::NotMatched], [$statement->clauses[0]->match, $statement->clauses[1]->match]);
     }
@@ -34,7 +34,7 @@ final class MergeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('MERGE INTO t USING u ON true WHEN NOT MATCHED BY SOURCE AND true THEN DELETE');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge::class, $statement);
         self::assertNotNull($statement->clauses[0]->condition);
     }
@@ -43,7 +43,7 @@ final class MergeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('MERGE INTO t USING u ON true WHEN NOT MATCHED THEN INSERT (a, b) OVERRIDING SYSTEM VALUE VALUES (1, 2)');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge::class, $statement);
         $action = $statement->clauses[0]->action;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert::class, $action);
@@ -54,7 +54,7 @@ final class MergeRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('MERGE INTO t USING u ON true WHEN NOT MATCHED THEN INSERT (a, b) VALUES (1, DEFAULT)');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge::class, $statement);
         $action = $statement->clauses[0]->action;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge\MergeInsert::class, $action);

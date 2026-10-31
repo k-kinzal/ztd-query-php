@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnNames;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RANGE COLUMNS (columns)` or `LIST COLUMNS (columns)`: partitioning by a tuple of column values.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnsMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The partitioning columns in order
@@ -39,7 +38,7 @@ final class ColumnsMethod implements PartitionMethod
      * @param PartitionKind $kind RANGE or LIST
      * @param list<Name> $columns The partitioning columns in order
      */
-    public function __construct(public readonly PartitionKind $kind, array $columns)
+    public function __construct(public readonly PartitionKind $kind, array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'Partitioning columns are a list of names.');
     }

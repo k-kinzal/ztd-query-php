@@ -8,6 +8,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEvents;
@@ -21,7 +22,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfiles;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarningCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 8.0 and later: one rule per statement.
@@ -85,9 +85,14 @@ final class ShowRule
         $clauses = new ClauseRule($this->lowering);
         switch ($form->signature) {
             case 'show_binary_logs_stmt: SHOW master_or_binary LOGS_SYM':
-                $this->lowering->utility->binaryLogsWord($form->node(1));
+                $master = $this->lowering->utility->binaryLogsWord($form->node(1));
+                $statement = new ShowBinaryLogs(masterLogs: $master);
+                $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ShowMasterLogs;
+                if ($master && $notice->warnedIn($this->lowering->profile->grammar)) {
+                    $this->lowering->origins->notice($statement, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice), $form->node(1));
+                }
 
-                return new ShowBinaryLogs();
+                return $statement;
             case 'show_binary_logs_stmt: SHOW BINARY_SYM LOGS_SYM':
                 return new ShowBinaryLogs();
             case 'show_replicas_stmt: SHOW SLAVE HOSTS_SYM':

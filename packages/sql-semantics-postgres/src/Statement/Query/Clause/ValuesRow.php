@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One parenthesized row of a VALUES list.
@@ -18,13 +17,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the values of a row
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('VALUES (1, 2)');
- *     count($query->statement->rows[0]->values) // => 2
+ *     count($query->rows[0]->values) // => 2
  * @example Refusing an empty row
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ValuesRow implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The values in column order
@@ -34,7 +33,7 @@ final class ValuesRow implements Node
     /**
      * @param list<Scalar> $values The values in column order; at least one
      */
-    public function __construct(array $values)
+    public function __construct(array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->values = Check::listOf($values, Scalar::class, 'A VALUES row holds at least one expression.', 1);
     }

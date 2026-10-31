@@ -19,6 +19,6 @@ final class AlterPublicationOptionsTest extends TestCase
 
     public function testDeriveStatementDerivesTheValues(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p SET (publish_via_partition_root)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p SET (publish_via_partition_root)')->diagnostics());
     }
 }

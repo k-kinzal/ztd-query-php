@@ -18,15 +18,15 @@ final class ShowOpenTablesTest extends TestCase
     public function testDeriveStatementResolvesTheCondition(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW OPEN TABLES WHERE In_use > 0');
-        self::assertInstanceOf(ShowOpenTables::class, $show->statement);
-        self::assertSame([], $show->facts->diagnostics);
+        self::assertInstanceOf(ShowOpenTables::class, $show);
+        self::assertSame([], $show->diagnostics());
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW OPEN TABLES WHERE In_use > 0');
-        self::assertInstanceOf(ShowOpenTables::class, $show->statement);
-        self::assertSame('Table', $show->facts->relation($show->statement)->shape->slots[1]->name?->value);
+        self::assertInstanceOf(ShowOpenTables::class, $show);
+        self::assertSame('Table', $show->relationInformation()->shape->slots[1]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

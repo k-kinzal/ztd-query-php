@@ -52,13 +52,13 @@ final class ColumnDefinitionTest extends TestCase
     public function testDeriveColumnDerivesTheTypeArgumentsAndTheConstraints(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DECIMAL(10, 2) DEFAULT 0)', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $type = $statement->columns[0]->type;
         self::assertNotNull($type);
-        self::assertEquals(new Known(Storage::Integer), $operation->facts->scalar($type->arguments[1]->number)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertEquals(new Known(Storage::Integer), $type->arguments[1]->number->scalarInformation()->type);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveColumnReportsADefaultNotConstantAndADefaultOnAGeneratedColumn(): void
@@ -67,13 +67,13 @@ final class ColumnDefinitionTest extends TestCase
         $constant = $semantics->analyze('CREATE TABLE t (a DEFAULT (abs(?)))', []);
         $generated = $semantics->analyze('CREATE TABLE t (a, b AS (a) DEFAULT 1, c DEFAULT word AS (a))', []);
 
-        self::assertCount(1, $constant->facts->diagnostics);
-        self::assertInstanceOf(DefaultNotConstant::class, $constant->facts->diagnostics[0]);
-        self::assertSame('a', $constant->facts->diagnostics[0]->column->value);
-        self::assertCount(2, $generated->facts->diagnostics);
-        self::assertInstanceOf(GeneratedColumnProblem::class, $generated->facts->diagnostics[0]);
-        self::assertSame(GeneratedColumnFlaw::WithDefault, $generated->facts->diagnostics[0]->flaw);
-        $second = $generated->facts->diagnostics[1];
+        self::assertCount(1, $constant->diagnostics());
+        self::assertInstanceOf(DefaultNotConstant::class, $constant->diagnostics()[0]);
+        self::assertSame('a', $constant->diagnostics()[0]->column->value);
+        self::assertCount(2, $generated->diagnostics());
+        self::assertInstanceOf(GeneratedColumnProblem::class, $generated->diagnostics()[0]);
+        self::assertSame(GeneratedColumnFlaw::WithDefault, $generated->diagnostics()[0]->flaw);
+        $second = $generated->diagnostics()[1];
         self::assertInstanceOf(GeneratedColumnProblem::class, $second);
         self::assertSame('c', $second->column?->value);
     }

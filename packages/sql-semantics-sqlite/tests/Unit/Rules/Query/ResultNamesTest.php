@@ -59,8 +59,8 @@ final class ResultNamesTest extends TestCase
     public function testResolvedLeavesAWordConditionalOnAMissingDeclarationUnnamed(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT "zz", nosuch, true FROM t');
-        self::assertInstanceOf(Select::class, $query->statement);
-        $column = $query->statement->columns[0];
+        self::assertInstanceOf(Select::class, $query);
+        $column = $query->columns[0];
         self::assertInstanceOf(ResultColumn::class, $column);
         $resolution = $query->field(0)->resolution;
 
@@ -75,8 +75,8 @@ final class ResultNamesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT "zz", nosuch, 1+1 FROM t');
-        self::assertInstanceOf(Select::class, $query->statement);
-        $columns = $query->statement->columns;
+        self::assertInstanceOf(Select::class, $query);
+        $columns = $query->columns;
         self::assertInstanceOf(ResultColumn::class, $columns[0]);
         self::assertInstanceOf(ResultColumn::class, $columns[2]);
 
@@ -134,8 +134,8 @@ final class ResultNamesTest extends TestCase
     public function testLeftmostFindsTheArmThatNamesTheColumns(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $compound = $semantics->analyze('WITH c AS (SELECT 1) VALUES (1) UNION SELECT 2')->statement;
-        $select = $semantics->analyze('SELECT 1')->statement;
+        $compound = $semantics->analyze('WITH c AS (SELECT 1) VALUES (1) UNION SELECT 2');
+        $select = $semantics->analyze('SELECT 1');
 
         self::assertInstanceOf(WithQuery::class, $compound);
         self::assertInstanceOf(Compound::class, $compound->body);
@@ -150,7 +150,7 @@ final class ResultNamesTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a + 1, * FROM t', [$create]);
-        $select = $query->statement;
+        $select = $query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame($select->columns[0], (new ResultNames())->column($select, $query->field(0)));

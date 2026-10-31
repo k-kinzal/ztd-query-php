@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ForeignOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,9 +25,9 @@ use SqlSemantics\Statement\Statement;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SERVER s VERSION NULL');
  *     $operation->toString() // => 'ALTER SERVER s VERSION NULL'
  */
-final class AlterForeignServer implements Statement
+final class AlterForeignServer extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<AlteredOption> The option changes
@@ -40,8 +39,11 @@ final class AlterForeignServer implements Statement
      * @param ServerVersion|null $version The version clause, when written
      * @param list<AlteredOption> $options The option changes
      */
-    public function __construct(public readonly Name $name, public readonly ?ServerVersion $version, array $options = [])
+    public function __construct(public readonly Name $name, public readonly ?ServerVersion $version, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, AlteredOption::class, 'Server option changes are a list of changes.');
         Check::input($version !== null || $this->options !== [], 'ALTER SERVER changes the version or an option.');
     }

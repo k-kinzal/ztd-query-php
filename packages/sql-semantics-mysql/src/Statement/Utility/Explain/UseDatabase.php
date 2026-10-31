@@ -6,10 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Explain;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * USE: makes a database the current database of the session.
@@ -23,17 +22,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading USE
  *     $use = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('use `my db`');
- *     [$use->statement->database->value, $use->toString()] // => ['my db', 'USE `my db`']
+ *     [$use->database->value, $use->toString()] // => ['my db', 'USE `my db`']
  */
-final class UseDatabase implements Statement
+final class UseDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $database The database
      */
-    public function __construct(public readonly Name $database)
+    public function __construct(public readonly Name $database, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

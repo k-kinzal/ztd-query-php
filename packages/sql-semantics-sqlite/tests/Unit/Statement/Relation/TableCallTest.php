@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableCall;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Statement\Shape\DependentField;
@@ -33,18 +32,18 @@ final class TableCallTest extends TestCase
         $query = $semantics->analyze('SELECT * FROM json_each(1) AS j', [$t]);
         $shape = $query->shape();
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(TableCall::class, $query->statement->from);
-        self::assertSame('json_each', $query->statement->from->name->name->value);
-        self::assertSame('j', $query->statement->from->alias?->value);
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(TableCall::class, $query->from);
+        self::assertSame('json_each', $query->from->name->name->value);
+        self::assertSame('j', $query->from->alias?->value);
         self::assertNull($query->fields());
         self::assertNotNull($shape);
         self::assertSame([], $shape->slots);
         self::assertInstanceOf(UndeclaredRoutine::class, $shape->missing[0]);
         self::assertSame('json_each', $shape->missing[0]->name->name->value);
-        self::assertNull($query->facts->relation($query->statement->from)->table);
+        self::assertNull($query->from->relationInformation()->table);
         self::assertInstanceOf(DependentField::class, $query->lookupField('value'));
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveRelationResolvesArgumentsAgainstTheTablesToTheLeft(): void
@@ -53,13 +52,13 @@ final class TableCallTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT * FROM t, json_each(b) AS j', [$t]);
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(JoinChain::class, $query->statement->from);
-        $call = $query->statement->from->steps[0]->relation;
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(JoinChain::class, $query->from);
+        $call = $query->from->steps[0]->relation;
         self::assertInstanceOf(TableCall::class, $call);
-        $resolution = $query->facts->scalar($call->arguments[0])->resolution;
+        $resolution = $call->arguments[0]->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
-        self::assertSame($query->statement->from->first, $resolution->relation);
+        self::assertSame($query->from->first, $resolution->relation);
         self::assertSame($t->declarations()[0]->columns[2], $resolution->declaration());
         self::assertNull($query->fields());
     }
@@ -68,7 +67,7 @@ final class TableCallTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $call = new TableCall(new QualifiedName(new Name('json_each'), new Name('main')), [new IntegerLiteral('1'), new TextLiteral('x')], new Name('j'));
-        $built = new Operation($semantics->context(), new Select([new Star()], $call));
+        $built = Semantics::fromStatement($semantics->context(), new Select([new Star()], $call));
 
         self::assertSame("SELECT * FROM main.json_each(1, 'x') AS j", $built->toString());
         self::assertSame('SELECT * FROM generate_series(1, 3)', $semantics->analyze('select * from generate_series(1,3)')->toString());

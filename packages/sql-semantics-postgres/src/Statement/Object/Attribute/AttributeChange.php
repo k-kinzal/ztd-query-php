@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One changed attribute of `ALTER OPERATOR ... SET` or `ALTER TYPE ... SET`.
@@ -24,19 +23,19 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an attribute set to NONE
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
- *     [$operation->statement->attributes[0]->none, $operation->statement->attributes[0]->attribute->value] // => [true, null]
+ *     [$operation->attributes[0]->none, $operation->attributes[0]->attribute->value] // => [true, null]
  * @example Refusing NONE together with a value
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange(new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute(new \SqlSemantics\Statement\Identifier\Name('x'), null, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('y')), true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class AttributeChange implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Attribute $attribute The attribute with its value as the command reads it; without a value for NONE
      * @param bool $none Whether the attribute is written `= NONE`
      */
-    public function __construct(public readonly Attribute $attribute, public readonly bool $none = false)
+    public function __construct(public readonly Attribute $attribute, public readonly bool $none = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$none || !$attribute->valued(), 'An attribute written = NONE has no other value.');
     }

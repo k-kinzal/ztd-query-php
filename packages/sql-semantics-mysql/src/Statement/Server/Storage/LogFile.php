@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A log file a log file group statement adds: `UNDOFILE 'file'` or `REDOFILE 'file'`.
@@ -22,14 +22,15 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class LogFile implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param LogFileKind $kind UNDOFILE or REDOFILE
      * @param Text $file The file name
      */
-    public function __construct(public readonly LogFileKind $kind, public readonly Text $file)
+    public function __construct(public readonly LogFileKind $kind, public readonly Text $file, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input($file->radix === null, 'A log file name is a quoted string.');
     }
 
     /**

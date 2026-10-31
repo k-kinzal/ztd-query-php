@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { database: mysql, package: sql-semantics-mysql, script: fuzz_mysql_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
+          # MySQL reconstruction runs with execution in mysql-memory-fuzz.yml.
           - { database: pg, package: sql-semantics-postgres, script: fuzz_pg_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: sqlite, package: sql-semantics-sqlite, script: fuzz_sqlite_roundtrip.php, extensions: 'mbstring, pcntl, zlib' }
           - { database: mysql-schema, package: sql-semantics-mysql, script: fuzz_mysql_schema.php, extensions: 'mbstring, pcntl, zlib' }

@@ -15,13 +15,13 @@ use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\TableLock;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockInstance;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers LOCK TABLES, UNLOCK TABLES and the backup lock statements.
  *
  * Rule: MYSQL-LOCK-001. Scope: lock, unlock, table_lock_list, table_lock,
- * lock_option. TABLE and TABLES are synonyms (LeafNoise); the alias goes
+ * lock_option. TABLE and TABLES retain their synonymous keyword forms; the alias goes
  * through the query family's alias rule. Constructs: LockTables, TableLock,
  * UnlockTables, LockInstance, UnlockInstance. Terminates: the lock list is
  * flattened iteratively.
@@ -68,18 +68,23 @@ final class LockRule
      * Lowers LOCK TABLES.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table is named twice
      */
     public function tables(Form $form): LockTables
     {
-        $this->lowering->options->skip($form->node(1));
+        $word = $this->lowering->options->tableWord($form->node(1));
         $list = $form->node(2);
         $this->lowering->names->claimed($this->lowering->form($list), ['table_lock_list: table_lock', 'table_lock_list: table_lock_list , table_lock']);
         $locks = [];
         foreach ((new Lists())->items($list) as $item) {
             $locks[] = $this->lock($item);
         }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (TableLock $lock): array => [$lock->table, $lock->alias, $lock], $locks));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0, false);
+        }
 
-        return new LockTables($locks);
+        return new LockTables($locks, tableWord: $word);
     }
 
     /**
@@ -110,8 +115,8 @@ final class LockRule
      */
     public function unlock(Node $tables): UnlockTables
     {
-        $this->lowering->options->skip($tables);
+        $word = $this->lowering->options->tableWord($tables);
 
-        return new UnlockTables();
+        return new UnlockTables(tableWord: $word);
     }
 }

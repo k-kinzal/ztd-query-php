@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FOR SEARCH` or `FOR ORDER BY sort_family`: what an operator of an operator class is for.
@@ -25,12 +24,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class MemberPurpose implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName|null $sortFamily The sort operator family of an ordering operator; null for FOR SEARCH
      */
-    public function __construct(public readonly ?DottedName $sortFamily = null)
+    public function __construct(public readonly ?DottedName $sortFamily = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

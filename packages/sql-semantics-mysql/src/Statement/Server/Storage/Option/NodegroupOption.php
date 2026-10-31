@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `NODEGROUP [=] id`: the NDB node group of a tablespace or log file group.
@@ -17,15 +16,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Holding the option
  *     (new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\NodegroupOption(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2')))->group->text // => '2'
+ * @example Retaining a fractional group number
+ *     (new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\NodegroupOption(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')))->group->text // => '1.5'
  */
 final class NodegroupOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Numeral $group The node group identifier
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly Numeral $group)
+    public function __construct(public readonly Numeral $group, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
     }
 
@@ -42,6 +44,10 @@ final class NodegroupOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('NODEGROUP')->node($this->group);
+        $out->keyword('NODEGROUP');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
+        }
+        $out->node($this->group);
     }
 }

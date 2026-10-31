@@ -24,48 +24,62 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 #[Medium]
 final class ExpressionRuleTest extends TestCase
 {
+    public function testExpressionPreservesADeferredNestedQueryInsideItsOuterOperands(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $sql = 'CREATE PROCEDURE p() SELECT missing, (SELECT GROUP_CONCAT(1) OVER ())';
+        $operation = $semantics->analyze($sql);
+        self::assertSame($sql, $operation->toString());
+        self::assertSame($sql, $semantics->analyze($operation->toString())->toString());
+    }
+
     public function testStatementFoldsTheClausesIntoASingleBlock(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t ORDER BY a LIMIT 1 FOR UPDATE');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertCount(1, $operation->statement->locking);
-        self::assertNotNull($operation->statement->limit);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertCount(1, $operation->query->locking);
+        self::assertNotNull($operation->query->limit);
     }
 
     public function testIntoLowersTheIntoAfterTheQuery(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT a FROM t FOR UPDATE INTO @x)');
 
-        self::assertInstanceOf(ParenthesizedQuery::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->query);
-        self::assertSame(IntoPosition::AfterLocking, $operation->statement->query->intoPosition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(ParenthesizedQuery::class, $operation->query);
+        self::assertInstanceOf(Select::class, $operation->query->query);
+        self::assertSame(IntoPosition::AfterLocking, $operation->query->query->intoPosition);
     }
 
     public function testExpressionWrapsANonBlockBody(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) SELECT 1 UNION SELECT 2 ORDER BY 1 FOR UPDATE');
 
-        self::assertInstanceOf(QueryStatement::class, $operation->statement);
-        self::assertInstanceOf(QueryExpression::class, $operation->statement->query);
-        self::assertNotNull($operation->statement->query->with);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryStatement::class, $operation->query);
+        self::assertInstanceOf(QueryExpression::class, $operation->query->query);
+        self::assertNotNull($operation->query->query->with);
     }
 
     public function testBodyBuildsALeftDeepChain(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 EXCEPT SELECT 3');
 
-        self::assertInstanceOf(SetOperation::class, $operation->statement);
-        self::assertSame(SetOperator::Except, $operation->statement->operator);
-        self::assertInstanceOf(SetOperation::class, $operation->statement->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(SetOperation::class, $operation->query);
+        self::assertSame(SetOperator::Except, $operation->query->operator);
+        self::assertInstanceOf(SetOperation::class, $operation->query->left);
     }
 
     public function testQuantifierLowersDistinctAndAll(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION DISTINCT SELECT 2');
 
-        self::assertInstanceOf(SetOperation::class, $operation->statement);
-        self::assertSame(SetQuantifier::Distinct, $operation->statement->quantifier);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(SetOperation::class, $operation->query);
+        self::assertSame(SetQuantifier::Distinct, $operation->query->quantifier);
     }
 
     public function testParenthesizedKeepsEveryPair(): void
@@ -87,8 +101,59 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM (SELECT 1) AS d');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(DerivedTable::class, $operation->statement->from);
-        self::assertInstanceOf(Select::class, $operation->statement->from->query);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(DerivedTable::class, $operation->query->from);
+        self::assertInstanceOf(Select::class, $operation->query->from->query);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLaterOperands(): iterable
+    {
+        yield 'union' => ['SELECT 1 UNION SELECT HIGH_PRIORITY 2', 'HIGH_PRIORITY'];
+        yield 'parenthesized operand' => ['SELECT 1 UNION (SELECT SQL_BUFFER_RESULT 2)', 'SQL_BUFFER_RESULT'];
+        yield 'insert source' => ['INSERT INTO t SELECT 1 EXCEPT SELECT SQL_CALC_FOUND_ROWS 2', 'SQL_CALC_FOUND_ROWS'];
+        yield 'stored program body' => ['CREATE PROCEDURE p() SELECT 1 UNION SELECT HIGH_PRIORITY 2', 'HIGH_PRIORITY'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLaterOperands')]
+    public function testBodyRefusesAModifierOfTheFirstBlockInALaterOperandOnceRead(string $sql, string $option): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The modifier belongs to the first block of the statement.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption::class, $failure->problem);
+            self::assertSame("Incorrect usage/placement of '$option'", $failure->problem->message());
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('SELECT HIGH_PRIORITY 1 UNION SELECT SQL_NO_CACHE 2', (new Semantics(Dialect::MySql))->analyze('SELECT HIGH_PRIORITY 1 UNION SELECT SQL_NO_CACHE 2')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerReachedTables(): iterable
+    {
+        yield 'read by the body' => ['WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM c, missing_t', "Incorrect usage/placement of 'HIGH_PRIORITY'"];
+        yield 'read through another definition' => ['WITH c AS (SELECT SQL_CALC_FOUND_ROWS 1), d AS (SELECT * FROM c) SELECT * FROM d', "Incorrect usage/placement of 'SQL_CALC_FOUND_ROWS'"];
+        yield 'quantifiers' => ['WITH c AS (SELECT ALL DISTINCT 1) SELECT (SELECT 1 FROM c)', 'Incorrect usage of ALL and DISTINCT'];
+        yield 'insert source' => ['INSERT INTO t WITH c AS (SELECT SQL_BUFFER_RESULT 1) SELECT * FROM c', "Incorrect usage/placement of 'SQL_BUFFER_RESULT'"];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReachedTables')]
+    public function testReachedRefusesTheModifiersOfACommonTableTheQueryReadsOnceRead(string $sql, string $message): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The read definition carries a modifier of the first block.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame($message, $failure->problem->message());
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT 2', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT 2')->toString());
+        self::assertSame('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM C', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT HIGH_PRIORITY 1) SELECT * FROM C')->toString());
     }
 }

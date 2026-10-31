@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One column of a table definition: its name, its declared type and its constraints in written order.
@@ -35,12 +34,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a column definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (price DECIMAL(10, 2) NOT NULL DEFAULT 0)');
- *     $column = $create->statement->columns[0];
+ *     $column = $create->columns[0];
  *     [$column->name->value, $column->type?->text(), count($column->constraints), $column->notNull()] // => ['price', 'DECIMAL', 2, true]
  */
 final class ColumnDefinition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnConstraint> The constraints in written order
@@ -52,7 +51,7 @@ final class ColumnDefinition implements Node
      * @param TypeName|null $type The declared type
      * @param list<ColumnConstraint> $constraints The constraints in written order
      */
-    public function __construct(public readonly Name $name, public readonly ?TypeName $type = null, array $constraints = [])
+    public function __construct(public readonly Name $name, public readonly ?TypeName $type = null, array $constraints = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->constraints = Check::listOf($constraints, ColumnConstraint::class, 'Column constraints are an ordered list of column constraints.');
     }

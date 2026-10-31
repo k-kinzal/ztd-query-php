@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -19,17 +18,20 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Reading the library file
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("LOAD 'auto_explain'")->statement->file->value // => 'auto_explain'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("LOAD 'auto_explain'")->file->value // => 'auto_explain'
  */
-final class Load implements Statement
+final class Load extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param StringConstant $file The library file name
      */
-    public function __construct(public readonly StringConstant $file)
+    public function __construct(public readonly StringConstant $file, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

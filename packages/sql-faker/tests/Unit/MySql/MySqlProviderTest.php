@@ -105,6 +105,7 @@ use SqlFaker\MySql\MySqlProvider;
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\IntegerToken::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\StartRuleResolver::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\GenerationContext::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]
@@ -257,6 +258,29 @@ final class MySqlProviderTest extends TestCase
 
         $identifier = $provider->identifier(3);
         self::assertNotSame('', $identifier);
+    }
+
+    #[DataProvider('providerOperatorModes')]
+    public function testGeneratePreservesOperatorsForTheRequestedModes(string $rule, string $terminal, bool $highNotPrecedence, bool $pipesAsConcat, string $expected): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker, highNotPrecedence: $highNotPrecedence, pipesAsConcat: $pipesAsConcat);
+        $plan = GenerationPlan::constrained($rule, [$rule => [ProductionPattern::exactly($terminal)]]);
+
+        self::assertSame($expected, $provider->generate($plan));
+    }
+
+    /**
+     * @return iterable<string, array{string, string, bool, bool, string}>
+     */
+    public static function providerOperatorModes(): iterable
+    {
+        yield 'default infix NOT' => ['not', 'NOT2_SYM', false, false, 'NOT'];
+        yield 'high infix NOT' => ['not', 'NOT2_SYM', true, false, 'NOT'];
+        yield 'default unary NOT' => ['not2', 'NOT2_SYM', false, false, '!'];
+        yield 'high unary NOT' => ['not2', 'NOT2_SYM', true, false, 'NOT'];
+        yield 'default logical OR' => ['or', 'OR2_SYM', false, false, '||'];
+        yield 'logical OR in concatenation mode' => ['or', 'OR2_SYM', false, true, 'OR'];
     }
 
     #[DataProvider('providerTargetedGenerationSeed')]

@@ -18,13 +18,13 @@ final class LikeClauseTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TABLE n (LIKE t)', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns::class, $n2);
         $n3 = $n2->elements[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeClause::class, $n3);
-        $n4 = $statement->facts->relation($n3)->table;
+        $n4 = $n3->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n4);
         self::assertSame(true, $n4->table === $context[0]);
     }
@@ -40,7 +40,7 @@ final class LikeClauseTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE SEQUENCE s'), $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['relation "s" is invalid in LIKE clause'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TABLE c (LIKE s)', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TABLE c (LIKE v)', $context)->facts->diagnostics));
+        self::assertSame(['relation "s" is invalid in LIKE clause'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TABLE c (LIKE s)', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TABLE c (LIKE v)', $context)->diagnostics()));
     }
 }

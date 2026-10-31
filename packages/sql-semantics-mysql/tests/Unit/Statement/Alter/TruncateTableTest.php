@@ -22,12 +22,13 @@ final class TruncateTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $truncate = $semantics->analyze('TRUNCATE t', [$table]);
 
-        self::assertInstanceOf(DeclaredTable::class, $truncate->facts->relation($truncate->statement)->table);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $truncate);
+        self::assertInstanceOf(DeclaredTable::class, $truncate->relationInformation()->table);
     }
 
-    public function testRenderWritesTable(): void
+    public function testRenderPreservesAnOmittedTableWord(): void
     {
-        self::assertSame('TRUNCATE TABLE db.t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('truncate db.t')->toString());
+        self::assertSame('TRUNCATE db.t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('truncate db.t')->toString());
     }
 
     public function testDeriveStatementRefusesAView(): void
@@ -36,6 +37,31 @@ final class TruncateTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['v is a view: TRUNCATE TABLE reports that the table doesn\'t exist.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('TRUNCATE TABLE v', [$table, $view])->facts->diagnostics));
+        self::assertSame(['v is a view: TRUNCATE TABLE reports that the table doesn\'t exist.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('TRUNCATE TABLE v', [$table, $view])->diagnostics()));
     }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['TRUNCATE t', 'TRUNCATE TABLE t'] as $sql) {
+                yield "$release->value/statement/$sql" => [$release, $sql];
+                yield "$release->value/program/$sql" => [$release, 'CREATE PROCEDURE wrapper() ' . $sql];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerWrittenForms')]
+    public function testRenderPreservesWrittenFormsThroughPublication(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
+    }
+
 }

@@ -19,9 +19,9 @@ final class IndexUsingTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY (a) TYPE BTREE)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $index = $statement->elements[1];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class, $index);
@@ -29,6 +29,6 @@ final class IndexUsingTest extends TestCase
 
         self::assertInstanceOf(IndexUsing::class, $option);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm::Btree, $option->algorithm);
-        self::assertSame('CREATE TABLE t (a INT, INDEX (a) USING BTREE)', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) TYPE BTREE)', $create->toString());
     }
 }

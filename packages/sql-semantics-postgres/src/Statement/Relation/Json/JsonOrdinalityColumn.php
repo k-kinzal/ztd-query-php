@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Relation\Json;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * name FOR ORDINALITY: a JSON_TABLE column that numbers the rows.
@@ -20,12 +19,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonOrdinalityColumn implements JsonTableColumn
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -7,9 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Account;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP ROLE [IF EXISTS] role, …` (8.0+): a request to remove roles.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Statement;
  * @example Dropping a role
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('drop role if exists reader')->toString() // => 'DROP ROLE IF EXISTS reader'
  */
-final class DropRole implements Statement
+final class DropRole extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<AccountName> The roles in order
+     * @var non-empty-list<AccountName> The roles in order
      */
     public readonly array $roles;
 
@@ -34,16 +33,21 @@ final class DropRole implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param list<AccountName> $roles The roles in order; at least one
      */
-    public function __construct(public readonly bool $ifExists, array $roles)
+    public function __construct(public readonly bool $ifExists, array $roles, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->roles = Check::listOf($roles, AccountName::class, 'DROP ROLE names at least one role.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives nothing: the statement names no relation and no expression.
+     * Derives the account name conditions without resolving a runtime catalog.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->roles);
     }
 
     /**

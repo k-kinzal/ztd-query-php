@@ -22,7 +22,7 @@ final class OperatorFamilyAdditionTest extends TestCase
     public function testDeriveStatementReportsAStorageType(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER OPERATOR FAMILY f USING btree ADD STORAGE int4');
-        self::assertEquals([new ObjectProblem(ObjectProblemKind::StorageInFamily)], $operation->facts->diagnostics);
+        self::assertEquals([new ObjectProblem(ObjectProblemKind::StorageInFamily)], $operation->diagnostics());
     }
 
     public function testRenderWritesTheItems(): void

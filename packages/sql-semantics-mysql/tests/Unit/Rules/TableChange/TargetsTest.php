@@ -25,15 +25,16 @@ final class TargetsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $truncate = $semantics->analyze('TRUNCATE t', [$table]);
 
-        self::assertCount(2, $truncate->facts->relation($truncate->statement)->shape->slots);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable::class, $truncate);
+        self::assertCount(2, $truncate->relationInformation()->shape->slots);
     }
 
     public function testOptionalResolvesAMissingTableToAbsent(): void
     {
         $drop = (new Semantics(Dialect::MySql))->analyze('DROP TABLE IF EXISTS t', []);
 
-        self::assertInstanceOf(DropTable::class, $drop->statement);
-        self::assertInstanceOf(AbsentTable::class, $drop->facts->relation($drop->statement->tables[0])->table);
+        self::assertInstanceOf(DropTable::class, $drop);
+        self::assertInstanceOf(AbsentTable::class, $drop->tables[0]->relationInformation()->table);
     }
 
     public function testSameComparesTheCurrentDatabase(): void

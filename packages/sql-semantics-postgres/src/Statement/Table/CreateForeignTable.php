@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a foreign table: a table whose rows a foreign server provides.
@@ -32,9 +31,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE FOREIGN TABLE f (a int OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')");
  *     [$create->declarations()[0]->columns[0]->nullability, $create->toString()] // => [\SqlSemantics\Statement\Type\Nullability::NotNull, "CREATE FOREIGN TABLE f (a INT OPTIONS (column_name 'x') NOT NULL) SERVER s OPTIONS (table_name 'y')"]
  */
-final class CreateForeignTable implements Relation, \SqlSemantics\Statement\Statement
+final class CreateForeignTable extends \SqlSemantics\Statement\SqlStatement implements Relation, \SqlSemantics\Statement\Statement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<GenericOption> The options of the foreign table
@@ -54,7 +54,16 @@ final class CreateForeignTable implements Relation, \SqlSemantics\Statement\Stat
         public readonly Name $server,
         array $options = [],
         public readonly bool $ifNotExists = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->options = Check::listOf($options, GenericOption::class, 'Foreign table options are generic options.');
     }
 

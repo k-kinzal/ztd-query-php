@@ -17,7 +17,7 @@ final class RemovePartitioningTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REMOVE PARTITIONING')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REMOVE PARTITIONING')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void

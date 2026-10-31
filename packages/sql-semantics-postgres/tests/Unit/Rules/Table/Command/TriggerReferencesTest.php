@@ -24,7 +24,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $table = $semantics->analyze('CREATE TABLE t (a int)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT OR UPDATE ON t FOR EACH ROW WHEN (old.a = 1) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame(["INSERT trigger's WHEN condition cannot reference OLD values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+        self::assertSame(["INSERT trigger's WHEN condition cannot reference OLD values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->diagnostics()));
     }
 
     public function testCheckReportsNewInADeleteTrigger(): void
@@ -32,7 +32,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $table = $semantics->analyze('CREATE TABLE t (a int)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW WHEN (new IS NULL) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame(["DELETE trigger's WHEN condition cannot reference NEW values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+        self::assertSame(["DELETE trigger's WHEN condition cannot reference NEW values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->diagnostics()));
     }
 
     public function testCheckReportsANewSystemColumnInABeforeTrigger(): void
@@ -40,7 +40,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $table = $semantics->analyze('CREATE TABLE t (a int)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW WHEN (new.xmin IS NULL) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW system columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW system columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->diagnostics()));
     }
 
     public function testCheckReportsAnyColumnInAStatementTrigger(): void
@@ -48,7 +48,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $table = $semantics->analyze('CREATE TABLE t (a int)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH STATEMENT WHEN (old.a = new.a) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame(["statement trigger's WHEN condition cannot reference column values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+        self::assertSame(["statement trigger's WHEN condition cannot reference column values"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->diagnostics()));
     }
 
     public function testCheckAcceptsOldAndNewInAnAfterUpdateTrigger(): void
@@ -56,7 +56,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $table = $semantics->analyze('CREATE TABLE t (a int)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW WHEN (old.* IS DISTINCT FROM new.* AND new.ctid IS NOT NULL) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame([], $trigger->facts->diagnostics);
+        self::assertSame([], $trigger->diagnostics());
     }
 
     public function testReferenceTellsOldNewAndSystemColumns(): void
@@ -64,8 +64,8 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $table = $semantics->analyze('CREATE TABLE t (a int, old int)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW WHEN (true) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
-        $fact = $trigger->facts->relation($trigger->statement);
+        self::assertInstanceOf(CreateTrigger::class, $trigger);
+        $fact = $trigger->relationInformation();
         $references = new TriggerReferences();
         self::assertSame(
             [[true, false, false], [false, true, false], null, [false, false, false], null, null],
@@ -85,7 +85,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-16.6');
         $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.a > 0 AND new.b > 0) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->diagnostics()));
     }
 
     public function testCheckReportsTheWholeNewRowOfATableWithAGeneratedColumn(): void
@@ -93,7 +93,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new IS DISTINCT FROM old) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->diagnostics()));
     }
 
     public function testCheckAcceptsNewGeneratedColumnsInAnAfterTrigger(): void
@@ -101,7 +101,7 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr AFTER UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND (new).b > 0) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertSame([], $trigger->facts->diagnostics);
+        self::assertSame([], $trigger->diagnostics());
     }
 
     public function testReferencesAnswersTheReferencesInWrittenOrder(): void
@@ -109,11 +109,11 @@ final class TriggerReferencesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
         $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND new.ctid IS NOT NULL AND old.a = (new).a) EXECUTE FUNCTION f()', $table->declarations());
-        self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
-        self::assertNotNull($trigger->statement->when);
+        self::assertInstanceOf(CreateTrigger::class, $trigger);
+        self::assertNotNull($trigger->when);
         self::assertSame(
             [[false, false, true], [false, true, false], [true, false, false], [false, false, false]],
-            (new TriggerReferences())->references($trigger->statement->when, $trigger->facts->relation($trigger->statement)),
+            (new TriggerReferences())->references($trigger->when, $trigger->relationInformation()),
         );
     }
 

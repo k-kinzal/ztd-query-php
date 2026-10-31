@@ -27,7 +27,7 @@ final class ChangeChecksTest extends TestCase
             'negator requires a parameter',
             'argument of commutator must be a name',
             'operator attribute "sort1" not recognized',
-        ], array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $operation->diagnostics()));
     }
 
     public function testProblemAcceptsARemovedFunction(): void

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Table options written one after the other without commas, such as `ENGINE = InnoDB COMMENT = 'x'`.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Changing the storage engine and the comment
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ALTER TABLE t ENGINE = InnoDB COMMENT = 'x'");
- *     count($alter->statement->commands[0]->options) // => 2
+ *     count($alter->commands[0]->options) // => 2
  */
 final class SetTableOptions implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<TableOption> The options in order; at least one
@@ -37,7 +36,7 @@ final class SetTableOptions implements AlterCommand
     /**
      * @param list<TableOption> $options The options in order; at least one
      */
-    public function __construct(array $options)
+    public function __construct(array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($options !== [], 'A run of table options holds at least one option.');
         $this->options = Check::listOf($options, TableOption::class, 'A run of table options is a list of table options.');

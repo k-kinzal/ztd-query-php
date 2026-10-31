@@ -19,4 +19,5 @@ enum ReplicaThread: string
 {
     case Applier = 'SQL_THREAD';
     case Receiver = 'IO_THREAD';
+    case Relay = 'RELAY_THREAD';
 }

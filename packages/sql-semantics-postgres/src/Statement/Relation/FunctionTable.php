@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A function call, or ROWS FROM of several, used as a FROM item.
@@ -29,15 +28,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a function in FROM
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT * FROM f() WITH ORDINALITY AS x (a integer)');
- *     [$query->statement->from->ordinality, $query->statement->from->definitions[0]->name->value, $query->toString()] // => [true, 'a', 'SELECT * FROM f() WITH ORDINALITY AS x (a INTEGER)']
+ *     [$query->from->ordinality, $query->from->definitions[0]->name->value, $query->toString()] // => [true, 'a', 'SELECT * FROM f() WITH ORDINALITY AS x (a INTEGER)']
  * @example Refusing several functions outside ROWS FROM
  *     $call = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableFunction(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     $other = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableFunction(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral());
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Relation\FunctionTable([$call, $other]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class FunctionTable implements Relation
+final class FunctionTable implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TableFunction> The function calls in written order
@@ -71,7 +71,12 @@ final class FunctionTable implements Relation
         array $columns = [],
         array $definitions = [],
         public readonly bool $lateral = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->functions = Check::listOf($functions, TableFunction::class, 'A function FROM item calls at least one function.', 1);
         $this->columns = Check::listOf($columns, Name::class, 'Column aliases are names.');
         $this->definitions = Check::listOf($definitions, TypedColumn::class, 'Column definitions are typed columns.');

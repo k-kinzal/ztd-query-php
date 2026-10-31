@@ -17,6 +17,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Problem;
  */
 enum ProgramRule: string
 {
+    case IncorrectName = "Incorrect routine name '%s'";
+    case NameTooLong = "Identifier name '%s' is too long";
     case DuplicateParameter = 'Duplicate parameter: %s';
     case DuplicateVariable = 'Duplicate variable: %s';
     case DuplicateCondition = 'Duplicate condition: %s';
@@ -42,9 +44,11 @@ enum ProgramRule: string
     case NestedAlterOrDrop = "Can't drop or alter a %s from within another stored routine";
     case EventRecursion = 'Recursion of EVENT DDL statements is forbidden when body is present';
     case ResultSet = 'Not allowed to return a result set from a %s';
+    case AutocommitInFunction = 'Not allowed to set autocommit from a stored function or trigger';
     case CommitInFunction = 'Explicit or implicit commit is not allowed in stored function or trigger.';
     case FunctionStatement = '%s is not allowed in stored function or trigger';
     case OldRowUpdate = 'Updating of OLD row is not allowed in trigger';
     case AfterRowUpdate = 'Updating of NEW row is not allowed in after trigger';
     case NoNewRow = 'There is no NEW row in on DELETE trigger';
+    case ArrayCast = 'Incorrect usage of CAST( .. AS .. ARRAY) and stored routines';
 }

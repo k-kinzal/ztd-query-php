@@ -30,10 +30,10 @@ final class TriviaScanner
     {
         $cursor = $scan->cursor;
         while (!$cursor->eof()) {
-            if ($cursor->match('\s+') !== null) {
+            if ($cursor->match(strtolower($scan->clientCharset ?? '') === 'latin1' ? '[\s\xA0]+' : '\s+') !== null) {
                 continue;
             }
-            if ($cursor->peek() === '#' || ($cursor->startsWith('--') && ($cursor->peek(2) === '' || \SqlParser\Lexer\Ascii::space($cursor->peek(2)) || \SqlParser\Lexer\Ascii::control($cursor->peek(2))))) {
+            if ($cursor->peek() === '#' || ($cursor->startsWith('--') && ($cursor->peek(2) === '' || \SqlParser\Lexer\Ascii::space($cursor->peek(2)) || \SqlParser\Lexer\Ascii::control($cursor->peek(2)) || (strtolower($scan->clientCharset ?? '') === 'latin1' && $cursor->peek(2) === "\xA0")))) {
                 $cursor->match('[^\n]*');
                 continue;
             }

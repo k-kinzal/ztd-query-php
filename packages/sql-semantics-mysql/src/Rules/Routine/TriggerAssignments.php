@@ -6,8 +6,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\ColumnResolver;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
@@ -38,7 +36,7 @@ use SqlSemantics\Statement\Reference\Column\MissingColumn;
 final class TriggerAssignments
 {
     /**
-     * Checks the items of a SET statement of a trigger body that assign to the NEW or OLD row.
+     * Resolves the columns of a SET statement of a trigger body that assign to the NEW row; the row rules themselves are the trigger's construction invariant (TriggerRows).
      */
     public function check(SetVariables $set, TriggerTime $time, TriggerEvent $event, Derivation $derivation, ProgramScope $scope): void
     {
@@ -46,17 +44,7 @@ final class TriggerAssignments
             if (!$item instanceof NameAssignment || $item->scope !== null || $item->qualifier === null) {
                 continue;
             }
-            $row = strtoupper($item->qualifier->value);
-            $problem = match (true) {
-                $row === 'OLD' => new ProgramProblem(ProgramRule::OldRowUpdate),
-                $row !== 'NEW' => null,
-                $event === TriggerEvent::Delete => new ProgramProblem(ProgramRule::NoNewRow),
-                $time === TriggerTime::After => new ProgramProblem(ProgramRule::AfterRowUpdate),
-                default => null,
-            };
-            if ($problem !== null) {
-                $derivation->report($problem);
-            } elseif ($row === 'NEW') {
+            if ((new TriggerRows())->assignment($item, $time, $event) === null && strtoupper($item->qualifier->value) === 'NEW') {
                 $resolution = (new ColumnResolver())->find($scope->environment, $item->name, new QualifiedName($item->qualifier));
                 if ($resolution instanceof MissingColumn) {
                     $derivation->report($resolution);

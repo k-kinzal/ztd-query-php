@@ -14,7 +14,9 @@ use SqlSemantics\Statement\Shape\RowShape;
  * The outcome of deriving a FROM clause term: its facts, the relations it makes visible and the columns `*` selects.
  *
  * Each star entry is the index of a visible relation and the position of a
- * slot in its shape, in the order `*` selects the columns.
+ * slot in its shape, in the order `*` selects the columns. A position past
+ * the slots of the shape selects an implicit slot, counted after them: an
+ * INVISIBLE column that a USING list merged.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -39,7 +41,7 @@ final class JoinedInput
     {
         $slots = [];
         foreach ($star as [$relation, $position]) {
-            $slots[] = $visible[$relation]->shape->slots[$position];
+            $slots[] = self::member($visible[$relation], $position);
         }
         $missing = [];
         foreach ($visible as $relation) {
@@ -56,7 +58,17 @@ final class JoinedInput
      */
     public function slot(array $entry): OutputSlot
     {
-        return $this->visible[$entry[0]]->shape->slots[$entry[1]];
+        return self::member($this->visible[$entry[0]], $entry[1]);
+    }
+
+    /**
+     * Answers the slot of a relation at a star position: a slot of its shape, or past them an implicit slot.
+     */
+    public static function member(VisibleRelation $relation, int $position): OutputSlot
+    {
+        $declared = count($relation->shape->slots);
+
+        return $position < $declared ? $relation->shape->slots[$position] : $relation->implicit[$position - $declared]->slot;
     }
 
     /**

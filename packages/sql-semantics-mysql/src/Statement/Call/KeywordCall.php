@@ -8,13 +8,17 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax;
+use SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of a built-in function whose name is a keyword and whose arguments are a plain list of expressions.
@@ -22,10 +26,11 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: MYSQL-KEYWORD-CALL-001. The function decides the argument counts
  * the grammar accepts and the result (MYSQL-CALL-RESULT-001); ADDDATE and
  * SUBDATE with a number of days are typed as a date plus or minus days.
- * GROUPING() yields 1 or 0 and is never NULL. The keyword is written against
+ * GROUPING() yields a bit per argument and its column can be NULL, as a live 8.4 server reports. The keyword is written against
  * its parenthesis, and the niladic functions are written with empty
  * parentheses, which the grammar accepts for every one of them; CURRENT_USER
- * keeps whether its optional parentheses are written.
+ * keeps whether its optional parentheses are written. MySQL 5.6 warns that OLD_PASSWORD() is
+ * deprecated.
  * Terminates: the arguments are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/built-in-function-reference.html.
  * Status: Implemented.
@@ -39,7 +44,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class KeywordCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The arguments in order
@@ -47,16 +53,24 @@ final class KeywordCall implements Scalar
     public readonly array $arguments;
 
     /**
+     * @param ?KeywordAlias $alias The selected synonym, or null for the canonical keyword
+     * @param ArgumentSyntax $syntax The separators naming or delimiting the arguments
      * @param KeywordFunction $function The function
      * @param list<Scalar> $arguments The arguments in order
      * @param OptionalWords $parentheses Whether the empty parentheses of CURRENT_USER are written; the other functions write their parentheses
      */
-    public function __construct(public readonly KeywordFunction $function, array $arguments, public readonly OptionalWords $parentheses = OptionalWords::Written)
+    public function __construct(public readonly KeywordFunction $function, array $arguments, public readonly OptionalWords $parentheses = OptionalWords::Written, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?KeywordAlias $alias = null, public readonly ArgumentSyntax $syntax = ArgumentSyntax::Commas)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Function arguments are expressions.');
+        Check::input($alias === null || $alias->function() === $function, 'A keyword synonym names the selected built-in function.');
+        Check::input($syntax === ArgumentSyntax::Commas || $function === KeywordFunction::Substring, 'Only SUBSTRING separates its arguments with FROM and FOR.');
         [$minimum, $maximum] = $function->arity();
         Check::input(count($arguments) >= $minimum && ($maximum === -1 || count($arguments) <= $maximum), 'The grammar does not accept this number of arguments for ' . $function->value . '.');
         Check::input($parentheses === OptionalWords::Written || $function === KeywordFunction::CurrentUser, 'Only CURRENT_USER is written without parentheses.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -64,16 +78,20 @@ final class KeywordCall implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->function === KeywordFunction::OldPassword) {
+            Deprecation::raise(Deprecated::OldPassword, $derivation);
+        }
+        Deprecation::spatial($this->function->value, $derivation);
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);
         }
         $typing = new ResultTyping();
         if ($this->function === KeywordFunction::AddDate || $this->function === KeywordFunction::SubDate) {
-            return new ScalarFact($typing->dateArithmetic($facts[0]->type, IntervalUnit::Day), $typing->nullability('Y', $facts));
+            return (new Results())->refine($this->function->value, $this->arguments, $facts, new ScalarFact($typing->dateArithmetic($facts[0]->type, IntervalUnit::Day), $typing->nullability('Y', $facts)), $derivation);
         }
 
-        return $typing->fact($this->function->result(), $facts);
+        return (new Results())->refine($this->function->value, $this->arguments, $facts, $typing->fact($this->function->result(), $facts), $derivation);
     }
 
     /**
@@ -81,9 +99,18 @@ final class KeywordCall implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value);
+        $out->keyword($this->alias === null ? $this->function->value : $this->alias->value);
         if ($this->parentheses === OptionalWords::Written) {
-            $out->glue()->symbol('(')->list($this->arguments)->symbol(')');
+            $out->glue()->symbol('(');
+            if ($this->syntax === ArgumentSyntax::FromFor) {
+                $out->node($this->arguments[0])->keyword('FROM')->node($this->arguments[1]);
+                if (isset($this->arguments[2])) {
+                    $out->keyword('FOR')->node($this->arguments[2]);
+                }
+            } else {
+                $out->list($this->arguments);
+            }
+            $out->symbol(')');
         }
     }
 }

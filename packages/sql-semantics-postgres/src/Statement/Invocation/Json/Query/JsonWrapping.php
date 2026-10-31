@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The wrapper clause of JSON_QUERY or of a JSON_TABLE column.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonWrapping implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param JsonWrapperKind $kind The wrapping written
      */
-    public function __construct(public readonly JsonWrapperKind $kind)
+    public function __construct(public readonly JsonWrapperKind $kind, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

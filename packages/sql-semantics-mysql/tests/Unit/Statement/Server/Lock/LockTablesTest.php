@@ -20,7 +20,7 @@ final class LockTablesTest extends TestCase
 {
     public function testRenderWritesTheLocks(): void
     {
-        self::assertSame('LOCK TABLES t READ, u WRITE', (new Semantics(Dialect::MySql))->analyze('lock table t read, u write')->toString());
+        self::assertSame('LOCK TABLE t READ, u WRITE', (new Semantics(Dialect::MySql))->analyze('lock table t read, u write')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
@@ -28,16 +28,24 @@ final class LockTablesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $lock = $semantics->analyze('LOCK TABLES t READ, u WRITE', [$table]);
-        self::assertInstanceOf(LockTables::class, $lock->statement);
+        self::assertInstanceOf(LockTables::class, $lock);
 
-        self::assertInstanceOf(DeclaredTable::class, $lock->facts->relation($lock->statement->locks[0])->table);
-        self::assertInstanceOf(MissingTable::class, $lock->facts->relation($lock->statement->locks[1])->table);
+        self::assertInstanceOf(DeclaredTable::class, $lock->locks[0]->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $lock->locks[1]->relationInformation()->table);
     }
 
-    public function testDeriveStatementReportsARepeatedAlias(): void
+    public function testDeriveStatementReportsAnAliasNamingAnEarlierTableOfTheCurrentDatabase(): void
     {
-        $lock = (new Semantics(Dialect::MySql))->analyze('LOCK TABLES t READ, u AS t WRITE');
+        $semantics = new Semantics(Dialect::MySql);
+        $lock = $semantics->analyze('LOCK TABLES pbt.t READ, u AS t WRITE', $semantics->context(searchPath: new \SqlSemantics\Contract\SearchPath('pbt')));
 
-        self::assertInstanceOf(NonUniqueTable::class, $lock->facts->diagnostics[0]);
+        self::assertInstanceOf(NonUniqueTable::class, $lock->diagnostics()[0]);
+    }
+
+    public function testDeriveStatementWarnsOfEachLowPriorityWriteIn57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        self::assertCount(2, $semantics->analyze('LOCK TABLES t LOW_PRIORITY WRITE, t AS u LOW_PRIORITY WRITE, t AS v READ')->warnings());
     }
 }

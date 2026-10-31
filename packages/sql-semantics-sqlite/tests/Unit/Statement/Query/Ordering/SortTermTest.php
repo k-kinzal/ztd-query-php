@@ -19,7 +19,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(SortTerm::class)]
 #[Medium]
@@ -29,8 +28,8 @@ final class SortTermTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('select a from t order by a + 1 asc nulls first, b desc, a nulls last, b');
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        $terms = $query->statement->orderBy;
+        self::assertInstanceOf(Select::class, $query);
+        $terms = $query->orderBy;
         self::assertInstanceOf(Binary::class, $terms[0]->expression);
         self::assertSame(SortDirection::Ascending, $terms[0]->direction);
         self::assertSame(NullsOrder::First, $terms[0]->nulls);
@@ -47,7 +46,7 @@ final class SortTermTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $term = new SortTerm(new ColumnUse(new Name('a')), SortDirection::Descending, NullsOrder::Last);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new ColumnUse(new Name('a')))], new TableInput(new QualifiedName(new Name('t'))), null, [], null, [], [$term]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new ColumnUse(new Name('a')))], new TableInput(new QualifiedName(new Name('t'))), null, [], null, [], [$term]));
 
         self::assertSame('SELECT a FROM t ORDER BY a DESC NULLS LAST', $operation->toString());
     }

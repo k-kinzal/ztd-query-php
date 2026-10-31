@@ -31,20 +31,20 @@ final class TableProblemsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, a TEXT) STRICT', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testReportFindsAnUnknownOptionAndANonStandardStrictType(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a VARCHAR(10), b) STRICT, fast', []);
 
-        self::assertSame([UnknownTableOption::class, StrictTypeViolation::class, StrictTypeViolation::class], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic::class, $operation->facts->diagnostics));
+        self::assertSame([UnknownTableOption::class, StrictTypeViolation::class, StrictTypeViolation::class], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic::class, $operation->diagnostics()));
     }
 
     public function testReportFindsEveryPrimaryKeyFlaw(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $flaw = static fn (string $sql): ?PrimaryKeyFlaw => array_map(static fn (Diagnostic $diagnostic): ?PrimaryKeyFlaw => $diagnostic instanceof PrimaryKeyProblem ? $diagnostic->flaw : null, $semantics->analyze($sql, [])->facts->diagnostics)[0] ?? null;
+        $flaw = static fn (string $sql): ?PrimaryKeyFlaw => array_map(static fn (Diagnostic $diagnostic): ?PrimaryKeyFlaw => $diagnostic instanceof PrimaryKeyProblem ? $diagnostic->flaw : null, $semantics->analyze($sql, [])->diagnostics())[0] ?? null;
 
         self::assertSame(PrimaryKeyFlaw::Repeated, $flaw('CREATE TABLE t (a PRIMARY KEY, b PRIMARY KEY)'));
         self::assertSame(PrimaryKeyFlaw::MissingWithoutRowid, $flaw('CREATE TABLE t (a) WITHOUT ROWID'));
@@ -55,7 +55,7 @@ final class TableProblemsTest extends TestCase
     public function testGeneratedReportsAKeyColumnThatIsGeneratedAndATableWithoutAPlainColumn(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $problems = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->analyze($sql, [])->facts->diagnostics);
+        $problems = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->analyze($sql, [])->diagnostics());
 
         self::assertSame([['InPrimaryKey', 'b']], $problems('CREATE TABLE t (a, b AS (a) PRIMARY KEY)'));
         self::assertSame([['InPrimaryKey', 'c']], $problems('CREATE TABLE t (a, b AS (a), c AS (a), PRIMARY KEY (a, "c"))'));
@@ -67,9 +67,9 @@ final class TableProblemsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        self::assertInstanceOf(QualifiedTemporaryName::class, $semantics->analyze('CREATE TEMP TABLE main.t (a)')->facts->diagnostics[0]);
-        self::assertSame([], $semantics->analyze('CREATE TEMP TABLE TEMP.t (a)')->facts->diagnostics);
-        self::assertSame([], $semantics->analyze('CREATE TABLE main.t (a)')->facts->diagnostics);
+        self::assertInstanceOf(QualifiedTemporaryName::class, $semantics->analyze('CREATE TEMP TABLE main.t (a)')->diagnostics()[0]);
+        self::assertSame([], $semantics->analyze('CREATE TEMP TABLE TEMP.t (a)')->diagnostics());
+        self::assertSame([], $semantics->analyze('CREATE TABLE main.t (a)')->diagnostics());
     }
 
     public function testTemporaryReportsThroughTheDerivation(): void

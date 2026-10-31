@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Resolution\ImplicitSlot;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
@@ -50,5 +51,14 @@ final class JoinedInputTest extends TestCase
         $unnamed = new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new SessionState('character_set_client')]);
 
         self::assertFalse(JoinedInput::of([new VisibleRelation(new Dual(), new RowShape([$unnamed]))], [[0, 0]])->complete());
+    }
+
+    public function testMemberAnswersAnImplicitSlotPastTheSlotsOfTheShape(): void
+    {
+        $slot = new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull);
+        $hidden = new OutputSlot(new Name('e'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable);
+        $relation = new VisibleRelation(new Dual(), new RowShape([$slot]), null, null, [], [new ImplicitSlot([new Name('e')], $hidden)]);
+
+        self::assertSame([$slot, $hidden, [$hidden, $slot]], [JoinedInput::member($relation, 0), JoinedInput::member($relation, 1), JoinedInput::of([$relation], [[0, 1], [0, 0]])->fact->shape->slots]);
     }
 }

@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * NESTED [PATH] path [AS name] COLUMNS (…): columns read from the items a path yields within the row.
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonNestedColumns implements JsonTableColumn
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<JsonTableColumn> The nested columns in written order
@@ -37,7 +36,7 @@ final class JsonNestedColumns implements JsonTableColumn
      * @param list<JsonTableColumn> $columns The nested columns in written order; at least one
      * @param Name|null $pathName The name of the path
      */
-    public function __construct(public readonly StringConstant $path, array $columns, public readonly ?Name $pathName = null)
+    public function __construct(public readonly StringConstant $path, array $columns, public readonly ?Name $pathName = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, JsonTableColumn::class, 'NESTED holds at least one column.', 1);
     }

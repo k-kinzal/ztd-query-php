@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Window;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The frame of a window: its unit, its boundaries and its exclusion.
@@ -20,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading both ends of a frame
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT sum(a) OVER (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM t');
- *     $query->statement->columns[0]->expression->over->frame->end->kind // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::CurrentRow
+ *     $query->columns[0]->expression->over->frame->end->kind // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::CurrentRow
  * @example Refusing a start the grammar does not admit
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\Frame(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit::Rows, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::UnboundedFollowing)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing an end at unbounded preceding
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Frame implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FrameUnit $unit The unit
@@ -36,7 +35,7 @@ final class Frame implements Node
      * @param FrameBound|null $end The end boundary of the BETWEEN form
      * @param FrameExclusion|null $exclusion The written exclusion
      */
-    public function __construct(public readonly FrameUnit $unit, public readonly FrameBound $start, public readonly ?FrameBound $end = null, public readonly ?FrameExclusion $exclusion = null)
+    public function __construct(public readonly FrameUnit $unit, public readonly FrameBound $start, public readonly ?FrameBound $end = null, public readonly ?FrameExclusion $exclusion = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($start->kind !== FrameBoundKind::UnboundedFollowing, 'A frame cannot start at UNBOUNDED FOLLOWING.');
         Check::input($end?->kind !== FrameBoundKind::UnboundedPreceding, 'A frame cannot end at UNBOUNDED PRECEDING.');

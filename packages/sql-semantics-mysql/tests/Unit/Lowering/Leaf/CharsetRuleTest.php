@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Leaf;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
@@ -19,6 +20,47 @@ use SqlSemantics\Platform\MySql\Platform;
 #[Medium]
 final class CharsetRuleTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerBinaryNames(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['BINARY', 'binary', '`binary`'] as $name) {
+                foreach ([
+                    "SELECT CONVERT('a' USING $name)",
+                    "SELECT CHAR(65 USING $name)",
+                    "SELECT CAST('a' AS CHAR CHARSET $name)",
+                    "SELECT CAST('a' AS CHAR CHARACTER SET $name)",
+                    "SELECT CAST('a' AS CHAR CHAR SET $name)",
+                    "CREATE TABLE t(a CHAR(5) CHARSET $name)",
+                    "CREATE TABLE t(a CHAR(5) BINARY CHARSET $name)",
+                    "CREATE TABLE t(a CHAR(5) CHARSET $name BINARY)",
+                    "SET NAMES $name",
+                    "SET CHARACTER SET $name",
+                    "SET CHARSET $name",
+                    "SET CHAR SET $name",
+                ] as $sql) {
+                    yield "$release->value: $sql" => [$release, $sql];
+                }
+                if (!in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                    yield "$release->value: COLLATE $name" => [$release, "SET NAMES binary COLLATE $name"];
+                }
+            }
+        }
+    }
+
+    #[DataProvider('providerBinaryNames')]
+    public function testReconstructsTheBinaryNameInItsCharsetAndCollationRoles(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        self::assertSame($formatter->format($sql), $formatter->format($semantics->analyze($sql)->toString()));
+    }
+
     public function testNameLowersANamedBinaryOrDefaultCharacterSet(): void
     {
         $platform = new Platform();

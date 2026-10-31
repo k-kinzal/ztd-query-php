@@ -22,7 +22,7 @@ final class ConditionDeclarationTest extends TestCase
     public function testRenderWritesTheNameAndTheErrorCode(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE gone CONDITION FOR 1051; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -45,7 +45,7 @@ final class ConditionDeclarationTest extends TestCase
      */
     public static function providerRenderWritesTheDeclaration(): iterable
     {
-        yield 'an SQLSTATE value in 5.6' => ['mysql-5.6.51', "create procedure p() begin declare e condition for sqlstate value '42S02'; end", "CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR SQLSTATE '42S02'; END"];
+        yield 'an SQLSTATE value in 5.6' => ['mysql-5.6.51', "create procedure p() begin declare e condition for sqlstate value '42S02'; end", "CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR SQLSTATE VALUE '42S02'; END"];
         yield 'an SQLSTATE value in 8.4' => ['mysql-8.4.7', "create procedure p() begin declare e condition for sqlstate '42S02'; end", "CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR SQLSTATE '42S02'; END"];
         yield 'an error code in 9.1' => ['mysql-9.1.0', 'create procedure p() begin declare `e x` condition for 1146; end', 'CREATE PROCEDURE p() BEGIN DECLARE `e x` CONDITION FOR 1146; END'];
     }

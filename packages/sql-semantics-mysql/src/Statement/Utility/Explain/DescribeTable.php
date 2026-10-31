@@ -10,11 +10,10 @@ use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DESCRIBE (DESC, EXPLAIN) with a table: the columns of a table or view, as SHOW COLUMNS reports them.
@@ -23,25 +22,29 @@ use SqlSemantics\Statement\Statement;
  * A column written after the table is a LIKE pattern the column names
  * must match, written as a name or as a string. The columns are those of
  * SHOW COLUMNS in the layout of MYSQL-SHOW-ROWS-001. DESCRIBE, DESC and
- * EXPLAIN are the same keyword (UtilityNoise); the writer emits DESCRIBE.
+ * EXPLAIN select the same operation; the command choice remains explicit.
  * Terminates: a fixed layout.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/explain.html. Status: Implemented.
  *
  * @visibility public
  * @example Reading a column pattern
  *     $describe = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("DESC t 'a%'");
- *     [$describe->statement->column?->value, $describe->field(0)->name?->value, $describe->toString()] // => ['a%', 'Field', "DESCRIBE t 'a%'"]
+ *     [$describe->column?->value, $describe->field(0)->name?->value, $describe->toString()] // => ['a%', 'Field', "DESC t 'a%'"]
  */
-final class DescribeTable implements Statement
+final class DescribeTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param InspectedTable $table The table
      * @param Name|Text|null $column The pattern of the column names, written as a name or as a string
      */
-    public function __construct(public readonly InspectedTable $table, public readonly Name|Text|null $column = null)
+    public function __construct(public readonly InspectedTable $table, public readonly Name|Text|null $column = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ExplainVerb $verb = ExplainVerb::Describe)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -58,7 +61,7 @@ final class DescribeTable implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('DESCRIBE')->node($this->table);
+        $out->keyword($this->verb->value)->node($this->table);
         if ($this->column instanceof Name) {
             $out->name($this->column, NameUse::Column);
         } else {

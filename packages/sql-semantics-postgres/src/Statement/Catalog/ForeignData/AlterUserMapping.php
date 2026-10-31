@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,9 +25,9 @@ use SqlSemantics\Statement\Statement;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password 'x')");
  *     $operation->toString() // => "ALTER USER MAPPING FOR bob SERVER s OPTIONS (SET password 'x')"
  */
-final class AlterUserMapping implements Statement
+final class AlterUserMapping extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<AlteredOption> The options
@@ -40,8 +39,11 @@ final class AlterUserMapping implements Statement
      * @param Name $server The foreign server
      * @param list<AlteredOption> $options The options
      */
-    public function __construct(public readonly RoleSpec|MappingUser $user, public readonly Name $server, array $options)
+    public function __construct(public readonly RoleSpec|MappingUser $user, public readonly Name $server, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, AlteredOption::class, 'User mapping options are a list of options.', 1);
     }
 

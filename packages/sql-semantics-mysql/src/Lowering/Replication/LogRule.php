@@ -15,7 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Group\StopGroupReplication
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsBefore;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\PurgeLogsTo;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers PURGE BINARY LOGS, BINLOG and START and STOP GROUP_REPLICATION.
@@ -73,18 +73,43 @@ final class LogRule
             throw ImplementationGap::production($form);
         }
         $options = $this->lowering->form($form->node(1));
+        $master = false;
         if ($options->signature === 'purge_options: master_or_binary LOGS_SYM purge_option') {
-            $this->lowering->utility->binaryLogsWord($options->node(0));
+            $master = $this->lowering->utility->binaryLogsWord($options->node(0));
         } elseif ($options->signature !== 'purge_options: BINARY_SYM LOGS_SYM purge_option') {
             throw ImplementationGap::production($options);
         }
         $option = $this->lowering->form($options->node(2));
+        $rejected = (new SyntaxLogMoment())->rejected($option->node, $this->lowering->profile->grammar);
+        if ($rejected !== null) {
+            throw $rejected;
+        }
 
-        return match ($option->signature) {
-            'purge_option: TO_SYM TEXT_STRING_sys' => new PurgeLogsTo($this->lowering->literals->text($option->node(1))),
-            'purge_option: BEFORE_SYM expr' => new PurgeLogsBefore($this->lowering->expressions->expression($option->node(1))),
+        $statement = match ($option->signature) {
+            'purge_option: TO_SYM TEXT_STRING_sys' => new PurgeLogsTo($this->lowering->literals->text($option->node(1)), masterLogs: $master),
+            'purge_option: BEFORE_SYM expr' => $this->moment($option->node(1), $master),
             default => throw ImplementationGap::production($option),
         };
+        $notice = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::PurgeMasterLogs;
+        if ($master && $notice->warnedIn($this->lowering->profile->grammar)) {
+            $this->lowering->origins->notice($statement, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($notice), $options->node(0));
+        }
+
+        return $statement;
+    }
+
+    /**
+     * Retains the cutoff's role when it cannot be an ordinary scalar.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the cutoff requires deferred preparation
+     */
+    public function moment(Node $node, bool $master = false): PurgeLogsBefore
+    {
+        $moment = $this->lowering->expressions->operand($node);
+        if (!$moment instanceof \SqlSemantics\Statement\Scalar) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedPurgeOperand($moment, $master), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, false);
+        }
+        return new PurgeLogsBefore($moment, masterLogs: $master);
     }
 
     /**
@@ -146,6 +171,7 @@ final class LogRule
     /**
      * Lowers one option of START GROUP_REPLICATION.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a restricted credential string contains a line feed
      * @throws ImplementationGap When a production has no rule
      */
     public function option(Node $option): CredentialOption

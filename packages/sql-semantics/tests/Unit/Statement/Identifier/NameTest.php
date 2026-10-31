@@ -26,4 +26,17 @@ final class NameTest extends TestCase
 
         self::assertSame('SELECT a FROM `a b`, `c d`, `e f`', $operation->toString());
     }
+    public function testQuotedNameKeepsItsDecodedValueAndDelimiter(): void
+    {
+        $name = new Name('a`b', \SqlSemantics\Statement\Identifier\NameQuote::Backtick);
+        self::assertSame('a`b', $name->value);
+        self::assertSame(\SqlSemantics\Statement\Identifier\NameQuote::Backtick, $name->quote);
+    }
+
+    public function testBareNameCannotInjectTokens(): void
+    {
+        $this->expectExceptionMessage('A bare identifier contains only identifier characters.');
+        new Name('a; SELECT 1', \SqlSemantics\Statement\Identifier\NameQuote::Bare);
+    }
+
 }

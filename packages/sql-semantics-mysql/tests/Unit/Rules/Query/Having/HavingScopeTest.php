@@ -45,20 +45,24 @@ final class HavingScopeTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
         $plain = $semantics->analyze('SELECT a AS x FROM t GROUP BY x HAVING a > 0', [$table]);
         $rollup = $semantics->analyze('SELECT a AS x FROM t GROUP BY x WITH ROLLUP HAVING a > 0', [$table]);
-        $plainSelect = $plain->statement;
-        $rollupSelect = $rollup->statement;
+        $plainSelect = $plain;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $plainSelect);
+        $plainSelect = $plainSelect->query;
+        $rollupSelect = $rollup;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $rollupSelect);
+        $rollupSelect = $rollupSelect->query;
         self::assertInstanceOf(Select::class, $plainSelect);
         self::assertInstanceOf(Select::class, $rollupSelect);
         self::assertInstanceOf(Comparison::class, $plainSelect->having);
         self::assertInstanceOf(Comparison::class, $rollupSelect->having);
-        $plainFact = $plain->facts->scalar($plainSelect->having->left);
-        $rollupFact = $rollup->facts->scalar($rollupSelect->having->left);
+        $plainFact = $plainSelect->having->left->scalarInformation();
+        $rollupFact = $rollupSelect->having->left->scalarInformation();
 
         self::assertInstanceOf(ResolvedColumn::class, $plainFact->resolution);
         self::assertSame(Nullability::NotNull, $plainFact->nullability);
         self::assertInstanceOf(ResolvedColumn::class, $rollupFact->resolution);
         self::assertSame(Nullability::Nullable, $rollupFact->nullability);
-        self::assertSame([], $rollup->facts->diagnostics);
+        self::assertSame([], $rollup->diagnostics());
     }
 
     public function testUndecidedAnswersTheColumnsOfIncompletelyKnownOccurrences(): void
@@ -67,25 +71,31 @@ final class HavingScopeTest extends TestCase
         $grouped = $semantics->analyze('SELECT 1 FROM u GROUP BY c HAVING c > 0');
         $selected = $semantics->analyze('SELECT a AS x FROM u HAVING a > 0');
         $missing = $semantics->analyze('SELECT a AS x FROM u HAVING b > 0');
-        $groupedSelect = $grouped->statement;
-        $selectedSelect = $selected->statement;
+        $groupedSelect = $grouped;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $groupedSelect);
+        $groupedSelect = $groupedSelect->query;
+        $selectedSelect = $selected;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $selectedSelect);
+        $selectedSelect = $selectedSelect->query;
         self::assertInstanceOf(Select::class, $groupedSelect);
         self::assertInstanceOf(Select::class, $selectedSelect);
         self::assertInstanceOf(Comparison::class, $groupedSelect->having);
         self::assertInstanceOf(Comparison::class, $selectedSelect->having);
 
-        self::assertInstanceOf(ConditionalColumn::class, $grouped->facts->scalar($groupedSelect->having->left)->resolution);
-        self::assertInstanceOf(ConditionalColumn::class, $selected->facts->scalar($selectedSelect->having->left)->resolution);
-        self::assertSame([], $grouped->facts->diagnostics);
-        self::assertCount(1, $missing->facts->diagnostics);
+        self::assertInstanceOf(ConditionalColumn::class, $groupedSelect->having->left->scalarInformation()->resolution);
+        self::assertInstanceOf(ConditionalColumn::class, $selectedSelect->having->left->scalarInformation()->resolution);
+        self::assertSame([], $grouped->diagnostics());
+        self::assertCount(1, $missing->diagnostics());
         self::assertSame([], (new HavingScope())->undecided([], []));
     }
 
     public function testLeaveLetsTheArgumentsOfASetFunctionSeeTheColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
-        $select = $operation->statement;
+        $operation = $semantics->analyze('SELECT MAX(a) FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
         $maximum = $select->having->left;
@@ -93,10 +103,22 @@ final class HavingScopeTest extends TestCase
         $platform = new Platform();
         $environment = (new Derivation($platform->context($platform->profile(null, null, ParameterStyle::Native), null, [], false)))->environment();
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($maximum->arguments[0])->resolution);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(ResolvedColumn::class, $maximum->arguments[0]->scalarInformation()->resolution);
         self::assertSame($environment, (new HavingScope())->leave($environment));
         self::assertSame([], (new HavingScope())->leave((new HavingScope())->enter($environment, new GroupedRow([], [], true)))->relations);
+    }
+
+    public function testArgumentsMarksTheInputPositionAndRemovesItsHavingResult(): void
+    {
+        $context = (new Semantics(Dialect::MySql))->context([]);
+        $environment = (new HavingScope())->enter(new \SqlSemantics\Resolution\Environment($context), new GroupedRow([], [], true));
+        $arguments = (new HavingScope())->arguments($environment);
+
+        self::assertTrue($arguments->aggregateArgument);
+        self::assertFalse($environment->aggregateArgument);
+        self::assertSame([], $arguments->relations);
+        self::assertSame($context, $arguments->context);
     }
 
     public function testRowAnswersTheGroupedRowOfAHavingEnvironmentOnly(): void

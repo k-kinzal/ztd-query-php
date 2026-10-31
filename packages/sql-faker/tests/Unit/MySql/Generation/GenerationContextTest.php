@@ -80,6 +80,7 @@ use SqlFaker\MySql\Generation\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\LexicalGrammar::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\IntegerToken::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\StartRuleResolver::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule::class)]
 #[UsesClass(\SqlFaker\Generation\Lexeme\LexemeBoundary::class)]

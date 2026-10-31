@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -41,9 +40,9 @@ use SqlSemantics\Statement\Statement;
  *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE VIEW v (one, two) AS SELECT 1, 2');
  *     [$view->declarations()[0]->columns[1]->name->value, $view->declarations()[0]->implicit] // => ['two', []]
  */
-final class CreateView implements Statement
+final class CreateView extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ListedColumn>|null The column list, or null when none is written
@@ -63,7 +62,12 @@ final class CreateView implements Statement
         ?array $columns = null,
         public readonly bool $temporary = false,
         public readonly bool $ifNotExists = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($name->catalog === null, 'A view name has at most a schema qualifier.');
         $this->columns = $columns === null ? null : Check::listOf($columns, ListedColumn::class, 'A written column list names at least one column.', 1);
     }
@@ -88,7 +92,7 @@ final class CreateView implements Statement
         if ($expected !== $returned) {
             $derivation->report(new ColumnCountMismatch($expected, $returned));
         }
-        $columns = (new QueryColumns())->viewColumns($this->query, $fact, $derivation->facts(), $listed, $derivation->context->columnNames, $expected === $returned);
+        $columns = (new QueryColumns())->viewColumns($this->query, $fact, $listed, $derivation->context->columnNames, $expected === $returned);
         $complete = $expected === $returned && count($columns) === ($listed === null ? $returned : count($listed)) && ($listed !== null || $fact->shape->complete());
         $derivation->declare(new Table((new TableDeclaration())->name($this->name, $this->temporary), $derivation->context->profile, $columns, [], $complete, RelationKind::View));
     }

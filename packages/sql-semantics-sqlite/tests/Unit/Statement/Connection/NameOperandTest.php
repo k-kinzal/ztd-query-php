@@ -23,14 +23,14 @@ final class NameOperandTest extends TestCase
     public function testDeriveScalarIsATextConstantAndNoColumnReference(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("ATTACH 'file.db' AS aux", []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Attach::class, $statement);
         self::assertInstanceOf(NameOperand::class, $statement->schema);
-        self::assertEquals(new Known(Storage::Text), $operation->facts->scalar($statement->schema)->type);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($statement->schema)->nullability);
-        self::assertNull($operation->facts->scalar($statement->schema)->resolution);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertEquals(new Known(Storage::Text), $statement->schema->scalarInformation()->type);
+        self::assertSame(Nullability::NotNull, $statement->schema->scalarInformation()->nullability);
+        self::assertNull($statement->schema->scalarInformation()->resolution);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheNameAsAnIdentifier(): void

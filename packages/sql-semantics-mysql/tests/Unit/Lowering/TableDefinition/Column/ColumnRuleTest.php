@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Dialect;
@@ -24,6 +23,17 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 #[Medium]
 final class ColumnRuleTest extends TestCase
 {
+    public function testSpecificationRefusesAnOutOfRangeTypeWithItsColumnIdentity(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TABLE d.t(c BIT(65))');
+            self::fail('The bit width exceeds 64.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize::class, $failure->problem);
+            self::assertSame('c', $failure->problem->name);
+        }
+    }
+
     public function testSpecificationLowersAGeneratedColumn(): void
     {
         $platform = new Platform();
@@ -34,7 +44,7 @@ final class ColumnRuleTest extends TestCase
         self::assertInstanceOf(GeneratedColumn::class, (new ColumnRule($lowering))->specification($node));
     }
 
-    public function testSpecificationLowersALegacyTypeAndAttributes(): void
+    public function testOrdinaryLowersALegacyTypeAndAttributes(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('5.6.51', null, ParameterStyle::Native);
@@ -44,6 +54,17 @@ final class ColumnRuleTest extends TestCase
 
         self::assertInstanceOf(OrdinaryColumn::class, $specification);
         self::assertCount(1, $specification->attributes);
+    }
+
+    public function testSpecificationRetainsATypeContradictionWithItsColumnIdentity(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE d.t MODIFY c BIT AUTO_INCREMENT');
+        $conditions = array_values(array_filter($operation->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute));
+        self::assertCount(1, $conditions);
+        self::assertSame('c', $conditions[0]->column->value);
+        self::assertSame('d', $conditions[0]->scope?->schema?->value);
+        self::assertSame('AUTO_INCREMENT', $conditions[0]->attribute);
+        self::assertSame('ALTER TABLE d.t MODIFY c BIT AUTO_INCREMENT', $operation->toString());
     }
 
     public function testAttributesLowersTheListInOrder(): void
@@ -56,42 +77,39 @@ final class ColumnRuleTest extends TestCase
         self::assertCount(3, (new ColumnRule($lowering))->attributes($node));
     }
 
-    public function testSpecificationRefusesAnAttributeOfAGeneratedColumn(): void
+    public function testSpecificationRetainsAnAttributeOfAGeneratedColumn(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT, g INT AS (a) NOT NULL DEFAULT 1)')->find('field_def')[1];
 
-        $this->expectException(AnalysisException::class);
-        $this->expectExceptionMessage('Incorrect usage of DEFAULT and generated column');
-
-        (new ColumnRule($lowering))->specification($node);
+        $specification = (new ColumnRule($lowering))->specification($node);
+        self::assertInstanceOf(GeneratedColumn::class, $specification);
+        self::assertCount(2, $specification->attributes);
     }
 
-    public function testRefuseNamesTheFirstRefusedAttribute(): void
+    public function testSpecificationReportsTheFirstIncompatibleAttribute(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        $this->expectException(AnalysisException::class);
-        $this->expectExceptionMessage('Incorrect usage of COLUMN_FORMAT and generated column');
-
-        $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
+        $statement = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
+        $conditions = array_values(array_filter($statement->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute));
+        self::assertSame('Incorrect usage of COLUMN_FORMAT and generated column', $conditions[0]->message());
     }
 
-    public function testRefuseNamesTheTypeSerial(): void
+    public function testSpecificationReportsTheTypeSerial(): void
     {
-        $this->expectException(AnalysisException::class);
-        $this->expectExceptionMessage('Incorrect usage of SERIAL and generated column');
-
-        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+        $statement = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+        $conditions = array_values(array_filter($statement->diagnostics(), static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute));
+        self::assertSame('Incorrect usage of SERIAL and generated column', $conditions[0]->message());
     }
 
-    public function testRefuseAcceptsTheOtherAttributes(): void
+    public function testSpecificationAcceptsTheOtherAttributes(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testAlwaysAcceptsTheOptionalWords(): void
@@ -127,13 +145,16 @@ final class ColumnRuleTest extends TestCase
         self::assertInstanceOf(NumberLiteral::class, (new ColumnRule($lowering))->expression($node));
     }
 
-    public function testParseLowersParseGcolExpr(): void
+    public function testParseRefusesAnInternalEntryInsteadOfPublishingAStatement(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('PARSE_GCOL_EXPR(1)')->find('parse_gcol_expr')[0];
 
-        self::assertInstanceOf(NumberLiteral::class, (new ColumnRule($lowering))->parse($node)->expression);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('PARSE_GCOL_EXPR is not a client statement.');
+
+        (new ColumnRule($lowering))->parse($node);
     }
 }

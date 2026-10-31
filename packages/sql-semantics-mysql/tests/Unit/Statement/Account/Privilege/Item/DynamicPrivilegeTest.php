@@ -17,6 +17,6 @@ final class DynamicPrivilegeTest extends TestCase
 {
     public function testRenderWritesTheNameAndColumns(): void
     {
-        self::assertSame('GRANT XA_RECOVER_ADMIN (c) ON *.* TO u', (new Semantics(Dialect::MySql))->analyze("grant 'XA_RECOVER_ADMIN' (c) on *.* to u")->toString());
+        self::assertSame('GRANT \'XA_RECOVER_ADMIN\' (c) ON *.* TO u', (new Semantics(Dialect::MySql))->analyze("grant 'XA_RECOVER_ADMIN' (c) on *.* to u")->toString());
     }
 }

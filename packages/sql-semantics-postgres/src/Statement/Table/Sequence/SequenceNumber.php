@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A sequence option with a number: CACHE, INCREMENT, MAXVALUE, MINVALUE, START or RESTART.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a numeric option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SEQUENCE s START WITH -5');
- *     [$create->statement->options[0]->kind, $create->statement->options[0]->value->negative, $create->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceNumberKind::Start, true, 'CREATE SEQUENCE s START - 5']
+ *     [$create->options[0]->kind, $create->options[0]->value->negative, $create->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceNumberKind::Start, true, 'CREATE SEQUENCE s START - 5']
  */
 final class SequenceNumber implements SequenceOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SequenceNumberKind $kind The option
      * @param SignedNumber $value The number
      */
-    public function __construct(public readonly SequenceNumberKind $kind, public readonly SignedNumber $value)
+    public function __construct(public readonly SequenceNumberKind $kind, public readonly SignedNumber $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

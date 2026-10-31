@@ -43,16 +43,16 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1 + 2) * 3, ((4))');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[1]);
-        $product = $operation->statement->columns[0]->expression;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[1]);
+        $product = $operation->columns[0]->expression;
         self::assertInstanceOf(Binary::class, $product);
         self::assertSame(BinaryOperator::Multiply, $product->operator);
         self::assertInstanceOf(Grouped::class, $product->left);
         self::assertInstanceOf(Binary::class, $product->left->operand);
         self::assertSame(BinaryOperator::Add, $product->left->operand->operator);
-        $twice = $operation->statement->columns[1]->expression;
+        $twice = $operation->columns[1]->expression;
         self::assertInstanceOf(Grouped::class, $twice);
         self::assertInstanceOf(Grouped::class, $twice->operand);
         self::assertInstanceOf(IntegerLiteral::class, $twice->operand->operand);
@@ -63,14 +63,14 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a COLLATE nocase, CAST(a AS TEXT), (1, 'x') = (2, 'y') FROM t");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([Collate::class, Cast::class, Binary::class], array_map(static function (object $column): string {
             self::assertInstanceOf(ResultColumn::class, $column);
 
             return $column->expression::class;
-        }, $operation->statement->columns));
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[2]);
-        $comparison = $operation->statement->columns[2]->expression;
+        }, $operation->columns));
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[2]);
+        $comparison = $operation->columns[2]->expression;
         self::assertInstanceOf(Binary::class, $comparison);
         self::assertInstanceOf(RowExpression::class, $comparison->left);
         self::assertCount(2, $comparison->left->items);
@@ -82,13 +82,13 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT 1), EXISTS (SELECT 1 FROM t)');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[1]);
-        self::assertInstanceOf(ScalarSubquery::class, $operation->statement->columns[0]->expression);
-        self::assertInstanceOf(Select::class, $operation->statement->columns[0]->expression->query);
-        self::assertInstanceOf(Exists::class, $operation->statement->columns[1]->expression);
-        self::assertInstanceOf(Select::class, $operation->statement->columns[1]->expression->query);
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[1]);
+        self::assertInstanceOf(ScalarSubquery::class, $operation->columns[0]->expression);
+        self::assertInstanceOf(Select::class, $operation->columns[0]->expression->query);
+        self::assertInstanceOf(Exists::class, $operation->columns[1]->expression);
+        self::assertInstanceOf(Select::class, $operation->columns[1]->expression->query);
         self::assertSame('SELECT (SELECT 1), EXISTS (SELECT 1 FROM t)', $operation->toString());
     }
 
@@ -96,8 +96,8 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("CREATE TRIGGER tr INSERT ON t BEGIN SELECT RAISE(IGNORE), RAISE(ABORT, 'no'); END");
 
-        self::assertInstanceOf(CreateTrigger::class, $operation->statement);
-        $select = $operation->statement->steps[0];
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        $select = $operation->steps[0];
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(ResultColumn::class, $select->columns[0]);
         self::assertInstanceOf(ResultColumn::class, $select->columns[1]);
@@ -117,22 +117,22 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 7');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(IntegerLiteral::class, $operation->statement->columns[0]->expression);
-        self::assertSame('7', $operation->statement->columns[0]->expression->digits);
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(IntegerLiteral::class, $operation->columns[0]->expression);
+        self::assertSame('7', $operation->columns[0]->expression->digits);
     }
 
     public function testWordLowersAnUnqualifiedWordByHowItIsWritten(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT "w" AS c1, TRUE AS c2, false AS c3, a AS c4, [true] AS c5, `false` AS c6 FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         $expressions = array_map(static function (object $column): object {
             self::assertInstanceOf(ResultColumn::class, $column);
 
             return $column->expression;
-        }, $operation->statement->columns);
+        }, $operation->columns);
         self::assertInstanceOf(DoubleQuotedWord::class, $expressions[0]);
         self::assertSame('w', $expressions[0]->word->value);
         self::assertInstanceOf(TruthWord::class, $expressions[1]);
@@ -152,11 +152,11 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT t.a, main.t.b FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[1]);
-        $table = $operation->statement->columns[0]->expression;
-        $schema = $operation->statement->columns[1]->expression;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[1]);
+        $table = $operation->columns[0]->expression;
+        $schema = $operation->columns[1]->expression;
         self::assertInstanceOf(ColumnUse::class, $table);
         self::assertInstanceOf(ColumnUse::class, $schema);
         self::assertSame('a', $table->name->value);
@@ -172,13 +172,13 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT ?, ?1, :x, @y, $z');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([[ParameterPrefix::Question, ''], [ParameterPrefix::Question, '1'], [ParameterPrefix::Colon, 'x'], [ParameterPrefix::At, 'y'], [ParameterPrefix::Dollar, 'z']], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(BindParameter::class, $column->expression);
 
             return [$column->expression->prefix, $column->expression->label];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT ?, ?1, :x, @y, $z', $operation->toString());
     }
 
@@ -186,11 +186,11 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CASE a WHEN 1 THEN 2 WHEN 3 THEN 4 ELSE 5 END, CASE WHEN a THEN 1 END FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[1]);
-        $full = $operation->statement->columns[0]->expression;
-        $bare = $operation->statement->columns[1]->expression;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[1]);
+        $full = $operation->columns[0]->expression;
+        $bare = $operation->columns[1]->expression;
         self::assertInstanceOf(CaseExpression::class, $full);
         self::assertInstanceOf(CaseExpression::class, $bare);
         self::assertInstanceOf(ColumnUse::class, $full->base);
@@ -210,42 +210,42 @@ final class ExpressionRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT random(), max(1, 2, 3)');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([0, 3], array_map(static function (object $column): int {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(FunctionCall::class, $column->expression);
 
             return count($column->expression->arguments);
-        }, $operation->statement->columns));
+        }, $operation->columns));
     }
 
     public function testItemsLowersTheExpressionsOfARowInWrittenOrder(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("VALUES (1, 'two', 3.0)");
 
-        self::assertInstanceOf(ValuesClause::class, $operation->statement);
-        self::assertSame([IntegerLiteral::class, TextLiteral::class, 'SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\RealLiteral'], array_map(static fn (object $value): string => $value::class, $operation->statement->rows[0]->values));
+        self::assertInstanceOf(ValuesClause::class, $operation);
+        self::assertSame([IntegerLiteral::class, TextLiteral::class, 'SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\RealLiteral'], array_map(static fn (object $value): string => $value::class, $operation->rows[0]->values));
     }
 
     public function testOptionalListIsNullWithoutParenthesesAfterATableValuedIn(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a IN t, a IN f(), a IN f(1, 2) FROM u');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([null, 0, 2], array_map(static function (object $column): ?int {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(InTable::class, $column->expression);
 
             return $column->expression->arguments === null ? null : count($column->expression->arguments);
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT a IN t, a IN f(), a IN f(1, 2) FROM u', $operation->toString());
     }
 
     public function testWhereIsNullWithoutTheClause(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('SELECT 1 FROM t')->statement;
-        $filtered = $semantics->analyze('SELECT 1 FROM t WHERE a = 1')->statement;
+        $bare = $semantics->analyze('SELECT 1 FROM t');
+        $filtered = $semantics->analyze('SELECT 1 FROM t WHERE a = 1');
 
         self::assertInstanceOf(Select::class, $bare);
         self::assertInstanceOf(Select::class, $filtered);

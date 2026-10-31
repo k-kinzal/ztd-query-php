@@ -39,9 +39,9 @@ final class MisuseRuleTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze($sql);
 
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame($rule, $query->facts->diagnostics[0]->rule);
-        self::assertSame($rule->value, $query->facts->diagnostics[0]->message());
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame($rule, $query->diagnostics()[0]->rule);
+        self::assertSame($rule->value, $query->diagnostics()[0]->message());
     }
 
     public function testCasesCarryTheWordsOfSqlite(): void

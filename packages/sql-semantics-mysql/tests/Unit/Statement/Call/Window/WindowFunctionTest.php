@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
@@ -18,16 +20,37 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(WindowFunction::class)]
 #[Small]
 final class WindowFunctionTest extends TestCase
 {
+    public function testDeriveScalarKeepsTheTypeBeforeWindowMaterialization(): void
+    {
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT FIRST_VALUE(10) OVER ()');
+        $expression = $query->field(0)->expression;
+        self::assertNotNull($expression);
+        $fact = $expression->scalarInformation();
+
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 3)), $fact->type);
+        self::assertEquals($fact->type, $query->field(0)->type);
+    }
+
+    public function testDeriveScalarFeedsItsLogicalTypeToParentExpressions(): void
+    {
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT COALESCE(FIRST_VALUE(NULL) OVER (),1)');
+
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 2)), $query->field(0)->type);
+    }
+
     public function testDeriveScalarDerivesTheArgumentsAndTheWindow(): void
     {
         $platform = new Platform();
@@ -49,5 +72,52 @@ final class WindowFunctionTest extends TestCase
         self::assertSame('NTH_VALUE(a, 2) FROM FIRST RESPECT NULLS OVER w', (new Lexical())->join($out->pieces()));
     }
 
+    public function testDeriveScalarResolvesTheLogicalTypeBeforeWindowStorage(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
+        $query = $semantics->analyze('SELECT ROW_NUMBER() OVER (), FIRST_VALUE(a) OVER (), LAG(a, 1, a) OVER () FROM t', [$table]);
+
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 21, true)), new Known(Domain::integer(Field::Long, 11))], [$query->field(0)->type, $query->field(1)->type]);
+        self::assertSame([Nullability::NotNull, Nullability::Nullable, Nullability::NotNull], [$query->field(0)->nullability, $query->field(1)->nullability, $query->field(2)->nullability]);
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['1.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['1e0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['18446744073709551616'])]
+    public function testValueRejectsANumericTokenOutsideTheCountGrammar(string $text): void
+    {
+        $this->expectExceptionMessage('A window count or offset literal is an unsigned 64-bit integer token.');
+        new WindowFunction(WindowFunctionKind::Tile, [new NumberLiteral($text)], new WindowSpec());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['0001'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['9223372036854775807'])]
+    public function testValueRetainsTheSignedOffsetDomain(string $text): void
+    {
+        $call = new WindowFunction(WindowFunctionKind::Lag, [new NumberLiteral('1'), new NumberLiteral($text)], new WindowSpec());
+        self::assertInstanceOf(NumberLiteral::class, $call->arguments[1]);
+        self::assertSame($text, $call->arguments[1]->text);
+    }
+
+    public function testValueRejectsUnsupportedNullTreatment(): void
+    {
+        $this->expectExceptionMessage('An ordinary window call cannot use an unsupported option: IGNORE NULLS.');
+        new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new WindowSpec(), NullTreatment::Ignore);
+    }
+
+    public function testValueRejectsAnUnsupportedCountingEdge(): void
+    {
+        $this->expectExceptionMessage('An ordinary window call cannot use an unsupported option: FROM LAST.');
+        new WindowFunction(WindowFunctionKind::NthValue, [new NumberLiteral('1'), new NumberLiteral('2')], new WindowSpec(), edge: CountingEdge::Last);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['9223372036854775808'])]
+    public function testValueRejectsALiteralOutsideTheBucketCountDomain(string $text): void
+    {
+        $this->expectExceptionMessage('An ordinary window count or offset literal belongs to its signed integer domain.');
+        new WindowFunction(WindowFunctionKind::Tile, [new NumberLiteral($text)], new WindowSpec());
+    }
 
 }

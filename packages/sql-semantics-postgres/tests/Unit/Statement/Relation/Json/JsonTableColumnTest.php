@@ -16,7 +16,7 @@ final class JsonTableColumnTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' AS p PASSING 1 AS x COLUMNS (n FOR ORDINALITY, v integer PATH '\$.v' NULL ON EMPTY, f jsonb FORMAT JSON PATH '\$.f' WITH WRAPPER, e boolean EXISTS PATH '\$.e' ERROR ON ERROR, NESTED '\$.b[*]' AS q COLUMNS (b text)) ERROR ON ERROR) AS j");
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $from = $select->from;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Relation\Json\JsonTable::class, $from);

@@ -17,12 +17,12 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 #[Medium]
 final class SridAttributeTest extends TestCase
 {
-    public function testDeriveAttributeDerivesNothing(): void
+    public function testDeriveAttributeAcceptsAKnownRestriction(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4326)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
@@ -36,4 +36,23 @@ final class SridAttributeTest extends TestCase
     {
         self::assertSame('CREATE TABLE t (g POINT SRID 4326)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4326)')->toString());
     }
+    public function testDeriveAttributeRetainsAnIntrinsicRangeViolation(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4294967296)');
+        self::assertSame('CREATE TABLE t (g POINT SRID 4294967296)', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange::class, $statement->diagnostics()[0]);
+    }
+
+    public function testAcceptsBothBoundsWithoutRequiringACatalog(): void
+    {
+        self::assertSame('0', (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')))->srid->text);
+        self::assertSame('FFFFFFFF', (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('FFFFFFFF', true)))->srid->text);
+    }
+    public function testProblemDistinguishesTokenAndColumnRanges(): void
+    {
+        self::assertNull((new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0')))->problem());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1e2')))->problem());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Column\SridRange::class, (new SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4294967296')))->problem());
+    }
+
 }

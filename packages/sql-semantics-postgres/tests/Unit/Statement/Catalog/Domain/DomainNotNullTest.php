@@ -19,6 +19,6 @@ final class DomainNotNullTest extends TestCase
 
     public function testDeriveClauseReportsNotValid(): void
     {
-        self::assertSame('NOT NULL constraints cannot be marked NOT VALID', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD NOT NULL NOT VALID')->facts->diagnostics[0]->message());
+        self::assertSame('NOT NULL constraints cannot be marked NOT VALID', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD NOT NULL NOT VALID')->diagnostics()[0]->message());
     }
 }

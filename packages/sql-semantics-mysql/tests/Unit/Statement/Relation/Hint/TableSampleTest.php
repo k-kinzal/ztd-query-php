@@ -32,10 +32,11 @@ final class TableSampleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT a FROM t TABLESAMPLE BERNOULLI (10)');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableReference::class, $operation->statement->from);
-        self::assertNotNull($operation->statement->from->sample);
-        self::assertInstanceOf(Known::class, $operation->facts->scalar($operation->statement->from->sample->percentage)->type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableReference::class, $operation->query->from);
+        self::assertNotNull($operation->query->from->sample);
+        self::assertInstanceOf(Known::class, $operation->query->from->sample->percentage->scalarInformation()->type);
     }
 
     public function testAnExpressionAsThePercentageIsRejected(): void

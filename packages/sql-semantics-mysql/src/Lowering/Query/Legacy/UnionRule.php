@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ExpressionRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
-use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
@@ -59,15 +58,15 @@ final class UnionRule
     }
 
     /**
-     * Lowers one operand of a statement-level union and answers it with the node of the union that follows it.
+     * Lowers one operand of a statement-level union and answers it with the node of the union that follows it and the offset the operand starts at.
      *
-     * @return array{Block|Query, Node}
+     * @return array{Block|Query, Node, int}
      * @throws ImplementationGap When a production has no rule
      */
     public function operand(Node $init): array
     {
         $form = $this->lowering->form($init);
-        $blocks = new BlockRule($this->lowering);
+        $start = (new \SqlSemantics\Construction\SourceRanges())->span($init)[0] ?? 0;
         switch ($form->signature) {
             case 'select_init: SELECT_SYM select_init2':
                 $second = $this->lowering->form($form->node(1));
@@ -75,14 +74,29 @@ final class UnionRule
                     throw ImplementationGap::production($second);
                 }
 
-                return [$blocks->part($second->node(0)), $second->node(1)];
+                return [$this->retained($second->node(0), $this->lowering->hints($form->token(0))), $second->node(1), $start];
             case 'select_init: ( select_paren ) union_opt':
-                return [new ParenthesizedQuery($this->paren($form->node(1))), $form->node(3)];
+                return [new ParenthesizedQuery($this->paren($form->node(1))), $form->node(3), $start];
             case 'select_init: SELECT_SYM select_part2 opt_union_clause':
-                return [$blocks->part($form->node(1)), $form->node(2)];
+                return [$this->retained($form->node(1), $this->lowering->hints($form->token(0))), $form->node(2), $start];
             default:
                 throw ImplementationGap::production($form);
         }
+    }
+
+    /**
+     * Retains complete deferred SELECT operands before assigning their tail to a UNION.
+     * Deferred sort operands remain with their separate ordering interpretation.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint> $hints The SELECT hints
+     */
+    public function retained(Node $part, array $hints): Block|Query
+    {
+        $selection = $hints === [] ? (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredSelections($this->lowering))->block($part) : null;
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            return new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        }
+        return ($selection instanceof Block ? $selection : (new BlockRule($this->lowering))->part($part))->hinted($hints);
     }
 
     /**
@@ -95,7 +109,7 @@ final class UnionRule
         $form = $this->lowering->form($paren);
 
         return match ($form->signature) {
-            'select_paren: SELECT_SYM select_part2' => (new BlockRule($this->lowering))->part($form->node(1))->select(),
+            'select_paren: SELECT_SYM select_part2' => $this->chain($this->retained($form->node(1), $this->lowering->hints($form->token(0))), null),
             'select_paren: ( select_paren )', 'create_view_select_paren: ( create_view_select_paren )' => new ParenthesizedQuery($this->paren($form->node(1))),
             'create_view_select_paren: create_view_select' => $this->view($form->node(0))->select(),
             default => throw ImplementationGap::production($form),
@@ -129,8 +143,14 @@ final class UnionRule
                         throw ImplementationGap::production($list);
                     }
                     $quantifiers[] = $expressions->quantifier($list->node(1));
-                    [$operand, $union] = $this->operand($list->node(2));
-                    $operands[] = [$operand, new Trailer()];
+                    $previous = $this->lowering->operand;
+                    $this->lowering->operand = true;
+                    try {
+                        [$operand, $union, $start] = $this->operand($list->node(2));
+                    } finally {
+                        $this->lowering->operand = $previous;
+                    }
+                    $operands[] = [$operand, new Trailer(), $start];
                     break;
                 case 'union_opt: union_order_or_limit':
                     $trailer = $this->ordering($form->node(0));
@@ -157,7 +177,7 @@ final class UnionRule
         return match ($form->signature) {
             'opt_union_order_or_limit:' => new Trailer(),
             'opt_union_order_or_limit: union_order_or_limit', 'union_order_or_limit: order_or_limit' => $this->ordering($form->node(0)),
-            'order_or_limit: order_clause opt_limit_clause_init', 'order_or_limit: order_clause opt_limit_clause' => new Trailer((new ClauseRule($this->lowering))->ordering($form->node(0)), $tail->limit($form->node(1))),
+            'order_or_limit: order_clause opt_limit_clause_init', 'order_or_limit: order_clause opt_limit_clause' => new Trailer((new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\StoredClauses($this->lowering))->ordering($form->node(0)), $tail->limit($form->node(1))),
             'order_or_limit: limit_clause' => new Trailer([], $tail->limit($form->node(0))),
             default => throw ImplementationGap::production($form),
         };
@@ -191,6 +211,6 @@ final class UnionRule
             throw ImplementationGap::production($form);
         }
 
-        return (new BlockRule($this->lowering))->part($form->node(1));
+        return (new BlockRule($this->lowering))->part($form->node(1))->hinted($this->lowering->hints($form->token(0)));
     }
 }

@@ -20,7 +20,7 @@ final class AlterTableTest extends TestCase
         $statement = $semantics->analyze('ALTER TABLE t ADD d int CHECK (d > a), ALTER zz DROP NOT NULL', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testDeriveRelationResolvesTheTable(): void
@@ -29,9 +29,9 @@ final class AlterTableTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('ALTER TABLE t DROP b', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
-        $n2 = $statement->facts->relation($n1)->table;
+        $n2 = $n1->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n2);
         self::assertSame(true, $n2->table === $context[0]);
     }

@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -20,17 +19,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a RESET of a keyword form
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('RESET TIME ZONE');
- *     [$operation->statement->parameter->parameter(), $operation->toString()] // => ['timezone', 'RESET TIME ZONE']
+ *     [$operation->parameter->parameter(), $operation->toString()] // => ['timezone', 'RESET TIME ZONE']
  */
-final class Reset implements Statement
+final class Reset extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ParameterName|SpecialParameter $parameter The parameter, or the keywords that name one or all
      */
-    public function __construct(public readonly ParameterName|SpecialParameter $parameter)
+    public function __construct(public readonly ParameterName|SpecialParameter $parameter, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

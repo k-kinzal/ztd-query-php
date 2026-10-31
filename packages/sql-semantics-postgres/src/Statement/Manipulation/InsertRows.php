@@ -17,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An INSERT of rows written in VALUES.
@@ -30,13 +29,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the rows of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("INSERT INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) RETURNING a");
- *     [count($insert->statement->rows->rows()), count($insert->statement->returning), $insert->toString()] // => [2, 1, "INSERT INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) RETURNING a"]
+ *     [count($insert->rows->rows()), count($insert->returning), $insert->toString()] // => [2, 1, "INSERT INTO t (a, b) VALUES (1, 'x'), (2, DEFAULT) RETURNING a"]
  * @example Refusing ONLY on the table of an INSERT
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertRows(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), true)), [], null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\ValueRows([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class InsertRows implements Modification
+final class InsertRows extends \SqlSemantics\Statement\SqlStatement implements Modification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnTarget> The column list in written order
@@ -67,7 +67,16 @@ final class InsertRows implements Modification
         public readonly ValueRows|ParenthesizedRows $rows,
         public readonly ConflictDoNothing|ConflictDoUpdate|null $conflict = null,
         array $returning = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         Check::input(!$target->table->only, 'The table of an INSERT is written without ONLY.');
         $this->columns = Check::listOf($columns, ColumnTarget::class, 'The column list of an INSERT holds column targets.');
         $this->returning = Check::listOf($returning, Target::class, 'RETURNING holds output items.');

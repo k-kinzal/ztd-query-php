@@ -76,6 +76,12 @@ $parser = new MySqlParser('mysql-8.4.7', SqlMode::fromString('ANSI_QUOTES,NO_BAC
 $parser->tokenize('SELECT "x"')[1]->name;        // 'IDENT_QUOTED'
 ```
 
+For a Latin-1 connection, pass `clientCharset: 'latin1'` to `MySqlParser`.
+This selects the observed MySQL Latin-1 classes for unquoted identifier bytes
+and whitespace, including the nonbreaking-space byte. Quoted tokens retain
+their original bytes. Omitting the option keeps the existing multibyte byte
+classification; this option does not transcode SQL text.
+
 A named placeholder such as `:id` is not in the languages of MySQL and PostgreSQL, which read only their own markers. Their parsers read `:name` as a parameter under `ParameterSyntax::Named`, as a dialect extension; SQLite reads it natively.
 
 ```php
@@ -85,6 +91,22 @@ use SqlParser\PostgreSql\PostgreSqlParser;
 $parser = new PostgreSqlParser(parameters: ParameterSyntax::Named);
 $parser->parse('SELECT id FROM users WHERE id = :id');
 ```
+
+MySQL also implements `SqlParser\Parser\ReductionParser`. Its optional second argument observes completed visible productions, including those completed before a later syntax error:
+
+```php
+$parser = new SqlParser\MySql\MySqlParser('mysql-8.4.7');
+$completed = [];
+try {
+    $parser->parse('SELECT BINARY 1, )', static function (SqlParser\Parser\Node $node, SqlParser\Lexer\Token $lookahead) use (&$completed): void {
+        $completed[] = [$node->name, $lookahead->offset];
+    });
+} catch (SqlParser\Parser\SyntaxException $error) {
+    // Completed reductions are available; the original syntax error still propagates.
+}
+```
+
+The callback receives the next token used for the reduction decision. Hidden grammar actions produce no notification. The parser's normal return value remains the lossless root node, and registering an observer does not accept otherwise invalid SQL. Consumers that retain observations should extract only the information they need from the temporary nodes.
 
 ## License
 

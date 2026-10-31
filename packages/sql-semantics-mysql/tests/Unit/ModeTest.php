@@ -47,6 +47,6 @@ final class ModeTest extends TestCase
         self::assertTrue($semantics->profile()->lexical->ansiQuotes);
         self::assertTrue($semantics->profile()->lexical->noBackslashEscapes);
         self::assertFalse($semantics->profile()->lexical->pipesAsConcat);
-        self::assertSame('SELECT `order`, \'a\\nb\' FROM t', $semantics->analyze('SELECT "order", \'a\\nb\' FROM t')->toString());
+        self::assertSame('SELECT "order", \'a\\nb\' FROM t', $semantics->analyze('SELECT "order", \'a\\nb\' FROM t')->toString());
     }
 }

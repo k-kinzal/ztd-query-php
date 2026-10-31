@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A value of XMLATTRIBUTES or XMLFOREST, optionally named with AS.
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class XmlAttribute implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $value The value
      * @param Name|null $name The name written after AS
      */
-    public function __construct(public readonly Scalar $value, public readonly ?Name $name = null)
+    public function __construct(public readonly Scalar $value, public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

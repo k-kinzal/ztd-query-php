@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,19 +26,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a comment on a column
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COMMENT ON COLUMN t.a IS 'key'");
- *     [$operation->statement->kind->value, $operation->statement->comment?->value] // => ['COLUMN', 'key']
+ *     [$operation->kind->value, $operation->comment?->value] // => ['COLUMN', 'key']
  */
-final class Comment implements Statement
+final class Comment extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ObjectKind $kind The kind of the object
      * @param ObjectReference $object The object, named as COMMENT names objects of the kind
      * @param StringConstant|null $comment The comment; null for NULL
      */
-    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly ?StringConstant $comment)
+    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly ?StringConstant $comment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $forms = new ObjectForms();
         Check::input(in_array($forms->form($object), $forms->comment($kind), true), 'COMMENT names the object as the grammar names objects of its kind.');
     }

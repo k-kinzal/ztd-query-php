@@ -42,7 +42,7 @@ final class SequenceTest extends TestCase
     public function testItemsAnswersTheMembersInSourceOrder(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p(a int, b int, c int) begin declare x int; declare y, z int; set @a = 1; set @b = 2; set @c = 3; end');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Parameter $parameter): string => $parameter->name->value, $statement->parameters->parameters));
         $block = $statement->body;

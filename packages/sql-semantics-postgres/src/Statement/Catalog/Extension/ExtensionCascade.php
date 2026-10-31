@@ -17,6 +17,8 @@ use SqlSemantics\Rendering\Output;
  */
 enum ExtensionCascade: string implements ExtensionOption
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case Cascade = 'CASCADE';
 
     /**

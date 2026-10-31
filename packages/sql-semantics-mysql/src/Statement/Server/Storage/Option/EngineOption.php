@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[STORAGE] ENGINE [=] name`: the storage engine of a tablespace, undo tablespace or log file group.
@@ -21,12 +20,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class EngineOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $engine The engine name
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
+     * @param bool $storageKeyword Whether the optional STORAGE keyword is written
      */
-    public function __construct(public readonly Name $engine)
+    public function __construct(public readonly Name $engine, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null, public readonly bool $storageKeyword = false)
     {
     }
 
@@ -43,6 +44,13 @@ final class EngineOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('ENGINE')->name($this->engine, NameUse::Identifier);
+        if ($this->storageKeyword) {
+            $out->keyword('STORAGE');
+        }
+        $out->keyword('ENGINE');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
+        }
+        $out->name($this->engine, NameUse::Identifier);
     }
 }

@@ -8,12 +8,12 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Scalar;
  * left spine is walked in a loop and the operations are built from the
  * innermost outwards, so the structure associates as the grammar does.
  * `&&` is AND and `||` without PIPES_AS_CONCAT is OR (their nonterminals are
- * synonyms); SOME is the keyword ANY. Constructs: Logical, Not, TruthTest,
+ * synonyms), and the operation keeps which spelling was written; SOME retains
+ * its keyword while sharing the behavior of ANY. Constructs: Logical, Not, TruthTest,
  * NullTest, Comparison, QuantifiedComparison. Terminates: the spine loop
  * descends one left child per step; every other child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/expressions.html.
@@ -78,9 +79,9 @@ final class ConditionRule
     private const QUANTIFIERS = ['all_or_any: ALL' => Quantifier::All, 'all_or_any: ANY_SYM' => Quantifier::Any];
 
     /**
-     * The synonym keyword productions of the logical operators.
+     * The synonym keyword productions of the logical operators, and whether each is the symbol `||` or `&&`.
      */
-    private const SYNONYMS = ['or: OR_SYM' => true, 'or: OR2_SYM' => true, 'and: AND_SYM' => true, 'and: AND_AND_SYM' => true];
+    private const SYNONYMS = ['or: OR_SYM' => false, 'or: OR2_SYM' => true, 'and: AND_SYM' => false, 'and: AND_AND_SYM' => true];
 
     /**
      * @param Lowering $lowering The lowering this rule belongs to
@@ -93,53 +94,57 @@ final class ConditionRule
      * Lowers a node of expr.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function expression(Node $expression): Scalar
+    public function expression(Node $expression): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $pending = [];
         $form = $this->lowering->form($expression);
         while (isset(self::LOGICAL[$form->signature])) {
-            if ($form->signature !== 'expr: expr XOR expr') {
-                $this->synonym($form->node(1));
-            }
-            $pending[] = [self::LOGICAL[$form->signature], $form->node(2)];
+            $symbolic = $form->signature !== 'expr: expr XOR expr' && $this->synonym($form->node(1));
+            $pending[] = [self::LOGICAL[$form->signature], $form->node(2), $symbolic];
             $form = $this->lowering->form($form->node(0));
         }
         $result = $this->unit($form);
-        foreach (array_reverse($pending) as [$operator, $right]) {
-            $result = new Logical($operator, $result, $this->expression($right));
+        foreach (array_reverse($pending) as [$operator, $right, $symbolic]) {
+            $operand = $this->lowering->expressions->operand($right);
+            $result = $result instanceof Scalar && $operand instanceof Scalar ? new Logical($operator, $result, $operand, $symbolic) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredLogical($operator, $result, $operand, $symbolic);
         }
 
-        return $result;
+        return $this->lowering->origins->record($result, $expression);
     }
 
     /**
      * Lowers an expr production that is not a logical operation.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function unit(Form $form): Scalar
+    public function unit(Form $form): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         if ($form->signature === 'expr: bool_pri') {
             return $this->boolean($form->node(0));
         }
         if ($form->signature === 'expr: NOT_SYM expr') {
-            return new Not($this->expression($form->node(1)));
+            $operand = $this->lowering->expressions->operand($form->node(1));
+            return $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNot($operand) : new Not((new OperandRule())->scalar($operand, $form->node(1)));
         }
         [$truth, $negated] = self::TRUTH[$form->signature] ?? throw ImplementationGap::production($form);
         if ($negated) {
             $this->lowering->options->skip($form->node(2));
         }
 
-        return new TruthTest($this->boolean($form->node(0)), $truth, $negated);
+        $operand = $this->boolean($form->node(0));
+        return $operand instanceof Scalar ? new TruthTest($operand, $truth, $negated) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredTruthTest($operand, $truth, $negated);
     }
 
     /**
      * Lowers a node of bool_pri.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function boolean(Node $expression): Scalar
+    public function boolean(Node $expression): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $pending = [];
         $form = $this->lowering->form($expression);
@@ -162,20 +167,34 @@ final class ConditionRule
      * Applies one left-recursive bool_pri production to its already lowered left operand.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When comparison operands have incompatible written widths
      */
-    public function apply(Form $form, Scalar $left): Scalar
+    public function apply(Form $form, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $predicates = new PredicateRule($this->lowering);
 
         return match ($form->signature) {
-            'bool_pri: bool_pri IS NULL_SYM' => new NullTest($left),
-            'bool_pri: bool_pri IS not NULL_SYM' => $this->negatedNull($form, $left),
-            'bool_pri: bool_pri EQUAL_SYM predicate' => new Comparison(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2))),
-            'bool_pri: bool_pri comp_op predicate' => new Comparison($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2))),
-            'bool_pri: bool_pri comp_op all_or_any ( subselect )' => new QuantifiedComparison($left, $this->operator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4))),
-            'bool_pri: bool_pri comp_op all_or_any table_subquery' => new QuantifiedComparison($left, $this->operator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3))),
+            'bool_pri: bool_pri IS NULL_SYM' => $this->nullTest($form, $left, false),
+            'bool_pri: bool_pri IS not NULL_SYM' => $this->nullTest($form, $left, true),
+            'bool_pri: bool_pri EQUAL_SYM predicate' => (new OperandRule())->comparison(ComparisonOperator::NullSafeEqual, $left, $predicates->predicate($form->node(2)), $form->node),
+            'bool_pri: bool_pri comp_op predicate' => (new OperandRule())->comparison($this->operator($form->node(1)), $left, $predicates->predicate($form->node(2)), $form->node),
+            'bool_pri: bool_pri comp_op all_or_any ( subselect )' => (new OperandRule())->quantified($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(4)), $form->node),
+            'bool_pri: bool_pri comp_op all_or_any table_subquery' => (new OperandRule())->quantified($left, $this->quantifiedOperator($form->node(1)), $this->quantifier($form->node(2)), $this->lowering->queries->query($form->node(3)), $form->node),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Preserves an intrinsic deferred condition under either NULL-test spelling.
+     */
+    public function nullTest(Form $form, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, bool $negated): NullTest|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest
+    {
+        if ($negated) {
+            $this->lowering->options->skip($form->node(2));
+        }
+        return $operand instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredNullTest($operand, $negated)
+            : new NullTest((new OperandRule())->scalar($operand, $form->node(0)), $negated);
     }
 
     /**
@@ -201,7 +220,24 @@ final class ConditionRule
     }
 
     /**
-     * Lowers ALL or ANY.
+     * Refuses the null-safe operator in a quantified comparison, as native MySQL does.
+     *
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When null-safe equality is followed by ALL, ANY or SOME
+     * @throws ImplementationGap When the production has no operator rule
+     */
+    public function quantifiedOperator(Node $operator): ComparisonOperator
+    {
+        $comparison = $this->operator($operator);
+        if ($comparison === ComparisonOperator::NullSafeEqual) {
+            $failure = new \SqlParser\Parser\SyntaxException($this->lowering->form($operator)->token(0), [], 'Null-safe equality is not a quantified comparison operator.');
+            throw new \SqlSemantics\Diagnostic\AnalysisException($failure->getMessage(), 0, $failure);
+        }
+
+        return $comparison;
+    }
+
+    /**
+     * Lowers ALL, ANY or SOME without discarding the keyword choice.
      *
      * @throws ImplementationGap When the production has no rule
      */
@@ -209,7 +245,9 @@ final class ConditionRule
     {
         $form = $this->lowering->form($quantifier);
 
-        return self::QUANTIFIERS[$form->signature] ?? throw ImplementationGap::production($form);
+        $quantifier = self::QUANTIFIERS[$form->signature] ?? throw ImplementationGap::production($form);
+
+        return $quantifier === Quantifier::Any && strtoupper($form->token(0)->text) === 'SOME' ? Quantifier::Some : $quantifier;
     }
 
     /**
@@ -217,11 +255,13 @@ final class ConditionRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function synonym(Node $keyword): void
+    public function synonym(Node $keyword): bool
     {
         $form = $this->lowering->form($keyword);
         if (!isset(self::SYNONYMS[$form->signature])) {
             throw ImplementationGap::production($form);
         }
+
+        return self::SYNONYMS[$form->signature];
     }
 }

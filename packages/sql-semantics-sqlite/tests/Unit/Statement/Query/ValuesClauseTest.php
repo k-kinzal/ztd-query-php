@@ -28,9 +28,9 @@ final class ValuesClauseTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze("VALUES (1, 'a', NULL)");
 
         self::assertSame(['column1', 'column2', 'column3'], array_map(static fn (object $field): ?string => $field->name?->value, [...$query->fields() ?? []]));
-        self::assertSame([], $query->facts->diagnostics);
-        self::assertInstanceOf(ValuesClause::class, $query->statement);
-        self::assertSame($query->statement->rows[0]->values[1], $query->field(1)->expression);
+        self::assertSame([], $query->diagnostics());
+        self::assertInstanceOf(ValuesClause::class, $query);
+        self::assertSame($query->rows[0]->values[1], $query->field(1)->expression);
     }
 
     public function testDeriveQueryChoosesTheTypeOverTheRowsAndTheirNullability(): void
@@ -52,10 +52,10 @@ final class ValuesClauseTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('VALUES (1, 2), (3), (4, 5, 6)');
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
-        self::assertSame(ArityRule::ValueRows, $query->facts->diagnostics[0]->rule);
-        self::assertSame('All VALUES must have the same number of terms: 2 and 1.', $query->facts->diagnostics[0]->message());
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(ArityMismatch::class, $query->diagnostics()[0]);
+        self::assertSame(ArityRule::ValueRows, $query->diagnostics()[0]->rule);
+        self::assertSame('All VALUES must have the same number of terms: 2 and 1.', $query->diagnostics()[0]->message());
         self::assertCount(2, $query->fields() ?? []);
     }
 
@@ -63,16 +63,16 @@ final class ValuesClauseTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('VALUES (a)');
 
-        self::assertInstanceOf(ValuesClause::class, $query->statement);
-        self::assertInstanceOf(MissingColumn::class, $query->facts->scalar($query->statement->rows[0]->values[0])->resolution);
-        self::assertSame('Column a does not exist.', $query->facts->diagnostics[0]->message());
+        self::assertInstanceOf(ValuesClause::class, $query);
+        self::assertInstanceOf(MissingColumn::class, $query->rows[0]->values[0]->scalarInformation()->resolution);
+        self::assertSame('Column a does not exist.', $query->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsRaiseOutsideATrigger(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('VALUES (RAISE(IGNORE))');
 
-        self::assertSame(MisuseRule::RaiseOutsideTrigger->value, $query->facts->diagnostics[0]->message());
+        self::assertSame(MisuseRule::RaiseOutsideTrigger->value, $query->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheRows(): void

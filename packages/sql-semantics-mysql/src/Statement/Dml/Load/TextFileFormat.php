@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Dml\FileFormat;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The text file format of SELECT ... INTO OUTFILE: character set, FIELDS options and LINES options.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the format of INTO OUTFILE
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'f' CHARACTER SET utf8mb4 FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY ';'");
- *     [$query->statement->into->format->charset->name->value, count($query->statement->into->format->fields), count($query->statement->into->format->lines)] // => ['utf8mb4', 2, 1]
+ *     [$query->query->into->format->charset->name->value, count($query->query->into->format->fields), count($query->query->into->format->lines)] // => ['utf8mb4', 2, 1]
  */
 final class TextFileFormat implements FileFormat
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FieldOption> The FIELDS options in written order; empty without FIELDS
@@ -39,12 +38,14 @@ final class TextFileFormat implements FileFormat
     public readonly array $lines;
 
     /**
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $charsetForm The written character-set introducer
      * @param CharsetName|null $charset The character set of the file
      * @param list<FieldOption> $fields The FIELDS options
      * @param list<LineOption> $lines The LINES options
      */
-    public function __construct(public readonly ?CharsetName $charset = null, array $fields = [], array $lines = [])
+    public function __construct(public readonly ?CharsetName $charset = null, array $fields = [], array $lines = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $charsetForm = \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named)
     {
+        Check::input($charsetForm->named(), 'A file character set uses a named charset form.');
         $this->fields = Check::listOf($fields, FieldOption::class, 'The FIELDS clause holds field options.');
         $this->lines = Check::listOf($lines, LineOption::class, 'The LINES clause holds line options.');
     }
@@ -55,7 +56,7 @@ final class TextFileFormat implements FileFormat
     public function render(Output $out): void
     {
         if ($this->charset !== null) {
-            $out->keyword('CHARSET')->node($this->charset);
+            $out->keyword(...explode(' ', $this->charsetForm->value))->node($this->charset);
         }
         if ($this->fields !== []) {
             $out->keyword('COLUMNS');

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER [ COLUMN ] ... SET ( ... ) or RESET ( ... ): the per-column options.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnAttributes implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Definition> The options
@@ -40,7 +39,7 @@ final class ColumnAttributes implements AlterCommand
      * @param bool $reset Whether the options are reset; set otherwise
      * @param list<Definition> $options The options
      */
-    public function __construct(public readonly Name $column, public readonly bool $reset, array $options)
+    public function __construct(public readonly Name $column, public readonly bool $reset, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, Definition::class, 'Column options are definitions.', 1);
     }

@@ -27,12 +27,13 @@ final class DropTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a)');
         $operation = $semantics->analyze('DROP TABLE t', [$table]);
-        $resolution = $operation->facts->relation($operation->statement)->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
+        $resolution = $operation->relationInformation()->table;
 
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($table->declarations()[0], $resolution->table);
         self::assertSame([], $operation->declarations());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementReportsAMissingTableUnlessIfExistsIsWritten(): void
@@ -41,9 +42,10 @@ final class DropTest extends TestCase
         $strict = $semantics->analyze('DROP TABLE t', []);
         $tolerant = $semantics->analyze('DROP VIEW IF EXISTS t', []);
 
-        self::assertInstanceOf(MissingTable::class, $strict->facts->diagnostics[0]);
-        self::assertSame([], $tolerant->facts->diagnostics);
-        self::assertInstanceOf(AbsentRelation::class, $tolerant->facts->relation($tolerant->statement)->table);
+        self::assertInstanceOf(MissingTable::class, $strict->diagnostics()[0]);
+        self::assertSame([], $tolerant->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $tolerant);
+        self::assertInstanceOf(AbsentRelation::class, $tolerant->relationInformation()->table);
     }
 
     public function testDeriveStatementReportsTheDropOfARelationOfTheOtherKind(): void
@@ -53,18 +55,19 @@ final class DropTest extends TestCase
         $table = $semantics->analyze('DROP TABLE IF EXISTS v', $declarations);
         $view = $semantics->analyze('DROP VIEW t', $declarations);
 
-        self::assertInstanceOf(WrongRelationKind::class, $table->facts->diagnostics[0]);
-        self::assertSame(KindRefusal::DropTable, $table->facts->diagnostics[0]->refusal);
-        self::assertInstanceOf(WrongRelationKind::class, $view->facts->diagnostics[0]);
-        self::assertSame(KindRefusal::DropView, $view->facts->diagnostics[0]->refusal);
-        self::assertSame([], $semantics->analyze('DROP VIEW v', $declarations)->facts->diagnostics);
+        self::assertInstanceOf(WrongRelationKind::class, $table->diagnostics()[0]);
+        self::assertSame(KindRefusal::DropTable, $table->diagnostics()[0]->refusal);
+        self::assertInstanceOf(WrongRelationKind::class, $view->diagnostics()[0]);
+        self::assertSame(KindRefusal::DropView, $view->diagnostics()[0]->refusal);
+        self::assertSame([], $semantics->analyze('DROP VIEW v', $declarations)->diagnostics());
     }
 
     public function testDeriveStatementKeepsAnUndeclaredTableUndeclared(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('DROP TABLE IF EXISTS t');
 
-        self::assertInstanceOf(UndeclaredTable::class, $operation->facts->relation($operation->statement)->table);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
+        self::assertInstanceOf(UndeclaredTable::class, $operation->relationInformation()->table);
     }
 
     public function testDeriveStatementRecordsNothingForIndexesAndTriggers(): void
@@ -73,9 +76,11 @@ final class DropTest extends TestCase
         $index = $semantics->analyze('DROP INDEX i', []);
         $trigger = $semantics->analyze('DROP TRIGGER tr', []);
 
-        self::assertFalse($index->facts->covers($index->statement));
-        self::assertFalse($trigger->facts->covers($trigger->statement));
-        self::assertSame([], $index->facts->diagnostics);
+        self::assertInstanceOf(Drop::class, $index);
+        self::assertFalse($index->hasRelationInformation());
+        self::assertInstanceOf(Drop::class, $trigger);
+        self::assertFalse($trigger->hasRelationInformation());
+        self::assertSame([], $index->diagnostics());
     }
 
     public function testRenderWritesTheObjectKindAndTheClause(): void
@@ -83,8 +88,8 @@ final class DropTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $operation = $semantics->analyze('drop trigger if exists main.tr');
 
-        self::assertInstanceOf(Drop::class, $operation->statement);
-        self::assertSame(SchemaObjectKind::Trigger, $operation->statement->object);
+        self::assertInstanceOf(Drop::class, $operation);
+        self::assertSame(SchemaObjectKind::Trigger, $operation->object);
         self::assertSame('DROP TRIGGER IF EXISTS main.tr', $operation->toString());
         self::assertSame('DROP INDEX i', $semantics->analyze('DROP INDEX i')->toString());
         self::assertSame('DROP VIEW v', $semantics->analyze('DROP VIEW v')->toString());

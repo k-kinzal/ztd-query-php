@@ -63,7 +63,7 @@ final class GeneratedWrites
      * @param Scalar|null $value The value, or null for a field no single expression computes
      * @param Name|null $table The declared name of the written table, or null when the table is not a declared table
      */
-    public function value(Field $column, ?Scalar $value, ?Name $table, Derivation $derivation): void
+    public function value(Field $column, Scalar|DefaultRequest|null $value, ?Name $table, Derivation $derivation): void
     {
         $declaration = $column->column();
         if ($table !== null && $declaration !== null && $declaration->generated && !$this->default($value)) {
@@ -74,14 +74,14 @@ final class GeneratedWrites
     /**
      * Reports the assignments that write a value other than a default value item into a generated column.
      *
-     * @param list<Assignment> $assignments
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $assignments
      * @param list<Field> $fields The assigned columns, one per assignment in written order
      */
     public function assignments(array $assignments, array $fields, Derivation $derivation): void
     {
         foreach ($fields as $position => $field) {
             $resolution = $field->resolution;
-            if ($resolution instanceof ResolvedColumn) {
+            if ($resolution instanceof ResolvedColumn && $assignments[$position] instanceof Assignment) {
                 $this->value($field, $assignments[$position]->value, $this->table($resolution->relation, $derivation), $derivation);
             }
         }
@@ -129,7 +129,7 @@ final class GeneratedWrites
     /**
      * Tells whether a value is a default value item: DEFAULT or DEFAULT(col), inside any parentheses; no value is none.
      */
-    public function default(?Scalar $value): bool
+    public function default(Scalar|DefaultRequest|null $value): bool
     {
         while ($value instanceof Grouped) {
             $value = $value->operand;
@@ -143,7 +143,7 @@ final class GeneratedWrites
      */
     public function table(Relation $relation, Derivation $derivation): ?Name
     {
-        $table = $derivation->facts()->relation($relation)->table;
+        $table = $relation->relationInformation()->table;
 
         return $table instanceof DeclaredTable ? $table->table->name->name : null;
     }

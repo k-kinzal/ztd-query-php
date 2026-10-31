@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\StorageProblem;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespace;
 
 #[CoversClass(AlterTablespace::class)]
@@ -18,13 +17,13 @@ final class AlterTablespaceTest extends TestCase
 {
     public function testRenderWritesTheRequest(): void
     {
-        self::assertSame('ALTER TABLESPACE ts INITIAL_SIZE `1M`', (new Semantics(Dialect::MySql))->analyze('alter tablespace ts initial_size 1M')->toString());
+        self::assertSame('ALTER TABLESPACE ts INITIAL_SIZE 1M', (new Semantics(Dialect::MySql))->analyze('alter tablespace ts initial_size 1M')->toString());
     }
 
-    public function testDeriveStatementReportsRejectedOptions(): void
+    public function testDeriveStatementAcceptsAConsistentOptionList(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLESPACE ts ENGINE a ENGINE b');
+        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLESPACE ts ENGINE a');
 
-        self::assertInstanceOf(StorageProblem::class, $operation->facts->diagnostics[0]);
+        self::assertSame([], $operation->diagnostics());
     }
 }

@@ -18,7 +18,7 @@ final class ShowProfileTest extends TestCase
     public function testDeriveStatementAddsTheColumnsOfTheSections(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW PROFILE MEMORY, IPC LIMIT 1 OFFSET 2');
-        self::assertInstanceOf(ShowProfile::class, $show->statement);
+        self::assertInstanceOf(ShowProfile::class, $show);
         self::assertSame(['Status', 'Duration', 'Messages_sent', 'Messages_received'], [$show->field(0)->name?->value, $show->field(1)->name?->value, $show->field(2)->name?->value, $show->field(3)->name?->value]);
         self::assertSame(4, $show->fields()?->count());
     }
@@ -27,4 +27,22 @@ final class ShowProfileTest extends TestCase
     {
         self::assertSame('SHOW PROFILE MEMORY, IPC LIMIT 1 OFFSET 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW PROFILE MEMORY, IPC LIMIT 1 OFFSET 2')->toString());
     }
+    public function testValueRejectsAQueryNumberOutsideTheIntegerTokenDomain(): void
+    {
+        $this->expectExceptionMessage('A SHOW PROFILE query number is a decimal integer token no greater than 2147483647.');
+        new ShowProfile(query: new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2147483648'));
+    }
+    public function testDeriveStatementOwnsOnlyTheLegacyDefinitionNoticeAfterLimitBinding(): void
+    {
+        $legacy = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $modern = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        $notices = $legacy->analyze('SHOW PROFILE LIMIT ?')->warnings();
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $notices[0]);
+        self::assertSame(1287, $notices[0]->code());
+        self::assertSame([], $legacy->analyze('SHOW PROFILE LIMIT missing')->warnings());
+        self::assertSame([], $modern->analyze('SHOW PROFILE LIMIT ?')->warnings());
+    }
+
 }

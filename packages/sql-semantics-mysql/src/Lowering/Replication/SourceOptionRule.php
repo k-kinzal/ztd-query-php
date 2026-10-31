@@ -202,6 +202,7 @@ final class SourceOptionRule
     /**
      * Lowers one option in the vocabulary of its statement.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a restricted system string contains a line feed
      * @throws ImplementationGap When a production has no rule
      */
     public function option(Node $option, Terminology $terminology): SourceOption
@@ -214,8 +215,10 @@ final class SourceOptionRule
             throw ImplementationGap::production($form);
         }
         $kind = self::OPTIONS[$form->signature] ?? $this->keyword($form->node(0));
+        $synonym = $terminology === Terminology::Current && !isset(self::OPTIONS[$form->signature]) && str_contains($this->lowering->form($form->node(0))->signature, 'MASTER_');
 
-        return new SourceOption($terminology, $kind, (new SourceValueRule($this->lowering))->value($form));
+        $value = (new SourceValueRule($this->lowering))->value($form);
+        return $this->lowering->origins->record(new SourceOption($terminology, $kind, $value, $synonym), $option);
     }
 
     /**

@@ -1,0 +1,91 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Command\Definition\Expression;
+
+use MySqlMemory\Command\Definition\Expression\GenerationText;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement as M;
+
+#[CoversClass(GenerationText::class)]
+#[Small]
+final class GenerationTextTest extends TestCase
+{
+    public function testTailUsesTheStructuralQueryBoundaryInsteadOfLiteralSelectText(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]);
+        $expression = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, new M\Literal\StringLiteral(['select 1']), new M\Expression\Subquery\ScalarSubquery($query));
+        self::assertSame('select 1)))', (new GenerationText())->tail($expression));
+        self::assertSame('select 1', (new GenerationText())->query($query));
+        self::assertSame([['(', false], ['select 1', true], [')', false]], (new GenerationText())->parts(new M\Expression\Subquery\ScalarSubquery($query)));
+        self::assertSame([['(', false], ['1', false], [',', false], ['select 1', true], [')', false]], (new GenerationText())->joined([[['1', false]], [['select 1', true]]], '(', ',', ')'));
+    }
+    public function testTailUnwrapsNamedCallArgumentOperands(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]);
+        $call = new M\Call\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('ABS'), [new M\Call\CallArgument(new M\Expression\Subquery\ScalarSubquery($query))]);
+        self::assertSame('select 1)))', (new GenerationText())->tail($call));
+    }
+
+    public function testTailRetainsAQueryInsideTheFullTextSearchOperand(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Call\KeywordCall(M\Call\KeywordFunction::User, []))]);
+        $expression = new M\Expression\Access\FullTextSearch([new M\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'))], new M\Expression\Subquery\ScalarSubquery($query));
+        self::assertSame('select user()))))', (new GenerationText())->tail($expression));
+    }
+
+    public function testPartsRetainsGroupingAroundAQuery(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))]);
+        self::assertSame([['(', false], ['select 1', true], [')', false]], (new GenerationText())->parts(new M\Expression\Subquery\ScalarSubquery($query)));
+    }
+
+    public function testJoinedPreservesMarkedChildPositions(): void
+    {
+        self::assertSame([['(', false], ['1', false], [',', false], ['select 1', true], [')', false]], (new GenerationText())->joined([[['1', false]], [['select 1', true]]], '(', ',', ')'));
+    }
+
+    public function testQueryKeepsQuotedIdentifiersAndCompactSeparators(): void
+    {
+        $query = new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1')), new M\Query\SelectExpression(new M\Literal\NumberLiteral('2'))]);
+        self::assertSame('select 1,2', (new GenerationText())->query($query));
+    }
+    public function testWrappedDistinguishesVariablesFromOrdinaryLeaves(): void
+    {
+        self::assertSame([['(@`v`)', false]], (new GenerationText())->wrapped(new M\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('v'))));
+        self::assertNull((new GenerationText())->wrapped(new M\Literal\NumberLiteral('1')));
+    }
+
+    public function testParameterPreservesBoundValueDisplayWithoutLiteralSyntax(): void
+    {
+        $writer = new GenerationText();
+        self::assertSame("'7'", $writer->parameter(new M\Literal\StringLiteral(['7'], new \SqlSemantics\Statement\Identifier\Name('latin1'))));
+        self::assertSame('-7', $writer->parameter(new M\Expression\Operator\Unary(M\Expression\Operator\UnaryOperator::Minus, new M\Literal\NumberLiteral('7'))));
+        self::assertSame('7', $writer->parameter(new M\Literal\NumberLiteral('7')));
+    }
+
+
+    public function testSystemTailUsesTheRemainingSemanticOperandsAfterAnOmittedVariable(): void
+    {
+        $variable = new M\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('version'));
+        $one = new M\Literal\NumberLiteral('1');
+        $text = new GenerationText();
+        self::assertSame('))', $text->systemTail(new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $one, $variable)));
+        self::assertSame('1))', $text->systemTail(new M\Expression\Row([$variable, $one])));
+        self::assertSame('))', $text->systemTail(new M\Expression\Row([$one, $variable])));
+        self::assertNull($text->systemTail($variable));
+    }
+    public function testSystemSuffixRetainsTheEnclosingArithmeticAfterTheMissingOperand(): void
+    {
+        $variable = new M\Variable\SystemVariable(new \SqlSemantics\Statement\Identifier\Name('version'));
+        $one = new M\Literal\NumberLiteral('1');
+        $inner = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $one, $variable);
+        $outer = new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Plus, $inner, new M\Literal\NumberLiteral('1'));
+        self::assertSame(') + 1)', (new GenerationText())->systemSuffix($outer));
+        self::assertSame(') + 1))', (new GenerationText())->systemTail($outer));
+        self::assertSame('* 1))', (new GenerationText())->systemTail(new M\Expression\Operator\Arithmetic(M\Expression\Operator\ArithmeticOperator::Multiply, $variable, $one)));
+    }
+}

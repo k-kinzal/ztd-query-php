@@ -19,4 +19,10 @@ final class LogFileTest extends TestCase
     {
         self::assertSame("ALTER LOGFILE GROUP g ADD REDOFILE 'r'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("alter logfile group g add redofile 'r'")->toString());
     }
+    public function testRefusesRadixText(): void
+    {
+        $this->expectExceptionMessage('A log file name is a quoted string.');
+
+        new LogFile(\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Undo, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

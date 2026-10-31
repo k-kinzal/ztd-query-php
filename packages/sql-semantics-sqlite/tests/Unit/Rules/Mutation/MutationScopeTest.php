@@ -39,7 +39,7 @@ final class MutationScopeTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('WITH w AS (SELECT 1 AS q) UPDATE t AS x SET a = 1', [$t])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('WITH w AS (SELECT 1 AS q) UPDATE t AS x SET a = 1', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
         $outer = $derivation->environment();
 
@@ -53,7 +53,7 @@ final class MutationScopeTest extends TestCase
         self::assertCount(3, $target->shape->slots);
         self::assertCount(1, $target->implicit);
         self::assertInstanceOf(DeclaredTable::class, $derivation->facts()->relation($statement->target)->table);
-        self::assertSame($outer, (new MutationScope())->open($statement->target, null, $derivation, $outer)[0]);
+        self::assertSame($outer, (new MutationScope())->open((new \SqlSemantics\Construction\Occurrences())->copy($statement->target), null, $derivation, $outer)[0]);
     }
 
     public function testNamesReportsColumnsAClosedTargetCertainlyLacks(): void

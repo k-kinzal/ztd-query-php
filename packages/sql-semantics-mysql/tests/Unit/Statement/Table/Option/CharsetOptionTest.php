@@ -19,14 +19,14 @@ final class CharsetOptionTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) DEFAULT CHARACTER SET = utf8mb4');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $option = $statement->options[0];
 
         self::assertInstanceOf(CharsetOption::class, $option);
         self::assertSame('utf8mb4', $option->charset->name?->value);
-        self::assertSame('CREATE TABLE t (a INT) CHARSET utf8mb4', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) DEFAULT CHARACTER SET = utf8mb4', $create->toString());
     }
 }

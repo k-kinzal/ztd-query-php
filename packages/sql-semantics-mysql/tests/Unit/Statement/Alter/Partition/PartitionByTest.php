@@ -22,8 +22,8 @@ final class PartitionByTest extends TestCase
 
         $alter = $semantics->analyze('ALTER TABLE t ADD b INT PARTITION BY HASH (a + b + c)', [$table]);
 
-        self::assertCount(1, $alter->facts->diagnostics);
-        self::assertSame('Column c does not exist.', $alter->facts->diagnostics[0]->message());
+        self::assertCount(1, $alter->diagnostics());
+        self::assertSame('Column c does not exist.', $alter->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheAction(): void

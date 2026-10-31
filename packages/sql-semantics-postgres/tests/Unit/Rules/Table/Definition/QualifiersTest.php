@@ -24,7 +24,7 @@ final class QualifiersTest extends TestCase
         $statement = $semantics->analyze('CREATE TABLE n (a text COLLATE "C" COLLATE "POSIX")', []);
         self::assertSame([
           0 => 'multiple COLLATE clauses not allowed',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testAttributesReportsMisplacedAndRepeatedAttributes(): void
@@ -36,7 +36,7 @@ final class QualifiersTest extends TestCase
           1 => 'multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed',
           2 => 'constraint declared INITIALLY DEFERRED must be DEFERRABLE',
           3 => 'multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testConflictsReportsCombinedValueSources(): void
@@ -48,6 +48,6 @@ final class QualifiersTest extends TestCase
           1 => 'both default and identity specified for column "a"',
           2 => 'both default and generation expression specified for column "a"',
           3 => 'both identity and generation expression specified for column "a"',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 }

@@ -7,6 +7,7 @@ namespace SqlSemantics\Statement\Reference\Column;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -30,8 +31,9 @@ final class AmbiguousColumn implements Resolution, Diagnostic
     /**
      * @param Name $name The column name
      * @param list<ResolvedColumn> $candidates The equally ranked candidates; at least two
+     * @param QualifiedName|null $qualifier The relation qualifier of the unresolved use
      */
-    public function __construct(public readonly Name $name, array $candidates)
+    public function __construct(public readonly Name $name, array $candidates, public readonly ?QualifiedName $qualifier = null)
     {
         $this->candidates = Check::listOf($candidates, ResolvedColumn::class, 'An ambiguous column has at least two candidates.', 2);
     }
@@ -41,6 +43,6 @@ final class AmbiguousColumn implements Resolution, Diagnostic
      */
     public function message(): string
     {
-        return 'Column ' . $this->name->value . ' is ambiguous.';
+        return 'Column ' . ($this->qualifier === null ? '' : $this->qualifier->name->value . '.') . $this->name->value . ' is ambiguous.';
     }
 }

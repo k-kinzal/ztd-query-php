@@ -23,7 +23,7 @@ final class ChangeOwnerTest extends TestCase
     public function testDeriveStatementRecordsNothingForASchema(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER SCHEMA s OWNER TO r', []);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheOwner(): void

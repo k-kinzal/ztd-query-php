@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the wrapper of a new server
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE SERVER IF NOT EXISTS s TYPE 'pg' VERSION '17' FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'db')");
- *     [$operation->statement->wrapper->value, $operation->statement->version?->version?->value] // => ['postgres_fdw', '17']
+ *     [$operation->wrapper->value, $operation->version?->version?->value] // => ['postgres_fdw', '17']
  */
-final class CreateForeignServer implements Statement
+final class CreateForeignServer extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<GenericOption> The options
@@ -51,7 +50,12 @@ final class CreateForeignServer implements Statement
         public readonly ?ServerVersion $version,
         public readonly Name $wrapper,
         array $options = [],
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, GenericOption::class, 'Server options are a list of options.');
     }
 

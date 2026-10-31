@@ -22,7 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(CommonTable::class)]
 #[Medium]
@@ -32,8 +31,8 @@ final class CommonTableTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('with c(x, y) as materialized (select 1, 2), d as not materialized (values (3)), e as (select 4) select * from c');
 
-        self::assertInstanceOf(WithQuery::class, $query->statement);
-        $tables = $query->statement->with->tables;
+        self::assertInstanceOf(WithQuery::class, $query);
+        $tables = $query->with->tables;
         self::assertSame('c', $tables[0]->name->value);
         self::assertSame(['x', 'y'], array_map(static fn (ListedColumn $column): string => $column->name->value, $tables[0]->columns));
         self::assertSame(Materialization::Materialized, $tables[0]->materialization);
@@ -49,7 +48,7 @@ final class CommonTableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = new CommonTable(new Name('c'), new Select([new ResultColumn(new IntegerLiteral('1'))]), [new ListedColumn(new Name('x'))], Materialization::NotMaterialized);
-        $operation = new Operation($semantics->context([]), new WithQuery(new WithClause([$table]), new Select([new Star()], new TableInput(new QualifiedName(new Name('c'))))));
+        $operation = Semantics::fromStatement($semantics->context([]), new WithQuery(new WithClause([$table]), new Select([new Star()], new TableInput(new QualifiedName(new Name('c'))))));
 
         self::assertSame('WITH c (x) AS NOT MATERIALIZED (SELECT 1) SELECT * FROM c', $operation->toString());
         self::assertSame('x', $operation->field(0)->name?->value);

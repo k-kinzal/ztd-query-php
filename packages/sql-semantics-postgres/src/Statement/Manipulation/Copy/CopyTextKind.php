@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy;
  * @visibility public
  * @example Reading the kind of a string option
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COPY t FROM STDIN DELIMITER AS ';'");
- *     $copy->statement->legacy[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTextKind::Delimiter
+ *     $copy->legacy[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTextKind::Delimiter
  */
 enum CopyTextKind: string
 {

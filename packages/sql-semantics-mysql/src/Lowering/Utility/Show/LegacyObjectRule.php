@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Lowering\Utility\Show;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateFunction;
@@ -40,7 +41,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowProcesslist;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 5.6 and 5.7 about schema objects, stored programs and the server.
@@ -121,15 +121,15 @@ final class LegacyObjectRule
         $names = $this->lowering->names;
 
         return match ($kind) {
-            'databases' => new ShowDatabases($clauses->filter($form->node(1))),
-            'tables' => new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2)), $clauses->filter($form->node(3))),
-            'triggers' => new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2)), $clauses->filter($form->node(3))),
-            'events' => new ShowEvents($clauses->database($form->node(1)), $clauses->filter($form->node(2))),
-            'tableStatus' => new ShowTableStatus($clauses->database($form->node(2)), $clauses->filter($form->node(3))),
-            'openTables' => new ShowOpenTables($clauses->database($form->node(2)), $clauses->filter($form->node(3))),
+            'databases' => $clauses->inspection(new ShowDatabases(listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\DatabaseListing::from(strtoupper($form->token(0)->text))), $form->node(1)),
+            'tables' => $clauses->inspection(new ShowTables($clauses->listing($form->node(0)), $clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
+            'triggers' => $clauses->inspection(new ShowTriggers($clauses->listing($form->node(0)) !== null, $clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
+            'events' => $clauses->inspection(new ShowEvents($clauses->database($form->node(1)), databaseIn: $clauses->usesIn($form->node(1))), $form->node(2)),
+            'tableStatus' => $clauses->inspection(new ShowTableStatus($clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
+            'openTables' => $clauses->inspection(new ShowOpenTables($clauses->database($form->node(2), true), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3)),
             'columns' => $this->columns($form),
             'keys' => $this->keys($form),
-            'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2))),
+            'createDatabase' => new ShowCreateDatabase($names->identifier($form->node(3)), $this->lowering->options->present($form->node(2)), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text))),
             'createTable' => new ShowCreateTable(new InspectedTable($names->qualified($form->node(2)))),
             'createView' => new ShowCreateView(new InspectedTable($names->qualified($form->node(2)))),
             'createProcedure' => new ShowCreateProcedure($names->qualified($form->node(2))),
@@ -147,12 +147,12 @@ final class LegacyObjectRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function columns(Form $form): ShowColumns
+    public function columns(Form $form): Statement
     {
         $clauses = new ClauseRule($this->lowering);
         $clauses->preposition($form->node(2));
 
-        return new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), $clauses->filter($form->node(5)));
+        return $clauses->inspection(new ShowColumns(new InspectedTable($this->lowering->names->qualified($form->node(3))), $clauses->listing($form->node(0)), $clauses->database($form->node(4)), tableIn: $clauses->usesIn($form->node(2)), databaseIn: $clauses->usesIn($form->node(4)), fieldsKeyword: strtoupper($form->token(1)->text) === 'FIELDS'), $form->node(5));
     }
 
     /**
@@ -160,13 +160,13 @@ final class LegacyObjectRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function keys(Form $form): ShowKeys
+    public function keys(Form $form): Statement
     {
         $clauses = new ClauseRule($this->lowering);
         $this->lowering->options->skip($form->node(0));
         $clauses->preposition($form->node(1));
 
-        return new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3)), $clauses->where($form->node(4)));
+        return $clauses->inspection(new ShowKeys(new InspectedTable($this->lowering->names->qualified($form->node(2))), false, $clauses->database($form->node(3)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(0))->token(0)->text)), databaseIn: $clauses->usesIn($form->node(3)), tableIn: $clauses->usesIn($form->node(1))), $form->node(4));
     }
 
     /**
@@ -186,16 +186,16 @@ final class LegacyObjectRule
             'engine' => $this->engine($form),
             'engines' => $this->engines($form),
             'privileges' => new ShowPrivileges(),
-            'status' => new ShowStatus($clauses->scope($form->node(0)), $clauses->filter($form->node(2))),
-            'variables' => new ShowVariables($clauses->scope($form->node(0)), $clauses->filter($form->node(2))),
+            'status' => $clauses->inspection(new ShowStatus($clauses->scope($form->node(0))), $form->node(2)),
+            'variables' => $clauses->inspection(new ShowVariables($clauses->scope($form->node(0))), $form->node(2)),
             'processlist' => new ShowProcesslist($clauses->listing($form->node(0)) !== null),
-            'charset' => new ShowCharacterSet($clauses->filter($form->node(1))),
-            'collation' => new ShowCollation($clauses->filter($form->node(1))),
+            'charset' => $clauses->inspection(new ShowCharacterSet(form: \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::from(strtoupper(implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(0)->tokens()))))), $form->node(1)),
+            'collation' => $clauses->inspection(new ShowCollation(), $form->node(1)),
             'grants' => new ShowGrants(),
             'grantsFor' => new ShowGrants($this->lowering->users->account($form->node(2))),
             'createUser' => $this->createUser($form),
-            'procedureStatus' => new ShowProcedureStatus($clauses->filter($form->node(2))),
-            'functionStatus' => new ShowFunctionStatus($clauses->filter($form->node(2))),
+            'procedureStatus' => $clauses->inspection(new ShowProcedureStatus(), $form->node(2)),
+            'functionStatus' => $clauses->inspection(new ShowFunctionStatus(), $form->node(2)),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -209,7 +209,7 @@ final class LegacyObjectRule
     {
         $this->lowering->options->present($form->node(0));
 
-        return new ShowEngineCatalog();
+        return new ShowEngineCatalog(storage: $form->node(0)->children !== []);
     }
 
     /**

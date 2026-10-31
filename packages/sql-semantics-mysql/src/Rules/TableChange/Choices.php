@@ -18,9 +18,8 @@ use SqlSemantics\Statement\Identifier\Name;
  * NONE, SHARED and EXCLUSIVE, and DEFAULT as a name in 5.6 and 5.7 only.
  * The keyword DEFAULT is always accepted. Any other name is the diagnostic
  * UnknownAlterChoice. Terminates: constant work.
- * Source: https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_alter.cc (Alter_info::set_requested_algorithm,
- * set_requested_lock), https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
- * (alter_algorithm_option_value, alter_lock_option_value).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
+ * Release distinctions and refusal order are checked through native SQL observations.
  * Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -28,40 +27,48 @@ use SqlSemantics\Statement\Identifier\Name;
 final class Choices
 {
     /**
+     * Identifies names that belong to the option domain in at least one supported release.
+     */
+    public function known(?Name $name, bool $lock): bool
+    {
+        return $name === null || in_array(strtoupper($name->value), $lock ? ['DEFAULT', 'NONE', 'SHARED', 'EXCLUSIVE'] : ['DEFAULT', 'INPLACE', 'COPY', 'INSTANT'], true);
+    }
+
+    /**
+     * Identifies an option name outside the selected release without discarding its value.
+     */
+    public function refusal(?Name $name, bool $lock, GrammarRelease $grammar): ?UnknownAlterChoice
+    {
+        if ($name === null) {
+            return null;
+        }
+        $legacy = in_array($grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $value = strtoupper($name->value);
+        return !$this->known($name, $lock) || ($value === 'DEFAULT' && !$legacy) || (!$lock && $value === 'INSTANT' && $legacy) ? new UnknownAlterChoice($lock, $name) : null;
+    }
+
+    /**
      * Reports an ALGORITHM name the release does not know.
      */
-    public function algorithm(?Name $name, Derivation $derivation): void
+    public function algorithm(?Name $name, Derivation $derivation, ?\SqlSemantics\Statement\Node $owner = null): void
     {
-        $this->check($name, ['INPLACE', 'COPY', ...($this->legacy($derivation) ? ['DEFAULT'] : ['INSTANT'])], false, $derivation);
+        $problem = $this->refusal($name, false, $derivation->context->profile->grammar);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $owner);
+        }
     }
 
     /**
      * Reports a LOCK name the release does not know.
      */
-    public function lock(?Name $name, Derivation $derivation): void
+    public function lock(?Name $name, Derivation $derivation, ?\SqlSemantics\Statement\Node $owner = null): void
     {
-        $this->check($name, ['NONE', 'SHARED', 'EXCLUSIVE', ...($this->legacy($derivation) ? ['DEFAULT'] : [])], true, $derivation);
-    }
-
-    /**
-     * Tells whether the release is 5.6 or 5.7.
-     */
-    public function legacy(Derivation $derivation): bool
-    {
-        $grammar = $derivation->context->profile->grammar;
-
-        return $grammar === GrammarRelease::MySql5651 || $grammar === GrammarRelease::MySql5744;
-    }
-
-    /**
-     * Reports a name that is none of the known values.
-     *
-     * @param list<string> $known The values the server accepts, in upper case
-     */
-    public function check(?Name $name, array $known, bool $lock, Derivation $derivation): void
-    {
-        if ($name !== null && !in_array(strtoupper($name->value), $known, true)) {
-            $derivation->report(new UnknownAlterChoice($lock, $name));
+        $problem = $this->refusal($name, true, $derivation->context->profile->grammar);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $owner);
         }
     }
+
 }

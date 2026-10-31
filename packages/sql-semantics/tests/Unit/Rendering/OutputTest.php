@@ -23,6 +23,76 @@ use SqlSemantics\Statement\Spelling\Spelled;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testLayoutKeepsValidatedLeadingTriviaWhenTheDialectRequestsIt(): void
+    {
+        $output = new Output(new Codec());
+        $output->keyword('SELECT')->layout(new Layout([new Spelled(' /* prefix */ ', '7')]), new IntegerLiteral('7'), true);
+
+        self::assertSame('SELECT /* prefix */ 7', (new Lexical())->join($output->pieces()));
+    }
+
+    public function testSeparateKeepsARequiredBoundaryInCanonicalPieces(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $output->keyword('SET', 'DEFAULT')->separate()->symbol('.')->name(new Name('key_buffer_size'))->symbol('=')->spelled('1');
+
+        self::assertSame('SET DEFAULT .key_buffer_size = 1', (new Lexical())->join($output->pieces()));
+        self::assertSame('SET DEFAULT .key_buffer_size = 1', (new Lexical())->join($output->canonical()));
+    }
+
+    public function testNameKeepsAKeywordAdjacentToItsFollowingParenthesis(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $output->keyword('CREATE', 'TABLE')->name(new Name('ADDDATE', \SqlSemantics\Statement\Identifier\NameQuote::Keyword))->symbol('(')->name(new Name('id'))->keyword('INT')->symbol(')');
+
+        self::assertSame('CREATE TABLE ADDDATE(id INT)', (new Lexical())->join($output->pieces()));
+        self::assertSame('CREATE TABLE ADDDATE(id INT)', (new Lexical())->join($output->canonical()));
+    }
+
+    public function testQuoteUsesTheDialectStringCodec(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+
+        self::assertSame("'a\\\\b''c'", $output->quote("a\\b'c"));
+        self::assertSame([], $output->pieces());
+    }
+
+    public function testSpelledNameConvertsCharactersWithoutChangingStringNotation(): void
+    {
+        $output = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1')));
+        $output->spelledName("'é\\n\n'");
+
+        self::assertSame("'\xe9\\n\n'", (new Lexical())->join($output->pieces()));
+        self::assertSame(PieceKind::Name, $output->pieces()[0]->kind);
+    }
+
+    public function testQuoteRequiresAStringCodec(): void
+    {
+        $output = new Output(new Codec());
+        $this->expectExceptionMessage('The dialect codec must support decoded string literals.');
+
+        $output->quote('x');
+    }
+
+    public function testParameterRecordsOccurrencesInWrittenOrder(): void
+    {
+        $output = new Output(new Codec());
+        $first = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $second = new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter();
+        $output->node($first)->symbol(',')->node($second);
+
+        self::assertSame([$first, $second], $output->parameters());
+        self::assertSame('?, ?', (new Lexical())->join($output->pieces()));
+    }
+
+    public function testParametersExcludeQuestionMarksInLiteralData(): void
+    {
+        $output = new Output(new Codec());
+        $output->spelled("'?'");
+
+        self::assertSame([], $output->parameters());
+    }
+
     public function testKeywordWritesEachUpperCaseWordAsAPiece(): void
     {
         $output = new Output(new Codec());
@@ -31,6 +101,25 @@ final class OutputTest extends TestCase
 
         self::assertSame(['ORDER', 'BY'], array_map(static fn (Piece $piece): string => $piece->text, $output->pieces()));
         self::assertSame(PieceKind::Keyword, $output->pieces()[0]->kind);
+    }
+
+    public function testCommentSeparatesTheNextPieceFromThePreviousOne(): void
+    {
+        $output = new Output(new Codec());
+
+        $output->keyword('SELECT')->comment('/*+ BKA(t) */')->spelled('1');
+
+        self::assertSame('SELECT /*+ BKA(t) */ 1', (new Lexical())->join($output->pieces()));
+        self::assertSame(['SELECT', '1'], array_map(static fn (Piece $piece): string => $piece->text, $output->canonical()));
+    }
+
+    public function testCommentRefusesTextThatIsNotOneBlockComment(): void
+    {
+        $output = new Output(new Codec());
+
+        $this->expectExceptionMessage('A comment is one block comment.');
+
+        $output->comment('/* a */ 1 /* b */');
     }
 
     public function testKeywordRefusesAnythingButOneUpperCaseWord(): void

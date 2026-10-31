@@ -7,11 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Table references separated by commas: their cross product, binding more loosely than every JOIN.
@@ -27,13 +26,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the members of a comma list
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM t, u JOIN v ON u.a = v.a');
- *     [count($query->statement->from->members), $query->statement->from->members[1] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable] // => [2, true]
+ *     [count($query->query->from->members), $query->query->from->members[1] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable] // => [2, true]
  * @example Refusing a list of one member
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\TableList([new \SqlSemantics\Platform\MySql\Statement\Relation\Dual()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class TableList implements Relation
+final class TableList implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Relation> The members in written order
@@ -43,8 +43,11 @@ final class TableList implements Relation
     /**
      * @param list<Relation> $members The members in written order; at least two
      */
-    public function __construct(array $members)
+    public function __construct(array $members, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->members = Check::listOf($members, Relation::class, 'A comma list joins at least two table references.', 2);
         foreach ($this->members as $member) {
             Check::input(!$member instanceof self, 'A comma list used as a member is written in parentheses.');

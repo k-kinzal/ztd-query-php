@@ -16,17 +16,49 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 #[Medium]
 final class PartitionClauseTest extends TestCase
 {
+    public function testExplicitCountRetainsFractionalTokensForDerivation(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) PARTITION BY KEY (a) PARTITIONS 1.0');
+        self::assertSame('CREATE TABLE t (a INT) PARTITION BY KEY (a) PARTITIONS 1.0', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $statement->diagnostics()[0]);
+    }
+
+    public function testExplicitCountRejectsLiteralZero(): void
+    {
+        $this->expectExceptionMessage('The explicit partition count is positive.');
+        new PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, []), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('0'), null, []);
+    }
+
+
     public function testDerivePartitioningDerivesTheMethodAndTheValues(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $alter = $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (b) (PARTITION p VALUES LESS THAN (c))', [$table]);
 
-        self::assertSame(['Column b does not exist.', 'Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['Column b does not exist.', 'Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
+    }
+
+    public function testDerivePartitioningReportsRequiredDefinitionsBeforeOpeningTheTable(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS(a)');
+        $warning = $operation->warnings()[0];
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
+        self::assertTrue($warning->aborts);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization, $warning->phase);
+        self::assertSame('For RANGE partitions each partition must be defined.', $warning->message());
     }
 
     public function testRenderWritesTheCountsAndTheDefinitions(): void
     {
         self::assertSame('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)')->toString());
     }
+    public function testDefinitionsRequireOneSubpartitionCount(): void
+    {
+        $definitions = [new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p0'), null, [], []), new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p1'), null, [], [new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('s'), [])])];
+        $this->expectExceptionMessage('Wrong number of subpartitions defined, mismatch with previous setting');
+        new PartitionClause(new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, null, []), null, null, $definitions);
+    }
+
 }

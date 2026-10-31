@@ -25,7 +25,7 @@ final class SetRuleTest extends TestCase
 
     public function testUnscopedRoutesALonePasswordToTheAccountFamily(): void
     {
-        self::assertNotInstanceOf(SetVariables::class, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SET PASSWORD = 'x'")->statement);
+        self::assertNotInstanceOf(SetVariables::class, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SET PASSWORD = 'x'"));
     }
 
     public function testScopedLowersTheScopedTransaction(): void
@@ -35,12 +35,12 @@ final class SetRuleTest extends TestCase
 
     public function testContinuedLowersEveryItem(): void
     {
-        self::assertSame('SET a = 1, GLOBAL b = 2, @c = 3, NAMES utf8', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set a = 1, global b = 2, @c = 3, names utf8')->toString());
+        self::assertSame('SET autocommit = 1, GLOBAL max_connections = 2, @c = 3, NAMES utf8', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set autocommit = 1, global max_connections = 2, @c = 3, names utf8')->toString());
     }
 
-    public function testScopeMapsLocalToSession(): void
+    public function testScopeRetainsTheLocalKeyword(): void
     {
-        self::assertSame('SET SESSION a = 1', (new Semantics(Dialect::MySql))->analyze('set local a = 1')->toString());
+        self::assertSame('SET LOCAL a = 1', (new Semantics(Dialect::MySql))->analyze('set local a = 1')->toString());
     }
 
     public function testCharacteristicsKeepTheOrder(): void

@@ -41,13 +41,13 @@ final class InsertSelectTest extends TestCase
         $exact = $semantics->analyze('INSERT INTO t (a, b) SELECT a, c FROM u', [$t, $u]);
         $open = $semantics->analyze('INSERT INTO t SELECT * FROM u');
 
-        self::assertInstanceOf(ArityMismatch::class, $narrow->facts->diagnostics[0]);
-        self::assertSame(ArityRule::InsertedValues, $narrow->facts->diagnostics[0]->rule);
-        self::assertSame('2 values for 3 columns.', $narrow->facts->diagnostics[0]->message());
-        self::assertInstanceOf(ArityMismatch::class, $wide->facts->diagnostics[0]);
-        self::assertSame('2 values for 1 columns.', $wide->facts->diagnostics[0]->message());
-        self::assertSame([], $exact->facts->diagnostics);
-        self::assertSame([], $open->facts->diagnostics);
+        self::assertInstanceOf(ArityMismatch::class, $narrow->diagnostics()[0]);
+        self::assertSame(ArityRule::InsertedValues, $narrow->diagnostics()[0]->rule);
+        self::assertSame('2 values for 3 columns.', $narrow->diagnostics()[0]->message());
+        self::assertInstanceOf(ArityMismatch::class, $wide->diagnostics()[0]);
+        self::assertSame('2 values for 1 columns.', $wide->diagnostics()[0]->message());
+        self::assertSame([], $exact->diagnostics());
+        self::assertSame([], $open->diagnostics());
     }
 
     public function testDeriveWithinBindsTheWithClauseForTheQueryAndReturnsTheTargetRow(): void
@@ -57,20 +57,20 @@ final class InsertSelectTest extends TestCase
         $query = $semantics->analyze('WITH w AS (SELECT 1 AS q) INSERT INTO t (a) SELECT q FROM w RETURNING id, b', [$t]);
         $fields = $query->fields();
 
-        self::assertInstanceOf(InsertSelect::class, $query->statement);
-        self::assertInstanceOf(Select::class, $query->statement->query);
-        self::assertCount(1, $query->facts->query($query->statement->query)->shape->slots);
+        self::assertInstanceOf(InsertSelect::class, $query);
+        self::assertInstanceOf(Select::class, $query->query);
+        self::assertCount(1, $query->query->queryInformation()->shape->slots);
         self::assertNotNull($fields);
         self::assertSame(['id', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $fields->items));
         self::assertSame($t->declarations()[0]->columns[2], $query->field('b')->column());
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('INSERT INTO t (a) SELECT 1', [$t])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('INSERT INTO t (a) SELECT 1', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(InsertSelect::class, $statement);
@@ -83,8 +83,8 @@ final class InsertSelectTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze('insert into t (id) select 1 union select 2 on conflict (id) do nothing returning *');
 
         self::assertSame('INSERT INTO t (id) SELECT 1 UNION SELECT 2 ON CONFLICT (id) DO NOTHING RETURNING *', $query->toString());
-        self::assertInstanceOf(InsertSelect::class, $query->statement);
-        self::assertCount(1, $query->statement->upserts);
+        self::assertInstanceOf(InsertSelect::class, $query);
+        self::assertCount(1, $query->upserts);
     }
 
     public function testRejectsABareValuesClause(): void

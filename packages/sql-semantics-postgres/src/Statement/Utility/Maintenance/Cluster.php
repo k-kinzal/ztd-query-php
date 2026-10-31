@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -34,13 +33,15 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a CLUSTER in the old syntax
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CLUSTER i ON t');
- *     [$operation->statement->table->name->value, $operation->statement->index->value, $operation->statement->indexFirst] // => ['t', 'i', true]
+ *     [$operation->table->name->value, $operation->index->value, $operation->indexFirst] // => ['t', 'i', true]
  * @example Refusing an index without a table
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Cluster([], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words, null, new \SqlSemantics\Statement\Identifier\Name('i')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Cluster implements Statement
+final class Cluster extends \SqlSemantics\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<UtilityOption> The options in the order written
@@ -60,7 +61,16 @@ final class Cluster implements Statement
         public readonly ?QualifiedName $table = null,
         public readonly ?Name $index = null,
         public readonly bool $indexFirst = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null,
+        ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->options = Check::listOf($options, UtilityOption::class, 'The options of CLUSTER are utility options.');
         Check::input((new OptionRules())->writable($this->options, $syntax, ['verbose']), 'The options cannot be written in that syntax.');
         Check::input($index === null || $table !== null, 'An index is named together with its table.');

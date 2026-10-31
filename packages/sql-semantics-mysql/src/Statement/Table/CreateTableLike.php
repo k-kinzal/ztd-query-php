@@ -10,12 +10,11 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create an empty table with the definition of another table: CREATE TABLE ... LIKE.
@@ -26,7 +25,8 @@ use SqlSemantics\Statement\Statement;
  * one declaration with new columns of the same names, types and NULL facts
  * as the source (MYSQL-TABLE-DECLARATION-001); an undeclared or missing
  * source leaves it empty and incomplete. `LIKE t` and `(LIKE t)` are the same
- * request. Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-like.html.
+ * request; the enclosure is retained for reconstruction.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-like.html.
  * Status: Implemented.
  *
  * @visibility public
@@ -36,24 +36,39 @@ use SqlSemantics\Statement\Statement;
  *     $copy = $semantics->analyze('CREATE TABLE c LIKE s', [$source])->declarations()[0];
  *     [$copy->name->name->value, $copy->columns[0]->name->value, $copy->columns[0] === $source->declarations()[0]->columns[0]] // => ['c', 'a', false]
  */
-final class CreateTableLike implements Statement
+final class CreateTableLike extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The table name
      * @param QualifiedName $source The table whose definition is copied
      * @param int $temporaryWords How many times TEMPORARY is written; MySQL 8.0 and later accept it once
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
+     * @param bool $enclosed Whether parentheses enclose the LIKE clause
      */
     public function __construct(
         public readonly QualifiedName $name,
         public readonly QualifiedName $source,
         public readonly int $temporaryWords = 0,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null,
+        public readonly bool $enclosed = false,
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($source);
         Check::input($name->catalog === null && $source->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($temporaryWords >= 0, 'TEMPORARY is written a non-negative number of times.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -81,12 +96,18 @@ final class CreateTableLike implements Statement
         }
         foreach ([$this->name, $this->source] as $position => $name) {
             if ($position === 1) {
+                if ($this->enclosed) {
+                    $out->symbol('(');
+                }
                 $out->keyword('LIKE');
             }
             if ($name->schema !== null) {
                 $out->name($name->schema, NameUse::Qualifier)->symbol('.');
             }
             $out->name($name->name, NameUse::Relation);
+        }
+        if ($this->enclosed) {
+            $out->symbol(')');
         }
     }
 }

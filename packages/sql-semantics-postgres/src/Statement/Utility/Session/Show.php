@@ -13,7 +13,6 @@ use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -40,15 +39,18 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SHOW work_mem');
  *     [$operation->shape()->complete(), $operation->shape()->missing[0]->describe()] // => [false, 'the session state: the registered name of the configuration parameter work_mem']
  */
-final class Show implements Statement
+final class Show extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ParameterName|SpecialParameter $parameter The parameter, or the keywords that name one or all
      */
-    public function __construct(public readonly ParameterName|SpecialParameter $parameter)
+    public function __construct(public readonly ParameterName|SpecialParameter $parameter, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

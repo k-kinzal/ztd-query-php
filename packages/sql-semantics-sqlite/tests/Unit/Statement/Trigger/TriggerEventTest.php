@@ -28,11 +28,11 @@ final class TriggerEventTest extends TestCase
         $delete = $semantics->analyze('create trigger tr delete on t begin select 1; end');
         $insert = $semantics->analyze('create trigger tr after Insert on t begin select 1; end');
 
-        self::assertInstanceOf(CreateTrigger::class, $delete->statement);
-        self::assertSame(TriggerEvent::Delete, $delete->statement->event);
+        self::assertInstanceOf(CreateTrigger::class, $delete);
+        self::assertSame(TriggerEvent::Delete, $delete->event);
         self::assertSame('CREATE TRIGGER tr DELETE ON t BEGIN SELECT 1; END', $delete->toString());
-        self::assertInstanceOf(CreateTrigger::class, $insert->statement);
-        self::assertSame(TriggerEvent::Insert, $insert->statement->event);
+        self::assertInstanceOf(CreateTrigger::class, $insert);
+        self::assertSame(TriggerEvent::Insert, $insert->event);
         self::assertSame('CREATE TRIGGER tr AFTER INSERT ON t BEGIN SELECT 1; END', $insert->toString());
     }
 }

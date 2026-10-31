@@ -25,8 +25,8 @@ final class RenamingsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $rename = $semantics->analyze('RENAME TABLE t TO u, u TO v', [$table]);
 
-        self::assertInstanceOf(RenameTable::class, $rename->statement);
-        self::assertEquals(new DeclaredTable($table->declarations()[0]), $rename->facts->relation($rename->statement->renamings[1])->table);
+        self::assertInstanceOf(RenameTable::class, $rename);
+        self::assertEquals(new DeclaredTable($table->declarations()[0], $semantics->context()->searchPath[0]), $rename->renamings[1]->relationInformation()->table);
     }
 
     public function testVacatedMakesAMovedNameMissing(): void
@@ -35,8 +35,8 @@ final class RenamingsTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $rename = $semantics->analyze('RENAME TABLE t TO u, t TO v', [$table]);
 
-        self::assertInstanceOf(RenameTable::class, $rename->statement);
-        self::assertInstanceOf(MissingTable::class, $rename->facts->relation($rename->statement->renamings[1])->table);
+        self::assertInstanceOf(RenameTable::class, $rename);
+        self::assertInstanceOf(MissingTable::class, $rename->renamings[1]->relationInformation()->table);
     }
 
     public function testExistsReportsANewNameThatIsTaken(): void
@@ -44,6 +44,6 @@ final class RenamingsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
 
-        self::assertSame(['Relation t does not exist.', 'Table y already exists.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('RENAME TABLE t TO x, x TO y, t TO y', [$table])->facts->diagnostics));
+        self::assertSame(['Relation t does not exist.', 'Table y already exists.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('RENAME TABLE t TO x, x TO y, t TO y', [$table])->diagnostics()));
     }
 }

@@ -23,6 +23,34 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Medium]
 final class ProgramNamesTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerInvalidNames(): iterable
+    {
+        yield 'empty' => [''];
+        yield 'trailing space' => ['p '];
+        yield 'too many characters' => [str_repeat('p', 65)];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidNames')]
+    public function testProblemReportsNamesOutsideTheStoredProgramDomain(string $name): void
+    {
+        $problem = ProgramNames::problem(new Name($name));
+
+        self::assertNotNull($problem);
+        self::assertSame($name, $problem->subject);
+    }
+
+    public function testCheckCountsCharactersAndPreservesPermittedWhitespace(): void
+    {
+        $name = new QualifiedName(new Name(str_repeat('é', 64)));
+        ProgramNames::check($name);
+        ProgramNames::check(new QualifiedName(new Name("\tp\t")));
+
+        self::assertNull(ProgramNames::problem($name->name));
+    }
+
     public function testQualifiedWritesTheDatabaseQualifierWhenPresent(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql910));
@@ -56,12 +84,12 @@ final class ProgramNamesTest extends TestCase
 
     public function testTypeWritesTheCollateClauseWhenPresent(): void
     {
-        $function = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS CHAR(1) COLLATE utf8mb4_bin RETURN 1')->statement;
+        $function = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin RETURN 1');
         self::assertInstanceOf(CreateFunction::class, $function);
         $out = new Output(new Codec(GrammarRelease::MySql910));
         (new ProgramNames())->type($out, $function->returns, $function->collation);
         (new ProgramNames())->type($out, $function->returns, null);
 
-        self::assertSame('CHAR(1) COLLATE utf8mb4_bin CHAR(1)', (new Lexical())->join($out->pieces()));
+        self::assertSame('CHAR(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin CHAR(1) CHARACTER SET utf8mb4', (new Lexical())->join($out->pieces()));
     }
 }

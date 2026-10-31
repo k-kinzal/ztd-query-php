@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The `internallength` of a base type: a number of bytes, or `variable`.
@@ -24,18 +23,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a variable length
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE box3 (input = box3_in, output = box3_out, internallength = VARIABLE)');
- *     [$operation->statement->definition[2]->value->bytes(), $operation->statement->definition[2]->value->variable()] // => [null, true]
+ *     [$operation->definition[2]->value->bytes(), $operation->definition[2]->value->variable()] // => [null, true]
  * @example Rejecting another word
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\LengthArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('fixed')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class LengthArgument implements AttributeArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SignedNumber|StringConstant|TypeName $length The length as written
      */
-    public function __construct(public readonly SignedNumber|StringConstant|TypeName $length)
+    public function __construct(public readonly SignedNumber|StringConstant|TypeName $length, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $text = new ArgumentText();
         Check::input($length instanceof SignedNumber ? $text->integer($length) !== null : strtolower($text->text($length)) === 'variable', 'A type length is an integer that fits in 32 bits or the word variable.');

@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -29,7 +28,7 @@ use SqlSemantics\Statement\Statement;
  */
 final class AtomicBody implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Statement|ReturnStatement> The statements in order
@@ -41,7 +40,7 @@ final class AtomicBody implements Clause
      *
      * @throws InvalidConstruction When an item is neither a statement nor a RETURN statement
      */
-    public function __construct(array $statements)
+    public function __construct(array $statements, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $checked = [];
         foreach (Check::listOf($statements, Node::class, 'The statements of a block are a list of nodes.') as $statement) {

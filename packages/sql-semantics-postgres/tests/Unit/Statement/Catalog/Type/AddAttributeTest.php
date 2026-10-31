@@ -19,6 +19,6 @@ final class AddAttributeTest extends TestCase
 
     public function testDeriveClauseDerivesTheType(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ADD ATTRIBUTE c numeric(4, 2)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ADD ATTRIBUTE c numeric(4, 2)')->diagnostics());
     }
 }

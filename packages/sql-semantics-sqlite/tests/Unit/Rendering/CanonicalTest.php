@@ -33,8 +33,8 @@ final class CanonicalTest extends TestCase
     public function testLayoutKeepsTheLayoutsNestedInTheNode(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT 1+1)');
-        self::assertInstanceOf(Select::class, $query->statement);
-        $column = $query->statement->columns[0];
+        self::assertInstanceOf(Select::class, $query);
+        $column = $query->columns[0];
         self::assertInstanceOf(ResultColumn::class, $column);
 
         self::assertNull($column->layout);

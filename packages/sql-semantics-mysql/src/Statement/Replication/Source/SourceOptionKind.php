@@ -98,8 +98,10 @@ enum SourceOptionKind: string
             self::SslKey, self::SslCrl, self::SslCrlpath, self::TlsVersion, self::PublicKeyPath, self::CompressionAlgorithms, self::LogFile,
             self::RelayLogFile => $value instanceof Text,
             self::Port, self::ConnectRetry, self::RetryCount, self::Delay, self::Ssl, self::SslVerifyServerCert, self::GetPublicKey,
-            self::ZstdCompressionLevel, self::AutoPosition, self::RequireRowFormat, self::ConnectionAutoFailover, self::GtidOnly, self::LogPosition,
+            self::ZstdCompressionLevel, self::AutoPosition,
             self::RelayLogPosition => $value instanceof Numeral,
+            self::RequireRowFormat, self::ConnectionAutoFailover, self::GtidOnly => $value instanceof Numeral,
+            self::LogPosition => $value instanceof Numeral && !$value->hexadecimal,
             self::HeartbeatPeriod => $value instanceof NumberLiteral,
             self::IgnoreServerIds => $value instanceof ServerIds,
             self::PrivilegeChecksUser => $value === null || $value instanceof AccountName,
@@ -116,4 +118,14 @@ enum SourceOptionKind: string
     {
         return $this === self::LogFile || $this === self::LogPosition || $this === self::RelayLogFile || $this === self::RelayLogPosition;
     }
+    /**
+     * Names the option in deprecation diagnostics, preserving the server's singular compression wording.
+     */
+    public function warningName(Terminology $terminology): string
+    {
+        $keyword = $this->keyword($terminology);
+
+        return $this === self::CompressionAlgorithms ? substr($keyword, 0, -1) : $keyword;
+    }
+
 }

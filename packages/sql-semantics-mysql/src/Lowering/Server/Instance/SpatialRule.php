@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute;
 use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE and DROP SPATIAL REFERENCE SYSTEM.
@@ -26,7 +26,7 @@ use SqlSemantics\Statement\Statement;
  * https://dev.mysql.com/doc/refman/8.4/en/drop-spatial-reference-system.html.
  * Status: Implemented.
  *
- * @visibility SqlSemantics\Platform\MySql\Lowering\Server
+ * @visibility SqlSemantics\Platform\MySql\Lowering
  */
 final class SpatialRule
 {
@@ -58,40 +58,83 @@ final class SpatialRule
         $options = $this->lowering->options;
 
         return match ($form->signature) {
-            'create_srs_stmt: CREATE OR_SYM REPLACE_SYM SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM real_ulonglong_num srs_attributes' => new CreateSpatialReference(
+            'create_srs_stmt: CREATE OR_SYM REPLACE_SYM SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM real_ulonglong_num srs_attributes' => $this->create(
+                $form,
                 true,
                 false,
                 $numbers->numeral($form->node(6)),
                 $this->attributes($form->node(7)),
             ),
-            'create_srs_stmt: CREATE SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM opt_if_not_exists real_ulonglong_num srs_attributes' => new CreateSpatialReference(
+            'create_srs_stmt: CREATE SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM opt_if_not_exists real_ulonglong_num srs_attributes' => $this->create(
+                $form,
                 false,
                 $options->present($form->node(4)),
                 $numbers->numeral($form->node(5)),
                 $this->attributes($form->node(6)),
             ),
-            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => new DropSpatialReference($options->present($form->node(4)), $numbers->numeral($form->node(5))),
+            'drop_srs_stmt: DROP SPATIAL_SYM REFERENCE_SYM SYSTEM_SYM if_exists real_ulonglong_num' => $this->drop($form, $options->present($form->node(4)), $numbers->numeral($form->node(5))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Retains the complete CREATE request, including its intrinsic declaration problem.
+     *
+     * @param list<SpatialAttribute> $attributes The complete written attributes
+     */
+    public function create(Form $form, bool $replace, bool $ifNotExists, \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $srid, array $attributes): CreateSpatialReference
+    {
+        return new CreateSpatialReference($replace, $ifNotExists, $srid, $attributes);
+    }
+
+    /**
+     * Retains a DROP request and its intrinsic identifier problem.
+     *
+     */
+    public function drop(Form $form, bool $ifExists, \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $srid): DropSpatialReference
+    {
+        return new DropSpatialReference($ifExists, $srid);
     }
 
     /**
      * Lowers the attribute list: a node of `srs_attributes`.
      *
      * @return list<SpatialAttribute>
+     * @throws \SqlSemantics\Construction\RejectedInput When an attribute literal is intrinsically invalid
      * @throws ImplementationGap When a production has no rule
      */
     public function attributes(Node $list): array
     {
-        $attributes = [];
+        $forms = [];
         $form = $this->lowering->form($list);
         while ($form->signature !== 'srs_attributes:') {
-            $kind = self::ATTRIBUTES[$form->signature] ?? throw ImplementationGap::production($form);
-            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->numeral($form->node(5)) : null;
-            array_unshift($attributes, new SpatialAttribute($kind, $this->lowering->literals->text($form->node(2)), $identifier));
+            $forms[] = $form;
             $form = $this->lowering->form($form->node(0));
+        }
+        $attributes = [];
+        foreach (array_reverse($forms) as $attributeForm) {
+            $kind = self::ATTRIBUTES[$attributeForm->signature] ?? throw ImplementationGap::production($attributeForm);
+            $value = $this->lowering->literals->text($attributeForm->node(2));
+            $identifier = $kind === SpatialAttributeKind::Organization ? $this->lowering->numbers->numeral($attributeForm->node(5)) : null;
+            $attributes[] = $this->lowering->origins->record(new SpatialAttribute($kind, $value, $identifier), $attributeForm->node);
         }
 
         return $attributes;
+    }
+
+    /**
+     * Preserves a completed attribute refusal before a later invalid operand.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($node->name !== 'srs_attributes') {
+            return null;
+        }
+        try {
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\SpatialChecks())->repeated($this->attributes($node));
+            return $problem === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
+        }
     }
 }

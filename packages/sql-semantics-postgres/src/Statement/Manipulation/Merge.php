@@ -17,7 +17,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A MERGE: the rows of a source joined to a target table, each inserted, updated, deleted or skipped by the first WHEN clause that applies.
@@ -30,13 +29,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the clauses of a MERGE
  *     $merge = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('MERGE INTO t USING u ON t.a = u.a WHEN MATCHED THEN UPDATE SET b = NULL WHEN NOT MATCHED THEN INSERT VALUES (u.a) RETURNING MERGE_ACTION(), t.a');
- *     [count($merge->statement->clauses), $merge->field(0)->name->value] // => [2, 'merge_action']
+ *     [count($merge->clauses), $merge->field(0)->name->value] // => [2, 'merge_action']
  * @example Refusing MERGE without a WHEN clause
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')))), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral(true), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Merge implements Modification
+final class Merge extends \SqlSemantics\Statement\SqlStatement implements Modification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<MergeWhen> The WHEN clauses in written order
@@ -65,7 +65,16 @@ final class Merge implements Modification
         public readonly Scalar $condition,
         array $clauses,
         array $returning = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->clauses = Check::listOf($clauses, MergeWhen::class, 'MERGE holds at least one WHEN clause.', 1);
         $this->returning = Check::listOf($returning, Target::class, 'RETURNING holds output items.');
     }

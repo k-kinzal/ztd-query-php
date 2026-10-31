@@ -28,7 +28,7 @@ final class GeneratedColumnProblemTest extends TestCase
     public function testMessageIsReportedForEachWrongUseOfAGeneratedColumn(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $flaw = static fn (string $sql): array => array_map(static fn (object $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->analyze($sql, [])->facts->diagnostics);
+        $flaw = static fn (string $sql): array => array_map(static fn (object $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->analyze($sql, [])->diagnostics());
 
         self::assertSame([['WithDefault', 'b']], $flaw('CREATE TABLE t (a, b DEFAULT 1 AS (a))'));
         self::assertSame([['WithDefault', 'b']], $flaw('CREATE TABLE t (a, b GENERATED ALWAYS AS (a) STORED DEFAULT (1))'));

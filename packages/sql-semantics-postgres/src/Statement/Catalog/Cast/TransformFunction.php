@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FROM SQL WITH FUNCTION function` or `TO SQL WITH FUNCTION function` of a transform.
@@ -19,17 +18,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the direction of a transform function
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (TO SQL WITH FUNCTION f(internal))');
- *     $operation->statement->functions[0]->direction // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\TransformDirection::ToSql
+ *     $operation->functions[0]->direction // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\TransformDirection::ToSql
  */
 final class TransformFunction implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TransformDirection $direction The direction
      * @param ObjectReference $function The function signature
      */
-    public function __construct(public readonly TransformDirection $direction, public readonly ObjectReference $function)
+    public function __construct(public readonly TransformDirection $direction, public readonly ObjectReference $function, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

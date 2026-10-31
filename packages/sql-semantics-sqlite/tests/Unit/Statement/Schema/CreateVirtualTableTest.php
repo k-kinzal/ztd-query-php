@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateVirtualTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\ModuleArgument;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(CreateVirtualTable::class)]
 #[Medium]
@@ -29,13 +28,13 @@ final class CreateVirtualTableTest extends TestCase
         self::assertSame([], $table->columns);
         self::assertSame([], $table->implicit);
         self::assertFalse($table->complete);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsEveryArgumentTextExactly(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("create virtual table if not exists docs using fts5( title ,body  TEXT,, tokenize = 'porter ascii', f(x , y) )");
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateVirtualTable::class, $statement);
         self::assertSame(['title', 'body  TEXT', '', "tokenize = 'porter ascii'", 'f(x , y)'], array_map(static fn (ModuleArgument $argument): string => $argument->text, $statement->arguments ?? []));
@@ -48,10 +47,10 @@ final class CreateVirtualTableTest extends TestCase
         $absent = $semantics->analyze('CREATE VIRTUAL TABLE t USING m');
         $empty = $semantics->analyze('CREATE VIRTUAL TABLE t USING m()');
 
-        self::assertInstanceOf(CreateVirtualTable::class, $absent->statement);
-        self::assertInstanceOf(CreateVirtualTable::class, $empty->statement);
-        self::assertNull($absent->statement->arguments);
-        self::assertCount(1, $empty->statement->arguments ?? []);
+        self::assertInstanceOf(CreateVirtualTable::class, $absent);
+        self::assertInstanceOf(CreateVirtualTable::class, $empty);
+        self::assertNull($absent->arguments);
+        self::assertCount(1, $empty->arguments ?? []);
         self::assertSame('CREATE VIRTUAL TABLE t USING m', $absent->toString());
         self::assertSame('CREATE VIRTUAL TABLE t USING m ()', $empty->toString());
     }
@@ -59,7 +58,7 @@ final class CreateVirtualTableTest extends TestCase
     public function testRenderWritesANewlyBuiltDefinition(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new CreateVirtualTable(new QualifiedName(new Name('t')), new Name('rtree'), [new ModuleArgument('id'), new ModuleArgument('minX'), new ModuleArgument('maxX')]));
+        $operation = Semantics::fromStatement($semantics->context(), new CreateVirtualTable(new QualifiedName(new Name('t')), new Name('rtree'), [new ModuleArgument('id'), new ModuleArgument('minX'), new ModuleArgument('maxX')]));
 
         self::assertSame('CREATE VIRTUAL TABLE t USING rtree (id, minX, maxX)', $operation->toString());
     }

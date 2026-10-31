@@ -1,0 +1,118 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Lowering\Replication;
+
+use SqlParser\Parser\Node;
+use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
+
+/**
+ * Preserves completed replication value checks before later input errors.
+ *
+ * The notice retains the decoded operand needed to format its error. No SQL,
+ * parser node or execution state survives the lowering call.
+ * Observed through isolated MySQL 8.0, 8.4 and 9.1 servers.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class SyntaxSettings
+{
+    /**
+     * Returns the refusal of an option outside its public constructor domain.
+     */
+    public function rejected(Node $node, Lowering $lowering): ?\SqlSemantics\Construction\RejectedInput
+    {
+        $setting = $this->completed($node, $lowering);
+        if ($setting?->problem instanceof \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting && $setting->problem->error === \SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed) {
+            return new \SqlSemantics\Construction\RejectedInput($setting->problem, (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0, $setting->aborts);
+        }
+
+        return null;
+    }
+
+    /**
+     * Retains system-string conversion before a later input or channel refusal.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Notice\NameConversion>
+     */
+    public function converted(Node $node, Lowering $lowering): array
+    {
+        if ($node->name !== 'TEXT_STRING_sys_nonewline') {
+            return [];
+        }
+        $notice = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->conversion(new \SqlSemantics\Platform\MySql\Statement\Literal\Text((new \SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule($lowering))->bytes($node)), $lowering->profile->grammar);
+
+        return $notice === null ? [] : [$notice];
+    }
+
+    /**
+     * Retains a heartbeat notice even when a later option cannot be lowered.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod>
+     */
+    public function warned(Node $node, Lowering $lowering, ?int $timeout): array
+    {
+        if (!in_array($node->name, ['source_def', 'master_def'], true)) {
+            return [];
+        }
+        try {
+            $option = (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+        } catch (\SqlSemantics\Construction\RejectedInput) {
+            return [];
+        }
+        $warning = (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->warning($option, $lowering->profile->grammar, $timeout);
+
+        return $warning === null ? [] : [$warning];
+    }
+
+    /**
+     * Returns a completed value condition. An excessive delay continues parsing;
+     * a refused UUID, heartbeat or password stops before subsequent options.
+     */
+    public function completed(Node $node, Lowering $lowering): ?ParseFailure
+    {
+        if (in_array($node->name, ['source_def', 'master_def'], true)) {
+            try {
+                $option = (new SourceOptionRule($lowering))->option($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+                return (new \SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings())->condition($option, $lowering->profile->grammar);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return new ParseFailure($failure->problem, $failure->aborts);
+            }
+        }
+        if (in_array($node->name, ['slave_until', 'opt_replica_until'], true)) {
+            try {
+                $until = (new UntilRule($lowering))->until($node, (new \SqlSemantics\Platform\MySql\Rules\Replication\Releases())->source($lowering->profile->grammar));
+                $error = $until === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Replication\ReplicaConditions())->until($until);
+                return $error === null ? null : new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting($error), true);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return new ParseFailure($failure->problem, $failure->aborts);
+            }
+        }
+        if ($node->name === 'TEXT_STRING_sys_nonewline') {
+            $text = new \SqlSemantics\Platform\MySql\Statement\Literal\Text((new \SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule($lowering))->bytes($node));
+
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->problem($text);
+
+            return $problem === null ? null : new ParseFailure($problem, true);
+        }
+        if (in_array($node->name, ['group_replication_user', 'group_replication_password'], true)) {
+            try {
+                $option = (new LogRule($lowering))->option($node);
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Replication\GroupCredentials())->credential($option);
+                return $problem === null ? null : new ParseFailure($problem, true);
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                return new ParseFailure($failure->problem, $failure->aborts);
+            }
+        }
+        if ($node->name !== 'source_reset_options') {
+            return null;
+        }
+        $number = (new ResetRule($lowering))->first($node);
+        $problem = ResetBinaryLogs::problem($number);
+
+        return $problem === null ? null : new ParseFailure($problem, true);
+    }
+}

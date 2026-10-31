@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A function, procedure or routine named with or without its argument list.
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RoutineSignature implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FunctionParameter>|null The written arguments; null when no argument list is written
@@ -41,7 +40,7 @@ final class RoutineSignature implements ObjectReference
      * @param DottedName $name The routine name
      * @param list<FunctionParameter>|null $arguments The written arguments, without default values; null when no argument list is written
      */
-    public function __construct(public readonly DottedName $name, ?array $arguments = null)
+    public function __construct(public readonly DottedName $name, ?array $arguments = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         if ($arguments === null) {
             $this->arguments = null;

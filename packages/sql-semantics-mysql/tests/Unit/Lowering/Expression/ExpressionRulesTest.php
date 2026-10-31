@@ -81,4 +81,23 @@ final class ExpressionRulesTest extends TestCase
         self::assertInstanceOf(NumberLiteral::class, $interval->quantity);
         self::assertSame(['7', IntervalUnit::Week], [$interval->quantity->text, $interval->unit]);
     }
+    public function testOperandsAllowsRowsInAComparisonList(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT 1 IN (1,(1,2),(3,4))')->find('expr_list')[0];
+        $operands = $lowering->expressions->operands($node);
+        self::assertCount(2, $operands);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Row::class, $operands[0]);
+    }
+
+    public function testOperandRetainsARowWithoutMakingItAScalar(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $operand = $lowering->expressions->operand($platform->parser($profile)->parse('SELECT (1,2)')->find('expr')[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Row::class, $operand);
+    }
 }

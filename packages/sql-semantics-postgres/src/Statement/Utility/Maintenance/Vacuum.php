@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Utility\MaintenanceFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\VacuumChecks;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -29,16 +28,16 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a VACUUM written with words
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('VACUUM FULL ANALYZE t');
- *     [$operation->statement->options[1]->option(), $operation->statement->targets[0]->table->name->value, $operation->toString()] // => ['analyze', 't', 'VACUUM FULL ANALYZE t']
+ *     [$operation->options[1]->option(), $operation->targets[0]->table->name->value, $operation->toString()] // => ['analyze', 't', 'VACUUM FULL ANALYZE t']
  * @example Refusing words in another order than the grammar reads
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Vacuum([
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name('verbose')),
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(new \SqlSemantics\Statement\Identifier\Name('full')),
  *     ], \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionSyntax::Words) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Vacuum implements Statement
+final class Vacuum extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<UtilityOption> The options in the order written
@@ -55,8 +54,11 @@ final class Vacuum implements Statement
      * @param OptionSyntax $syntax How the options are written
      * @param list<MaintenanceTarget> $targets The tables; none stands for every table
      */
-    public function __construct(array $options = [], public readonly OptionSyntax $syntax = OptionSyntax::Words, array $targets = [])
+    public function __construct(array $options = [], public readonly OptionSyntax $syntax = OptionSyntax::Words, array $targets = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, UtilityOption::class, 'The options of VACUUM are utility options.');
         $this->targets = Check::listOf($targets, MaintenanceTarget::class, 'The tables of VACUUM are maintenance targets.');
         Check::input((new OptionRules())->writable($this->options, $syntax, ['full', 'freeze', 'verbose', 'analyze']), 'The options cannot be written in that syntax.');

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The operator between two terms of a FROM clause: a comma, JOIN, or JOIN after up to three words.
@@ -29,14 +28,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the meaning of a join operator
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t NATURAL LEFT JOIN u');
- *     $operator = $query->statement->from->steps[0]->operator;
+ *     $operator = $query->from->steps[0]->operator;
  *     [$operator->natural(), $operator->left(), $operator->right(), $operator->valid()] // => [true, true, false, true]
  * @example Refusing words after a comma
  *     new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOperator(true, [\SqlSemantics\Platform\Sqlite\Statement\Relation\JoinKeyword::Left]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class JoinOperator implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<JoinKeyword|Name> The words before JOIN in written order
@@ -48,7 +47,7 @@ final class JoinOperator implements Node
      * @param list<JoinKeyword|Name> $words The words before JOIN: a join keyword first, then up to two keywords or names
      * @throws InvalidConstruction When the words are not what the grammar admits before JOIN
      */
-    public function __construct(public readonly bool $comma = false, array $words = [])
+    public function __construct(public readonly bool $comma = false, array $words = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $list = (new ClosedList())->of($words, [JoinKeyword::class, Name::class], 'A join word is a join keyword or a name.');
         Check::input(count($list) <= 3 && ($list === [] || (!$comma && $list[0] instanceof JoinKeyword)), 'A join operator is a comma, JOIN, or JOIN after a join keyword and up to two more words.');

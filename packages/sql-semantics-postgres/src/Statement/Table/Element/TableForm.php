@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the form of a table definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t OF person');
- *     $create->statement->definition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TypedTable // => true
+ *     $create->definition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TypedTable // => true
  */
 interface TableForm extends Node
 {

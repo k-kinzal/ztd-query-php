@@ -5,27 +5,20 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
-use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\KeyPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption;
-use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to add an index to an existing table: CREATE [UNIQUE | FULLTEXT | SPATIAL] INDEX.
@@ -45,11 +38,12 @@ use SqlSemantics\Statement\Statement;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
  *     $index = $semantics->analyze('CREATE UNIQUE INDEX i ON t (b DESC, (a + b))', [$table]);
- *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->diagnostics] // => [true, []]
+ *     [$index->relationInformation()->table->table === $table->declarations()[0], $index->diagnostics()] // => [true, []]
  */
-final class CreateIndex implements Statement, Relation
+final class CreateIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<KeyPart> The key parts in order
@@ -74,6 +68,7 @@ final class CreateIndex implements Statement, Relation
      * @param IndexAlgorithm|null $algorithm The USING clause written before ON
      * @param list<IndexOption> $options The options after the key parts, in written order
      * @param list<AlterOption> $alterOptions The ALGORITHM and LOCK clauses in written order
+     * @param bool $typeKeyword Whether TYPE introduces the algorithm instead of USING
      */
     public function __construct(
         public readonly Name $name,
@@ -83,13 +78,34 @@ final class CreateIndex implements Statement, Relation
         public readonly ?IndexAlgorithm $algorithm = null,
         array $options = [],
         array $alterOptions = [],
+        ?RelationFact $relationInformation = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $typeKeyword = false
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table name has at most a database qualifier.');
         Check::input($kind !== IndexKind::Primary, 'CREATE INDEX does not create a primary key.');
         Check::input($algorithm === null || $kind === IndexKind::Index || $kind === IndexKind::Unique, 'A full-text or spatial index has no USING clause before ON.');
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
-        $this->alterOptions = Check::listOf($alterOptions, AlterOption::class, 'ALGORITHM and LOCK clauses are an ordered list.');
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->check($kind, $this->options);
+        $this->alterOptions = (new \SqlSemantics\Platform\MySql\Rules\TableChange\IndexOptions())->checked($alterOptions);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Identifies a retained name or key condition whose priority depends on target lookup.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Roles())->request($this->name, $this->parts, $this->kind);
     }
 
     /**
@@ -97,20 +113,7 @@ final class CreateIndex implements Statement, Relation
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $targets = new TableTargets();
-        $fact = $derivation->relation($this, $derivation->environment());
-        (new RelationKinds())->require($derivation, $this->table, $fact->table, RelationKind::BaseTable);
-        $declared = $fact->table instanceof DeclaredTable ? $fact->table->table : null;
-        $scope = $targets->scope($derivation, $this, new QualifiedName($this->table->name), $fact->shape, $declared === null ? [] : $targets->implicit($declared));
-        foreach ($this->parts as $part) {
-            $part->deriveKeyPart($derivation, $scope);
-            if ($declared !== null && $declared->complete && $part instanceof ColumnPart && $declared->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
-                $derivation->report(new UnknownKeyColumn($part->column));
-            }
-        }
-        foreach ($this->alterOptions as $option) {
-            $option->deriveOption($derivation);
-        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Requests())->derive($this, $derivation);
     }
 
     /**
@@ -126,21 +129,6 @@ final class CreateIndex implements Statement, Relation
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE');
-        if ($this->kind !== IndexKind::Index) {
-            $out->keyword($this->kind->value);
-        }
-        $out->keyword('INDEX')->name($this->name, NameUse::Label);
-        if ($this->algorithm !== null) {
-            $out->keyword('USING', $this->algorithm->value);
-        }
-        $out->keyword('ON');
-        if ($this->table->schema !== null) {
-            $out->name($this->table->schema, NameUse::Qualifier)->symbol('.');
-        }
-        $out->name($this->table->name, NameUse::Relation)->symbol('(')->list($this->parts)->symbol(')');
-        foreach ([...$this->options, ...$this->alterOptions] as $option) {
-            $out->node($option);
-        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Requests())->render($this, $out);
     }
 }

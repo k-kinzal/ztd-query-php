@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One column of the result of a function declared `RETURNS TABLE ( ... )`.
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ResultColumn implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
      * @param TypeName $type The column type
      */
-    public function __construct(public readonly Name $name, public readonly TypeName $type)
+    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

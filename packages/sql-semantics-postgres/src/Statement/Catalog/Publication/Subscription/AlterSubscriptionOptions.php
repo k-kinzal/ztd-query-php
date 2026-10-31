@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Skipping a transaction
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER SUBSCRIPTION s SKIP (lsn = '0/14C0378')");
- *     $operation->statement->action // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\SubscriptionOptionAction::Skip
+ *     $operation->action // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\SubscriptionOptionAction::Skip
  */
-final class AlterSubscriptionOptions implements Statement
+final class AlterSubscriptionOptions extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Definition> The parameters
@@ -40,8 +39,11 @@ final class AlterSubscriptionOptions implements Statement
      * @param SubscriptionOptionAction $action Whether parameters are set or a transaction is skipped
      * @param list<Definition> $options The parameters; at least one
      */
-    public function __construct(public readonly Name $name, public readonly SubscriptionOptionAction $action, array $options)
+    public function __construct(public readonly Name $name, public readonly SubscriptionOptionAction $action, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, Definition::class, 'ALTER SUBSCRIPTION names at least one parameter.', 1);
     }
 

@@ -8,13 +8,13 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An integer type with its optional display width and its attributes in the order written.
  *
  * `INT`, `INTEGER` and `INT4` are one keyword to the server, as are the other
- * numbered spellings; the kind names the type they denote.
+ * numbered spellings. The kind names the type they denote; the alias retains
+ * the keyword used to request it.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/integer-types.html,
  * https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
  *
@@ -23,9 +23,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::BigInt, '20', [\SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier::Unsigned]);
  *     [$type->name(), $type->width, $type->unsigned()] // => ['BIGINT', '20', true]
  */
-final class Integral implements TypeName
+final class Integral implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<NumericModifier> The attributes in the order written; an attribute may repeat
@@ -36,11 +36,14 @@ final class Integral implements TypeName
      * @param IntegralKind $kind The integer type
      * @param string|null $width The display width exactly as written
      * @param list<NumericModifier> $modifiers The attributes in the order written
+     * @param Keyword\IntegralAlias|null $alias The written synonym; null uses the canonical keyword form
      */
-    public function __construct(public readonly IntegralKind $kind, public readonly ?string $width = null, array $modifiers = [])
+    public function __construct(public readonly IntegralKind $kind, public readonly ?string $width = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?Keyword\IntegralAlias $alias = null)
     {
+        Check::input($alias === null || $alias->kind() === $kind, 'A type synonym must match its canonical type role.');
         Check::input($width === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $width) === 1, 'A display width is an unsigned number.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**
@@ -64,7 +67,7 @@ final class Integral implements TypeName
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->kind->value);
+        $out->keyword(...explode(' ', $this->alias->value ?? $this->kind->value));
         if ($this->width !== null) {
             $out->glue()->symbol('(')->spelled($this->width)->symbol(')');
         }

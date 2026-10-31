@@ -28,34 +28,34 @@ final class GetDiagnosticsTest extends TestCase
     public function testDeriveStatementReadsStatementInformationIntoUserVariables(): void
     {
         $get = (new Semantics(Dialect::MySql))->analyze('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
-        $statement = $get->statement;
+        $statement = $get;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
         self::assertNull($statement->area);
         self::assertInstanceOf(StatementDiagnostics::class, $statement->information);
         self::assertCount(2, $statement->information->items);
-        self::assertSame([], $get->facts->diagnostics);
+        self::assertSame([], $get->diagnostics());
     }
 
     public function testDeriveStatementReadsConditionInformationOfAVariableNumber(): void
     {
         $get = (new Semantics(Dialect::MySql))->analyze('GET CURRENT DIAGNOSTICS CONDITION @i @m = MESSAGE_TEXT, @e = MYSQL_ERRNO, @s = RETURNED_SQLSTATE');
-        $statement = $get->statement;
+        $statement = $get;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
         self::assertSame(DiagnosticsArea::Current, $statement->area);
         self::assertInstanceOf(ConditionDiagnostics::class, $statement->information);
         self::assertCount(3, $statement->information->items);
-        self::assertSame([], $get->facts->diagnostics);
+        self::assertSame([], $get->diagnostics());
     }
 
     public function testDeriveStatementReportsANameTargetOutsideAProgram(): void
     {
         $get = (new Semantics(Dialect::MySql))->analyze('GET DIAGNOSTICS n = NUMBER');
-        $problem = $get->facts->diagnostics[0] ?? null;
+        $problem = $get->diagnostics()[0] ?? null;
         self::assertInstanceOf(ProgramProblem::class, $problem);
 
-        self::assertCount(1, $get->facts->diagnostics);
+        self::assertCount(1, $get->diagnostics());
         self::assertSame(ProgramRule::UndeclaredVariable, $problem->rule);
         self::assertSame('Undeclared variable: n', $problem->message());
     }
@@ -64,7 +64,7 @@ final class GetDiagnosticsTest extends TestCase
     {
         $get = (new Semantics(Dialect::MySql))->analyze('GET DIAGNOSTICS CONDITION k @m = MESSAGE_TEXT');
 
-        self::assertSame(['Column k does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $get->facts->diagnostics));
+        self::assertSame(['Column k does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $get->diagnostics()));
     }
 
     public function testDeriveStatementRefusesTheStackedAreaBeforeMySql57(): void
@@ -77,7 +77,7 @@ final class GetDiagnosticsTest extends TestCase
     public function testDeriveProgramResolvesParametersAndLocalVariables(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(i INT) BEGIN DECLARE m TEXT; DECLARE EXIT HANDLER FOR SQLEXCEPTION GET STACKED DIAGNOSTICS CONDITION i m = MESSAGE_TEXT, @e = MYSQL_ERRNO; END');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         $body = $statement->body;
         self::assertInstanceOf(Block::class, $body);
@@ -88,7 +88,7 @@ final class GetDiagnosticsTest extends TestCase
 
         self::assertSame(DiagnosticsArea::Stacked, $get->area);
         self::assertInstanceOf(ConditionDiagnostics::class, $get->information);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**
@@ -116,9 +116,13 @@ final class GetDiagnosticsTest extends TestCase
     #[DataProvider('providerDeriveProgramReportsAnUndeclaredTarget')]
     public function testDeriveProgramReportsAnUndeclaredTarget(string $sql, array $messages): void
     {
-        $create = (new Semantics(Dialect::MySql))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 
     /**
@@ -138,7 +142,7 @@ final class GetDiagnosticsTest extends TestCase
     {
         $get = (new Semantics(Dialect::MySql, $release))->analyze($sql);
 
-        self::assertInstanceOf(GetDiagnostics::class, $get->statement);
+        self::assertInstanceOf(GetDiagnostics::class, $get);
         self::assertSame($expected, $get->toString());
     }
 }

@@ -19,7 +19,7 @@ final class HandlerCloseTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h CLOSE');
 
-        self::assertNull($operation->facts->output);
+        self::assertNull($operation->output());
     }
 
     public function testRenderWritesTheHandler(): void

@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `(column, ...) = source` item of a SET list: several columns assigned from one row or one sub-SELECT.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a multiple-column assignment
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('UPDATE t SET (a, b) = (1, 2)');
- *     count($update->statement->assignments[0]->columns) // => 2
+ *     count($update->assignments[0]->columns) // => 2
  * @example Refusing an empty column list
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssignment([], new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class RowAssignment implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ColumnTarget> The columns written, in order
@@ -41,7 +40,7 @@ final class RowAssignment implements Node
      *
      * @throws InvalidConstruction When there is no column
      */
-    public function __construct(array $columns, public readonly Scalar $source)
+    public function __construct(array $columns, public readonly Scalar $source, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, ColumnTarget::class, 'A multiple-column assignment names at least one column.', 1);
     }

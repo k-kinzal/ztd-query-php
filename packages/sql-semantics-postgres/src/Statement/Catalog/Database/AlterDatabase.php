@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Catalog\OptionChecks;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,9 +26,9 @@ use SqlSemantics\Statement\Statement;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DATABASE d CONNECTION LIMIT 10');
  *     $operation->toString() // => 'ALTER DATABASE d WITH CONNECTION LIMIT = 10'
  */
-final class AlterDatabase implements Statement
+final class AlterDatabase extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<DatabaseOption> The options in the order written
@@ -40,8 +39,11 @@ final class AlterDatabase implements Statement
      * @param Name $name The database name
      * @param list<DatabaseOption> $options The options in the order written
      */
-    public function __construct(public readonly Name $name, array $options = [])
+    public function __construct(public readonly Name $name, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, DatabaseOption::class, 'Database options are a list of options.');
     }
 

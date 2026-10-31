@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\With;
  * @visibility public
  * @example Reading a materialization hint
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('WITH c AS NOT MATERIALIZED (SELECT 1) SELECT * FROM c');
- *     $query->statement->with->tables[0]->materialization // => \SqlSemantics\Platform\Sqlite\Statement\Query\With\Materialization::NotMaterialized
+ *     $query->with->tables[0]->materialization // => \SqlSemantics\Platform\Sqlite\Statement\Query\With\Materialization::NotMaterialized
  */
 enum Materialization: string
 {

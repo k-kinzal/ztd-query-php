@@ -5,19 +5,23 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Account\Problem\ResourceGroupNameTooLong;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\AlterResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CpuRange;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\CreateResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\DropResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind;
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\SetResourceGroup;
 use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the resource group statements (8.0+).
@@ -28,8 +32,7 @@ use SqlSemantics\Statement\Statement;
  * opt_resource_group_vcpu_list, vcpu_range_spec_list, vcpu_num_or_range,
  * opt_resource_group_priority, signed_num,
  * opt_resource_group_enable_disable, opt_force, thread_id_list,
- * thread_id_list_options. Numbers keep their exact text; the optional `=`
- * and commas carry no meaning. Constructs: CreateResourceGroup,
+ * thread_id_list_options. Numbers, optional equals signs and comma choices are retained. Constructs: CreateResourceGroup,
  * AlterResourceGroup, DropResourceGroup, SetResourceGroup, CpuRange,
  * ThreadPriority. Terminates: the lists are flattened iteratively; every
  * other child is a strict subtree.
@@ -53,20 +56,21 @@ final class ResourceGroupRule
      */
     public function statement(Form $form): Statement
     {
-        $names = $this->lowering->names;
-
         return match ($form->signature) {
             'create_resource_group_stmt: CREATE RESOURCE_SYM GROUP_SYM ident TYPE_SYM opt_equal resource_group_types opt_resource_group_vcpu_list opt_resource_group_priority opt_resource_group_enable_disable' => $this->create($form),
             'alter_resource_group_stmt: ALTER RESOURCE_SYM GROUP_SYM ident opt_resource_group_vcpu_list opt_resource_group_priority opt_resource_group_enable_disable opt_force' => new AlterResourceGroup(
-                $names->identifier($form->node(3)),
+                $this->name($form),
                 $this->cpus($form->node(4)),
                 $this->priority($form->node(5)),
                 $this->enabled($form->node(6)),
                 $this->force($form->node(7)),
+                cpusCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(4), ['vcpu_num_or_range']),
+                cpusOperator: $this->operator($form->node(4)),
+                priorityOperator: $this->operator($form->node(5)),
             ),
-            'drop_resource_group_stmt: DROP RESOURCE_SYM GROUP_SYM ident opt_force' => new DropResourceGroup($names->identifier($form->node(3)), $this->force($form->node(4))),
-            'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident' => new SetResourceGroup($names->identifier($form->node(3))),
-            'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident FOR_SYM thread_id_list_options' => new SetResourceGroup($names->identifier($form->node(3)), $this->threads($form->node(5))),
+            'drop_resource_group_stmt: DROP RESOURCE_SYM GROUP_SYM ident opt_force' => new DropResourceGroup($this->name($form), $this->force($form->node(4))),
+            'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident' => new SetResourceGroup($this->name($form)),
+            'set_resource_group_stmt: SET_SYM RESOURCE_SYM GROUP_SYM ident FOR_SYM thread_id_list_options' => new SetResourceGroup($this->name($form), $this->threads($form->node(5)), threadsCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(5), ['real_ulong_num'])),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -78,8 +82,8 @@ final class ResourceGroupRule
      */
     public function create(Form $form): CreateResourceGroup
     {
-        $name = $this->lowering->names->identifier($form->node(3));
-        $this->lowering->options->present($form->node(5));
+        $name = $this->name($form);
+        $typeOperator = $this->lowering->options->optionalAssignment($form->node(5));
         $type = $this->lowering->form($form->node(6));
         $kind = match ($type->signature) {
             'resource_group_types: USER' => ResourceGroupKind::User,
@@ -87,7 +91,42 @@ final class ResourceGroupRule
             default => throw ImplementationGap::production($type),
         };
 
-        return new CreateResourceGroup($name, $kind, $this->cpus($form->node(7)), $this->priority($form->node(8)), $this->enabled($form->node(9)));
+        return new CreateResourceGroup(
+            $name,
+            $kind,
+            $this->cpus($form->node(7)),
+            $this->priority($form->node(8)),
+            $this->enabled($form->node(9)),
+            cpusCommas: (new \SqlSemantics\Platform\MySql\Lowering\Lists\OptionalCommas($this->lowering))->between($form->node(7), ['vcpu_num_or_range']),
+            typeOperator: $typeOperator,
+            cpusOperator: $this->operator($form->node(7)),
+            priorityOperator: $this->operator($form->node(8)),
+        );
+    }
+
+    /**
+     * Retains the assignment sign of a written VCPU or THREAD_PRIORITY clause.
+     */
+    public function operator(Node $option): ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator
+    {
+        return $option->children === [] ? null : $this->lowering->options->optionalAssignment($this->lowering->form($option)->node(1));
+    }
+
+    /**
+     * Lowers a group identifier, refusing a name outside its byte domain.
+     * This contextual check follows grammar completion and the debug-entry check.
+     *
+     * @throws RejectedInput When the converted name exceeds 64 bytes
+     */
+    public function name(Form $form): ResourceGroupName
+    {
+        $source = $form->node(3);
+        $name = $this->lowering->names->identifier($source);
+        if (!ResourceGroupName::accepts($name)) {
+            throw new RejectedInput(new ResourceGroupNameTooLong($name), (new SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        return $this->lowering->origins->record(new ResourceGroupName($name), $source);
     }
 
     /**

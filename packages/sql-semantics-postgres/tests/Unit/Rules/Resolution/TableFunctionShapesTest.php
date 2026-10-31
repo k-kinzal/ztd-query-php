@@ -16,14 +16,14 @@ final class TableFunctionShapesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text NULL NOT NULL, n FOR ORDINALITY, m FOR ORDINALITY)");
-        self::assertSame('only one FOR ORDINALITY column is allowed', $query->facts->diagnostics[1]->message());
+        self::assertSame('only one FOR ORDINALITY column is allowed', $query->diagnostics()[1]->message());
     }
 
     public function testOptionsReportsConflictingNullability(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text NULL NOT NULL, n FOR ORDINALITY, m FOR ORDINALITY)");
-        self::assertSame('conflicting or redundant NULL / NOT NULL declarations for column "a"', $query->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant NULL / NOT NULL declarations for column "a"', $query->diagnostics()[0]->message());
     }
 
     public function testJsonHasTheColumnsInOrder(): void
@@ -44,7 +44,7 @@ final class TableFunctionShapesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze("SELECT * FROM JSON_TABLE ('[]', '\$[*]' COLUMNS (e boolean EXISTS EMPTY ON ERROR))");
-        self::assertSame('invalid ON ERROR behavior for column "e"', $query->facts->diagnostics[0]->message());
+        self::assertSame('invalid ON ERROR behavior for column "e"', $query->diagnostics()[0]->message());
     }
 
     public function testClauseIgnoresNoClause(): void

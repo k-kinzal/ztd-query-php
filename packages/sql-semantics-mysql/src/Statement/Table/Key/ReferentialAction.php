@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One ON UPDATE or ON DELETE clause of a foreign key reference.
@@ -20,13 +19,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ReferentialAction implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ReferenceEvent $event The change of the parent row
      * @param ReferenceOption $option What happens to the child rows
      */
-    public function __construct(public readonly ReferenceEvent $event, public readonly ReferenceOption $option)
+    public function __construct(public readonly ReferenceEvent $event, public readonly ReferenceOption $option, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

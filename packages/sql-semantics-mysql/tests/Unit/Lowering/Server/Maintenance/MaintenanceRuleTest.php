@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Server\Maintenance;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -15,6 +16,26 @@ use SqlSemantics\Platform\MySql\Lowering\Server\Maintenance\MaintenanceRule;
 #[Medium]
 final class MaintenanceRuleTest extends TestCase
 {
+    #[DataProvider('providerLegacyTargets')]
+    public function testTablesRetainsLeadingDotsInEveryMaintenanceRole(string $version, string $sql): void
+    {
+        $statement = (new Semantics(Dialect::MySql, $version))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertCount($version === 'mysql-5.7.44' ? 2 : 0, $statement->warnings());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerLegacyTargets(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44'] as $version) {
+            foreach (['ANALYZE TABLE', 'CHECK TABLE', 'CHECKSUM TABLE', 'OPTIMIZE TABLE', 'REPAIR TABLE', 'FLUSH TABLES'] as $command) {
+                yield $version . ' ' . $command => [$version, $command . ' .t, .u'];
+            }
+        }
+    }
+
     public function testStatementLowersEveryMaintenanceStatement(): void
     {
         self::assertSame('ANALYZE TABLE t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('analyze table t')->toString());
@@ -23,6 +44,28 @@ final class MaintenanceRuleTest extends TestCase
     public function testTablesLowersQualifiedNames(): void
     {
         self::assertSame('OPTIMIZE TABLE a.b, c', (new Semantics(Dialect::MySql))->analyze('optimize table a.b, c')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerRepeatedTargets(): iterable
+    {
+        foreach (['ANALYZE', 'CHECK', 'CHECKSUM', 'OPTIMIZE', 'REPAIR'] as $command) {
+            yield $command => [$command . ' TABLE t, t, later'];
+        }
+    }
+
+    #[DataProvider('providerRepeatedTargets')]
+    public function testTablesRefusesATableNamedTwiceWhileReading(string $sql): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The list names a table twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable::class, $failure->problem);
+            self::assertSame('t', $failure->problem->alias->value);
+        }
     }
 
     public function testCheckOptionsKeepsTheWrittenOrder(): void

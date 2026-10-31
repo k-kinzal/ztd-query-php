@@ -19,10 +19,10 @@ final class StatementTest extends TestCase
     public function testDeriveStatementRecordsTheRowsAndDeclarationsOfTheRoot(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('CREATE TABLE t (a INTEGER)')->statement;
+        $statement = $semantics->analyze('CREATE TABLE t (a INTEGER)');
         $derivation = new Derivation($semantics->context([]));
 
-        $statement->deriveStatement($derivation);
+        (new \SqlSemantics\Construction\Occurrences())->copy($statement)->deriveStatement($derivation);
 
         self::assertCount(1, $derivation->facts()->declarations);
         self::assertNull($derivation->facts()->output);

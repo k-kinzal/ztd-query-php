@@ -19,14 +19,14 @@ final class UnionOptionTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) UNION = (x, db.y)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $option = $statement->options[0];
 
         self::assertInstanceOf(UnionOption::class, $option);
         self::assertCount(2, $option->tables);
-        self::assertSame('CREATE TABLE t (a INT) UNION (x, db.y)', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) UNION = (x, db.y)', $create->toString());
     }
 }

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP PARTITION p, …`: a request to remove partitions and their rows.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Dropping two partitions
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t DROP PARTITION p0, p1');
- *     count($alter->statement->commands[0]->partitions->names) // => 2
+ *     count($alter->commands[0]->partitions->names) // => 2
  */
 final class DropPartition implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param NamedPartitions $partitions The partitions
      */
-    public function __construct(public readonly NamedPartitions $partitions)
+    public function __construct(public readonly NamedPartitions $partitions, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

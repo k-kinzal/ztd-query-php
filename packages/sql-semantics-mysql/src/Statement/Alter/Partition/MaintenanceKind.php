@@ -26,6 +26,14 @@ enum MaintenanceKind: string
     case Truncate = 'TRUNCATE';
 
     /**
+     * Tells whether the operation returns administration rows instead of an ALTER completion.
+     */
+    public function reports(): bool
+    {
+        return $this !== self::Rebuild && $this !== self::Truncate;
+    }
+
+    /**
      * Tells whether the operation accepts NO_WRITE_TO_BINLOG.
      */
     public function logged(): bool

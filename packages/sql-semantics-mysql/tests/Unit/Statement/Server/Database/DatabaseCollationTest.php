@@ -17,6 +17,6 @@ final class DatabaseCollationTest extends TestCase
 {
     public function testRenderWritesCollate(): void
     {
-        self::assertSame('CREATE DATABASE d COLLATE latin1_bin', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('create database d default collate = latin1_bin')->toString());
+        self::assertSame('CREATE DATABASE d DEFAULT COLLATE = latin1_bin', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('create database d default collate = latin1_bin')->toString());
     }
 }

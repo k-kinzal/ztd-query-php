@@ -47,6 +47,6 @@ final class MissingColumnTest extends TestCase
 
         $query = $semantics->analyze('SELECT b FROM t', [$table]);
 
-        self::assertSame([$query->field('b')->resolution], $query->facts->diagnostics);
+        self::assertSame([$query->field('b')->resolution], $query->diagnostics());
     }
 }

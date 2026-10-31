@@ -9,7 +9,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -57,7 +57,7 @@ final class BitRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function bitExpression(Node $expression): Scalar
+    public function bitExpression(Node $expression): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $pending = [];
         $form = $this->lowering->form($expression);
@@ -68,14 +68,22 @@ final class BitRule
         if ($form->signature !== 'bit_expr: simple_expr') {
             throw ImplementationGap::production($form);
         }
-        $result = $this->lowering->expressions->simpleExpression($form->node(0));
+        $result = (new PrimaryRule($this->lowering))->simpleExpression($form->node(0));
         foreach (array_reverse($pending) as $operation) {
             $operator = self::OPERATORS[$operation->signature] ?? null;
             $result = $operator === null
-                ? new IntervalArithmetic($result, $this->lowering->expressions->interval($operation->node(3), $operation->node(4)), self::INTERVALS[$operation->signature])
-                : new Arithmetic($operator, $result, $this->bitExpression($operation->node(2)));
+                ? (new IntervalRule($this->lowering))->arithmetic($result, $operation->node(3), $operation->node(4), self::INTERVALS[$operation->signature])
+                : $this->arithmetic($operator, $result, $this->bitExpression($operation->node(2)), $operation->signature === 'bit_expr: bit_expr MOD_SYM bit_expr');
         }
 
-        return $result;
+        return $this->lowering->origins->record($result, $expression);
+    }
+
+    /**
+     * Keeps row-containing arithmetic in the stored computation domain.
+     */
+    public function arithmetic(ArithmeticOperator $operator, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $left, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $right, bool $modWord = false): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+    {
+        return $left instanceof Scalar && $right instanceof Scalar ? new Arithmetic($operator, $left, $right, modWord: $modWord) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredArithmetic($operator, $left, $right, modWord: $modWord);
     }
 }

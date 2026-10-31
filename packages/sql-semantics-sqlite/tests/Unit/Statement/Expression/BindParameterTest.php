@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
@@ -33,7 +32,7 @@ final class BindParameterTest extends TestCase
 
     public function testMarkerReadsEveryWrittenPrefix(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT ?, ?7, :a, @b, $c')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT ?, ?7, :a, @b, $c');
 
         self::assertInstanceOf(Select::class, $statement);
         $parameters = array_map(static function (object $column): BindParameter {
@@ -50,16 +49,16 @@ final class BindParameterTest extends TestCase
     public function testDeriveScalarDependsOnTheBoundValue(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT ?2', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
-        $fact = $operation->facts->scalar($statement->columns[0]->expression);
+        $fact = $statement->columns[0]->expression->scalarInformation();
         self::assertEquals(new Dependent([new UnboundParameter('?2')]), $fact->type);
         self::assertSame(Nullability::Dependent, $fact->nullability);
         self::assertNull($fact->resolution);
         self::assertSame(Nullability::Dependent, $operation->field(0)->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarNamesTheMarkerOfANamedParameter(): void
@@ -81,7 +80,7 @@ final class BindParameterTest extends TestCase
     public function testRenderWritesANewlyBuiltParameter(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new BindParameter(ParameterPrefix::Question)), new ResultColumn(new BindParameter(ParameterPrefix::At, 'x'))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new BindParameter(ParameterPrefix::Question)), new ResultColumn(new BindParameter(ParameterPrefix::At, 'x'))]));
 
         self::assertSame('SELECT ?, @x', $operation->toString());
     }

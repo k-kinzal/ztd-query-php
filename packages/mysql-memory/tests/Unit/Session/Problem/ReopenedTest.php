@@ -1,0 +1,113 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Session\Problem;
+
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Problem\Reopened;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(Reopened::class)]
+#[Small]
+final class ReopenedTest extends TestCase
+{
+    public function testCheckRefusesATemporaryTableNamedTwice(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TEMPORARY TABLE x1 (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: 'a'");
+
+        $session->query('SELECT * FROM x1 AS a JOIN x1 AS b');
+    }
+
+    public function testTemporaryAnswersTheTemporaryTableAReferenceNames(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE x2 (a INT); CREATE TEMPORARY TABLE x1 (a INT)');
+
+        $result1 = $session->query('SELECT count(*) FROM x2 a JOIN x2 b')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([['0']], $result1->rows);
+    }
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerOpeningProblems(): iterable
+    {
+        yield 'column' => ['SELECT unknown_column FROM x1 first_table JOIN x1 second_table'];
+        yield 'routine' => ['SELECT unknown_function(1) FROM x1 first_table JOIN x1 second_table'];
+        yield 'missing table' => ['SELECT * FROM no_such_table JOIN x1 first_table JOIN x1 second_table'];
+    }
+
+    #[DataProvider('providerOpeningProblems')]
+    public function testCheckPrecedesOtherTableAndNameErrors(string $sql): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query('USE mysql;CREATE TEMPORARY TABLE x1(a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: 'first_table'");
+
+        $session->query($sql);
+    }
+
+
+    public function testCheckOpensTheWriteTargetBeforeTheQuerySource(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TEMPORARY TABLE x1(a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: 'x1'");
+
+        $session->query('INSERT INTO x1 SELECT a FROM x1 source');
+    }
+
+    public function testCheckDefersOpeningTheBodyUntilTheProcedureRuns(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d;USE d;CREATE TEMPORARY TABLE x1(a INT)');
+        $session->query('CREATE PROCEDURE p() SELECT * FROM x1 first_table JOIN x1 second_table');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: 'first_table'");
+
+        $session->query('CALL p()');
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerContainedReferences(): iterable
+    {
+        yield '5.6' => ['5.6.51', 'second_table'];
+        yield '5.7' => ['5.7.44', 'second_table'];
+        yield '8.4' => ['8.4.7', 'first_table'];
+    }
+
+    #[DataProvider('providerContainedReferences')]
+    public function testCheckNamesTheLegacyContainedReferenceBeingReopened(string $version, string $reference): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('CREATE DATABASE d;USE d;CREATE TEMPORARY TABLE x1(a INT)');
+        $session->query('CREATE FUNCTION f() RETURNS INT DETERMINISTIC RETURN (SELECT COUNT(*) FROM x1 first_table JOIN x1 second_table)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: '" . $reference . "'");
+
+        $session->query('SELECT f()');
+    }
+}

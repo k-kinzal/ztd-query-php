@@ -43,7 +43,8 @@ final class TriggerRuleTest extends TestCase
     public function testCreateLowersATriggerOfEveryLayout(string $release, string $sql, TriggerTime $time, TriggerEvent $event, string $expected): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $create->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertSame('tr', $statement->name->name->value);
         self::assertSame('db', $statement->name->schema?->value);
@@ -71,12 +72,35 @@ final class TriggerRuleTest extends TestCase
     public function testCreateReadsIfNotExists(string $release): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze('create trigger if not exists tr after insert on t for each row begin end');
-        $statement = $create->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertTrue($statement->ifNotExists);
         self::assertNull($statement->definer);
         self::assertInstanceOf(Block::class, $statement->body);
         self::assertSame('CREATE TRIGGER IF NOT EXISTS tr AFTER INSERT ON t FOR EACH ROW BEGIN END', $create->toString());
+    }
+
+    public function testCreateRetainsTheCompleteRequestForDistinctDatabases(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW SET @x=1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(CreateTrigger::class, $operation);
+        self::assertSame('a', $operation->name->schema?->value);
+        self::assertSame('b', $operation->table->name->schema?->value);
+        self::assertTrue($operation->hasExecutionCondition());
+        self::assertSame('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW SET @x = 1', $operation->toString());
+    }
+
+    public function testCreateKeepsABodyConditionBeforeTheSchemaRelationship(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER a.tr BEFORE INSERT ON b.t FOR EACH ROW RETURN 1');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('RETURN is only allowed in a FUNCTION', $failure->problem->message());
+        }
     }
 
     public function testCreateRefusesAnotherProduction(): void
@@ -96,7 +120,7 @@ final class TriggerRuleTest extends TestCase
     public static function providerOrderLowersFollowsAndPrecedes(): iterable
     {
         yield 'follows on 5.7' => ['mysql-5.7.44', 'create trigger tr before update on t for each row follows other set @a = 1', OrderPlacement::Follows, 'CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW FOLLOWS other SET @a = 1'];
-        yield 'precedes a string on 8.0' => ['mysql-8.0.44', "create trigger tr after insert on t for each row precedes 'other' set @a = 1", OrderPlacement::Precedes, 'CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW PRECEDES other SET @a = 1'];
+        yield 'precedes a string on 8.0' => ['mysql-8.0.44', "create trigger tr after insert on t for each row precedes 'other' set @a = 1", OrderPlacement::Precedes, "CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW PRECEDES 'other' SET @a = 1"];
         yield 'follows on 9.1' => ['mysql-9.1.0', 'create trigger tr before delete on t for each row follows other set @a = 1', OrderPlacement::Follows, 'CREATE TRIGGER tr BEFORE DELETE ON t FOR EACH ROW FOLLOWS other SET @a = 1'];
         yield 'precedes on 9.1' => ['mysql-9.1.0', 'create trigger tr before delete on t for each row precedes other set @a = 1', OrderPlacement::Precedes, 'CREATE TRIGGER tr BEFORE DELETE ON t FOR EACH ROW PRECEDES other SET @a = 1'];
     }
@@ -105,7 +129,8 @@ final class TriggerRuleTest extends TestCase
     public function testOrderLowersFollowsAndPrecedes(string $release, string $sql, OrderPlacement $placement, string $expected): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $create->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertSame($placement, $statement->order?->placement);
         self::assertSame('other', $statement->order->other->value);

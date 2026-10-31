@@ -5,24 +5,24 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Expression\Operator;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Floating;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -32,6 +32,70 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class UnaryTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int, UnaryOperator}>
+     */
+    public static function providerNegationSpellings(): iterable
+    {
+        yield 'paired' => ['!!1', 1, UnaryOperator::PairedNot];
+        yield 'three adjacent' => ['!!!1', 2, UnaryOperator::PairedNot];
+        yield 'four adjacent' => ['!!!!1', 2, UnaryOperator::PairedNot];
+        yield 'space separated' => ['! !1', 2, UnaryOperator::Not];
+        yield 'comment separated' => ['!/**/!1', 2, UnaryOperator::Not];
+        yield 'single before pair' => ['! !!1', 2, UnaryOperator::Not];
+    }
+
+    #[DataProvider('providerNegationSpellings')]
+    public function testDeriveScalarRetainsContiguousPairsAndTheirWarnings(string $expression, int $warnings, UnaryOperator $operator): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT ' . $expression);
+        $node = $operation->field(0)->expression;
+
+        self::assertInstanceOf(Unary::class, $node);
+        self::assertSame($operator, $node->operator);
+        self::assertCount($warnings, $operation->warnings());
+        self::assertSame('SELECT ' . $expression, $operation->toString());
+    }
+
+    public function testDeriveScalarRetainsTheBindingAndOperandOfUnaryPlus(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(id INT PRIMARY KEY)');
+        $query = $semantics->analyze('SELECT +id AS v FROM t', [$table]);
+        $field = $query->field(0);
+
+        self::assertInstanceOf(Unary::class, $field->expression);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $field->resolution);
+        self::assertSame('id', $field->column()?->name->value);
+        self::assertSame($field->expression->operand, $field->expression->scalarInformation()->replacement);
+    }
+
+    public function testDeriveScalarWarnsOnlyForTheSymbolicSpellingOfTightNegation(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('HIGH_NOT_PRECEDENCE'));
+        $operation = $semantics->analyze('SELECT NOT 1, ! 1, NOT 2 = 1');
+
+        self::assertCount(1, $operation->warnings());
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, $operation->warnings()[0]->message());
+        self::assertSame('SELECT NOT 1, ! 1, NOT 2 = 1', $operation->toString());
+    }
+
+    public function testDeriveScalarRejectsTheTightKeywordWithoutItsMode(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $this->expectExceptionMessage('The tight NOT keyword requires HIGH_NOT_PRECEDENCE.');
+
+        $derivation->scalar(new Unary(UnaryOperator::Not, new NumberLiteral('1'), keyword: true), $derivation->environment());
+    }
+
+    public function testRejectsAKeywordSpellingForOtherOperators(): void
+    {
+        $this->expectExceptionMessage('Only logical negation has a keyword spelling.');
+
+        new Unary(UnaryOperator::Minus, new NumberLiteral('1'), keyword: true);
+    }
+
     public function testDeriveScalarTypesEachOperator(): void
     {
         $platform = new Platform();
@@ -41,7 +105,18 @@ final class UnaryTest extends TestCase
         $invert = $derivation->scalar(new Unary(UnaryOperator::Invert, new StringLiteral(['7'])), $derivation->environment());
         $not = $derivation->scalar(new Unary(UnaryOperator::Not, new StringLiteral(['7'])), $derivation->environment());
 
-        self::assertEquals([new Known(new Character(CharacterKind::VarChar)), new Known(new Floating(FloatingKind::Double)), new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), new Known(new Integral(IntegralKind::BigInt))], [$plus->type, $minus->type, $invert->type, $not->type]);
+        self::assertEquals([new Known(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), new Known(Domain::double(23)), new Known(Domain::integer(Field::LongLong, 21, true)), new Known(Domain::integer(Field::LongLong, 1))], [$plus->type, $minus->type, $invert->type, $not->type]);
+    }
+
+    public function testDeriveScalarMakesTheNegationOfANegativeIntegerConstantADecimal(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $twice = $derivation->scalar(new Unary(UnaryOperator::Minus, new Unary(UnaryOperator::Minus, new NumberLiteral('3'))), $derivation->environment());
+        $once = $derivation->scalar(new Unary(UnaryOperator::Minus, new NumberLiteral('3')), $derivation->environment());
+        $smallest = $derivation->scalar(new Unary(UnaryOperator::Minus, new NumberLiteral('9223372036854775808')), $derivation->environment());
+
+        self::assertEquals([new Known(Domain::decimal(1, 0)), new Known(Domain::integer(Field::LongLong, 2)), new Known(Domain::integer(Field::LongLong, 20))], [$twice->type, $once->type, $smallest->type]);
     }
 
     public function testRenderNegatesACollatedOperandWithoutParentheses(): void
@@ -58,5 +133,15 @@ final class UnaryTest extends TestCase
         $this->expectExceptionMessage('The operand of a prefix operator needs a grouping to keep its place.');
 
         new Unary(UnaryOperator::Minus, new Concatenation(new NumberLiteral('1'), new NumberLiteral('2')));
+    }
+
+    public function testNegatedCountsTheSignInTheLengthOfAnExactResultIn57(): void
+    {
+        $platform = new Platform();
+        $legacy = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $modern = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $minus = new Unary(UnaryOperator::Minus, new NumberLiteral('1.5'));
+
+        self::assertSame([5, 4], [$minus->negated(new Numbers(), Domain::decimal(2, 1), new NumericResult(), $legacy)->length, $minus->negated(new Numbers(), Domain::decimal(2, 1), new NumericResult(), $modern)->length]);
     }
 }

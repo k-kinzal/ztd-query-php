@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Lock;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `UNLOCK INSTANCE`: a request to release the backup lock of the session (MySQL 8.0 and later).
@@ -21,9 +20,9 @@ use SqlSemantics\Statement\Statement;
  * @example Reading the request
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('unlock instance')->toString() // => 'UNLOCK INSTANCE'
  */
-final class UnlockInstance implements Statement
+final class UnlockInstance extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Has nothing to derive: the request names no relation and no value.
@@ -38,5 +37,14 @@ final class UnlockInstance implements Statement
     public function render(Output $out): void
     {
         $out->keyword('UNLOCK', 'INSTANCE');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 }

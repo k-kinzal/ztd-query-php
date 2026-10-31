@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The definition of a routine written as a string constant: unanalysed text in the routine's language.
@@ -49,18 +48,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the language and the text of a routine definition
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE FUNCTION one() RETURNS int4 LANGUAGE sql AS \$\$ SELECT 1 \$\$");
- *     $source = $operation->statement->options[1]->source;
+ *     $source = $operation->options[1]->source;
  *     [$source->language?->value, $source->text->value] // => ['sql', ' SELECT 1 ']
  */
 final class RoutineSource implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $language The language the text is written in, as the routine's LANGUAGE option names it; null when none is written
      * @param StringConstant $text The text, decoded
      */
-    public function __construct(public readonly ?Name $language, public readonly StringConstant $text)
+    public function __construct(public readonly ?Name $language, public readonly StringConstant $text, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

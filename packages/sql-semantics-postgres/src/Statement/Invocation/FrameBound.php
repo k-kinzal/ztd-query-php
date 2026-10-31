@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One bound of a window frame.
@@ -34,13 +33,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FrameBound implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FrameBoundKind $kind Where the bound lies
      * @param Scalar|null $offset The offset expression; given exactly for the offset kinds
      */
-    public function __construct(public readonly FrameBoundKind $kind, public readonly ?Scalar $offset = null)
+    public function __construct(public readonly FrameBoundKind $kind, public readonly ?Scalar $offset = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($kind->offset() === ($offset !== null), 'A frame bound has an offset exactly when it is an offset bound.');
     }

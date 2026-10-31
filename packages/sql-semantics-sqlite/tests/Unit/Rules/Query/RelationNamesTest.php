@@ -27,8 +27,8 @@ final class RelationNamesTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a COLLATE nocase, true, a, a, a, (a), a, t.b, 1 + 1, "zz", oid, A FROM t', [$create]);
-        self::assertInstanceOf(Select::class, $query->statement);
-        $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
+        self::assertInstanceOf(Select::class, $query);
+        $shape = (new RelationNames())->shape($query->output() ?? self::fail('The query has an output.'), $query, new Derivation($semantics->context()));
 
         self::assertSame(['a', 'column2', 'a:1', 'a:2', 'a:3', 'a:4', null, 'b', '1 + 1', 'zz', 'oid', null], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $shape->slots));
         self::assertSame($query->field(0)->slot, $shape->slots[0]->origin);
@@ -40,8 +40,8 @@ final class RelationNamesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT a AS a, a, a AS "a:1", b AS A FROM t');
-        self::assertInstanceOf(Select::class, $query->statement);
-        $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
+        self::assertInstanceOf(Select::class, $query);
+        $shape = (new RelationNames())->shape($query->output() ?? self::fail('The query has an output.'), $query, new Derivation($semantics->context()));
 
         self::assertSame(['a', 'a:1', 'a:2', 'A:3'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $shape->slots));
     }
@@ -50,8 +50,8 @@ final class RelationNamesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT a, *, b FROM t');
-        self::assertInstanceOf(Select::class, $query->statement);
-        $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
+        self::assertInstanceOf(Select::class, $query);
+        $shape = (new RelationNames())->shape($query->output() ?? self::fail('The query has an output.'), $query, new Derivation($semantics->context()));
 
         self::assertSame(['a', null], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $shape->slots));
         self::assertSame([[], ['the declaration of relation t']], array_map(static fn (OutputSlot $slot): array => array_map(static fn (MissingInput $input): string => $input->describe(), $slot->unnamed), $shape->slots));
@@ -63,8 +63,8 @@ final class RelationNamesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT *, 2 AS two FROM (SELECT *, 1 AS one FROM u)');
-        self::assertInstanceOf(Select::class, $query->statement);
-        $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
+        self::assertInstanceOf(Select::class, $query);
+        $shape = (new RelationNames())->shape($query->output() ?? self::fail('The query has an output.'), $query, new Derivation($semantics->context()));
 
         self::assertSame([null, null], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $shape->slots));
         self::assertSame('the declaration of relation u', $shape->slots[0]->unnamed[0]->describe());
@@ -84,7 +84,7 @@ final class RelationNamesTest extends TestCase
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT oid, a AS x, "zz", true, TRUE AS z, 1, * FROM t', [$create]);
         $names = new RelationNames();
-        $select = $query->statement;
+        $select = $query;
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame('oid', $names->named($query->field(0), $select, 0)?->value);
@@ -99,7 +99,7 @@ final class RelationNamesTest extends TestCase
     public function testNamedReadsTheWordOfAValuesColumnOrItsPosition(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('VALUES (x, 1)');
-        $values = $query->statement;
+        $values = $query;
 
         self::assertInstanceOf(ValuesClause::class, $values);
         self::assertSame('x', (new RelationNames())->named($query->field(0), $values, 0)?->value);

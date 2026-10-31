@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpressi
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A variable passed to a JSON path with PASSING: `value AS name`.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonArgument implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param JsonValueExpression $value The value
      * @param Name $name The variable name the path uses
      */
-    public function __construct(public readonly JsonValueExpression $value, public readonly Name $name)
+    public function __construct(public readonly JsonValueExpression $value, public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

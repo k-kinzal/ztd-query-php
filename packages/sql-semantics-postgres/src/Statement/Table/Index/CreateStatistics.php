@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -34,9 +33,9 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE STATISTICS IF NOT EXISTS s (ndistinct) ON a, (a + b) FROM t');
  *     $statement->toString() // => 'CREATE STATISTICS IF NOT EXISTS s (ndistinct) ON a, (a + b) FROM t'
  */
-final class CreateStatistics implements Statement
+final class CreateStatistics extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ColumnKey|ExpressionKey> The columns and expressions
@@ -66,7 +65,12 @@ final class CreateStatistics implements Statement
         array $from,
         array $kinds = [],
         public readonly bool $ifNotExists = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->keys = (new KeyTerms())->checked($keys);
         $this->from = Check::listOf($from, Relation::class, 'Statistics are built FROM at least one relation.', 1);
         $this->kinds = Check::listOf($kinds, Name::class, 'Statistics kinds are names.');

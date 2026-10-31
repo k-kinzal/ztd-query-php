@@ -18,7 +18,7 @@ final class ShowCreateTriggerTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE TRIGGER db.x');
-        self::assertInstanceOf(ShowCreateTrigger::class, $show->statement);
+        self::assertInstanceOf(ShowCreateTrigger::class, $show);
         self::assertSame('Trigger', $show->field(0)->name?->value);
     }
 
@@ -26,4 +26,11 @@ final class ShowCreateTriggerTest extends TestCase
     {
         self::assertSame('SHOW CREATE TRIGGER db.x', (new Semantics(Dialect::MySql))->analyze('SHOW CREATE TRIGGER db.x')->toString());
     }
+
+    public function testNameRejectsACatalogQualifier(): void
+    {
+        $this->expectExceptionMessage('A stored-program name has at most a database qualifier.');
+        new ShowCreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('db'), new \SqlSemantics\Statement\Identifier\Name('catalog')));
+    }
+
 }

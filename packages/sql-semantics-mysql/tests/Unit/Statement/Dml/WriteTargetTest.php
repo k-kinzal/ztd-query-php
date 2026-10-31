@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -42,19 +44,19 @@ final class WriteTargetTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze('DELETE FROM t WHERE a = 1', [$t]);
-        self::assertInstanceOf(Delete::class, $operation->statement);
-        $fact = $operation->facts->relation($operation->statement->table);
+        self::assertInstanceOf(Delete::class, $operation);
+        $fact = $operation->table->relationInformation();
 
         self::assertCount(2, $fact->shape->slots);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveRelationReportsACommonTable(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) DELETE FROM c');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1) DELETE FROM c');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertSame('The target table is a common table expression, which is not updatable', $operation->facts->diagnostics[0]->message());
+        self::assertCount(1, $operation->diagnostics());
+        self::assertSame('The target table is a common table expression, which is not updatable', $operation->diagnostics()[0]->message());
     }
 
     public function testRenderWritesNameAliasAndPartitions(): void
@@ -67,5 +69,18 @@ final class WriteTargetTest extends TestCase
         $this->expectExceptionMessage('A table is qualified by at most a database.');
 
         new WriteTarget(new QualifiedName(new Name('t'), new Name('s'), new Name('c')));
+    }
+
+    public function testDeriveRelationNamesACommonTableTarget(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('c'))], $semantics->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) DELETE FROM c')->diagnostics());
+        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('z'))], $semantics->analyze('CREATE PROCEDURE p() WITH c AS (SELECT 1 AS k) DELETE FROM c AS z')->diagnostics());
+    }
+    public function testValueRejectsAnEqualsAliasMarker(): void
+    {
+        $this->expectExceptionMessage('A write target alias uses AS or no marker.');
+        new WriteTarget(new QualifiedName(new Name('t')), new Name('a'), mark: \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::Equals);
     }
 }

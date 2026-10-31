@@ -1,0 +1,263 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Session\Parse;
+
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use MySqlMemory\Session\Parse\Reader;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Diagnostic\AnalysisException;
+
+#[CoversClass(Reader::class)]
+#[Small]
+final class ReaderTest extends TestCase
+{
+    public function testMarkerEndKeepsTheCompletedGrammarBoundary(): void
+    {
+        $reader = new Reader();
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedTemporalLiteral('bad', \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Time);
+        $rejection = new \SqlSemantics\Construction\RejectedInput($problem, 17, true);
+        self::assertSame(17, $reader->markerEnd($rejection, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertSame(PHP_INT_MAX, $reader->markerEnd($rejection, \SqlSemantics\Contract\GrammarRelease::MySql5744));
+        self::assertSame(PHP_INT_MAX, $reader->markerEnd(null, \SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
+    public function testReadKeepsAnUnpreparedMarkerBeforeTemporalInterpretation(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near '?' at line 1");
+        (new Reader())->read("SELECT TIME 'bad', ?", false, $session);
+    }
+
+    public function testTargetNoticesKeepsGrammarFailuresBeforeModernTargetResolution(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2);
+        $grammar = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem);
+        $contextual = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+        $notices = [[1, $grammar], [2, $contextual]];
+
+        self::assertSame([[1, $grammar]], (new Reader())->targetNotices($notices, true, false));
+        self::assertSame([], (new Reader())->targetNotices($notices, true, true));
+        self::assertSame($notices, (new Reader())->targetNotices($notices, false, true));
+    }
+
+    public function testRejectionResolvesTheRoutineDatabaseBeforeStatementQuantifiers(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->run('CREATE PROCEDURE p() SELECT ALL DISTINCT 1');
+
+        self::assertSame([['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
+
+    public function testRejectionFormatsAHashRefusalBeforeTheIncompleteSuffix(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run("ALTER USER u IDENTIFIED BY PASSWORD 'text' REQUIRE");
+
+        self::assertSame([['Error', 1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ''text' REQUIRE' at line 1"]], $session->diagnostics->conditions);
+    }
+
+    public function testOperandKeepsTheDebugEntryBeforeDateInterpretation(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+
+        $session->query("SHOW PARSE_TREE SELECT DATE 'bad'");
+    }
+
+    public function testTreeRefusesAStandalonePartitionBeforeItsParameterMarker(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $this->expectExceptionMessage("Partitioning can not be used stand-alone in query near 'PARTITION BY HASH(?)' at line 1");
+
+        (new Reader())->tree('PARTITION BY HASH(?)', false, $session);
+    }
+
+    public function testRefusedPreservesThePartitionEntryBeforeALaterLexicalFailure(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $sql = "PARTITION BY HASH('unclosed";
+        $error = (new Reader())->refused(new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, 'later failure'), $sql, false, $session);
+
+        self::assertSame("Partitioning can not be used stand-alone in query near '" . $sql . "' at line 1", $error->getMessage());
+        self::assertSame([['Error', 1064, $error->getMessage()]], $session->diagnostics->conditions);
+    }
+
+    public function testLowerRetainsConcreteOperandsAndTheirInputLocations(): void
+    {
+        $session = (new Instance())->connect();
+        $tree = $session->semantics()->parser()->parse('SELECT ? + ?');
+        [$statement, $sources] = (new Reader())->lower($tree, $session);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        $markers = (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class);
+        self::assertSame([0, 1], [$markers[0]->position, $markers[1]->position]);
+        self::assertSame([7, 11], [$sources->of($markers[0])?->offset, $sources->of($markers[1])?->offset]);
+        self::assertFalse($statement->hasStatementInformation());
+    }
+
+    public function testRefusedRecordsAParameterMarkerBeforeALaterSyntaxError(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+
+        $error = (new Reader())->refused(new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, 'x'), 'SELECT ? FROM', false, $session);
+
+        self::assertSame("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '? FROM' at line 1", $error->getMessage());
+        self::assertSame([['Error', 1064, $error->getMessage()]], $session->diagnostics->conditions);
+    }
+
+    public function testReadAcceptsPreparedMarkersAndRefusesThemOutsidePreparation(): void
+    {
+        $session = (new Instance())->connect();
+        (new Reader())->read('SELECT /*+ BKA() */ ?', true, $session);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+
+        (new Reader())->read('SELECT ?', false, $session);
+    }
+
+    public function testRefusedCountsFollowingErrorsBeyondTheConditionStorageLimit(): void
+    {
+        $session = (new Instance())->connect();
+        $session->diagnostics->limit = 1;
+        $error = new SqlError(\MySqlMemory\Error\Family\AdministrationError::UnknownSystemVariable, 'unknown', following: [[1193, 'following']]);
+
+        self::assertSame($error, (new Reader())->refused($error, 'SET x=(', true, $session));
+        self::assertSame([['Error', 1193, 'unknown']], $session->diagnostics->conditions);
+        self::assertSame([2, 2], [$session->diagnostics->raised(), $session->diagnostics->errors()]);
+    }
+
+    public function testRefusalAnswersTheParseErrorOfARefusedStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $tree = $session->semantics()->parser()->parse('SELECT 1');
+
+        self::assertSame(1064, (new Reader())->refusal($tree, new AnalysisException('refused'), 'SELECT 1', '', $session)->getCode());
+    }
+
+    public function testRejectionKeepsOneDelayedWarningForACompleteRefusedWrite(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->run('REPLACE DELAYED t SELECT *');
+
+        self::assertSame([['Warning', 3005, 'REPLACE DELAYED is no longer supported. The statement was converted to REPLACE.'], ['Error', 1146, "Table 'd.t' doesn't exist"]], $session->diagnostics->conditions);
+    }
+
+    public function testRejectionRetainsTheTypedProblemAndPrecedingNotices(): void
+    {
+        $session = (new Instance())->connect();
+        $session->variables->database = 'd';
+        $sql = "CREATE PROCEDURE p() BEGIN SELECT BINARY 1; SIGNAL SQLSTATE '00000'; END";
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::BadSqlState, '00000'), strlen($sql) - 5);
+
+        $error = (new Reader())->rejection($failure, $sql, $session);
+
+        self::assertSame(1407, $error->getCode());
+        self::assertTrue($error->recorded);
+        self::assertSame([1287, 1407], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testReadDefersTemporalValidationInADebugInspection(): void
+    {
+        $session = (new Instance())->connect();
+
+        $tree = (new Reader())->read("SHOW PARSE_TREE SELECT DATE 'bad'", false, $session);
+
+        self::assertSame('start_entry', $tree->name);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testReadRefusesASubqueryInTheMomentOfPurgeInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near '  SELECT 1)' at line 1");
+
+        $session->query('PURGE BINARY LOGS BEFORE 1 + (  SELECT 1)');
+    }
+
+    public function testReadRefusesASubqueryNearItsParenthesisAfterAllInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("near '( SELECT 1) )' at line 1");
+
+        $session->query('PURGE MASTER LOGS BEFORE (1 = ALL ( SELECT 1) )');
+    }
+
+
+    public function testRejectionKeepsSyntaxConditionsBeforeDeleteTargetResolution(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1066);
+        $this->expectExceptionMessage("Not unique table/alias: 'c'");
+        $session->query('WITH unused AS (WITH c AS (SELECT 1), c AS (SELECT 2) SELECT 1) DELETE FROM x USING t');
+    }
+    public function testTemplateLeavesIndependentOperandConditionsAtTheirOwnBoundary(): void
+    {
+        $session = (new Instance())->connect();
+        $failure = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2), 0);
+        self::assertNull((new Reader())->template($failure, 'SELECT ROW(1,2)', $session));
+    }
+
+    public function testAppendTargetRequiresModernGrammarInterpretationToSucceed(): void
+    {
+        $reader = new Reader();
+        $failure = new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation('missing'));
+        self::assertFalse($reader->appendTarget([[1, $failure]], true, false));
+        self::assertTrue($reader->appendTarget([], true, false));
+        self::assertTrue($reader->appendTarget([[1, $failure]], true, true));
+        self::assertTrue($reader->appendTarget([[1, $failure]], false, false));
+    }
+
+    public function testEarlierPrefersTheRefusalTheLoweringFindsFirst(): void
+    {
+        $session = (new Instance())->connect();
+        $tree = $session->semantics()->parser()->parse('SIGNAL c SET MESSAGE_TEXT = @@nosuch');
+        $later = new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable('nosuch'), 36);
+
+        $earlier = (new Reader())->earlier($later, $tree, $session);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem::class, $earlier->problem);
+        self::assertSame('Undefined CONDITION: c', $earlier->problem->message());
+        self::assertSame($later, (new Reader())->earlier($later, $session->semantics()->parser()->parse('SELECT 1'), $session));
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerUndeclaredBeforeRefusals(): iterable
+    {
+        yield '5.7 LIMIT before a misplaced cache modifier' => ['5.7.44', '(SELECT 1 LIMIT a) UNION (SELECT SQL_CACHE 2)', 1327];
+        yield '5.6 LIMIT before a misplaced cache modifier' => ['5.6.51', 'SELECT 1 LIMIT a UNION SELECT SQL_NO_CACHE 2', 1327];
+        yield '8.4 INTO before a misplaced INTO' => ['8.4.7', 'SELECT 1 INTO a UNION SELECT 2', 1327];
+        yield '8.4 INTO after the refused operand' => ['8.4.7', 'SELECT 1 UNION SELECT HIGH_PRIORITY 2 INTO a', 1234];
+        yield '5.7 table before the variable without a database' => ['5.7.44', '(SELECT 1 FROM t LIMIT a) UNION (SELECT SQL_CACHE 2)', 1046];
+        yield '5.7 table after the variable without a database' => ['5.7.44', '(SELECT 1 LIMIT a) UNION (SELECT SQL_CACHE 2 FROM t)', 1327];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUndeclaredBeforeRefusals')]
+    public function testUndeclaredOrdersAVariableBeforeTheRefusedOperandAsTheServerDoes(string $release, string $sql, int $code): void
+    {
+        $session = (new Instance($release))->connect();
+        $answers = $session->run($sql);
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame($code, $answers[0]->getCode());
+    }
+}

@@ -19,7 +19,7 @@ final class ToggleKeysTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ENABLE KEYS', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t ENABLE KEYS', [$table])->diagnostics());
     }
 
     public function testRenderWritesEnableOrDisable(): void

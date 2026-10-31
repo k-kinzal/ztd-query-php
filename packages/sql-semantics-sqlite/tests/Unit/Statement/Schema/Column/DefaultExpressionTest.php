@@ -22,22 +22,22 @@ final class DefaultExpressionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b DEFAULT (a + 1))', []);
 
-        self::assertCount(2, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(DefaultNotConstant::class, $operation->facts->diagnostics[1]);
-        self::assertSame('b', $operation->facts->diagnostics[1]->column->value);
+        self::assertCount(2, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
+        self::assertInstanceOf(DefaultNotConstant::class, $operation->diagnostics()[1]);
+        self::assertSame('b', $operation->diagnostics()[1]->column->value);
     }
 
     public function testDeriveConstraintAcceptsAConstantExpression(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT (1 + 2))', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $default = $statement->columns[0]->constraints[0];
         self::assertInstanceOf(DefaultExpression::class, $default);
-        self::assertTrue($operation->facts->covers($default->expression));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertTrue($default->expression->hasBinding());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheExpressionInParentheses(): void

@@ -20,6 +20,8 @@ use SqlSemantics\Resolution\Environment;
  */
 enum CastConversion: string implements Clause
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case Binary = 'WITHOUT FUNCTION';
     case InOut = 'WITH INOUT';
 

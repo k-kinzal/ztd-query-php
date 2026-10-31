@@ -18,10 +18,16 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 #[Medium]
 final class ColumnPartTest extends TestCase
 {
+    public function testExplicitZeroPrefixIsRejected(): void
+    {
+        $this->expectExceptionMessage('A key prefix length must be positive.');
+        new ColumnPart(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('000'));
+    }
+
     public function testDeriveKeyPartDerivesNothing(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, KEY (a(4) DESC))');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
         self::assertInstanceOf(IndexDefinition::class, $element1);
@@ -29,11 +35,11 @@ final class ColumnPartTest extends TestCase
 
         self::assertInstanceOf(ColumnPart::class, $part);
         self::assertSame(Direction::Descending, $part->direction);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheColumnTheLengthAndTheDirection(): void
     {
-        self::assertSame('CREATE TABLE t (a TEXT, INDEX (a(4) ASC))', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
+        self::assertSame('CREATE TABLE t (a TEXT, KEY (a(4) ASC))', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT, KEY (a(4) ASC))')->toString());
     }
 }

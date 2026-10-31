@@ -10,11 +10,11 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Routine\FlowFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The simple CASE statement: an operand compared for equality with the value of each WHEN.
@@ -24,14 +24,17 @@ use SqlSemantics\Statement\Statement;
  * follow MYSQL-PROGRAM-FLOW-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/case.html.
  *
+ * A stored row operand is retained until this instruction is reached. It cannot
+ * supply a scalar result, but an unreachable instruction does not evaluate it.
+ *
  * @visibility public
  * @example Reading a simple CASE statement
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(a INT) CASE a WHEN 1 THEN SELECT 1; ELSE SELECT 2; END CASE');
- *     [count($create->statement->body->branches), count($create->statement->body->otherwise)] // => [1, 1]
+ *     [count($create->body->branches), count($create->body->otherwise)] // => [1, 1]
  */
-final class SimpleCase implements ProgramStatement
+final class SimpleCase implements FunctionBody
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ConditionalBranch> The WHEN branches in written order
@@ -44,12 +47,12 @@ final class SimpleCase implements ProgramStatement
     public readonly array $otherwise;
 
     /**
-     * @param Scalar $operand The value every WHEN value is compared with
+     * @param Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand The value every WHEN value is compared with
      * @param list<ConditionalBranch> $branches The WHEN branches; at least one
      * @param list<ProgramStatement|Statement> $otherwise The statements of ELSE; empty without ELSE
      * @throws InvalidConstruction When there is no branch or a member is of another class
      */
-    public function __construct(public readonly Scalar $operand, array $branches, array $otherwise = [])
+    public function __construct(public readonly Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, array $branches, array $otherwise = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->branches = Check::listOf($branches, ConditionalBranch::class, 'CASE holds at least one WHEN branch.', 1);
         $this->otherwise = (new StatementSequence())->members($otherwise);

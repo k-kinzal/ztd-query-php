@@ -9,9 +9,8 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Routine\ConditionFacts;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SIGNAL: raises a condition.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the statement
  *     $signal = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'");
- *     [$signal->statement->condition->state->value, $signal->toString()] // => ['45000', "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'no'"]
+ *     [$signal->condition->state->value, $signal->toString()] // => ['45000', "SIGNAL SQLSTATE VALUE '45000' SET MESSAGE_TEXT = 'no'"]
  */
-final class Signal implements Statement, ProgramStatement
+final class Signal extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, ProgramStatement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SignalItem> The condition information items in written order
@@ -39,9 +38,18 @@ final class Signal implements Statement, ProgramStatement
      * @param ConditionName|SqlState $condition The condition raised: an SQLSTATE value or a condition name
      * @param list<SignalItem> $items The condition information items of the SET clause; empty without SET
      */
-    public function __construct(public readonly ConditionName|SqlState $condition, array $items = [])
+    public function __construct(public readonly ConditionName|SqlState $condition, array $items = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = Check::listOf($items, SignalItem::class, 'The SET clause holds condition information items.');
+        $seen = [];
+        foreach ($this->items as $item) {
+            Check::input(!in_array($item->name, $seen, true), 'A condition information item is set once.');
+            $seen[] = $item->name;
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

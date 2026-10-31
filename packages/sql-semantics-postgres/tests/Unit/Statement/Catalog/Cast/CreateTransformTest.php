@@ -19,6 +19,6 @@ final class CreateTransformTest extends TestCase
 
     public function testDeriveStatementDerivesTheFunctions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION a(internal))')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION a(internal))')->diagnostics());
     }
 }

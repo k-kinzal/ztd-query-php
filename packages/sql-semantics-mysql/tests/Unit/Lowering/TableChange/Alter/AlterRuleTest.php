@@ -15,6 +15,15 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Alter\AlterRule;
 #[Medium]
 final class AlterRuleTest extends TestCase
 {
+    public function testStatementRetainsTheLegacyLeadingDot(): void
+    {
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE .t ADD COLUMN j INT');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $statement);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written, $statement->dot);
+        self::assertSame('ALTER TABLE .t ADD COLUMN j INT', $statement->toString());
+        self::assertSame('ALTER IGNORE TABLE .t FORCE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER IGNORE TABLE .t FORCE')->toString());
+    }
+
     public function testStatementLowersEveryGeneration(): void
     {
         self::assertSame('ALTER IGNORE TABLE t FORCE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter ignore table t force')->toString());
@@ -22,7 +31,7 @@ final class AlterRuleTest extends TestCase
 
     public function testCommandsFlattensModifiersItemsAndPartitioning(): void
     {
-        self::assertSame('ALTER TABLE t LOCK = `NONE`, ADD COLUMN a INT, WITH VALIDATION PARTITION BY KEY ()', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()')->toString());
+        self::assertSame('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK NONE, ADD a INT, WITH VALIDATION PARTITION BY KEY ()')->toString());
     }
 
     public function testOthersLowersRemovePartitioning(): void
@@ -32,6 +41,28 @@ final class AlterRuleTest extends TestCase
 
     public function testItemsKeepsRunsOfTableOptionsApart(): void
     {
-        self::assertSame('ALTER TABLE t ENGINE InnoDB, ROW_FORMAT DYNAMIC', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
+        self::assertSame('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ENGINE = InnoDB, ROW_FORMAT = DYNAMIC')->toString());
+    }
+    public function testDefinitionPublishesAnOrdinaryRootWithItsInvocationCondition(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, '5.7.44'))->analyze('ALTER TABLE t MODIFY g INT AS(USER())');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation);
+        self::assertTrue($operation->hasExecutionCondition());
+    }
+
+    public function testDefinitionRetainsPartitionOperandRangesWithoutRetainingInputText(): void
+    {
+        $sql = 'ALTER TABLE t WITH VALIDATION PARTITION BY HASH(VERSION())';
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $operation);
+        $partition = $operation->commands[1];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Partition\PartitionBy::class, $partition);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod::class, $partition->partitioning->method);
+        $origin = $partition->partitioning->method->expression->source();
+        self::assertNotNull($origin);
+        self::assertSame(strpos($sql, 'VERSION()'), $origin->offset);
+        self::assertSame(9, $origin->length);
     }
 }

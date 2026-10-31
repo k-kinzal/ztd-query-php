@@ -24,12 +24,12 @@ final class ScriptTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INTEGER); INSERT INTO t (a) VALUES (1)', []);
 
-        self::assertInstanceOf(Script::class, $operation->statement);
-        self::assertCount(2, $operation->statement->statements);
+        self::assertInstanceOf(Script::class, $operation);
+        self::assertCount(2, $operation->statements);
         self::assertCount(1, $operation->declarations());
-        self::assertCount(2, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[1]);
+        self::assertCount(2, $operation->diagnostics());
+        self::assertInstanceOf(MissingTable::class, $operation->diagnostics()[0]);
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[1]);
     }
 
     public function testDeriveStatementCollectsTheDeclarationsOfEveryMember(): void
@@ -45,8 +45,8 @@ final class ScriptTest extends TestCase
 
         $operation = $semantics->analyze('');
 
-        self::assertInstanceOf(Script::class, $operation->statement);
-        self::assertSame([], $operation->statement->statements);
+        self::assertInstanceOf(Script::class, $operation);
+        self::assertSame([], $operation->statements);
         self::assertSame('', $operation->toString());
         self::assertNull($operation->shape());
     }
@@ -57,7 +57,7 @@ final class ScriptTest extends TestCase
         $output = new Output(Platforms::of('sqlite')->codec($semantics->profile()));
         $operation = $semantics->analyze('select 1 ; delete from t ;');
 
-        $operation->statement->render($output);
+        $operation->render($output);
 
         self::assertSame('SELECT 1; DELETE FROM t', (new Lexical())->join($output->pieces()));
         self::assertSame('SELECT 1; DELETE FROM t', $operation->toString());
@@ -65,7 +65,7 @@ final class ScriptTest extends TestCase
 
     public function testRenderIsNotReachedForAScriptOfExactlyOneStatement(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1');
 
         $this->expectExceptionMessage('A script holds no statement or several; one statement is its own root.');
 
@@ -74,11 +74,27 @@ final class ScriptTest extends TestCase
 
     public function testRenderIsNotReachedForANestedScript(): void
     {
-        $script = (new Semantics(Dialect::Sqlite))->analyze('DELETE FROM t; DELETE FROM u')->statement;
+        $script = (new Semantics(Dialect::Sqlite))->analyze('DELETE FROM t; DELETE FROM u');
 
         self::assertInstanceOf(Script::class, $script);
         $this->expectExceptionMessage('A script does not nest.');
 
         new Script([$script, $script]);
     }
+
+    public function testSourceRetainsAnExplicitScriptRange(): void
+    {
+        $source = new \SqlSemantics\Statement\Source\Span(2, 0);
+        self::assertSame($source, (new Script([], inputSource: $source))->source());
+    }
+
+    public function testHasBindingDistinguishesAnUnconstructedScript(): void
+    {
+        $script = new Script([]);
+        self::assertFalse($script->hasBinding());
+        $constructed = Semantics::fromStatement((new Semantics(Dialect::Sqlite))->context(), $script);
+        self::assertTrue($constructed->hasBinding());
+        self::assertNull($constructed->output());
+    }
+
 }

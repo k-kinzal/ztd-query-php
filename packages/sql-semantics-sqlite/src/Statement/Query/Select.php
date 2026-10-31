@@ -21,7 +21,6 @@ use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Selection;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -35,13 +34,14 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t WHERE a > 1 GROUP BY a HAVING count(*) > 1 ORDER BY a LIMIT 3');
- *     [count($query->statement->columns), $query->statement->where !== null, count($query->statement->groupBy), $query->statement->having !== null, count($query->statement->orderBy), $query->statement->limit !== null] // => [1, true, 1, true, 1, true]
+ *     [count($query->columns), $query->where !== null, count($query->groupBy), $query->having !== null, count($query->orderBy), $query->limit !== null] // => [1, true, 1, true, 1, true]
  * @example Refusing an integer constant as an ordinary ordering expression
  *     new \SqlSemantics\Platform\Sqlite\Statement\Query\Select([new \SqlSemantics\Platform\Sqlite\Statement\Query\Star()], null, null, [], null, [], [new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Select implements Statement, Query, Selection
+final class Select extends \SqlSemantics\Statement\SqlStatement implements Statement, Query, Selection
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ResultColumn|Star|TableStar> The result columns in written order
@@ -85,7 +85,16 @@ final class Select implements Statement, Query, Selection
         array $orderBy = [],
         public readonly ?Limit $limit = null,
         public readonly ?SetQuantifier $quantifier = null,
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->columns = (new ClosedList())->of($columns, [ResultColumn::class, Star::class, TableStar::class], 'A selection projects at least one result column: an expression, a star or a qualified star.', 1);
         $this->groupBy = Check::listOf($groupBy, Scalar::class, 'GROUP BY terms are expressions.');
         $this->windows = Check::listOf($windows, WindowDefinition::class, 'The WINDOW clause holds window definitions.');

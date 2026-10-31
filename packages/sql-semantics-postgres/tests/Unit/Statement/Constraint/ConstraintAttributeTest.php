@@ -24,7 +24,7 @@ final class ConstraintAttributeTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a int REFERENCES u DEFERRABLE)', []);
-        self::assertSame(1, count($statement->facts->diagnostics));
+        self::assertSame(1, count($statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

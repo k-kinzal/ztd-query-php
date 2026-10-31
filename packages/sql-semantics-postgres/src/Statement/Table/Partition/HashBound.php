@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A hash partition bound: FOR VALUES WITH (MODULUS m, REMAINDER r).
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class HashBound implements PartitionBound
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<HashModulus> The items
@@ -35,7 +34,7 @@ final class HashBound implements PartitionBound
     /**
      * @param list<HashModulus> $items The items; at least one
      */
-    public function __construct(array $items)
+    public function __construct(array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->items = Check::listOf($items, HashModulus::class, 'A hash bound has at least one item.', 1);
     }

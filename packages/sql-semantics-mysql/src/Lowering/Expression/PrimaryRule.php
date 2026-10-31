@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -76,7 +77,7 @@ final class PrimaryRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function simpleExpression(Node $expression): Scalar
+    public function simpleExpression(Node $expression): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $pending = [];
         $form = $this->lowering->form($expression);
@@ -87,11 +88,11 @@ final class PrimaryRule
         $result = $this->unit($form);
         foreach (array_reverse($pending) as $operation) {
             $result = $operation->signature === 'simple_expr: simple_expr OR_OR_SYM simple_expr'
-                ? new Concatenation($result, $this->simpleExpression($operation->node(2)))
-                : new Collated($result, $this->lowering->names->identifier($operation->node(2)));
+                ? new Concatenation((new OperandRule())->scalar($result, $operation->node(0)), $this->lowering->expressions->simpleExpression($operation->node(2)))
+                : (new OperandRule())->collated($result, $this->lowering->names->identifier($operation->node(2)), $operation->node(2), $this->lowering->profile->grammar, $this->lowering->stored());
         }
 
-        return $result;
+        return $this->lowering->origins->record($result, $expression);
     }
 
     /**
@@ -99,7 +100,7 @@ final class PrimaryRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function unit(Form $form): Scalar
+    public function unit(Form $form): Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         if (isset(self::CALLS[$form->signature])) {
             return $this->lowering->calls->call($form->node(0));
@@ -109,20 +110,47 @@ final class PrimaryRule
         }
         $prefix = self::PREFIX[$form->signature] ?? null;
         if ($prefix !== null) {
-            if ($prefix === UnaryOperator::Not) {
-                $this->negation($form->node(0));
+            $keyword = $prefix === UnaryOperator::Not && $this->negation($form->node(0));
+            $operand = $this->lowering->form($form->node(1));
+            if ($prefix === UnaryOperator::Not && !$keyword && $this->paired($form, $operand)) {
+                return $this->unary(UnaryOperator::PairedNot, $operand->node(1), false);
             }
 
-            return new Unary($prefix, $this->simpleExpression($form->node(1)));
+            return $this->unary($prefix, $form->node(1), $keyword);
         }
 
         return (new FormRule($this->lowering))->lower($form);
     }
 
     /**
+     * Preserves the operand's scalar or deferred role under a prefix operator.
+     */
+    public function unary(UnaryOperator $operator, Node $node, bool $keyword): Unary|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary
+    {
+        $operand = $this->simpleExpression($node);
+        return !$operand instanceof Scalar
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredUnary($operator, $operand, $keyword)
+            : new Unary($operator, $operand, $keyword);
+    }
+
+    /**
+     * Recognizes adjacent symbolic negations as one observable pair.
+     */
+    public function paired(Form $outer, Form $inner): bool
+    {
+        if ($inner->signature !== 'simple_expr: not2 simple_expr' || $this->negation($inner->node(0))) {
+            return false;
+        }
+        $left = $this->lowering->form($outer->node(0))->token(0);
+        $right = $this->lowering->form($inner->node(0))->token(0);
+
+        return $left->end() === $right->offset;
+    }
+
+    /**
      * Lowers a leaf of a kind.
      */
-    public function leaf(string $kind, Node $leaf): Scalar
+    public function leaf(string $kind, Node $leaf): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment
     {
         return match ($kind) {
             'column' => $this->lowering->names->column($leaf),
@@ -133,15 +161,17 @@ final class PrimaryRule
     }
 
     /**
-     * Confirms the tight negation keyword: `!`, or NOT under HIGH_NOT_PRECEDENCE.
+     * Confirms tight negation and answers whether it uses the NOT keyword spelling.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function negation(Node $keyword): void
+    public function negation(Node $keyword): bool
     {
         $form = $this->lowering->form($keyword);
         if ($form->signature !== 'not2: !' && $form->signature !== 'not2: NOT2_SYM') {
             throw ImplementationGap::production($form);
         }
+
+        return $form->signature === 'not2: NOT2_SYM';
     }
 }

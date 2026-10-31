@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER [ COLUMN ] ... SET EXPRESSION AS ( expression ): replaces the expression of a generated column.
@@ -28,13 +27,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SetExpression implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column
      * @param Scalar $expression The generation expression
      */
-    public function __construct(public readonly Name $column, public readonly Scalar $expression)
+    public function __construct(public readonly Name $column, public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Identifier\Name;
  * opt_full, opt_show_cmd_type, opt_extended, opt_var_type, engine_or_all,
  * binlog_in, opt_binlog_in, binlog_from, opt_profile_defs, profile_defs,
  * profile_def, opt_profile_args, opt_for_query. FROM and IN are the same
- * keyword and LOCAL is the scope SESSION (UtilityNoise). Constructs:
+ * keyword and LOCAL retains its spelling and denotes SESSION (UtilityNoise). Constructs:
  * ShowLike, ShowWhere, ShowListing, ProfileSection, VariableScope and the
  * leaf values. Terminates: the profile list spine is flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show.html. Status: Implemented.
@@ -34,6 +34,14 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class ClauseRule
 {
+    /**
+     * Reads the qualifier word of a FROM/IN clause, including an absent optional clause.
+     */
+    public function usesIn(Node $clause): bool
+    {
+        return strtoupper($clause->tokens()[0]->text ?? '') === 'IN';
+    }
+
     /**
      * The empty filter productions.
      */
@@ -64,7 +72,7 @@ final class ClauseRule
      * The scope keywords of SHOW STATUS and SHOW VARIABLES.
      */
     private const SCOPES = [
-        'opt_var_type:' => null, 'opt_var_type: GLOBAL_SYM' => VariableScope::Global, 'opt_var_type: LOCAL_SYM' => VariableScope::Session,
+        'opt_var_type:' => null, 'opt_var_type: GLOBAL_SYM' => VariableScope::Global, 'opt_var_type: LOCAL_SYM' => VariableScope::Local,
         'opt_var_type: SESSION_SYM' => VariableScope::Session,
     ];
 
@@ -88,6 +96,7 @@ final class ClauseRule
     /**
      * Lowers a LIKE or WHERE clause: a node of `wild_and_where`, `opt_wild_or_where` or `opt_wild_or_where_for_show`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the WHERE operand has no scalar role
      * @throws ImplementationGap When a production has no rule
      */
     public function filter(Node $filter): ShowLike|ShowWhere|null
@@ -110,6 +119,42 @@ final class ClauseRule
     }
 
     /**
+     * Attaches a filter while preserving its inspection owner if the operand is refused.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the filter has no scalar role
+     */
+    public function inspection(\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet|\SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation $header, Node $source): \SqlSemantics\Platform\MySql\Statement\Statement
+    {
+        try {
+            $filter = $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys ? $this->where($source) : $this->filter($source);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\RefusedScalar) {
+                throw $failure;
+            }
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter($header, $failure->problem), $failure->end, $failure->aborts);
+        }
+        if ($header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys) {
+            \SqlSemantics\Diagnostic\Check::invariant(!$filter instanceof ShowLike, 'Index inspections admit only WHERE filters.');
+            return new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys($header->table, $header->extended, $header->database, $filter, listing: $header->listing, databaseIn: $header->databaseIn, tableIn: $header->tableIn);
+        }
+        return match (true) {
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowEvents($header->database, $filter, databaseIn: $header->databaseIn),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowDatabases($filter, listing: $header->listing),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables($header->database, $filter, databaseIn: $header->databaseIn),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowStatus($header->scope, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowVariables($header->scope, $filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCharacterSet($filter, form: $header->form),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Server\ShowCollation($filter),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns($header->table, $header->listing, $header->database, $filter, tableIn: $header->tableIn, databaseIn: $header->databaseIn, fieldsKeyword: $header->fieldsKeyword),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables($header->listing, $header->database, $filter, databaseIn: $header->databaseIn),
+            $header instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers($header->full, $header->database, $filter, databaseIn: $header->databaseIn),
+            default => new \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus($header->database, $filter, databaseIn: $header->databaseIn),
+        };
+    }
+
+    /**
      * Lowers a WHERE clause of the query family: a node of `where_clause` or `opt_where_clause`.
      *
      * @throws ImplementationGap When a production has no rule
@@ -124,9 +169,12 @@ final class ClauseRule
     /**
      * Lowers the database clause: a node of `opt_db`.
      *
+     * @param bool $listingFilter Whether the operand filters open-table entries rather than naming a database
+     * @throws \SqlSemantics\Construction\RejectedInput When an explicit database name is empty
+     *
      * @throws ImplementationGap When a production has no rule
      */
-    public function database(Node $database): ?Name
+    public function database(Node $database, bool $listingFilter = false): ?Name
     {
         $form = $this->lowering->form($database);
         if ($form->signature === 'opt_db:') {
@@ -137,7 +185,12 @@ final class ClauseRule
         }
         $this->preposition($form->node(0));
 
-        return $this->lowering->names->identifier($form->node(1));
+        $name = $this->lowering->names->identifier($form->node(1));
+        if (!$listingFilter && $name->value === '') {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\EmptyObjectName(\SqlSemantics\Platform\MySql\Statement\Name\ObjectNameKind::Database), (new \SqlSemantics\Construction\SourceRanges())->span($database)[1] ?? 0, false);
+        }
+
+        return $name;
     }
 
     /**

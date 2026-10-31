@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ON *.*`: the global privilege level.
@@ -18,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class GlobalLevel implements PrivilegeLevel
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Describes the level.
@@ -34,5 +33,11 @@ final class GlobalLevel implements PrivilegeLevel
     public function render(Output $out): void
     {
         $out->symbol('*')->glue()->symbol('.')->glue()->symbol('*');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

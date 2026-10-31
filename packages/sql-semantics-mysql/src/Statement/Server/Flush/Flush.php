@@ -7,9 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Flush;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `FLUSH [NO_WRITE_TO_BINLOG | LOCAL] item, …`: a request to clear or reload server caches and logs.
@@ -17,39 +16,50 @@ use SqlSemantics\Statement\Statement;
  * Mirrors SQLCOM_FLUSH with the REFRESH_* flags of LEX::type. Rule:
  * MYSQL-FLUSH-001. The items are kept in written order; the server merges
  * them into flags. LOCAL is a synonym of NO_WRITE_TO_BINLOG, which is
- * written. The statement names no relation and has no facts.
+ * written. The statement names no relation. Each QUERY CACHE item reports its
+ * MySQL 5.7 deprecation, including repeated items.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Flushing logs and privileges
  *     $flush = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('flush local binary logs, privileges');
- *     [$flush->toString(), $flush->statement->items[1]->option] // => ['FLUSH NO_WRITE_TO_BINLOG BINARY LOGS, PRIVILEGES', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]
+ *     [$flush->toString(), $flush->items[1]->option] // => ['FLUSH LOCAL BINARY LOGS, PRIVILEGES', \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption::Privileges]
  */
-final class Flush implements Statement
+final class Flush extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<FlushItem> The items in written order; at least one
+     * @var non-empty-list<FlushItem> The items in written order; at least one
      */
     public readonly array $items;
 
     /**
-     * @param bool $noWriteToBinlog Whether NO_WRITE_TO_BINLOG or its synonym LOCAL is written
+     * @param ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog The binary logging suppression keyword, or null when absent
      * @param list<FlushItem> $items The items in written order; at least one
      * @throws InvalidConstruction When the list is empty
      */
-    public function __construct(public readonly bool $noWriteToBinlog, array $items)
+    public function __construct(public readonly ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, array $items, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = Check::listOf($items, FlushItem::class, 'FLUSH flushes at least one item.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: the request names no relation and no value.
+     * Reports each written query-cache item without resolving a relation or value.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        foreach ($this->items as $item) {
+            $notice = $item->deprecation($derivation->context->profile->grammar);
+            if ($notice !== null) {
+                \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise($notice, $derivation, $item);
+            }
+        }
     }
 
     /**
@@ -58,8 +68,8 @@ final class Flush implements Statement
     public function render(Output $out): void
     {
         $out->keyword('FLUSH');
-        if ($this->noWriteToBinlog) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($this->binlog !== null) {
+            $out->keyword($this->binlog->value);
         }
         $out->list($this->items);
     }

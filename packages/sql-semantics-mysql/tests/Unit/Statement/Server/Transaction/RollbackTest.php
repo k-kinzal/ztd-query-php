@@ -17,14 +17,30 @@ final class RollbackTest extends TestCase
 {
     public function testRenderWritesTheCompletionChoices(): void
     {
-        self::assertSame('ROLLBACK AND NO CHAIN RELEASE', (new Semantics(Dialect::MySql))->analyze('rollback work and no chain release')->toString());
+        self::assertSame('ROLLBACK WORK AND NO CHAIN RELEASE', (new Semantics(Dialect::MySql))->analyze('rollback work and no chain release')->toString());
     }
 
-    public function testDeriveStatementHasNoFacts(): void
+    public function testDeriveStatementPublishesTheConcreteTransaction(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('ROLLBACK');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertInstanceOf(Rollback::class, $operation);
+        self::assertSame([], $operation->declarations());
+    }
+
+    public function testToStringReconstructsTheConcreteOperands(): void
+    {
+        self::assertSame('ROLLBACK', (new Rollback())->toString());
+    }
+
+    public function testProfileRetainsTheSelectedRelease(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        self::assertSame($profile, (new Rollback(profile: $profile))->profile());
+    }
+
+    public function testDeclarationsIntroducesNoSchemaObjects(): void
+    {
+        self::assertSame([], (new Rollback())->declarations());
     }
 }

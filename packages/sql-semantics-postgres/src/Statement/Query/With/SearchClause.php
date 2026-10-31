@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SEARCH DEPTH FIRST or BREADTH FIRST BY columns SET column: an ordering column added to a recursive query.
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SearchClause implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The columns the order follows
@@ -37,7 +36,7 @@ final class SearchClause implements Node
      * @param list<Name> $columns The columns the order follows; at least one
      * @param Name $sequence The name of the added ordering column
      */
-    public function __construct(public readonly SearchOrder $order, array $columns, public readonly Name $sequence)
+    public function __construct(public readonly SearchOrder $order, array $columns, public readonly Name $sequence, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A SEARCH clause names at least one column.', 1);
     }

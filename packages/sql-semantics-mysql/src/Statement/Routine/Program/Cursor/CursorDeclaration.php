@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor;
 
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\QueryRoot;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DECLARE ... CURSOR FOR: a named cursor over the rows of a query.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a cursor declaration
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT a FROM t; END');
- *     $create->statement->body->declarations[0]->name->value // => 'c'
+ *     $create->body->declarations[0]->name->value // => 'c'
  */
 final class CursorDeclaration implements Declaration
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The cursor name
-     * @param Query $query The query whose rows the cursor reads
+     * @param QueryRoot|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $query The query in the statement grammar position of CURSOR FOR
      */
-    public function __construct(public readonly Name $name, public readonly Query $query)
+    public function __construct(public readonly Name $name, public readonly QueryRoot|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery $query, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

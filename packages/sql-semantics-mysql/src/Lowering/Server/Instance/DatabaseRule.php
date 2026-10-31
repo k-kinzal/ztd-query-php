@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseReadOnly;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE, ALTER and DROP DATABASE.
@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Statement;
  * create_database_option, alter_database_options, alter_database_option,
  * default_encryption. The character set and collation go through the leaf
  * character set rules; DEFAULT before an option and its equals sign are
- * optional (LeafNoise). Constructs: CreateDatabase, AlterDatabase,
+ * retained. Constructs: CreateDatabase, AlterDatabase,
  * UpgradeDatabaseName, DropDatabase and the DatabaseOption classes.
  * Terminates: the option lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html,
@@ -72,21 +72,39 @@ final class DatabaseRule
                 $options->present($form->node(2)),
                 $names->identifier($form->node(3)),
                 $this->options($form->node(4)),
+                databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)),
             ),
             'alter: ALTER DATABASE ident_or_empty create_database_options', 'alter_database_stmt: ALTER DATABASE ident_or_empty alter_database_options' => new AlterDatabase(
                 $names->optional($form->node(2)),
                 $this->options($form->node(3)),
+                databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)),
             ),
-            'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => new UpgradeDatabaseName($names->identifier($form->node(2))),
-            'drop: DROP DATABASE if_exists ident', 'drop_database_stmt: DROP DATABASE if_exists ident' => new DropDatabase($options->present($form->node(2)), $names->identifier($form->node(3))),
+            'alter: ALTER DATABASE ident UPGRADE_SYM DATA_SYM DIRECTORY_SYM NAME_SYM' => $this->upgrade($form),
+            'drop: DROP DATABASE if_exists ident', 'drop_database_stmt: DROP DATABASE if_exists ident' => new DropDatabase($options->present($form->node(2)), $names->identifier($form->node(3)), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Separates a valid legacy directory role and retains other requested names for execution.
+     */
+    public function upgrade(Form $form): UpgradeDatabaseName
+    {
+        $name = $this->lowering->names->decoded($form->node(2));
+        $suffix = substr($name->value, 9);
+        $target = str_starts_with($name->value, '#mysql50#') && \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName::valid($suffix)
+            ? $this->lowering->leaves->record($this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\Server\Database\LegacyDatabaseName(new \SqlSemantics\Statement\Identifier\Name($suffix)), $form->node(2)))
+            : $name;
+
+        return new UpgradeDatabaseName($target, databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(1)->text)));
     }
 
     /**
      * Lowers an option list: a node of `opt_create_database_options`, `create_database_options` or `alter_database_options`.
      *
      * @return list<DatabaseOption>
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
+     * @throws \SqlSemantics\Construction\RejectedInput When an encryption operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function options(Node $list): array
@@ -101,6 +119,10 @@ final class DatabaseRule
         foreach ((new Lists())->items($list) as $item) {
             $options[] = $this->option($item);
         }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->problem($options, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
+        }
 
         return $options;
     }
@@ -108,6 +130,8 @@ final class DatabaseRule
     /**
      * Lowers one option: a node of `create_database_option` or `alter_database_option`.
      *
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a READ ONLY operand is outside its domain
+     * @throws \SqlSemantics\Construction\RejectedInput When an encryption operand is outside its domain
      * @throws ImplementationGap When a production has no rule
      */
     public function option(Node $option): DatabaseOption
@@ -118,8 +142,8 @@ final class DatabaseRule
         return match ($form->signature) {
             'alter_database_option: create_database_option' => $this->option($form->node(0)),
             'alter_database_option: READ_SYM ONLY_SYM opt_equal ternary_option' => $this->readOnly($form),
-            'create_database_option: default_charset' => new DatabaseCharset($charsets->charset($form->node(0))),
-            'create_database_option: default_collation' => new DatabaseCollation($charsets->collation($form->node(0)) ?? new CollationName(null)),
+            'create_database_option: default_charset' => new DatabaseCharset($charsets->charset($form->node(0)), operator: $this->lowering->options->optionalAssignment($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0)), form: (new \SqlSemantics\Platform\MySql\Lowering\Type\TypePartRule($this->lowering))->named($this->lowering->form($form->node(0))->node(1))),
+            'create_database_option: default_collation' => new DatabaseCollation($charsets->collation($form->node(0)) ?? new CollationName(null), operator: $this->lowering->options->optionalAssignment($this->lowering->form($form->node(0))->node(2)), defaultKeyword: $this->lowering->options->present($this->lowering->form($form->node(0))->node(0))),
             'create_database_option: default_encryption' => $this->encryption($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
@@ -129,18 +153,24 @@ final class DatabaseRule
      * Lowers READ ONLY.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When the value converts to neither 0 nor 1
      */
     public function readOnly(Form $form): DatabaseReadOnly
     {
-        $this->lowering->options->present($form->node(2));
+        $operator = $this->lowering->options->optionalAssignment($form->node(2));
+        $value = $this->lowering->numbers->ternary($form->node(3));
+        if ($value !== null && !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($value, '1')) {
+            throw new \SqlSemantics\Diagnostic\AnalysisException('Syntax error: READ ONLY accepts 0, 1 or DEFAULT.', 0, new \SqlParser\Parser\SyntaxException($form->node(3)->tokens()[0], [], ''));
+        }
 
-        return new DatabaseReadOnly($this->lowering->numbers->ternary($form->node(3)));
+        return new DatabaseReadOnly($value, operator: $operator);
     }
 
     /**
      * Lowers ENCRYPTION: a node of `default_encryption`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the encryption value is neither Y nor N
      */
     public function encryption(Node $encryption): DatabaseEncryption
     {
@@ -148,9 +178,17 @@ final class DatabaseRule
         if ($form->signature !== 'default_encryption: opt_default ENCRYPTION_SYM opt_equal TEXT_STRING_sys') {
             throw ImplementationGap::production($form);
         }
-        $this->lowering->options->present($form->node(0));
-        $this->lowering->options->present($form->node(2));
+        $default = $this->lowering->options->present($form->node(0));
+        $operator = $this->lowering->options->optionalAssignment($form->node(2));
 
-        return new DatabaseEncryption($this->lowering->literals->text($form->node(3)));
+        $text = $this->lowering->literals->bytes($form->node(3));
+        $value = \SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::fromOperand($text);
+        if ($value === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Server\Database\Problem\InvalidEncryption(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text)), (new \SqlSemantics\Construction\SourceRanges())->span($encryption)[1] ?? 0);
+        }
+
+        $spelling = $text === $value->value ? null : $this->lowering->leaves->record(new \SqlSemantics\Platform\MySql\Statement\Literal\Text($text));
+
+        return new DatabaseEncryption($this->lowering->leaves->record($value), $spelling, operator: $operator, defaultKeyword: $default);
     }
 }

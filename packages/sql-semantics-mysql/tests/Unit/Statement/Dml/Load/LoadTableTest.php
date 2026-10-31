@@ -29,22 +29,80 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class LoadTableTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, string, array{}|null}>
+     */
+    public static function providerDestinationLists(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['DATA', 'XML'] as $format) {
+                yield $release->value . '/' . $format . '/omitted' => [$release->value, $format, '', null];
+                yield $release->value . '/' . $format . '/empty' => [$release->value, $format, ' ()', []];
+            }
+        }
+    }
+
+    /**
+     * @param array{}|null $columns The presence of an empty input destination list
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDestinationLists')]
+    public function testRenderPreservesAbsentAndExplicitEmptyDestinations(string $release, string $format, string $suffix, ?array $columns): void
+    {
+        $sql = "LOAD $format INFILE 'f' INTO TABLE t" . $suffix;
+        $load = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+        self::assertInstanceOf(LoadTable::class, $load);
+        self::assertSame($columns, $load->columns);
+        self::assertSame($sql, $load->toString());
+    }
+
+    public function testHasExecutionConditionRetainsFixedWidthInputVariables(): void
+    {
+        $load = new LoadTable(LoadFormat::Data, null, new LoadInput(true, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), fields: [new \SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption(\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, new Text(''))], columns: [new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new Name('v'))]);
+        self::assertTrue($load->hasExecutionCondition());
+        self::assertFalse((new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t')))))->hasExecutionCondition());
+    }
+
+    public function testRenderKeepsARadixLiteralAsARowTag(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t ROWS IDENTIFIED BY 0x0f");
+        self::assertInstanceOf(LoadTable::class, $operation);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, $operation->rowTag?->radix);
+        self::assertStringContainsString('ROWS IDENTIFIED BY', $operation->toString());
+    }
+
+    public function testRejectsARadixLiteralAsACompressionAlgorithm(): void
+    {
+        $this->expectExceptionMessage('A LOAD compression algorithm is quoted text.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), compression: new Text('2', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
+    public function testRejectsAFractionalIgnoredRowCount(): void
+    {
+        $this->expectExceptionMessage('A LOAD ignored-row count is a decimal integer token no greater than 2147483647.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t'))), ignored: new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5'));
+    }
+
     public function testDeriveStatementResolvesColumnsAndAssignments(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
         $operation = $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE t (a, @v) SET b = @v + a, a = DEFAULT", [$t]);
-        self::assertInstanceOf(LoadTable::class, $operation->statement);
+        self::assertInstanceOf(LoadTable::class, $operation);
 
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($operation->statement->assignments[0]->column)->resolution);
-        self::assertEquals(new Known(new Integral(IntegralKind::Int)), $operation->facts->scalar($operation->statement->assignments[1]->value)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(ResolvedColumn::class, $operation->assignments[0]->column->scalarInformation()->resolution);
+        self::assertEquals(new Known(new Integral(IntegralKind::Int)), $operation->assignments[1]->value->scalarInformation()->type);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesEveryClause(): void
     {
-        self::assertSame("LOAD XML CONCURRENT INFILE 'f' REPLACE INTO TABLE t PARTITION (p) CHARSET utf8mb4 ROWS IDENTIFIED BY '<r>' COLUMNS TERMINATED BY ',' LINES TERMINATED BY ';' IGNORE 1 LINES (a, @b) SET c = @b", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("load xml concurrent infile 'f' replace into table t partition (p) charset utf8mb4 rows identified by '<r>' fields terminated by ',' lines terminated by ';' ignore 1 rows (a, @b) set c = @b")->toString());
-        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE t CHARSET latin1 COMPRESSION = 'zstd'", (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze("load data infile 'f' into table t character set latin1 compression = 'zstd' ()")->toString());
+        self::assertSame("LOAD XML CONCURRENT INFILE 'f' REPLACE INTO TABLE t PARTITION (p) CHARSET utf8mb4 ROWS IDENTIFIED BY '<r>' COLUMNS TERMINATED BY ',' LINES TERMINATED BY ';' IGNORE 1 ROWS (a, @b) SET c = @b", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("load xml concurrent infile 'f' replace into table t partition (p) charset utf8mb4 rows identified by '<r>' fields terminated by ',' lines terminated by ';' ignore 1 rows (a, @b) set c = @b")->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET latin1 COMPRESSION = 'zstd' () ALGORITHM = BULK", (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze("load data infile 'f' into table t character set latin1 compression = 'zstd' () ALGORITHM = BULK")->toString());
     }
 
     public function testRenderRejectsACorrelationName(): void
@@ -52,5 +110,48 @@ final class LoadTableTest extends TestCase
         $this->expectExceptionMessage('The table of LOAD has no correlation name.');
 
         new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::Infile, new Text('f')), null, new WriteTarget(new QualifiedName(new Name('t')), new Name('x')));
+    }
+    public function testValuePreservesTheLegacyDefaultCharacterSet(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET DEFAULT");
+
+        self::assertInstanceOf(LoadTable::class, $operation);
+        self::assertNotNull($operation->charset);
+        self::assertNull($operation->charset->name);
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET DEFAULT", $operation->toString());
+    }
+
+    public function testValueRejectsDefaultCharacterSetCombinedWithModernLoadInput(): void
+    {
+        $this->expectExceptionMessage('A query cannot combine features removed before MySQL 8.0 with features introduced in MySQL 8.0 or later.');
+
+        new LoadTable(LoadFormat::Data, null, new LoadInput(false, LoadSource::S3, new Text('file')), null, new WriteTarget(new QualifiedName(new Name('t'))), new \SqlSemantics\Platform\MySql\Statement\Name\CharsetName(null));
+    }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRetainedInputs(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (["LOAD DATA INFILE 'f' INTO TABLE t () SET a=ROW(1,2)", "LOAD DATA LOCAL INFILE 'f' INTO TABLE t COLUMNS TERMINATED BY '' (@v)"] as $sql) {
+                yield "$release->value/$sql" => [$release->value, $sql];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRetainedInputs')]
+    public function testRenderPreservesCompleteConditionBearingInputs(string $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        $information = $statement->statementInformation();
+        $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($information->profile->grammar, $information->profile->lexical, $information->client));
+        $statement->render($out);
+        self::assertSame($formatter->format($sql), $formatter->format((new \SqlSemantics\Rendering\Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
 }

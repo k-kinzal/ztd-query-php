@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A UNIQUE table constraint: no two rows hold the same values in the key columns.
@@ -33,7 +32,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TableUnique implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The key columns
@@ -64,7 +63,7 @@ final class TableUnique implements Constraint
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      * @param Name|null $name The constraint name
      */
-    public function __construct(array $columns, public readonly ?bool $nullsDistinct = null, array $included = [], array $options = [], public readonly ?Name $tablespace = null, array $attributes = [], public readonly ?Name $name = null)
+    public function __construct(array $columns, public readonly ?bool $nullsDistinct = null, array $included = [], array $options = [], public readonly ?Name $tablespace = null, array $attributes = [], public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A unique constraint has at least one key column.', 1);
         $this->included = Check::listOf($included, Name::class, 'Included columns are names.');

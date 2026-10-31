@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A prefix operator applied to one operand: `- a`, `+ a`, `@ a`, `OPERATOR(s.!!) a`.
@@ -37,7 +36,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class UnaryOperation implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The operators the scanner returns as their own tokens, of which only + and - can be written before an operand.
@@ -48,8 +48,11 @@ final class UnaryOperation implements Scalar
      * @param OperatorName $operator The operator
      * @param Scalar $operand The operand
      */
-    public function __construct(public readonly OperatorName $operator, public readonly Scalar $operand)
+    public function __construct(public readonly OperatorName $operator, public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($operator->explicit || $operator->qualifiers === [], 'An expression writes a qualified operator with OPERATOR(...).');
         Check::input($operator->explicit || !in_array($operator->name->value, self::SELF, true), 'This operator cannot be written before an operand without OPERATOR(...).');
         $precedence = new Precedence();

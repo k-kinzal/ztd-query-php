@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One INCLUDING or EXCLUDING option of LIKE.
@@ -18,17 +17,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading whether an option includes or excludes
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (LIKE u EXCLUDING DEFAULTS)');
- *     $create->statement->definition->elements[0]->options[0]->including // => false
+ *     $create->definition->elements[0]->options[0]->including // => false
  */
 final class LikeOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $including Whether the option is INCLUDING; EXCLUDING otherwise
      * @param LikeOptionKind $kind The property
      */
-    public function __construct(public readonly bool $including, public readonly LikeOptionKind $kind)
+    public function __construct(public readonly bool $including, public readonly LikeOptionKind $kind, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

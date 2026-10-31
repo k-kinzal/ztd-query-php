@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -46,7 +45,7 @@ final class TableInputTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT b, rowid FROM t', [$t]);
-        $fact = $query->facts->relation($query->singleNamedInput());
+        $fact = $query->singleNamedInput()->relationInformation();
 
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
         self::assertSame($t->declarations()[0], $fact->table->table);
@@ -63,12 +62,12 @@ final class TableInputTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('WITH w AS (SELECT a FROM t) SELECT * FROM w', [$t]);
 
-        self::assertInstanceOf(WithQuery::class, $query->statement);
-        self::assertInstanceOf(Select::class, $query->statement->body);
-        self::assertInstanceOf(TableInput::class, $query->statement->body->from);
-        $fact = $query->facts->relation($query->statement->body->from);
+        self::assertInstanceOf(WithQuery::class, $query);
+        self::assertInstanceOf(Select::class, $query->body);
+        self::assertInstanceOf(TableInput::class, $query->body->from);
+        $fact = $query->body->from->relationInformation();
         self::assertInstanceOf(CommonTable::class, $fact->table);
-        self::assertSame($query->statement->with->tables[0], $fact->table->definition);
+        self::assertSame($query->with->tables[0], $fact->table->definition);
         self::assertSame($t->declarations()[0]->columns[1], $query->field('a')->column());
     }
 
@@ -78,11 +77,11 @@ final class TableInputTest extends TestCase
         $missing = $semantics->analyze('SELECT * FROM t', []);
         $undeclared = $semantics->analyze('SELECT * FROM t');
 
-        self::assertInstanceOf(MissingTable::class, $missing->facts->relation($missing->singleNamedInput())->table);
-        self::assertSame($missing->facts->relation($missing->singleNamedInput())->table, $missing->facts->diagnostics[0]);
-        self::assertInstanceOf(UndeclaredTable::class, $undeclared->facts->relation($undeclared->singleNamedInput())->table);
-        self::assertFalse($undeclared->facts->relation($undeclared->singleNamedInput())->shape->complete());
-        self::assertSame([], $undeclared->facts->diagnostics);
+        self::assertInstanceOf(MissingTable::class, $missing->singleNamedInput()->relationInformation()->table);
+        self::assertSame($missing->singleNamedInput()->relationInformation()->table, $missing->diagnostics()[0]);
+        self::assertInstanceOf(UndeclaredTable::class, $undeclared->singleNamedInput()->relationInformation()->table);
+        self::assertFalse($undeclared->singleNamedInput()->relationInformation()->shape->complete());
+        self::assertSame([], $undeclared->diagnostics());
     }
 
     public function testAliasHidesTheTableName(): void
@@ -100,7 +99,7 @@ final class TableInputTest extends TestCase
     public function testRenderWritesSchemaAliasAndIndexChoice(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $built = new Operation($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice())));
+        $built = Semantics::fromStatement($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice())));
 
         self::assertSame('SELECT * FROM main.t AS x NOT INDEXED', $built->toString());
         self::assertSame('SELECT * FROM t x INDEXED BY i', $semantics->analyze('select * from t x indexed by i')->toString());

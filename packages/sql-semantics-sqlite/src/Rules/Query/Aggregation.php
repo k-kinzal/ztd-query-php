@@ -36,7 +36,7 @@ final class Aggregation
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']);
         $functions = new Functions();
         foreach ($nodes as $node) {
-            foreach ($graph->objects($node) as $object) {
+            foreach ($graph->objects($node, bindings: false) as $object) {
                 if ($object instanceof FunctionCall && $object->over === null && $functions->aggregates($object->name->value, count($object->arguments))) {
                     return true;
                 }

@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a temporary table in the main schema
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TEMP TABLE main.t (a)');
- *     $create->facts->diagnostics[0]->message() // => 'Temporary object t must not be qualified with schema main.'
+ *     $create->diagnostics()[0]->message() // => 'Temporary object t must not be qualified with schema main.'
  */
 final class QualifiedTemporaryName implements Diagnostic
 {

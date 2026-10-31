@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A window specification: an optional base window, a partition, an ordering and a frame.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parts of a window
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT rank() OVER (w PARTITION BY a ORDER BY b) FROM t WINDOW w AS ()');
- *     $window = $query->statement->columns[0]->expression->over;
+ *     $window = $query->columns[0]->expression->over;
  *     [$window->base->value, count($window->partition), count($window->order)] // => ['w', 1, 1]
  */
 final class WindowSpec implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The partitioning expressions
@@ -44,7 +43,7 @@ final class WindowSpec implements Node
      * @param list<SortTerm> $order The ordering terms
      * @param Frame|null $frame The frame
      */
-    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly ?Frame $frame = null)
+    public function __construct(public readonly ?Name $base = null, array $partition = [], array $order = [], public readonly ?Frame $frame = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->partition = Check::listOf($partition, Scalar::class, 'A window partition is a list of expressions.');
         $this->order = Check::listOf($order, SortTerm::class, 'A window ordering is a list of ordering terms.');

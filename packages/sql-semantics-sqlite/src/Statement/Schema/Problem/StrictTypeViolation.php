@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a type a STRICT table does not allow
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a VARCHAR(10)) STRICT');
- *     $create->facts->diagnostics[0]->message() // => 'Column a of a STRICT table has the unknown datatype VARCHAR(10).'
+ *     $create->diagnostics()[0]->message() // => 'Column a of a STRICT table has the unknown datatype VARCHAR(10).'
  */
 final class StrictTypeViolation implements Diagnostic
 {

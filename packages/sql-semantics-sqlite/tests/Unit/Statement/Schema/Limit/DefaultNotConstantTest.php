@@ -25,7 +25,7 @@ final class DefaultNotConstantTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $operation = $semantics->analyze('CREATE TABLE t (a DEFAULT ((SELECT 1)), b DEFAULT ("word"), c DEFAULT (random() + 1), d DEFAULT (CASE WHEN 1 THEN 2 END))', []);
-        $columns = array_map(static fn (object $diagnostic): ?string => $diagnostic instanceof DefaultNotConstant ? $diagnostic->column->value : null, $operation->facts->diagnostics);
+        $columns = array_map(static fn (object $diagnostic): ?string => $diagnostic instanceof DefaultNotConstant ? $diagnostic->column->value : null, $operation->diagnostics());
 
         self::assertSame(['a', 'b'], $columns);
     }

@@ -17,14 +17,30 @@ final class BeginTest extends TestCase
 {
     public function testRenderWritesBegin(): void
     {
-        self::assertSame('BEGIN', (new Semantics(Dialect::MySql))->analyze('begin work')->toString());
+        self::assertSame('BEGIN WORK', (new Semantics(Dialect::MySql))->analyze('begin work')->toString());
     }
 
-    public function testDeriveStatementHasNoFacts(): void
+    public function testDeriveStatementPublishesTheConcreteTransaction(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('BEGIN');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertInstanceOf(Begin::class, $operation);
+        self::assertSame([], $operation->declarations());
+    }
+
+    public function testToStringReconstructsTheConcreteOperands(): void
+    {
+        self::assertSame('BEGIN', (new Begin())->toString());
+    }
+
+    public function testProfileRetainsTheSelectedRelease(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        self::assertSame($profile, (new Begin(profile: $profile))->profile());
+    }
+
+    public function testDeclarationsIntroducesNoSchemaObjects(): void
+    {
+        self::assertSame([], (new Begin())->declarations());
     }
 }

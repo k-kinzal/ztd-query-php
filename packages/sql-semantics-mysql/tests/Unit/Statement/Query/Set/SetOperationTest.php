@@ -52,10 +52,11 @@ final class SetOperationTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT a, b FROM t UNION ALL SELECT a, c FROM u', [$t, $u]);
 
-        self::assertInstanceOf(SetOperation::class, $operation->statement);
-        self::assertSame($operation->facts->query($operation->statement), $operation->facts->output);
-        self::assertSame(SetQuantifier::All, $operation->statement->quantifier);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(SetOperation::class, $operation->query);
+        self::assertSame($operation->query->queryInformation(), $operation->output());
+        self::assertSame(SetQuantifier::All, $operation->query->quantifier);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveQueryNamesTheColumnsAfterTheFirstOperandAndCombinesNullability(): void
@@ -83,11 +84,11 @@ final class SetOperationTest extends TestCase
 
     public function testDeriveQueryReportsOperandsOfDifferentLengths(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 1, 2');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT 1 UNION SELECT 1, 2');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);
-        self::assertSame(CountedList::SetOperands, $operation->facts->diagnostics[0]->list);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(CountMismatch::class, $operation->diagnostics()[0]);
+        self::assertSame(CountedList::SetOperands, $operation->diagnostics()[0]->list);
     }
 
     public function testDeriveQueryLeavesTheOutputOpenOverAnUndeclaredFirstOperand(): void
@@ -106,7 +107,9 @@ final class SetOperationTest extends TestCase
         self::assertSame('SELECT 1 UNION SELECT 2 EXCEPT DISTINCT SELECT 3', $semantics->analyze('select 1 union select 2 except distinct select 3')->toString());
         self::assertSame('SELECT 1 UNION SELECT 2 INTERSECT SELECT 3', $semantics->analyze('SELECT 1 UNION SELECT 2 INTERSECT SELECT 3')->toString());
         self::assertSame('SELECT 1 INTERSECT (SELECT 2 UNION SELECT 3)', $semantics->analyze('SELECT 1 INTERSECT (SELECT 2 UNION SELECT 3)')->toString());
-        self::assertInstanceOf(SetOperation::class, $semantics->analyze('SELECT 1 UNION SELECT 2 INTERSECT SELECT 3')->statement);
+        $root = $semantics->analyze('SELECT 1 UNION SELECT 2 INTERSECT SELECT 3');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(SetOperation::class, $root->query);
     }
 
     public function testANestedOperationOnTheRightIsRejected(): void

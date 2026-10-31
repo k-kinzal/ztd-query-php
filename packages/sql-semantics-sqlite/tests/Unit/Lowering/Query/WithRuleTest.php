@@ -25,10 +25,10 @@ final class WithRuleTest extends TestCase
     public function testOptionalIsNullWithoutAWithClauseOnADataChange(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('DELETE FROM t')->statement;
-        $with = $semantics->analyze('WITH c AS (SELECT 1) DELETE FROM t WHERE a IN c')->statement;
-        $recursive = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) UPDATE t SET a = 1 WHERE a IN c')->statement;
-        $insert = $semantics->analyze('WITH c AS (SELECT 1) INSERT INTO t SELECT * FROM c')->statement;
+        $bare = $semantics->analyze('DELETE FROM t');
+        $with = $semantics->analyze('WITH c AS (SELECT 1) DELETE FROM t WHERE a IN c');
+        $recursive = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) UPDATE t SET a = 1 WHERE a IN c');
+        $insert = $semantics->analyze('WITH c AS (SELECT 1) INSERT INTO t SELECT * FROM c');
 
         self::assertInstanceOf(Delete::class, $bare);
         self::assertInstanceOf(Delete::class, $with);
@@ -55,9 +55,9 @@ final class WithRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('WITH a AS (SELECT 1), b AS (SELECT 2), c AS (SELECT 3) SELECT * FROM a, b, c');
 
-        self::assertInstanceOf(WithQuery::class, $operation->statement);
-        self::assertSame(['a', 'b', 'c'], array_map(static fn (CommonTable $table): string => $table->name->value, $operation->statement->with->tables));
-        self::assertFalse($operation->statement->with->recursive);
+        self::assertInstanceOf(WithQuery::class, $operation);
+        self::assertSame(['a', 'b', 'c'], array_map(static fn (CommonTable $table): string => $table->name->value, $operation->with->tables));
+        self::assertFalse($operation->with->recursive);
         self::assertSame('WITH a AS (SELECT 1), b AS (SELECT 2), c AS (SELECT 3) SELECT * FROM a, b, c', $operation->toString());
     }
 
@@ -65,8 +65,8 @@ final class WithRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c');
 
-        self::assertInstanceOf(WithQuery::class, $operation->statement);
-        self::assertTrue($operation->statement->with->recursive);
+        self::assertInstanceOf(WithQuery::class, $operation);
+        self::assertTrue($operation->with->recursive);
         self::assertSame('WITH RECURSIVE c (n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c', $operation->toString());
     }
 
@@ -74,12 +74,12 @@ final class WithRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('WITH c (a, b) AS MATERIALIZED (SELECT 1, 2), d AS NOT MATERIALIZED (SELECT 3), e AS (SELECT 4) SELECT * FROM c, d, e');
 
-        self::assertInstanceOf(WithQuery::class, $operation->statement);
+        self::assertInstanceOf(WithQuery::class, $operation);
         self::assertSame([[2, Materialization::Materialized], [0, Materialization::NotMaterialized], [0, null]], array_map(static function (CommonTable $table): array {
             self::assertInstanceOf(Select::class, $table->query);
 
             return [count($table->columns), $table->materialization];
-        }, $operation->statement->with->tables));
+        }, $operation->with->tables));
         self::assertSame('WITH c (a, b) AS MATERIALIZED (SELECT 1, 2), d AS NOT MATERIALIZED (SELECT 3), e AS (SELECT 4) SELECT * FROM c, d, e', $operation->toString());
     }
 }

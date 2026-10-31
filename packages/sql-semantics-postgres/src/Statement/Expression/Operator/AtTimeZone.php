@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A time converted to or from a time zone: `a AT TIME ZONE zone`.
@@ -34,14 +33,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AtTimeZone implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The time value
      * @param Scalar $zone The time zone
      */
-    public function __construct(public readonly Scalar $operand, public readonly Scalar $zone)
+    public function __construct(public readonly Scalar $operand, public readonly Scalar $zone, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->before($operand, Precedence::AT), 'The time value needs parentheses to keep its place.');
         Check::input($precedence->after($zone, Precedence::AT), 'The time zone needs parentheses to keep its place.');

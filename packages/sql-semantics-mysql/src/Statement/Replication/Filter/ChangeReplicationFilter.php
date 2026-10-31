@@ -12,9 +12,8 @@ use SqlSemantics\Platform\MySql\Rules\Replication\SourceSettings;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CHANGE REPLICATION FILTER filter = (…), … [FOR CHANNEL 'name']`: replaces replication filter rules (MySQL 5.7 and later).
@@ -32,12 +31,12 @@ use SqlSemantics\Statement\Statement;
  * @example Setting two filters
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("change replication filter replicate_do_db = (a, b), replicate_wild_ignore_table = ('a.%')")->toString() // => "CHANGE REPLICATION FILTER REPLICATE_DO_DB = (a, b), REPLICATE_WILD_IGNORE_TABLE = ('a.%')"
  */
-final class ChangeReplicationFilter implements Statement
+final class ChangeReplicationFilter extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<ReplicationFilter> The filters in written order; at least one
+     * @var non-empty-list<ReplicationFilter> The filters in written order; at least one
      */
     public readonly array $filters;
 
@@ -45,9 +44,14 @@ final class ChangeReplicationFilter implements Statement
      * @param list<ReplicationFilter> $filters The filters in written order; at least one
      * @param Text|null $channel The replication channel, when FOR CHANNEL is written
      */
-    public function __construct(array $filters, public readonly ?Text $channel = null)
+    public function __construct(array $filters, public readonly ?Text $channel = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->filters = Check::listOf($filters, ReplicationFilter::class, 'CHANGE REPLICATION FILTER sets a list of filters.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

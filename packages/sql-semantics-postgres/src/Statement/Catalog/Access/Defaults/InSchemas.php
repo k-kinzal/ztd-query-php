@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The clause IN SCHEMA of ALTER DEFAULT PRIVILEGES: the defaults apply to objects created in these schemas.
@@ -18,11 +17,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the schemas
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DEFAULT PRIVILEGES IN SCHEMA app, audit GRANT SELECT ON TABLES TO joe');
- *     $operation->statement->scopes[0]->schemas[1]->value // => 'audit'
+ *     $operation->scopes[0]->schemas[1]->value // => 'audit'
  */
 final class InSchemas implements DefaultScope
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The schemas in the order written
@@ -32,7 +31,7 @@ final class InSchemas implements DefaultScope
     /**
      * @param list<Name> $schemas The schemas in the order written, at least one
      */
-    public function __construct(array $schemas)
+    public function __construct(array $schemas, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->schemas = Check::listOf($schemas, Name::class, 'IN SCHEMA names at least one schema.', 1);
     }

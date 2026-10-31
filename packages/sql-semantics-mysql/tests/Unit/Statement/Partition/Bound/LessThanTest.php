@@ -19,7 +19,7 @@ final class LessThanTest extends TestCase
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (b))');
 
-        self::assertSame('Column b does not exist.', $alter->facts->diagnostics[0]->message());
+        self::assertSame('Column b does not exist.', $alter->diagnostics()[0]->message());
     }
 
     public function testRenderWritesMaxvalueWithoutParentheses(): void

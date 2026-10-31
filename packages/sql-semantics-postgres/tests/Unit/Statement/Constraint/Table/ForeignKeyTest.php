@@ -16,7 +16,7 @@ final class ForeignKeyTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a int, FOREIGN KEY (a) REFERENCES u)', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns::class, $n2);
@@ -35,7 +35,7 @@ final class ForeignKeyTest extends TestCase
           0 => 'column "zz" named in key does not exist',
           1 => 'column "nope" referenced in foreign key constraint does not exist',
           2 => 'FOREIGN KEY constraints cannot be marked NO INHERIT',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Ordering;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One ordering term: an expression with its optional direction and NULL placement.
@@ -18,19 +17,19 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an ordering term
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t ORDER BY a + 1 ASC NULLS FIRST');
- *     $term = $query->statement->orderBy[0];
+ *     $term = $query->orderBy[0];
  *     [$term->direction, $term->nulls] // => [\SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection::Ascending, \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\NullsOrder::First]
  */
 final class SortTerm implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The ordering expression
      * @param SortDirection|null $direction The written direction
      * @param NullsOrder|null $nulls The written NULL placement
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?SortDirection $direction = null, public readonly ?NullsOrder $nulls = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?SortDirection $direction = null, public readonly ?NullsOrder $nulls = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a scalar function used as a window function
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT abs(1) OVER ()');
- *     $query->facts->diagnostics[0]->message() // => 'abs() may not be used as a window function'
+ *     $query->diagnostics()[0]->message() // => 'abs() may not be used as a window function'
  */
 final class CallMisuse implements Diagnostic
 {

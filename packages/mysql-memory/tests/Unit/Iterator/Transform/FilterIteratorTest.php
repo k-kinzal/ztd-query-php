@@ -1,0 +1,139 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Iterator\Transform;
+
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Leaf\Constant;
+use MySqlMemory\Evaluation\Operator\DoubleOperand;
+use MySqlMemory\Instance;
+use MySqlMemory\Iterator\Source\WorkingTableIterator;
+use MySqlMemory\Iterator\Transform\FilterIterator;
+use MySqlMemory\Plan\Path\Source\WorkingTable;
+use MySqlMemory\Plan\Path\Transform\Filter;
+use MySqlMemory\Typing\Domain;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
+#[CoversClass(FilterIterator::class)]
+#[Small]
+final class FilterIteratorTest extends TestCase
+{
+    public function testReadRechecksConstantPartsOnlyAfterTheFullPredicateIncludingRandomPasses(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1); SET @v=0');
+        $session->query('SELECT id FROM t WHERE RAND(17)>2 AND (@v:=@v+1)>0 AND id=1');
+        $before = $session->query('SELECT @v')[0];
+        $session->query('SELECT id FROM t WHERE (@v:=@v+1)>0 AND RAND(17)>2 AND id=1');
+        $after = $session->query('SELECT @v')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $before);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $after);
+        self::assertSame([['0']], $before->rows);
+        self::assertSame([['1']], $after->rows);
+    }
+
+    public function testReadRechecksALegacyConstantRowOnlyAfterItsFirstPredicatePasses(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1); SET @v=0');
+        $passed = $session->query('SELECT id FROM t WHERE (@v:=@v+1)=1 AND id=1; SELECT @v');
+        $session->query('SET @v=0');
+        $rejected = $session->query('SELECT id FROM t WHERE (@v:=@v+1)=2 AND id=1; SELECT @v');
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $passed[0]);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $passed[1]);
+        self::assertSame([], $passed[0]->rows);
+        self::assertSame([['2']], $passed[1]->rows);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rejected[0]);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rejected[1]);
+        self::assertSame([], $rejected[0]->rows);
+        self::assertSame([['1']], $rejected[1]->rows);
+    }
+
+    public function testReadPassesOnlyTheRowsTheConditionIsTrueFor(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [[1, 'a'], [0, 'b'], [null, 'c'], [5, 'd']];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0)), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([1, 'a'], $iterator->read());
+        self::assertSame([5, 'd'], $iterator->read());
+        self::assertNull($iterator->read());
+    }
+
+    public function testInitRestartsTheInput(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $working->rows = [[0], [2]];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0)), new WorkingTableIterator($working));
+        $iterator->init($frame);
+        $first = [$iterator->read(), $iterator->read()];
+        $iterator->init($frame);
+
+        self::assertSame([[2], null], $first);
+        self::assertSame([2], $iterator->read());
+    }
+
+    public function testHoldsEvaluatesThePreconditionOnceForTheStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $working->rows = [[1], [2]];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0), new DoubleOperand(new Constant(Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), '1x'), false)), new WorkingTableIterator($working));
+        $iterator->init($frame);
+        $rows = [$iterator->read(), $iterator->read(), $iterator->read()];
+        $iterator->init($frame);
+
+        self::assertSame([[1], [2], null], $rows);
+        self::assertSame([[1], true], [$iterator->read(), $iterator->holds()]);
+        self::assertSame(1, $session->diagnostics->count());
+    }
+
+    public function testReadReadsNoRowWhenThePreconditionIsNotTrue(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(1);
+        $working->rows = [[1], [2]];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0), new Constant(Domain::null(), null)), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([null, false], [$iterator->read(), $iterator->holds()]);
+    }
+
+    public function testReadUsesIntegerConversionForALegacyRootPredicate(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $working = new WorkingTable(1);
+        $working->rows = [['0.5'], ['1'], [null]];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::string(3, Collation::known('utf8mb4_general_ci')), 0)), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame(['1'], $iterator->read());
+        self::assertNull($iterator->read());
+        self::assertSame(1, $session->diagnostics->count());
+    }
+
+    public function testHoldsUsesIntegerConversionForALegacyConstantPredicate(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $working = new WorkingTable(1);
+        $working->rows = [[1]];
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0), new Constant(Domain::decimal(1, 1), '0.1')), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertFalse($iterator->holds());
+        self::assertNull($iterator->read());
+    }
+}

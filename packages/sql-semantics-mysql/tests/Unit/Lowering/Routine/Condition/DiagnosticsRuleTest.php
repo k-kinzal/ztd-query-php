@@ -51,10 +51,10 @@ final class DiagnosticsRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('get diagnostics @n = number, @r = row_count');
 
-        self::assertEquals(new GetDiagnostics(new StatementDiagnostics([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new GetDiagnostics(new StatementDiagnostics([
             new InformationItem(new UserVariable(new Name('n')), StatementItemName::Number),
             new InformationItem(new UserVariable(new Name('r')), StatementItemName::RowCount),
-        ])), $operation->statement);
+        ])), $operation));
         self::assertSame('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT', $operation->toString());
     }
 
@@ -73,7 +73,7 @@ final class DiagnosticsRuleTest extends TestCase
     public function testStatementLowersTheArea(string $release, string $sql, ?DiagnosticsArea $area, string $rendering): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
         self::assertSame($area, $statement->area);
@@ -96,21 +96,21 @@ final class DiagnosticsRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('get current diagnostics condition 1 @a = class_origin, @b = returned_sqlstate');
 
-        self::assertEquals(new GetDiagnostics(new ConditionDiagnostics(new NumberLiteral('1'), [
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new GetDiagnostics(new ConditionDiagnostics(new NumberLiteral('1'), [
             new InformationItem(new UserVariable(new Name('a')), ConditionItemName::ClassOrigin),
             new InformationItem(new UserVariable(new Name('b')), ConditionItemName::ReturnedSqlstate),
-        ]), DiagnosticsArea::Current), $operation->statement);
+        ]), DiagnosticsArea::Current), $operation));
         self::assertSame('GET CURRENT DIAGNOSTICS CONDITION 1 @a = CLASS_ORIGIN, @b = RETURNED_SQLSTATE', $operation->toString());
     }
 
     public function testStatementLowersTheConditionNumberAsAVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('get diagnostics condition @c @m = message_text');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         self::assertInstanceOf(ConditionDiagnostics::class, $statement->information);
 
-        self::assertEquals(new UserVariable(new Name('c')), $statement->information->number);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new UserVariable(new Name('c')), $statement->information->number));
         self::assertSame('GET DIAGNOSTICS CONDITION @c @m = MESSAGE_TEXT', $operation->toString());
     }
 
@@ -140,7 +140,7 @@ final class DiagnosticsRuleTest extends TestCase
     public function testItemsLowersEveryConditionItemName(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('get diagnostics condition 1 @a = class_origin, @b = subclass_origin, @c = constraint_catalog, @d = constraint_schema, @e = constraint_name, @f = catalog_name, @g = schema_name, @h = table_name, @i = column_name, @j = cursor_name, @k = message_text, @l = mysql_errno, @m = returned_sqlstate');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
 
         self::assertSame(ConditionItemName::cases(), array_map(static fn (InformationItem $item): ConditionItemName|StatementItemName => $item->item, $statement->information->items));
@@ -161,15 +161,15 @@ final class DiagnosticsRuleTest extends TestCase
     public function testItemsLowersLocalVariableTargets(string $release): void
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze('create procedure p() begin declare n, t int; get diagnostics n = number; get diagnostics condition n t = mysql_errno; end');
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Block::class, $statement->body);
 
-        self::assertEquals([
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference([
             new GetDiagnostics(new StatementDiagnostics([new InformationItem(new Name('n'), StatementItemName::Number)])),
             new GetDiagnostics(new ConditionDiagnostics(new ColumnUse(new Name('n')), [new InformationItem(new Name('t'), ConditionItemName::MysqlErrno)])),
-        ], $statement->body->statements);
+        ], $statement->body->statements));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE n, t INT; GET DIAGNOSTICS n = NUMBER; GET DIAGNOSTICS CONDITION n t = MYSQL_ERRNO; END', $operation->toString());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 }

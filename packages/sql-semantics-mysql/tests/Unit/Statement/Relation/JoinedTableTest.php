@@ -11,10 +11,10 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -46,7 +46,7 @@ final class JoinedTableTest extends TestCase
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
         self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
         self::assertSame(Nullability::NotNull, $operation->field(3)->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveRelationMergesTheCommonColumnsOfANaturalJoin(): void
@@ -63,7 +63,7 @@ final class JoinedTableTest extends TestCase
         $operation = $semantics->analyze('SELECT * FROM t NATURAL JOIN u', [$t, $u]);
 
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveRelationReportsAUsingColumnAnOperandLacks(): void
@@ -79,8 +79,8 @@ final class JoinedTableTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1 FROM t JOIN u USING (c)', [$t, $u]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveRelationNestsLikeTheParseOfTheRelease(): void
@@ -97,13 +97,15 @@ final class JoinedTableTest extends TestCase
         $modern = $semantics->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', [$t, $u]);
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM t JOIN u JOIN u AS v ON t.a = v.a', []);
 
-        self::assertInstanceOf(Select::class, $modern->statement);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->from);
-        self::assertInstanceOf(JoinedTable::class, $modern->statement->from->right);
-        self::assertCount(1, $modern->facts->diagnostics);
-        self::assertInstanceOf(Select::class, $legacy->statement);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->from);
-        self::assertInstanceOf(JoinedTable::class, $legacy->statement->from->left);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $modern);
+        self::assertInstanceOf(Select::class, $modern->query);
+        self::assertInstanceOf(JoinedTable::class, $modern->query->from);
+        self::assertInstanceOf(JoinedTable::class, $modern->query->from->right);
+        self::assertCount(1, $modern->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $legacy);
+        self::assertInstanceOf(Select::class, $legacy->query);
+        self::assertInstanceOf(JoinedTable::class, $legacy->query->from);
+        self::assertInstanceOf(JoinedTable::class, $legacy->query->from->left);
     }
 
     public function testRenderWritesTheOperatorAndTheCondition(): void
@@ -119,27 +121,60 @@ final class JoinedTableTest extends TestCase
     {
         $this->expectExceptionMessage('A natural join takes no condition.');
 
-        new JoinedTable(new Dual(), JoinOperator::Natural, new Dual(), null, [new Name('a')]);
+        new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Natural, new TableReference(new QualifiedName(new Name('t'))), null, [new Name('a')]);
     }
 
     public function testBothConditionsAreRejected(): void
     {
         $this->expectExceptionMessage('A join has an ON condition or a USING list, not both.');
 
-        new JoinedTable(new Dual(), JoinOperator::Join, new Dual(), new NumberLiteral('1'), [new Name('a')]);
+        new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Join, new TableReference(new QualifiedName(new Name('t'))), new NumberLiteral('1'), [new Name('a')]);
     }
 
     public function testAJoinOnTheRightOfANaturalJoinIsRejected(): void
     {
         $this->expectExceptionMessage('The right operand of a natural join is no unparenthesized join.');
 
-        new JoinedTable(new Dual(), JoinOperator::Natural, new JoinedTable(new Dual(), JoinOperator::Cross, new Dual()));
+        new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Natural, new JoinedTable(new TableReference(new QualifiedName(new Name('t'))), JoinOperator::Cross, new TableReference(new QualifiedName(new Name('t')))));
     }
 
     public function testACommaListAsAnOperandIsRejected(): void
     {
         $this->expectExceptionMessage('A comma list joined to a table is written in parentheses.');
 
-        new JoinedTable(new TableList([new Dual(), new Dual()]), JoinOperator::Cross, new Dual());
+        new JoinedTable(new TableList([new TableReference(new QualifiedName(new Name('t'))), new TableReference(new QualifiedName(new Name('t')))]), JoinOperator::Cross, new TableReference(new QualifiedName(new Name('t'))));
     }
+    public function testRetainedConditionSurvivesAnOrdinaryReadRoot(): void
+    {
+        $table = new TableReference(new QualifiedName(new Name('t')));
+        $clock = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9'));
+        $join = new JoinedTable($table, JoinOperator::Join, new TableReference(new QualifiedName(new Name('u'))), $clock);
+        self::assertSame($clock, $join->on);
+        self::assertTrue((new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))], $join)))->hasExecutionCondition());
+    }
+
+    public function testRetainedConditionRemainsOnTheCompleteUpdate(): void
+    {
+        $table = new TableReference(new QualifiedName(new Name('t')));
+        $clock = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('9'));
+        $join = new JoinedTable($table, JoinOperator::Join, new TableReference(new QualifiedName(new Name('u'))), $clock);
+        $assignment = new \SqlSemantics\Platform\MySql\Statement\Dml\Assignment(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new Name('a'), new QualifiedName(new Name('t'))), new NumberLiteral('1'));
+        $statement = new \SqlSemantics\Platform\MySql\Statement\Dml\Update(null, false, false, [$join], [$assignment]);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertSame([$join], $statement->tables);
+        self::assertSame([$assignment], $statement->assignments);
+        self::assertSame($clock, $join->on);
+    }
+
+    public function testRenderRetainsTheCompleteStoredConditionWithoutSourceInput(): void
+    {
+        $table = new TableReference(new QualifiedName(new Name('t')));
+        $clock = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('263'));
+        $join = new JoinedTable($table, JoinOperator::Join, new TableReference(new QualifiedName(new Name('u'))), $clock);
+        $output = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\MySql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        $join->render($output);
+        self::assertSame('t JOIN u ON NOW(263)', (new \SqlSemantics\Rendering\Lexical())->join($output->pieces()));
+        self::assertSame($clock, $join->on);
+    }
+
 }

@@ -19,11 +19,11 @@ final class CreateExtensionTest extends TestCase
 
     public function testDeriveStatementReportsFrom(): void
     {
-        self::assertSame('CREATE EXTENSION ... FROM is no longer supported', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EXTENSION e FROM \'1.0\'')->facts->diagnostics[0]->message());
+        self::assertSame('CREATE EXTENSION ... FROM is no longer supported', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EXTENSION e FROM \'1.0\'')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsARepeatedOption(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EXTENSION e SCHEMA a SCHEMA b')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EXTENSION e SCHEMA a SCHEMA b')->diagnostics()[0]->message());
     }
 }

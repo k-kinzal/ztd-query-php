@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -32,14 +31,14 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class DatetimeDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DatetimeKeyword $keyword The keyword
      * @param IntegerConstant|null $precision The number of fractional second digits
      * @param ZoneOption|null $zone The time zone clause written
      */
-    public function __construct(public readonly DatetimeKeyword $keyword, public readonly ?IntegerConstant $precision = null, public readonly ?ZoneOption $zone = null)
+    public function __construct(public readonly DatetimeKeyword $keyword, public readonly ?IntegerConstant $precision = null, public readonly ?ZoneOption $zone = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

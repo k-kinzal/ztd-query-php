@@ -28,8 +28,9 @@ final class WithClauseTest extends TestCase
     public function testBindAnswersTheScopeWithTheCommonTables(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c');
-        $with = $operation->statement instanceof QueryExpression ? $operation->statement->with : null;
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Occurrences())->copy($semantics->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c'));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $with = $operation->query instanceof QueryExpression ? $operation->query->with : null;
         $derivation = new Derivation($semantics->context());
 
         self::assertNotNull($with);

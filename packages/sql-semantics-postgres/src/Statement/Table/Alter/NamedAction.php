@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A relation action on one named object.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a named action
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t DISABLE TRIGGER audit');
- *     [$statement->statement->commands[0]->kind, $statement->statement->commands[0]->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\NamedActionKind::DisableTrigger, 'audit']
+ *     [$statement->commands[0]->kind, $statement->commands[0]->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\NamedActionKind::DisableTrigger, 'audit']
  */
 final class NamedAction implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param NamedActionKind $kind The action
      * @param Name $name The object
      */
-    public function __construct(public readonly NamedActionKind $kind, public readonly Name $name)
+    public function __construct(public readonly NamedActionKind $kind, public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

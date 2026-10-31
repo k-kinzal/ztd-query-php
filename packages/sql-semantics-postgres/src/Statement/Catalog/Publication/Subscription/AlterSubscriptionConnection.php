@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,18 +20,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the new connection string
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER SUBSCRIPTION s CONNECTION 'host=b'");
- *     $operation->statement->connection->value // => 'host=b'
+ *     $operation->connection->value // => 'host=b'
  */
-final class AlterSubscriptionConnection implements Statement
+final class AlterSubscriptionConnection extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The subscription name
      * @param StringConstant $connection The connection string
      */
-    public function __construct(public readonly Name $name, public readonly StringConstant $connection)
+    public function __construct(public readonly Name $name, public readonly StringConstant $connection, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**
