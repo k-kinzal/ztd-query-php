@@ -75,7 +75,7 @@
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com"> * @visibility public</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * @example Retaining a wildcard request until execution</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;DO *&#039;)-&gt;hasExecutionCondition() // =&gt; true</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> *     (new \SqlSemantics\Platform\MySql\Statement\Dml\Evaluation([new \SqlSemantics\Platform\MySql\Statement\Query\Star()]))-&gt;hasExecutionCondition() // =&gt; true</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> * @example Reading the expressions of DO</span></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com"> *     $do = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))-&gt;analyze(&#039;DO SLEEP(1), @a := 2&#039;);</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">35</span><span class="tok-com"> *     [count($do-&gt;statement-&gt;items), $do-&gt;facts-&gt;output, $do-&gt;toString()] // =&gt; [2, null, &#039;DO SLEEP(1), @a := 2&#039;]</span></span>

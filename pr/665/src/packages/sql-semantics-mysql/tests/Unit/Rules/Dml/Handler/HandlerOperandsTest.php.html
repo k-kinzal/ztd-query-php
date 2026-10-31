@@ -144,7 +144,7 @@
 <span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>        <span class="tok-var">$rules</span> = <span class="tok-kw">new</span> <span class="tok-id">HandlerOperands</span>();</span>
 <span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a></span>
 <span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;A HANDLER read cannot contain a subquery.&#039;</span>, <span class="tok-var">$rules</span>-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$moment</span>));</span>
-<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-var">$rules</span>-&gt;<span class="tok-id">problem</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral</span>(<span class="tok-str">&#039;1&#039;</span>)));</span>
+<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-var">$rules</span>-&gt;<span class="tok-id">problem</span>(<span class="tok-kw">new</span> <span class="tok-id">NumberLiteral</span>(<span class="tok-str">&#039;1&#039;</span>)));</span>
 <span class="src-line" id="L108" data-diff="added"><a class="ln" href="#L108">108</a>    }</span>
 <span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>}</span>
 <span class="src-line" id="L110" data-diff="added"><a class="ln" href="#L110">110</a></span>
