@@ -121,12 +121,17 @@ final class ChangeRuleTest extends TestCase
         self::assertSame('DELETE db.t.*, u FROM db.t, u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete db.t.*, u from db.t, u')->toString());
     }
 
-    public function testTargetsRetainsAnIntrinsicRepetitionWithTheCompleteInputs(): void
+    public function testTargetsRefuseAnIntrinsicRepetitionWhileReading(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('DELETE a, a FROM missing');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
-        self::assertCount(2, $statement->targets);
-        self::assertTrue($statement->hasExecutionCondition());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('DELETE a, a FROM missing');
+            self::fail('The target is written twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget::class, $failure->problem);
+            self::assertSame("Not unique table/alias: 'a'", $failure->problem->message());
+            self::assertSame(11, $failure->end);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     public function testCompletedKeepsTheLegacyPrefixBeforeAnInvalidSuffix(): void

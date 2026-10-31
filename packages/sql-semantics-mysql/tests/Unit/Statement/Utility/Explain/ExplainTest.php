@@ -64,13 +64,17 @@ final class ExplainTest extends TestCase
         $this->expectExceptionMessage('EXTENDED and PARTITIONS are written alone.');
         new Explain($select, null, true, ExplainModifier::Extended);
     }
-    public function testRetainsAnIntoWithoutExplicitJsonFormat(): void
+    public function testAnIntoWithoutExplicitJsonFormatIsRefusedWhileReading(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @p SELECT 1');
-        self::assertInstanceOf(Explain::class, $statement);
-        self::assertNull($statement->format);
-        self::assertSame('p', $statement->into?->name->value);
-        self::assertSame('EXPLAIN INTO @p SELECT 1', $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @p SELECT 1');
+            self::fail('EXPLAIN INTO requires FORMAT=JSON.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto::class, $failure->problem);
+            self::assertNull($failure->problem->format);
+            self::assertSame(15, $failure->end);
+            self::assertTrue($failure->aborts);
+        }
     }
 
 

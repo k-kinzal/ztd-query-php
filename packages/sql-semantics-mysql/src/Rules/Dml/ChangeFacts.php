@@ -118,10 +118,6 @@ final class ChangeFacts
         if (($sampling = (new Read\Sampling())->of($delete)) !== null) {
             $derivation->report($sampling);
         }
-        $repeated = (new TargetNames())->duplicate($delete->targets);
-        if ($repeated !== null) {
-            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($delete->targets[$repeated]->name));
-        }
         $base = $this->base($delete->with, $derivation, $outer);
         $visible = $this->references($delete->tables, $derivation, $base);
         $this->targets($delete->targets, $visible, $derivation, $delete);

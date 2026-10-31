@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
-use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainVerb;
 use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(ExplainConnection::class)]
@@ -33,11 +32,11 @@ final class ExplainConnectionTest extends TestCase
 
     public function testDeriveStatementRetainsAnOversizedDecimalConnection(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616');
+        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FOR CONNECTION 18446744073709551616');
         self::assertInstanceOf(ExplainConnection::class, $statement);
         self::assertNull($statement->connectionId);
         self::assertSame('18446744073709551616', $statement->connection->text);
-        self::assertSame('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616', $statement->toString());
+        self::assertSame('EXPLAIN FOR CONNECTION 18446744073709551616', $statement->toString());
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $statement->diagnostics()[0]);
     }
 
@@ -47,16 +46,16 @@ final class ExplainConnectionTest extends TestCase
         new ExplainConnection(new Numeral('1'), new Name('JSON'), ExplainModifier::Extended);
     }
 
-    public function testDeriveStatementKeepsTheFuzzerCounterexample(): void
+    public function testDeriveStatementIsNeverReachedForTheFuzzerCounterexample(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DESC INTO @localhost FOR CONNECTION 1');
-        self::assertInstanceOf(ExplainConnection::class, $statement);
-        self::assertSame('localhost', $statement->into?->name->value);
-        self::assertSame(1, $statement->connectionId);
-        self::assertSame('DESC INTO @localhost FOR CONNECTION 1', $statement->toString());
-        self::assertSame(ExplainVerb::Desc, $statement->verb);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto::class, $statement->diagnostics()[0]);
-        self::assertNull($statement->shape());
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DESC INTO @localhost FOR CONNECTION 1');
+            self::fail('EXPLAIN FOR CONNECTION takes no INTO.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain::class, $failure->problem);
+            self::assertSame(20, $failure->end);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     public function testDeriveStatementKeepsAnIgnoredEmptyDestination(): void
@@ -69,12 +68,14 @@ final class ExplainConnectionTest extends TestCase
         self::assertSame([], $statement->diagnostics());
     }
 
-    public function testDeriveStatementRetainsAnInvalidDestination(): void
+    public function testDeriveStatementIsNeverReachedForAnInvalidDestination(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("EXPLAIN FORMAT=JSON INTO @'' FOR CONNECTION 0");
-        self::assertInstanceOf(ExplainConnection::class, $statement);
-        self::assertSame('', $statement->into?->name->value);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget::class, $statement->diagnostics()[0]);
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("EXPLAIN FORMAT=JSON INTO @'' FOR CONNECTION 0");
+            self::fail('The empty variable name is refused before the FOR CONNECTION clause.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\InvalidExplainTarget::class, $failure->problem);
+        }
     }
 
 

@@ -26,11 +26,16 @@ final class ExplainFactsTest extends TestCase
         self::assertFalse($facts->known(new \SqlSemantics\Statement\Identifier\Name('XML')));
     }
 
-    public function testRefusalRetainsUnavailableFormatsAsDiagnostics(): void
+    public function testRefusalIsRaisedByTheReadingForAFormatTheReleaseLacks(): void
     {
-        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = TREE SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat::class, $statement->diagnostics()[0]);
-        self::assertSame('EXPLAIN FORMAT = TREE SELECT 1', $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('EXPLAIN FORMAT = TREE SELECT 1');
+            self::fail('MySQL 5.7 knows no TREE format.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat::class, $failure->problem);
+            self::assertSame('TREE', $failure->problem->name->value);
+            self::assertTrue($failure->aborts);
+        }
     }
 
     public function testRefusalAnswersTheBrokenRule(): void
@@ -59,11 +64,21 @@ final class ExplainFactsTest extends TestCase
         self::assertFalse((new Semantics(Dialect::MySql))->analyze('EXPLAIN SELECT 1')->shape()?->complete());
         self::assertNull((new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @v SELECT 1')->shape());
     }
-    public function testDeriveRetainsContradictoryIntoOptions(): void
+    public function testDeriveIsNeverReachedForContradictoryIntoOptions(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto::class, $statement->diagnostics()[0]);
-        self::assertNull($statement->shape());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('EXPLAIN INTO @v SELECT 1');
+            self::fail('EXPLAIN INTO requires FORMAT=JSON.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto::class, $failure->problem);
+        }
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze('EXPLAIN INTO @v SELECT 1');
+            self::fail('EXPLAIN INTO requires FORMAT=JSON.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
     }
 
     public function testDeriveRetainsTheModifierNoticeBeforeItsExplainedOperand(): void

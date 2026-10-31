@@ -49,7 +49,7 @@ final class ExplainConnectionGenerator implements ErisGenerator
                     return new ExplainConnection(connection: $connection, format: null, modifier: $modifier, statementInformation: null, inputSource: null, verb: $verb, analyze: false, into: null, emptyInto: false);
                 }
 
-                return new ExplainConnection(connection: $connection, format: $format, modifier: null, statementInformation: null, inputSource: null, verb: $verb, analyze: $analyze, into: $emptyInto ? null : $into, emptyInto: $emptyInto);
+                return new ExplainConnection(connection: $connection, format: $format, modifier: null, statementInformation: null, inputSource: null, verb: $verb, analyze: false, into: null, emptyInto: $emptyInto);
             },
             Generators::tuple(
                 new NumeralGenerator($release),

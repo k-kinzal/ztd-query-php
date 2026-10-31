@@ -76,6 +76,8 @@ final class ConditionBindings
 
     /**
      * Checks one instruction without executing a condition number or SIGNAL value.
+     * A LIMIT or INTO operand written as a bare name is a variable the program declares
+     * (`CREATE PROCEDURE p() BEGIN SELECT 1 LIMIT n; SELECT * FROM; END` answers 1327 on 8.4.7).
      *
      * @param list<Name> $locals Variables visible in this instruction
      * @param array<string, M\Routine\Condition\ErrorCode|M\Routine\Condition\SqlState> $conditions Folded condition names
@@ -94,6 +96,21 @@ final class ConditionBindings
             foreach ($body instanceof M\Routine\Program\Cursor\FetchCursor ? $body->targets : [] as $target) {
                 if (!in_array($weights->key($target->value), $keys, true)) {
                     return [new M\Routine\Problem\ProgramProblem(M\Routine\Problem\ProgramRule::UndeclaredVariable, $target->value), $body];
+                }
+            }
+        }
+        $declared = null;
+        $excluded = [];
+        foreach ((new ReturnSearch())->nested($body) as $nested) {
+            foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($nested) as $node) {
+                $excluded[spl_object_id($node)] = true;
+            }
+        }
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->nodes($body) as $node) {
+            if ($node instanceof M\Query\Clause\ProgramVariable && !isset($excluded[spl_object_id($node)])) {
+                $declared ??= array_map(static fn (Name $name): string => $weights->key($name->value), $locals);
+                if (!in_array($weights->key($node->name->value), $declared, true)) {
+                    return [new M\Routine\Problem\ProgramProblem(M\Routine\Problem\ProgramRule::UndeclaredVariable, $node->name->value), $body];
                 }
             }
         }

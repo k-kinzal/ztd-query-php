@@ -89,7 +89,15 @@ final class CommandPrefix
         try {
             $tree = $semantics->parser()->parse(substr($statement, 0, $end));
             $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
-        } catch (SourceException|AnalysisException|\SqlSemantics\Construction\RejectedInput) {
+        } catch (SourceException|AnalysisException) {
+            return null;
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            $problem = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody ? $failure->problem->problem : $failure->problem;
+            if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem && $problem->rule === \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::UndeclaredVariable) {
+                return (new RoutinePrefix())->database($statement, $end, $session)
+                    ?? (new \MySqlMemory\Session\CacheOptions())->undeclared((new \MySqlMemory\Session\Problem\Errors())->error($failure->problem, $session), $statement, $session);
+            }
+
             return null;
         }
         foreach ($operation instanceof \SqlSemantics\Platform\MySql\Statement\Statement ? $operation->statementInformation()->diagnostics : [] as $problem) {

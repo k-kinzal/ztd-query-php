@@ -101,7 +101,6 @@ final class ExplainCommand implements Command
         if (!$statement instanceof Explain && !$statement instanceof DeferredExplain && !$statement instanceof ExplainConnection) {
             return;
         }
-        (new Options())->check($statement, $session);
         if ($statement instanceof ExplainConnection) {
             return;
         }

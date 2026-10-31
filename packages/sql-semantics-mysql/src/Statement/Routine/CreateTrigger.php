@@ -73,6 +73,7 @@ final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStat
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
         $this->body = (new StatementSequence())->member($body);
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Trigger, $name, null, [], $definitionSource?->bodyRefusalOffset) === null, 'A trigger body satisfies the stored program restrictions.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\TriggerRows())->problem($this->body, $time, $event) === null, 'A trigger body assigns only to the row its time and event allow.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

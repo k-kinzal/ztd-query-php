@@ -106,19 +106,17 @@ final class CreateTriggerTest extends TestCase
     }
 
     #[DataProvider('providerDeriveStatementReportsAnAssignmentToARowItMayNotChange')]
-    public function testDeriveStatementReportsAnAssignmentToARowItMayNotChange(string $timing, string $row, ProgramRule $rule, string $message): void
+    public function testDeriveStatementIsNeverReachedForAnAssignmentToARowItMayNotChange(string $timing, string $row, ProgramRule $rule, string $message): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $table);
-        $create = $semantics->analyze('CREATE TRIGGER tr ' . $timing . ' ON t FOR EACH ROW SET ' . $row . '.a = 1', [$table]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $create);
-        $problem = $create->diagnostics()[0] ?? null;
-        self::assertInstanceOf(ProgramProblem::class, $problem);
-
-        self::assertCount(1, $create->diagnostics());
-        self::assertSame($rule, $problem->rule);
-        self::assertSame($message, $problem->message());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr ' . $timing . ' ON t FOR EACH ROW SET ' . $row . '.a = 1');
+            self::fail('The trigger assigns to a row it cannot change.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertInstanceOf(ProgramProblem::class, $failure->problem->problem);
+            self::assertSame($rule, $failure->problem->problem->rule);
+            self::assertSame($message, $failure->problem->message());
+        }
     }
 
     /**

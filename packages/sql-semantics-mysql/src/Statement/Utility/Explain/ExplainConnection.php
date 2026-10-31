@@ -29,9 +29,8 @@ use SqlSemantics\Statement\Identifier\Name;
  * ANALYZE and INTO remain part of the request even when the server refuses them.
  *
  * @visibility public
- * @example Retaining incompatible connection options
- *     $explain = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXPLAIN INTO @v FOR CONNECTION 1');
- *     [$explain->into?->name->value, $explain->toString()] // => ['v', 'EXPLAIN INTO @v FOR CONNECTION 1']
+ * @example Refusing INTO with FOR CONNECTION while reading
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @v FOR CONNECTION 1') // throws \SqlSemantics\Construction\RejectedInput
  * @example Retaining a fractional connection operand
  *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.5')))->connection->text // => '1.5'
  * @example Retaining a connection operand beyond the token range
@@ -74,7 +73,9 @@ final class ExplainConnection extends \SqlSemantics\Platform\MySql\Statement\Sql
         $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();
         $this->connectionId = $magnitudes->integral($connection) ? $magnitudes->connection($connection) : null;
         Check::input(!$emptyInto || $into === null, 'An ignored empty destination has no assignment.');
-        Check::input($modifier === null || ($format === null && !$analyze && $into === null && !$emptyInto), 'EXTENDED and PARTITIONS are written alone.');
+        Check::input(!$analyze && $into === null, 'EXPLAIN FOR CONNECTION takes neither ANALYZE nor INTO.');
+        Check::input(in_array(strtoupper($format->value ?? 'TRADITIONAL'), ['TRADITIONAL', 'JSON', 'TREE'], true), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
+        Check::input($modifier === null || ($format === null && !$emptyInto), 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

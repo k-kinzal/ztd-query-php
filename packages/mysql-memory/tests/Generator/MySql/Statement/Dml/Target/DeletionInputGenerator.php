@@ -41,7 +41,15 @@ final class DeletionInputGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): DeletionInput => new DeletionInput(tables: $parts[0], targets: $parts[1], resolutions: null, wildcards: $parts[1] === null || $parts[2] === null ? null : array_slice($parts[2], 0, count($parts[1]))),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated($parts[0]) === null,
+                static function (array $parts): bool {
+                    $members = [];
+                    foreach ($parts[0] as $table) {
+                        array_push($members, ...($table instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList ? $table->members : [$table]));
+                    }
+
+                    return (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeated($parts[0]) === null
+                        && (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($parts[1] ?? (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->names($members)) === null;
+                },
                 Generators::tuple(
                     Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new TableSourceGenerator($release, $depth - 1))),
                     Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(1, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new QualifiedNameGenerator($release)))),

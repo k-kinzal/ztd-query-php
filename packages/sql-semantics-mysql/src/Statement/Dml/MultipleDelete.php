@@ -90,8 +90,7 @@ final class MultipleDelete extends \SqlSemantics\Platform\MySql\Statement\SqlSta
      */
     public function hasExecutionCondition(): bool
     {
-        return (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) !== null
-            || (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($this->targets, $this->tables) !== null
+        return (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing($this->targets, $this->tables) !== null
             || (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $this->with) !== null
             || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null
             || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null;

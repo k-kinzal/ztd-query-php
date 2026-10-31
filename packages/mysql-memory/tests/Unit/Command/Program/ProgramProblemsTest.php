@@ -42,12 +42,17 @@ final class ProgramProblemsTest extends TestCase
 
     public function testRaiseConsumesScopedVariableResolutionFromSemantics(): void
     {
-        $session = (new Instance())->connect();
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
         $statement = $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT n');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $statement);
         self::assertSame([], $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT N')->statementInformation()->diagnostics);
-        self::assertSame(['Undeclared variable: m'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT m')->statementInformation()->diagnostics));
+        try {
+            $session->analyze('CREATE PROCEDURE p(n INT) SELECT 1 LIMIT m');
+            self::fail('No declaration supplies m.');
+        } catch (\MySqlMemory\Error\SqlError $error) {
+            self::assertSame([1327, 'Undeclared variable: m'], [$error->getCode(), $error->getMessage()]);
+        }
     }
 
     public function testRaiseRaisesTheProblemsOfTheRulesFirst(): void

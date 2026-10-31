@@ -120,14 +120,12 @@ final class DeleteUseTest extends TestCase
         (new DeleteUse())->check($statement, $statement->statementInformation(), $session);
     }
 
-    public function testExplainedChecksOptionsBeforeTheDeletionNamespace(): void
+    public function testExplainedIsNeverReachedForAnUnknownFormat(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
-        $statement = $session->semantics()->analyze('EXPLAIN FORMAT=XML DELETE x FROM t');
-        self::assertInstanceOf(M\Utility\Explain\Explain::class, $statement);
-        $session->text = 'opaque request label';
-        $this->expectExceptionCode(1791);
-        (new DeleteUse())->explained($statement, $session);
+        $reply = $session->run('EXPLAIN FORMAT=XML DELETE x FROM t')[0];
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertSame(1791, $reply->getCode());
     }
 
     public function testExplainedRestoresTheCallerDatabaseAfterTargetFailure(): void

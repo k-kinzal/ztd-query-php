@@ -77,21 +77,28 @@ final class ExplainRuleTest extends TestCase
         self::assertSame('EXPLAIN ANALYZE FORMAT = json INTO @v FOR DATABASE db SELECT 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('explain analyze format=json into @v for database db select 1')->toString());
     }
 
-    public function testModernRetainsConnectionAnalysisForExecution(): void
+    public function testModernRefusesConnectionAnalysisWhileReading(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection::class, $statement);
-        self::assertTrue($statement->analyze);
-        self::assertSame('EXPLAIN ANALYZE FOR CONNECTION 1', $statement->toString());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain::class, $statement->diagnostics()[0]);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 1');
+            self::fail('EXPLAIN ANALYZE FOR CONNECTION is not supported.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain::class, $failure->problem);
+            self::assertTrue($failure->problem->analyze);
+            self::assertTrue($failure->aborts);
+        }
     }
 
-    public function testModernRetainsConnectionIntoForExecution(): void
+    public function testModernRefusesConnectionIntoWhileReading(): void
     {
-        $statement = (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @a FOR CONNECTION 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection::class, $statement);
-        self::assertSame('a', $statement->into?->name->value);
-        self::assertSame('EXPLAIN FORMAT = JSON INTO @a FOR CONNECTION 1', $statement->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('EXPLAIN FORMAT=JSON INTO @a FOR CONNECTION 1');
+            self::fail('EXPLAIN FOR CONNECTION takes no INTO.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain::class, $failure->problem);
+            self::assertFalse($failure->problem->analyze);
+            self::assertSame(27, $failure->end);
+        }
     }
 
     public function testExplainedLowersThroughTheOwningFamily(): void

@@ -55,7 +55,7 @@ final class CreateEventGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): CreateEvent => new CreateEvent(name: $parts[0], schedule: $parts[1], body: $parts[2], completion: $parts[3], status: $parts[4], comment: $parts[5], definer: $parts[6], ifNotExists: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[2], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $parts[0], null, [], $parts[10]?->bodyRefusalOffset) === null,
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[2], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Event, $parts[0], null, [], $parts[10]?->bodyRefusalOffset) === null && (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyNames())->unknown($parts[2], [], \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of($release)) === null,
                 Generators::tuple(
                     new QualifiedNameGenerator($release),
                     new ScheduleGenerator($release, $depth - 1),

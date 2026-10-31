@@ -55,7 +55,7 @@ final class CreateTriggerGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): CreateTrigger => new CreateTrigger(name: $parts[0], time: $parts[1], event: $parts[2], table: $parts[3], body: $parts[4], order: $parts[5], definer: $parts[6], ifNotExists: $parts[7], statementInformation: $parts[8], inputSource: $parts[9], definitionSource: $parts[10]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[4], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $parts[0], null, [], $parts[10]?->bodyRefusalOffset) === null,
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[4], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $parts[0], null, [], $parts[10]?->bodyRefusalOffset) === null && (new \SqlSemantics\Platform\MySql\Rules\Routine\TriggerRows())->problem($parts[4], $parts[1], $parts[2]) === null && (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyNames())->unknown($parts[4], [], \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of($release)) === null,
                 Generators::tuple(
                     new QualifiedNameGenerator($release),
                     new TriggerTimeGenerator($release),

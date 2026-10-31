@@ -60,15 +60,18 @@ final class ExplainGenerator implements ErisGenerator
 
                 return new Explain(statement: $statement, format: $analyze && $format !== null && strcasecmp($format->value, 'TRADITIONAL') === 0 ? null : $format, analyze: $analyze, modifier: null, into: $into, database: $database, emptyInto: false, statementInformation: null, inputSource: null, verb: $verb);
             },
-            Generators::tuple(
-                new ExplainableGenerator($release, $depth - 1),
-                Generators::oneOf(Generators::constant(null), Generators::map(static fn (string $name): Name => new Name($name), Generators::elements(($bit & 3) !== 0 ? ['TRADITIONAL', 'JSON'] : ['TRADITIONAL', 'JSON', 'TREE']))),
-                Generators::bool(),
-                ((new ReleaseDomain())->bit($release) & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ExplainModifierGenerator($release)) : Generators::constant(null),
-                Generators::oneOf(Generators::constant(null), new UserVariableGenerator($release)),
-                Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
-                Generators::bool(),
-                new ExplainVerbGenerator($release)
+            Generators::suchThat(
+                static fn (array $parts): bool => $parts[4] === null || (strcasecmp($parts[1]->value ?? '', 'JSON') === 0 && !($release === GrammarRelease::MySql810 && $parts[2])),
+                Generators::tuple(
+                    new ExplainableGenerator($release, $depth - 1),
+                    Generators::oneOf(Generators::constant(null), Generators::map(static fn (string $name): Name => new Name($name), Generators::elements(($bit & 3) !== 0 ? ['TRADITIONAL', 'JSON'] : ['TRADITIONAL', 'JSON', 'TREE']))),
+                    Generators::bool(),
+                    ((new ReleaseDomain())->bit($release) & 3) !== 0 ? Generators::oneOf(Generators::constant(null), new ExplainModifierGenerator($release)) : Generators::constant(null),
+                    Generators::oneOf(Generators::constant(null), new UserVariableGenerator($release)),
+                    Generators::oneOf(Generators::constant(null), new NameGenerator($release)),
+                    Generators::bool(),
+                    new ExplainVerbGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::map(

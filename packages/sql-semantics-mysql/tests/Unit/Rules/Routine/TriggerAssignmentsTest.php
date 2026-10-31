@@ -11,8 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Routine\TriggerAssignments;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Statement\Fact\Diagnostic;
 
 #[CoversClass(TriggerAssignments::class)]
@@ -82,18 +80,8 @@ final class TriggerAssignmentsTest extends TestCase
      */
     public static function providerCheckReportsAnAssignmentTheTriggerCannotMake(): iterable
     {
-        yield 'OLD in a BEFORE UPDATE trigger' => ['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET OLD.a = 1', ['Updating of OLD row is not allowed in trigger']];
-        yield 'old in a BEFORE INSERT trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET old.a = 1', ['Updating of OLD row is not allowed in trigger']];
-        yield 'OLD in an AFTER DELETE trigger' => ['CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW SET OLD.zz = 1', ['Updating of OLD row is not allowed in trigger']];
-        yield 'NEW in a BEFORE DELETE trigger' => ['CREATE TRIGGER tr BEFORE DELETE ON t FOR EACH ROW SET NEW.a = 1', ['There is no NEW row in on DELETE trigger']];
-        yield 'NEW in an AFTER DELETE trigger' => ['CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW SET NEW.a = 1', ['There is no NEW row in on DELETE trigger']];
-        yield 'NEW in an AFTER INSERT trigger' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', ['Updating of NEW row is not allowed in after trigger']];
-        yield 'new in an AFTER UPDATE trigger' => ['CREATE TRIGGER tr AFTER UPDATE ON t FOR EACH ROW SET new.zz = 1', ['Updating of NEW row is not allowed in after trigger']];
         yield 'a column the NEW row lacks' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1', ['Column NEW.zz does not exist.']];
         yield 'a column the new row lacks' => ['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET new.zz = 1', ['Column new.zz does not exist.']];
-        yield 'every item in order' => ['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET NEW.a = 1, OLD.b = 2, @x = 3, NEW.zz = 4', ['Updating of OLD row is not allowed in trigger', 'Column NEW.zz does not exist.']];
-        yield 'an assignment nested in the body' => ['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW BEGIN IF NEW.a > 0 THEN SET OLD.a = 1; END IF; END', ['Updating of OLD row is not allowed in trigger']];
-        yield 'an assignment in a handler' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET NEW.a = 1; END', ['Updating of NEW row is not allowed in after trigger']];
     }
 
     /**
@@ -113,9 +101,7 @@ final class TriggerAssignmentsTest extends TestCase
      */
     public static function providerCheckReportsTheAssignmentInEveryRelease(): iterable
     {
-        yield 'NEW after an insert in 5.6' => ['mysql-5.6.51', 'CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', ['Updating of NEW row is not allowed in after trigger']];
         yield 'a missing column in 5.7' => ['mysql-5.7.44', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.zz = 1, NEW.a = 2', ['Column NEW.zz does not exist.']];
-        yield 'OLD before an update in 8.0' => ['mysql-8.0.44', 'CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET OLD.b = NEW.b', ['Updating of OLD row is not allowed in trigger']];
         yield 'NEW before an insert in 8.4' => ['mysql-8.4.7', 'CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = 2', []];
     }
 
@@ -126,11 +112,14 @@ final class TriggerAssignmentsTest extends TestCase
         self::assertSame([], $operation->diagnostics());
     }
 
-    public function testCheckReportsAProgramProblemOfTheRule(): void
+    public function testCheckIsNeverReachedForARowAssignmentTheTriggerCannotMake(): void
     {
-        $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', [$semantics->analyze('CREATE TABLE t (a INT, b INT)')]);
-
-        self::assertEquals([new ProgramProblem(ProgramRule::AfterRowUpdate)], $operation->diagnostics());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1');
+            self::fail('An AFTER trigger cannot change the NEW row.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Updating of NEW row is not allowed in after trigger', $failure->problem->message());
+        }
     }
 }

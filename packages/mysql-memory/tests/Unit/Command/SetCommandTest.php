@@ -176,30 +176,6 @@ final class SetCommandTest extends TestCase
         self::assertSame([['8', '1', '3', '3']], $result1->rows);
     }
 
-    public function testVariableRefusesAColumnOfTheNewRowOfAnAfterTrigger(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT)');
-        $session->query('CREATE PROCEDURE p() SELECT 1');
-        $program = new \MySqlMemory\Program\Activation('TRIGGER', 'd.t', true, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'));
-        $program->scope[] = new \MySqlMemory\Program\Row(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \MySqlMemory\Program\Variable('a', \MySqlMemory\Typing\Domain::integer())], 'NEW');
-        $session->program = $program;
-        $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER x AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $trigger);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger::class, $trigger);
-        $statement = $trigger->body;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $statement);
-        $item = $statement->items[0];
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment::class, $item);
-
-        $this->expectExceptionCode(1362);
-        $this->expectExceptionMessage('Updating of NEW row is not allowed in after trigger');
-
-        (new SetCommand())->variable($item, $session);
-    }
-
     public function testLocalAssignsTheVariableABareNameNames(): void
     {
         $session = (new Instance())->connect();

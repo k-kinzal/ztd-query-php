@@ -45,16 +45,19 @@ final class DeferredMultipleDeleteGenerator implements ErisGenerator
     {
         $bit = (new ReleaseDomain())->bit($release);
         $this->delegate = Generators::map(
-            static fn (array $parts): DeferredMultipleDelete => new DeferredMultipleDelete(with: $parts[0], options: $parts[1], input: new DeletionInput($parts[2]->tables, [$parts[7], $parts[7]], null, null), form: $parts[3], where: $parts[4], hints: $parts[5], inputSource: $parts[6]),
-            Generators::tuple(
-                $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
-                Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DeleteOptionGenerator($release))),
-                new DeletionInputGenerator($release, $depth - 1),
-                new MultipleDeleteFormGenerator($release),
-                $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
-                ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
-                Generators::constant(null),
-                new QualifiedNameGenerator($release)
+            static fn (array $parts): DeferredMultipleDelete => new DeferredMultipleDelete(with: $parts[0], options: $parts[1], input: new DeletionInput($parts[2]->tables, [$parts[7]], null, null), form: $parts[3], where: $parts[4], hints: $parts[5], inputSource: $parts[6]),
+            Generators::suchThat(
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->missing([$parts[7]], $parts[2]->tables) !== null,
+                Generators::tuple(
+                    $depth > 0 && ($bit & 508) !== 0 ? Generators::oneOf(Generators::constant(null), new WithGenerator($release, $depth - 1)) : Generators::constant(null),
+                    Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new DeleteOptionGenerator($release))),
+                    new DeletionInputGenerator($release, $depth - 1),
+                    new MultipleDeleteFormGenerator($release),
+                    $depth > 0 ? Generators::oneOf(Generators::constant(null), new ScalarGenerator($release, $depth - 1)) : Generators::constant(null),
+                    ($bit & 510) !== 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new OptimizerHintGenerator($release))) : Generators::constant([]),
+                    Generators::constant(null),
+                    new QualifiedNameGenerator($release)
+                )
             )
         );
         $this->delegate = Generators::suchThat(

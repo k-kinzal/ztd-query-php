@@ -134,8 +134,11 @@ final class ExplainRule
     /**
      * Lowers EXPLAIN of MySQL 5.x from its `opt_extended_describe` and its explained command.
      *
+     * A format name the release does not know is refused as it is read (`EXPLAIN FORMAT=XML SELECT * FROM`
+     * answers 1791 before the syntax error on 8.4.7, also inside a stored body).
+     *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When the explained operand needs invocation-time preparation
+     * @throws \SqlSemantics\Construction\RejectedInput When the explained operand needs invocation-time preparation, or the format is unknown
      */
     public function legacy(Form $options, Form $command, ExplainVerb $verb = ExplainVerb::Explain): Statement
     {
@@ -143,6 +146,9 @@ final class ExplainRule
         $modifier = null;
         if ($options->signature === 'opt_extended_describe: FORMAT_SYM EQ ident_or_text') {
             $format = $this->lowering->names->identifier($options->node(2));
+            if ((new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->refusal($this->lowering->profile->grammar, strtoupper($format->value), false, false) === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::UnknownExplainFormat) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat($format), (new \SqlSemantics\Construction\SourceRanges())->span($options->node)[1] ?? 0);
+            }
         } elseif ($options->signature !== 'opt_extended_describe:') {
             $modifier = self::MODIFIERS[$options->signature] ?? throw ImplementationGap::production($options);
         }
@@ -160,20 +166,35 @@ final class ExplainRule
     /**
      * Lowers EXPLAIN of MySQL 8.0 and later from its options, the variable of an INTO written before the statement, and its `explainable_stmt`.
      *
+     * An unknown format name, then an invalid INTO variable name, then INTO without FORMAT=JSON and FOR CONNECTION with ANALYZE or INTO are refused at the options,
+     * before the explained statement is read (`EXPLAIN INTO @v SELECT * FROM` answers 6006 on 8.4.7,
+     * also inside a stored body); MySQL 8.1 reads the explained statement first.
+     *
      * @throws ImplementationGap When a production has no rule
-     * @throws \SqlSemantics\Construction\RejectedInput When an explained operand needs deferred preparation
+     * @throws \SqlSemantics\Construction\RejectedInput When an explained operand needs deferred preparation, or the options are refused
      */
     public function modern(Node $options, ?Node $into, Form $explainable, ExplainVerb $verb = ExplainVerb::Explain): Statement
     {
         [$format, $analyze, $target] = (new OptionRule($this->lowering))->options($options);
         $variable = $into === null ? $target : $this->lowering->variables->user($into);
+        $boundary = (new \SqlSemantics\Construction\SourceRanges())->span($into ?? $options)[1] ?? 0;
+        if ($format !== null && (new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->refusal($this->lowering->profile->grammar, strtoupper($format->value), false, false) === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::UnknownExplainFormat) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UnknownExplainFormat($format), (new \SqlSemantics\Construction\SourceRanges())->span($options)[1] ?? 0);
+        }
+        $this->target($variable, $into ?? $options);
         if ($explainable->signature === 'explainable_stmt: FOR_SYM CONNECTION_SYM real_ulong_num') {
+            if ($analyze || $variable !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedConnectionExplain($analyze), $boundary);
+            }
             $connection = $this->lowering->numbers->numeral($explainable->node(2));
             return new ExplainConnection($connection, $format, analyze: $analyze, into: $variable, emptyInto: (new OptionRule($this->lowering))->emptyInto($options), verb: $verb);
         }
         $database = (self::EXPLAINED[$explainable->signature] ?? 0) === 1 ? (new OptionRule($this->lowering))->database($explainable->node(0)) : null;
 
-        $this->target($variable, $into ?? $options);
+        $legacy = $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql810;
+        if ($variable !== null && (($legacy && $analyze) || strcasecmp($format->value ?? '', 'JSON') !== 0)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\RefusedExplainInto($format, $legacy && $analyze), $legacy ? ((new \SqlSemantics\Construction\SourceRanges())->span($explainable->node)[1] ?? 0) : $boundary, !$legacy);
+        }
         $statement = $this->deferred($explainable);
         $empty = (new OptionRule($this->lowering))->emptyInto($options);
         if (!$statement instanceof Explainable || !(new \SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts())->target($variable) || ($analyze && strcasecmp($format->value ?? '', 'TRADITIONAL') === 0)) {

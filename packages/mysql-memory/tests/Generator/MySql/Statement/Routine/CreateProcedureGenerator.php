@@ -53,7 +53,7 @@ final class CreateProcedureGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): CreateProcedure => new CreateProcedure(name: $parts[0], parameters: $parts[1], body: $parts[2], characteristics: $parts[3], definer: $parts[4], ifNotExists: ($bit & 508) !== 0 && $parts[5], statementInformation: $parts[6], inputSource: $parts[7], definitionSource: $parts[8]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[2], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Procedure, $parts[0], $parts[1], $parts[3], $parts[8]?->bodyRefusalOffset) === null,
+                static fn (array $parts): bool => (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($parts[2], \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Procedure, $parts[0], $parts[1], $parts[3], $parts[8]?->bodyRefusalOffset) === null && (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\BodyNames())->unknown($parts[2], array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Routine\Parameter $parameter): Name => $parameter->name, $parts[1]->parameters), \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables::of($release)) === null,
                 Generators::tuple(
                     new QualifiedNameGenerator($release),
                     new ParameterListGenerator($release),

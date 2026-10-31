@@ -214,7 +214,6 @@ final class ProgramFactsTest extends TestCase
         yield 'a local variable' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW BEGIN DECLARE v INT DEFAULT NEW.a; SET NEW.b = v; END', []];
         yield 'a column of the NEW row it lacks' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @x = NEW.zz', ['Column NEW.zz does not exist.']];
         yield 'a column without row' => ['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET @x = a', ['Column a does not exist.']];
-        yield 'the trigger assignments' => ['CREATE TRIGGER tr AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1', ['Updating of NEW row is not allowed in after trigger']];
     }
 
     public function testTriggerDerivesTheTable(): void

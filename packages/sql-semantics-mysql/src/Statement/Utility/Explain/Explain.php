@@ -31,9 +31,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/explain.html. Status: Implemented.
  *
  * @visibility public
- * @example Retaining an unknown format for execution validation
+ * @example Refusing a format name no release knows
  *     $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
- *     (new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, new \SqlSemantics\Statement\Identifier\Name('XML')))->format?->value // => 'XML'
+ *     new \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain($query, new \SqlSemantics\Statement\Identifier\Name('XML')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a legacy modifier around a modern DELETE alias
  *     $target = new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), alias: new \SqlSemantics\Statement\Identifier\Name('x'));
  *     $delete = new \SqlSemantics\Platform\MySql\Statement\Dml\Delete(null, [], $target);
@@ -74,6 +74,8 @@ final class Explain extends \SqlSemantics\Platform\MySql\Statement\SqlStatement 
         Check::input((new ExplainFacts())->target($into), 'An EXPLAIN INTO target has between 1 and 64 characters.');
         Check::input($database === null || mb_strlen($database->value, 'UTF-8') <= 64, 'An EXPLAIN database name has at most 64 characters.');
         Check::input(!$analyze || strcasecmp($format->value ?? '', 'TRADITIONAL') !== 0, 'EXPLAIN ANALYZE cannot use the TRADITIONAL format.');
+        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO requires FORMAT=JSON.');
+        Check::input(in_array(strtoupper($format->value ?? 'TRADITIONAL'), ['TRADITIONAL', 'JSON', 'TREE'], true), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null), 'EXTENDED and PARTITIONS are written alone.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }

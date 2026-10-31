@@ -241,11 +241,22 @@ final class ChangeRule
     /**
      * Lowers complete deletion target lists.
      *
+     * The server refuses a target written twice with the same spelling as it reads the list
+     * (`DELETE FROM t, t USING t` and `DELETE a, a FROM t a` answer 1066 on 8.4.7, before a later
+     * syntax error); targets differing by letter case or by a written database are resolved later.
+     *
      * @return list<QualifiedName>
+     * @throws \SqlSemantics\Construction\RejectedInput When a target repeats an earlier one
      */
     public function targets(Node $list): array
     {
-        return $this->lowering->dml->deleteTargets($list);
+        $targets = $this->lowering->dml->deleteTargets($list);
+        $position = (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($targets);
+        if ($position !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Dml\Problem\RepeatedDeleteTarget(array_slice($targets, 0, $position + 1), $this->lowering->programName), (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
+        }
+
+        return $targets;
     }
 
     /**

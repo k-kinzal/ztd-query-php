@@ -249,9 +249,6 @@ final class SetCommand implements Command
         if ($row === null) {
             return null;
         }
-        if (!$row->writable) {
-            throw \MySqlMemory\Error\Family\ProgramError::TriggerRowChange->error(strtoupper($item->qualifier->value), strcasecmp($item->qualifier->value, 'NEW') === 0 ? 'after ' : '');
-        }
 
         return $row->variable($item->name->value) ?? throw \MySqlMemory\Error\Family\QueryError::BadField->error($item->name->value, strtoupper($item->qualifier->value));
     }

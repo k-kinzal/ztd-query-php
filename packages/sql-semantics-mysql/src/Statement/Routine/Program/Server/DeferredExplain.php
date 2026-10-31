@@ -49,6 +49,8 @@ final class DeferredExplain implements ProgramStatement
         Check::input($modifier === null || ($format === null && !$analyze && $into === null && $database === null && !$emptyInto), 'EXTENDED and PARTITIONS are written alone.');
         Check::input(!$statement instanceof Explainable || !(new ExplainFacts())->target($into) || ($analyze && strcasecmp($format->value ?? '', 'TRADITIONAL') === 0), 'A deferred explanation retains an invocation-time operand constraint.');
         Check::input($database === null || mb_strlen($database->value, 'UTF-8') <= 64, 'An EXPLAIN database name has at most 64 characters.');
+        Check::input($into === null || strcasecmp($format->value ?? '', 'JSON') === 0, 'EXPLAIN INTO requires FORMAT=JSON.');
+        Check::input(in_array(strtoupper($format->value ?? 'TRADITIONAL'), ['TRADITIONAL', 'JSON', 'TREE'], true), 'An EXPLAIN format is TRADITIONAL, JSON or TREE.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 

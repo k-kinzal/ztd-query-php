@@ -64,6 +64,7 @@ final class DeletionInput
         foreach ($this->targets as $target) {
             Check::input($target->catalog === null, 'A table is qualified by at most a database.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Dml\TargetNames())->duplicate($this->targets) === null, 'A multiple-table DELETE names each target once.');
         $this->wildcards = Check::listOf($wildcards ?? array_fill(0, count($this->targets), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::class, 'DELETE target suffixes are optional wildcards.', 1);
         Check::input(count($this->wildcards) === count($this->targets), 'Every DELETE target has one wildcard choice.');
         if ($resolutions !== null) {

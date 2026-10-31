@@ -57,6 +57,16 @@ final class ConditionBindingsTest extends TestCase
         self::assertSame('Undeclared variable: x', $refusal[0]->message());
     }
 
+    public function testInstructionChecksTheLimitAndIntoVariablesOfTheInstruction(): void
+    {
+        $limited = new M\QueryRoot(new M\Query\Select([], [new M\Query\SelectExpression(new M\Literal\NumberLiteral('1'))], limit: new M\Query\Clause\RowLimit(new M\Query\Clause\ProgramVariable(new Name('n')))));
+        $rule = new ConditionBindings();
+        self::assertSame(M\Routine\Problem\ProgramRule::UndeclaredVariable, $rule->instruction($limited, [], [])[0]->rule ?? null);
+        self::assertNull($rule->instruction($limited, [new Name('N')], []));
+        $outer = new M\Routine\Program\Flow\IfStatement([new M\Routine\Program\Flow\ConditionalBranch(new M\Literal\NumberLiteral('1'), [$limited])]);
+        self::assertNull($rule->instruction($outer, [], []));
+    }
+
     public function testInstructionChecksTheCursorBeforeItsFetchTargets(): void
     {
         $fetch = new M\Routine\Program\Cursor\FetchCursor(new Name('C'), [new Name('X')]);
