@@ -66,12 +66,13 @@
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com"> *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">25</span><span class="tok-com"> * `CONVERT(expr, type)` is the same request as `CAST(expr AS type)` and is</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">26</span><span class="tok-com"> * written as CAST. `ARRAY` (MySQL 8.0.17 and later) casts a JSON array for</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * CAST, typed CONVERT and AT LOCAL retain their written request forms. `ARRAY` (MySQL 8.0.17 and later) casts a JSON array for</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com"> * a multi-valued index.</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">27</span><span class="tok-com"> * a multi-valued index.</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * CAST and typed CONVERT retain their written request forms; `CAST ... AT LOCAL` is refused while reading, as no release</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * executes it. `ARRAY` (MySQL 8.0.17 and later) casts a JSON array for a multi-valued index.</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com"> * Rule: MYSQL-CAST-001. Facts: MYSQL-CAST-RESULT-001; a cast to an array is</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">30</span><span class="tok-com"> * a JSON value. The operand takes a single value. Terminates: the operand</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * a JSON value. Unsupported element types, AT LOCAL and invalid target bounds</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * a JSON value. Unsupported element types and invalid target bounds</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> * remain complete requests with ordered SQL conditions. Invalid conversions</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> * have an Invalid type fact instead of an invented result domain. The operand takes a single value. Terminates: the operand</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com"> * is a strict part.</span></span>
@@ -148,19 +149,16 @@
 <span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">form</span> === <span class="tok-id">CastForm</span>::<span class="tok-id">Convert</span>) {</span>
 <span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;,&#039;</span>);</span>
 <span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        } <span class="tok-kw">else</span> {</span>
-<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">form</span> === <span class="tok-id">CastForm</span>::<span class="tok-id">AtLocal</span>) {</span>
-<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>                <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;AT&#039;</span>, <span class="tok-str">&#039;LOCAL&#039;</span>);</span>
-<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>            }</span>
-<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;AS&#039;</span>);</span>
-<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a>        }</span>
-<span class="src-line" id="L107" data-diff="added"><a class="ln" href="#L107">107</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>);</span>
-<span class="src-line" id="L108" data-diff="same"><a class="ln" href="#L108">108</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">array</span>) {</span>
-<span class="src-line" id="L109" data-diff="same"><a class="ln" href="#L109">109</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ARRAY&#039;</span>);</span>
-<span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a>        }</span>
-<span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
-<span class="src-line" id="L112" data-diff="same"><a class="ln" href="#L112">112</a>    }</span>
-<span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>}</span>
-<span class="src-line" id="L114" data-diff="same"><a class="ln" href="#L114">114</a></span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;AS&#039;</span>);</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>        }</span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">node</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>);</span>
+<span class="src-line" id="L105" data-diff="same"><a class="ln" href="#L105">105</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">array</span>) {</span>
+<span class="src-line" id="L106" data-diff="same"><a class="ln" href="#L106">106</a>            <span class="tok-var">$out</span>-&gt;<span class="tok-id">keyword</span>(<span class="tok-str">&#039;ARRAY&#039;</span>);</span>
+<span class="src-line" id="L107" data-diff="same"><a class="ln" href="#L107">107</a>        }</span>
+<span class="src-line" id="L108" data-diff="same"><a class="ln" href="#L108">108</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">symbol</span>(<span class="tok-str">&#039;)&#039;</span>);</span>
+<span class="src-line" id="L109" data-diff="same"><a class="ln" href="#L109">109</a>    }</span>
+<span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a>}</span>
+<span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
