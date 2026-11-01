@@ -54,25 +54,22 @@ final class ParameterListTest extends TestCase
     public function testDeriveRelationAnswersTheRowOfAnAnalyzedRoutine(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(INOUT x INT, y BIGINT) SELECT x');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateProcedure::class, $statement);
 
-        self::assertEquals(new RowShape([
-            new OutputSlot(new Name('x'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable),
-            new OutputSlot(new Name('y'), new Known(new Integral(IntegralKind::BigInt)), Nullability::Nullable),
-        ]), $create->facts->relation($statement->parameters)->shape);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new RowShape([new OutputSlot(new Name('x'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable), new OutputSlot(new Name('y'), new Known(new Integral(IntegralKind::BigInt)), Nullability::Nullable)]), $statement->parameters->relationInformation()->shape));
     }
 
     public function testDeriveRelationResolvesEveryDirectionInTheBody(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(IN a INT, OUT b INT, INOUT c INT, d INT) SELECT a, b, c, d, z', []);
 
-        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Column z does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveRelationLetsALocalVariableHideAParameter(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x BIGINT; SELECT x; END', [])->diagnostics());
     }
 
     /**
@@ -83,7 +80,6 @@ final class ParameterListTest extends TestCase
         yield 'MySQL 5.6 empty' => ['mysql-5.6.51', 'create procedure p() select 1', 'CREATE PROCEDURE p() SELECT 1'];
         yield 'MySQL 5.7 two parameters' => ['mysql-5.7.44', 'create procedure p(a int,b int) select 1', 'CREATE PROCEDURE p(a INT, b INT) SELECT 1'];
         yield 'MySQL 8.0 function' => ['mysql-8.0.44', 'create function f(a int, b char(2)) returns int return 1', 'CREATE FUNCTION f(a INT, b CHAR(2)) RETURNS INT RETURN 1'];
-        yield 'MySQL 9.1 duplicate kept' => ['mysql-9.1.0', 'create procedure p(in x int, x int) select 1', 'CREATE PROCEDURE p(IN x INT, x INT) SELECT 1'];
     }
 
     #[DataProvider('providerRenderWritesTheParentheses')]
@@ -103,4 +99,51 @@ final class ParameterListTest extends TestCase
         self::assertSame('()', (new Lexical())->join($empty->pieces()));
         self::assertSame('(a INT, OUT b INT)', (new Lexical())->join($two->pieces()));
     }
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerRepeatedNames(): iterable
+    {
+        yield 'identical' => ['x', 'x'];
+        yield 'ASCII case' => ['x', 'X'];
+        yield 'Unicode case' => ['é', 'É'];
+        yield 'accent' => ['é', 'e'];
+    }
+
+    #[DataProvider('providerRepeatedNames')]
+    public function testRepeatedAnswersTheFirstParameterRepeatingAnEarlierName(string $first, string $second): void
+    {
+        $duplicate = new Parameter(new Name($second), new Integral(IntegralKind::Int));
+
+        self::assertSame($duplicate, ParameterList::repeated([new Parameter(new Name($first), new Integral(IntegralKind::Int)), $duplicate, new Parameter(new Name('later'), new Integral(IntegralKind::Int))]));
+    }
+
+    public function testDeriveRelationRetainsInvalidNamesBesideModernQuerySyntax(): void
+    {
+        $parameters = new ParameterList([new Parameter(new Name(''), new Integral(IntegralKind::Int))]);
+        $body = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')])]));
+        $statement = new CreateProcedure(new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('p')), $parameters, $body);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $statement->deriveStatement($derivation);
+
+        self::assertSame($body, $statement->body);
+        self::assertSame("Incorrect routine name ''", $derivation->facts()->diagnostics[0]->message());
+    }
+
+    public function testRepeatedAcceptsDistinctNames(): void
+    {
+        self::assertNull(ParameterList::repeated([new Parameter(new Name('x'), new Integral(IntegralKind::Int)), new Parameter(new Name('y'), new Integral(IntegralKind::Int))]));
+    }
+
+    public function testDeriveRelationReportsANameWhenTheSessionUsesAModernRelease(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $derivation = new Derivation($semantics->context([]));
+        $parameters = new ParameterList([new Parameter(new Name('x '), new Integral(IntegralKind::Int))]);
+
+        $derivation->relation($parameters, $derivation->environment());
+
+        self::assertSame(["Incorrect routine name 'x '"], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $derivation->facts()->diagnostics));
+    }
+
 }

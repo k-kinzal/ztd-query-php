@@ -8,10 +8,12 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Rules\TableChange\Choices;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlterModifier;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\ValidationOption;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -23,8 +25,8 @@ use SqlSemantics\Statement\Identifier\Name;
  * alter_commands_modifier_list, alter_commands_modifier, opt_validation,
  * alter_opt_validation, opt_with_validation, with_validation. The `=` is
  * an optional word; the keyword DEFAULT is the absent name; the name of an
- * algorithm or lock level is kept as written and checked when the statement
- * is derived (MYSQL-ALTER-CHOICES-001). Constructs: AlgorithmOption,
+ * algorithm or lock level remains available when its definition condition is published
+ * (MYSQL-ALTER-CHOICES-001). Constructs: AlgorithmOption,
  * LockOption, ValidationOption. Terminates: lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html#alter-table-performance.
  * Status: Implemented.
@@ -81,10 +83,24 @@ final class ModifierRule
     {
         $form = $this->lowering->form($option);
         [$lock, $value] = self::OPTIONS[$form->signature] ?? throw ImplementationGap::production($form);
-        $this->lowering->options->present($form->node(1));
+        $operator = $this->lowering->options->optionalAssignment($form->node(1));
         $name = $value === null ? null : $this->value($form->node($value));
 
-        return $lock ? new LockOption($name) : new AlgorithmOption($name);
+        return $lock ? new LockOption($name, operator: $operator) : new AlgorithmOption($name, operator: $operator);
+    }
+
+    /**
+     * Preserves an unknown option's abort before later input or warnings.
+     */
+    public function completed(Node $node): ?ParseFailure
+    {
+        if (!in_array($node->name, ['alter_algorithm_option', 'alter_lock_option'], true)) {
+            return null;
+        }
+        $option = $this->option($node);
+        $lock = $option instanceof LockOption;
+        $problem = (new Choices())->refusal($lock ? $option->lock : $option->algorithm, $lock, $this->lowering->profile->grammar);
+        return $problem === null ? null : new ParseFailure($problem, true);
     }
 
     /**

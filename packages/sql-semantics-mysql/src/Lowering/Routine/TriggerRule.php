@@ -69,6 +69,7 @@ final class TriggerRule
      * Lowers CREATE TRIGGER: a node of `trigger_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the body has a definition condition or assigns to a row the trigger cannot change
      */
     public function create(Node $tail, ?Account $definer): CreateTrigger
     {
@@ -87,15 +88,28 @@ final class TriggerRule
         $time = $this->lowering->form($parts['trg_action_time']);
         $event = $this->lowering->form($parts['trg_event']);
 
+        $name = $this->lowering->names->qualified($parts['sp_name']);
+        $body = (new StatementRule($this->lowering->inProgram($name)))->statement($parts['sp_proc_stmt']);
+        $table = new TriggerTable($this->lowering->names->qualified($parts['table_ident']));
+        $source = (new DefinitionBody())->source($body, $parts['sp_name'], $parts['sp_proc_stmt']);
+        $time = self::TIMES[$time->signature] ?? throw ImplementationGap::production($time);
+        $event = self::EVENTS[$event->signature] ?? throw ImplementationGap::production($event);
+        $rows = (new \SqlSemantics\Platform\MySql\Rules\Routine\TriggerRows())->problem($body, $time, $event);
+        if ($rows !== null) {
+            $origin = $this->lowering->origins->publish()->of($rows[1]);
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody($name, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $rows[0], $definer, nameEnd: $source->nameEnd), $origin === null ? ((new \SqlSemantics\Construction\SourceRanges())->span($tail)[1] ?? 0) : $origin->offset + $origin->length);
+        }
+        (new BodyRefusal($this->lowering))->checked($tail, $name, \SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind::Trigger, $body, null, [], $definer, $source);
         return new CreateTrigger(
-            $this->lowering->names->qualified($parts['sp_name']),
-            self::TIMES[$time->signature] ?? throw ImplementationGap::production($time),
-            self::EVENTS[$event->signature] ?? throw ImplementationGap::production($event),
-            new TriggerTable($this->lowering->names->qualified($parts['table_ident'])),
-            (new StatementRule($this->lowering))->statement($parts['sp_proc_stmt']),
+            $name,
+            $time,
+            $event,
+            $table,
+            $body,
             isset($parts['trigger_follows_precedes_clause']) ? $this->order($parts['trigger_follows_precedes_clause']) : null,
             $definer,
             isset($parts['opt_if_not_exists']) && $this->lowering->options->present($parts['opt_if_not_exists']),
+            definitionSource: $source,
         );
     }
 

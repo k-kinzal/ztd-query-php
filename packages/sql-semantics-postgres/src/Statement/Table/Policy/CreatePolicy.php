@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -35,9 +34,10 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE POLICY p ON t AS RESTRICTIVE FOR UPDATE TO CURRENT_USER USING (a > 0) WITH CHECK (a < 10)');
  *     $statement->toString() // => 'CREATE POLICY p ON t AS restrictive FOR UPDATE TO CURRENT_USER USING (a > 0) WITH CHECK (a < 10)'
  */
-final class CreatePolicy implements Statement, Relation
+final class CreatePolicy extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<RoleSpec> The roles after TO; none means PUBLIC
@@ -61,7 +61,16 @@ final class CreatePolicy implements Statement, Relation
         array $roles = [],
         public readonly ?Scalar $using = null,
         public readonly ?Scalar $check = null,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($mode === null || in_array($mode->value, ['permissive', 'restrictive'], true), 'A policy is permissive or restrictive.');
         $this->roles = Check::listOf($roles, RoleSpec::class, 'Policy roles are roles.');
     }

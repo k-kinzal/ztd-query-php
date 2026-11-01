@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Flow\ConditionalBranch;
@@ -51,7 +52,7 @@ final class FlowFacts
      *
      * @param list<Node> $statements
      */
-    public function loop(?Name $label, ?Name $end, ?Scalar $condition, array $statements, Derivation $derivation, ProgramScope $scope): void
+    public function loop(?Name $label, ?Name $end, Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $condition, array $statements, Derivation $derivation, ProgramScope $scope): void
     {
         $inside = (new LabelFacts())->enter($label, $end, true, $derivation, $scope);
         if ($condition !== null) {
@@ -74,7 +75,7 @@ final class FlowFacts
     /**
      * Derives the expression of RETURN and checks that the program is a function.
      */
-    public function returned(Scalar $value, Derivation $derivation, ProgramScope $scope): void
+    public function returned(Scalar|RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $value, Derivation $derivation, ProgramScope $scope): void
     {
         $derivation->scalar($value, $scope->environment);
         if ($scope->kind !== ProgramKind::Function) {

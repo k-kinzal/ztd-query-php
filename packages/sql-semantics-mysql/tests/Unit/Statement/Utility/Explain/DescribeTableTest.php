@@ -20,13 +20,13 @@ final class DescribeTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $describe = $semantics->analyze('DESCRIBE t a', [$table]);
-        self::assertInstanceOf(DescribeTable::class, $describe->statement);
-        self::assertSame([], $describe->facts->diagnostics);
+        self::assertInstanceOf(DescribeTable::class, $describe);
+        self::assertSame([], $describe->diagnostics());
         self::assertSame('Field', $describe->field(0)->name?->value);
     }
 
     public function testRenderWritesTheColumn(): void
     {
-        self::assertSame('DESCRIBE db.t `a%`', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('explain db.t `a%`')->toString());
+        self::assertSame('EXPLAIN db.t `a%`', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('explain db.t `a%`')->toString());
     }
 }

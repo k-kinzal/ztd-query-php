@@ -17,7 +17,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem;
  * @visibility public
  * @example Reading which rule a command breaks
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER TYPE t DROP VALUE 'a'");
- *     $operation->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule::EnumValueDrop
+ *     $operation->diagnostics()[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule::EnumValueDrop
  */
 enum CatalogMisuseRule: string
 {

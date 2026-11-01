@@ -40,9 +40,9 @@ final class TriggerTableTest extends TestCase
             new Column(new Name('b'), new Integral(IntegralKind::BigInt), Nullability::Nullable),
         ]);
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.a = NEW.b', [$table]);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
-        $fact = $create->facts->relation($statement->table);
+        $fact = $statement->table->relationInformation();
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
         self::assertInstanceOf(Known::class, $fact->shape->slots[1]->type ?? null);
 
@@ -54,21 +54,21 @@ final class TriggerTableTest extends TestCase
         self::assertSame($table->columns[1], $fact->shape->slots[1]->column);
         self::assertSame($table->columns[1]->type, $fact->shape->slots[1]->type->descriptor);
         self::assertSame(Nullability::Nullable, $fact->shape->slots[1]->nullability);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveRelationReportsATableTheCompleteContextLacks(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @x = 1', []);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
-        $fact = $create->facts->relation($statement->table);
+        $fact = $statement->table->relationInformation();
         self::assertInstanceOf(MissingTable::class, $fact->table);
 
         self::assertSame('t', $fact->table->name->name->value);
         self::assertTrue($fact->shape->complete());
         self::assertSame([], $fact->shape->slots);
-        self::assertSame(['Relation t does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Relation t does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveRelationDoesNotFindATableOfAnotherDatabase(): void
@@ -78,28 +78,28 @@ final class TriggerTableTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
         $create = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON shop.t FOR EACH ROW SET @x = 1', [$table]);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
 
-        $resolution = $create->facts->relation($statement->table)->table;
+        $resolution = $statement->table->relationInformation()->table;
         self::assertInstanceOf(MissingTable::class, $resolution);
 
         self::assertSame('shop', $resolution->name->schema?->value);
-        self::assertSame(['Relation t does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->facts->diagnostics));
+        self::assertSame(['Relation t does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $create->diagnostics()));
     }
 
     public function testDeriveRelationLeavesTheShapeOpenForAnUndeclaredTable(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE INSERT ON shop.t FOR EACH ROW SET @x = 1');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
-        $fact = $create->facts->relation($statement->table);
+        $fact = $statement->table->relationInformation();
         self::assertInstanceOf(UndeclaredTable::class, $fact->table);
 
         self::assertFalse($fact->shape->complete());
         self::assertSame([], $fact->shape->slots);
         self::assertSame('the declaration of relation shop.t', $fact->shape->missing[0]->describe());
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**

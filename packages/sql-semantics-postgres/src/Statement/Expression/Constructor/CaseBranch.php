@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `WHEN condition THEN result` branch of a CASE expression.
@@ -23,13 +22,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CaseBranch implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $condition The condition, or the value compared with the CASE operand
      * @param Scalar $result The result when the branch is taken
      */
-    public function __construct(public readonly Scalar $condition, public readonly Scalar $result)
+    public function __construct(public readonly Scalar $condition, public readonly Scalar $result, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

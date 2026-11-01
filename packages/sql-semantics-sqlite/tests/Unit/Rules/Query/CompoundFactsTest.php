@@ -36,7 +36,7 @@ final class CompoundFactsTest extends TestCase
     public function testDeriveCombinesTheArmsAndOrdersByTheNamesOfEveryArm(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $compound = $semantics->analyze("SELECT 1 AS a, 'x' AS b UNION SELECT NULL AS c, 2 ORDER BY c, 2 LIMIT 1")->statement;
+        $compound = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze("SELECT 1 AS a, 'x' AS b UNION SELECT NULL AS c, 2 ORDER BY c, 2 LIMIT 1"));
         self::assertInstanceOf(Compound::class, $compound);
         $derivation = new Derivation($semantics->context([]));
 
@@ -61,7 +61,7 @@ final class CompoundFactsTest extends TestCase
     public function testDeriveReportsAnOrderingOrALimitOnAnEarlierArm(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $compound = $semantics->analyze('SELECT 1 ORDER BY 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
+        $compound = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT 1 ORDER BY 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3'));
         self::assertInstanceOf(Compound::class, $compound);
         $derivation = new Derivation($semantics->context([]));
 
@@ -74,9 +74,9 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze("SELECT 1 AS a UNION SELECT 'x', 2 UNION SELECT NULL, 3, 4");
-        $compound = $query->statement;
+        $compound = $query;
         self::assertInstanceOf(Compound::class, $compound);
-        $facts = [$query->facts->query($compound->first), $query->facts->query($compound->steps[0]->query), $query->facts->query($compound->steps[1]->query)];
+        $facts = [$compound->first->queryInformation(), $compound->steps[0]->query->queryInformation(), $compound->steps[1]->query->queryInformation()];
         $derivation = new Derivation($semantics->context([]));
 
         $items = (new CompoundFacts())->combined($facts, $derivation);
@@ -98,11 +98,11 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT * FROM t UNION SELECT 1');
-        $compound = $query->statement;
+        $compound = $query;
         self::assertInstanceOf(Compound::class, $compound);
         $derivation = new Derivation($semantics->context());
 
-        $items = (new CompoundFacts())->combined([$query->facts->query($compound->first), $query->facts->query($compound->steps[0]->query)], $derivation);
+        $items = (new CompoundFacts())->combined([$compound->first->queryInformation(), $compound->steps[0]->query->queryInformation()], $derivation);
 
         self::assertCount(1, $items);
         self::assertInstanceOf(OpenStar::class, $items[0]);
@@ -113,10 +113,10 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT 1 AS a UNION SELECT * FROM t');
-        $compound = $query->statement;
+        $compound = $query;
         self::assertInstanceOf(Compound::class, $compound);
 
-        $items = (new CompoundFacts())->combined([$query->facts->query($compound->first), $query->facts->query($compound->steps[0]->query)], new Derivation($semantics->context()));
+        $items = (new CompoundFacts())->combined([$compound->first->queryInformation(), $compound->steps[0]->query->queryInformation()], new Derivation($semantics->context()));
 
         self::assertInstanceOf(Field::class, $items[0]);
         self::assertSame(Nullability::Dependent, $items[0]->nullability);
@@ -126,11 +126,11 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT 1 AS a, 2 UNION SELECT 3 AS b, 4 AS c');
-        $compound = $query->statement;
+        $compound = $query;
         self::assertInstanceOf(Compound::class, $compound);
         $arms = [$compound->first, $compound->steps[0]->query];
-        $facts = [$query->facts->query($compound->first), $query->facts->query($compound->steps[0]->query)];
-        $output = $query->facts->output;
+        $facts = [$compound->first->queryInformation(), $compound->steps[0]->query->queryInformation()];
+        $output = $query->output();
         self::assertNotNull($output);
 
         $aliases = (new CompoundFacts())->aliases($arms, $facts, $output->projection);
@@ -145,7 +145,7 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT 1+1, (a), 2 AS b, * FROM (SELECT 1 AS a)');
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(Select::class, $select);
         $facts = new CompoundFacts();
 
@@ -160,14 +160,14 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('WITH RECURSIVE c(n, true, N) AS (SELECT 1 AS x, 2, 3 UNION ALL SELECT n + 1, 2, 3 FROM c) SELECT * FROM c', []);
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];
         $compound = $table->query;
         self::assertInstanceOf(Compound::class, $compound);
-        $outer = new Environment($query->context, null, [], [new CommonBinding($table->name, $table, new RowShape([]))]);
+        $outer = new Environment($semantics->context([]), null, [], [new CommonBinding($table->name, $table, new RowShape([]))]);
 
-        $rebound = (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer, new Derivation($query->context));
+        $rebound = (new CompoundFacts())->rebound($compound, $compound->first->queryInformation(), $outer, new Derivation($semantics->context([])));
         $slot = $rebound->commonTables[0]->shape->slots[0];
 
         self::assertNotSame($outer, $rebound);
@@ -182,14 +182,14 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 AS x, 1+1 UNION ALL SELECT x + 1, 2 FROM c) SELECT * FROM c', []);
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];
         $compound = $table->query;
         self::assertInstanceOf(Compound::class, $compound);
-        $outer = new Environment($query->context, null, [], [new CommonBinding($table->name, $table, new RowShape([]))]);
+        $outer = new Environment($semantics->context([]), null, [], [new CommonBinding($table->name, $table, new RowShape([]))]);
 
-        $rebound = (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer, new Derivation($query->context));
+        $rebound = (new CompoundFacts())->rebound($compound, $compound->first->queryInformation(), $outer, new Derivation($semantics->context([])));
 
         self::assertSame('x', $rebound->commonTables[0]->shape->slots[0]->name?->value);
         self::assertSame('1+1', $rebound->commonTables[0]->shape->slots[1]->name?->value);
@@ -199,10 +199,10 @@ final class CompoundFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT 1 UNION SELECT 2');
-        $compound = $query->statement;
+        $compound = $query;
         self::assertInstanceOf(Compound::class, $compound);
-        $outer = new Environment($query->context);
+        $outer = new Environment($semantics->context([]));
 
-        self::assertSame($outer, (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer, new Derivation($query->context)));
+        self::assertSame($outer, (new CompoundFacts())->rebound($compound, $compound->first->queryInformation(), $outer, new Derivation($semantics->context([]))));
     }
 }

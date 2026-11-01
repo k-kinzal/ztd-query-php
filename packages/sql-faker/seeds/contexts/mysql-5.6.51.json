@@ -1,0 +1,79 @@
+{
+    "sp_proc_stmt#1": {
+        "statement": [
+            8
+        ],
+        "create": [
+            5
+        ],
+        "definer_tail": [
+            3
+        ],
+        "no_definer_tail": [
+            3
+        ]
+    },
+    "sp_proc_stmt_return#0": {
+        "statement": [
+            8
+        ],
+        "create": [
+            5
+        ],
+        "definer_tail": [
+            3
+        ],
+        "no_definer_tail": [
+            3
+        ]
+    },
+    "create3#2": {
+        "opt_as": [
+            1
+        ]
+    },
+    "start_transaction_option_list#1": {
+        "start_transaction_option": [
+            0,
+            1
+        ]
+    },
+    "function_call_nonkeyword#16": {
+        "func_datetime_precision": [
+            1
+        ]
+    },
+    "keyword_sp#1": {
+        "statement": [
+            8
+        ],
+        "create": [
+            0
+        ],
+        "create2": [
+            0
+        ]
+    },
+    "opt_and#1": {
+        "require_list_element": [
+            0,
+            1
+        ]
+    },
+    "keyword_sp#256": {
+        "statement": [
+            8
+        ],
+        "create": [
+            0
+        ],
+        "create2": [
+            0
+        ]
+    },
+    "opt_union_order_or_limit#1": {
+        "query_specification": [
+            1
+        ]
+    }
+}

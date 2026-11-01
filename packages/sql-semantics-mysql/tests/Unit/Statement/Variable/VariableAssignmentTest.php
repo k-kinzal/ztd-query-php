@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class VariableAssignmentTest extends TestCase
 {
-    public function testDeriveScalarHasTheFactsOfTheValue(): void
+    public function testDeriveScalarResolvesTheAssignmentTypeAndRetainsValueNullability(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
@@ -37,21 +37,22 @@ final class VariableAssignmentTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT @n := b, @m := a FROM t', [$table]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(VariableAssignment::class, $item0->expression);
-        $nullable = $operation->facts->scalar($item0->expression);
+        $nullable = $item0->expression->scalarInformation();
         self::assertInstanceOf(Known::class, $nullable->type);
         self::assertSame('BIGINT', $nullable->type->descriptor->name());
         self::assertSame(Nullability::Nullable, $nullable->nullability);
         self::assertNull($nullable->resolution);
-        $item1 = $operation->statement->items[1];
+        $item1 = $operation->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(VariableAssignment::class, $item1->expression);
-        $notNull = $operation->facts->scalar($item1->expression);
+        $notNull = $item1->expression->scalarInformation();
         self::assertInstanceOf(Known::class, $notNull->type);
-        self::assertSame('INT', $notNull->type->descriptor->name());
+        self::assertSame('BIGINT', $notNull->type->descriptor->name());
         self::assertSame(Nullability::NotNull, $notNull->nullability);
         self::assertSame('@n := b', $operation->field(0)->name?->value);
         self::assertNull($operation->field(0)->column());
@@ -61,34 +62,37 @@ final class VariableAssignmentTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @n := 5');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(VariableAssignment::class, $item0->expression);
-        $target = $operation->facts->scalar($item0->expression->target);
+        $target = $item0->expression->target->scalarInformation();
         self::assertInstanceOf(Dependent::class, $target->type);
         self::assertSame('the session state: user variable @n', $target->type->missing[0]->describe());
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($item0->expression)->nullability);
+        self::assertSame(Nullability::NotNull, $item0->expression->scalarInformation()->nullability);
     }
 
     public function testDeriveScalarTakesEverythingRightOfTheOperatorAsTheValue(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @n := 5');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(Comparison::class, $operation->statement->where);
-        self::assertInstanceOf(VariableAssignment::class, $operation->statement->where->right);
-        self::assertSame('n', $operation->statement->where->right->target->name->value);
-        self::assertInstanceOf(NumberLiteral::class, $operation->statement->where->right->value);
-        self::assertSame('5', $operation->statement->where->right->value->text);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Comparison::class, $operation->query->where);
+        self::assertInstanceOf(VariableAssignment::class, $operation->query->where->right);
+        self::assertSame('n', $operation->query->where->right->target->name->value);
+        self::assertInstanceOf(NumberLiteral::class, $operation->query->where->right->value);
+        self::assertSame('5', $operation->query->where->right->value->text);
         self::assertSame('SELECT a FROM t WHERE a = @n := 5', $operation->toString());
     }
 
     public function testDeriveScalarReportsARowOnceAndPassesOnAValueWithoutType(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @a := (1, 2)');
-
-        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT @a := (1, 2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertContains('Operand should contain 1 column(s), not 2.', array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheTargetTheOperatorAndTheValue(): void

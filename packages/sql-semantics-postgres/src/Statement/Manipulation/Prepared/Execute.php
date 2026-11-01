@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a run of a prepared statement
  *     $execute = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("EXECUTE p (1, 'x')");
- *     [count($execute->statement->parameters), $execute->shape()->complete()] // => [2, false]
+ *     [count($execute->parameters), $execute->shape()->complete()] // => [2, false]
  */
-final class Execute implements Statement
+final class Execute extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The parameter values in order
@@ -47,8 +46,11 @@ final class Execute implements Statement
      *
      * @throws InvalidConstruction When a value is not an expression
      */
-    public function __construct(public readonly Name $name, array $parameters = [])
+    public function __construct(public readonly Name $name, array $parameters = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->parameters = Check::listOf($parameters, Scalar::class, 'The parameters of EXECUTE are expressions.');
     }
 

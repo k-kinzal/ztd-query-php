@@ -12,14 +12,16 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Call\WindowResults;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Known;
@@ -29,6 +31,58 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class WindowResultsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{WindowFunctionKind}>
+     */
+    public static function providerDependentCounts(): iterable
+    {
+        yield 'tile count' => [WindowFunctionKind::Tile];
+        yield 'lead offset' => [WindowFunctionKind::Lead];
+        yield 'lag offset' => [WindowFunctionKind::Lag];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDependentCounts')]
+    public function testDomainRetainsNumericMetadataWithADependentProgramCount(WindowFunctionKind $kind): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $count = new \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable(new Name('n'));
+        $arguments = $kind === WindowFunctionKind::Tile ? [$count] : [new NumberLiteral('1'), $count];
+        $call = new WindowFunction($kind, $arguments, new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
+        $fact = $derivation->scalar($call, $derivation->environment());
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(Kind::Integer, $fact->type->descriptor->kind);
+        self::assertSame($kind === WindowFunctionKind::Tile ? Nullability::NotNull : Nullability::Nullable, $fact->nullability);
+    }
+
+    public function testResolvedPreservesTheLogicalTemporalCharset(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $call = new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new Name('w'));
+        $date = new Domain(Kind::Date, Field::Date, 10, 0);
+        $results = new WindowResults();
+
+        self::assertSame([8, 63], [$results->resolved($call, [$date], $derivation, false)?->collation->id, $results->resolved($call, [$date], $derivation)?->collation->id]);
+    }
+
+    public function testMaterializedSeparatesTheStoredFieldFromTheOriginalValueDomain(): void
+    {
+        $domain = Domain::integer(Field::LongLong, 3);
+        $result = (new WindowResults())->materialized(WindowFunctionKind::FirstValue, $domain, \SqlSemantics\Contract\GrammarRelease::MySql847);
+
+        self::assertSame([Field::LongLong, Field::Long, 3], [$domain->field, $result->field, $result->length]);
+    }
+
+    public function testMaterializedKeepsTheMySql80JsonShiftWidthInBinaryStorage(): void
+    {
+        $json = new Domain(Kind::Json, Field::Json, 4294967295, 31, false, Collation::known('utf8mb4_bin'));
+        $stored = (new WindowResults())->materialized(WindowFunctionKind::Lag, $json, \SqlSemantics\Contract\GrammarRelease::MySql8044);
+
+        self::assertSame([63, 4294967295, 4294967292, 0], [$stored->collation->id, $stored->length, $stored->metadataLength(), $stored->decimals]);
+    }
+
     public function testResultTypesEachKindOfWindowFunction(): void
     {
         $platform = new Platform();
@@ -40,24 +94,50 @@ final class WindowResultsTest extends TestCase
         $lead = $results->result(new WindowFunction(WindowFunctionKind::Lead, [new NumberLiteral('1'), new NumberLiteral('1'), new StringLiteral(['a'])], new Name('w')), [$int, $int, $text], $derivation);
         $first = $results->result(new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new Name('w')), [$int], $derivation);
 
-        self::assertEquals(new Known(TypeClass::Unsigned->descriptor()), $rank->type);
+        self::assertEquals(new Known(TypeClass::Integer->descriptor()), $rank->type);
         self::assertSame(Nullability::NotNull, $rank->nullability);
         self::assertEquals(new Known(TypeClass::Character->descriptor()), $lead->type);
-        self::assertSame(Nullability::Nullable, $lead->nullability);
+        self::assertSame(Nullability::NotNull, $lead->nullability);
         self::assertSame($int->type, $first->type);
     }
 
-    public function testResultReportsIgnoreNullsAndFromLast(): void
+    public function testResultAcceptsRespectNullsAndFromFirstWithoutDiagnostics(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $int = new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull);
-        $call = new WindowFunction(WindowFunctionKind::NthValue, [new NumberLiteral('1'), new NumberLiteral('2')], new Name('w'), NullTreatment::Ignore, CountingEdge::Last);
-        (new WindowResults())->result($call, [$int, $int], $derivation);
-        $diagnostics = $derivation->facts()->diagnostics;
+        $call = new WindowFunction(WindowFunctionKind::NthValue, [new NumberLiteral('1'), new NumberLiteral('2')], new Name('w'), NullTreatment::Respect, CountingEdge::First);
+        $result = (new WindowResults())->result($call, [$int, $int], $derivation);
 
-        self::assertInstanceOf(UnsupportedWindowing::class, $diagnostics[0]);
-        self::assertInstanceOf(UnsupportedWindowing::class, $diagnostics[1]);
-        self::assertSame([WindowingLimit::IgnoreNulls, WindowingLimit::FromLast], [$diagnostics[0]->limit, $diagnostics[1]->limit]);
+        self::assertSame([], $derivation->facts()->diagnostics);
+        self::assertSame($int->type, $result->type);
+    }
+
+    public function testResolvedTypesRankingAsUnsignedBigintAndValuesAsTheTemporaryTableHoldsThem(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $results = new WindowResults();
+        $column = Domain::column(Field::Long, 11);
+        $text = Domain::string(10, Collation::known('utf8mb4_0900_ai_ci'), Field::String);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 21, true), $results->resolved(new WindowFunction(WindowFunctionKind::RowNumber, [], new Name('w')), [], $derivation));
+        self::assertEquals(Domain::double(23), $results->resolved(new WindowFunction(WindowFunctionKind::CumulativeDistribution, [], new Name('w')), [], $derivation));
+        self::assertSame([Field::LongLong, 11], [$results->resolved(new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new Name('w')), [$column], $derivation)?->field, $results->resolved(new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new Name('w')), [$column], $derivation)?->length]);
+        self::assertSame([Field::VarString, 0], [$results->resolved(new WindowFunction(WindowFunctionKind::LastValue, [new NumberLiteral('1')], new Name('w')), [$text], $derivation)?->field, $results->resolved(new WindowFunction(WindowFunctionKind::LastValue, [new NumberLiteral('1')], new Name('w')), [$text], $derivation)?->decimals]);
+    }
+
+    public function testShiftedAggregatesTheValueAndTheDefaultAndKeepsJson(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $results = new WindowResults();
+        $json = new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::known('utf8mb4_bin'));
+        $lag = new WindowFunction(WindowFunctionKind::Lag, [new NumberLiteral('1'), new NumberLiteral('1'), new NumberLiteral('2')], new Name('w'));
+
+        self::assertSame(Kind::Json, $results->shifted($lag, [$json, Domain::integer(), Domain::null()], $derivation)?->kind);
+        $early = new Derivation($platform->context($platform->profile('mysql-8.0.44', null, ParameterStyle::Native), null, [], false));
+        self::assertSame(4294967292, $results->shifted($lag, [$json, Domain::integer(), Domain::null()], $early, false)?->metadataLength());
+        self::assertSame([Kind::Decimal, 1], [$results->shifted($lag, [Domain::column(Field::Long, 11), Domain::integer(), Domain::decimal(2, 1)], $derivation)?->kind, $results->shifted($lag, [Domain::column(Field::Long, 11), Domain::integer(), Domain::decimal(2, 1)], $derivation)?->decimals]);
     }
 }

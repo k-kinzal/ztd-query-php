@@ -16,6 +16,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Problem;
  */
 enum SpatialRule: string
 {
+    case LineFeed = 'ER_WRONG_VALUE';
     case IdentifierOutOfRange = 'ER_DATA_OUT_OF_RANGE';
     case IdentifierZero = 'ER_CANT_MODIFY_SRID_0';
     case RepeatedAttribute = 'ER_SRS_MULTIPLE_ATTRIBUTE_DEFINITIONS';

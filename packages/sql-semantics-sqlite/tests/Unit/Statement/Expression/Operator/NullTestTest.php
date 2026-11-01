@@ -19,7 +19,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Known;
@@ -49,8 +48,8 @@ final class NullTestTest extends TestCase
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(NullTest::class, $test);
-        self::assertInstanceOf(ResolvedColumn::class, $query->facts->scalar($test->operand)->resolution);
-        self::assertSame(Nullability::Nullable, $query->facts->scalar($test->operand)->nullability);
+        self::assertInstanceOf(ResolvedColumn::class, $test->operand->scalarInformation()->resolution);
+        self::assertSame(Nullability::Nullable, $test->operand->scalarInformation()->nullability);
     }
 
     public function testRenderWritesEachForm(): void
@@ -78,7 +77,7 @@ final class NullTestTest extends TestCase
     public function testRenderWritesANewlyBuiltTest(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new NullTest(new NullLiteral(), NullTestForm::NotNullWords))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new NullTest(new NullLiteral(), NullTestForm::NotNullWords))]));
 
         self::assertSame('SELECT NULL NOT NULL', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

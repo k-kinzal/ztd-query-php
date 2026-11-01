@@ -19,17 +19,17 @@ final class PublicationListTest extends TestCase
 
     public function testDeriveReportsAQualifiedTableAfterASchema(): void
     {
-        self::assertSame('invalid schema name', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, a.b')->facts->diagnostics[0]->message());
+        self::assertSame('invalid schema name', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, a.b')->diagnostics()[0]->message());
     }
 
     public function testDeriveReportsAFilterAfterASchema(): void
     {
-        self::assertSame('WHERE clause not allowed for schema', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t WHERE (true)')->facts->diagnostics[0]->message());
+        self::assertSame('WHERE clause not allowed for schema', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t WHERE (true)')->diagnostics()[0]->message());
     }
 
     public function testDeriveReportsColumnsAfterASchema(): void
     {
-        self::assertSame('column specification not allowed for schema', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t (a)')->facts->diagnostics[0]->message());
+        self::assertSame('column specification not allowed for schema', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA s, t (a)')->diagnostics()[0]->message());
     }
 
     public function testRuleOfAnIntroducedItemIsNull(): void

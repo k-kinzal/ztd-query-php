@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -34,11 +33,12 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Resolving VALUE in a domain constraint to the base type
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DOMAIN posint AS int4 CHECK (VALUE > 0)');
- *     [$operation->facts->diagnostics, $operation->toString()] // => [[], 'CREATE DOMAIN posint int4 CHECK (value > 0)']
+ *     [$operation->diagnostics(), $operation->toString()] // => [[], 'CREATE DOMAIN posint int4 CHECK (value > 0)']
  */
-final class CreateDomain implements Statement, Relation
+final class CreateDomain extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Clause> The constraints and the collation in the order written
@@ -50,8 +50,14 @@ final class CreateDomain implements Statement, Relation
      * @param TypeName $type The base type
      * @param list<Clause> $constraints The constraints and the collation in the order written
      */
-    public function __construct(public readonly DottedName $name, public readonly TypeName $type, array $constraints = [])
+    public function __construct(public readonly DottedName $name, public readonly TypeName $type, array $constraints = [], ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->constraints = Check::listOf($constraints, Clause::class, 'Domain constraints are clauses.');
     }
 

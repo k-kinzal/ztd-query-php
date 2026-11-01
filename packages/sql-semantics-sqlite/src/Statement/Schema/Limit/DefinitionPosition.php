@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Limit;
  * @visibility public
  * @example Reading the position of a prohibited expression
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a CHECK (a > ?))');
- *     $create->facts->diagnostics[0]->position // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition::CheckConstraint
+ *     $create->diagnostics()[0]->position // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition::CheckConstraint
  */
 enum DefinitionPosition: string
 {

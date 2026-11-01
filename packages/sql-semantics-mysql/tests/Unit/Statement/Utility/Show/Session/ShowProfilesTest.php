@@ -18,8 +18,11 @@ final class ShowProfilesTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW PROFILES');
-        self::assertInstanceOf(ShowProfiles::class, $show->statement);
+        self::assertInstanceOf(ShowProfiles::class, $show);
         self::assertSame('Query_ID', $show->field(0)->name?->value);
+        self::assertCount(1, $show->warnings());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $show->warnings()[0]);
+        self::assertSame(1287, $show->warnings()[0]->code());
     }
 
     public function testRenderWritesTheStatement(): void

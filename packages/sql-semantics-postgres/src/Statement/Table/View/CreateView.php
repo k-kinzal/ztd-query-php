@@ -18,7 +18,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -41,9 +40,9 @@ use SqlSemantics\Statement\Statement;
  *     $view = $semantics->analyze('CREATE OR REPLACE VIEW v (x) AS SELECT a, b FROM t', $table->declarations());
  *     array_map(static fn ($column) => [$column->name->value, $column->nullability->name], $view->declarations()[0]->columns) // => [['x', 'NotNull'], ['b', 'Nullable']]
  */
-final class CreateView implements SchemaElement, RecursiveDefinition
+final class CreateView extends \SqlSemantics\Statement\SqlStatement implements SchemaElement, RecursiveDefinition
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names
@@ -74,7 +73,12 @@ final class CreateView implements SchemaElement, RecursiveDefinition
         public readonly bool $recursive = false,
         array $options = [],
         public readonly ?CheckOption $checkOption = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'View column names are names.', $recursive ? 1 : 0);
         $this->options = Check::listOf($options, Definition::class, 'View options are definitions.');
         Check::input($checkOption === null || !(new Trailing())->takesWith($query), 'A query ending in IS JSON without a uniqueness clause would take WITH CHECK OPTION; group it.');

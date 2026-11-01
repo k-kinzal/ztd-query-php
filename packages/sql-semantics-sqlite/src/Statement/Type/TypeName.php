@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A type name as SQLite reads it: one or more words and up to two signed numbers in parentheses.
@@ -24,12 +23,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the target type of a CAST
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT CAST(a AS UNSIGNED BIG INT(10))');
- *     $target = $query->statement->columns[0]->expression->target;
+ *     $target = $query->columns[0]->expression->target;
  *     [count($target->words), $target->text(), $target->affinity()] // => [3, 'UNSIGNED BIG INT', \SqlSemantics\Platform\Sqlite\Statement\Type\Affinity::Integer]
  */
 final class TypeName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Word> The words of the name in order
@@ -45,7 +44,7 @@ final class TypeName implements Node
      * @param list<Word> $words The words of the name in order; at least one
      * @param list<SignedNumber> $arguments The numbers written in parentheses; at most two
      */
-    public function __construct(array $words, array $arguments = [])
+    public function __construct(array $words, array $arguments = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->words = Check::listOf($words, Word::class, 'A type name has at least one word.', 1);
         $this->arguments = Check::listOf($arguments, SignedNumber::class, 'Type arguments are signed numbers.');

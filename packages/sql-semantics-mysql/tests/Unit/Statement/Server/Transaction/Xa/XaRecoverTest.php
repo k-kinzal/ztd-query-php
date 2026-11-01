@@ -29,7 +29,24 @@ final class XaRecoverTest extends TestCase
     {
         $recover = (new Semantics(Dialect::MySql))->analyze('XA RECOVER');
 
-        self::assertSame(4, $recover->fields()?->count());
-        self::assertSame('formatID', $recover->field(0)->slot->name?->value);
+        self::assertInstanceOf(XaRecover::class, $recover);
+        self::assertCount(4, $recover->shape->slots);
+        self::assertSame('formatID', $recover->shape->slots[0]->name?->value);
+    }
+
+    public function testToStringReconstructsTheConcreteOperands(): void
+    {
+        self::assertSame('XA RECOVER', (new XaRecover())->toString());
+    }
+
+    public function testProfileRetainsTheSelectedRelease(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        self::assertSame($profile, (new XaRecover(profile: $profile))->profile());
+    }
+
+    public function testDeclarationsIntroducesNoSchemaObjects(): void
+    {
+        self::assertSame([], (new XaRecover())->declarations());
     }
 }

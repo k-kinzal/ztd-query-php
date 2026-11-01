@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -25,17 +24,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the decoded text of a string literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT 'it''s'");
- *     [$query->statement->columns[0]->expression->value, $query->toString()] // => ["it's", "SELECT 'it''s'"]
+ *     [$query->columns[0]->expression->value, $query->toString()] // => ["it's", "SELECT 'it''s'"]
  */
 final class TextLiteral implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $value The decoded text
      */
-    public function __construct(public readonly string $value)
+    public function __construct(public readonly string $value, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

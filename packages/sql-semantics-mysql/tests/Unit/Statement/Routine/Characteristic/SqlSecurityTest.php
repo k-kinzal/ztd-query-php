@@ -35,7 +35,7 @@ final class SqlSecurityTest extends TestCase
     public function testRenderWritesTheContextKeyword(string $release, string $sql, string $expected, SecurityContext $context): void
     {
         $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(SqlSecurity::class, $characteristic);

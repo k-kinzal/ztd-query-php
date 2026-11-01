@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Resolving an absent table that IF EXISTS allows
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP TABLE IF EXISTS t', []);
- *     $drop->facts->relation($drop->statement->tables[0])->table instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable // => true
+ *     $drop->tables[0]->relationInformation()->table instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AbsentTable // => true
  */
 final class AbsentTable implements TableResolution
 {

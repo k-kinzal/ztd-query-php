@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A CHECK constraint added to a domain in release 17: `[ CONSTRAINT name ] CHECK ( expression ) attributes`.
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the attributes of an added check
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NOT VALID');
- *     $operation->statement->constraint->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::NotValid]
+ *     $operation->constraint->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::NotValid]
  */
 final class DomainCheck implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ConstraintAttribute> The attributes in the order written
@@ -43,7 +42,7 @@ final class DomainCheck implements Clause
      * @param Scalar $condition The condition
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      */
-    public function __construct(public readonly ?Name $name, public readonly Scalar $condition, array $attributes = [])
+    public function __construct(public readonly ?Name $name, public readonly Scalar $condition, array $attributes = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->attributes = Check::listOf($attributes, ConstraintAttribute::class, 'Constraint attributes are a list.');
     }

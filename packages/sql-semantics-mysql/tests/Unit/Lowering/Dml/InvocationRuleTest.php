@@ -30,8 +30,8 @@ final class InvocationRuleTest extends TestCase
 
     public function testArgumentsLowersEveryList(): void
     {
-        self::assertSame('CALL p', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('call p()')->toString());
-        self::assertSame('CALL p', (new Semantics(Dialect::MySql))->analyze('call p()')->toString());
+        self::assertSame('CALL p()', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('call p()')->toString());
+        self::assertSame('CALL p()', (new Semantics(Dialect::MySql))->analyze('call p()')->toString());
         self::assertSame('CALL p(1, 2)', (new Semantics(Dialect::MySql))->analyze('call p(1, 2)')->toString());
     }
 
@@ -42,12 +42,26 @@ final class InvocationRuleTest extends TestCase
 
     public function testPreparedLowersPrepareExecuteAndDeallocate(): void
     {
-        self::assertSame('PREPARE s FROM @q', (new Semantics(Dialect::MySql))->analyze('prepare s from @`q`')->toString());
+        self::assertSame('PREPARE s FROM @`q`', (new Semantics(Dialect::MySql))->analyze('prepare s from @`q`')->toString());
         self::assertSame('DEALLOCATE PREPARE s', (new Semantics(Dialect::MySql))->analyze('deallocate prepare s')->toString());
     }
 
     public function testVariablesLowersTheUsingList(): void
     {
-        self::assertSame('EXECUTE s USING @a, @`b c`', (new Semantics(Dialect::MySql))->analyze('execute s using @a, @\'b c\'')->toString());
+        self::assertSame('EXECUTE s USING @a, @\'b c\'', (new Semantics(Dialect::MySql))->analyze('execute s using @a, @\'b c\'')->toString());
+    }
+
+    public function testCheckedRefusesAStandaloneWildcardAndKeepsAStoredOne(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('DO *');
+            self::fail('A wildcard has no tables to read.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\EvaluationWildcard::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
+        $stored = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() DO *');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $stored);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation::class, $stored->body);
     }
 }

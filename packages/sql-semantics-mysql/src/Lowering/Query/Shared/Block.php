@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
 
 use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
@@ -15,8 +16,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -36,25 +38,31 @@ final class Block
      * @param list<SelectOption> $options The modifiers
      * @param list<SelectExpression|Star|TableWildcard> $items The select list
      * @param IntoDestination|null $into The INTO destination after the select list
-     * @param Relation|null $from The FROM clause
+     * @param Relation|Dual|null $from The FROM clause
      * @param Scalar|null $where The row predicate
      * @param Grouping|null $groupBy The GROUP BY clause
      * @param Scalar|null $having The group predicate
      * @param list<WindowDefinition> $windows The named windows
      * @param Scalar|null $qualify The QUALIFY predicate
      * @param Trailer $trailer The clauses written after the block
+     * @param list<OptimizerHint> $hints The hints of the comment written right after SELECT
+     * @param \SqlParser\Parser\Node|null $source The original query specification, when tracked
+     * @param \SqlSemantics\Construction\Origins|null $origins The recorder for the finished selection
      */
     public function __construct(
         public readonly array $options,
         public readonly array $items,
         public readonly ?IntoDestination $into = null,
-        public readonly ?Relation $from = null,
+        public readonly Relation|Dual|null $from = null,
         public readonly ?Scalar $where = null,
         public readonly ?Grouping $groupBy = null,
         public readonly ?Scalar $having = null,
         public readonly array $windows = [],
         public readonly ?Scalar $qualify = null,
         public readonly Trailer $trailer = new Trailer(),
+        public readonly array $hints = [],
+        public readonly ?\SqlParser\Parser\Node $source = null,
+        public readonly ?\SqlSemantics\Construction\Origins $origins = null,
     ) {
     }
 
@@ -65,7 +73,7 @@ final class Block
      */
     public function then(Trailer $later): self
     {
-        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer->then($later));
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer->then($later), $this->hints, $this->source, $this->origins);
     }
 
     /**
@@ -98,11 +106,21 @@ final class Block
     }
 
     /**
+     * Answers the block with the hints of the comment written right after its SELECT.
+     *
+     * @param list<OptimizerHint> $hints The hints, in written order
+     */
+    public function hinted(array $hints): self
+    {
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer, $hints, $this->source, $this->origins);
+    }
+
+    /**
      * Answers the block without the clauses written after it.
      */
     public function bare(): self
     {
-        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify);
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, hints: $this->hints, source: $this->source, origins: $this->origins);
     }
 
     /**
@@ -110,6 +128,7 @@ final class Block
      *
      * @param LateOrdering|null $late The ORDER BY and LIMIT a 5.6 subquery writes after the locking clauses or the LIMIT of the block
      * @throws AnalysisException When INTO is written twice, which the server rejects while parsing (ER_SYNTAX_ERROR of the 5.7 `select_part2` action, ER_MULTIPLE_INTO_CLAUSES of 8.0 `PT_select_stmt::make_cmd`, right after contextualizing; the 5.6 grammar has no such form)
+     * @throws \SqlSemantics\Construction\RejectedInput When a locking clause names a table the block does not hold, or a derived table or a table locked already (ER_UNRESOLVED_TABLE_LOCK, ER_DUPLICATE_TABLE_LOCK), which the server refuses once it has read the statement, before any table is opened (verified on 8.4.7, also inside a stored program body)
      */
     public function select(?LateOrdering $late = null): Select
     {
@@ -125,6 +144,12 @@ final class Block
             $position = IntoPosition::AfterItems;
         }
 
-        return new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late);
+        $misuse = (new \SqlSemantics\Platform\MySql\Rules\Query\Tail\LockedNames())->problem($this->from, $trailer->locking);
+        if ($misuse !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($misuse, $this->source === null ? 0 : ((new \SqlSemantics\Construction\SourceRanges())->span($this->source)[1] ?? 0), false);
+        }
+        $select = new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late, $this->hints);
+
+        return $this->source === null || $this->origins === null ? $select : $this->origins->record($select, $this->source);
     }
 }

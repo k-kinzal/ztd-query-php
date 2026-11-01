@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An action on a column without an operand: SET/DROP NOT NULL, DROP DEFAULT, DROP EXPRESSION, DROP IDENTITY.
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a column action
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ALTER COLUMN a DROP NOT NULL');
- *     $statement->statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\ColumnActionKind::DropNotNull
+ *     $statement->commands[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column\ColumnActionKind::DropNotNull
  */
 final class ColumnAction implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnActionKind $kind The action
      * @param Name $column The column
      */
-    public function __construct(public readonly ColumnActionKind $kind, public readonly Name $column)
+    public function __construct(public readonly ColumnActionKind $kind, public readonly Name $column, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

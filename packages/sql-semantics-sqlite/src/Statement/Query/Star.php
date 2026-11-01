@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The result column `*`: every column of every input relation.
@@ -16,11 +15,17 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
  *     $query = $semantics->analyze('SELECT * FROM t', [$table]);
- *     [$query->statement->columns[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Query\Star, count($query->fields())] // => [true, 2]
+ *     [$query->columns[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Query\Star, count($query->fields())] // => [true, 2]
  */
 final class Star implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    /**
+ * Constructs a SQL occurrence with optional publication information.
+ */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+    }
 
     /**
      * Writes the star.

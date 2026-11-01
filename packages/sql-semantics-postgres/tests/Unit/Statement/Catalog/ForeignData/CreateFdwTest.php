@@ -19,6 +19,6 @@ final class CreateFdwTest extends TestCase
 
     public function testDeriveStatementReportsATwiceNamedHandler(): void
     {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE FOREIGN DATA WRAPPER w HANDLER a HANDLER b')->facts->diagnostics[0]->message());
+        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE FOREIGN DATA WRAPPER w HANDLER a HANDLER b')->diagnostics()[0]->message());
     }
 }

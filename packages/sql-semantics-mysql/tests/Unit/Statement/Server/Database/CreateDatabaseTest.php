@@ -17,14 +17,14 @@ final class CreateDatabaseTest extends TestCase
 {
     public function testRenderWritesIfNotExistsAndOptions(): void
     {
-        self::assertSame('CREATE DATABASE IF NOT EXISTS d CHARACTER SET utf8mb4', (new Semantics(Dialect::MySql))->analyze('create database if not exists d charset utf8mb4')->toString());
+        self::assertSame('CREATE DATABASE IF NOT EXISTS d CHARSET utf8mb4', (new Semantics(Dialect::MySql))->analyze('create database if not exists d charset utf8mb4')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE DATABASE d');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

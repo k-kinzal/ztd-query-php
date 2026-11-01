@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -36,9 +35,10 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SEQUENCE IF EXISTS s RESTART WITH 1 NO MAXVALUE');
  *     $statement->toString() // => 'ALTER SEQUENCE IF EXISTS s RESTART 1 NO MAXVALUE'
  */
-final class AlterSequence implements Statement, Relation
+final class AlterSequence extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SequenceOption> The options in the order written
@@ -50,8 +50,14 @@ final class AlterSequence implements Statement, Relation
      * @param list<SequenceOption> $options The options in the order written
      * @param bool $ifExists Whether IF EXISTS is written
      */
-    public function __construct(public readonly QualifiedName $name, array $options, public readonly bool $ifExists = false)
+    public function __construct(public readonly QualifiedName $name, array $options, public readonly bool $ifExists = false, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->options = Check::listOf($options, SequenceOption::class, 'ALTER SEQUENCE takes at least one option.', 1);
     }
 

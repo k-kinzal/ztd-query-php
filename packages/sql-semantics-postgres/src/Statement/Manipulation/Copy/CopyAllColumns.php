@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The argument `*` of a COPY option: every column copied.
@@ -19,11 +18,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the star argument
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t TO STDOUT (force_quote *)');
- *     $copy->statement->options[0]->argument instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyAllColumns // => true
+ *     $copy->options[0]->argument instanceof \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyAllColumns // => true
  */
 final class CopyAllColumns implements OptionArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    /**
+ * Constructs a SQL occurrence with optional publication information.
+ */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+    }
 
     /**
      * Derives nothing: the star holds no expression.

@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An attribute value read as a Boolean, such as `hashes` of an operator.
@@ -27,18 +26,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an attribute given alone
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OPERATOR === (rightarg = int4, function = f, hashes, merges = off)');
- *     [$operation->statement->definition[2]->value->value(), $operation->statement->definition[3]->value->value()] // => [true, false]
+ *     [$operation->definition[2]->value->value(), $operation->definition[3]->value->value()] // => [true, false]
  * @example Rejecting a value that is not a Boolean
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\BooleanArgument(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('yes')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class BooleanArgument implements AttributeArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant|null $written The value as written; null when the attribute is given alone
      */
-    public function __construct(public readonly TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant|null $written = null)
+    public function __construct(public readonly TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant|null $written = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new AttributeReader())->boolean($written) !== null, 'A Boolean attribute is given alone, as 0 or 1, or as true, false, on or off.');
     }

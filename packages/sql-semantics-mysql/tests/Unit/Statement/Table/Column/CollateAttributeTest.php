@@ -17,12 +17,12 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 #[Medium]
 final class CollateAttributeTest extends TestCase
 {
-    public function testDeriveAttributeDerivesNothing(): void
+    public function testDeriveAttributeRetainsAKnownCollation(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TEXT COLLATE utf8mb4_bin)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
@@ -30,6 +30,17 @@ final class CollateAttributeTest extends TestCase
 
         self::assertInstanceOf(CollateAttribute::class, $attribute);
         self::assertSame('utf8mb4_bin', $attribute->collation->name?->value);
+    }
+
+    public function testDeriveAttributeIsNeverReachedForACollationTheReadingRefuses(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a BIT NULL COLLATE unknown');
+            self::fail('The collation does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $failure->problem);
+            self::assertSame("Unknown collation: 'unknown'", $failure->problem->message());
+        }
     }
 
     public function testRenderWritesTheAttribute(): void

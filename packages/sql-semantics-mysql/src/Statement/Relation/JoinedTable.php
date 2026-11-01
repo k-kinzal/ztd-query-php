@@ -9,22 +9,25 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
- * A join of two table references with its ON condition or USING column list.
+ * A join input template with its complete ON condition or USING column list.
  *
  * The structure follows the parse of the release, where a join can nest on
  * the right without parentheses (`t JOIN u JOIN v ON c` joins t to the join
  * of u and v in 8.0 and later). A natural join takes no condition and its
  * right operand is no unparenthesized join; LEFT and RIGHT joins require a
  * condition; a comma list as an operand is written in parentheses.
+ *
+ * Non-scalar ON conditions are retained for stored instructions and unused
+ * query templates. Ordinary read and write roles reject a reached intrinsic
+ * condition before an Operation is constructed.
  *
  * Rule: MYSQL-JOIN-001. The operands and the condition are derived by
  * MYSQL-FROM-SCOPE-001 and combined by MYSQL-JOIN-COLUMNS-001.
@@ -33,15 +36,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a join
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 FROM t LEFT JOIN u USING (a)');
- *     [$query->statement->from->operator, $query->statement->from->using[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left, 'a']
+ *     [$query->query->from->operator, $query->query->from->using[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left, 'a']
  * @example Refusing a left join without a condition
  *     $t = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
  *     $u = new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')));
  *     new \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable($t, \SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left, $u) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class JoinedTable implements Relation
+final class JoinedTable implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The USING columns in written order; empty without USING
@@ -52,11 +56,14 @@ final class JoinedTable implements Relation
      * @param Relation $left The left operand
      * @param JoinOperator $operator The join operator
      * @param Relation $right The right operand
-     * @param Scalar|null $on The ON condition
+     * @param Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $on The ON condition, including a retained instruction condition
      * @param list<Name> $using The USING columns
      */
-    public function __construct(public readonly Relation $left, public readonly JoinOperator $operator, public readonly Relation $right, public readonly ?Scalar $on = null, array $using = [])
+    public function __construct(public readonly Relation $left, public readonly JoinOperator $operator, public readonly Relation $right, public readonly Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $on = null, array $using = [], ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->using = Check::listOf($using, Name::class, 'USING names columns.');
         Check::input($on === null || $using === [], 'A join has an ON condition or a USING list, not both.');
         Check::input(!$operator->natural() || ($on === null && $using === []), 'A natural join takes no condition.');

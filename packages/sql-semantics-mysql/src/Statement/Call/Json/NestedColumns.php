@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A `NESTED PATH path COLUMNS (...)` column of JSON_TABLE: the columns of the rows of a nested array.
@@ -31,10 +30,10 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class NestedColumns implements JsonTableColumn
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<JsonTableColumn> The nested columns in order
+     * @var non-empty-list<JsonTableColumn> The nested columns in order
      */
     public readonly array $columns;
 
@@ -42,7 +41,7 @@ final class NestedColumns implements JsonTableColumn
      * @param StringLiteral $path The path of the nested array
      * @param list<JsonTableColumn> $columns The nested columns in order; at least one
      */
-    public function __construct(public readonly StringLiteral $path, array $columns)
+    public function __construct(public readonly StringLiteral $path, array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, JsonTableColumn::class, 'A nested path has at least one column.', 1);
     }

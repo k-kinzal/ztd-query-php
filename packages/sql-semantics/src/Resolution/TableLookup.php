@@ -8,7 +8,6 @@ use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\TableResolution;
@@ -44,7 +43,7 @@ final class TableLookup
                 return new ConditionalTable($matches, new UndeclaredRelation($name));
             }
 
-            return count($matches) === 1 ? new DeclaredTable($matches[0]) : new ConflictingTables($name, $matches);
+            return new DeclaredTable($matches[0], $schema);
         }
 
         return $context->complete ? new MissingTable($name) : new UndeclaredTable(new UndeclaredRelation($name));

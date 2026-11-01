@@ -29,6 +29,18 @@ final class KeyOptionRuleTest extends TestCase
         self::assertSame(IndexAlgorithm::Rtree, (new KeyOptionRule($lowering))->algorithm($node));
     }
 
+    public function testTypeKeywordDistinguishesTypeFromUsing(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $typed = $platform->parser($profile)->parse('CREATE TABLE t (a INT, KEY k TYPE HASH (a))')->find('opt_index_name_and_type')[0];
+        $using = $platform->parser($profile)->parse('CREATE TABLE t (a INT, KEY k USING HASH (a))')->find('opt_index_name_and_type')[0];
+
+        self::assertTrue((new KeyOptionRule($lowering))->typeKeyword($typed));
+        self::assertFalse((new KeyOptionRule($lowering))->typeKeyword($using));
+    }
+
     public function testMarkedConfirmsTheMarker(): void
     {
         $platform = new Platform();

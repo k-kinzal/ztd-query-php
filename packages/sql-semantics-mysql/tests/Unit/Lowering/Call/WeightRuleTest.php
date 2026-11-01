@@ -66,6 +66,18 @@ final class WeightRuleTest extends TestCase
         self::assertSame('7', (new WeightRule($lowering))->length($node)->text);
     }
 
+    public function testLengthRefusesZeroBeforeConstructingItsOwner(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT WEIGHT_STRING(NULL AS CHAR(0))')->find('ws_num_codepoints')[0];
+        $this->expectException(\SqlSemantics\Diagnostic\AnalysisException::class);
+        $this->expectExceptionMessage('WEIGHT_STRING requires a positive cast length');
+
+        (new WeightRule($lowering))->length($node);
+    }
+
     public function testLevelsLowersARange(): void
     {
         $platform = new Platform();
@@ -104,4 +116,30 @@ final class WeightRuleTest extends TestCase
         $node = $platform->parser($profile)->parse('SELECT WEIGHT_STRING(a LEVEL 5)')->find('ws_level_number')[0];
         self::assertSame('5', (new WeightRule($lowering))->number($node)->text);
     }
+    public function testComposedRetainsNonScalarSubjectsAndLegacyLevelOperands(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $rule = new WeightRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+        $level = new \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'));
+        $value = $rule->composed($row, levels: [$level]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWeightString::class, $value);
+        self::assertSame([$row, [$level]], [$value->subject, $value->levels]);
+    }
+
+    public function testParametersRetainsTheThreeNumericOptions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new WeightRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $row = new \SqlSemantics\Platform\MySql\Statement\Expression\Row([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('2')]);
+        $length = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('7');
+        $weights = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('2');
+        $flags = new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('64');
+        $value = $rule->parameters($row, $length, $weights, $flags);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWeightParameters::class, $value);
+        self::assertSame([$row, $length, $weights, $flags], [$value->subject, $value->length, $value->weights, $value->flags]);
+    }
+
 }

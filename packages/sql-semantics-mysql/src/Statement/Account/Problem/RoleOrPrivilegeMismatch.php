@@ -27,9 +27,11 @@ final class RoleOrPrivilegeMismatch implements Diagnostic
     /**
      * @param string $item The item as a person reads it
      * @param bool $roleExpected Whether the statement reads the item as a role
+     * @param int|null $offset The operand's input byte offset when reported during lowering; no input text is retained
      */
-    public function __construct(public readonly string $item, public readonly bool $roleExpected)
+    public function __construct(public readonly string $item, public readonly bool $roleExpected, public readonly ?int $offset = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($offset === null || $offset >= 0, 'An operand offset is nonnegative.');
     }
 
     /**

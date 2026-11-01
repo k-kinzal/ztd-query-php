@@ -17,6 +17,6 @@ final class PartitionOptionTest extends TestCase
 {
     public function testRenderWritesTheKeywordsAndTheValue(): void
     {
-        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p ENGINE = InnoDB DATA DIRECTORY = '/d' MAX_ROWS = 10)", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p STORAGE ENGINE InnoDB DATA DIRECTORY '/d' MAX_ROWS 10)")->toString());
+        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p STORAGE ENGINE InnoDB DATA DIRECTORY '/d' MAX_ROWS 10)", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p STORAGE ENGINE InnoDB DATA DIRECTORY '/d' MAX_ROWS 10)")->toString());
     }
 }

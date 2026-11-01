@@ -20,6 +20,44 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
 #[Medium]
 final class OptionRuleTest extends TestCase
 {
+    public function testAssignmentRetainsBothSigns(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal, $rule->assignment(new Node('equal', 0, [new Token(0, 'EQ', '=', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::ColonEqual, $rule->assignment(new Node('equal', 1, [new Token(0, 'SET_VAR', ':=', 0)])));
+    }
+
+    public function testOptionalAssignmentRetainsOmissionAndWrittenSigns(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertNull($rule->optionalAssignment(new Node('opt_equal', 0, [])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal, $rule->optionalAssignment(new Node('opt_equal', 1, [new Node('equal', 0, [new Token(0, 'EQ', '=', 0)])])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\AssignmentOperator::ColonEqual, $rule->optionalAssignment(new Node('opt_equal', 1, [new Node('equal', 1, [new Token(0, 'SET_VAR', ':=', 0)])])));
+    }
+
+    public function testBinlogRetainsBothKeywordsAndOmission(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertNull($rule->binlog(new Node('opt_no_write_to_binlog', 0, [])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::Local, $rule->binlog(new Node('opt_no_write_to_binlog', 2, [new Token(0, 'LOCAL_SYM', 'LOCAL', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::NoWriteToBinlog, $rule->binlog(new Node('opt_no_write_to_binlog', 1, [new Token(0, 'NO_WRITE_TO_BINLOG', 'NO_WRITE_TO_BINLOG', 0)])));
+    }
+
+    public function testTableWordRetainsBothTableListKeywords(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table, $rule->tableWord(new Node('table_or_tables', 0, [new Token(0, 'TABLE_SYM', 'TABLE', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\TableWord::Tables, $rule->tableWord(new Node('table_or_tables', 1, [new Token(0, 'TABLES', 'TABLES', 0)])));
+    }
+
     public function testPresentTellsWhetherAnOptionalKeywordIsWritten(): void
     {
         $platform = new Platform();
@@ -66,5 +104,15 @@ final class OptionRuleTest extends TestCase
         self::assertNull($rule->dropBehavior(new Node('opt_restrict', 0, [])));
         self::assertSame(DropBehavior::Restrict, $rule->dropBehavior(new Node('opt_restrict', 1, [new Token(0, 'RESTRICT', 'RESTRICT', 0)])));
         self::assertSame(DropBehavior::Cascade, $rule->dropBehavior(new Node('opt_restrict', 2, [new Token(0, 'CASCADE', 'CASCADE', 0)])));
+    }
+
+    public function testIndexWordRetainsBothSynonymsAndAnAbsentOptionalKeyword(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new OptionRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Key, $rule->indexWord(new Node('key_or_index', 0, [new Token(0, 'KEY_SYM', 'KEY', 0)])));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index, $rule->indexWord(new Node('key_or_index', 1, [new Token(0, 'INDEX_SYM', 'INDEX', 0)])));
+        self::assertNull($rule->indexWord(new Node('opt_key_or_index', 0, [])));
     }
 }

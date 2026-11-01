@@ -18,7 +18,7 @@ final class ShowProcesslistTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW PROCESSLIST');
-        self::assertInstanceOf(ShowProcesslist::class, $show->statement);
+        self::assertInstanceOf(ShowProcesslist::class, $show);
         self::assertSame('Id', $show->field(0)->name?->value);
     }
 

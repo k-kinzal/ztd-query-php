@@ -19,6 +19,6 @@ final class CreateCastTest extends TestCase
 
     public function testDeriveStatementDerivesTheTypes(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CAST (numeric(4, 2) AS b) WITHOUT FUNCTION')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CAST (numeric(4, 2) AS b) WITHOUT FUNCTION')->diagnostics());
     }
 }

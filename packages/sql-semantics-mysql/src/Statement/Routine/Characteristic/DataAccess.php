@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Characteristic;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The data access characteristic of a stored routine.
@@ -15,16 +14,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the data access of a routine
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER PROCEDURE p READS SQL DATA');
- *     $alter->statement->characteristics[0]->level // => \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel::ReadsSqlData
+ *     $alter->characteristics[0]->level // => \SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel::ReadsSqlData
  */
 final class DataAccess implements Characteristic
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param AccessLevel $level The declared use of data
      */
-    public function __construct(public readonly AccessLevel $level)
+    public function __construct(public readonly AccessLevel $level, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -20,14 +20,14 @@ final class AttachTest extends TestCase
     public function testDeriveStatementDerivesEveryOperandWhereNoRelationIsVisible(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("ATTACH 'a' || name AS aux KEY 'k'", []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Attach::class, $statement);
         self::assertNotNull($statement->key);
-        self::assertTrue($operation->facts->covers($statement->file));
-        self::assertTrue($operation->facts->covers($statement->key));
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertTrue($statement->file->hasBinding());
+        self::assertTrue($statement->key->hasBinding());
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveStatementProvidesNoDeclaration(): void
@@ -43,8 +43,8 @@ final class AttachTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $operation = $semantics->analyze("attach database 'file.db' as aux key 'secret'");
 
-        self::assertInstanceOf(Attach::class, $operation->statement);
-        self::assertInstanceOf(NameOperand::class, $operation->statement->schema);
+        self::assertInstanceOf(Attach::class, $operation);
+        self::assertInstanceOf(NameOperand::class, $operation->schema);
         self::assertSame("ATTACH 'file.db' AS aux KEY 'secret'", $operation->toString());
     }
 }

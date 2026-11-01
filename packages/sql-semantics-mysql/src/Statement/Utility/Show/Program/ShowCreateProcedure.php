@@ -8,10 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE PROCEDURE: the statement that creates a stored procedure.
@@ -25,17 +24,23 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE PROCEDURE shop.p');
- *     [$show->statement->name->schema?->value, $show->toString()] // => ['shop', 'SHOW CREATE PROCEDURE shop.p']
+ *     [$show->name->schema?->value, $show->toString()] // => ['shop', 'SHOW CREATE PROCEDURE shop.p']
  */
-final class ShowCreateProcedure implements Statement
+final class ShowCreateProcedure extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The name with its optional database
      */
-    public function __construct(public readonly QualifiedName $name)
+    public function __construct(public readonly QualifiedName $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::check($name);
+        \SqlSemantics\Diagnostic\Check::input($name->catalog === null, 'A stored-program name has at most a database qualifier.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

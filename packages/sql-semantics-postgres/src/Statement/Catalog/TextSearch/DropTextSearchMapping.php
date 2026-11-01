@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Dropping a mapping if it exists
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH CONFIGURATION c DROP MAPPING IF EXISTS FOR word');
- *     $operation->statement->ifExists // => true
+ *     $operation->ifExists // => true
  */
-final class DropTextSearchMapping implements Statement
+final class DropTextSearchMapping extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The token types
@@ -39,8 +38,11 @@ final class DropTextSearchMapping implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param list<Name> $tokens The token types; at least one
      */
-    public function __construct(public readonly DottedName $configuration, public readonly bool $ifExists, array $tokens)
+    public function __construct(public readonly DottedName $configuration, public readonly bool $ifExists, array $tokens, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tokens = Check::listOf($tokens, Name::class, 'A mapping names at least one token type.', 1);
     }
 

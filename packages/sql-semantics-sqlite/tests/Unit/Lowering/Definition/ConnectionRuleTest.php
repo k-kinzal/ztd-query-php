@@ -24,15 +24,15 @@ final class ConnectionRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        self::assertInstanceOf(Attach::class, $semantics->analyze("ATTACH 'f' AS a")->statement);
-        self::assertInstanceOf(Detach::class, $semantics->analyze('DETACH a')->statement);
+        self::assertInstanceOf(Attach::class, $semantics->analyze("ATTACH 'f' AS a"));
+        self::assertInstanceOf(Detach::class, $semantics->analyze('DETACH a'));
     }
 
     public function testKeywordIsOptionalBeforeTheOperand(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $short = $semantics->analyze('DETACH a')->statement;
-        $long = $semantics->analyze('DETACH DATABASE a')->statement;
+        $short = $semantics->analyze('DETACH a');
+        $long = $semantics->analyze('DETACH DATABASE a');
 
         self::assertInstanceOf(Detach::class, $short);
         self::assertInstanceOf(Detach::class, $long);
@@ -43,8 +43,8 @@ final class ConnectionRuleTest extends TestCase
     public function testKeyIsNullUnlessAKeyIsWritten(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze("ATTACH 'f' AS a")->statement;
-        $keyed = $semantics->analyze("ATTACH 'f' AS a KEY secret")->statement;
+        $plain = $semantics->analyze("ATTACH 'f' AS a");
+        $keyed = $semantics->analyze("ATTACH 'f' AS a KEY secret");
 
         self::assertInstanceOf(Attach::class, $plain);
         self::assertInstanceOf(Attach::class, $keyed);
@@ -55,7 +55,7 @@ final class ConnectionRuleTest extends TestCase
     public function testOperandReadsAnIdentifierInsideParenthesesAsItsName(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('DETACH ((aux))');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Detach::class, $statement);
         self::assertInstanceOf(Grouped::class, $statement->schema);
@@ -66,7 +66,7 @@ final class ConnectionRuleTest extends TestCase
 
     public function testOperandLowersAnyOtherExpressionAsAnExpression(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze("ATTACH 'f' AS a")->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze("ATTACH 'f' AS a");
 
         self::assertInstanceOf(Attach::class, $statement);
         self::assertInstanceOf(TextLiteral::class, $statement->file);

@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -39,9 +39,10 @@ final class TableListTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT * FROM t, u', [$t, $u]);
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(TableList::class, $operation->statement->from);
-        self::assertCount(4, $operation->facts->relation($operation->statement->from)->shape->slots);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(TableList::class, $operation->query->from);
+        self::assertCount(4, $operation->query->from->relationInformation()->shape->slots);
         self::assertSame(['a', 'b', 'a', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
     }
 
@@ -58,8 +59,8 @@ final class TableListTest extends TestCase
         ]);
         $operation = $semantics->analyze('SELECT 1 FROM t, u JOIN u AS v ON t.a = v.a', [$t, $u]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testRenderWritesTheMembers(): void
@@ -71,13 +72,13 @@ final class TableListTest extends TestCase
     {
         $this->expectExceptionMessage('A comma list joins at least two table references.');
 
-        new TableList([new Dual()]);
+        new TableList([new TableReference(new QualifiedName(new Name('t')))]);
     }
 
     public function testANestedListIsRejected(): void
     {
         $this->expectExceptionMessage('A comma list used as a member is written in parentheses.');
 
-        new TableList([new Dual(), new TableList([new Dual(), new Dual()])]);
+        new TableList([new TableReference(new QualifiedName(new Name('t'))), new TableList([new TableReference(new QualifiedName(new Name('t'))), new TableReference(new QualifiedName(new Name('t')))])]);
     }
 }

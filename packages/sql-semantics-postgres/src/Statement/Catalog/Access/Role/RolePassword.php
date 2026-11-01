@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The role option PASSWORD: a password, or NULL to remove the password.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Removing the password of a role
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE joe PASSWORD NULL');
- *     $operation->statement->options[0]->password // => null
+ *     $operation->options[0]->password // => null
  */
 final class RolePassword implements RoleOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param StringConstant|null $password The password; null when NULL is written
      * @param bool $unencrypted Whether UNENCRYPTED is written, which the server rejects
      */
-    public function __construct(public readonly ?StringConstant $password, public readonly bool $unencrypted = false)
+    public function __construct(public readonly ?StringConstant $password, public readonly bool $unencrypted = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$unencrypted || $password !== null, 'UNENCRYPTED PASSWORD is followed by a password.');
     }

@@ -20,7 +20,7 @@ final class PartitionElementTest extends TestCase
         $statement = $semantics->analyze('CREATE TABLE n (a int) PARTITION BY RANGE (zz)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

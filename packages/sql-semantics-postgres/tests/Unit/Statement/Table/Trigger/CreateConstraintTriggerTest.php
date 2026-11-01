@@ -15,17 +15,17 @@ final class CreateConstraintTriggerTest extends TestCase
     public function testCreatedSchemaIsTheSchemaOfTheTable(): void
     {
         $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON s.t FOR EACH ROW EXECUTE FUNCTION f()', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
         self::assertSame('s', $n1->createdSchema()?->value);
     }
 
     public function testDeriveElementLocatesTheTableInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()');
-        $n1 = $statement->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()'));
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $derivation = new \SqlSemantics\Construction\Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context());
         $n1->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
         $n2 = $derivation->facts()->relation($n1)->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\UndeclaredTable::class, $n2);
@@ -42,7 +42,7 @@ final class CreateConstraintTriggerTest extends TestCase
           0 => 'Relation u does not exist.',
           1 => 'TRIGGER constraints cannot be marked NOT VALID',
           2 => 'Column new.zz does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testDeriveRelationResolvesTheTable(): void
@@ -51,9 +51,9 @@ final class CreateConstraintTriggerTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
-        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($semantics->context($context)), new \SqlSemantics\Resolution\Environment($semantics->context($context)))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

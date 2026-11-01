@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Large objects named by their identifiers as the objects of a GRANT or REVOKE.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the identifier of a large object
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON LARGE OBJECT 16385 TO joe');
- *     $operation->statement->target->identifiers[0]->magnitude->digits // => '16385'
+ *     $operation->target->identifiers[0]->magnitude->digits // => '16385'
  */
 final class LargeObjectsTarget implements PrivilegeTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SignedNumber> The identifiers in the order written
@@ -36,7 +35,7 @@ final class LargeObjectsTarget implements PrivilegeTarget
     /**
      * @param list<SignedNumber> $identifiers The identifiers in the order written, at least one
      */
-    public function __construct(array $identifiers)
+    public function __construct(array $identifiers, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->identifiers = Check::listOf($identifiers, SignedNumber::class, 'A grant names at least one large object.', 1);
     }

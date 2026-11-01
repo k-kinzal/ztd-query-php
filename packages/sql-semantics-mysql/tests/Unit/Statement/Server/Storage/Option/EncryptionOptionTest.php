@@ -16,6 +16,13 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EncryptionOption
 #[Medium]
 final class EncryptionOptionTest extends TestCase
 {
+    public function testValueRequiresAQuotedEncryptionValue(): void
+    {
+        $this->expectExceptionMessage('A tablespace encryption value is quoted text.');
+
+        new EncryptionOption(new Text('0f', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
+
     public function testRenderWritesTheOption(): void
     {
         self::assertSame("ALTER TABLESPACE ts ENCRYPTION 'Y'", (new Semantics(Dialect::MySql))->analyze("alter tablespace ts encryption 'Y'")->toString());

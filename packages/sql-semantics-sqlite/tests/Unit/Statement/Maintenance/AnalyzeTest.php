@@ -19,8 +19,9 @@ final class AnalyzeTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('ANALYZE users', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertFalse($operation->facts->covers($operation->statement));
+        self::assertSame([], $operation->diagnostics());
+        self::assertTrue($operation->hasStatementInformation());
+        self::assertNotInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
     }
 
     public function testRenderWritesTheOptionalTarget(): void
@@ -28,8 +29,8 @@ final class AnalyzeTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $qualified = $semantics->analyze('analyze main.users');
 
-        self::assertInstanceOf(Analyze::class, $qualified->statement);
-        self::assertSame('users', $qualified->statement->target?->name->value);
+        self::assertInstanceOf(Analyze::class, $qualified);
+        self::assertSame('users', $qualified->target?->name->value);
         self::assertSame('ANALYZE main.users', $qualified->toString());
         self::assertSame('ANALYZE', $semantics->analyze('ANALYZE')->toString());
     }

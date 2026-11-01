@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Shape\Field;
@@ -33,11 +32,12 @@ final class SelectExpressionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('select a total from t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->items[0]->expression);
-        self::assertSame('a', $operation->statement->items[0]->expression->name->value);
-        self::assertSame('total', $operation->statement->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertInstanceOf(ColumnUse::class, $operation->query->items[0]->expression);
+        self::assertSame('a', $operation->query->items[0]->expression->name->value);
+        self::assertSame('total', $operation->query->items[0]->alias?->value);
         self::assertSame('SELECT a total FROM t', $operation->toString());
     }
 
@@ -45,11 +45,12 @@ final class SelectExpressionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a, 1 FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[1]);
-        self::assertNull($operation->statement->items[0]->alias);
-        self::assertNull($operation->statement->items[1]->alias);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $operation->query->items[1]);
+        self::assertNull($operation->query->items[0]->alias);
+        self::assertNull($operation->query->items[1]->alias);
         self::assertSame('SELECT a, 1 FROM t', $operation->toString());
     }
 
@@ -57,8 +58,9 @@ final class SelectExpressionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a AS `select` FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame('select', $operation->statement->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame('select', $operation->query->items[0]->alias?->value);
         self::assertSame('SELECT a AS `select` FROM t', $operation->toString());
     }
 
@@ -160,9 +162,17 @@ final class SelectExpressionTest extends TestCase
     public function testRenderWritesAnItemBuiltWithoutLayoutCanonically(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1')))]));
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1')))])), new \SqlSemantics\Statement\Source\SourceMap());
 
         self::assertSame('SELECT 1 + 1', $operation->toString());
         self::assertSame('1 + 1', $operation->field(0)->name?->value);
     }
+    public function testRenderUsesAStringAliasWhenAnIdentifierCannotSpellNul(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 AS 'zero\0tail'");
+
+        self::assertSame("SELECT 1 AS 'zero\\0tail'", $operation->toString());
+        self::assertSame('zero', $operation->field(0)->name?->value);
+    }
+
 }

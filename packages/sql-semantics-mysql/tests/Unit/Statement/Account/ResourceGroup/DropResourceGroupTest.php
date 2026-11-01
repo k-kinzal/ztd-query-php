@@ -17,7 +17,7 @@ final class DropResourceGroupTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP RESOURCE GROUP g')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP RESOURCE GROUP g')->diagnostics());
     }
 
     public function testRenderWritesForce(): void

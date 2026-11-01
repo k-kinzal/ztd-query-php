@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading the counts of an INSERT that supplies too few values
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
- *     $problem = $semantics->analyze('INSERT INTO t VALUES (1)', [$table])->facts->diagnostics[0];
+ *     $problem = $semantics->analyze('INSERT INTO t VALUES (1)', [$table])->diagnostics()[0];
  *     [$problem->expected, $problem->actual] // => [2, 1]
  */
 final class ArityMismatch implements Diagnostic

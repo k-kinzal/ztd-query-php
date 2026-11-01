@@ -26,7 +26,9 @@ use SqlSemantics\Statement\Query;
  * the WINDOW clause of the same query block, compared without regard to
  * letter case; a subquery has a WINDOW clause of its own and is not
  * searched. A name no window of the block has is reported
- * (ER_WINDOW_NO_SUCH_WINDOW, raised while the server resolves the windows).
+ * (ER_WINDOW_NO_SUCH_WINDOW, raised while the server resolves the windows),
+ * in a clause where a window function is not allowed too, such as WHERE
+ * and GROUP BY (verified on a live 8.4 server).
  * Terminates: the walk visits the finite parts of the block once and stops
  * at subqueries. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/window-functions-named-windows.html.
@@ -39,17 +41,20 @@ final class WindowReferences
     /**
      * Reports each window name of the block that its WINDOW clause does not define.
      */
-    public function check(Select $select, Derivation $derivation): void
+    public function check(Select|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection $select, Derivation $derivation): void
     {
         $names = $derivation->context->columnNames;
         $defined = [];
         foreach ($select->windows as $window) {
             $defined[$names->fold($window->name->value)] = true;
         }
-        $parts = [...$select->items, ...$select->orderBy, ...$select->windows, ...array_values(array_filter([$select->having, $select->qualify, $select->late]))];
+        $parts = [...$select->items, ...$select->orderBy, ...$select->windows, ...array_values(array_filter([$select->where, $select->groupBy, $select->having]))];
+        if ($select instanceof Select) {
+            array_push($parts, ...array_values(array_filter([$select->qualify, $select->late])));
+        }
         foreach ($this->names($parts) as $name) {
             if (!isset($defined[$names->fold($name->value)])) {
-                $derivation->report(new Misuse(MisuseRule::UnknownWindow));
+                $derivation->report(new Misuse(MisuseRule::UnknownWindow, $name));
             }
         }
     }
@@ -57,10 +62,11 @@ final class WindowReferences
     /**
      * Answers the window names used in parts of a query block, in written order, without entering subqueries.
      *
+     * @param bool $bases Whether to include base names of parenthesized specifications
      * @param list<Node> $parts
      * @return list<Name>
      */
-    public function names(array $parts): array
+    public function names(array $parts, bool $bases = true): array
     {
         $found = [];
         $pending = array_reverse($parts);
@@ -70,8 +76,8 @@ final class WindowReferences
                 continue;
             }
             $reference = match (true) {
-                $node instanceof WindowFunction, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof JsonObjectAggregate => $node->over,
-                $node instanceof WindowSpec => $node->base,
+                $node instanceof WindowFunction, $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowFunction, $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate, $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate, $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredGroupConcat, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof JsonObjectAggregate => $node->over,
+                ($node instanceof WindowSpec || $node instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredWindowSpec) && $bases => $node->base,
                 default => null,
             };
             if ($reference instanceof Name) {

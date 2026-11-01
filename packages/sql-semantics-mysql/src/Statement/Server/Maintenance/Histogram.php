@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the columns of a histogram request
  *     $analyze = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ANALYZE TABLE t DROP HISTOGRAM ON a, b');
- *     count($analyze->statement->histogram?->columns() ?? []) // => 2
+ *     count($analyze->histogram?->columns() ?? []) // => 2
  */
 interface Histogram extends Node
 {

@@ -77,7 +77,7 @@ final class RelationTargets
     /**
      * Resolves a relation written as a dotted name and records the fact on the reference.
      */
-    public function dotted(ObjectReference $reference, DottedName $name, bool $ifExists, Derivation $derivation): RelationFact
+    public function dotted(DottedName|MemberName $reference, DottedName $name, bool $ifExists, Derivation $derivation): RelationFact
     {
         $qualified = $name->qualified();
         if ($qualified === null) {
@@ -92,7 +92,7 @@ final class RelationTargets
     /**
      * Resolves a relation name and records the fact on the reference.
      */
-    public function record(ObjectReference $reference, QualifiedName $name, bool $ifExists, Derivation $derivation): RelationFact
+    public function record(DottedName|MemberName|RelationTarget $reference, QualifiedName $name, bool $ifExists, Derivation $derivation): RelationFact
     {
         $resolution = $derivation->table($name, $derivation->environment());
         if ($ifExists && $resolution instanceof MissingTable) {

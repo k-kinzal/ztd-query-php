@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Telling a program statement from other statements
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN END');
- *     $create->statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement // => true
+ *     $create->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement // => true
  */
 interface ProgramStatement extends Node
 {

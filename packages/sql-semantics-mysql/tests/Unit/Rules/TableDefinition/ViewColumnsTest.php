@@ -12,7 +12,6 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(ViewColumns::class)]
@@ -39,28 +38,31 @@ final class ViewColumnsTest extends TestCase
     public function testGeneratedTellsTheFieldsWithoutAliasThatAreNoColumns(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a, b AS c, 1+1 FROM t');
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertSame([false, false, true], (new ViewColumns($operation->context->profile, $operation->context->columnNames))->generated($select, $operation->fields()->items ?? []));
+        self::assertSame([false, false, true], (new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames))->generated($select, $operation->fields()->items ?? []));
     }
 
     public function testBlockAnswersTheFirstQueryBlock(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('(SELECT 1 AS a) UNION SELECT 2');
-        $values = (new Semantics(Dialect::MySql))->analyze('VALUES ROW(1)')->statement;
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $values = (new Semantics(Dialect::MySql))->analyze('VALUES ROW(1)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $values);
+        $values = $values->query;
+        $columns = new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames);
 
-        self::assertInstanceOf(Query::class, $operation->statement);
-        self::assertInstanceOf(Query::class, $values);
-        self::assertSame('a', $columns->block($operation->statement)?->items[0]->alias?->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertSame('a', $columns->block($operation->query)?->items[0]->alias?->value);
         self::assertNull($columns->block($values));
     }
 
     public function testUniqueAddsTheCounterWhenTheNameIsTaken(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames);
 
         self::assertSame('Name_exp_1_a', $columns->unique(['Name_exp_a', 'a', 'a'], 2, 2, 'a'));
     }
@@ -68,10 +70,17 @@ final class ViewColumnsTest extends TestCase
     public function testCutKeepsSixtyFourCharactersOrTheLegacyBytes(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
-        $columns = new ViewColumns($operation->context->profile, $operation->context->columnNames);
+        $columns = new ViewColumns((new Semantics(Dialect::MySql))->context([])->profile, (new Semantics(Dialect::MySql))->context([])->columnNames);
 
         self::assertSame(str_repeat('a', 64), $columns->cut(str_repeat('a', 70), false));
         self::assertSame(str_repeat('a', 191), $columns->cut(str_repeat('a', 200), true));
         self::assertEquals(new Name('x'), new Name($columns->cut('x', false)));
     }
+    public function testExplicitFindsTheFirstInvalidModernColumnName(): void
+    {
+        self::assertNull(ViewColumns::explicit(null));
+        self::assertNull(ViewColumns::explicit([new Name('a')]));
+        self::assertSame('', ViewColumns::explicit([new Name('a'), new Name(''), new Name('bad ')])?->column->value);
+    }
+
 }

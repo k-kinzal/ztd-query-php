@@ -16,6 +16,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CodecTest extends TestCase
 {
+    public function testQuoteSpellsDecodedBytesUnderEachLexicalMode(): void
+    {
+        $escaped = new Codec(GrammarRelease::MySql847);
+        $verbatim = new Codec(GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('NO_BACKSLASH_ESCAPES'));
+
+        self::assertSame("'a\\\\b''c'", $escaped->quote("a\\b'c"));
+        self::assertSame("'a\\b''c'", $verbatim->quote("a\\b'c"));
+    }
+
     public function testNameWritesAPlainAsciiWordBare(): void
     {
         $codec = new Codec(GrammarRelease::MySql8044);
@@ -23,6 +32,20 @@ final class CodecTest extends TestCase
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Relation));
         self::assertSame('Order_Items2', $codec->name(new Name('Order_Items2'), NameUse::Column));
         self::assertSame('a', $codec->name(new Name('a'), NameUse::Alias));
+        self::assertSame('_sqlfaker_identifier', $codec->name(new Name('_sqlfaker_identifier'), NameUse::Relation));
+        self::assertSame('_x', $codec->name(new Name('_x'), NameUse::Column));
+        self::assertSame('_', $codec->name(new Name('_'), NameUse::Column));
+    }
+
+    public function testNameUsesTheVariableAlphabetOnlyAfterTheVariableSigil(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql847);
+        self::assertSame('B.a', $codec->name(new Name('B.a'), NameUse::Variable));
+        self::assertSame('`B.a`', $codec->name(new Name('B.a'), NameUse::Column));
+        self::assertSame('1.2', $codec->name(new Name('1.2'), NameUse::Variable));
+        self::assertSame('select', $codec->name(new Name('select'), NameUse::Variable));
+        self::assertSame('`B.a`', $codec->name(new Name('B.a', \SqlSemantics\Statement\Identifier\NameQuote::Backtick), NameUse::Variable));
+        self::assertSame('`a b`', $codec->name(new Name('a b'), NameUse::Variable));
     }
 
     public function testNameQuotesKeywordsFunctionNamesAndIntroducerLikeWords(): void
@@ -33,7 +56,6 @@ final class CodecTest extends TestCase
         self::assertSame('`ORDER`', $codec->name(new Name('ORDER'), NameUse::Relation));
         self::assertSame('`count`', $codec->name(new Name('count'), NameUse::Routine));
         self::assertSame('`action`', $codec->name(new Name('action'), NameUse::Column));
-        self::assertSame('`_x`', $codec->name(new Name('_x'), NameUse::Column));
         self::assertSame('`_utf8mb4`', $codec->name(new Name('_utf8mb4'), NameUse::Column));
     }
 
@@ -83,4 +105,28 @@ final class CodecTest extends TestCase
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Routine));
         self::assertSame('users', $codec->name(new Name('users'), NameUse::Label));
     }
+    public function testSpellingEncodesCanonicalNamesAndPreservesQuoteMarks(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql5744, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        self::assertSame('`é``x`', $codec->spelling('`Ã©``x`'));
+        self::assertSame("'é\\0x'", $codec->name(new Name("Ã©\0x"), NameUse::Alias));
+    }
+
+    public function testSpellingRefusesLossySqlEncodingInsteadOfChangingTheName(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql5744, client: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        $this->expectException(\SqlSemantics\Diagnostic\UnrepresentableName::class);
+        $codec->spelling('猫');
+    }
+
+    public function testNameReconstructsAnExplicitDelimiterChoice(): void
+    {
+        $codec = new Codec(GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('ANSI_QUOTES'));
+        self::assertSame("'a''b'", $codec->name(new Name("a'b", \SqlSemantics\Statement\Identifier\NameQuote::SingleQuote), NameUse::Alias));
+        self::assertSame('ADDDATE', $codec->name(new Name('ADDDATE', \SqlSemantics\Statement\Identifier\NameQuote::Keyword), NameUse::Relation));
+        self::assertSame('BINLOG', $codec->name(new Name('BINLOG', \SqlSemantics\Statement\Identifier\NameQuote::Bare), NameUse::Identifier));
+        self::assertSame('`ordinary`', $codec->name(new Name('ordinary', \SqlSemantics\Statement\Identifier\NameQuote::Backtick), NameUse::Identifier));
+        self::assertSame('"a""b"', $codec->name(new Name('a"b', \SqlSemantics\Statement\Identifier\NameQuote::DoubleQuote), NameUse::Identifier));
+    }
+
 }

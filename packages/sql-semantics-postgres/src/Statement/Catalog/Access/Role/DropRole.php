@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the removed roles
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP ROLE IF EXISTS joe, ann');
- *     [$operation->statement->ifExists, $operation->statement->roles[1]->name?->value] // => [true, 'ann']
+ *     [$operation->ifExists, $operation->roles[1]->name?->value] // => [true, 'ann']
  */
-final class DropRole implements Statement
+final class DropRole extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RoleSpec> The roles in the order written
@@ -42,8 +41,11 @@ final class DropRole implements Statement
      * @param list<RoleSpec> $roles The roles in the order written, at least one
      * @param bool $ifExists Whether IF EXISTS is written
      */
-    public function __construct(public readonly RoleWord $word, array $roles, public readonly bool $ifExists = false)
+    public function __construct(public readonly RoleWord $word, array $roles, public readonly bool $ifExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->roles = Check::listOf($roles, RoleSpec::class, 'A role list names at least one role.', 1);
     }
 

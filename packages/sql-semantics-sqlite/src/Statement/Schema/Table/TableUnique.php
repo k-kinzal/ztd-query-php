@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A UNIQUE table constraint.
@@ -31,11 +30,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the terms of a unique constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
- *     count($create->statement->constraints[0]->items[0]->terms) // => 2
+ *     count($create->constraints[0]->items[0]->terms) // => 2
  */
 final class TableUnique implements TableConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SortTerm> The key terms in written order
@@ -46,7 +45,7 @@ final class TableUnique implements TableConstraint
      * @param list<SortTerm> $terms The key terms in written order; at least one
      * @param ConflictResolution|null $conflict The written ON CONFLICT resolution
      */
-    public function __construct(array $terms, public readonly ?ConflictResolution $conflict = null)
+    public function __construct(array $terms, public readonly ?ConflictResolution $conflict = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->terms = Check::listOf($terms, SortTerm::class, 'A key constraint has at least one term.', 1);
         foreach ($this->terms as $term) {

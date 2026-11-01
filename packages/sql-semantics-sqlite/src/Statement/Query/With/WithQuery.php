@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,18 +27,25 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the body of a query with common tables
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('WITH c AS (SELECT 1 AS x) SELECT x FROM c');
- *     [$query->statement->body->columns[0]->expression->name->value, $query->field('x')->type->descriptor] // => ['x', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer]
+ *     [$query->body->columns[0]->expression->name->value, $query->field('x')->type->descriptor] // => ['x', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer]
  */
-final class WithQuery implements Statement, Query
+final class WithQuery extends \SqlSemantics\Statement\SqlStatement implements Statement, Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param WithClause $with The WITH clause
      * @param Select|ValuesClause|Compound $body The query the clause belongs to
      */
-    public function __construct(public readonly WithClause $with, public readonly Select|ValuesClause|Compound $body)
+    public function __construct(public readonly WithClause $with, public readonly Select|ValuesClause|Compound $body, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
     }
 
     /**

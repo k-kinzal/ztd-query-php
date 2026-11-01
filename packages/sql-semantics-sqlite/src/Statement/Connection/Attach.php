@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Connection;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,17 +24,20 @@ use SqlSemantics\Statement\Statement;
  * @example Writing an attach request without the optional keyword
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("ATTACH DATABASE 'file.db' AS aux")->toString() // => "ATTACH 'file.db' AS aux"
  */
-final class Attach implements Statement
+final class Attach extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $file The expression that names the database file
      * @param Scalar $schema The expression that names the schema
      * @param Scalar|null $key The expression of the encryption key, which only builds with encryption support use
      */
-    public function __construct(public readonly Scalar $file, public readonly Scalar $schema, public readonly ?Scalar $key = null)
+    public function __construct(public readonly Scalar $file, public readonly Scalar $schema, public readonly ?Scalar $key = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class GroupingFunction implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The arguments in order
@@ -44,8 +44,11 @@ final class GroupingFunction implements Scalar, OutputNaming
     /**
      * @param list<Scalar> $arguments The arguments in order; at least one
      */
-    public function __construct(array $arguments)
+    public function __construct(array $arguments, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = Check::listOf($arguments, Scalar::class, 'GROUPING takes at least one expression.', 1);
     }
 

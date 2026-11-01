@@ -20,12 +20,12 @@ final class CommitTest extends TestCase
         self::assertSame('COMMIT AND CHAIN NO RELEASE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('commit and chain no release')->toString());
     }
 
-    public function testDeriveStatementHasNoFacts(): void
+    public function testDeriveStatementPublishesTheConcreteTransaction(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('COMMIT');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertInstanceOf(Commit::class, $operation);
+        self::assertSame([], $operation->declarations());
     }
 
     public function testChoicesAreNullWhenAbsent(): void
@@ -33,5 +33,21 @@ final class CommitTest extends TestCase
         $commit = new Commit();
 
         self::assertSame([null, null], [$commit->chain, $commit->release]);
+    }
+
+    public function testToStringReconstructsTheConcreteOperands(): void
+    {
+        self::assertSame('COMMIT', (new Commit())->toString());
+    }
+
+    public function testProfileRetainsTheSelectedRelease(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        self::assertSame($profile, (new Commit(profile: $profile))->profile());
+    }
+
+    public function testDeclarationsIntroducesNoSchemaObjects(): void
+    {
+        self::assertSame([], (new Commit())->declarations());
     }
 }

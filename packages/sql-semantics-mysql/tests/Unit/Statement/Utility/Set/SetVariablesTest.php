@@ -18,33 +18,33 @@ final class SetVariablesTest extends TestCase
 {
     public function testScopeOfAnswersTheInheritedScope(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST a = 1, b = 2, @@SESSION.c = 3, @d = 4, e = 5');
-        self::assertInstanceOf(SetVariables::class, $set->statement);
-        self::assertSame(VariableScope::Persist, $set->statement->scopeOf(1));
-        self::assertSame(VariableScope::Session, $set->statement->scopeOf(2));
-        self::assertNull($set->statement->scopeOf(3));
-        self::assertSame(VariableScope::Persist, $set->statement->scopeOf(4));
+        $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST autocommit = 1, sql_mode = 2, @@SESSION.sql_log_bin = 3, @d = 4, wait_timeout = 5');
+        self::assertInstanceOf(SetVariables::class, $set);
+        self::assertSame(VariableScope::Persist, $set->scopeOf(1));
+        self::assertSame(VariableScope::Session, $set->scopeOf(2));
+        self::assertNull($set->scopeOf(3));
+        self::assertSame(VariableScope::Persist, $set->scopeOf(4));
     }
 
     public function testScopeOfRefusesAPositionOutsideTheItems(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET a = 1');
-        self::assertInstanceOf(SetVariables::class, $set->statement);
+        self::assertInstanceOf(SetVariables::class, $set);
         $this->expectExceptionMessage('The position is one of the items.');
-        $set->statement->scopeOf(1);
+        $set->scopeOf(1);
     }
 
     public function testDeriveStatementDerivesEveryItem(): void
     {
-        $set = (new Semantics(Dialect::MySql))->analyze('SET @a = b, @@x = c', []);
-        self::assertInstanceOf(SetVariables::class, $set->statement);
-        self::assertCount(1, $set->facts->diagnostics);
+        $set = (new Semantics(Dialect::MySql))->analyze('SET @a = b, @@sort_buffer_size = c', []);
+        self::assertInstanceOf(SetVariables::class, $set);
+        self::assertCount(1, $set->diagnostics());
         self::assertNull($set->shape());
     }
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame('SET SESSION a = 1, @b = 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set local a = 1, @b := 2')->toString());
+        self::assertSame('SET LOCAL autocommit = 1, @b := 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set local autocommit = 1, @b := 2')->toString());
     }
 
     public function testRefusesAnEmptyList(): void

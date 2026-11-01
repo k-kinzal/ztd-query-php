@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Problem;
  * @visibility public
  * @example Naming the flaw of a definition with two primary keys
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY, b PRIMARY KEY)');
- *     $create->facts->diagnostics[0]->flaw // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw::Repeated
+ *     $create->diagnostics()[0]->flaw // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw::Repeated
  */
 enum PrimaryKeyFlaw: string
 {

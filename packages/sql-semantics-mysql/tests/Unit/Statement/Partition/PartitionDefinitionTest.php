@@ -17,11 +17,11 @@ final class PartitionDefinitionTest extends TestCase
 {
     public function testDerivePartitionDerivesTheValues(): void
     {
-        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (x))')->facts->diagnostics);
+        self::assertCount(1, (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD PARTITION (PARTITION p VALUES LESS THAN (x))')->diagnostics());
     }
 
     public function testRenderWritesEveryPart(): void
     {
-        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT = 'c' (SUBPARTITION s))", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))")->toString());
+        self::assertSame("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))", (new Semantics(Dialect::MySql))->analyze("ALTER TABLE t ADD PARTITION (PARTITION p VALUES IN (1) COMMENT 'c' (SUBPARTITION s))")->toString());
     }
 }

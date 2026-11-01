@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A type or domain named as an object with a full type name, as DROP TYPE, DROP DOMAIN and COMMENT ON TYPE write it.
@@ -26,12 +25,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TypeReference implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $type The type name
      */
-    public function __construct(public readonly TypeName $type)
+    public function __construct(public readonly TypeName $type, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

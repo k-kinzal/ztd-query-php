@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Deferring every constraint
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET CONSTRAINTS ALL DEFERRED');
- *     [$operation->statement->constraints, $operation->statement->deferred] // => [[], true]
+ *     [$operation->constraints, $operation->deferred] // => [[], true]
  */
-final class SetConstraints implements Statement
+final class SetConstraints extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<QualifiedName> The constraint names; none stands for ALL
@@ -40,8 +39,11 @@ final class SetConstraints implements Statement
      * @param list<QualifiedName> $constraints The constraint names; none stands for ALL
      * @param bool $deferred True for DEFERRED, false for IMMEDIATE
      */
-    public function __construct(array $constraints, public readonly bool $deferred)
+    public function __construct(array $constraints, public readonly bool $deferred, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->constraints = Check::listOf($constraints, QualifiedName::class, 'SET CONSTRAINTS takes constraint names.');
     }
 

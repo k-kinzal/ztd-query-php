@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table\Column;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Call\Clock;
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Literal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column default written as a literal, NULL or the current timestamp function, without parentheses.
@@ -19,17 +21,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the clause of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a TIMESTAMP DEFAULT 1)');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral // => true
+ *     $create->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral // => true
  */
 final class DefaultLiteral implements ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param Scalar $value The value
+     * @param Literal|ClockCall|Value\CurrentTimestamp $value The value
      */
-    public function __construct(public readonly Scalar $value)
+    public function __construct(public readonly Literal|ClockCall|Value\CurrentTimestamp $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input(!$value instanceof ClockCall || $value->clock === Clock::Now, 'A column timestamp clause accepts only CURRENT_TIMESTAMP and its synonyms.');
     }
 
     /**
@@ -37,7 +40,9 @@ final class DefaultLiteral implements ColumnAttribute
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {
-        $derivation->scalar($this->value, $scope);
+        if (!$this->value instanceof Value\CurrentTimestamp) {
+            $derivation->scalar($this->value, $scope);
+        }
     }
 
     /**

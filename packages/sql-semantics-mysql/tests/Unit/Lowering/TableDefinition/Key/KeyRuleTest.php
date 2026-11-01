@@ -40,7 +40,7 @@ final class KeyRuleTest extends TestCase
         $index = (new KeyRule($lowering))->index($lowering->form($node));
 
         self::assertSame(IndexKind::FullText, $index->kind);
-        self::assertTrue($index->keyword);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Key, $index->keyword);
     }
 
     public function testConstrainedLowersAPrimaryKey(): void

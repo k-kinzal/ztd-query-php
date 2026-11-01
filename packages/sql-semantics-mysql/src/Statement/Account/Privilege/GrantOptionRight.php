@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `WITH GRANT OPTION` of GRANT: the grantees may grant the privileges they receive at that level to others.
@@ -14,12 +13,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the option of a grant
- *     $grant = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT ON *.* TO u WITH GRANT OPTION')->statement;
+ *     $grant = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT SELECT ON *.* TO u WITH GRANT OPTION');
  *     $grant->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight // => true
  */
 final class GrantOptionRight implements WithOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes GRANT OPTION.
@@ -27,5 +26,11 @@ final class GrantOptionRight implements WithOption
     public function render(Output $out): void
     {
         $out->keyword('GRANT', 'OPTION');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

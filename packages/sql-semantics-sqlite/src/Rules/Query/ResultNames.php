@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
@@ -169,9 +168,8 @@ final class ResultNames
     /**
      * Answers the name of a result column of a view or created table, or null when it depends on a missing declaration.
      *
-     * @param Facts $facts The facts of the query, which include the expressions of the column
      */
-    public function declared(ResultColumn $column, Facts $facts): ?Name
+    public function declared(ResultColumn $column): ?Name
     {
         if ($column->alias !== null) {
             return $column->alias;
@@ -183,7 +181,7 @@ final class ResultNames
         if (!$expression instanceof ColumnUse && !$expression instanceof DoubleQuotedWord && !$expression instanceof TruthWord) {
             return $this->span($column);
         }
-        return $this->resolved($column, $expression, $facts->scalar($expression)->resolution);
+        return $this->resolved($column, $expression, $expression->scalarInformation()->resolution);
     }
 
     /**

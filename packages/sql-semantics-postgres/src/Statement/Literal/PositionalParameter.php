@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
@@ -38,17 +37,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the missing input of a parameter
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT $1');
- *     [$query->statement->targets[0]->expression->number, $query->field(0)->type->missing[0]->describe()] // => ['1', 'the value bound to parameter $1']
+ *     [$query->targets[0]->expression->number, $query->field(0)->type->missing[0]->describe()] // => ['1', 'the value bound to parameter $1']
  */
 final class PositionalParameter implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $number The parameter number as canonical decimal digits
      */
-    public function __construct(public readonly string $number)
+    public function __construct(public readonly string $number, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(preg_match('/\A(?:0|[1-9][0-9]*)\z/', $number) === 1, 'A parameter number is canonical decimal digits.');
     }
 

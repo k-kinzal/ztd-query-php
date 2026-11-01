@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyOptionRule;
-use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyPartRule;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
@@ -60,6 +59,7 @@ final class IndexRule
      * Lowers CREATE INDEX: the form of a 5.x `create` alternative or of `create_index_stmt`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the complete index has a retained non-scalar role
      */
     public function index(Form $form): CreateIndex
     {
@@ -68,15 +68,24 @@ final class IndexRule
         $kindKey = $keyword instanceof Node ? $this->lowering->productions->form($keyword)->signature : $keyword->name;
         $rule = new KeyOptionRule($this->lowering);
 
-        return new CreateIndex(
-            $this->lowering->names->identifier($form->node($name)),
-            $this->lowering->names->qualified($form->node($table)),
-            (new KeyPartRule($this->lowering))->parts($form->node($parts)),
-            self::KINDS[$kindKey] ?? throw ImplementationGap::production($form),
-            $structure === null ? null : $this->structure($form->node($structure), $rule),
-            $rule->options($form->node($options)),
+        $kind = self::KINDS[$kindKey] ?? throw ImplementationGap::production($form);
+        $this->lowering->columnTable = $this->lowering->names->qualified($form->node($table));
+        $algorithm = $structure === null ? null : $this->structure($form->node($structure), $rule);
+        $indexOptions = $rule->options($form->node($options));
+        $keyParts = (new Key\OrderingRule())->parts($this->lowering, $form->node, $form->node($parts), $kind, $algorithm, $indexOptions);
+
+        $indexName = $this->lowering->names->identifier($form->node($name));
+        $index = new CreateIndex(
+            $indexName,
+            $this->lowering->columnTable,
+            $keyParts,
+            $kind,
+            $algorithm,
+            $indexOptions,
             $this->lowering->tableChanges->alterOptions($form->node($alter)),
+            typeKeyword: $structure !== null && $rule->typeKeyword($form->node($structure)),
         );
+        return $index;
     }
 
     /**

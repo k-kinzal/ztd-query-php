@@ -9,29 +9,37 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
+use SqlSemantics\Platform\MySql\Statement\Explainable;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DELETE from several tables: the tables rows are deleted from, the table references that find the rows, and WHERE.
  *
  * Each table to delete from names a table of the references, by its
- * correlation name when it has one. The facts follow MYSQL-DELETE-001.
+ * correlation name when it has one. The facts follow MYSQL-DELETE-001. The
+ * hints of the comment written right after DELETE are kept with the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/delete.html.
  *
  * @visibility public
  * @example Reading a multiple-table DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DELETE t.* , u FROM t JOIN u ON t.a = u.a WHERE t.b = 1');
- *     [count($delete->statement->targets), $delete->toString()] // => [2, 'DELETE t, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
+ *     [count($delete->targets), $delete->toString()] // => [2, 'DELETE t.*, u FROM t JOIN u ON t.a = u.a WHERE t.b = 1']
+
  */
-final class MultipleDelete implements Statement
+final class MultipleDelete extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Explainable, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
+     */
+    public readonly array $hints;
 
     /**
      * @var list<DeleteOption> The modifiers in written order
@@ -39,38 +47,53 @@ final class MultipleDelete implements Statement
     public readonly array $options;
 
     /**
-     * @var list<QualifiedName> The tables rows are deleted from, in written order
+     * @var non-empty-list<QualifiedName> The tables rows are deleted from, in written order
      */
     public readonly array $targets;
 
     /**
-     * @var list<Relation> The table references in written order
+     * @var non-empty-list<Relation> The table references in written order
      */
     public readonly array $tables;
 
     /**
      * @param WithClause|null $with The common tables (MySQL 8.0 and later)
      * @param list<DeleteOption> $options The modifiers
-     * @param list<QualifiedName> $targets The tables rows are deleted from; at least one
+     * @param Target\DeletionInput $input The coupled target and input namespace
      * @param MultipleDeleteForm $form Where the tables to delete from are written
-     * @param list<Relation> $tables The table references; at least one
      * @param Scalar|null $where The row predicate
-     * @throws InvalidConstruction When there is no table to delete from or no table reference
+     * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
+     * @throws InvalidConstruction When target or reference operands are malformed
      */
     public function __construct(
         public readonly ?WithClause $with,
         array $options,
-        array $targets,
+        public readonly Target\DeletionInput $input,
         public readonly MultipleDeleteForm $form,
-        array $tables,
         public readonly ?Scalar $where = null,
+        array $hints = [],
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
-        $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
-        $this->targets = Check::listOf($targets, QualifiedName::class, 'A multiple-table DELETE names at least one table to delete from.', 1);
-        foreach ($this->targets as $target) {
-            Check::input($target->catalog === null, 'A table is qualified by at most a database.');
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
         }
-        $this->tables = Check::listOf($tables, Relation::class, 'A multiple-table DELETE names at least one table reference.', 1);
+        $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
+        $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
+        $this->targets = $input->targets;
+        $this->tables = $input->tables;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReachedTables())->problem($with, [$input->tables, $where]) === null, 'A common table expression the statement reads carries no HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS or SQL_CACHE, and no block with ALL and DISTINCT.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Whether preparation must resolve a retained target or operand condition.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Dml\TargetReferences())->readOnly($this->targets, $this->tables, $this->with) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Query\From\InputColumns())->of($this) !== null
+            || (new \SqlSemantics\Platform\MySql\Rules\Dml\Read\Sampling())->of($this) !== null;
     }
 
     /**
@@ -87,6 +110,10 @@ final class MultipleDelete implements Statement
     public function render(Output $out): void
     {
         $out->node($this->with)->keyword('DELETE');
+        $comment = (new HintComment($this->hints))->text();
+        if ($comment !== null) {
+            $out->comment($comment);
+        }
         foreach ($this->options as $option) {
             $out->keyword($option->value);
         }
@@ -101,6 +128,9 @@ final class MultipleDelete implements Statement
                 $out->name($target->schema, NameUse::Qualifier)->symbol('.');
             }
             $out->name($target->name, NameUse::Relation);
+            if ($this->input->wildcards[$position] === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+                $out->symbol('.')->symbol('*');
+            }
         }
         $out->keyword($this->form === MultipleDeleteForm::Using ? 'USING' : 'FROM')->list($this->tables);
         if ($this->where !== null) {

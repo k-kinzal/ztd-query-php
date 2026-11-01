@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * name type EXISTS [PATH path] [ON ERROR]: a JSON_TABLE column that tells whether the path yields an item.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonExistsColumn implements JsonTableColumn
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The column name
@@ -35,7 +34,7 @@ final class JsonExistsColumn implements JsonTableColumn
      * @param StringConstant|null $path The path written after PATH
      * @param Clause|null $onError The ON ERROR behavior
      */
-    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?StringConstant $path = null, public readonly ?Clause $onError = null)
+    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?StringConstant $path = null, public readonly ?Clause $onError = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

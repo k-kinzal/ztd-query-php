@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RELOAD TLS [FOR CHANNEL channel] [NO ROLLBACK ON ERROR]`: reconfigure the TLS context of a connection interface (MySQL 8.0.16 and later).
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reloading the TLS context of the administrative interface
  *     $reload = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER INSTANCE RELOAD TLS FOR CHANNEL mysql_admin NO ROLLBACK ON ERROR');
- *     [$reload->statement->action->channel?->value, $reload->statement->action->noRollbackOnError] // => ['mysql_admin', true]
+ *     [$reload->action->channel?->value, $reload->action->noRollbackOnError] // => ['mysql_admin', true]
  */
 final class ReloadTls implements InstanceAction
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $channel The channel of FOR CHANNEL, when written
      * @param bool $noRollbackOnError Whether NO ROLLBACK ON ERROR is written
      */
-    public function __construct(public readonly ?Name $channel = null, public readonly bool $noRollbackOnError = false)
+    public function __construct(public readonly ?Name $channel = null, public readonly bool $noRollbackOnError = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

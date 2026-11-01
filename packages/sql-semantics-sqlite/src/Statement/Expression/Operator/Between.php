@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A range test: an operand between a low and a high bound, optionally negated.
@@ -30,15 +29,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the bounds of a range test
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a NOT BETWEEN 1 AND 9 FROM t');
- *     $test = $query->statement->columns[0]->expression;
+ *     $test = $query->columns[0]->expression;
  *     [$test->negated, $test->low->digits, $test->high->digits] // => [true, '1', '9']
  * @example Refusing a bound that the rendered SQL would associate differently
- *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
+ *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t')->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Between(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral(), $or, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Between implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested expression
@@ -46,8 +46,11 @@ final class Between implements Scalar
      * @param Scalar $high The high bound
      * @param bool $negated Whether NOT is written before BETWEEN
      */
-    public function __construct(public readonly Scalar $operand, public readonly Scalar $low, public readonly Scalar $high, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar $operand, public readonly Scalar $low, public readonly Scalar $high, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->closing($operand) >= Precedence::EQUALITY, 'The tested operand needs parentheses to keep its place.');
         Check::input($precedence->opening($low) > Precedence::EQUALITY && $precedence->closing($low) > Precedence::CONJUNCTION, 'The low bound needs parentheses to keep its place.');

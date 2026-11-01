@@ -19,8 +19,8 @@ final class DatabaseOptionTest extends TestCase
     public function testOptionsAreDatabaseOptions(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE DATABASE d COLLATE utf8mb4_bin');
-        self::assertInstanceOf(CreateDatabase::class, $create->statement);
+        self::assertInstanceOf(CreateDatabase::class, $create);
 
-        self::assertContainsOnlyInstancesOf(DatabaseOption::class, $create->statement->options);
+        self::assertContainsOnlyInstancesOf(DatabaseOption::class, $create->options);
     }
 }

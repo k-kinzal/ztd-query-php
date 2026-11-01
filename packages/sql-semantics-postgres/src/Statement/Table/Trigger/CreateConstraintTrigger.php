@@ -20,7 +20,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a constraint trigger: an AFTER ROW trigger whose firing can be deferred.
@@ -35,9 +34,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()');
  *     $statement->toString() // => 'CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()'
  */
-final class CreateConstraintTrigger implements SchemaElement, Relation
+final class CreateConstraintTrigger extends \SqlSemantics\Statement\SqlStatement implements SchemaElement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TriggerEvent> The events
@@ -75,7 +75,16 @@ final class CreateConstraintTrigger implements SchemaElement, Relation
         array $attributes = [],
         public readonly ?Scalar $when = null,
         public readonly bool $replace = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->events = Check::listOf($events, TriggerEvent::class, 'A trigger fires on at least one event.', 1);
         $this->arguments = Check::listOf($arguments, TriggerArgument::class, 'Trigger arguments are trigger arguments.');
         $this->attributes = (new Attributes())->checked($attributes);

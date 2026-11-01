@@ -32,8 +32,9 @@ final class TrimTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new Trim(new StringLiteral(['x']), TrimSide::Both, new StringLiteral(['x'])), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Character->descriptor()), $fact->type);
-        self::assertSame(Nullability::NotNull, $fact->nullability);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame(TypeClass::Character, TypeClass::of($fact->type->descriptor));
+        self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
     public function testRenderWritesEachForm(): void

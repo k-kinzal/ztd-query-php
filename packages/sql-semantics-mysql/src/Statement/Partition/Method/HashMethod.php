@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Partition\Method;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[LINEAR] HASH (expression)`: partitioning by the value of an expression modulo the number of partitions.
@@ -21,17 +22,24 @@ use SqlSemantics\Statement\Snapshot;
  * @example Holding a hash partitioning
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('id')));
  *     [$method->linear, $method->expression->name->value] // => [false, 'id']
+ * @example Retaining a session-dependent request for execution validation
+ *     $expression = new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []);
+ *     (new \SqlSemantics\Platform\MySql\Statement\Partition\Method\HashMethod(false, $expression))->expression === $expression // => true
  */
 final class HashMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $linear Whether LINEAR is written
      * @param Scalar $expression The partitioning expression
      */
-    public function __construct(public readonly bool $linear, public readonly Scalar $expression)
+    public function __construct(public readonly bool $linear, public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        $rules = new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions();
+        Check::input($rules->condition($expression, \SqlSemantics\Contract\GrammarRelease::MySql847) !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\OperandCondition::Subquery, 'A partition subquery needs a retained instruction.');
+        Check::input((new Precedence())->admits($expression, Precedence::BIT_EXPR), 'A partition expression needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -39,7 +47,7 @@ final class HashMethod implements PartitionMethod
      */
     public function deriveMethod(Derivation $derivation, Environment $scope): void
     {
-        $derivation->scalar($this->expression, $scope);
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\PartitionExpressions())->derive($this->expression, $derivation, $scope);
     }
 
     /**

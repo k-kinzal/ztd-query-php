@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A DEFAULT column constraint whose value is an expression in parentheses.
@@ -25,16 +24,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a column reference in a default expression
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b DEFAULT (a))');
- *     $create->facts->diagnostics[0]->message() // => 'Column a does not exist.'
+ *     $create->diagnostics()[0]->message() // => 'Column a does not exist.'
  */
 final class DefaultExpression implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The expression written in parentheses
      */
-    public function __construct(public readonly Scalar $expression)
+    public function __construct(public readonly Scalar $expression, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

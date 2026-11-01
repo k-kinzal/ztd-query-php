@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The body of a stored routine written in an external language: `AS` and the code as a string (MySQL 8.1 and later).
@@ -20,16 +19,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the code of an external body
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze('CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS $$ return 1 $$');
- *     $create->statement->body->code->text // => ' return 1 '
+ *     $create->body->code->text // => ' return 1 '
  */
 final class ExternalBody implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DollarQuotedText|Text $code The code, written as a dollar-quoted or a quoted string
      */
-    public function __construct(public readonly DollarQuotedText|Text $code)
+    public function __construct(public readonly DollarQuotedText|Text $code, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($code instanceof DollarQuotedText || $code->radix === null, 'The code of an external body is written as a quoted string.');
     }

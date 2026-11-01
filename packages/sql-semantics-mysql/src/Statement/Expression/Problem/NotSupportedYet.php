@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting CAST … AT LOCAL
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE CAST(a AT LOCAL AS DATETIME)');
- *     $query->facts->diagnostics[0]->message() // => "This version of MySQL doesn't yet support 'AT LOCAL'."
+ *     (new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('AT LOCAL'))->message() // => "This version of MySQL doesn't yet support 'AT LOCAL'."
  */
 final class NotSupportedYet implements Diagnostic
 {

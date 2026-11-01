@@ -42,21 +42,21 @@ final class ForeignKeyClauseTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES missing (id))', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveConstraintReportsADecoratedParentColumn(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent (id COLLATE nocase))');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(DecoratedColumnName::class, $operation->diagnostics()[0]);
     }
 
     public function testRenderWritesTheParentTheColumnsAndTheClauses(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table c (p references parent(a, b) on delete set default match full)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];
@@ -68,7 +68,7 @@ final class ForeignKeyClauseTest extends TestCase
 
     public function testRenderKeepsAnAbsentColumnListAbsent(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];

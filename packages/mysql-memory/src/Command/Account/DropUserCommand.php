@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Command\Account;
+
+use MySqlMemory\Account\Identity;
+use MySqlMemory\Command\Command;
+use MySqlMemory\Error\Family\AccountError;
+use MySqlMemory\Evaluation\Compile\Connection;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Result\Completion;
+use MySqlMemory\Result\Reply;
+use MySqlMemory\Session\Session;
+use Override;
+use SqlSemantics\Platform\MySql\Statement\Account\DropRole;
+use SqlSemantics\Platform\MySql\Statement\Account\DropUser;
+use SqlSemantics\Platform\MySql\Statement\Statement as MySqlStatement;
+
+/**
+ * Executes DROP USER and DROP ROLE.
+ *
+ * The statement commits the open transaction. An account that does not exist fails the
+ * statement (ER_CANNOT_USER, naming every such account). MySQL 5.6 and 5.7 keep successful
+ * deletions in a refused batch; later releases leave the batch unchanged. IF EXISTS
+ * draws a note. Dropping an account revokes it from the accounts it was granted to as a
+ * role and from their default roles; the account of the session may be dropped (verified on a
+ * live 8.4 server).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-user.html,
+ * https://dev.mysql.com/doc/refman/8.4/en/drop-role.html.
+ *
+ * @visibility MySqlMemory
+ */
+final class DropUserCommand implements Command
+{
+    /**
+     * Answers true.
+     */
+    #[Override]
+    public function clearsDiagnostics(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Drops the accounts.
+     */
+    #[Override]
+    public function execute(\SqlSemantics\Statement\AnalyzedStatement $operation, Session $session, Context $context, Connection $connection): Reply
+    {
+        assert($operation instanceof MySqlStatement);
+        $statement = $operation;
+        assert($statement instanceof DropUser || $statement instanceof DropRole);
+        $session->transaction->commit();
+        $names = new Names($session->settings()->release());
+        $listed = $statement instanceof DropUser ? $statement->users : $statement->roles;
+        $names->check($listed);
+        $accounts = $session->instance->accounts;
+        $missing = [];
+        $dropped = [];
+        foreach ($listed as $name) {
+            $identity = $names->identity($name, $session);
+            if ($statement instanceof DropUser) {
+                (new Authentication\DefinerReferences())->record($identity, $session, $context);
+            }
+            $stored = $session->settings()->legacy() ? $accounts->find($identity) : $accounts->stored($identity->stored());
+            $names->ascii($identity, count($stored?->grants->dynamic ?? []), $context->diagnostics, 'HOST');
+            $names->ascii($identity, 7, $context->diagnostics);
+            $key = $session->settings()->legacy() ? $identity->key() : $identity->stored()->key();
+            if (($accounts->find($identity) === null && $stored === null) || isset($dropped[$key])) {
+                $missing[] = $identity;
+                if ($statement->ifExists) {
+                    $context->diagnostics->note(AccountError::UserDoesNotExist, $names->existence($identity, false));
+                }
+                continue;
+            }
+            $dropped[$key] = $identity;
+        }
+        if ($missing !== [] && !$statement->ifExists) {
+            if ($session->settings()->legacy()) {
+                foreach ($dropped as $identity) {
+                    $accounts->drop($identity);
+                }
+            } else {
+                $accounts->reload();
+            }
+            $operation = $statement instanceof DropUser ? 'DROP USER' : 'DROP ROLE';
+            throw (new Names($session->settings()->release()))->failure($operation, implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
+        }
+        foreach ($dropped as $identity) {
+            $accounts->drop($identity);
+        }
+
+        return new Completion(0, 0, $context->diagnostics->raised());
+    }
+}

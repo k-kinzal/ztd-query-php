@@ -29,4 +29,10 @@ final class ReplicationFilterTest extends TestCase
 
         new ReplicationFilter(FilterKind::DoTable, [new QualifiedName(new Name('t'))]);
     }
+
+    public function testValueRejectsIncompatiblePattern(): void
+    {
+        $this->expectExceptionMessage('A replication wildcard pattern is quoted text.');
+        new ReplicationFilter(FilterKind::WildDoTable, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal)]);
+    }
 }

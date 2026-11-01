@@ -25,7 +25,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Type\Choice;
@@ -39,9 +38,9 @@ final class CompoundTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze("SELECT 1 AS a, 'x' AS b UNION ALL SELECT 2 AS c, 'y' AS d");
 
-        self::assertInstanceOf(Compound::class, $query->statement);
+        self::assertInstanceOf(Compound::class, $query);
         self::assertSame(['a', 'b'], array_map(static fn (object $field): ?string => $field->name?->value, [...$query->fields() ?? []]));
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveQueryChoosesTheTypeOverTheArmsAndTheirNullability(): void
@@ -58,10 +57,10 @@ final class CompoundTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 UNION SELECT 2, 3 UNION SELECT 4, 5, 6');
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
-        self::assertSame('SELECTs to the left and right of a compound operator do not have the same number of result columns: 1 and 2.', $query->facts->diagnostics[0]->message());
-        self::assertSame(ArityRule::CompoundArms, $query->facts->diagnostics[0]->rule);
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(ArityMismatch::class, $query->diagnostics()[0]);
+        self::assertSame('SELECTs to the left and right of a compound operator do not have the same number of result columns: 1 and 2.', $query->diagnostics()[0]->message());
+        self::assertSame(ArityRule::CompoundArms, $query->diagnostics()[0]->rule);
         self::assertCount(1, $query->fields() ?? []);
     }
 
@@ -69,10 +68,10 @@ final class CompoundTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS a UNION ALL SELECT 2 AS b ORDER BY b');
 
-        self::assertInstanceOf(Compound::class, $query->statement);
-        self::assertInstanceOf(Select::class, $query->statement->steps[0]->query);
-        self::assertSame([], $query->statement->steps[0]->query->orderBy);
-        $resolution = $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution;
+        self::assertInstanceOf(Compound::class, $query);
+        self::assertInstanceOf(Select::class, $query->steps[0]->query);
+        self::assertSame([], $query->steps[0]->query->orderBy);
+        $resolution = $query->orderBy[0]->expression->scalarInformation()->resolution;
         self::assertInstanceOf(AliasTarget::class, $resolution);
         self::assertSame(0, $resolution->field->position);
         self::assertSame('b', $resolution->field->name?->value);
@@ -84,10 +83,10 @@ final class CompoundTest extends TestCase
         $ordered = $semantics->analyze('SELECT 1 ORDER BY 1 UNION SELECT 2');
         $limited = $semantics->analyze('SELECT 1 LIMIT 1 UNION SELECT 2');
 
-        self::assertInstanceOf(Misuse::class, $ordered->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::OrderByBeforeCompound, $ordered->facts->diagnostics[0]->rule);
-        self::assertInstanceOf(Misuse::class, $limited->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::LimitBeforeCompound, $limited->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Misuse::class, $ordered->diagnostics()[0]);
+        self::assertSame(MisuseRule::OrderByBeforeCompound, $ordered->diagnostics()[0]->rule);
+        self::assertInstanceOf(Misuse::class, $limited->diagnostics()[0]);
+        self::assertSame(MisuseRule::LimitBeforeCompound, $limited->diagnostics()[0]->rule);
     }
 
     public function testDeriveQueryKeepsAnUndeclaredFirstArmOpen(): void
@@ -95,7 +94,7 @@ final class CompoundTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t UNION SELECT 1');
 
         self::assertNull($query->fields());
-        self::assertInstanceOf(OpenStar::class, $query->facts->output?->projection[0]);
+        self::assertInstanceOf(OpenStar::class, $query->output()?->projection[0]);
     }
 
     public function testRenderWritesTheArmsThenTheOrderingAndTheLimit(): void
@@ -110,7 +109,7 @@ final class CompoundTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $first = new ValuesClause([new ValueRow([new IntegerLiteral('1')])]);
         $compound = new Compound($first, [new CompoundStep(CompoundOperator::Union, new Select([new ResultColumn(new IntegerLiteral('2'))]))], [], new Limit(new IntegerLiteral('1')));
-        $operation = new Operation($semantics->context(), $compound);
+        $operation = Semantics::fromStatement($semantics->context(), $compound);
 
         self::assertSame('VALUES (1) UNION SELECT 2 LIMIT 1', $operation->toString());
         self::assertSame('column1', $operation->field(0)->name?->value);
@@ -118,7 +117,7 @@ final class CompoundTest extends TestCase
 
     public function testRenderRefusesAnOrderingLeftOnTheLastArm(): void
     {
-        $ordered = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS a ORDER BY a')->statement;
+        $ordered = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS a ORDER BY a');
         self::assertInstanceOf(Select::class, $ordered);
 
         $this->expectExceptionMessage('ORDER BY and LIMIT after the last arm belong to the compound query.');

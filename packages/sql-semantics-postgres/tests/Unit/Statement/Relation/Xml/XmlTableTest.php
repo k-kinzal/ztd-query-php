@@ -23,7 +23,7 @@ final class XmlTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS a text foo 'a')");
-        self::assertSame('unrecognized column option "foo"', $query->facts->diagnostics[0]->message());
+        self::assertSame('unrecognized column option "foo"', $query->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheNamespacesAndColumns(): void

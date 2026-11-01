@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
  * @visibility public
  * @example Reading the operator of an expression
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2');
- *     $query->statement->columns[0]->expression->operator // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator::Add
+ *     $query->columns[0]->expression->operator // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator::Add
  */
 enum BinaryOperator: string
 {

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,18 +24,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the rejected request
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER TYPE mood DROP VALUE 'sad'");
- *     [$operation->statement->label->value, $operation->facts->diagnostics[0]->message()] // => ['sad', 'dropping an enum value is not implemented']
+ *     [$operation->label->value, $operation->diagnostics()[0]->message()] // => ['sad', 'dropping an enum value is not implemented']
  */
-final class DropEnumLabel implements Statement
+final class DropEnumLabel extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $type The enum type
      * @param StringConstant $label The label
      */
-    public function __construct(public readonly DottedName $type, public readonly StringConstant $label)
+    public function __construct(public readonly DottedName $type, public readonly StringConstant $label, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

@@ -15,22 +15,22 @@ final class SetTimeZoneTest extends TestCase
     public function testDeriveStatementTypesTheIntervalConstant(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET TIME ZONE INTERVAL '1' HOUR");
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone::class, $statement);
         $zone = $statement->zone;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral::class, $zone);
-        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $operation->facts->scalar($zone)->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $zone->scalarInformation()->nullability);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementReportsOtherIntervalFields(): void
     {
-        self::assertSame('time zone interval must be HOUR or HOUR TO MINUTE', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TIME ZONE INTERVAL \'1\' DAY TO HOUR')->facts->diagnostics[0]->message());
+        self::assertSame('time zone interval must be HOUR or HOUR TO MINUTE', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TIME ZONE INTERVAL \'1\' DAY TO HOUR')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementAcceptsAPrecision(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TIME ZONE INTERVAL (2) \'1\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TIME ZONE INTERVAL (2) \'1\'')->diagnostics());
     }
 
     public function testRenderQuotesAnIdentifierThatIsAKeyword(): void

@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `TRIM ([LEADING | TRAILING | BOTH] [characters] FROM strings)` and the forms without FROM.
@@ -32,7 +31,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Trim implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The strings trimmed, as written after FROM
@@ -44,8 +44,11 @@ final class Trim implements Scalar, OutputNaming
      * @param Scalar|null $characters The characters removed, written before FROM
      * @param list<Scalar> $strings The strings trimmed; at least one
      */
-    public function __construct(public readonly TrimSide $side, public readonly ?Scalar $characters, array $strings)
+    public function __construct(public readonly TrimSide $side, public readonly ?Scalar $characters, array $strings, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->strings = Check::listOf($strings, Scalar::class, 'TRIM takes at least one string.', 1);
     }
 

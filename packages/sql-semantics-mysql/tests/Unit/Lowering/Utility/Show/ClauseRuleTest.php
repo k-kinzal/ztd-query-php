@@ -15,6 +15,13 @@ use SqlSemantics\Platform\MySql\Lowering\Utility\Show\ClauseRule;
 #[Medium]
 final class ClauseRuleTest extends TestCase
 {
+    public function testUsesInDistinguishesQualifierWordsAndAbsentClauses(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        self::assertSame('SHOW KEYS IN t FROM db', $semantics->analyze('SHOW KEYS IN t FROM db')->toString());
+        self::assertSame('SHOW EVENTS', $semantics->analyze('SHOW EVENTS')->toString());
+    }
+
     public function testFilterLowersLikeAndWhere(): void
     {
         self::assertSame("SHOW STATUS LIKE 'a'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("show status like 'a'")->toString());
@@ -23,17 +30,42 @@ final class ClauseRuleTest extends TestCase
 
     public function testWhereLowersTheQueryClause(): void
     {
-        self::assertSame('SHOW INDEXES FROM t WHERE 1', (new Semantics(Dialect::MySql))->analyze('show keys from t where 1')->toString());
+        self::assertSame('SHOW KEYS FROM t WHERE 1', (new Semantics(Dialect::MySql))->analyze('show keys from t where 1')->toString());
     }
 
     public function testDatabaseLowersTheClause(): void
     {
-        self::assertSame('SHOW EVENTS FROM db', (new Semantics(Dialect::MySql))->analyze('show events in db')->toString());
+        self::assertSame('SHOW EVENTS IN db', (new Semantics(Dialect::MySql))->analyze('show events in db')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDatabaseOperands(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $release) {
+            foreach (['TABLES', 'TRIGGERS', 'EVENTS', 'TABLE STATUS', 'COLUMNS FROM t', 'KEYS FROM t'] as $form) {
+                yield $release . ' ' . $form => [$release, 'SHOW ' . $form . ' FROM ``'];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDatabaseOperands')]
+    public function testDatabaseRefusesEmptyDatabaseIdentities(string $release, string $sql): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect database name ''");
+        (new Semantics(Dialect::MySql, 'mysql-' . $release))->analyze($sql);
+    }
+
+    public function testDatabaseAllowsAnEmptyOpenTableFilter(): void
+    {
+        self::assertSame('SHOW OPEN TABLES FROM ``', (new Semantics(Dialect::MySql))->analyze('SHOW OPEN TABLES FROM ``')->toString());
     }
 
     public function testPrepositionAcceptsFromAndIn(): void
     {
-        self::assertSame('SHOW COLUMNS FROM t FROM db', (new Semantics(Dialect::MySql))->analyze('show columns in t in db')->toString());
+        self::assertSame('SHOW COLUMNS IN t IN db', (new Semantics(Dialect::MySql))->analyze('show columns in t in db')->toString());
     }
 
     public function testListingLowersFullAndExtended(): void
@@ -43,12 +75,12 @@ final class ClauseRuleTest extends TestCase
 
     public function testExtendedLowersTheKeyword(): void
     {
-        self::assertSame('SHOW EXTENDED INDEXES FROM t', (new Semantics(Dialect::MySql))->analyze('show extended keys from t')->toString());
+        self::assertSame('SHOW EXTENDED KEYS FROM t', (new Semantics(Dialect::MySql))->analyze('show extended keys from t')->toString());
     }
 
     public function testScopeLowersTheKeywords(): void
     {
-        self::assertSame('SHOW SESSION STATUS', (new Semantics(Dialect::MySql))->analyze('show local status')->toString());
+        self::assertSame('SHOW LOCAL STATUS', (new Semantics(Dialect::MySql))->analyze('show local status')->toString());
     }
 
     public function testEngineLowersAll(): void
@@ -74,5 +106,42 @@ final class ClauseRuleTest extends TestCase
     public function testQueryLowersTheNumber(): void
     {
         self::assertSame('SHOW PROFILE FOR QUERY 3', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('show profile for query 3')->toString());
+    }
+    public function testInspectionRetainsTheOwnerWhenItsScalarFilterIsRefused(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('SHOW TABLE STATUS FROM d WHERE ROW(1,2) LIKE 1');
+            self::fail('A non-scalar SHOW condition must retain its refused role.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter::class, $failure->problem);
+            self::assertSame('d', $failure->problem->header->database?->value);
+        }
+    }
+
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerFilteredInspections(): iterable
+    {
+        foreach (['5.7.44', '8.4.7'] as $release) {
+            foreach (['DATABASES', 'TABLES', 'TABLE STATUS', 'TRIGGERS', 'COLUMNS FROM t', 'KEYS FROM t', 'EVENTS', 'PROCEDURE STATUS', 'FUNCTION STATUS', 'OPEN TABLES', 'STATUS', 'VARIABLES', 'CHARACTER SET', 'COLLATION'] as $header) {
+                yield $release . ':' . $header => [$release, 'SHOW ' . $header];
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerFilteredInspections')]
+    public function testInspectionRetainsEveryFilterOwner(string $release, string $header): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $release);
+        $expected = $semantics->analyze($header);
+        try {
+            $semantics->analyze($header . ' WHERE (1,2)');
+            self::fail('A row condition must retain its refused scalar role.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Show\RefusedFilter::class, $failure->problem);
+            self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($expected, $failure->problem->header));
+        }
     }
 }

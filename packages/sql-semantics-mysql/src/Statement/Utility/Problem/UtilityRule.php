@@ -16,6 +16,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
 enum UtilityRule: string
 {
     case NamesExpression = 'SET NAMES takes a character set name, not an expression';
+    case NamesShadow = "Variable 'names' must be quoted with `...`, or renamed";
     case UnknownExplainFormat = 'Unknown EXPLAIN format name';
     case AnalyzeFormat = 'EXPLAIN ANALYZE does not support the TRADITIONAL format';
     case ExplainIntoFormat = 'EXPLAIN INTO requires FORMAT=JSON';

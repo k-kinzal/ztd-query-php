@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query;
  * @visibility public
  * @example Reading the quantifier of UNION ALL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 UNION ALL SELECT 2');
- *     $query->statement->quantifier // => \SqlSemantics\Platform\PostgreSql\Statement\Query\SetQuantifier::All
+ *     $query->quantifier // => \SqlSemantics\Platform\PostgreSql\Statement\Query\SetQuantifier::All
  */
 enum SetQuantifier: string
 {

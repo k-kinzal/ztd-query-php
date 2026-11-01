@@ -62,9 +62,9 @@ final class ColumnFactsTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a AS q FROM t WHERE q = 1', [$t]);
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(Binary::class, $query->statement->where);
-        $resolution = $query->facts->scalar($query->statement->where->left)->resolution;
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(Binary::class, $query->where);
+        $resolution = $query->where->left->scalarInformation()->resolution;
         self::assertInstanceOf(AliasTarget::class, $resolution);
         $fact = (new ColumnFacts())->of($resolution);
         self::assertSame($query->field('q'), $resolution->field);
@@ -119,7 +119,7 @@ final class ColumnFactsTest extends TestCase
         self::assertNull($query->field(4)->resolution);
         self::assertNull($query->field(5)->resolution);
         self::assertNull($query->field(6)->resolution);
-        self::assertCount(1, $query->facts->diagnostics);
+        self::assertCount(1, $query->diagnostics());
     }
 
     public function testDenotedAnswersTheOutcomeOfAnUngroupedNameUse(): void

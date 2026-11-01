@@ -8,9 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW REPLICAS (SHOW SLAVE HOSTS): the replicas registered with the source.
@@ -28,15 +27,19 @@ use SqlSemantics\Statement\Statement;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.0.44'))->analyze('SHOW SLAVE HOSTS');
  *     [$show->field(4)->name?->value, $show->toString()] // => ['Slave_UUID', 'SHOW SLAVE HOSTS']
  */
-final class ShowReplicas implements Statement
+final class ShowReplicas extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Terminology $terminology Whether SLAVE HOSTS or REPLICAS is written
      */
-    public function __construct(public readonly Terminology $terminology)
+    public function __construct(public readonly Terminology $terminology, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -44,6 +47,7 @@ final class ShowReplicas implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         (new ShowFacts())->rows($derivation, $this->terminology === Terminology::Legacy ? Report::ReplicaHosts : Report::Replicas);
     }
 

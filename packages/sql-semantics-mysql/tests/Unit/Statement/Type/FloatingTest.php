@@ -57,7 +57,7 @@ final class FloatingTest extends TestCase
         self::assertSame('REAL', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderWritesDoubleForDoublePrecisionAndFloat8(): void
+    public function testRenderRetainsDoublePrecisionWithItsCanonicalKind(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -76,7 +76,7 @@ final class FloatingTest extends TestCase
         self::assertSame(FloatingKind::Float, $float4->kind);
         self::assertNull($precision->precision);
         $precision->render($out);
-        self::assertSame('DOUBLE', (new Lexical())->join($out->pieces()));
+        self::assertSame('DOUBLE PRECISION', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderKeepsRealApartFromDouble(): void

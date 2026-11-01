@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SHUTDOWN`: a request to stop the server (MySQL 5.7.9 and later).
@@ -21,9 +20,9 @@ use SqlSemantics\Statement\Statement;
  * @example Reading the request
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('shutdown')->toString() // => 'SHUTDOWN'
  */
-final class Shutdown implements Statement
+final class Shutdown extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Has nothing to derive: the request names no relation and no value.
@@ -38,5 +37,14 @@ final class Shutdown implements Statement
     public function render(Output $out): void
     {
         $out->keyword('SHUTDOWN');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 }

@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The roles SET ROLE, a DEFAULT ROLE clause or GRANT … AS … WITH ROLE select: `role, …`, `NONE`, `DEFAULT` or `ALL [EXCEPT role, …]`.
@@ -19,12 +18,12 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Selecting all roles but one
- *     $selection = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET ROLE ALL EXCEPT r')->statement->roles;
+ *     $selection = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET ROLE ALL EXCEPT r')->roles;
  *     [$selection->set, $selection->roles[0]->user->value] // => [\SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All, 'r']
  */
 final class RoleSelection implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<AccountName> The named roles, or the roles EXCEPT names
@@ -35,7 +34,7 @@ final class RoleSelection implements Node
      * @param RoleSet $set Which roles are selected
      * @param list<AccountName> $roles The named roles (at least one), or the roles EXCEPT names; none otherwise
      */
-    public function __construct(public readonly RoleSet $set, array $roles = [])
+    public function __construct(public readonly RoleSet $set, array $roles = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->roles = Check::listOf($roles, AccountName::class, 'A role selection names roles.');
         Check::input(match ($set) {

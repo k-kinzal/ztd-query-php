@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\TableDefinition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\ParameterStyle;
@@ -51,6 +52,32 @@ final class CreateTableRuleTest extends TestCase
 
         self::assertNotNull($create->query);
         self::assertSame(2, $create->temporaryWords);
+    }
+
+    #[DataProvider('providerQueryIntroducers')]
+    public function testEnclosedRetainsTheWrittenQueryIntroducer(string $version, string $sql, bool $as): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-' . $version))->analyze($sql);
+        self::assertInstanceOf(CreateTable::class, $statement);
+        self::assertSame($as, $statement->query?->as);
+        self::assertSame($sql, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string, bool}>
+     */
+    public static function providerQueryIntroducers(): iterable
+    {
+        foreach (['5.6.51', '5.7.44'] as $version) {
+            foreach ([
+                ['CREATE TABLE t (SELECT 1 AS a)', false],
+                ['CREATE TABLE t AS (SELECT 1 AS a)', true],
+                ['CREATE TABLE t (SELECT 1 AS a) UNION ALL SELECT 2', false],
+                ['CREATE TABLE t (a INT) (SELECT 1 AS a)', false],
+            ] as $index => [$sql, $as]) {
+                yield $version . ' ' . $index => [$version, $sql, $as];
+            }
+        }
     }
 
     public function testTemporaryCountsTheTemporaryWords(): void
@@ -105,5 +132,55 @@ final class CreateTableRuleTest extends TestCase
         $node = $platform->parser($profile)->parse('CREATE TABLE t REPLACE SELECT 1 AS a')->find('opt_duplicate_as_qe')[0];
 
         self::assertNotNull((new CreateTableRule($lowering))->query($node));
+    }
+
+    public function testCreateRetainsTheSameMergeQueryInOrdinaryAndStoredRequests(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $procedureAnalysis = $semantics->analyze('CREATE PROCEDURE p() CREATE TABLE t UNION=() SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $procedureAnalysis);
+        $procedure = $procedureAnalysis;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure::class, $procedure);
+        self::assertInstanceOf(CreateTable::class, $procedure->body);
+        $creation = $semantics->analyze('CREATE TABLE t UNION=() SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $creation);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference($procedure->body, $creation));
+    }
+
+    public function testCreateRefusesAWrittenProblemWithTheStoredDefinition(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (b))')->find('create')[0];
+
+        try {
+            (new CreateTableRule($lowering))->legacy($lowering->form($node));
+            self::fail('The second key names no column.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTable::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn::class, $failure->problem->problem);
+            self::assertSame(strlen('CREATE TABLE t (a INT PRIMARY KEY, PRIMARY KEY (b))'), $failure->end);
+        }
+    }
+
+    public function testForbiddenPartitionExpressionFindsTheExpressionTheParserRefuses(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $rule = new CreateTableRule($lowering);
+        $accepted = $rule->modern($platform->parser($profile)->parse('CREATE TABLE t (a INT) PARTITION BY HASH(a) SUBPARTITION BY KEY(a) SUBPARTITIONS 2')->find('create_table_stmt')[0]);
+        self::assertInstanceOf(CreateTable::class, $accepted);
+
+        self::assertNull($rule->forbiddenPartitionExpression(null));
+        self::assertNull($rule->forbiddenPartitionExpression($accepted->partitioning));
+        try {
+            $rule->modern($platform->parser($profile)->parse('CREATE TABLE t (a INT, a INT) PARTITION BY HASH(a) SUBPARTITION BY HASH(USER()) SUBPARTITIONS 2')->find('create_table_stmt')[0]);
+            self::fail('The subpartitioning function is refused while reading.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail::class, $failure->problem);
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $failure->problem->problem);
+        }
     }
 }

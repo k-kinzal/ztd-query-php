@@ -90,6 +90,7 @@ final class LoadRule
      *
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When the word before the number of files is not COUNT
+     * @throws \SqlSemantics\Construction\RejectedInput When the input, format and algorithm options conflict (ER_WRONG_USAGE), which MySQL 8.2 and later refuse once the statement is read, before the table is opened (`LOAD DATA INFILE 'a' COUNT 2 INTO TABLE t` -> 1221 although `t` is missing; verified on 8.4.7), while 8.0 and 8.1 ignore the bulk annotations
      */
     public function statement(Form $form): LoadTable
     {
@@ -106,22 +107,32 @@ final class LoadRule
         $format = new FormatRule($this->lowering);
         $queries = $this->lowering->queries;
 
-        return new LoadTable(
-            $this->format($parts['data_or_xml']),
-            $this->lock($parts['load_data_lock']),
-            $this->input($parts),
-            $this->lowering->dml->duplicateHandling($parts['opt_duplicate']),
-            new WriteTarget($this->lowering->names->qualified($parts['table_ident']), null, $queries->partitions($parts['opt_use_partition'])),
-            $format->charset($parts['opt_load_data_charset']),
-            $this->tagged($parts['opt_compression_algorithm'] ?? null),
-            $this->tagged($parts['opt_xml_rows_identified_by']),
-            $format->fields($parts['opt_field_term']),
-            $format->lines($parts['opt_line_term']),
-            $this->ignored($parts['opt_ignore_lines']),
-            $this->columns($parts['opt_field_or_var_spec']),
-            $this->assignments($parts['opt_load_data_set_spec']),
-            $this->bulk($parts),
-        );
+        $operands = [
+            'format' => $this->format($parts['data_or_xml']),
+            'lock' => $this->lock($parts['load_data_lock']),
+            'input' => $this->input($parts),
+            'duplicates' => $this->lowering->dml->duplicateHandling($parts['opt_duplicate']),
+            'table' => new WriteTarget($this->lowering->names->qualified($parts['table_ident']), null, $queries->partitions($parts['opt_use_partition'])),
+            'charset' => $format->charset($parts['opt_load_data_charset']),
+            'charsetForm' => $format->charsetForm($parts['opt_load_data_charset']),
+            'compression' => $this->tagged($parts['opt_compression_algorithm'] ?? null),
+            'rowTag' => $this->tagged($parts['opt_xml_rows_identified_by']),
+            'fields' => $format->fields($parts['opt_field_term']),
+            'lines' => $format->lines($parts['opt_line_term']),
+            'ignored' => $this->ignored($parts['opt_ignore_lines']),
+            'ignoreRows' => strtoupper($parts['opt_ignore_lines']->tokens()[2]->text ?? '') === 'ROWS',
+            'columns' => $this->columns($parts['opt_field_or_var_spec']),
+            'bulk' => $this->bulk($parts),
+        ];
+        $assignments = (new LoadAssignments($this->lowering))->read($parts['opt_load_data_set_spec']);
+        $grammar = $this->lowering->profile->grammar;
+        $conflict = in_array($grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true) ? null
+            : (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], ($operands['columns'] ?? []) !== [], $assignments !== [], $operands['bulk'], $operands['lines']);
+        if ($conflict !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($conflict, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        return new LoadTable(...$operands, assignments: $assignments);
     }
 
     /**
@@ -193,21 +204,29 @@ final class LoadRule
         $order = $this->flag($parts['opt_source_order'] ?? null);
         $count = isset($parts['opt_source_count']) ? $this->lowering->form($parts['opt_source_count']) : null;
         if ($count === null || $count->signature === 'opt_source_count:') {
-            return new LoadInput($local, $source, $file, null, $order);
+            return new LoadInput($local, $source, $file, null, $order, from: $this->flag($parts['opt_from_keyword'] ?? null));
         }
         $number = $this->lowering->numbers->token($count->token(1));
+        $failure = (new SyntaxLoadInput())->rejected($parts['opt_source_count'], $this->lowering);
+        if ($failure !== null) {
+            throw $failure;
+        }
         if ($count->signature === 'opt_source_count: COUNT_SYM NUM') {
-            return new LoadInput($local, $source, $file, $number, $order);
+            return new LoadInput($local, $source, $file, $number, $order, from: $this->flag($parts['opt_from_keyword'] ?? null));
         }
         if ($count->signature !== 'opt_source_count: IDENT_sys NUM') {
             throw ImplementationGap::production($count);
+        }
+        $spelling = $this->lowering->form($count->node(0))->token(0)->text;
+        if ((new \SqlSemantics\Platform\MySql\Rules\Identifiers())->decode($spelling) === 'COUNT') {
+            return new LoadInput($local, $source, $file, $number, $order, from: $this->flag($parts['opt_from_keyword'] ?? null));
         }
         $word = $this->lowering->names->identifier($count->node(0));
         if (strcasecmp($word->value, 'count') !== 0) {
             throw new AnalysisException('Syntax error: COUNT expected before the number of files.');
         }
 
-        return new LoadInput($local, $source, $file, $number, $order, $word);
+        return new LoadInput($local, $source, $file, $number, $order, $word, from: $this->flag($parts['opt_from_keyword'] ?? null));
     }
 
     /**
@@ -249,15 +268,18 @@ final class LoadRule
     }
 
     /**
-     * Lowers a node of `opt_field_or_var_spec`; an absent or empty list is empty.
+     * Lowers a node of `opt_field_or_var_spec`; null denotes absence and [] retains explicit parentheses.
      *
-     * @return list<ColumnUse|UserVariable>
+     * @return list<ColumnUse|UserVariable>|null
      * @throws ImplementationGap When a production has no rule
      */
-    public function columns(Node $spec): array
+    public function columns(Node $spec): ?array
     {
         $form = $this->lowering->form($spec);
-        if ($form->signature === 'opt_field_or_var_spec:' || $form->signature === 'opt_field_or_var_spec: ( )') {
+        if ($form->signature === 'opt_field_or_var_spec:') {
+            return null;
+        }
+        if ($form->signature === 'opt_field_or_var_spec: ( )') {
             return [];
         }
         if ($form->signature !== 'opt_field_or_var_spec: ( fields_or_vars )') {
@@ -296,17 +318,15 @@ final class LoadRule
         foreach ((new ListRule($this->lowering))->items($form->node(1), ['load_data_set_list: load_data_set_list , load_data_set_elem', 'load_data_set_list: load_data_set_elem']) as $item) {
             $element = $this->lowering->form($item);
             if ($element->signature === 'load_data_set_elem: simple_ident_nospvar equal remember_name expr_or_default remember_end') {
-                $this->lowering->options->skip($element->node(1));
                 $this->lowering->options->skip($element->node(2));
                 $this->lowering->options->skip($element->node(4));
-                $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(3)));
+                $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(3)), operator: $this->lowering->options->assignment($element->node(1)));
                 continue;
             }
             if ($element->signature !== 'load_data_set_elem: simple_ident_nospvar equal expr_or_default') {
                 throw ImplementationGap::production($element);
             }
-            $this->lowering->options->skip($element->node(1));
-            $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(2)));
+            $assignments[] = new Assignment($this->lowering->names->column($element->node(0)), $values->value($element->node(2)), operator: $this->lowering->options->assignment($element->node(1)));
         }
 
         return $assignments;

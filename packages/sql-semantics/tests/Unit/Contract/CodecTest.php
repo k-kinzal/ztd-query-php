@@ -42,4 +42,10 @@ final class CodecTest extends TestCase
 
         self::assertSame('a`b', $query->field(0)->name?->value);
     }
+    public function testSpellingKeepsQuotedIdentifierSpellingInTheDefaultEncoding(): void
+    {
+        $codec = Platforms::of('sqlite')->codec((new Semantics(Dialect::Sqlite))->profile());
+        self::assertSame('`é``x`', $codec->spelling('`é``x`'));
+    }
+
 }

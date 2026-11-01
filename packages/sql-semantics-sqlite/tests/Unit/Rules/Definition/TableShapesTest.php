@@ -93,7 +93,7 @@ final class TableShapesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a)');
-        $index = $semantics->analyze('CREATE INDEX i ON t (a)')->statement;
+        $index = $semantics->analyze('CREATE INDEX i ON t (a)');
         $derivation = new Derivation($semantics->context([$table]));
         $shapes = new TableShapes();
         $fact = $shapes->target($derivation, new QualifiedName(new Name('t')));

@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Replacing a dictionary everywhere
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH CONFIGURATION c ALTER MAPPING REPLACE english WITH swedish');
- *     [$operation->statement->tokens, $operation->statement->replacement->last()->value] // => [[], 'swedish']
+ *     [$operation->tokens, $operation->replacement->last()->value] // => [[], 'swedish']
  */
-final class ReplaceTextSearchDictionary implements Statement
+final class ReplaceTextSearchDictionary extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The token types whose mappings change; empty for every mapping
@@ -40,8 +39,11 @@ final class ReplaceTextSearchDictionary implements Statement
      * @param DottedName $replaced The dictionary replaced
      * @param DottedName $replacement The dictionary put in its place
      */
-    public function __construct(public readonly DottedName $configuration, array $tokens, public readonly DottedName $replaced, public readonly DottedName $replacement)
+    public function __construct(public readonly DottedName $configuration, array $tokens, public readonly DottedName $replaced, public readonly DottedName $replacement, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tokens = Check::listOf($tokens, Name::class, 'Token types are names.');
     }
 

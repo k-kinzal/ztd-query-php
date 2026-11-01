@@ -16,11 +16,10 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerOrder;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * CREATE TRIGGER: a statement that runs for each row an INSERT, UPDATE or DELETE changes in a table.
@@ -32,11 +31,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a trigger definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET @changed = 1');
- *     [$create->statement->time->value, $create->statement->event->value, $create->statement->table->name->name->value] // => ['BEFORE', 'UPDATE', 't']
+ *     [$create->time->value, $create->event->value, $create->table->name->name->value] // => ['BEFORE', 'UPDATE', 't']
  */
-final class CreateTrigger implements Statement
+final class CreateTrigger extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var ProgramStatement|Statement The statement the trigger runs
@@ -63,9 +62,27 @@ final class CreateTrigger implements Statement
         public readonly ?TriggerOrder $order = null,
         public readonly ?Account $definer = null,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Definition\DefinitionSource $definitionSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        ProgramNames::check($name);
         Check::input($name->catalog === null, 'A trigger name has at most a database qualifier.');
         $this->body = (new StatementSequence())->member($body);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Trigger, $name, null, [], $definitionSource?->bodyRefusalOffset) === null, 'A trigger body satisfies the stored program restrictions.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Routine\TriggerRows())->problem($this->body, $time, $event) === null, 'A trigger body assigns only to the row its time and event allow.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
+    }
+
+    /**
+     * Identifies distinct explicit databases while retaining the complete trigger body.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return !\SqlSemantics\Platform\MySql\Rules\Routine\Declaration\TriggerSchemas::compatible($this->name, $this->table);
     }
 
     /**
@@ -73,7 +90,9 @@ final class CreateTrigger implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
         (new ProgramFacts())->trigger($this->table, $this->time, $this->event, $this->body, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->order($this, $derivation);
     }
 
     /**

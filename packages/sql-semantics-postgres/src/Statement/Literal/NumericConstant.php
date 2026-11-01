@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A numeric constant the server keeps as its written text: one written with a decimal point or an exponent, or an integer too large for 32 bits.
@@ -28,18 +27,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the text of a numeric constant
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1_0.50e-3');
- *     $query->statement->targets[0]->expression->value->text // => '1_0.50e-3'
+ *     $query->targets[0]->expression->value->text // => '1_0.50e-3'
  * @example Rejecting an integer the scanner reads as an integer constant
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('100') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class NumericConstant implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $text The written text, without a sign
      */
-    public function __construct(public readonly string $text)
+    public function __construct(public readonly string $text, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new Numerals())->kept($text), 'A numeric constant is a number with a point or an exponent, or an integer beyond 32 bits, as the scanner reads it.');
     }

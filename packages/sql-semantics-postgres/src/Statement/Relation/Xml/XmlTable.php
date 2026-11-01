@@ -16,7 +16,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * XMLTABLE as a FROM item: rows and columns read from an XML value.
@@ -31,9 +30,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT * FROM XMLTABLE ('/r' PASSING '<r/>' COLUMNS n FOR ORDINALITY, a text PATH 'a' NOT NULL) AS x");
  *     [$query->field(0)->type->descriptor->name(), $query->field(1)->nullability->name] // => ['integer', 'NotNull']
  */
-final class XmlTable implements Relation
+final class XmlTable implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<XmlNamespace> The namespaces of XMLNAMESPACES
@@ -67,7 +67,12 @@ final class XmlTable implements Relation
         public readonly ?Name $alias = null,
         array $aliases = [],
         public readonly bool $lateral = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, XmlTableColumn::class, 'XMLTABLE has at least one column.', 1);
         $this->namespaces = Check::listOf($namespaces, XmlNamespace::class, 'XMLNAMESPACES holds namespaces.');
         $this->aliases = Check::listOf($aliases, Name::class, 'Column aliases are names.');

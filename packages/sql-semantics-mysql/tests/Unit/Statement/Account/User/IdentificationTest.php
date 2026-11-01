@@ -44,7 +44,7 @@ final class IdentificationTest extends TestCase
 
     public function testRenderWritesEveryCredential(): void
     {
-        self::assertSame("CREATE USER a IDENTIFIED WITH p BY RANDOM PASSWORD, b IDENTIFIED WITH p AS 'h', c IDENTIFIED WITH p BY 'x', d IDENTIFIED BY RANDOM PASSWORD", (new Semantics(Dialect::MySql))->analyze("create user a identified with p by random password, b identified with 'p' as 'h', c identified with p by 'x', d identified by random password")->toString());
+        self::assertSame("CREATE USER a IDENTIFIED WITH p BY RANDOM PASSWORD, b IDENTIFIED WITH 'p' AS 'h', c IDENTIFIED WITH p BY 'x', d IDENTIFIED BY RANDOM PASSWORD", (new Semantics(Dialect::MySql))->analyze("create user a identified with p by random password, b identified with 'p' as 'h', c identified with p by 'x', d identified by random password")->toString());
         self::assertSame("GRANT USAGE ON *.* TO a IDENTIFIED BY PASSWORD 'h'", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("grant usage on *.* to a identified by password 'h'")->toString());
     }
 }

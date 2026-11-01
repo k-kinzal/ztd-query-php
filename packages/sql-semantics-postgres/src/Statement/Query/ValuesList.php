@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,9 +29,10 @@ use SqlSemantics\Statement\Statement;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("VALUES (1, 'a'), (2, NULL)");
  *     [$query->field(1)->name->value, $query->field(1)->type->descriptor->name(), $query->field(1)->nullability->name] // => ['column2', 'text', 'Nullable']
  */
-final class ValuesList implements Statement, Query, OutputNaming
+final class ValuesList extends \SqlSemantics\Statement\SqlStatement implements Statement, Query, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ValuesRow> The rows in written order
@@ -42,8 +42,14 @@ final class ValuesList implements Statement, Query, OutputNaming
     /**
      * @param list<ValuesRow> $rows The rows in written order; at least one
      */
-    public function __construct(array $rows)
+    public function __construct(array $rows, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->rows = Check::listOf($rows, ValuesRow::class, 'A VALUES list holds at least one row.', 1);
     }
 

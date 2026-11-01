@@ -48,6 +48,8 @@ jobs:
             split_repository: sql-semantics-sqlite
           - local_path: sql-catalog
             split_repository: sql-catalog
+          - local_path: mysql-memory
+            split_repository: mysql-memory
           - local_path: requirements
             split_repository: requirements
           - local_path: ztd-query-mysql

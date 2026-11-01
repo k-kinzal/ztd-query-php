@@ -19,6 +19,6 @@ final class AlterCompositeTest extends TestCase
 
     public function testDeriveStatementDerivesTheChanges(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a')->diagnostics());
     }
 }

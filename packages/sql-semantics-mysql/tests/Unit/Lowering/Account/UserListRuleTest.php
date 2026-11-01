@@ -45,6 +45,14 @@ final class UserListRuleTest extends TestCase
         self::assertSame('GRANT SELECT ON *.* TO a, b IDENTIFIED WITH p', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant select on *.* to a, b identified with p')->toString());
     }
 
+    public function testLegacyAlteredRetainsPasswordHashesWithTheirCondition(): void
+    {
+        $sql = "ALTER USER u IDENTIFIED BY PASSWORD '*0123456789012345678901234567890123456789'";
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze($sql);
+        self::assertSame($sql, $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash::class, $statement->diagnostics()[0]);
+    }
+
     public function testGrantLowersEveryForm(): void
     {
         self::assertSame("CREATE USER u IDENTIFIED WITH p BY 'x'", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("create user u identified with p by 'x'")->toString());

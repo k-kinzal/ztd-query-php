@@ -26,6 +26,6 @@ final class AttributesTest extends TestCase
           0 => 'conflicting constraint properties',
           1 => 'CHECK constraints cannot be marked DEFERRABLE',
           2 => 'conflicting constraint properties',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 }

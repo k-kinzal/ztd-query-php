@@ -19,8 +19,8 @@ final class HistogramTest extends TestCase
     public function testColumnsAnswersTheColumnNames(): void
     {
         $analyze = (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE t DROP HISTOGRAM ON a, b');
-        self::assertInstanceOf(AnalyzeTable::class, $analyze->statement);
+        self::assertInstanceOf(AnalyzeTable::class, $analyze);
 
-        self::assertSame('b', $analyze->statement->histogram?->columns()[1]->value);
+        self::assertSame('b', $analyze->histogram?->columns()[1]->value);
     }
 }

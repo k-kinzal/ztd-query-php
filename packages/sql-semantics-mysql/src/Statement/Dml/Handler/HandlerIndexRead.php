@@ -6,13 +6,12 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Handler;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
+use SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HANDLER ... READ index FIRST|NEXT|PREV|LAST: reads rows of an open handler in the order of an index.
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading an index read of a handler
  *     $read = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('HANDLER h READ idx PREV');
- *     [$read->statement->index->value, $read->statement->direction, $read->toString()] // => ['idx', \SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection::Previous, 'HANDLER h READ idx PREV']
+ *     [$read->index->value, $read->direction, $read->toString()] // => ['idx', \SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection::Previous, 'HANDLER h READ idx PREV']
  */
-final class HandlerIndexRead implements Statement
+final class HandlerIndexRead extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param OpenHandler $handler The handler read from
@@ -36,8 +35,13 @@ final class HandlerIndexRead implements Statement
      * @param Scalar|null $where The condition rows must meet
      * @param Limit|null $limit The most rows read
      */
-    public function __construct(public readonly OpenHandler $handler, public readonly Name $index, public readonly IndexDirection $direction, public readonly ?Scalar $where = null, public readonly ?Limit $limit = null)
+    public function __construct(public readonly OpenHandler $handler, public readonly Name $index, public readonly IndexDirection $direction, public readonly ?Scalar $where = null, public readonly ?Limit $limit = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Dml\Handler\HandlerOperands())->check($this);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

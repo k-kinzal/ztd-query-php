@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\LiteralExpression;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
 
@@ -22,11 +21,12 @@ use SqlSemantics\Statement\Type\NullOnly;
  * @visibility public
  * @example Typing a bare NULL
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = NULL');
- *     $query->facts->scalar($query->statement->where->right)->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
+ *     $query->query->where->right->scalarInformation()->nullability // => \SqlSemantics\Statement\Type\Nullability::Nullable
  */
-final class NullLiteral implements Scalar
+final class NullLiteral implements LiteralExpression
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Derives the NULL-only type.
@@ -42,5 +42,14 @@ final class NullLiteral implements Scalar
     public function render(Output $out): void
     {
         $out->keyword('NULL');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 }

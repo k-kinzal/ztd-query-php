@@ -9,7 +9,9 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
@@ -34,7 +36,7 @@ final class QuantifiedComparisonTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], true));
 
         self::assertInstanceOf(QuantifiedComparison::class, $comparison);
-        self::assertSame(Quantifier::Any, $comparison->quantifier);
+        self::assertSame(Quantifier::Some, $comparison->quantifier);
         self::assertSame(Nullability::NotNull, $derivation->scalar($comparison, $derivation->environment())->nullability);
     }
 
@@ -59,5 +61,64 @@ final class QuantifiedComparisonTest extends TestCase
         $this->expectExceptionMessage('The operand of a quantified comparison needs a grouping to keep its place.');
 
         new QuantifiedComparison(new TruthTest(new NumberLiteral('1'), Truth::True), ComparisonOperator::Equal, Quantifier::All, $comparison->query);
+    }
+
+    public function testDeriveScalarComparesRowsForEqualAny(): void
+    {
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ANY (SELECT 1, 2)')->diagnostics());
+    }
+
+    public function testEqualAllRetainsARowOperandForExecution(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) = ALL (SELECT 1, 2)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertNotEmpty($statement->diagnostics());
+    }
+
+    public function testNullSafeEqualityCannotBeQuantified(): void
+    {
+        $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new NumberLiteral('1'))]);
+        $this->expectExceptionMessage('Null-safe equality is not a quantified comparison operator.');
+
+        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::NullSafeEqual, Quantifier::Any, $query);
+    }
+
+    public function testRenderExcludesAnIntoDestinationWithinTheSelect(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'target'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        $this->expectExceptionMessage('An expression subquery cannot have an INTO destination.');
+        new QuantifiedComparison(new NumberLiteral('1'), ComparisonOperator::Equal, Quantifier::Any, $operation->query);
+    }
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease, string}>
+     */
+    public static function providerWrittenForms(): iterable
+    {
+        foreach (\SqlSemantics\Contract\GrammarRelease::cases() as $release) {
+            if ($release->database() !== 'mysql') {
+                continue;
+            }
+            foreach (['1 = SOME(SELECT 1)', '(1, 2) = SOME(SELECT 1, 2)', '1 <> ALL(SELECT 1)', '1 = ANY(SELECT 1)'] as $expression) {
+                foreach (['', ' AS chosen'] as $alias) {
+                    yield $release->value . '/statement/' . $expression . $alias => [$release, 'SELECT ' . $expression . $alias];
+                    yield $release->value . '/program/' . $expression . $alias => [$release, 'CREATE PROCEDURE wrapper() SELECT ' . $expression . $alias];
+                }
+            }
+        }
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerWrittenForms')]
+    public function testRenderPreservesTheStructureBeforeOutputSpelling(\SqlSemantics\Contract\GrammarRelease $release, string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release->value);
+        $formatter = new \SqlFormatter\Facade\Formatter($semantics->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), $semantics->analyze($sql));
+        $information = $statement->statementInformation();
+        $out = new Output(new \SqlSemantics\Platform\MySql\Rendering\Codec($release, $information->profile->lexical, $information->client));
+        $statement->render($out);
+        self::assertSame($formatter->format($sql), $formatter->format((new Lexical())->join($out->canonical())));
+        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
     }
 }

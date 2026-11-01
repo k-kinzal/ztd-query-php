@@ -29,8 +29,8 @@ final class TypeNameRuleTest extends TestCase
     public function testNamedIsNullWhenNoTypeIsWritten(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $cast = $semantics->analyze('SELECT CAST(a AS) FROM t')->statement;
-        $table = $semantics->analyze('CREATE TABLE t (a)')->statement;
+        $cast = $semantics->analyze('SELECT CAST(a AS) FROM t');
+        $table = $semantics->analyze('CREATE TABLE t (a)');
 
         self::assertInstanceOf(Select::class, $cast);
         self::assertInstanceOf(ResultColumn::class, $cast->columns[0]);
@@ -44,10 +44,10 @@ final class TypeNameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a UNSIGNED BIG INT, b Text)');
 
-        self::assertInstanceOf(CreateTable::class, $operation->statement);
-        self::assertSame(['UNSIGNED', 'BIG', 'INT'], array_map(static fn (Word $word): string => $word->name->value, $operation->statement->columns[0]->type->words ?? []));
-        self::assertSame(['Text'], array_map(static fn (Word $word): string => $word->name->value, $operation->statement->columns[1]->type->words ?? []));
-        self::assertSame([], $operation->statement->columns[0]->type->arguments ?? null);
+        self::assertInstanceOf(CreateTable::class, $operation);
+        self::assertSame(['UNSIGNED', 'BIG', 'INT'], array_map(static fn (Word $word): string => $word->name->value, $operation->columns[0]->type->words ?? []));
+        self::assertSame(['Text'], array_map(static fn (Word $word): string => $word->name->value, $operation->columns[1]->type->words ?? []));
+        self::assertSame([], $operation->columns[0]->type->arguments ?? null);
         self::assertSame('CREATE TABLE t (a UNSIGNED BIG INT, b Text)', $operation->toString());
     }
 
@@ -55,7 +55,7 @@ final class TypeNameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS VARCHAR(10)) AS c1, CAST(a AS DECIMAL(+10, -2)) AS c2 FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([[[null, '10']], [[NumberSign::Plus, '10'], [NumberSign::Minus, '2']]], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(Cast::class, $column->expression);
@@ -65,7 +65,7 @@ final class TypeNameRuleTest extends TestCase
 
                 return [$argument->sign, $argument->number->digits];
             }, $column->expression->target->arguments ?? []);
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT CAST(a AS VARCHAR(10)) AS c1, CAST(a AS DECIMAL(+10,-2)) AS c2 FROM t', $operation->toString());
     }
 
@@ -73,10 +73,10 @@ final class TypeNameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS "my" [type] `t` \'q\' plain) FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(Cast::class, $operation->statement->columns[0]->expression);
-        $words = $operation->statement->columns[0]->expression->target->words ?? [];
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(Cast::class, $operation->columns[0]->expression);
+        $words = $operation->columns[0]->expression->target->words ?? [];
         self::assertSame(['my', 'type', 't', 'q', 'plain'], array_map(static fn (Word $word): string => $word->name->value, $words));
         self::assertSame([WordQuote::Double, WordQuote::Bracket, WordQuote::Backtick, WordQuote::Single, WordQuote::Bare], array_map(static fn (Word $word): WordQuote => $word->quote, $words));
         self::assertSame('SELECT CAST(a AS "my" [type] `t` \'q\' plain) FROM t', $operation->toString());
@@ -86,10 +86,10 @@ final class TypeNameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS N(1.5, -0x10)) AS c1 FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(Cast::class, $operation->statement->columns[0]->expression);
-        $arguments = $operation->statement->columns[0]->expression->target->arguments ?? [];
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(Cast::class, $operation->columns[0]->expression);
+        $arguments = $operation->columns[0]->expression->target->arguments ?? [];
         self::assertCount(2, $arguments);
         self::assertNull($arguments[0]->sign);
         self::assertInstanceOf(RealLiteral::class, $arguments[0]->number);
@@ -104,10 +104,10 @@ final class TypeNameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS N(3, +.5)) AS c1 FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(Cast::class, $operation->statement->columns[0]->expression);
-        $arguments = $operation->statement->columns[0]->expression->target->arguments ?? [];
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(Cast::class, $operation->columns[0]->expression);
+        $arguments = $operation->columns[0]->expression->target->arguments ?? [];
         self::assertCount(2, $arguments);
         self::assertNull($arguments[0]->sign);
         self::assertSame(NumberSign::Plus, $arguments[1]->sign);
@@ -120,10 +120,10 @@ final class TypeNameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CAST(a AS N(-1e2)) FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(Cast::class, $operation->statement->columns[0]->expression);
-        $arguments = $operation->statement->columns[0]->expression->target->arguments ?? [];
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(Cast::class, $operation->columns[0]->expression);
+        $arguments = $operation->columns[0]->expression->target->arguments ?? [];
         self::assertCount(1, $arguments);
         self::assertSame(NumberSign::Minus, $arguments[0]->sign);
         self::assertInstanceOf(RealLiteral::class, $arguments[0]->number);

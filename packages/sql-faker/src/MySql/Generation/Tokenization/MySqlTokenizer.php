@@ -25,11 +25,15 @@ final class MySqlTokenizer
      * @param array<string, string> $symbolTokens Terminal name by upper-cased keyword or operator
      * @param array<string, string> $functionTokens Terminal name by upper-cased function name
      * @param bool $dollarQuotedStrings Whether the server build accepts `$$ ... $$` strings
+     * @param bool $highNotPrecedence Whether NOT has unary precedence
+     * @param bool $pipesAsConcat Whether || denotes concatenation
      */
     public function __construct(
         private readonly array $symbolTokens,
         private readonly array $functionTokens,
         private readonly bool $dollarQuotedStrings,
+        private readonly bool $highNotPrecedence = false,
+        private readonly bool $pipesAsConcat = false,
     ) {
     }
 
@@ -239,7 +243,9 @@ final class MySqlTokenizer
         $word = strtoupper($match[0]);
         $asFunction = ($sql[$offset] ?? null) === '(' ? ($this->functionTokens[$word] ?? null) : null;
 
-        return $asFunction ?? $this->symbolTokens[$word] ?? 'IDENT';
+        $token = $asFunction ?? $this->symbolTokens[$word] ?? 'IDENT';
+
+        return $token === 'NOT_SYM' && $this->highNotPrecedence ? 'NOT2_SYM' : $token;
     }
 
     /**
@@ -260,7 +266,7 @@ final class MySqlTokenizer
         $offset += strlen($operator);
         $token = $this->symbolTokens[$operator] ?? $operator;
 
-        return $token === 'OR_OR_SYM' ? 'OR2_SYM' : $token;
+        return $token === 'OR_OR_SYM' && !$this->pipesAsConcat ? 'OR2_SYM' : $token;
     }
 
     /**
@@ -342,20 +348,11 @@ final class MySqlTokenizer
      *
      * @param string $integer The digits as written
      *
-     * @return string One of NUM, LONG_NUM or ULONGLONG_NUM
+     * @return string One of NUM, LONG_NUM, ULONGLONG_NUM or DECIMAL_NUM
      */
     public function integerToken(string $integer): string
     {
-        $normalized = ltrim($integer, '0');
-        $normalized = $normalized === '' ? '0' : $normalized;
-
-        foreach ([['2147483647', 'NUM'], ['9223372036854775807', 'LONG_NUM'], ['18446744073709551615', 'ULONGLONG_NUM']] as [$maximum, $token]) {
-            if (strlen($normalized) < strlen($maximum) || (strlen($normalized) === strlen($maximum) && strcmp($normalized, $maximum) <= 0)) {
-                return $token;
-            }
-        }
-
-        return 'DECIMAL_NUM';
+        return IntegerToken::of($integer);
     }
 
     /**

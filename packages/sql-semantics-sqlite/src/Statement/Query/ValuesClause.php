@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -34,11 +33,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the output of a VALUES clause
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("VALUES (1, 'a'), (2, NULL)");
- *     [count($query->statement->rows), $query->field(1)->name->value, $query->field(1)->nullability] // => [2, 'column2', \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     [count($query->rows), $query->field(1)->name->value, $query->field(1)->nullability] // => [2, 'column2', \SqlSemantics\Statement\Type\Nullability::Nullable]
  */
-final class ValuesClause implements Statement, Query
+final class ValuesClause extends \SqlSemantics\Statement\SqlStatement implements Statement, Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ValueRow> The rows in written order
@@ -48,8 +48,14 @@ final class ValuesClause implements Statement, Query
     /**
      * @param list<ValueRow> $rows The rows in written order; at least one
      */
-    public function __construct(array $rows)
+    public function __construct(array $rows, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->rows = Check::listOf($rows, ValueRow::class, 'A VALUES clause has at least one row.', 1);
     }
 

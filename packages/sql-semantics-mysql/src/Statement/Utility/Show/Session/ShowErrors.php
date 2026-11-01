@@ -8,9 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW ERRORS: the errors of the last statement of the session.
@@ -26,15 +25,19 @@ use SqlSemantics\Statement\Statement;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW ERRORS LIMIT 1, 2');
  *     [$show->field(2)->name?->value, $show->toString()] // => ['Message', 'SHOW ERRORS LIMIT 1, 2']
  */
-final class ShowErrors implements Statement
+final class ShowErrors extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ?Limit $limit The LIMIT clause
      */
-    public function __construct(public readonly ?Limit $limit = null)
+    public function __construct(public readonly ?Limit $limit = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

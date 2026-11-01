@@ -21,7 +21,7 @@ final class AggregationTest extends TestCase
 {
     public function testAggregatesFindsABuiltInAggregateCallAmongTheResultColumns(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT a, max(b) FROM t')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT a, max(b) FROM t');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertTrue((new Aggregation())->aggregates($statement->columns));
@@ -30,7 +30,7 @@ final class AggregationTest extends TestCase
 
     public function testAggregatesIgnoresWindowedAndScalarCalls(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT count(*) OVER (), abs(a), nosuch(a) FROM t')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT count(*) OVER (), abs(a), nosuch(a) FROM t');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertFalse((new Aggregation())->aggregates($statement->columns));
@@ -38,7 +38,7 @@ final class AggregationTest extends TestCase
 
     public function testAggregatesLooksIntoNestedQueriesAndOrderingTerms(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT count(*) FROM u) FROM t ORDER BY sum(a)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT (SELECT count(*) FROM u) FROM t ORDER BY sum(a)');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertTrue((new Aggregation())->aggregates([$statement->columns[0]]));

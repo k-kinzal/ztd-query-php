@@ -24,7 +24,7 @@ final class AlterServerTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("ALTER SERVER s OPTIONS (HOST 'h')");
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

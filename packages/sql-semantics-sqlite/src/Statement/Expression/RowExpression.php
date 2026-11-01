@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -26,13 +25,14 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the elements of a row value
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT (a, b) = (1, 2) FROM t');
- *     count($query->statement->columns[0]->expression->left->items) // => 2
+ *     count($query->columns[0]->expression->left->items) // => 2
  * @example Refusing a row of one element, which is a grouping
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class RowExpression implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The elements in order
@@ -42,8 +42,11 @@ final class RowExpression implements Scalar
     /**
      * @param list<Scalar> $items The elements in order; at least two
      */
-    public function __construct(array $items)
+    public function __construct(array $items, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->items = Check::listOf($items, Scalar::class, 'A row value has at least two elements.', 2);
     }
 

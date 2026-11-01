@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Statement\Reference\Table;
 
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -15,16 +17,23 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
  *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
- *     $query->facts->relation($query->inputRelation())->table->table === $table->declarations()[0] // => true
+ *     $query->inputRelation()->relationInformation()->table->table === $table->declarations()[0] // => true
  */
 final class DeclaredTable implements TableResolution
 {
     use Snapshot;
 
     /**
+ * The declaration identity in the namespace where this occurrence resolved.
+ */
+    public readonly QualifiedName $name;
+
+    /**
      * @param Table $table The declaration object of the context
+     * @param Name|null $schema The searched namespace when the declaration is unqualified
      */
-    public function __construct(public readonly Table $table)
+    public function __construct(public readonly Table $table, ?Name $schema = null)
     {
+        $this->name = new QualifiedName($table->name->name, $table->name->schema ?? $schema, $table->name->catalog);
     }
 }

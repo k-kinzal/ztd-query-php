@@ -19,7 +19,7 @@ final class CreateLanguageTest extends TestCase
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE LANGUAGE l HANDLER h NO VALIDATOR')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE LANGUAGE l HANDLER h NO VALIDATOR')->diagnostics());
     }
 
     public function testRejectsAHandlerClauseAsValidator(): void

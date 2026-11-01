@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\FetchCounts;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * FETCH FIRST count ROWS ONLY or WITH TIES: the SQL-standard row limit.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading FETCH FIRST WITH TIES
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 ORDER BY 1 FETCH NEXT 2 ROW WITH TIES');
- *     [$query->statement->options->limit->count->withTies, $query->toString()] // => [true, 'SELECT 1 ORDER BY 1 FETCH FIRST 2 ROWS WITH TIES']
+ *     [$query->options->limit->count->withTies, $query->toString()] // => [true, 'SELECT 1 ORDER BY 1 FETCH FIRST 2 ROWS WITH TIES']
  * @example Refusing a count that would need parentheses
  *     $one = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));
  *     $two = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'));
@@ -31,13 +30,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FetchFirst implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|null $count The row count; null for one row
      * @param bool $withTies Whether rows that tie with the last row are returned too
      */
-    public function __construct(public readonly ?Scalar $count = null, public readonly bool $withTies = false)
+    public function __construct(public readonly ?Scalar $count = null, public readonly bool $withTies = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($count === null || (new FetchCounts())->admits($count), 'A FETCH FIRST count is a primary expression or a signed numeric constant.');
     }

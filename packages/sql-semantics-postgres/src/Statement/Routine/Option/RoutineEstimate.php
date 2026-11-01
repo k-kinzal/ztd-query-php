@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `COST number` or `ROWS number`: a planner estimate for the routine.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RoutineEstimate implements RoutineOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param EstimateKind $kind What the estimate states
      * @param SignedNumber $value The estimate
      */
-    public function __construct(public readonly EstimateKind $kind, public readonly SignedNumber $value)
+    public function __construct(public readonly EstimateKind $kind, public readonly SignedNumber $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

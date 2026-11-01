@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Where a new enum label goes: BEFORE or AFTER an existing label.
@@ -21,13 +20,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class EnumPosition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $after Whether the label goes after the neighbor instead of before it
      * @param StringConstant $neighbor The existing label
      */
-    public function __construct(public readonly bool $after, public readonly StringConstant $neighbor)
+    public function __construct(public readonly bool $after, public readonly StringConstant $neighbor, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

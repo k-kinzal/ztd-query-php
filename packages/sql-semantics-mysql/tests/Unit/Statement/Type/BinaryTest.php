@@ -117,4 +117,9 @@ final class BinaryTest extends TestCase
 
         new Binary(BinaryKind::Blob, '');
     }
+    public function testValueRequiresTheLengthOfAVaryingDeclaration(): void
+    {
+        $this->expectExceptionMessage('A VARBINARY declaration requires a length.');
+        new Binary(BinaryKind::VarBinary);
+    }
 }

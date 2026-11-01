@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A character set at a position that names one: a character set name or the keyword DEFAULT.
@@ -25,13 +24,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CharsetName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $name The character set name, or null for the keyword DEFAULT
      */
-    public function __construct(public readonly ?Name $name)
+    public function __construct(public readonly ?Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($name === null || \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($name->value) !== null, 'A character set name is one the server knows.');
     }
 
     /**

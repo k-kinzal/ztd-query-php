@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * OWNER TO: changes the owner.
@@ -24,12 +23,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class OwnerTo implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RoleSpec $owner The new owner
      */
-    public function __construct(public readonly RoleSpec $owner)
+    public function __construct(public readonly RoleSpec $owner, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

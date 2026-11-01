@@ -9,9 +9,8 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSelection;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER USER [IF EXISTS] account DEFAULT ROLE {ALL | NONE | role, …}` (8.0+): a request to set the default roles of an account.
@@ -21,27 +20,32 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Setting every granted role as default
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter user u default role all')->statement->roles->set // => \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter user u default role all')->roles->set // => \SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet::All
  */
-final class AlterDefaultRole implements Statement
+final class AlterDefaultRole extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $ifExists Whether IF EXISTS is written
      * @param Account $user The account
      * @param RoleSelection $roles The default roles: named roles, ALL or NONE
      */
-    public function __construct(public readonly bool $ifExists, public readonly Account $user, public readonly RoleSelection $roles)
+    public function __construct(public readonly bool $ifExists, public readonly Account $user, public readonly RoleSelection $roles, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($roles->set !== RoleSet::Default && ($roles->set !== RoleSet::All || $roles->roles === []), 'DEFAULT ROLE names roles, ALL or NONE.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives nothing: the statement names no relation and no expression.
+     * Derives the account name conditions without resolving a runtime catalog.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user, $this->roles]);
     }
 
     /**

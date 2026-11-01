@@ -40,11 +40,11 @@ final class ConditionDiagnosticsTest extends TestCase
     public function testRenderWritesTheAnalyzedInformation(): void
     {
         $get = (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT, @c = CURSOR_NAME');
-        $statement = $get->statement;
+        $statement = $get;
         self::assertInstanceOf(GetDiagnostics::class, $statement);
         self::assertInstanceOf(ConditionDiagnostics::class, $statement->information);
 
-        self::assertEquals(new NumberLiteral('2'), $statement->information->number);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new NumberLiteral('2'), $statement->information->number));
         self::assertSame(
             [ConditionItemName::MessageText, ConditionItemName::CursorName],
             array_map(static fn (InformationItem $item): ConditionItemName|StatementItemName => $item->item, $statement->information->items),

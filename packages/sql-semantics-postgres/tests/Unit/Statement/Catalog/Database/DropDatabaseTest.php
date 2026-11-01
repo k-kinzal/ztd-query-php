@@ -19,6 +19,6 @@ final class DropDatabaseTest extends TestCase
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP DATABASE d')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP DATABASE d')->diagnostics());
     }
 }

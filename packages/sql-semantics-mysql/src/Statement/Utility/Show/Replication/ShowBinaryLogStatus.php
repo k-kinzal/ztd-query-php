@@ -8,9 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW BINARY LOG STATUS (SHOW MASTER STATUS): the position in the binary log of the source.
@@ -27,15 +26,19 @@ use SqlSemantics\Statement\Statement;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW BINARY LOG STATUS');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['File', 'SHOW BINARY LOG STATUS']
  */
-final class ShowBinaryLogStatus implements Statement
+final class ShowBinaryLogStatus extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Terminology $terminology Whether MASTER STATUS or BINARY LOG STATUS is written
      */
-    public function __construct(public readonly Terminology $terminology)
+    public function __construct(public readonly Terminology $terminology, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -43,6 +46,9 @@ final class ShowBinaryLogStatus implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->terminology === Terminology::Legacy) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ShowMasterStatus, $derivation);
+        }
         (new ShowFacts())->rows($derivation, Report::LogStatus);
     }
 

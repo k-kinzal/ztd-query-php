@@ -15,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -33,17 +32,17 @@ final class DerivedQueryTest extends TestCase
         $query = $semantics->analyze('SELECT * FROM (SELECT a, b AS bb, a + 1 FROM t) AS d', [$create]);
         $fields = $query->fields();
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(DerivedQuery::class, $query->statement->from);
-        self::assertSame('d', $query->statement->from->alias?->value);
-        self::assertInstanceOf(Select::class, $query->statement->from->query);
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(DerivedQuery::class, $query->from);
+        self::assertSame('d', $query->from->alias?->value);
+        self::assertInstanceOf(Select::class, $query->from->query);
         self::assertNotNull($fields);
         self::assertSame(['a', 'bb', 'a + 1'], array_map(static fn (Field $field): ?string => $field->name?->value, $fields->items));
         self::assertSame($create->declarations()[0]->columns[2], $query->field('bb')->column());
         self::assertSame(Nullability::NotNull, $query->field('a')->nullability);
-        self::assertNull($query->facts->relation($query->statement->from)->table);
-        self::assertCount(3, $query->facts->relation($query->statement->from)->shape->slots);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertNull($query->from->relationInformation()->table);
+        self::assertCount(3, $query->from->relationInformation()->shape->slots);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveRelationKeepsDuplicateNamesApartLikeSqlite(): void
@@ -83,12 +82,12 @@ final class DerivedQueryTest extends TestCase
     public function testRenderWritesTheQueryInParenthesesWithItsAlias(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $built = new Operation($semantics->context(), new Select([new Star()], new DerivedQuery(new Select([new ResultColumn(new IntegerLiteral('1'), new Name('q'))]), new Name('d'))));
+        $built = Semantics::fromStatement($semantics->context(), new Select([new Star()], new DerivedQuery(new Select([new ResultColumn(new IntegerLiteral('1'), new Name('q'))]), new Name('d'))));
 
         self::assertSame('SELECT * FROM (SELECT 1 AS q) AS d', $built->toString());
         self::assertSame('SELECT * FROM (SELECT 1)', $semantics->analyze('select * from (select 1)')->toString());
         self::assertSame('SELECT q FROM (SELECT 1 AS q) d', $semantics->analyze('SELECT q FROM (SELECT 1 AS q) d')->toString());
-        self::assertSame('SELECT * FROM (SELECT 1 AS q) d', (new Operation($semantics->context(), new Select([new Star()], new DerivedQuery(new Select([new ResultColumn(new IntegerLiteral('1'), new Name('q'))]), new Name('d'), false))))->toString());
+        self::assertSame('SELECT * FROM (SELECT 1 AS q) d', (Semantics::fromStatement($semantics->context(), new Select([new Star()], new DerivedQuery(new Select([new ResultColumn(new IntegerLiteral('1'), new Name('q'))]), new Name('d'), false))))->toString());
     }
 
     public function testRenderRefusesToLeaveOutAsWithoutAnAlias(): void

@@ -30,7 +30,7 @@ final class FunctionTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT * FROM f() AS (a integer)');
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $from = $select->from;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Relation\FunctionTable::class, $from);

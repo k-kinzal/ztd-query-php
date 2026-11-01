@@ -18,6 +18,8 @@ use SqlSemantics\Rendering\Output;
  */
 enum MappingUser: string implements \SqlSemantics\Statement\Node
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case User = 'USER';
 
     /**

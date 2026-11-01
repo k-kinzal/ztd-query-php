@@ -30,14 +30,14 @@ final class PredicateRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([NullTestForm::IsNull, NullTestForm::NotNull, NullTestForm::NotNullWords], array_map(static function (object $column): NullTestForm {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(NullTest::class, $column->expression);
             self::assertInstanceOf(ColumnUse::class, $column->expression->operand);
 
             return $column->expression->form;
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t', $operation->toString());
     }
 
@@ -45,11 +45,11 @@ final class PredicateRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a BETWEEN 1 AND 2, a NOT BETWEEN 1 AND 2 FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[1]);
-        $plain = $operation->statement->columns[0]->expression;
-        $negated = $operation->statement->columns[1]->expression;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[1]);
+        $plain = $operation->columns[0]->expression;
+        $negated = $operation->columns[1]->expression;
         self::assertInstanceOf(Between::class, $plain);
         self::assertInstanceOf(Between::class, $negated);
         self::assertFalse($plain->negated);
@@ -62,12 +62,12 @@ final class PredicateRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a IN (1, 2), a NOT IN (), a IN (SELECT 1), a NOT IN main.u FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         $expressions = array_map(static function (object $column): object {
             self::assertInstanceOf(ResultColumn::class, $column);
 
             return $column->expression;
-        }, $operation->statement->columns);
+        }, $operation->columns);
         self::assertInstanceOf(InList::class, $expressions[0]);
         self::assertCount(2, $expressions[0]->items);
         self::assertFalse($expressions[0]->negated);
@@ -87,14 +87,14 @@ final class PredicateRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a LIKE 'x', a NOT LIKE 'x', a GLOB 'x', a NOT REGEXP 'x', a MATCH 'x' FROM t");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([[PatternOperator::Like, false], [PatternOperator::Like, true], [PatternOperator::Glob, false], [PatternOperator::Regexp, true], [PatternOperator::Match, false]], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(PatternMatch::class, $column->expression);
             self::assertNull($column->expression->escape);
 
             return [$column->expression->operator, $column->expression->negated];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame("SELECT a LIKE 'x', a NOT LIKE 'x', a GLOB 'x', a NOT REGEXP 'x', a MATCH 'x' FROM t", $operation->toString());
     }
 
@@ -102,11 +102,11 @@ final class PredicateRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a LIKE 'x' ESCAPE '!', a NOT GLOB b ESCAPE c FROM t");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
-        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[1]);
-        $like = $operation->statement->columns[0]->expression;
-        $glob = $operation->statement->columns[1]->expression;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $operation->columns[1]);
+        $like = $operation->columns[0]->expression;
+        $glob = $operation->columns[1]->expression;
         self::assertInstanceOf(PatternMatch::class, $like);
         self::assertInstanceOf(PatternMatch::class, $glob);
         self::assertNotNull($like->escape);
@@ -120,12 +120,12 @@ final class PredicateRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 BETWEEN 0 AND 2, 1 NOT BETWEEN 0 AND 2, 1 IN (1), 1 NOT IN (1)');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([false, true, false, true], array_map(static function (object $column): ?bool {
             self::assertInstanceOf(ResultColumn::class, $column);
             $predicate = $column->expression;
 
             return $predicate instanceof Between || $predicate instanceof InList ? $predicate->negated : null;
-        }, $operation->statement->columns));
+        }, $operation->columns));
     }
 }

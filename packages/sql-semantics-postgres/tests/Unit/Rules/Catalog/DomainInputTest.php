@@ -14,11 +14,11 @@ final class DomainInputTest extends TestCase
 {
     public function testEnvironmentSeesValue(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DOMAIN d text CHECK (length(VALUE) > 0)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DOMAIN d text CHECK (length(VALUE) > 0)')->diagnostics());
     }
 
     public function testUndeclaredDependsOnTheDomain(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN s.d ADD CHECK (VALUE IS NOT NULL)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN s.d ADD CHECK (VALUE IS NOT NULL)')->diagnostics());
     }
 }

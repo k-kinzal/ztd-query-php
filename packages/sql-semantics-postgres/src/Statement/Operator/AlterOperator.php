@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKin
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorArity;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the changed attributes
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER OPERATOR = (int4, int4) SET (restrict = NONE)');
- *     $operation->statement->attributes[0]->attribute->name->value // => 'restrict'
+ *     $operation->attributes[0]->attribute->name->value // => 'restrict'
  */
-final class AlterOperator implements Statement
+final class AlterOperator extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AttributeChange> The changed attributes in written order
@@ -44,8 +43,11 @@ final class AlterOperator implements Statement
      * @param OperatorSignature $operator The operator
      * @param list<AttributeChange> $attributes The changed attributes, read as ALTER OPERATOR reads them; at least one
      */
-    public function __construct(public readonly OperatorSignature $operator, array $attributes)
+    public function __construct(public readonly OperatorSignature $operator, array $attributes, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->attributes = Check::listOf($attributes, AttributeChange::class, 'ALTER OPERATOR ... SET changes at least one attribute.', 1);
         foreach ($this->attributes as $change) {
             Check::input($change->attribute->known === null || $change->attribute->known instanceof OperatorChangeAttribute, 'ALTER OPERATOR reads the attributes it can change.');

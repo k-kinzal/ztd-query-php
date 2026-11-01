@@ -19,8 +19,9 @@ final class ReindexTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('REINDEX nocase', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertFalse($operation->facts->covers($operation->statement));
+        self::assertSame([], $operation->diagnostics());
+        self::assertTrue($operation->hasStatementInformation());
+        self::assertNotInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
     }
 
     public function testRenderWritesTheOptionalTarget(): void
@@ -28,8 +29,8 @@ final class ReindexTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $qualified = $semantics->analyze('reindex main.users');
 
-        self::assertInstanceOf(Reindex::class, $qualified->statement);
-        self::assertSame('main', $qualified->statement->target?->schema?->value);
+        self::assertInstanceOf(Reindex::class, $qualified);
+        self::assertSame('main', $qualified->target?->schema?->value);
         self::assertSame('REINDEX main.users', $qualified->toString());
         self::assertSame('REINDEX', $semantics->analyze('REINDEX')->toString());
     }

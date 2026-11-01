@@ -20,11 +20,11 @@ final class ColumnsMethodTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
 
-        self::assertSame('Column b does not exist in the table.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS (a, b) (PARTITION p VALUES LESS THAN (1, 2))', [$table])->facts->diagnostics[0]->message());
+        self::assertSame('Column b does not exist in the table.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS (a, b) (PARTITION p VALUES LESS THAN (1, 2))', [$table])->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheColumns(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b) (PARTITION p VALUES IN ((1, 2)))', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b) (PARTITION p VALUES IN ((1, 2)))')->toString());
     }
 }

@@ -12,7 +12,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `OVERLAY (string PLACING replacement FROM start [FOR count])`: a substring replaced.
@@ -31,7 +30,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Overlay implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $string The string changed
@@ -39,8 +39,11 @@ final class Overlay implements Scalar, OutputNaming
      * @param Scalar $start The position of the first character replaced
      * @param Scalar|null $count The number of characters replaced; the length of the replacement when null
      */
-    public function __construct(public readonly Scalar $string, public readonly Scalar $replacement, public readonly Scalar $start, public readonly ?Scalar $count = null)
+    public function __construct(public readonly Scalar $string, public readonly Scalar $replacement, public readonly Scalar $start, public readonly ?Scalar $count = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

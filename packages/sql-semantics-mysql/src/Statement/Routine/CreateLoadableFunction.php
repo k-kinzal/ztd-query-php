@@ -8,10 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * CREATE [AGGREGATE] FUNCTION ... SONAME: registers a loadable function of a shared library.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a loadable function
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'");
- *     [$create->statement->aggregate, $create->statement->returns->value, $create->statement->library->value] // => [true, 'REAL', 'udf.so']
+ *     [$create->aggregate, $create->returns->value, $create->library->value] // => [true, 'REAL', 'udf.so']
  */
-final class CreateLoadableFunction implements Statement
+final class CreateLoadableFunction extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The function name
@@ -44,8 +43,14 @@ final class CreateLoadableFunction implements Statement
         public readonly Text $library,
         public readonly bool $aggregate = false,
         public readonly bool $ifNotExists = false,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($library->radix === null, 'A library name is written as a quoted string.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -53,6 +58,18 @@ final class CreateLoadableFunction implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+    }
+
+    /**
+     * Tells whether the name collides with a keyword or built-in function in this release.
+     *
+     * A loadable function reports this collision before examining the library path.
+     * Observed with quoted and unquoted names on native MySQL 5.6 through 9.1.
+     */
+    public function nameCollision(\SqlSemantics\Contract\GrammarRelease $release): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rendering\Keywords($release))->contains($this->name->value)
+            || (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->exists($release, $this->name->value);
     }
 
     /**

@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,14 +38,18 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class Extract implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ExtractUnit|Name|StringConstant $field The field: a keyword, an identifier or a string constant
      * @param Scalar $source The value the field is taken from
      */
-    public function __construct(public readonly ExtractUnit|Name|StringConstant $field, public readonly Scalar $source)
+    public function __construct(public readonly ExtractUnit|Name|StringConstant $field, public readonly Scalar $source, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

@@ -29,8 +29,10 @@ use SqlSemantics\Statement\Identifier\Name;
  * identifier. An item without alias that the server names after its text
  * keeps the layout of its expression (MYSQL-ITEM-LAYOUT-001) unless the
  * expression is written exactly as its canonical rendering, which an item
- * without layout stands for; an item that names itself, such as a column
- * reference or a string (MYSQL-SELECT-ITEM-NAME-001), keeps none. Constructs: SelectOption, SelectExpression, Star, and the
+ * without layout stands for. Unqualified references also retain observable
+ * spelling because they may resolve to stored-program variables. Other
+ * self-naming items, such as qualified columns and strings, keep none.
+ * Constructs: SelectOption, SelectExpression, Star, and the
  * TableWildcard of the leaf rules. Terminates: lists are flattened
  * iteratively. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  * Status: Implemented.
@@ -90,10 +92,12 @@ final class ItemRule
     /**
      * Lowers the select options in written order.
      *
+     * @param bool $first Whether the options belong to the first query block of the statement; a derived table, a subquery or a later operand of a 5.x union is never that block
      * @return list<SelectOption>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When MySQL 5.6 or 5.7 refuses a modifier of the block while parsing it
      */
-    public function options(Node $options): array
+    public function options(Node $options, bool $first = true): array
     {
         $form = $this->lowering->form($options);
         $list = self::LISTS[$form->signature] ?? throw ImplementationGap::production($form);
@@ -105,15 +109,47 @@ final class ItemRule
             throw ImplementationGap::production($spine);
         }
         $result = [];
+        $nodes = [];
         foreach ((new Lists())->items($spine->node) as $item) {
             $option = $this->lowering->form($item);
             if ($option->signature === 'select_option: query_expression_option' || $option->signature === 'select_option: query_spec_option') {
                 $option = $this->lowering->form($option->node(0));
             }
             $result[] = self::OPTIONS[$option->signature] ?? throw ImplementationGap::production($option);
+            $nodes[] = $item;
         }
+        $this->placed($result, $nodes, $first);
 
         return $result;
+    }
+
+    /**
+     * Refuses the modifiers of a query block where MySQL 5.6 and 5.7 refuse them while parsing the block.
+     *
+     * MySQL 5.6 refuses the first of HIGH_PRIORITY, SQL_BUFFER_RESULT, SQL_CALC_FOUND_ROWS, SQL_CACHE
+     * and SQL_NO_CACHE in a block that is not the first of the statement (ER_CANT_USE_OPTION_HERE),
+     * before a conflict of its query cache modifiers; both releases then refuse a query cache
+     * modifier that meets an earlier one (ER_DUP_ARGUMENT, ER_WRONG_USAGE), at the second modifier
+     * (verified on live 5.6.51 and 5.7.44 servers). Later releases check the modifiers of the other
+     * blocks once the statement is read.
+     *
+     * @param list<SelectOption> $options The lowered modifiers in written order
+     * @param list<Node> $nodes The nodes of the modifiers
+     * @param bool $first Whether the block is the first query block of its statement
+     * @throws \SqlSemantics\Construction\RejectedInput When the release refuses a modifier of the block
+     */
+    public function placed(array $options, array $nodes, bool $first): void
+    {
+        $grammar = $this->lowering->profile->grammar;
+        $rules = new \SqlSemantics\Platform\MySql\Rules\Query\SelectOptions();
+        $index = $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$first ? $rules->placement($options) : null;
+        if ($index !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Option\RestrictedSelectOption($options[$index]), (new \SqlSemantics\Construction\SourceRanges())->span($nodes[$index])[1] ?? 0);
+        }
+        $conflict = $rules->conflict($options, $grammar);
+        if ($conflict !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($conflict[1], (new \SqlSemantics\Construction\SourceRanges())->span($nodes[$conflict[0]])[1] ?? 0);
+        }
     }
 
     /**
@@ -171,15 +207,23 @@ final class ItemRule
      */
     public function expression(Node $expression, Node $alias): SelectExpression
     {
+        return $this->resolved($this->lowering->expressions->expression($expression), $expression, $alias);
+    }
+
+    /**
+     * Names an already lowered scalar projection without creating another operand occurrence.
+     */
+    public function resolved(\SqlSemantics\Statement\Scalar $lowered, Node $expression, Node $alias): SelectExpression
+    {
         $name = $this->alias($alias);
-        $lowered = $this->lowering->expressions->expression($expression);
         $naming = new ItemNaming($this->lowering->profile);
-        $layout = $name === null && $naming->own($lowered) === null ? (new ItemLayout($this->lowering->profile->grammar))->of($expression) : null;
-        if ($layout !== null && $layout->text() === $naming->canonical($lowered)) {
+        $layout = $name === null && $naming->keeps($lowered) ? (new ItemLayout($this->lowering->profile->grammar))->of($expression, $naming->own($lowered) instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) : null;
+        $layout = $layout === null ? null : (new ItemLayout($this->lowering->profile->grammar))->names($layout, $lowered, $this->lowering->profile, $this->lowering->inputClient);
+        if ($layout !== null && $layout->tokens[0]->gap === '' && $layout->text() === $naming->canonical($lowered)) {
             $layout = null;
         }
 
-        return new SelectExpression($lowered, $name, $layout, $this->mark($alias));
+        return new SelectExpression($lowered, $name, $layout, $this->mark($alias), $layout === null ? null : $this->lowering->profile);
     }
 
     /**

@@ -61,6 +61,81 @@ Once lexical forms have been selected, the boundary between each pair of neighbo
 
 The resolved token text and separators are then concatenated to produce the SQL string. Selecting the spellings and boundaries before concatenation preserves the intended token structure.
 
+## Reproducible grammar seeds
+
+From the package directory, build or replay the committed grammar corpus with:
+
+```sh
+php bin/seeds.php build --tag mysql-8.4.7
+php bin/seeds.php check --tag mysql-8.4.7
+```
+
+`BytePlanCompiler` uses four little-endian budget bytes followed by alternating
+production and lexical choice bytes. Inputs of at most four bytes also supply
+production choices. This lets an empty-corpus fuzzer vary statement forms during
+its initial short mutations. Inputs with a separate choice body, including the
+grammar seeds, retain their original decoding.
+
+Each seed records choices for `BytePlanCompiler` under
+`GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty()`.
+The builder first visits every reachable alternative with a short terminating
+derivation. It then adds the version's recipes from `seeds/contexts/`, when
+present. Each recipe names a target alternative and the original alternative
+ordinals to choose for successive occurrences of enclosing or sibling rules.
+These choices are encoded in the seed itself; replay needs no recipe or special
+generation settings. MySQL operator-mode supplements live under `modes/HIGH_NOT_PRECEDENCE/` and `modes/PIPES_AS_CONCAT/`; their manifests record the required mode. The builder reads their target recipes from `seeds/modes/`. Replay uses the same byte plan with the corresponding provider flag, and execution must enable that mode in the database session. Diagnostic supplements under `diagnostics/` replay the original grammar with structural rewrites disabled. Their manifests record `structuralRewrites: false`; recipes are in `seeds/diagnostics/`. These inputs retain forms the server refuses, including decimal operands at integer-only positions and `SET NAMES = expr`, so differential tests can verify the errors as well as successful statements.
+
+The MySQL 5.6 and 5.7 corpora also include these supplements. Their context
+recipes place RETURN inside a function, distinguish parenthesized CREATE TABLE
+queries with AS, and keep function keywords adjacent to the opening parenthesis
+when used as table names. The 5.6 ordering recipe parenthesizes the inner query
+so its LIMIT belongs to the outer query expression. Without these contexts, a
+selected alternative can be rewritten or parsed as a different alternative.
+
+Replay each profile separately with its recorded settings. Pass only that
+profile's `.txt` files to PHP-Fuzzer; a corpus directory also contains manifests
+and may contain subdirectories whose inputs require different settings.
+
+MySQL 5.6 and 5.7 use `statement` as the corpus root. Their normal provider
+excludes its `partition_entry` alternative: the server uses that entry to read
+`.frm` metadata and rejects every client invocation before reading its body.
+Partition clauses remain reachable through CREATE TABLE and ALTER TABLE. MySQL
+5.7 also excludes the internal `statement: parse_gcol_expr` alternative, while
+retaining `PARSE_GCOL_EXPR` as an ordinary identifier keyword. The
+coverage inventory records the excluded source alternative, and the internal
+fragment remains available when explicitly requested by rule name. The provider
+also excludes `keyword_sp: UDF_RETURNS_SYM`: neither legacy lexer emits that
+token. The ordinary `RETURNS_SYM` alternative remains available. Raw diagnostic
+generation still uses the original grammar. Legacy seeds must be rebuilt after
+these changes because their production-choice domains have changed.
+
+The modern client grammar excludes two scanner-unreachable alternatives.
+`role_ident_or_text: LEX_HOSTNAME` occurs before the optional `@`, while the
+scanner produces LEX_HOSTNAME only after `@`. Host names still use
+`ident_or_text: LEX_HOSTNAME`. In releases containing
+`opt_source_count: COUNT_SYM NUM`, COUNT_SYM requires a following opening
+parenthesis, so `COUNT 1` uses the retained `IDENT_sys NUM` alternative.
+These exclusions are recorded in the coverage inventory; the original grammar
+is unchanged. See the upstream [hostname scanner](https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc#L1928-L1950),
+[role productions](https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy#L15144-L15149),
+[COUNT registration](https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/lex.h#L835)
+and [LOAD count productions](https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/sql_yacc.yy#L13700-L13711).
+Rebuild modern corpora after updating these choice domains as well.
+
+Contexts matter because structural rewrites can replace a selected alternative.
+For example, a `SUPER` privilege needs a `GRANT ... ON ...` context to remain a
+privilege, and a stored-program `RETURN` needs a function context to remain a
+return statement. Recipes supplement the short derivations without removing
+their seeds or changing the coverage denominator. The build fails if a recipe
+references an unavailable alternative or fails to reach its target.
+
+The manifest distinguishes selected alternatives (`reached`) from original
+alternatives retained through generation (`emitted`). Neither proves that a
+server exercised an alternative: lexing can change token identity, and rewrites
+can introduce other alternatives. To measure executed syntax, parse the emitted
+SQL with the matching dialect, map its concrete productions back to the inventory,
+and associate that evidence with the execution result.
+
 ## Limitations
 
 SQL Faker's scope is generating SQL syntax. It does not generate a database state in which every resulting statement is executable.

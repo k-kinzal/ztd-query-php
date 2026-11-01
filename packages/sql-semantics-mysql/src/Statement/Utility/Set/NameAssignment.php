@@ -8,11 +8,13 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemTarget;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment to a variable named without `@@`: `SET x = v`, `SET GLOBAL x = v`, `SET a.x = v`.
@@ -26,7 +28,10 @@ use SqlSemantics\Statement\Snapshot;
  * instance of a structured system variable; `DEFAULT.x` is the instance
  * `default`. The value is derived as an expression at a position that sees
  * no relation, a keyword value has no facts, and a bare name value is its
- * text for a system variable (MYSQL-SET-WORD-001). Diagnostics: none.
+ * text for a system variable (MYSQL-SET-WORD-001). Outside a program, an unknown
+ * assignment target is reported. An explicitly scoped target is also checked for
+ * writability and scope. MySQL 8.0 and later derive the value before checking the
+ * target; older releases check the target first.
  * Terminates: the parts are leaves.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html,
  * https://dev.mysql.com/doc/refman/8.4/en/set-statement.html,
@@ -36,35 +41,51 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a scoped name assignment
  *     $set = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SET SESSION sort_buffer_size = DEFAULT');
- *     [$set->statement->items[0]->scope, $set->statement->items[0]->name->value, $set->statement->items[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, 'sort_buffer_size', \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Default]
+ *     [$set->items[0]->scope, $set->items[0]->name->value, $set->items[0]->value] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, 'sort_buffer_size', \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord::Default]
  */
 final class NameAssignment implements SetItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The assigned name
-     * @param Scalar|SetWord $value The value: an expression, or a keyword the grammar accepts there
+     * @param Scalar|BareName|SetWord $value The value: an expression, or a keyword the grammar accepts there
      * @param VariableScope|null $scope The scope keyword written before the name
      * @param Name|null $qualifier The component, key cache instance or trigger row written before the name
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly Name $name, public readonly Scalar|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null)
+    public function __construct(public readonly Name $name, public readonly Scalar|BareName|SetWord $value, public readonly ?VariableScope $scope = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
         Check::input(!$value instanceof BareName || $value->system === ($scope !== null), 'A bare name value is known to be text exactly when a scope keyword names a system variable.');
     }
 
     /**
-     * Derives the value.
+     * Resolves the target and value in the release's order; inside a stored program an unscoped name may be local.
      */
     public function deriveItem(Derivation $derivation): void
     {
-        if ($this->value instanceof Scalar) {
+        $valueFirst = !in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($valueFirst && !$this->value instanceof SetWord) {
+            (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
+        }
+        $settings = Settings::of($derivation->context);
+        if ($this->qualifier === null && !$derivation->inProgram() && ($this->scope !== null || $settings->variable($this->name->value) === null)) {
+            $access = new VariableAccess();
+            if ($this->scope === null) {
+                $access->find($this->name->value, $derivation, true, $valueFirst && $this->value instanceof \SqlSemantics\Statement\Node ? $this->value : $this, $valueFirst);
+            } else {
+                $access->assign($this->name->value, $this->scope, $derivation, $valueFirst && $this->value instanceof \SqlSemantics\Statement\Node ? $this->value : $this, $valueFirst);
+            }
+        } elseif ($this->qualifier !== null && !$derivation->inProgram() && $settings->row($this->qualifier->value) === null) {
+            (new SystemTarget($this->name, null, $this->qualifier))->structured($derivation);
+        }
+        if (!$valueFirst && !$this->value instanceof SetWord) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }
 
     /**
-     * Writes the scope, the name, an equals sign and the value.
+     * Writes the scope, the name, the chosen assignment sign and the value.
      */
     public function render(Output $out): void
     {
@@ -72,9 +93,14 @@ final class NameAssignment implements SetItem
             $out->keyword($this->scope->value);
         }
         if ($this->qualifier !== null) {
-            $out->name($this->qualifier, NameUse::Label)->symbol('.');
+            if ($this->qualifier->quote === \SqlSemantics\Statement\Identifier\NameQuote::Keyword && strcasecmp($this->qualifier->value, 'default') === 0) {
+                $out->keyword('DEFAULT')->separate();
+            } else {
+                $out->name($this->qualifier, NameUse::Label);
+            }
+            $out->symbol('.');
         }
-        $out->name($this->name, NameUse::Label)->symbol('=');
+        $out->name($this->name, NameUse::Label)->symbol($this->operator->value);
         if ($this->value instanceof SetWord) {
             $out->keyword($this->value->value);
         } else {

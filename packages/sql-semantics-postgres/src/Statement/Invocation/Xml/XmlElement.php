@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -35,7 +34,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class XmlElement implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<XmlAttribute> The attributes; none when XMLATTRIBUTES is not written
@@ -52,8 +52,11 @@ final class XmlElement implements Scalar, OutputNaming
      * @param list<XmlAttribute> $attributes The attributes; none when XMLATTRIBUTES is not written
      * @param list<Scalar> $content The content values
      */
-    public function __construct(public readonly Name $name, array $attributes = [], array $content = [])
+    public function __construct(public readonly Name $name, array $attributes = [], array $content = [], ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->attributes = Check::listOf($attributes, XmlAttribute::class, 'XML attributes are attribute values.');
         $this->content = Check::listOf($content, Scalar::class, 'XML element content is a list of values.');
     }

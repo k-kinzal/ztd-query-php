@@ -19,6 +19,6 @@ final class AddEnumLabelTest extends TestCase
 
     public function testDeriveStatementReportsALongLabel(): void
     {
-        self::assertCount(1, (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE mood ADD VALUE \'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\'')->facts->diagnostics);
+        self::assertCount(1, (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE mood ADD VALUE \'yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\'')->diagnostics());
     }
 }

@@ -27,4 +27,14 @@ final class ListRuleTest extends TestCase
         self::assertCount(3, $rule->expressions($platform->parser($profile)->parse('SELECT 1 IN (1, 2, 3, 4)')->find('expr_list')[0]));
         self::assertSame([], $rule->expressions($platform->parser($profile)->parse('SELECT GEOMETRYCOLLECTION()')->find('opt_expr_list')[0]));
     }
+    public function testOperandsAllowsRowsInAComparisonList(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('SELECT 1 IN (1,(1,2),(3,4))')->find('expr_list')[0];
+        $operands = (new ListRule($lowering))->operands($node);
+        self::assertCount(2, $operands);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Row::class, $operands[0]);
+    }
 }

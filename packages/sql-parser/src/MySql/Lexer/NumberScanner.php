@@ -36,7 +36,7 @@ final class NumberScanner
             return null;
         }
         $prefixed = $cursor->match('0[xX][0-9A-Fa-f]+') ?? $cursor->match('0[bB][01]+');
-        if ($prefixed !== null && !Scan::isIdentifierByte($cursor->peek())) {
+        if ($prefixed !== null && !Scan::isIdentifierByte($cursor->peek(), $scan->clientCharset)) {
             return $scan->lexeme(\SqlParser\Lexer\Ascii::lower($prefixed[1]) === 'x' ? 'HEX_NUM' : 'BIN_NUM', $start);
         }
         $cursor->seek($start);
@@ -44,7 +44,7 @@ final class NumberScanner
         if ($cursor->peek() === '.') {
             return $this->fraction($scan, $start);
         }
-        if (Scan::isIdentifierByte($cursor->peek())) {
+        if (Scan::isIdentifierByte($cursor->peek(), $scan->clientCharset)) {
             $exponent = $cursor->lookingAt('[eE](?:[0-9]|[+-][0-9])') ? $cursor->match('[eE][+-]?[0-9]+') : null;
             if ($exponent !== null) {
                 return $scan->lexeme('FLOAT_NUM', $start);

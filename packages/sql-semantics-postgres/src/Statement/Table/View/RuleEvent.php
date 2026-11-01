@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\View;
  *
  * @visibility public
  * @example Reading the event of a rule
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE RULE r AS ON DELETE TO t DO INSTEAD NOTHING')->statement->event // => \SqlSemantics\Platform\PostgreSql\Statement\Table\View\RuleEvent::Delete
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE RULE r AS ON DELETE TO t DO INSTEAD NOTHING')->event // => \SqlSemantics\Platform\PostgreSql\Statement\Table\View\RuleEvent::Delete
  */
 enum RuleEvent: string
 {

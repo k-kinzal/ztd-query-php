@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The schedule `EVERY quantity unit [STARTS timestamp] [ENDS timestamp]`: the event runs repeatedly.
@@ -19,11 +18,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a recurring schedule
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE EVENT e ON SCHEDULE EVERY 2 HOUR STARTS CURRENT_TIMESTAMP DO SELECT 1');
- *     [$create->statement->schedule->unit, $create->statement->schedule->ends] // => [\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Hour, null]
+ *     [$create->schedule->unit, $create->schedule->ends] // => [\SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit::Hour, null]
  */
 final class RecurringSchedule implements Schedule
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $quantity The length of the interval between two runs
@@ -31,7 +30,7 @@ final class RecurringSchedule implements Schedule
      * @param Scalar|null $starts The time of the first run, when written
      * @param Scalar|null $ends The time after which the event no longer runs, when written
      */
-    public function __construct(public readonly Scalar $quantity, public readonly IntervalUnit $unit, public readonly ?Scalar $starts = null, public readonly ?Scalar $ends = null)
+    public function __construct(public readonly Scalar $quantity, public readonly IntervalUnit $unit, public readonly ?Scalar $starts = null, public readonly ?Scalar $ends = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

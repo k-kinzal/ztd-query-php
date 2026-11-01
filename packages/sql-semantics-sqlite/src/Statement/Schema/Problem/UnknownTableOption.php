@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting an unknown option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a) WITHOUT oid');
- *     $create->facts->diagnostics[0]->message() // => 'Table option oid is unknown.'
+ *     $create->diagnostics()[0]->message() // => 'Table option oid is unknown.'
  */
 final class UnknownTableOption implements Diagnostic
 {

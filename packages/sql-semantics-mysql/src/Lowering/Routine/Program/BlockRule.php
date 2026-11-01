@@ -79,7 +79,7 @@ final class BlockRule
         }
         $declarations = [];
         foreach ((new Sequence($this->lowering))->items($body->node(1), ['sp_decls:', 'sp_decls: sp_decls sp_decl ;']) as $item) {
-            $declarations[] = $this->declaration($item);
+            $declarations[] = $this->lowering->origins->record($this->declaration($item), $item);
         }
 
         return new Block($declarations, (new StatementRule($this->lowering))->statements($body->node(2)), $label, $end);
@@ -89,6 +89,7 @@ final class BlockRule
      * Lowers one DECLARE: a node of `sp_decl`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a condition or handler operand is outside its intrinsic domain
      */
     public function declaration(Node $declaration): Declaration
     {
@@ -96,11 +97,11 @@ final class BlockRule
         $parameters = new ParameterRule($this->lowering);
         switch ($form->signature) {
             case 'sp_decl: DECLARE_SYM sp_decl_idents type_with_opt_collate sp_opt_default':
-                [$type, $collation] = $parameters->declared($form->node(2), null);
+                [$type, $collation] = $this->declared($parameters, $form->node(2), null, $declaration);
 
                 return new VariableDeclaration($this->names($form->node(1), 'sp_decl_idents'), $type, $collation, $this->initial($form->node(3)));
             case 'sp_decl: DECLARE_SYM sp_decl_idents type opt_collate sp_opt_default':
-                [$type, $collation] = $parameters->declared($form->node(2), $form->node(3));
+                [$type, $collation] = $this->declared($parameters, $form->node(2), $form->node(3), $declaration);
 
                 return new VariableDeclaration($this->names($form->node(1), 'sp_decl_idents'), $type, $collation, $this->initial($form->node(4)));
             case 'sp_decl: DECLARE_SYM ident CONDITION_SYM FOR_SYM sp_cond':
@@ -115,7 +116,7 @@ final class BlockRule
                 );
             case 'sp_decl: DECLARE_SYM ident CURSOR_SYM FOR_SYM select':
             case 'sp_decl: DECLARE_SYM ident CURSOR_SYM FOR_SYM select_stmt':
-                return new CursorDeclaration($this->lowering->names->identifier($form->node(1)), $this->lowering->queries->query($form->node(4)));
+                return new CursorDeclaration($this->lowering->names->identifier($form->node(1)), (new \SqlSemantics\Platform\MySql\Lowering\Query\Shared\QueryMeaning())->of($this->lowering->queries->query($form->node(4)), (new \SqlSemantics\Construction\SourceRanges())->span($form->node(4))[1] ?? 0, true));
             default:
                 throw ImplementationGap::production($form);
         }
@@ -142,13 +143,13 @@ final class BlockRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function initial(Node $default): ?Scalar
+    public function initial(Node $default): Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null
     {
         $form = $this->lowering->form($default);
 
         return match ($form->signature) {
             'sp_opt_default:' => null,
-            'sp_opt_default: DEFAULT expr', 'sp_opt_default: DEFAULT_SYM expr' => $this->lowering->expressions->expression($form->node(1)),
+            'sp_opt_default: DEFAULT expr', 'sp_opt_default: DEFAULT_SYM expr' => $this->lowering->expressions->operand($form->node(1)),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -166,7 +167,7 @@ final class BlockRule
                 throw ImplementationGap::production($words);
             }
 
-            return new FetchCursor($this->lowering->names->identifier($form->node(2)), $this->names($form->node(4), 'sp_fetch_list'));
+            return new FetchCursor($this->lowering->names->identifier($form->node(2)), $this->names($form->node(4), 'sp_fetch_list'), from: $words->node->children !== [], next: count($words->node->tokens()) === 2);
         }
 
         return match ($form->signature) {
@@ -174,5 +175,42 @@ final class BlockRule
             'sp_proc_stmt_close: CLOSE_SYM ident' => new CloseCursor($this->lowering->names->identifier($form->node(1))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers the type of a DECLARE statement. The server checks the type once the whole declaration is read,
+     * so a refused size is placed at the end of the declaration, after the notices of its DEFAULT value.
+     *
+     * @return array{\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName, \SqlSemantics\Platform\MySql\Statement\Name\CollationName|null}
+     * @throws ImplementationGap When a part has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
+     */
+    public function declared(ParameterRule $parameters, Node $type, ?Node $collation, Node $declaration): array
+    {
+        try {
+            $declared = $parameters->declared($type, $collation);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if (!$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize) {
+                throw $failure;
+            }
+
+            throw new \SqlSemantics\Construction\RejectedInput($failure->problem, (new \SqlSemantics\Construction\SourceRanges())->span($declaration)[1] ?? 0, $failure->aborts, $failure->sources);
+        }
+        $this->sized($declared[0], $declaration);
+
+        return $declared;
+    }
+
+    /**
+     * Refuses a declared type that exceeds a bound of the release, as the server does while reading the body.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the type exceeds a bound
+     */
+    public function sized(\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName $type, Node $at): void
+    {
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($type, '', $this->lowering->profile->grammar);
+        if ($size !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($at)[1] ?? 0);
+        }
     }
 }

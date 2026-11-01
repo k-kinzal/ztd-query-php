@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Into;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `INTO DUMPFILE 'file'`: one row written without separators or escaping.
@@ -16,16 +15,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the file name
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t INTO DUMPFILE '/tmp/a.bin'");
- *     $query->statement->into->file->value // => '/tmp/a.bin'
+ *     $query->query->into->file->value // => '/tmp/a.bin'
  */
 final class IntoDumpfile implements IntoDestination
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $file The file name
      */
-    public function __construct(public readonly Text $file)
+    public function __construct(public readonly Text $file, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

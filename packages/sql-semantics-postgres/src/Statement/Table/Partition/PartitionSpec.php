@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * PARTITION BY: the strategy and the key of a partitioned table.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the strategy
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int) PARTITION BY HASH (a)');
- *     $create->statement->partitioning->strategy->value // => 'hash'
+ *     $create->partitioning->strategy->value // => 'hash'
  */
 final class PartitionSpec implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<PartitionElement> The key
@@ -41,7 +40,7 @@ final class PartitionSpec implements Clause
      * @param Name $strategy The strategy word
      * @param list<PartitionElement> $elements The key; at least one element
      */
-    public function __construct(public readonly Name $strategy, array $elements)
+    public function __construct(public readonly Name $strategy, array $elements, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->elements = Check::listOf($elements, PartitionElement::class, 'A partition key has at least one element.', 1);
     }

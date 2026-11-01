@@ -15,18 +15,18 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 #[Medium]
 final class LockOptionTest extends TestCase
 {
-    public function testDeriveOptionReportsALockTheReleaseDoesNotKnow(): void
+    public function testDeriveOptionAcceptsTheKnownLock(): void
     {
-        self::assertSame('DEFAULT is not a LOCK the server knows.', (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t LOCK = `DEFAULT`')->facts->diagnostics[0]->message());
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('DROP INDEX i ON t LOCK = SHARED')->diagnostics());
     }
 
     public function testDeriveCommandChecksTheLock(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t LOCK = `default`')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t LOCK = `default`')->diagnostics());
     }
 
     public function testRenderWritesTheLockOrDefault(): void
     {
-        self::assertSame('ALTER TABLE t LOCK = DEFAULT, LOCK = EXCLUSIVE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE')->toString());
+        self::assertSame('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t LOCK DEFAULT, LOCK EXCLUSIVE')->toString());
     }
 }

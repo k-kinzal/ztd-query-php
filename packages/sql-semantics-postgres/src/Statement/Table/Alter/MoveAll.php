@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,9 +23,9 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE ALL IN TABLESPACE a OWNED BY u1, u2 SET TABLESPACE b NOWAIT');
  *     $statement->toString() // => 'ALTER TABLE ALL IN TABLESPACE a OWNED BY u1, u2 SET TABLESPACE b NOWAIT'
  */
-final class MoveAll implements Statement
+final class MoveAll extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<RoleSpec> The owners whose relations move; none means all
@@ -46,7 +45,12 @@ final class MoveAll implements Statement
         public readonly Name $to,
         array $owners = [],
         public readonly bool $nowait = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->owners = Check::listOf($owners, RoleSpec::class, 'Owners are roles.');
         Check::input(in_array($target, [AlterTarget::Table, AlterTarget::Index, AlterTarget::MaterializedView], true), 'ALL IN TABLESPACE moves tables, indexes or materialized views.');
     }

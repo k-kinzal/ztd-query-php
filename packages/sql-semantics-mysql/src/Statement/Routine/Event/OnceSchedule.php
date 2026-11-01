@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The schedule `AT timestamp`: the event runs once.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a one-time schedule
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DO SELECT 1");
- *     $create->statement->schedule->at->value() // => '2030-01-01 00:00:00'
+ *     $create->schedule->at->value() // => '2030-01-01 00:00:00'
  */
 final class OnceSchedule implements Schedule
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $at The time the event runs
      */
-    public function __construct(public readonly Scalar $at)
+    public function __construct(public readonly Scalar $at, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

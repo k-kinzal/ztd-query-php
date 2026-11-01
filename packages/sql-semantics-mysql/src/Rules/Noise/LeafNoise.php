@@ -25,12 +25,6 @@ final class LeafNoise
      *   Before a table alias (8.0 and later) the model keeps the keyword as
      *   written (AliasMark), since it can be part of the text MySQL names an
      *   unaliased select list expression after.
-     * - `equal: EQ`, `equal: SET_VAR`: an option is written `name [=] value`, and
-     *   in SET and UPDATE assignments `:=` and `=` are the same assignment
-     *   operator; where the rule is mandatory the token cannot be left out, so
-     *   dropping its key loses nothing
-     *   (https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
-     *   https://dev.mysql.com/doc/refman/8.4/en/assignment-operators.html).
      * - `opt_default: DEFAULT`, `opt_default: DEFAULT_SYM`: `[DEFAULT] CHARACTER
      *   SET`, `[DEFAULT] COLLATE` and `[DEFAULT] ENCRYPTION` are the same option
      *   with or without the keyword
@@ -49,7 +43,7 @@ final class LeafNoise
      *   default object type of GRANT and REVOKE
      *   (https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html,
      *   https://dev.mysql.com/doc/refman/8.4/en/grant.html).
-     * - `table_ident: . ident` and `field_ident: . ident`, position 0: a
+     * - `table_ident: . ident`, position 0: a
      *   leading dot names the default database, as an unqualified name does
      *   (https://dev.mysql.com/doc/refman/5.7/en/identifier-qualifiers.html).
      *   A table of a FROM clause and a column of an expression keep the dot
@@ -58,10 +52,8 @@ final class LeafNoise
      * - `charset: CHAR_SYM SET` and `character_set: CHAR_SYM SET_SYM`, position
      *   1: with the synonym key of position 0, the two keywords are the one
      *   keyword CHARSET (https://dev.mysql.com/doc/refman/8.4/en/create-table.html:
-     *   "CHARSET is a synonym for CHARACTER SET"). The character set attribute
-     *   of a type keeps the two-word form (CharsetForm::CharacterSet), since a
-     *   cast target is part of the text MySQL names an unaliased select list
-     *   expression after.
+     *   "CHARSET is a synonym for CHARACTER SET"). Type attributes and SET CHARACTER SET retain all three
+     *   forms through CharsetForm, including CHAR SET separately from CHARACTER SET.
      *
      * @return array<string, list<int>>
      */
@@ -69,8 +61,6 @@ final class LeafNoise
     {
         return [
             'opt_as: AS' => [0],
-            'equal: EQ' => [0],
-            'equal: SET_VAR' => [0],
             'opt_default: DEFAULT' => [0],
             'opt_default: DEFAULT_SYM' => [0],
             'opt_wild: . *' => [0, 1],
@@ -78,7 +68,7 @@ final class LeafNoise
             'opt_storage: STORAGE_SYM' => [0],
             'opt_table: TABLE_SYM' => [0],
             'table_ident: . ident' => [0],
-            'field_ident: . ident' => [0],
+
             'charset: CHAR_SYM SET' => [1],
             'character_set: CHAR_SYM SET_SYM' => [1],
         ];

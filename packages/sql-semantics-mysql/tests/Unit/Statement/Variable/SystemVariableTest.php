@@ -11,29 +11,38 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(SystemVariable::class)]
 #[Medium]
 final class SystemVariableTest extends TestCase
 {
-    public function testDeriveScalarNamesTheVariableAsMissingSessionState(): void
+    public function testRejectsAnAssignmentOnlyScope(): void
+    {
+        $this->expectExceptionMessage('A system-variable read has an implicit, GLOBAL or SESSION scope.');
+
+        new SystemVariable(new Name('sql_mode'), VariableScope::Persist);
+    }
+
+    public function testDeriveScalarTypesAReadAsTheReleaseDefinesTheVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@GLOBAL.sort_buffer_size');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
-        $fact = $operation->facts->scalar($item0->expression);
-        self::assertInstanceOf(Dependent::class, $fact->type);
-        self::assertSame('the session state: system variable @@GLOBAL.sort_buffer_size', $fact->type->missing[0]->describe());
-        self::assertSame(Nullability::Dependent, $fact->nullability);
+        $fact = $item0->expression->scalarInformation();
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame('BIGINT', $fact->type->descriptor->name());
+        self::assertSame(Nullability::Nullable, $fact->nullability);
         self::assertNull($fact->resolution);
         self::assertSame('@@GLOBAL.sort_buffer_size', $operation->field(0)->name?->value);
     }
@@ -42,31 +51,33 @@ final class SystemVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@SESSION.innodb.x');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertSame(VariableScope::Session, $item0->expression->scope);
         self::assertSame('innodb', $item0->expression->instance?->value);
         self::assertSame('x', $item0->expression->name->value);
-        $fact = $operation->facts->scalar($item0->expression);
+        $fact = $item0->expression->scalarInformation();
         self::assertInstanceOf(Dependent::class, $fact->type);
         self::assertSame('the session state: system variable @@SESSION.innodb.x', $fact->type->missing[0]->describe());
     }
 
-    public function testDeriveScalarNamesAnUnscopedVariableWithoutAScope(): void
+    public function testDeriveScalarTypesAnUnscopedReadAsTheSessionValue(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@autocommit');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertNull($item0->expression->scope);
         self::assertNull($item0->expression->instance);
-        $fact = $operation->facts->scalar($item0->expression);
-        self::assertInstanceOf(Dependent::class, $fact->type);
-        self::assertSame('the session state: system variable @@autocommit', $fact->type->missing[0]->describe());
+        $fact = $item0->expression->scalarInformation();
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame([1, false], [$fact->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? $fact->type->descriptor->length : 0, $fact->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $fact->type->descriptor->unsigned]);
     }
 
     public function testRenderWritesTheScopeTheInstanceAndTheNameWithoutSpaces(): void
@@ -79,36 +90,81 @@ final class SystemVariableTest extends TestCase
         self::assertSame('SELECT @@autocommit', $semantics->analyze('SELECT @@autocommit')->toString());
     }
 
-    public function testRenderSpellsLocalAsSession(): void
+    public function testRenderRetainsTheLocalScopeSpelling(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.x AS v');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.autocommit AS v');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
-        self::assertSame(VariableScope::Session, $item0->expression->scope);
-        self::assertSame('SELECT @@SESSION.x AS v', $operation->toString());
-    }
-
-    public function testRenderQuotesANameThatIsAReservedWord(): void
-    {
-        self::assertSame('SELECT @@`select`', (new Semantics(Dialect::MySql))->analyze('SELECT @@`select`')->toString());
+        self::assertSame(VariableScope::Local, $item0->expression->scope);
+        self::assertSame('SELECT @@LOCAL.autocommit AS v', $operation->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $variable = new SystemVariable(new Name('x'), VariableScope::Global, new Name('innodb'));
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression($variable)]));
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression($variable)])), new \SqlSemantics\Statement\Source\SourceMap());
 
         self::assertSame('SELECT @@GLOBAL.innodb.x', $operation->toString());
-        self::assertSame(Nullability::Dependent, $operation->facts->scalar($variable)->nullability);
+        self::assertFalse($variable->hasBinding());
+        self::assertSame(Nullability::Dependent, $operation->field(0)->nullability);
     }
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @@global.x as v')->toString());
-        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @@global.x as v')->toString());
+        self::assertSame('SELECT @@GLOBAL.autocommit AS v', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @@global.autocommit as v')->toString());
+        self::assertSame('SELECT @@GLOBAL.autocommit AS v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @@global.autocommit as v')->toString());
+    }
+
+    public function testDeriveScalarReportsAStructuredVariableThatIsNoKeyCacheVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $unknown = $semantics->analyze('SELECT @@hot.sort_buffer_size')->diagnostics();
+
+        self::assertCount(1, $unknown);
+        self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
+        self::assertSame('hot.sort_buffer_size', $unknown[0]->name);
+        self::assertSame([], $semantics->analyze('SELECT @@hot.key_buffer_size, @@hot.KEY_CACHE_BLOCK_SIZE')->diagnostics());
+    }
+
+    public function testDeriveScalarLeavesTheWarningOfAnAssignedVariableToTheAssignment(): void
+    {
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SET @@tx_isolation = DEFAULT')->warnings());
+    }
+
+    public function testStructuredReadsTheNameAfterTheInstanceInMySql57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        try {
+            $semantics->analyze('SELECT @@x.y');
+            self::fail('The name after the instance is unknown.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new UnknownSystemVariable('y', structured: true), $failure->problem);
+        }
+        try {
+            $semantics->analyze('SELECT @@innodb.sql_mode');
+            self::fail('The variable takes no component.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable('sql_mode'), $failure->problem);
+        }
+    }
+
+    public function testDeriveScalarTypesAParameterOfANamedKeyCacheAsTheVariable(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@x.key_buffer_size');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(SystemVariable::class, $item0->expression);
+        $fact = $item0->expression->scalarInformation();
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame('BIGINT', $fact->type->descriptor->name());
+        self::assertSame([Nullability::Nullable, []], [$fact->nullability, $operation->diagnostics()]);
     }
 }

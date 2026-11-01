@@ -19,11 +19,11 @@ final class AlterDatabaseTest extends TestCase
 
     public function testDeriveStatementReportsATablespaceWithOtherOptions(): void
     {
-        self::assertSame('option "tablespace" cannot be specified with other options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DATABASE d WITH tablespace x allow_connections false')->facts->diagnostics[0]->message());
+        self::assertSame('option "tablespace" cannot be specified with other options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DATABASE d WITH tablespace x allow_connections false')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsAnOptionOnlyCreateAccepts(): void
     {
-        self::assertSame('option "owner" not recognized', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DATABASE d OWNER x')->facts->diagnostics[0]->message());
+        self::assertSame('option "owner" not recognized', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DATABASE d OWNER x')->diagnostics()[0]->message());
     }
 }

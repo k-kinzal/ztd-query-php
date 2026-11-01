@@ -1,0 +1,290 @@
+{
+    "SqlSemantics\\Construction\\Facts": {
+        "declarations": "array",
+        "diagnostics": "array",
+        "notices": "array",
+        "output": "?SqlSemantics\\Statement\\Fact\\QueryFact",
+        "queries": "array",
+        "references": "array",
+        "relations": "array",
+        "scalars": "array",
+        "warningInstructions": "array",
+        "warningSubjects": "array",
+        "warnings": "array"
+    },
+    "SqlSemantics\\Contract\\AnalysisContext": {
+        "columnNames": "SqlSemantics\\Statement\\Identifier\\Comparison",
+        "complete": "bool",
+        "declarationSchema": "SqlSemantics\\Statement\\Identifier\\Name",
+        "foldedSchemas": "array",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "relationNames": "SqlSemantics\\Statement\\Identifier\\Comparison",
+        "searchPath": "array",
+        "session": "?SqlSemantics\\Contract\\Session",
+        "tables": "array"
+    },
+    "SqlSemantics\\Contract\\GrammarRelease": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Contract\\LanguageProfile": {
+        "grammar": "SqlSemantics\\Contract\\GrammarRelease",
+        "lexical": "SqlSemantics\\Contract\\LexicalSettings",
+        "parameters": "SqlSemantics\\Contract\\ParameterStyle",
+        "ruleRevision": "string"
+    },
+    "SqlSemantics\\Contract\\LexicalSettings": {
+        "ansiQuotes": "bool",
+        "highNotPrecedence": "bool",
+        "ignoreSpace": "bool",
+        "noBackslashEscapes": "bool",
+        "pipesAsConcat": "bool"
+    },
+    "SqlSemantics\\Contract\\NameUse": {
+        "name": "string"
+    },
+    "SqlSemantics\\Contract\\ParameterStyle": {
+        "name": "string",
+        "value": "string"
+    },
+    "SqlSemantics\\Rendering\\PieceKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Resolution\\VisibleRelation": {
+        "alias": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "hidden": "array",
+        "implicit": "array",
+        "name": "?SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "relation": "SqlSemantics\\Statement\\Relation",
+        "shape": "SqlSemantics\\Statement\\Shape\\RowShape"
+    },
+    "SqlSemantics\\Statement\\Declaration\\Column": {
+        "expression": "bool",
+        "generated": "bool",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "nullability": "SqlSemantics\\Statement\\Type\\Nullability",
+        "type": "SqlSemantics\\Statement\\Type\\TypeDescriptor"
+    },
+    "SqlSemantics\\Statement\\Declaration\\ImplicitColumn": {
+        "column": "SqlSemantics\\Statement\\Declaration\\Column",
+        "names": "array"
+    },
+    "SqlSemantics\\Statement\\Declaration\\Key": {
+        "columns": "array",
+        "primary": "bool"
+    },
+    "SqlSemantics\\Statement\\Declaration\\RelationKind": {
+        "name": "string"
+    },
+    "SqlSemantics\\Statement\\Declaration\\Table": {
+        "columns": "array",
+        "complete": "bool",
+        "implicit": "array",
+        "keys": "array",
+        "kind": "SqlSemantics\\Statement\\Declaration\\RelationKind",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "partitions": "?array",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile"
+    },
+    "SqlSemantics\\Statement\\Fact\\Notice": {
+        "fromInput": "bool",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "instruction": "?SqlSemantics\\Statement\\Node",
+        "subject": "SqlSemantics\\Statement\\Node|SqlSemantics\\Statement\\Identifier\\Name|null",
+        "warning": "SqlSemantics\\Statement\\Fact\\Warning"
+    },
+    "SqlSemantics\\Statement\\Fact\\QueryFact": {
+        "aggregates": "array",
+        "diagnostics": "array",
+        "names": "SqlSemantics\\Statement\\Identifier\\Comparison",
+        "projection": "array",
+        "shape": "SqlSemantics\\Statement\\Shape\\RowShape"
+    },
+    "SqlSemantics\\Statement\\Fact\\RelationFact": {
+        "shape": "SqlSemantics\\Statement\\Shape\\RowShape",
+        "table": "?SqlSemantics\\Statement\\Reference\\Table\\TableResolution"
+    },
+    "SqlSemantics\\Statement\\Fact\\ScalarFact": {
+        "nullability": "SqlSemantics\\Statement\\Type\\Nullability",
+        "replacement": "?SqlSemantics\\Statement\\Scalar",
+        "resolution": "?SqlSemantics\\Statement\\Reference\\Column\\Resolution",
+        "type": "SqlSemantics\\Statement\\Type\\TypeFact"
+    },
+    "SqlSemantics\\Statement\\Identifier\\Comparison": {
+        "name": "string"
+    },
+    "SqlSemantics\\Statement\\Identifier\\Name": {
+        "quote": "?SqlSemantics\\Statement\\Identifier\\NameQuote",
+        "value": "string"
+    },
+    "SqlSemantics\\Statement\\Identifier\\NameQuote": {
+        "name": "string"
+    },
+    "SqlSemantics\\Statement\\Identifier\\QualifiedName": {
+        "catalog": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "schema": "?SqlSemantics\\Statement\\Identifier\\Name"
+    },
+    "SqlSemantics\\Statement\\Reference\\Column\\AliasTarget": {
+        "depth": "int",
+        "field": "SqlSemantics\\Statement\\Shape\\Field"
+    },
+    "SqlSemantics\\Statement\\Reference\\Column\\AmbiguousColumn": {
+        "candidates": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Statement\\Reference\\Column\\ConditionalColumn": {
+        "candidates": "array",
+        "missing": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "relations": "array"
+    },
+    "SqlSemantics\\Statement\\Reference\\Column\\MissingColumn": {
+        "name": "SqlSemantics\\Statement\\Identifier\\Name",
+        "qualifier": "?SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Statement\\Reference\\Column\\ResolvedColumn": {
+        "depth": "int",
+        "relation": "SqlSemantics\\Statement\\Relation",
+        "resultReference": "bool",
+        "slot": "SqlSemantics\\Statement\\Shape\\OutputSlot"
+    },
+    "SqlSemantics\\Statement\\Reference\\Missing\\IncompleteMembers": {
+        "table": "SqlSemantics\\Statement\\Declaration\\Table"
+    },
+    "SqlSemantics\\Statement\\Reference\\Missing\\SessionState": {
+        "subject": "string"
+    },
+    "SqlSemantics\\Statement\\Reference\\Missing\\UnboundParameter": {
+        "marker": "string"
+    },
+    "SqlSemantics\\Statement\\Reference\\Missing\\UndeclaredDomain": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Statement\\Reference\\Missing\\UndeclaredRelation": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Statement\\Reference\\Missing\\UndeclaredRoutine": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Statement\\Reference\\Table\\CommonTable": {
+        "definition": "SqlSemantics\\Statement\\Node"
+    },
+    "SqlSemantics\\Statement\\Reference\\Table\\ConditionalTable": {
+        "candidates": "array",
+        "missing": "SqlSemantics\\Statement\\Reference\\Missing\\UndeclaredRelation"
+    },
+    "SqlSemantics\\Statement\\Reference\\Table\\ConflictingTables": {
+        "candidates": "array",
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Statement\\Reference\\Table\\DeclaredTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName",
+        "table": "SqlSemantics\\Statement\\Declaration\\Table"
+    },
+    "SqlSemantics\\Statement\\Reference\\Table\\MissingTable": {
+        "name": "SqlSemantics\\Statement\\Identifier\\QualifiedName"
+    },
+    "SqlSemantics\\Statement\\Reference\\Table\\UndeclaredTable": {
+        "missing": "SqlSemantics\\Statement\\Reference\\Missing\\UndeclaredRelation"
+    },
+    "SqlSemantics\\Statement\\Script": {
+        "SqlSemantics\\Statement\\SqlStatement::$requestInformation": "?SqlSemantics\\Statement\\StatementSemantics",
+        "inputSource": "?SqlSemantics\\Statement\\Source\\Span",
+        "statements": "array"
+    },
+    "SqlSemantics\\Statement\\Shape\\AbsentField": {
+        "name": "string"
+    },
+    "SqlSemantics\\Statement\\Shape\\AmbiguousFields": {
+        "fields": "array",
+        "name": "string"
+    },
+    "SqlSemantics\\Statement\\Shape\\DependentField": {
+        "candidates": "array",
+        "missing": "array",
+        "name": "string"
+    },
+    "SqlSemantics\\Statement\\Shape\\Field": {
+        "expression": "?SqlSemantics\\Statement\\Scalar",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "nullability": "SqlSemantics\\Statement\\Type\\Nullability",
+        "position": "int",
+        "resolution": "?SqlSemantics\\Statement\\Reference\\Column\\Resolution",
+        "slot": "SqlSemantics\\Statement\\Shape\\OutputSlot",
+        "type": "SqlSemantics\\Statement\\Type\\TypeFact"
+    },
+    "SqlSemantics\\Statement\\Shape\\Fields": {
+        "items": "array",
+        "names": "SqlSemantics\\Statement\\Identifier\\Comparison"
+    },
+    "SqlSemantics\\Statement\\Shape\\OpenStar": {
+        "missing": "array"
+    },
+    "SqlSemantics\\Statement\\Shape\\OutputSlot": {
+        "column": "?SqlSemantics\\Statement\\Declaration\\Column",
+        "name": "?SqlSemantics\\Statement\\Identifier\\Name",
+        "nullability": "SqlSemantics\\Statement\\Type\\Nullability",
+        "origin": "?SqlSemantics\\Statement\\Shape\\OutputSlot",
+        "type": "SqlSemantics\\Statement\\Type\\TypeFact",
+        "unnamed": "array"
+    },
+    "SqlSemantics\\Statement\\Shape\\RowShape": {
+        "missing": "array",
+        "slots": "array"
+    },
+    "SqlSemantics\\Statement\\Shape\\UniqueField": {
+        "field": "SqlSemantics\\Statement\\Shape\\Field"
+    },
+    "SqlSemantics\\Statement\\Source\\Origin": {
+        "length": "int",
+        "node": "SqlSemantics\\Statement\\Node",
+        "offset": "int"
+    },
+    "SqlSemantics\\Statement\\Source\\SourceMap": {
+        "notices": "array",
+        "origins": "array"
+    },
+    "SqlSemantics\\Statement\\Source\\SourceNotice": {
+        "offset": "int",
+        "subject": "SqlSemantics\\Statement\\Node|SqlSemantics\\Statement\\Identifier\\Name",
+        "warning": "SqlSemantics\\Statement\\Fact\\Warning"
+    },
+    "SqlSemantics\\Statement\\Source\\Span": {
+        "length": "int",
+        "offset": "int"
+    },
+    "SqlSemantics\\Statement\\Spelling\\Layout": {
+        "tokens": "array",
+        "trail": "string"
+    },
+    "SqlSemantics\\Statement\\Spelling\\Spelled": {
+        "gap": "string",
+        "text": "string"
+    },
+    "SqlSemantics\\Statement\\StatementSemantics": {
+        "declarations": "array",
+        "diagnostics": "array",
+        "notices": "array",
+        "output": "?SqlSemantics\\Statement\\Fact\\QueryFact",
+        "profile": "SqlSemantics\\Contract\\LanguageProfile",
+        "warnings": "array"
+    },
+    "SqlSemantics\\Statement\\Type\\Choice": {
+        "alternatives": "array"
+    },
+    "SqlSemantics\\Statement\\Type\\Dependent": {
+        "missing": "array"
+    },
+    "SqlSemantics\\Statement\\Type\\Invalid": {
+        "cause": "SqlSemantics\\Statement\\Fact\\Diagnostic"
+    },
+    "SqlSemantics\\Statement\\Type\\Known": {
+        "descriptor": "SqlSemantics\\Statement\\Type\\TypeDescriptor"
+    },
+    "SqlSemantics\\Statement\\Type\\NullOnly": [],
+    "SqlSemantics\\Statement\\Type\\Nullability": {
+        "name": "string"
+    }
+}

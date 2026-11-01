@@ -21,7 +21,7 @@ final class SecurityLabelTest extends TestCase
     public function testDeriveStatementResolvesALabelledTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('SECURITY LABEL ON TABLE t IS NULL', []);
-        self::assertSame(['Relation t does not exist.'], [$operation->facts->diagnostics[0]->message()]);
+        self::assertSame(['Relation t does not exist.'], [$operation->diagnostics()[0]->message()]);
     }
 
     public function testRenderWritesTheProvider(): void

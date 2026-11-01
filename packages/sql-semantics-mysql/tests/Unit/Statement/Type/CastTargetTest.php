@@ -120,12 +120,12 @@ final class CastTargetTest extends TestCase
         self::assertSame(CastKind::Double, $double->kind);
         self::assertSame(CastKind::Real, $real->kind);
         $out->list([$signed, $unsigned, $double, $real]);
-        self::assertSame('SIGNED INT, UNSIGNED INT, DOUBLE PRECISION, REAL', (new Lexical())->join($out->pieces()));
+        self::assertSame('SIGNED INTEGER, UNSIGNED INT, DOUBLE PRECISION, REAL', (new Lexical())->join($out->pieces()));
         self::assertSame(OptionalWords::Written, $signed->words);
         self::assertSame(OptionalWords::Omitted, $real->words);
     }
 
-    public function testRenderWritesGeometrycollectionForTheShortSpelling(): void
+    public function testRenderRetainsTheShortGeometrycollectionKeyword(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -135,7 +135,7 @@ final class CastTargetTest extends TestCase
 
         self::assertSame(CastKind::GeometryCollection, $target->kind);
         $target->render($out);
-        self::assertSame('GEOMETRYCOLLECTION', (new Lexical())->join($out->pieces()));
+        self::assertSame('GEOMCOLLECTION', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesACharTargetWithCharsetLoweredUnderTheOldestRelease(): void

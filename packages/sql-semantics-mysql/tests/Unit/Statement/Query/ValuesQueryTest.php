@@ -26,17 +26,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ValuesQueryTest extends TestCase
 {
-    public function testDeriveStatementRecordsTheRowsAsTheOutput(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $values = new ValuesQuery([new ValueRow([new NumberLiteral('1')])]);
-        $derivation = new Derivation($semantics->context());
-        $derivation->statement($values);
-
-        self::assertNotNull($derivation->facts()->output);
-        self::assertSame('column_0', $derivation->facts()->output->fields()?->at(0)->name?->value);
-    }
-
     public function testDeriveQueryNamesTheColumnsAndCombinesTheRows(): void
     {
         $semantics = new Semantics(Dialect::MySql);

@@ -19,11 +19,11 @@ final class DomainCheckTest extends TestCase
 
     public function testDeriveClauseReportsDeferrable(): void
     {
-        self::assertSame('CHECK constraints cannot be marked DEFERRABLE', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD CHECK (VALUE <> 0) DEFERRABLE')->facts->diagnostics[0]->message());
+        self::assertSame('CHECK constraints cannot be marked DEFERRABLE', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD CHECK (VALUE <> 0) DEFERRABLE')->diagnostics()[0]->message());
     }
 
     public function testDeriveClauseReportsNoInherit(): void
     {
-        self::assertSame('check constraints for domains cannot be marked NO INHERIT', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NO INHERIT')->facts->diagnostics[0]->message());
+        self::assertSame('check constraints for domains cannot be marked NO INHERIT', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD CHECK (VALUE <> 0) NO INHERIT')->diagnostics()[0]->message());
     }
 }

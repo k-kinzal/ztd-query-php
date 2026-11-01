@@ -22,7 +22,8 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior;
  * subselect_start, subselect_end, have_partitioning, init_key_options,
  * sp_init_param, no_definer and empty_select_options. An optional keyword
  * lowers to whether it is written; RESTRICT and CASCADE to the keyword
- * written. A synonym or marker rule holds no operand: skip() confirms the
+ * written. Assignment signs retain their chosen operator separately.
+ * A synonym or marker rule holds no operand: skip() confirms the
  * production is one of them. Which of the keywords are noise or synonyms for
  * the token correspondence is stated in LeafNoise. Terminates: constant
  * work. Source: the statement pages cited in LeafNoise. Status: Implemented.
@@ -42,7 +43,6 @@ final class OptionRule
         'opt_equal:' => false, 'opt_equal: equal' => true, 'opt_wild:' => false, 'opt_wild: . *' => true,
         'opt_storage:' => false, 'opt_storage: STORAGE_SYM' => true, 'opt_table:' => false, 'opt_table: TABLE_SYM' => true,
         'opt_comma:' => false, 'opt_comma: ,' => true, 'optional_braces:' => false, 'optional_braces: ( )' => true,
-        'opt_no_write_to_binlog:' => false, 'opt_no_write_to_binlog: NO_WRITE_TO_BINLOG' => true, 'opt_no_write_to_binlog: LOCAL_SYM' => true,
         'opt_key_or_index:' => false, 'opt_key_or_index: key_or_index' => true,
     ];
 
@@ -51,8 +51,8 @@ final class OptionRule
      */
     private const INERT = [
         'key_or_index: KEY_SYM' => true, 'key_or_index: INDEX_SYM' => true, 'keys_or_index: KEYS' => true, 'keys_or_index: INDEX_SYM' => true,
-        'keys_or_index: INDEXES' => true, 'table_or_tables: TABLE_SYM' => true, 'table_or_tables: TABLES' => true,
-        'equal: EQ' => true, 'equal: SET_VAR' => true, 'not: NOT_SYM' => true, 'not: NOT2_SYM' => true,
+        'keys_or_index: INDEXES' => true,
+        'not: NOT_SYM' => true, 'not: NOT2_SYM' => true,
         'charset: CHAR_SYM SET' => true, 'charset: CHARSET' => true, 'character_set: CHAR_SYM SET_SYM' => true, 'character_set: CHARSET' => true,
         'remember_name:' => true, 'remember_end:' => true, 'init_lex_create_info:' => true, 'clear_privileges:' => true,
         'clear_privileges: clear_password_expire_options' => true, 'clear_password_expire_options:' => true, 'get_select_lex:' => true,
@@ -80,6 +80,38 @@ final class OptionRule
     }
 
     /**
+     * Retains the chosen sign of a required assignment.
+     *
+     * @throws ImplementationGap When the production is not an assignment sign
+     */
+    public function assignment(Node $node): \SqlSemantics\Platform\MySql\Statement\AssignmentOperator
+    {
+        $form = $this->lowering->form($node);
+
+        return match ($form->signature) {
+            'equal: EQ' => \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal,
+            'equal: SET_VAR' => \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::ColonEqual,
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Retains an optional assignment sign, including its omission.
+     *
+     * @throws ImplementationGap When the production is not an optional assignment sign
+     */
+    public function optionalAssignment(Node $node): ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator
+    {
+        $form = $this->lowering->form($node);
+
+        return match ($form->signature) {
+            'opt_equal:' => null,
+            'opt_equal: equal' => $this->assignment($form->node(0)),
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
      * Confirms that a node is a synonym keyword or an empty marker and holds no operand.
      *
      * @throws ImplementationGap When the production has no rule
@@ -90,6 +122,54 @@ final class OptionRule
         if (!isset(self::INERT[$form->signature])) {
             throw ImplementationGap::production($form);
         }
+    }
+
+    /**
+     * Retains an omitted logging modifier or its exact suppression keyword.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function binlog(Node $option): ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption
+    {
+        $form = $this->lowering->form($option);
+        return match ($form->signature) {
+            'opt_no_write_to_binlog:' => null,
+            'opt_no_write_to_binlog: NO_WRITE_TO_BINLOG' => \SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::NoWriteToBinlog,
+            'opt_no_write_to_binlog: LOCAL_SYM' => \SqlSemantics\Platform\MySql\Statement\Server\BinlogOption::Local,
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Retains the singular or plural keyword of a table-list request.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function tableWord(Node $word): \SqlSemantics\Platform\MySql\Statement\Table\TableWord
+    {
+        $form = $this->lowering->form($word);
+        return match ($form->signature) {
+            'table_or_tables: TABLE_SYM' => \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table,
+            'table_or_tables: TABLES' => \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Tables,
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Retains the chosen KEY or INDEX keyword, including optional keyword forms.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function indexWord(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Table\IndexWord
+    {
+        $form = $this->lowering->form($node);
+        return match ($form->signature) {
+            'opt_key_or_index:' => null,
+            'normal_key_type: key_or_index', 'opt_key_or_index: key_or_index' => $this->indexWord($form->node(0)),
+            'key_or_index: KEY_SYM' => \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Key,
+            'key_or_index: INDEX_SYM' => \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Index,
+            default => throw ImplementationGap::production($form),
+        };
     }
 
     /**

@@ -24,7 +24,7 @@ final class GrantTest extends TestCase
 
     public function testAnalysisKeepsAllPrivilegesAsAnEmptyList(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT ALL ON SCHEMA s TO joe')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT ALL ON SCHEMA s TO joe');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Grant::class, $statement);
         self::assertSame([], $statement->privileges);
         self::assertFalse($statement->grantOption);
@@ -33,12 +33,12 @@ final class GrantTest extends TestCase
 
     public function testDeriveStatementReportsTheProblems(): void
     {
-        self::assertSame(['unrecognized privilege type "foo"', 'invalid privilege type EXECUTE for schema', 'grant options can only be granted to roles', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT foo, EXECUTE ON SCHEMA s TO PUBLIC WITH GRANT OPTION GRANTED BY PUBLIC')->facts->diagnostics));
+        self::assertSame(['unrecognized privilege type "foo"', 'invalid privilege type EXECUTE for schema', 'grant options can only be granted to roles', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT foo, EXECUTE ON SCHEMA s TO PUBLIC WITH GRANT OPTION GRANTED BY PUBLIC')->diagnostics()));
     }
 
     public function testDeriveStatementKeepsAGrantOptionOnSchemaContentsOpen(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA s TO PUBLIC WITH GRANT OPTION')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA s TO PUBLIC WITH GRANT OPTION')->diagnostics()));
     }
 
     public function testRejectsAllAmongOtherPrivileges(): void

@@ -19,14 +19,14 @@ final class TextOptionTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) DATA DIRECTORY = \'/d\'');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $option = $statement->options[0];
 
         self::assertInstanceOf(TextOption::class, $option);
         self::assertSame('/d', $option->value->value);
-        self::assertSame('CREATE TABLE t (a INT) DATA DIRECTORY \'/d\'', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) DATA DIRECTORY = \'/d\'', $create->toString());
     }
 }

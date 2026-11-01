@@ -27,7 +27,7 @@ final class ForeignKeysTest extends TestCase
         self::assertSame([
           0 => 'column "zz" referenced in foreign key constraint does not exist',
           1 => 'MATCH PARTIAL not yet implemented',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testWriteTargetWritesTheReferencedSide(): void
@@ -41,6 +41,6 @@ final class ForeignKeysTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['referenced relation "v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TABLE c (a int REFERENCES v (zz))', $context)->facts->diagnostics));
+        self::assertSame(['referenced relation "v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TABLE c (a int REFERENCES v (zz))', $context)->diagnostics()));
     }
 }

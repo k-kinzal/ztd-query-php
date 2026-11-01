@@ -33,6 +33,10 @@ final class ViewFacts
     public function derive(ViewDefinition $definition, Derivation $derivation): Table
     {
         $output = $derivation->query($definition->query, $derivation->environment());
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($definition->query);
+        if ($problem !== null && array_filter($derivation->diagnostics(), static fn ($reported): bool => $reported::class === $problem::class && get_object_vars($reported) === get_object_vars($problem)) === []) {
+            $derivation->report($problem);
+        }
         if ($definition->columns !== null && $output->shape->complete() && count($definition->columns) !== count($output->projection)) {
             $derivation->report(new ViewColumnCount(count($definition->columns), count($output->projection)));
         }
@@ -48,6 +52,33 @@ final class ViewFacts
         }
         (new TableProblems())->duplicates($table, $derivation);
 
-        return $table;
+        return $this->materialized($table, $definition, $derivation);
     }
+
+    /**
+     * Resolves materialized view columns with the same storage types as derived tables.
+     * Unlike derived tables, MySQL 5.6 can merge a view. Merged views retain
+     * expression domains, while ALGORITHM TEMPTABLE always materializes the query.
+     */
+    public function materialized(Table $table, ViewDefinition $definition, Derivation $derivation): Table
+    {
+        $release = $derivation->context->profile->grammar;
+        $types = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
+        $merged = $definition->algorithm !== \SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::TempTable && $types->view($definition->query, $release);
+        $columns = [];
+        foreach ($table->columns as $position => $column) {
+            if ($merged) {
+                $columns[] = new \SqlSemantics\Statement\Declaration\Column($column->name, $column->type, $column->nullability, $column->generated, expression: true);
+                continue;
+            }
+            $domain = $column->type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? $types->projected($column->type, $definition->query, $position, $derivation, $types->narrows($definition->query)) : $column->type;
+            if ($column->type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $column->type->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null && in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744, \SqlSemantics\Contract\GrammarRelease::MySql8044], true)) {
+                $domain = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::String, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), [], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable);
+            }
+            $columns[] = new \SqlSemantics\Statement\Declaration\Column($column->name, $domain, $column->nullability, $column->generated);
+        }
+
+        return new Table($table->name, $table->profile, $columns, $table->implicit, $table->complete, $table->kind, $table->keys, $table->partitions);
+    }
+
 }

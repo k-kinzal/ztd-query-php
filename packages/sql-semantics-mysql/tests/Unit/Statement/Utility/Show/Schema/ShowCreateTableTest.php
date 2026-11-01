@@ -18,9 +18,9 @@ final class ShowCreateTableTest extends TestCase
     public function testDeriveStatementLeavesTheShapeOpen(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE TABLE t');
-        self::assertInstanceOf(ShowCreateTable::class, $show->statement);
+        self::assertInstanceOf(ShowCreateTable::class, $show);
         $missing = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE TABLE t', []);
-        self::assertSame('Relation t does not exist.', $missing->facts->diagnostics[0]->message());
+        self::assertSame('Relation t does not exist.', $missing->diagnostics()[0]->message());
         self::assertFalse($show->shape()?->complete());
     }
 

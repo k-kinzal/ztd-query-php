@@ -18,7 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Invalid;
@@ -30,7 +29,7 @@ final class CollateTest extends TestCase
 {
     public function testAcceptsAPrefixOperandWhichBindsTighter(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT -1')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT -1');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -44,7 +43,7 @@ final class CollateTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT a COLLATE NOCASE FROM t', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -52,13 +51,13 @@ final class CollateTest extends TestCase
         $collate = $statement->columns[0]->expression;
         self::assertInstanceOf(ColumnUse::class, $collate->operand);
         self::assertSame('NOCASE', $collate->collation->value);
-        $fact = $operation->facts->scalar($collate);
+        $fact = $collate->scalarInformation();
         self::assertNull($fact->resolution);
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($collate->operand)->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $collate->operand->scalarInformation()->resolution);
         self::assertNull($operation->field(0)->resolution);
         self::assertSame(Nullability::NotNull, $fact->nullability);
-        self::assertSame($operation->facts->scalar($collate->operand)->type, $fact->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame($collate->operand->scalarInformation()->type, $fact->type);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarCollatesAPrefixExpression(): void
@@ -66,7 +65,7 @@ final class CollateTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT -a COLLATE nocase AS c1 FROM t', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -78,15 +77,15 @@ final class CollateTest extends TestCase
     public function testDeriveScalarReportsACollatedRowValue(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2) COLLATE nocase', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
-        $fact = $operation->facts->scalar($statement->columns[0]->expression);
+        $fact = $statement->columns[0]->expression->scalarInformation();
         self::assertInstanceOf(Invalid::class, $fact->type);
         self::assertEquals(new Misuse(MisuseRule::TooManyValueColumns), $fact->type->cause);
-        self::assertSame('row value misused', $operation->facts->diagnostics[0]->message());
-        self::assertContains($fact->type->cause, $operation->facts->diagnostics);
+        self::assertSame('row value misused', $operation->diagnostics()[0]->message());
+        self::assertContains($fact->type->cause, $operation->diagnostics());
     }
 
     public function testRenderWritesTheOperandAndTheCollationName(): void
@@ -99,7 +98,7 @@ final class CollateTest extends TestCase
     public function testRenderWritesANewlyBuiltCollation(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Collate(new IntegerLiteral('1'), new Name('NOCASE')))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new Collate(new IntegerLiteral('1'), new Name('NOCASE')))]));
 
         self::assertSame('SELECT 1 COLLATE NOCASE', $operation->toString());
     }

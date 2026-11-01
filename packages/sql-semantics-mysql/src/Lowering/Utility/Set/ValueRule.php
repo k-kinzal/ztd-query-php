@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetWord;
-use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -39,11 +38,6 @@ final class ValueRule
     ];
 
     /**
-     * The rules an expression that is only a name passes through on its way to `simple_ident`.
-     */
-    private const UNITS = ['expr' => true, 'bool_pri' => true, 'predicate' => true, 'bit_expr' => true, 'simple_expr' => true];
-
-    /**
      * @param Lowering $lowering The lowering this rule belongs to
      */
     public function __construct(private readonly Lowering $lowering)
@@ -56,14 +50,25 @@ final class ValueRule
      * @param bool $system Whether the assigned variable is known to be a system variable
      * @throws ImplementationGap When a production has no rule
      */
-    public function value(Node $value, bool $system): Scalar|SetWord
+    public function value(Node $value, bool $system): Scalar|BareName|SetWord
+    {
+        $operand = $this->operand($value, $system);
+        return $operand instanceof BareName || $operand instanceof SetWord ? $operand : (new \SqlSemantics\Platform\MySql\Lowering\Expression\OperandRule())->scalar($operand, $value);
+    }
+
+    /**
+     * Reads an assignment operand while preserving a stored row or deferred computation.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function operand(Node $value, bool $system): Scalar|BareName|SetWord|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $form = $this->lowering->form($value);
         if ($form->signature !== 'set_expr_or_default: expr') {
             return self::WORDS[$form->signature] ?? throw ImplementationGap::production($form);
         }
 
-        return $this->word($form->node(0), $system) ?? $this->lowering->expressions->expression($form->node(0));
+        return $this->word($form->node(0), $system) ?? $this->lowering->expressions->operand($form->node(0));
     }
 
     /**
@@ -71,30 +76,6 @@ final class ValueRule
      */
     public function word(Node $expression, bool $system): ?BareName
     {
-        $node = $expression;
-        while (isset(self::UNITS[$node->name]) && count($node->children) === 1 && $node->children[0] instanceof Node) {
-            $node = $node->children[0];
-        }
-        if ($node->name !== 'simple_ident' || count($node->children) !== 1 || !$node->children[0] instanceof Node) {
-            return null;
-        }
-        $idents = [];
-        foreach ($node->children[0]->name === 'ident' ? [$node->children[0]] : $node->children[0]->children as $child) {
-            if ($child instanceof Node) {
-                $idents[] = $child;
-            }
-        }
-        if ($idents === [] || count($idents) > 3 || array_filter($idents, static fn (Node $ident): bool => $ident->name !== 'ident') !== []) {
-            return null;
-        }
-        $parts = array_map(fn (Node $ident): \SqlSemantics\Statement\Identifier\Name => $this->lowering->names->identifier($ident), $idents);
-        $word = array_pop($parts);
-        $qualifier = match (count($parts)) {
-            0 => null,
-            1 => new QualifiedName($parts[0]),
-            default => new QualifiedName($parts[1], $parts[0]),
-        };
-
-        return new BareName($word, $qualifier, $system);
+        return (new \SqlSemantics\Platform\MySql\Lowering\Leaf\WordRule($this->lowering))->word($expression, $system);
     }
 }

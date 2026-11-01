@@ -7,10 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Plugin;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `INSTALL PLUGIN name SONAME 'library'`: a request to load a server plugin from a shared library.
@@ -23,18 +22,23 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Installing a plugin
  *     $install = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("install plugin audit soname 'audit.so'");
- *     [$install->toString(), $install->statement->library->value] // => ["INSTALL PLUGIN audit SONAME 'audit.so'", 'audit.so']
+ *     [$install->toString(), $install->library->value] // => ["INSTALL PLUGIN audit SONAME 'audit.so'", 'audit.so']
  */
-final class InstallPlugin implements Statement
+final class InstallPlugin extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $plugin The plugin name
      * @param Text $library The file name of the shared library in the plugin directory
      */
-    public function __construct(public readonly Name $plugin, public readonly Text $library)
+    public function __construct(public readonly Name $plugin, public readonly Text $library, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        \SqlSemantics\Diagnostic\Check::input($library->radix === null, 'A plugin library name is quoted text.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

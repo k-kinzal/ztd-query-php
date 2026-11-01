@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\CreateServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\DropServer;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOption;
 use SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers CREATE, ALTER and DROP SERVER.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Statement;
  * https://dev.mysql.com/doc/refman/8.4/en/drop-server.html.
  * Status: Implemented.
  *
- * @visibility SqlSemantics\Platform\MySql\Lowering\Server
+ * @visibility SqlSemantics\Platform\MySql\Lowering
  */
 final class ForeignServerRule
 {
@@ -84,7 +84,26 @@ final class ForeignServerRule
     {
         $names = $this->lowering->names;
 
-        return new CreateServer($names->identifier($form->node($name)), $names->identifier($form->node($name + 4)), $this->options($form->node($name + 7)));
+        $identifier = $names->identifier($form->node($name));
+        return new CreateServer($identifier, $names->identifier($form->node($name + 4)), $this->options($form->node($name + 7)));
+    }
+
+    /**
+     * Retains a completed definition condition before a later malformed suffix.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if ($node->name !== 'create' && $node->name !== 'server_def') {
+            return null;
+        }
+        $form = $this->lowering->form($node);
+        $name = match ($form->signature) {
+            'server_def: SERVER_SYM ident_or_text FOREIGN DATA_SYM WRAPPER_SYM ident_or_text OPTIONS_SYM ( server_options_list )' => 1,
+            'create: CREATE SERVER_SYM ident_or_text FOREIGN DATA_SYM WRAPPER_SYM ident_or_text OPTIONS_SYM ( server_options_list )' => 2,
+            default => null,
+        };
+        $problem = $name === null ? null : $this->create($form, $name)->problem();
+        return $problem === null ? null : new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true);
     }
 
     /**

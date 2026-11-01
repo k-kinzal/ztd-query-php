@@ -17,7 +17,7 @@ final class SecondaryLoadTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t SECONDARY_UNLOAD')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t SECONDARY_UNLOAD')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void

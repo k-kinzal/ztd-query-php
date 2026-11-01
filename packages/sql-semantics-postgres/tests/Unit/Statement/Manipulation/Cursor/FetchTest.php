@@ -16,14 +16,14 @@ final class FetchTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('FETCH NEXT c');
-        self::assertSame('the session state: the cursor c', $query->facts->output?->shape->missing[0]->describe());
+        self::assertSame('the session state: the cursor c', $query->output()?->shape->missing[0]->describe());
     }
 
     public function testDeriveStatementRecordsNoRowsForMove(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('MOVE LAST IN c');
-        self::assertNull($query->facts->output);
+        self::assertNull($query->output());
     }
 
     public function testRenderWritesTheMovementAndTheCount(): void

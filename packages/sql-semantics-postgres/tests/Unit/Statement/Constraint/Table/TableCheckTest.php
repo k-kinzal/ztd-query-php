@@ -16,7 +16,7 @@ final class TableCheckTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t (a int, CHECK (a > 0))', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns::class, $n2);
@@ -32,7 +32,7 @@ final class TableCheckTest extends TestCase
         self::assertSame([
           0 => 'argument of CHECK must be type boolean',
           1 => 'CHECK constraints cannot be marked DEFERRABLE',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

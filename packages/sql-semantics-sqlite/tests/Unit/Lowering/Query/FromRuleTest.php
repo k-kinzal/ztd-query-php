@@ -32,8 +32,8 @@ final class FromRuleTest extends TestCase
     public function testFromIsNullWithoutTheClause(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('SELECT 1')->statement;
-        $read = $semantics->analyze('SELECT 1 FROM t')->statement;
+        $bare = $semantics->analyze('SELECT 1');
+        $read = $semantics->analyze('SELECT 1 FROM t');
 
         self::assertInstanceOf(Select::class, $bare);
         self::assertInstanceOf(Select::class, $read);
@@ -45,8 +45,8 @@ final class FromRuleTest extends TestCase
     public function testTermsAnswersOneTermWithoutAConstraintAndAChainOtherwise(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $single = $semantics->analyze('SELECT * FROM t')->statement;
-        $pair = $semantics->analyze('SELECT * FROM t, u')->statement;
+        $single = $semantics->analyze('SELECT * FROM t');
+        $pair = $semantics->analyze('SELECT * FROM t, u');
         $leading = $semantics->analyze('SELECT * FROM t ON 1');
 
         self::assertInstanceOf(Select::class, $single);
@@ -57,12 +57,12 @@ final class FromRuleTest extends TestCase
         self::assertCount(1, $pair->from->steps);
         self::assertTrue($pair->from->steps[0]->operator->comma);
         self::assertNull($pair->from->constraint);
-        self::assertInstanceOf(Select::class, $leading->statement);
-        self::assertInstanceOf(JoinChain::class, $leading->statement->from);
-        self::assertSame([], $leading->statement->from->steps);
-        self::assertInstanceOf(JoinOn::class, $leading->statement->from->constraint);
-        self::assertInstanceOf(Misuse::class, $leading->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::OnWithoutJoin, $leading->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Select::class, $leading);
+        self::assertInstanceOf(JoinChain::class, $leading->from);
+        self::assertSame([], $leading->from->steps);
+        self::assertInstanceOf(JoinOn::class, $leading->from->constraint);
+        self::assertInstanceOf(Misuse::class, $leading->diagnostics()[0]);
+        self::assertSame(MisuseRule::OnWithoutJoin, $leading->diagnostics()[0]->rule);
         self::assertSame('SELECT * FROM t ON 1', $leading->toString());
     }
 
@@ -70,13 +70,13 @@ final class FromRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT * FROM t AS x, main.u INDEXED BY i, json_each('[1]') AS j, (SELECT 1) AS d, (t JOIN u) AS n");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(JoinChain::class, $operation->statement->from);
-        $first = $operation->statement->from->first;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(JoinChain::class, $operation->from);
+        $first = $operation->from->first;
         self::assertInstanceOf(TableInput::class, $first);
         self::assertSame('x', $first->alias?->value);
         self::assertNull($first->index);
-        $relations = array_map(static fn (JoinStep $step): object => $step->relation, $operation->statement->from->steps);
+        $relations = array_map(static fn (JoinStep $step): object => $step->relation, $operation->from->steps);
         self::assertInstanceOf(TableInput::class, $relations[0]);
         self::assertSame('main', $relations[0]->name->schema?->value);
         self::assertSame('i', $relations[0]->index?->index?->value);
@@ -97,9 +97,9 @@ final class FromRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t, u JOIN v NATURAL LEFT OUTER JOIN w CROSS JOIN x INNER JOIN y RIGHT JOIN z FULL OUTER JOIN q');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(JoinChain::class, $operation->statement->from);
-        self::assertSame([[true, []], [false, []], [false, [JoinKeyword::Natural, JoinKeyword::Left, JoinKeyword::Outer]], [false, [JoinKeyword::Cross]], [false, [JoinKeyword::Inner]], [false, [JoinKeyword::Right]], [false, [JoinKeyword::Full, JoinKeyword::Outer]]], array_map(static fn (JoinStep $step): array => [$step->operator->comma, $step->operator->words], $operation->statement->from->steps));
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(JoinChain::class, $operation->from);
+        self::assertSame([[true, []], [false, []], [false, [JoinKeyword::Natural, JoinKeyword::Left, JoinKeyword::Outer]], [false, [JoinKeyword::Cross]], [false, [JoinKeyword::Inner]], [false, [JoinKeyword::Right]], [false, [JoinKeyword::Full, JoinKeyword::Outer]]], array_map(static fn (JoinStep $step): array => [$step->operator->comma, $step->operator->words], $operation->from->steps));
         self::assertSame('SELECT * FROM t, u JOIN v NATURAL LEFT OUTER JOIN w CROSS JOIN x INNER JOIN y RIGHT JOIN z FULL OUTER JOIN q', $operation->toString());
     }
 
@@ -107,15 +107,15 @@ final class FromRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t LEFT bogus JOIN u');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(JoinChain::class, $operation->statement->from);
-        $words = $operation->statement->from->steps[0]->operator->words;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(JoinChain::class, $operation->from);
+        $words = $operation->from->steps[0]->operator->words;
         self::assertCount(2, $words);
         self::assertSame(JoinKeyword::Left, $words[0]);
         self::assertInstanceOf(Name::class, $words[1]);
         self::assertSame('bogus', $words[1]->value);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::UnknownJoinType, $operation->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Misuse::class, $operation->diagnostics()[0]);
+        self::assertSame(MisuseRule::UnknownJoinType, $operation->diagnostics()[0]->rule);
         self::assertSame('SELECT * FROM t LEFT bogus JOIN u', $operation->toString());
     }
 
@@ -123,9 +123,9 @@ final class FromRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t JOIN u ON t.a = u.a JOIN v USING (a, b) JOIN w');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(JoinChain::class, $operation->statement->from);
-        $constraints = array_map(static fn (JoinStep $step): ?object => $step->constraint, $operation->statement->from->steps);
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(JoinChain::class, $operation->from);
+        $constraints = array_map(static fn (JoinStep $step): ?object => $step->constraint, $operation->from->steps);
         self::assertInstanceOf(JoinOn::class, $constraints[0]);
         self::assertInstanceOf(JoinUsing::class, $constraints[1]);
         self::assertSame(['a', 'b'], array_map(static fn (Name $column): string => $column->value, $constraints[1]->columns));
@@ -137,10 +137,10 @@ final class FromRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t INDEXED BY i, u NOT INDEXED');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(JoinChain::class, $operation->statement->from);
-        $first = $operation->statement->from->first;
-        $second = $operation->statement->from->steps[0]->relation;
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertInstanceOf(JoinChain::class, $operation->from);
+        $first = $operation->from->first;
+        $second = $operation->from->steps[0]->relation;
         self::assertInstanceOf(TableInput::class, $first);
         self::assertInstanceOf(TableInput::class, $second);
         self::assertSame('i', $first->index?->index?->value);
@@ -152,9 +152,9 @@ final class FromRuleTest extends TestCase
     public function testOptionalIndexedIsNullWithoutAClause(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('DELETE FROM t')->statement;
-        $chosen = $semantics->analyze('DELETE FROM t INDEXED BY i')->statement;
-        $refused = $semantics->analyze('DELETE FROM t NOT INDEXED')->statement;
+        $bare = $semantics->analyze('DELETE FROM t');
+        $chosen = $semantics->analyze('DELETE FROM t INDEXED BY i');
+        $refused = $semantics->analyze('DELETE FROM t NOT INDEXED');
 
         self::assertInstanceOf(Delete::class, $bare);
         self::assertInstanceOf(Delete::class, $chosen);

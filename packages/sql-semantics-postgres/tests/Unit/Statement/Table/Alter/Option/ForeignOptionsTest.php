@@ -18,7 +18,7 @@ final class ForeignOptionsTest extends TestCase
         $statement = $semantics->analyze('ALTER FOREIGN TABLE f OPTIONS (ADD x \'y\')', []);
         self::assertSame([
           0 => 'Relation f does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

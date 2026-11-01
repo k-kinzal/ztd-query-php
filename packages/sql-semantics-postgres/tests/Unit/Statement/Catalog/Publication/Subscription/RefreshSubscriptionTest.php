@@ -19,6 +19,6 @@ final class RefreshSubscriptionTest extends TestCase
 
     public function testDeriveStatementDerivesTheOptions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s REFRESH PUBLICATION')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s REFRESH PUBLICATION')->diagnostics());
     }
 }

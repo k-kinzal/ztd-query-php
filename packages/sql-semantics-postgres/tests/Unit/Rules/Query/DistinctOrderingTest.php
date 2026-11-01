@@ -19,7 +19,7 @@ final class DistinctOrderingTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT DISTINCT ON (a) a, b FROM t ORDER BY b, a', [$t, $u]);
-        self::assertSame('SELECT DISTINCT ON expressions must match initial ORDER BY expressions', $query->facts->diagnostics[0]->message());
+        self::assertSame('SELECT DISTINCT ON expressions must match initial ORDER BY expressions', $query->diagnostics()[0]->message());
     }
 
     public function testCheckAcceptsDistinctTermsFirst(): void
@@ -29,7 +29,7 @@ final class DistinctOrderingTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT DISTINCT ON (1, b) a, b FROM t ORDER BY b', [$t, $u]);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testKeyIsTheOutputPosition(): void
@@ -39,9 +39,9 @@ final class DistinctOrderingTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT a FROM t', [$t, $u]);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
-        self::assertSame(0, (new \SqlSemantics\Platform\PostgreSql\Rules\Query\DistinctOrdering())->key(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Statement\Identifier\Name('a')])), $query->facts->output->projection ?? [], new \SqlSemantics\Construction\Derivation($query->context)));
+        self::assertSame(0, (new \SqlSemantics\Platform\PostgreSql\Rules\Query\DistinctOrdering())->key(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Statement\Identifier\Name('a')])), $query->output()->projection ?? [], new \SqlSemantics\Construction\Derivation($semantics->context([$t, $u]))));
     }
 
     public function testFindAnswersNullForAnotherKey(): void

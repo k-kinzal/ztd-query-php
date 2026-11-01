@@ -19,14 +19,14 @@ final class NumberOptionTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) STATS_PERSISTENT = DEFAULT MAX_ROWS 10');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $option = $statement->options[0];
 
         self::assertInstanceOf(NumberOption::class, $option);
         self::assertNull($option->value);
-        self::assertSame('CREATE TABLE t (a INT) STATS_PERSISTENT DEFAULT MAX_ROWS 10', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) STATS_PERSISTENT = DEFAULT MAX_ROWS 10', $create->toString());
     }
 }

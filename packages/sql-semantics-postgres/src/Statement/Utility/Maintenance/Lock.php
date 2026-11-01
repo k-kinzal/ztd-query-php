@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,13 +27,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the mode a LOCK takes
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('LOCK TABLE ONLY a, b NOWAIT');
- *     [$operation->statement->mode, $operation->statement->effectiveMode(), $operation->toString()] // => [null, \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode::AccessExclusive, 'LOCK ONLY a, b NOWAIT']
+ *     [$operation->mode, $operation->effectiveMode(), $operation->toString()] // => [null, \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\LockMode::AccessExclusive, 'LOCK ONLY a, b NOWAIT']
  * @example Refusing a LOCK without a table
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Lock([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Lock implements Statement
+final class Lock extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RelationReference> The tables
@@ -46,8 +45,11 @@ final class Lock implements Statement
      * @param LockMode|null $mode The lock mode, when written
      * @param bool $nowait Whether the command fails instead of waiting for a conflicting lock
      */
-    public function __construct(array $tables, public readonly ?LockMode $mode = null, public readonly bool $nowait = false)
+    public function __construct(array $tables, public readonly ?LockMode $mode = null, public readonly bool $nowait = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = Check::listOf($tables, RelationReference::class, 'LOCK names at least one table.', 1);
     }
 

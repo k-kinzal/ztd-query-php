@@ -18,7 +18,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An EXCLUDE table constraint: no two rows satisfy all the operators of the elements together.
@@ -36,7 +35,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Exclusion implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ExclusionElement> The elements
@@ -77,6 +76,7 @@ final class Exclusion implements Constraint
         public readonly ?Scalar $where = null,
         array $attributes = [],
         public readonly ?Name $name = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         $this->elements = Check::listOf($elements, ExclusionElement::class, 'An exclusion constraint has at least one element.', 1);
         $this->included = Check::listOf($included, Name::class, 'Included columns are names.');

@@ -11,7 +11,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetPersist;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ResetPersist::class)]
 #[Medium]
@@ -21,7 +20,7 @@ final class ResetPersistTest extends TestCase
     {
         $this->expectExceptionMessage('RESET PERSIST needs MySQL 8.0 or later.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new ResetPersist());
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new ResetPersist(), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderWritesTheComponentVariable(): void
@@ -29,6 +28,6 @@ final class ResetPersistTest extends TestCase
         $reset = (new Semantics(Dialect::MySql))->analyze('reset persist comp.var');
 
         self::assertSame('RESET PERSIST comp.var', $reset->toString());
-        self::assertEquals(new ResetPersist(false, new Name('var'), new Name('comp')), $reset->statement);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new ResetPersist(false, new Name('var'), new Name('comp')), $reset));
     }
 }

@@ -24,7 +24,13 @@ final class InstallPluginTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("INSTALL PLUGIN p SONAME 'p.so'");
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
+    }
+
+    public function testValueRejectsIncompatibleLibrary(): void
+    {
+        $this->expectExceptionMessage('A plugin library name is quoted text.');
+        new InstallPlugin(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('41', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
     }
 }

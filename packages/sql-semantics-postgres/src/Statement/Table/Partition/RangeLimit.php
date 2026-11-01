@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * MINVALUE or MAXVALUE in a range partition bound: below or above every value.
@@ -21,16 +20,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an infinite bound
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES FROM (MINVALUE) TO (10)');
- *     $create->statement->definition->bound->from[0]->maximum() // => false
+ *     $create->definition->bound->from[0]->maximum() // => false
  */
 final class RangeLimit implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $word The word, `minvalue` or `maxvalue`
      */
-    public function __construct(public readonly Name $word)
+    public function __construct(public readonly Name $word, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($word->value === 'minvalue' || $word->value === 'maxvalue', 'An infinite range bound is minvalue or maxvalue.');
     }

@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Cursor\OpenCursor;
 use SqlSemantics\Statement\Fact\Diagnostic;
 
@@ -20,13 +19,13 @@ final class OpenCursorTest extends TestCase
 {
     public function testDeriveProgramReportsAnUndefinedCursor(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() OPEN c');
-        $create = $operation->statement;
-        self::assertInstanceOf(CreateProcedure::class, $create);
-        self::assertInstanceOf(OpenCursor::class, $create->body);
-
-        self::assertSame('c', $create->body->cursor->value);
-        self::assertSame(['Undefined CURSOR: c'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() OPEN c');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undefined CURSOR: c', $failure->problem->message());
+        }
     }
 
     /**
@@ -37,7 +36,7 @@ final class OpenCursorTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -49,8 +48,6 @@ final class OpenCursorTest extends TestCase
         yield 'a cursor of an outer block' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; BEGIN OPEN c; END; END', []];
         yield 'a cursor in another case' => ['CREATE PROCEDURE p() BEGIN DECLARE C CURSOR FOR SELECT 1; OPEN c; END', []];
         yield 'a cursor from a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE EXIT HANDLER FOR SQLWARNING OPEN c; END', []];
-        yield 'a cursor of an inner block' => ['CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CURSOR FOR SELECT 1; END; OPEN c; END', ['Undefined CURSOR: c']];
-        yield 'a cursor declared after a handler that uses it' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING OPEN c; DECLARE c CURSOR FOR SELECT 1; END', ['Undefined CURSOR: c', 'Cursor declaration after handler declaration']];
     }
 
     #[DataProvider('providerRenderWritesTheStatement')]
@@ -65,6 +62,38 @@ final class OpenCursorTest extends TestCase
     public static function providerRenderWritesTheStatement(): iterable
     {
         yield '5.6' => ['mysql-5.6.51', 'create procedure p() begin declare c cursor for select 1; open c; end', 'CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; OPEN c; END'];
-        yield '8.0' => ['mysql-8.0.44', 'create procedure p() open `c d`', 'CREATE PROCEDURE p() OPEN `c d`'];
+        yield '8.0' => ['mysql-8.0.44', 'create procedure p() begin declare `c d` cursor for select 1; open `c d`; end', 'CREATE PROCEDURE p() BEGIN DECLARE `c d` CURSOR FOR SELECT 1; OPEN `c d`; END'];
+    }
+
+
+    #[DataProvider('providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRefusesTheDefinition')]
+    public function testDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRefusesTheDefinition(string $sql, string $message): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDeriveProgramLooksTheCursorUpInTheEnclosingBlocksRefusesTheDefinition(): iterable
+    {
+        yield 'a cursor of an inner block' => ['CREATE PROCEDURE p() BEGIN BEGIN DECLARE c CURSOR FOR SELECT 1; END; OPEN c; END', 'Undefined CURSOR: c'];
+        yield 'a cursor declared after a handler that uses it' => ['CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLWARNING OPEN c; DECLARE c CURSOR FOR SELECT 1; END', 'Undefined CURSOR: c'];
+    }
+    public function testRenderRejectsTheUnboundQuotedCursorBeforePublication(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('create procedure p() open `c d`');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undefined CURSOR: c d', $failure->problem->message());
+        }
     }
 }

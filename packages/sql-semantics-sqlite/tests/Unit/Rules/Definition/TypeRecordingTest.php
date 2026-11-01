@@ -87,7 +87,7 @@ final class TypeRecordingTest extends TestCase
     public function testWrittenIsTheTextTheRenderedSqlSpells(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a  DECIMAL ( + 10 , -2 ), b "big" int)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $first = $statement->columns[0]->type;

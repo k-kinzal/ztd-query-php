@@ -18,9 +18,9 @@ final class DefinitionsTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TABLE n (x int CHECK (x > 0))', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
-        $n2 = $statement->facts->relation($n1)->table;
+        $n2 = $n1->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n2);
         self::assertSame(true, $n2->table === $statement->declarations()[0]);
     }
@@ -29,8 +29,8 @@ final class DefinitionsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE n (x int)', []);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $n1 = $statement->statement;
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context([]));
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         self::assertSame('1 0', count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Definitions())->fact($n1, $derivation, null)->shape->slots) . ' ' . count($derivation->facts()->declarations));
     }
@@ -39,7 +39,7 @@ final class DefinitionsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TEMP TABLE n (x int)', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         self::assertSame('pg_temp', (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Definitions())->name($n1, null)->schema?->value);
     }
@@ -50,7 +50,7 @@ final class DefinitionsTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TABLE n () INHERITS (t, zz)', $context);
-        self::assertSame(1, count($statement->facts->diagnostics));
+        self::assertSame(1, count($statement->diagnostics()));
     }
 
     public function testReportReportsRepeatedAndSystemColumnNames(): void
@@ -62,7 +62,7 @@ final class DefinitionsTest extends TestCase
           1 => 'column name "xmin" conflicts with a system column name',
           2 => 'array of serial is not implemented',
           3 => 'multiple primary keys for table "n" are not allowed',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testReportCountsTheColumnsALikeClauseCopies(): void
@@ -70,14 +70,14 @@ final class DefinitionsTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = $semantics->analyze('CREATE TABLE t (a int NOT NULL, b int)', [])->declarations();
         $statement = $semantics->analyze('CREATE TABLE n (b text, LIKE t, c int)', $context);
-        self::assertSame(['column "b" specified more than once'], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        self::assertSame(['column "b" specified more than once'], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testDeriveReportsATemporaryTableInAPermanentSchema(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TEMP TABLE public.n (a int)', []);
-        self::assertSame(['cannot create temporary relation in non-temporary schema'], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        self::assertSame(['cannot create temporary relation in non-temporary schema'], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testKindDeclaresAForeignTableAsOne(): void

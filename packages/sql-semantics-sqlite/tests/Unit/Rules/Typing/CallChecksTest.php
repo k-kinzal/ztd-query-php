@@ -24,57 +24,57 @@ final class CallChecksTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT row_number()');
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(CallMisuseRule::WindowWithoutOver, $query->facts->diagnostics[0]->rule);
-        self::assertSame('row_number', $query->facts->diagnostics[0]->function->value);
-        self::assertSame('misuse of window function row_number()', $query->facts->diagnostics[0]->message());
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[0]);
+        self::assertSame(CallMisuseRule::WindowWithoutOver, $query->diagnostics()[0]->rule);
+        self::assertSame('row_number', $query->diagnostics()[0]->function->value);
+        self::assertSame('misuse of window function row_number()', $query->diagnostics()[0]->message());
     }
 
     public function testReportRecordsAScalarFunctionCalledAsAWindowOrWithFilter(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT abs(1) OVER (), abs(1) FILTER (WHERE 1)');
-        $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics);
+        $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->diagnostics());
 
         self::assertSame(['abs() may not be used as a window function', 'FILTER may not be used with non-aggregate abs()'], $messages);
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(CallMisuseRule::ScalarAsWindow, $query->facts->diagnostics[0]->rule);
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[1]);
-        self::assertSame(CallMisuseRule::FilterWithoutAggregate, $query->facts->diagnostics[1]->rule);
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[0]);
+        self::assertSame(CallMisuseRule::ScalarAsWindow, $query->diagnostics()[0]->rule);
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[1]);
+        self::assertSame(CallMisuseRule::FilterWithoutAggregate, $query->diagnostics()[1]->rule);
     }
 
     public function testReportRecordsAFilterOnAWindowOnlyFunction(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT row_number() FILTER (WHERE 1) OVER ()');
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(CallMisuseRule::FilterOnWindowOnly, $query->facts->diagnostics[0]->rule);
-        self::assertSame('FILTER clause may only be used with aggregate window functions', $query->facts->diagnostics[0]->message());
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[0]);
+        self::assertSame(CallMisuseRule::FilterOnWindowOnly, $query->diagnostics()[0]->rule);
+        self::assertSame('FILTER clause may only be used with aggregate window functions', $query->diagnostics()[0]->message());
     }
 
     public function testReportRecordsAnArgumentOrderingOutsideAnAggregate(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT abs(a ORDER BY b), count(a ORDER BY b) OVER (), group_concat(a ORDER BY b) FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
-        $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics);
+        $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->diagnostics());
 
         self::assertSame(['ORDER BY may not be used with non-aggregate abs()', 'ORDER BY may not be used with non-aggregate count()'], $messages);
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[1]);
-        self::assertSame(CallMisuseRule::OrderByWithoutAggregate, $query->facts->diagnostics[1]->rule);
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[1]);
+        self::assertSame(CallMisuseRule::OrderByWithoutAggregate, $query->diagnostics()[1]->rule);
     }
 
     public function testReportRecordsDistinctInAWindowAndDistinctWithSeveralArguments(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze("SELECT sum(DISTINCT a) OVER (), group_concat(DISTINCT a, ',') FROM t", [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
-        $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics);
+        $messages = array_map(static fn (object $diagnostic): string => $diagnostic->message(), $query->diagnostics());
 
         self::assertSame(['DISTINCT is not supported for window functions', 'DISTINCT aggregates must have exactly one argument'], $messages);
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(CallMisuseRule::DistinctInWindow, $query->facts->diagnostics[0]->rule);
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[1]);
-        self::assertSame(CallMisuseRule::DistinctArguments, $query->facts->diagnostics[1]->rule);
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[0]);
+        self::assertSame(CallMisuseRule::DistinctInWindow, $query->diagnostics()[0]->rule);
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[1]);
+        self::assertSame(CallMisuseRule::DistinctArguments, $query->diagnostics()[1]->rule);
     }
 
     public function testReportAdmitsTheClausesEachKindTakes(): void
@@ -82,7 +82,7 @@ final class CallChecksTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT count(*) FILTER (WHERE 1) OVER (), max(DISTINCT a, b), count(DISTINCT a), sum(a) FILTER (WHERE b IS NULL), row_number() OVER (ORDER BY a), abs(a) FROM t', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testReportIgnoresANameOutsideTheTableOrAWrongArgumentCount(): void
@@ -91,9 +91,9 @@ final class CallChecksTest extends TestCase
         $unknown = $semantics->analyze('SELECT nosuch(1) OVER ()');
         $wrong = $semantics->analyze('SELECT abs(1, 2) OVER ()');
 
-        self::assertSame([], $unknown->facts->diagnostics);
-        self::assertCount(1, $wrong->facts->diagnostics);
-        self::assertInstanceOf(WrongArgumentCount::class, $wrong->facts->diagnostics[0]);
+        self::assertSame([], $unknown->diagnostics());
+        self::assertCount(1, $wrong->diagnostics());
+        self::assertInstanceOf(WrongArgumentCount::class, $wrong->diagnostics()[0]);
     }
 
     public function testReportRecordsThroughTheDerivation(): void

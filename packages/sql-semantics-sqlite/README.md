@@ -39,10 +39,10 @@ $semantics = new Semantics(Dialect::Sqlite);
 $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)');
 $insert = $semantics->analyze("insert or replace into users (id, name) values (1, 'Alice') returning id", [$users]);
 
-$insert->statement instanceof InsertRows; // => true
+$insert instanceof InsertRows; // => true
 $insert->toString(); // => "INSERT OR REPLACE INTO users (id, name) VALUES (1, 'Alice') RETURNING id"
 $insert->field('id')->nullability; // => Nullability::NotNull
-$semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users])->facts->diagnostics[0]->message(); // => '2 values for 1 columns.'
+$semantics->analyze('INSERT INTO users (id) VALUES (1, 2)', [$users])->diagnostics()[0]->message(); // => '2 values for 1 columns.'
 ```
 
 INSERT with VALUES, with a query and with DEFAULT VALUES are three classes: `InsertRows`, `InsertSelect` and `InsertDefaults`.
@@ -167,7 +167,7 @@ $semantics = new Semantics(Dialect::Sqlite);
 $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS one');
 
 $view->declarations()[0]->kind; // => RelationKind::View
-$semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); // => 'Relation v is a view: DROP TABLE removes only a table.'
+$semantics->analyze('DROP TABLE v', [$view])->diagnostics()[0]->message(); // => 'Relation v is a view: DROP TABLE removes only a table.'
 ```
 
 ### Generated columns
@@ -182,8 +182,8 @@ $semantics = new Semantics(Dialect::Sqlite);
 $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))');
 
 $table->declarations()[0]->columns[1]->generated; // => true
-$semantics->analyze('UPDATE t SET b = 1', [$table])->facts->diagnostics[0]->message(); // => 'cannot UPDATE generated column "b"'
-$semantics->analyze('INSERT INTO t VALUES (1)', [$table])->facts->diagnostics; // => []
+$semantics->analyze('UPDATE t SET b = 1', [$table])->diagnostics()[0]->message(); // => 'cannot UPDATE generated column "b"'
+$semantics->analyze('INSERT INTO t VALUES (1)', [$table])->diagnostics(); // => []
 ```
 
 ## Limitations

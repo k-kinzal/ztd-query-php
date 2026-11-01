@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the access method
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OPERATOR CLASS c DEFAULT FOR TYPE int4 USING btree AS OPERATOR 1 <, FUNCTION 1 btint4cmp(int4, int4)');
- *     [$operation->statement->method->value, $operation->statement->isDefault, count($operation->statement->items)] // => ['btree', true, 2]
+ *     [$operation->method->value, $operation->isDefault, count($operation->items)] // => ['btree', true, 2]
  */
-final class CreateOperatorClass implements Statement
+final class CreateOperatorClass extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<OperatorClassItem> The items in written order
@@ -49,7 +48,12 @@ final class CreateOperatorClass implements Statement
         array $items,
         public readonly bool $isDefault = false,
         public readonly ?DottedName $family = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->items = Check::listOf($items, OperatorClassItem::class, 'An operator class has at least one item.', 1);
     }
 

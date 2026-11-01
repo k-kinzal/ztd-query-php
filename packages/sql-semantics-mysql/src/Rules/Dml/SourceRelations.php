@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
@@ -53,12 +54,13 @@ final class SourceRelations
                 $pending = [...$nested, ...$pending];
                 continue;
             }
-            if (!$facts->covers($relation)) {
+            if (!$relation->hasBinding()) {
                 continue;
             }
-            $shape = $facts->relation($relation)->shape;
+            $fact = $relation->relationInformation();
+            $shape = $fact->shape;
             if ($relation instanceof NamedRelation) {
-                $visible[] = new VisibleRelation($relation, $shape, $relation->alias(), $relation->name());
+                $visible[] = new VisibleRelation($relation, $shape, $relation->alias(), $relation->name(), [], (new TableShapes())->implicit($fact));
             } elseif ($relation instanceof DerivedTable || $relation instanceof JsonTable) {
                 $visible[] = new VisibleRelation($relation, $shape, $relation->alias);
             }

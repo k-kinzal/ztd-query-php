@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAc
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Adding a publication
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s ADD PUBLICATION p3');
- *     [$operation->statement->action, $operation->statement->publications[0]->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction::Add, 'p3']
+ *     [$operation->action, $operation->publications[0]->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction::Add, 'p3']
  */
-final class AlterSubscriptionPublications implements Statement
+final class AlterSubscriptionPublications extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The publications
@@ -47,8 +46,11 @@ final class AlterSubscriptionPublications implements Statement
      * @param list<Name> $publications The publications; at least one
      * @param list<Definition> $options The options
      */
-    public function __construct(public readonly Name $name, public readonly PublicationAction $action, array $publications, array $options = [])
+    public function __construct(public readonly Name $name, public readonly PublicationAction $action, array $publications, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->publications = Check::listOf($publications, Name::class, 'ALTER SUBSCRIPTION names at least one publication.', 1);
         $this->options = Check::listOf($options, Definition::class, 'Subscription options are definitions.');
     }

@@ -12,10 +12,9 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * LOOP ... END LOOP: repeats its statements until a LEAVE or RETURN ends it.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a labeled loop
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() again: LOOP LEAVE again; END LOOP again');
- *     [$create->statement->body->label->value, count($create->statement->body->statements)] // => ['again', 1]
+ *     [$create->body->label->value, count($create->body->statements)] // => ['again', 1]
  */
-final class Loop implements ProgramStatement
+final class Loop implements FunctionBody
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ProgramStatement|Statement> The statements in written order
@@ -43,7 +42,7 @@ final class Loop implements ProgramStatement
      * @param Name|null $endLabel The label written after the loop; only a labeled loop has one
      * @throws InvalidConstruction When there is no statement, a member is of another class, or an end label is given without a label
      */
-    public function __construct(array $statements, public readonly ?Name $label = null, public readonly ?Name $endLabel = null)
+    public function __construct(array $statements, public readonly ?Name $label = null, public readonly ?Name $endLabel = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->statements = (new StatementSequence())->members($statements, 1);
         Check::input($endLabel === null || $label !== null, 'Only a labeled loop has an end label.');

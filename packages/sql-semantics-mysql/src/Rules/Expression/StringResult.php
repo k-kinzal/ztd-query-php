@@ -6,8 +6,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Statement\Type\TypeFact;
 
 /**
@@ -44,15 +42,15 @@ final class StringResult
             $binary = 0;
             $types = $alternatives->of($operand);
             foreach ($types as $type) {
-                $binary += $type instanceof Binary ? 1 : 0;
+                $binary += ($type instanceof Binary || ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily && $type->binary)) ? 1 : 0;
             }
             $certain = $certain || $binary === count($types);
             $possible = $possible || $binary > 0;
         }
         if ($certain) {
-            return $alternatives->known([new Binary(BinaryKind::VarBinary)]);
+            return $alternatives->known([new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)]);
         }
 
-        return $alternatives->known($possible ? [new Character(CharacterKind::VarChar), new Binary(BinaryKind::VarBinary)] : [new Character(CharacterKind::VarChar)]);
+        return $alternatives->known($possible ? [new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)] : [new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()]);
     }
 }

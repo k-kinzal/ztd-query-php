@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `WHERE CURRENT OF cursor`: the row a cursor is positioned on, as the only row an UPDATE or DELETE changes.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the cursor of a positioned DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DELETE FROM t WHERE CURRENT OF c');
- *     $delete->statement->where->cursor->value // => 'c'
+ *     $delete->where->cursor->value // => 'c'
  */
 final class CurrentOf implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $cursor The cursor name
      */
-    public function __construct(public readonly Name $cursor)
+    public function __construct(public readonly Name $cursor, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

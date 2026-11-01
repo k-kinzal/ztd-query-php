@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -34,7 +33,8 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class XmlForest implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<XmlAttribute> The values and their element names
@@ -44,8 +44,11 @@ final class XmlForest implements Scalar, OutputNaming
     /**
      * @param list<XmlAttribute> $elements The values and their element names; at least one
      */
-    public function __construct(array $elements)
+    public function __construct(array $elements, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->elements = Check::listOf($elements, XmlAttribute::class, 'XMLFOREST takes at least one value.', 1);
     }
 

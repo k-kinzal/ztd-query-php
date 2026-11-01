@@ -20,8 +20,8 @@ final class VirtualTableRuleTest extends TestCase
     public function testCommandLowersBothFormsOfAVirtualTableDefinition(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('CREATE VIRTUAL TABLE t USING m')->statement;
-        $argued = $semantics->analyze('CREATE VIRTUAL TABLE t USING m(a)')->statement;
+        $bare = $semantics->analyze('CREATE VIRTUAL TABLE t USING m');
+        $argued = $semantics->analyze('CREATE VIRTUAL TABLE t USING m(a)');
 
         self::assertInstanceOf(CreateVirtualTable::class, $bare);
         self::assertInstanceOf(CreateVirtualTable::class, $argued);
@@ -31,7 +31,7 @@ final class VirtualTableRuleTest extends TestCase
 
     public function testTableKeepsTheNameTheModuleAndTheFlag(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE VIRTUAL TABLE IF NOT EXISTS aux.t USING "my module"')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE VIRTUAL TABLE IF NOT EXISTS aux.t USING "my module"');
 
         self::assertInstanceOf(CreateVirtualTable::class, $statement);
         self::assertTrue($statement->ifNotExists);
@@ -41,7 +41,7 @@ final class VirtualTableRuleTest extends TestCase
 
     public function testArgumentsAreTheExactTextsBetweenTheTopLevelCommas(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE VIRTUAL TABLE t USING m(a INT  PRIMARY KEY, f(1, (2, 3)), 'x,y' , )")->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE VIRTUAL TABLE t USING m(a INT  PRIMARY KEY, f(1, (2, 3)), 'x,y' , )");
 
         self::assertInstanceOf(CreateVirtualTable::class, $statement);
         self::assertSame(['a INT  PRIMARY KEY', 'f(1, (2, 3))', "'x,y'", ''], array_map(static fn (ModuleArgument $argument): string => $argument->text, $statement->arguments ?? []));

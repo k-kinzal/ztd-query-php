@@ -29,6 +29,17 @@ use SqlSemantics\Platform\MySql\Rules\Noise\UtilityNoise;
 #[Small]
 final class LeafKeysTest extends TestCase
 {
+    public function testKeyComparesCpuIndicesByValueWhilePreservingExpressionSpellings(): void
+    {
+        $keys = new LeafKeys(new LexicalSettings(''));
+        $token = new Token(1, 'NUM', '007', 0);
+
+        self::assertSame('number:7', $keys->key($token, 'vcpu_num_or_range: NUM', 0));
+        self::assertSame('number:7', $keys->key($token, 'vcpu_num_or_range: NUM - NUM', 2));
+        self::assertSame('number:007', $keys->key($token, 'NUM_literal: NUM', 0));
+        self::assertSame('number:0', $keys->key(new Token(1, 'NUM', '000', 0), 'vcpu_num_or_range: NUM', 0));
+    }
+
     public function testKeyDecodesNamesAtNameProductions(): void
     {
         $keys = new LeafKeys(new LexicalSettings(''));

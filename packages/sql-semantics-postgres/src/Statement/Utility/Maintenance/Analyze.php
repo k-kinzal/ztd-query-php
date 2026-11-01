@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\MaintenanceFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading an ANALYZE in the British spelling
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ANALYSE VERBOSE t');
- *     [$operation->statement->keyword, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Analyse, 'ANALYSE VERBOSE t']
+ *     [$operation->keyword, $operation->toString()] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Analyse, 'ANALYSE VERBOSE t']
  * @example Refusing a command keyword that is not a spelling of ANALYZE
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Analyze(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Format) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Analyze implements Statement
+final class Analyze extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<UtilityOption> The options in the order written
@@ -51,8 +50,11 @@ final class Analyze implements Statement
      * @param OptionSyntax $syntax How the options are written
      * @param list<MaintenanceTarget> $targets The tables; none stands for every table
      */
-    public function __construct(public readonly OptionKeyword $keyword = OptionKeyword::Analyze, array $options = [], public readonly OptionSyntax $syntax = OptionSyntax::Words, array $targets = [])
+    public function __construct(public readonly OptionKeyword $keyword = OptionKeyword::Analyze, array $options = [], public readonly OptionSyntax $syntax = OptionSyntax::Words, array $targets = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($keyword !== OptionKeyword::Format, 'The command is spelled ANALYZE or ANALYSE.');
         $this->options = Check::listOf($options, UtilityOption::class, 'The options of ANALYZE are utility options.');
         $this->targets = Check::listOf($targets, MaintenanceTarget::class, 'The tables of ANALYZE are maintenance targets.');

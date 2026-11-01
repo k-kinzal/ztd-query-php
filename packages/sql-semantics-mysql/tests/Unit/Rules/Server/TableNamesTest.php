@@ -22,11 +22,11 @@ final class TableNamesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $lock = $semantics->analyze('LOCK TABLES t READ, t AS u WRITE, t AS u READ', [$table]);
-        self::assertInstanceOf(LockTables::class, $lock->statement);
+        $lock = $semantics->analyze('LOCK TABLES t READ, t AS u WRITE, pbt.t AS u READ', $semantics->context([$table], searchPath: new \SqlSemantics\Contract\SearchPath('pbt')));
+        self::assertInstanceOf(LockTables::class, $lock);
 
-        self::assertInstanceOf(DeclaredTable::class, $lock->facts->relation($lock->statement->locks[1])->table);
-        self::assertCount(1, $lock->facts->diagnostics);
-        self::assertInstanceOf(NonUniqueTable::class, $lock->facts->diagnostics[0]);
+        self::assertInstanceOf(DeclaredTable::class, $lock->locks[1]->relationInformation()->table);
+        self::assertCount(1, $lock->diagnostics());
+        self::assertInstanceOf(NonUniqueTable::class, $lock->diagnostics()[0]);
     }
 }

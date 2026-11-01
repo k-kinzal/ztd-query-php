@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One further arm of a compound query with the operator before it.
@@ -14,17 +13,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a further arm
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 EXCEPT SELECT 2');
- *     $query->statement->steps[0]->query->columns[0]->expression->digits // => '2'
+ *     $query->steps[0]->query->columns[0]->expression->digits // => '2'
  */
 final class CompoundStep implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CompoundOperator $operator The operator before the arm
      * @param Select|ValuesClause $query The arm
      */
-    public function __construct(public readonly CompoundOperator $operator, public readonly Select|ValuesClause $query)
+    public function __construct(public readonly CompoundOperator $operator, public readonly Select|ValuesClause $query, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -20,6 +20,6 @@ final class RoutineFactsTest extends TestCase
     public function testCreateHidesParametersFromDefaults(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE FUNCTION f(a int4, b int4 DEFAULT a) RETURNS int4 RETURN b', []);
-        self::assertEquals([new MissingColumn(new Name('a'))], $operation->facts->diagnostics);
+        self::assertEquals([new MissingColumn(new Name('a'))], $operation->diagnostics());
     }
 }

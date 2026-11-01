@@ -12,7 +12,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Server\Maintenance\MaintenanceRule;
 use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The entry rules of the server family: the methods other families and the statement dispatcher call.

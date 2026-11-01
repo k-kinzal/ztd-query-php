@@ -24,7 +24,7 @@ final class ShutdownTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SHUTDOWN');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

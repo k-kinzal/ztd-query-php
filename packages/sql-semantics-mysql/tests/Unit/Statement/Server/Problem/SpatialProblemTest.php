@@ -20,4 +20,17 @@ final class SpatialProblemTest extends TestCase
         self::assertSame('SRID 0 cannot be modified (ER_CANT_MODIFY_SRID_0).', (new SpatialProblem(SpatialRule::IdentifierZero))->message());
         self::assertSame('Attribute NAME is too long (ER_SRS_ATTRIBUTE_STRING_TOO_LONG).', (new SpatialProblem(SpatialRule::TooLong, SpatialAttributeKind::Name))->message());
     }
+    public function testMessageRetainsTheLineFeedOperand(): void
+    {
+        $problem = new SpatialProblem(SpatialRule::LineFeed, SpatialAttributeKind::Name, "a\nb");
+
+        self::assertSame("a\nb", $problem->value);
+        self::assertSame('Attribute NAME contains a line feed (ER_WRONG_VALUE).', $problem->message());
+    }
+    public function testValueRequiresTheLineFeedOperand(): void
+    {
+        $this->expectExceptionMessage('Only a line-feed problem retains its offending value.');
+
+        new SpatialProblem(SpatialRule::LineFeed, SpatialAttributeKind::Name);
+    }
 }

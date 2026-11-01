@@ -28,8 +28,10 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOptionKind;
  * compared as the server does after converting to a floating number);
  * REQUIRE_ROW_FORMAT, SOURCE_CONNECTION_AUTO_FAILOVER and GTID_ONLY other
  * than 0 or 1, and a fraction in the last two; an anonymous GTID UUID whose
- * first 36 characters are not a UUID in its text form. Each is a RefusedSetting
- * diagnostic. Terminates: one pass over the options.
+ * first 36 characters are not a UUID in its text form. UUID values are
+ * retained with the complete option and reported during derivation. Numeric
+ * switches retain their numeral and source position. The same conditions are
+ * available to incomplete input checks. Terminates: one pass over the options.
  * Source: sql/sql_yacc.yy (source_def, master_def, TEXT_STRING_sys_nonewline,
  * assign_gtids_to_anonymous_transactions_def),
  * https://dev.mysql.com/doc/refman/8.4/en/change-replication-source-to.html.
@@ -71,15 +73,38 @@ final class SourceSettings
      */
     public function option(Derivation $derivation, SourceOption $option): void
     {
+        (new Vocabulary())->derive($option, $derivation);
         $release = $derivation->context->profile->grammar;
         Check::input((new Releases())->option($release, $option->kind), $option->kind->value . ' is not an option of this release.');
         if ($option->value instanceof NumberLiteral) {
             $derivation->scalar($option->value, $derivation->environment());
         }
-        $error = $this->error($option, $release);
-        if ($error !== null) {
-            $derivation->report(new RefusedSetting($error));
+        $condition = $this->condition($option, $release);
+        $warning = $this->warning($option, $release, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->replicaNetTimeout);
+        if ($warning !== null) {
+            $derivation->warn($warning, $option);
         }
+        if ($condition !== null) {
+            $derivation->report($condition->problem);
+            $derivation->warn($condition, $option);
+        }
+    }
+
+    /**
+     * Retains a source option's condition and its parsing phase without discarding the request.
+     */
+    public function condition(SourceOption $option, GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        $error = $this->error($option, $release);
+        if ($error === null) {
+            return null;
+        }
+        if ($option->value instanceof Numeral && in_array($option->kind, [SourceOptionKind::RequireRowFormat, SourceOptionKind::ConnectionAutoFailover, SourceOptionKind::GtidOnly], true)) {
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSourceNumber($option->kind, $option->value, $option->value->inputSource->offset ?? 0);
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, $option->kind !== SourceOptionKind::RequireRowFormat);
+        }
+        $problem = new RefusedSetting($error, $error === ReplicationError::DelayOutOfRange && $option->value instanceof Numeral ? $option->value : null, in_array($error, [ReplicationError::LineFeed, ReplicationError::InvalidUuid], true) && $option->value instanceof Text ? $option->value : null);
+        return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, $error !== ReplicationError::DelayOutOfRange);
     }
 
     /**
@@ -95,10 +120,38 @@ final class SourceSettings
             return $this->number($option->kind, $value);
         }
         if ($value instanceof NumberLiteral) {
-            return (float) $value->text > self::HEARTBEAT ? ReplicationError::HeartbeatOutOfRange : null;
+            return $this->heartbeat($value);
         }
 
         return null;
+    }
+
+    /**
+     * Refuses a heartbeat literal outside the protocol's supported interval.
+     */
+    public function heartbeat(NumberLiteral $value): ?ReplicationError
+    {
+        return (float) $value->text > self::HEARTBEAT ? ReplicationError::HeartbeatOutOfRange : null;
+    }
+
+    /**
+     * Resolves the notice for one written heartbeat period before later input is read.
+     */
+    public function warning(SourceOption $option, GrammarRelease $release, ?int $timeout = null): ?\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod
+    {
+        if ($option->kind !== SourceOptionKind::HeartbeatPeriod || !$option->value instanceof NumberLiteral || $this->heartbeat($option->value) !== null) {
+            return null;
+        }
+        $period = (float) $option->value->text;
+        if ($period > 0 && $period < 0.001) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod(\SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatCondition::BelowMinimum);
+        }
+        $timeout ??= $release === GrammarRelease::MySql5651 ? 3600 : 60;
+        if ($period <= $timeout) {
+            return null;
+        }
+
+        return new \SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatPeriod(in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? \SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatCondition::AboveSlaveTimeout : \SqlSemantics\Platform\MySql\Statement\Notice\HeartbeatCondition::AboveReplicaTimeout);
     }
 
     /**
@@ -109,7 +162,7 @@ final class SourceSettings
         if ($kind === SourceOptionKind::AssignGtidsToAnonymousTransactions) {
             return preg_match('/\A[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/', $value->value) === 1 ? null : ReplicationError::InvalidUuid;
         }
-        if ($kind !== SourceOptionKind::CompressionAlgorithms && str_contains($value->value, "\n")) {
+        if ($kind !== SourceOptionKind::CompressionAlgorithms && !(new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value)) {
             return ReplicationError::LineFeed;
         }
         if ($kind === SourceOptionKind::Password && $release !== GrammarRelease::MySql5651 && strlen($value->value) > self::PASSWORD) {
@@ -143,8 +196,13 @@ final class SourceSettings
      */
     public function lineFeed(Derivation $derivation, ?Text $value): void
     {
-        if ($value !== null && str_contains($value->value, "\n")) {
-            $derivation->report(new RefusedSetting(ReplicationError::LineFeed));
+        $conversion = $value === null ? null : (new ChannelName())->conversion($value, $derivation->context->profile->grammar);
+        if ($conversion !== null) {
+            $derivation->warn($conversion, $value);
+        }
+        $problem = (new ChannelName())->problem($value);
+        if ($problem !== null) {
+            $derivation->report($problem);
         }
     }
 }

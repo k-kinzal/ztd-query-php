@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The COMMENT of a column.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the attribute of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT COMMENT \'x\')');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute // => true
+ *     $create->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute // => true
  */
 final class CommentAttribute implements ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $comment The comment
      */
-    public function __construct(public readonly Text $comment)
+    public function __construct(public readonly Text $comment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

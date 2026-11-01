@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER CHECK c [NOT] ENFORCED` or `ALTER CONSTRAINT c [NOT] ENFORCED` (8.0.16 and later).
@@ -25,18 +24,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Suspending a check constraint
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t ALTER CHECK c NOT ENFORCED');
- *     [$alter->statement->commands[0]->enforced, $alter->toString()] // => [false, 'ALTER TABLE t ALTER CHECK c NOT ENFORCED']
+ *     [$alter->commands[0]->enforced, $alter->toString()] // => [false, 'ALTER TABLE t ALTER CHECK c NOT ENFORCED']
  */
 final class ConstraintEnforcement implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ElementKind $kind CHECK or CONSTRAINT
      * @param Name $constraint The constraint name
      * @param bool $enforced Whether ENFORCED (true) or NOT ENFORCED (false) is written
      */
-    public function __construct(public readonly ElementKind $kind, public readonly Name $constraint, public readonly bool $enforced)
+    public function __construct(public readonly ElementKind $kind, public readonly Name $constraint, public readonly bool $enforced, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($kind === ElementKind::Check || $kind === ElementKind::Constraint, 'Only CHECK or CONSTRAINT names an enforced constraint.');
     }

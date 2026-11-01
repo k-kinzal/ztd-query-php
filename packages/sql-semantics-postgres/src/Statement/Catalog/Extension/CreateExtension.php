@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Installing an extension into a schema
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EXTENSION IF NOT EXISTS hstore WITH SCHEMA ext CASCADE');
- *     [$operation->statement->ifNotExists, $operation->toString()] // => [true, 'CREATE EXTENSION IF NOT EXISTS hstore SCHEMA ext CASCADE']
+ *     [$operation->ifNotExists, $operation->toString()] // => [true, 'CREATE EXTENSION IF NOT EXISTS hstore SCHEMA ext CASCADE']
  */
-final class CreateExtension implements Statement
+final class CreateExtension extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ExtensionOption> The options in the order written
@@ -42,8 +41,11 @@ final class CreateExtension implements Statement
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      * @param list<ExtensionOption> $options The options in the order written
      */
-    public function __construct(public readonly Name $name, public readonly bool $ifNotExists = false, array $options = [])
+    public function __construct(public readonly Name $name, public readonly bool $ifNotExists = false, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, ExtensionOption::class, 'Extension options are a list of options.');
     }
 

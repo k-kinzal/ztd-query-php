@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the kind of the objects of a grant
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT USAGE ON SCHEMA app TO joe');
- *     $operation->statement->target->object() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::Schema
+ *     $operation->target->object() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::Schema
  */
 interface PrivilegeTarget extends Node
 {

@@ -34,7 +34,7 @@ final class ExplainTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
         self::assertSame(
             ['Column b does not exist.'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('EXPLAIN ANALYZE UPDATE t SET a = b', [$table])->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('EXPLAIN ANALYZE UPDATE t SET a = b', [$table])->diagnostics()),
         );
     }
 
@@ -42,7 +42,7 @@ final class ExplainTest extends TestCase
     {
         self::assertSame(
             ['unrecognized EXPLAIN option "fast"', 'costs requires a Boolean value'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('EXPLAIN (fast, costs 5) SELECT 1')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('EXPLAIN (fast, costs 5) SELECT 1')->diagnostics()),
         );
     }
 

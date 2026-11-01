@@ -100,7 +100,7 @@ final class CommonTables
     public function uses(CommonTable $table): array
     {
         $names = [];
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($table->query) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($table->query, bindings: false) as $object) {
             if ($object instanceof TableInput && $object->name->schema === null) {
                 $names[strtr($object->name->name->value, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')] = true;
             }

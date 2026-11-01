@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -20,19 +19,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the copied collation
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE COLLATION german FROM "de_DE"');
- *     $operation->statement->source->last()->value // => 'de_DE'
+ *     $operation->source->last()->value // => 'de_DE'
  */
-final class CopyCollation implements Statement
+final class CopyCollation extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The new collation
      * @param DottedName $source The existing collation
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
      */
-    public function __construct(public readonly DottedName $name, public readonly DottedName $source, public readonly bool $ifNotExists = false)
+    public function __construct(public readonly DottedName $name, public readonly DottedName $source, public readonly bool $ifNotExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

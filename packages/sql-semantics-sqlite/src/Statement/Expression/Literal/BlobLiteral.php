@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the bytes of a BLOB literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT x'0aff' AS b");
- *     [$query->statement->columns[0]->expression->hex, $query->toString()] // => ['0AFF', "SELECT x'0AFF' AS b"]
+ *     [$query->columns[0]->expression->hex, $query->toString()] // => ['0AFF', "SELECT x'0AFF' AS b"]
  * @example Refusing half a byte
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral('ABC') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing lower case digits
@@ -33,13 +32,17 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class BlobLiteral implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $hex The bytes as upper-case hexadecimal digits, two per byte
      */
-    public function __construct(public readonly string $hex)
+    public function __construct(public readonly string $hex, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(preg_match('/\A(?:[0-9A-F]{2})*\z/', $hex) === 1, 'A BLOB literal is an even number of upper-case hexadecimal digits.');
     }
 

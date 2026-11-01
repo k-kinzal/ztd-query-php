@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PARALLEL level`: whether the routine can run in parallel mode.
@@ -24,12 +23,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ParallelSafety implements RoutineOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $level The written level
      */
-    public function __construct(public readonly Name $level)
+    public function __construct(public readonly Name $level, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -25,11 +24,12 @@ final class UserVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @total');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(UserVariable::class, $item0->expression);
-        $fact = $operation->facts->scalar($item0->expression);
+        $fact = $item0->expression->scalarInformation();
         self::assertInstanceOf(Dependent::class, $fact->type);
         self::assertSame('the session state: user variable @total', $fact->type->missing[0]->describe());
         self::assertSame(Nullability::Dependent, $fact->nullability);
@@ -41,12 +41,13 @@ final class UserVariableTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @Total');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(UserVariable::class, $item0->expression);
         self::assertSame('Total', $item0->expression->name->value);
-        $fact = $operation->facts->scalar($item0->expression);
+        $fact = $item0->expression->scalarInformation();
         self::assertInstanceOf(Dependent::class, $fact->type);
         self::assertSame('the session state: user variable @Total', $fact->type->missing[0]->describe());
     }
@@ -63,18 +64,26 @@ final class UserVariableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame('SELECT @`my var` AS v', $semantics->analyze("SELECT @'my var' AS v")->toString());
-        self::assertSame('SELECT @x AS v', $semantics->analyze('SELECT @`x` AS v')->toString());
+        self::assertSame('SELECT @\'my var\' AS v', $semantics->analyze("SELECT @'my var' AS v")->toString());
+        self::assertSame('SELECT @`x` AS v', $semantics->analyze('SELECT @`x` AS v')->toString());
         self::assertSame("SELECT @'my var'", $semantics->analyze("SELECT @'my var'")->toString());
+    }
+
+    public function testRenderSpellsAnExplicitDottedVariableWithoutSplittingItsIdentity(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $statement = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression(new UserVariable(new Name('B.a')))])));
+        self::assertSame('SELECT @B.a', $statement->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $variable = new UserVariable(new Name('my var'));
-        $operation = new Operation($semantics->context(), new Select([], [new SelectExpression($variable)]));
+        $operation = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish($semantics->context(), new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new Select([], [new SelectExpression($variable)])), new \SqlSemantics\Statement\Source\SourceMap());
 
         self::assertSame('SELECT @`my var`', $operation->toString());
-        self::assertSame(Nullability::Dependent, $operation->facts->scalar($variable)->nullability);
+        self::assertFalse($variable->hasBinding());
+        self::assertSame(Nullability::Dependent, $operation->field(0)->nullability);
     }
 }

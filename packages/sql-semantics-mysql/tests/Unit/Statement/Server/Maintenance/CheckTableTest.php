@@ -26,8 +26,8 @@ final class CheckTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('CHECK TABLE t', [$table]);
-        self::assertInstanceOf(CheckTable::class, $operation->statement);
+        self::assertInstanceOf(CheckTable::class, $operation);
 
-        self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);
+        self::assertInstanceOf(DeclaredTable::class, $operation->tables[0]->relationInformation()->table);
     }
 }

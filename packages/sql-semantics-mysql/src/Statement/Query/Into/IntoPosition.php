@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Into;
  * @visibility public
  * @example Reading where an INTO clause is written
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t INTO @x');
- *     $query->statement->intoPosition // => \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterQuery
+ *     $query->query->intoPosition // => \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition::AfterQuery
  */
 enum IntoPosition
 {

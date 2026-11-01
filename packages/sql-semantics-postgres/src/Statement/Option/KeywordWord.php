@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Keywords;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A reserved keyword, or NONE, written as the value of a definition option.
@@ -29,12 +28,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class KeywordWord implements OptionArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $word The keyword in lower case
      */
-    public function __construct(public readonly Name $word)
+    public function __construct(public readonly Name $word, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $reserved = $word->value === 'none';
         foreach ([GrammarRelease::PostgreSql166, GrammarRelease::PostgreSql172] as $release) {

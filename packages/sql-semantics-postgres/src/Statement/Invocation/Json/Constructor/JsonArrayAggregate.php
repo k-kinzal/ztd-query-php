@@ -19,7 +19,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -38,7 +37,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class JsonArrayAggregate implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SortItem> The ordering of the elements
@@ -60,7 +60,12 @@ final class JsonArrayAggregate implements Scalar, OutputNaming
         public readonly ?JsonReturning $returning = null,
         public readonly ?Scalar $filter = null,
         public readonly WindowSpecification|Name|null $over = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->order = Check::listOf($order, SortItem::class, 'An aggregate ordering is a list of sort items.');
     }
 

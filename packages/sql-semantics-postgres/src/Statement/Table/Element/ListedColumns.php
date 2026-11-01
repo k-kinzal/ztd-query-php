@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\TableConstraints;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Constraint;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A table defined by a column list, possibly inheriting the columns of parent tables.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parents of a table
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t () INHERITS (a, s.b)');
- *     [count($create->statement->definition->elements), $create->statement->definition->parents[1]->name->schema->value] // => [0, 's']
+ *     [count($create->definition->elements), $create->definition->parents[1]->name->schema->value] // => [0, 's']
  */
 final class ListedColumns implements TableForm
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnDefinition|LikeClause|Constraint> The column definitions, LIKE clauses and table constraints, in order
@@ -41,7 +40,7 @@ final class ListedColumns implements TableForm
      * @param list<ColumnDefinition|LikeClause|Constraint> $elements The column definitions, LIKE clauses and table constraints, in order
      * @param list<ParentTable> $parents The parent tables
      */
-    public function __construct(array $elements = [], array $parents = [])
+    public function __construct(array $elements = [], array $parents = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $checked = [];
         foreach (Check::listOf($elements, Clause::class, 'Table elements are an ordered list of clauses.') as $element) {

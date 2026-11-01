@@ -69,7 +69,7 @@ final class OptionRulesTest extends TestCase
     {
         self::assertSame(
             ['unrecognized ANALYZE option "full"', 'verbose requires a Boolean value', 'buffer_usage_limit requires a parameter'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze("ANALYZE (FULL, VERBOSE 'yes', SKIP_LOCKED 0, BUFFER_USAGE_LIMIT) t")->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze("ANALYZE (FULL, VERBOSE 'yes', SKIP_LOCKED 0, BUFFER_USAGE_LIMIT) t")->diagnostics()),
         );
     }
 
@@ -77,7 +77,7 @@ final class OptionRulesTest extends TestCase
     {
         self::assertSame(
             ['unrecognized CLUSTER option "Verbose"'],
-            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE, "Verbose") t')->facts->diagnostics),
+            array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE, "Verbose") t')->diagnostics()),
         );
     }
 }

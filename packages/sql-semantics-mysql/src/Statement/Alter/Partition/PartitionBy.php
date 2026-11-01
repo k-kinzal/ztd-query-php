@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PARTITION BY …` in ALTER TABLE: a request to partition or repartition the table.
@@ -24,12 +23,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionBy implements TrailingCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionClause $partitioning The new partitioning
      */
-    public function __construct(public readonly PartitionClause $partitioning)
+    public function __construct(public readonly PartitionClause $partitioning, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

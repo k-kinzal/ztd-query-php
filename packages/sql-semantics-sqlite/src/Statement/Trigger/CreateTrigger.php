@@ -22,7 +22,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -39,15 +38,15 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of a trigger
  *     $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TEMP TRIGGER IF NOT EXISTS r AFTER UPDATE OF a ON t FOR EACH ROW WHEN new.a > old.a BEGIN DELETE FROM log; SELECT 1; END');
- *     $statement = $trigger->statement;
+ *     $statement = $trigger;
  *     [$statement->name->name->value, $statement->temporary, $statement->timing, $statement->columns[0]->value, $statement->forEachRow, count($statement->steps)] // => ['r', true, \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming::After, 'a', true, 2]
  * @example Refusing a program statement the trigger grammar does not admit
- *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DELETE FROM t RETURNING a')->statement;
+ *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DELETE FROM t RETURNING a');
  *     new \SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('r')), \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent::Delete, new \SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), [$delete]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class CreateTrigger implements Statement
+final class CreateTrigger extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Select|ValuesClause|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete> The statements of the program in written order
@@ -83,7 +82,12 @@ final class CreateTrigger implements Statement
         public readonly bool $forEachRow = false,
         public readonly bool $temporary = false,
         public readonly bool $ifNotExists = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $list = (new ClosedList())->of($steps, [Select::class, ValuesClause::class, Compound::class, WithQuery::class, InsertRows::class, InsertSelect::class, Update::class, Delete::class], 'A trigger program consists of at least one query, INSERT, UPDATE or DELETE statement.', 1);
         foreach ($list as $step) {
             if ($step instanceof InsertRows || $step instanceof InsertSelect) {

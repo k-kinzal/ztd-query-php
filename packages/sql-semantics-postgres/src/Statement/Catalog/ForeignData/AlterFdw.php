@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Removing the validator
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER FOREIGN DATA WRAPPER w NO VALIDATOR');
- *     $operation->statement->functions[0]->function // => null
+ *     $operation->functions[0]->function // => null
  */
-final class AlterFdw implements Statement
+final class AlterFdw extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FunctionClause> The handler and validator clauses in the order written
@@ -46,8 +45,11 @@ final class AlterFdw implements Statement
      * @param list<FunctionClause> $functions The handler and validator clauses in the order written
      * @param list<AlteredOption> $options The option changes
      */
-    public function __construct(public readonly Name $name, array $functions = [], array $options = [])
+    public function __construct(public readonly Name $name, array $functions = [], array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->functions = Check::listOf($functions, FunctionClause::class, 'Wrapper functions are a list of function clauses.');
         $this->options = Check::listOf($options, AlteredOption::class, 'Wrapper option changes are a list of changes.');
         Check::input($this->functions !== [] || $this->options !== [], 'ALTER FOREIGN DATA WRAPPER changes a function or an option.');

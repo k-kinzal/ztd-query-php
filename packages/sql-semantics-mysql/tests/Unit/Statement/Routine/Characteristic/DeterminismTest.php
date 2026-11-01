@@ -34,7 +34,7 @@ final class DeterminismTest extends TestCase
     public function testRenderWritesNotBeforeANonDeterministicRoutine(string $release, string $sql, string $expected, bool $deterministic): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
         $characteristic = $statement->characteristics[array_key_last($statement->characteristics)] ?? null;
         self::assertInstanceOf(Determinism::class, $characteristic);

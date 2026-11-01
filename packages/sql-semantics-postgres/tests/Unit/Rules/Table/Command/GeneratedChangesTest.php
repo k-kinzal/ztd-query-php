@@ -24,7 +24,7 @@ final class GeneratedChangesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER COLUMN a SET DEFAULT 1, ALTER COLUMN b SET DEFAULT 1', $table->declarations());
-        self::assertEquals([new DefinitionProblem(DefinitionRule::GeneratedColumnDefault, new Name('b'), new Name('t'))], $alter->facts->diagnostics);
+        self::assertEquals([new DefinitionProblem(DefinitionRule::GeneratedColumnDefault, new Name('b'), new Name('t'))], $alter->diagnostics());
     }
 
     public function testCheckReportsSetExpressionOfARegularColumn(): void
@@ -32,7 +32,7 @@ final class GeneratedChangesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER COLUMN a SET EXPRESSION AS (1), ALTER COLUMN b SET EXPRESSION AS (a + 1)', $table->declarations());
-        self::assertSame(['column "a" of relation "t" is not a generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['column "a" of relation "t" is not a generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testCheckReportsUsingForAGeneratedColumn(): void
@@ -40,7 +40,7 @@ final class GeneratedChangesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-16.6');
         $table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER COLUMN a TYPE bigint USING a, ALTER COLUMN b TYPE bigint USING b', $table->declarations());
-        self::assertSame(['cannot specify USING when altering type of generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['cannot specify USING when altering type of generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testRuleReportsDropExpressionOfARegularColumn(): void
@@ -48,7 +48,7 @@ final class GeneratedChangesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-16.6');
         $table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER COLUMN a DROP EXPRESSION, ALTER COLUMN a DROP EXPRESSION IF EXISTS, ALTER COLUMN b DROP EXPRESSION', $table->declarations());
-        self::assertSame(['column "a" of relation "t" is not a stored generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['column "a" of relation "t" is not a stored generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testRuleReportsDropDefaultOfAGeneratedColumn(): void
@@ -56,14 +56,14 @@ final class GeneratedChangesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER COLUMN b DROP DEFAULT', $table->declarations());
-        self::assertSame(['column "b" of relation "t" is a generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+        self::assertSame(['column "b" of relation "t" is a generated column'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->diagnostics()));
     }
 
     public function testGeneratedIsUnknownForATableTheContextLacks(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $alter = $semantics->analyze('ALTER TABLE zz ALTER COLUMN a DROP EXPRESSION, ALTER COLUMN b SET DEFAULT 1');
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testDroppedAcceptsADefaultAfterTheExpressionIsDropped(): void
@@ -71,6 +71,6 @@ final class GeneratedChangesTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
         $table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)');
         $alter = $semantics->analyze('ALTER TABLE t ALTER COLUMN b SET DEFAULT 1, ALTER COLUMN b DROP EXPRESSION', $table->declarations());
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 }

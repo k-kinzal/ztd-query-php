@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Expression;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
@@ -57,6 +58,24 @@ final class IntervalRule
             $form = $this->lowering->form($form->node(0));
         }
 
-        return self::UNITS[$form->signature] ?? throw ImplementationGap::production($form);
+        $expected = self::UNITS[$form->signature] ?? throw ImplementationGap::production($form);
+        $keyword = IntervalUnit::tryFrom(strtoupper($form->token(0)->text));
+        Check::invariant($keyword !== null && $keyword->canonical() === $expected, 'An interval keyword agrees with its grammar unit.');
+
+        return $keyword;
+    }
+
+    /**
+     * Retains non-scalar date and quantity operands until invocation preparation.
+     */
+    public function arithmetic(\SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, Node $quantity, Node $unit, bool $subtract = false, bool $leading = false): \SqlSemantics\Statement\Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval
+    {
+        $value = $this->lowering->expressions->operand($quantity);
+        $kind = $this->unit($unit);
+        if (!$operand instanceof \SqlSemantics\Statement\Scalar || !$value instanceof \SqlSemantics\Statement\Scalar) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredInterval($operand, $value, $kind, $subtract, $leading);
+        }
+        $interval = new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval($value, $kind);
+        return $leading ? new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition($interval, $operand) : new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic($operand, $interval, $subtract);
     }
 }

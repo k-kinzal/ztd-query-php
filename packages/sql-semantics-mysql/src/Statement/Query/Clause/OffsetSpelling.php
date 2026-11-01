@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Clause;
  * @visibility public
  * @example Reading the spelling of an offset
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t LIMIT 5, 10');
- *     $query->statement->limit->spelling // => \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma
+ *     $query->query->limit->spelling // => \SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling::Comma
  */
 enum OffsetSpelling
 {

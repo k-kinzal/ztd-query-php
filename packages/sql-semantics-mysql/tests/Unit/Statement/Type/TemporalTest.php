@@ -138,4 +138,17 @@ final class TemporalTest extends TestCase
 
         new Temporal(TemporalKind::Date, null, [NumericModifier::Zerofill]);
     }
+
+    public function testPrecisionDomainRequiresANumTokenForFractionalSeconds(): void
+    {
+        $this->expectExceptionMessage('A fractional seconds precision is a decimal NUM integer token.');
+        new Temporal(TemporalKind::Timestamp, '1.5');
+    }
+
+    public function testPrecisionDomainRetainsTheDifferentYearWidthGrammar(): void
+    {
+        $type = new Temporal(TemporalKind::Year, '1.5');
+        self::assertSame('1.5', $type->precision);
+    }
+
 }

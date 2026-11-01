@@ -29,13 +29,13 @@ final class TriggerTimingTest extends TestCase
         $before = $semantics->analyze('create trigger tr Before delete on t begin select 1; end');
         $none = $semantics->analyze('create trigger tr delete on t begin select 1; end');
 
-        self::assertInstanceOf(CreateTrigger::class, $instead->statement);
-        self::assertSame(TriggerTiming::InsteadOf, $instead->statement->timing);
+        self::assertInstanceOf(CreateTrigger::class, $instead);
+        self::assertSame(TriggerTiming::InsteadOf, $instead->timing);
         self::assertSame('CREATE TRIGGER tr INSTEAD OF INSERT ON v BEGIN SELECT 1; END', $instead->toString());
-        self::assertInstanceOf(CreateTrigger::class, $before->statement);
-        self::assertSame(TriggerTiming::Before, $before->statement->timing);
+        self::assertInstanceOf(CreateTrigger::class, $before);
+        self::assertSame(TriggerTiming::Before, $before->timing);
         self::assertSame('CREATE TRIGGER tr BEFORE DELETE ON t BEGIN SELECT 1; END', $before->toString());
-        self::assertInstanceOf(CreateTrigger::class, $none->statement);
-        self::assertNull($none->statement->timing);
+        self::assertInstanceOf(CreateTrigger::class, $none);
+        self::assertNull($none->timing);
     }
 }

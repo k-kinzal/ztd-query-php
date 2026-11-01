@@ -36,7 +36,7 @@ final class DataAccessTest extends TestCase
     public function testRenderWritesTheKeywordsOfTheLevel(string $release, string $sql, string $expected, AccessLevel $level): void
     {
         $alter = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
         $characteristic = $statement->characteristics[0] ?? null;
         self::assertInstanceOf(DataAccess::class, $characteristic);

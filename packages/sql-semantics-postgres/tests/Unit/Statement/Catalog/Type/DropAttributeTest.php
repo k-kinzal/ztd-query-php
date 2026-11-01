@@ -19,6 +19,6 @@ final class DropAttributeTest extends TestCase
 
     public function testDeriveClauseRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair DROP ATTRIBUTE b')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair DROP ATTRIBUTE b')->diagnostics());
     }
 }

@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Registry;
+
+use MySqlMemory\Registry\Replication;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(Replication::class)]
+#[Small]
+final class ReplicationTest extends TestCase
+{
+    public function testResetClosesRepositoriesAndKeepsAClosedLog(): void
+    {
+        $replication = new Replication();
+        $replication->initialized = true;
+        $replication->missing = true;
+        $replication->reset();
+
+        self::assertSame([false, false, true, false], [$replication->initialized, $replication->applying, $replication->closed, $replication->missing]);
+    }
+    public function testResetClearsSourceSettingsOnlyWhenAllIsSpecified(): void
+    {
+        $replication = new Replication();
+        $replication->host = 'source';
+        $replication->autoPosition = true;
+        $replication->requireRowFormat = true;
+        $replication->gtidOnly = true;
+        $replication->autoFailover = true;
+        $replication->reset();
+        $retained = [$replication->autoPosition, $replication->requireRowFormat, $replication->gtidOnly, $replication->autoFailover];
+        self::assertSame('source', $replication->host);
+        $replication->reset(true);
+        self::assertSame('', $replication->host);
+
+        self::assertSame([true, true, true, true], $retained);
+        self::assertSame([false, false, false, false], [$replication->autoPosition, $replication->requireRowFormat, $replication->gtidOnly, $replication->autoFailover]);
+    }
+
+}

@@ -19,9 +19,9 @@ final class IndexEngineAttributeTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY (a) ENGINE_ATTRIBUTE = \'{}\')');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $index = $statement->elements[1];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition::class, $index);
@@ -29,6 +29,6 @@ final class IndexEngineAttributeTest extends TestCase
 
         self::assertInstanceOf(IndexEngineAttribute::class, $option);
         self::assertFalse($option->secondary);
-        self::assertSame('CREATE TABLE t (a INT, INDEX (a) ENGINE_ATTRIBUTE \'{}\')', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT, KEY (a) ENGINE_ATTRIBUTE = \'{}\')', $create->toString());
     }
 }

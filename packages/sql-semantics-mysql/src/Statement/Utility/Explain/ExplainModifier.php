@@ -21,4 +21,16 @@ enum ExplainModifier: string
 {
     case Extended = 'EXTENDED';
     case Partitions = 'PARTITIONS';
+
+    /**
+     * Answers the notice owned by this modifier in releases that deprecate it.
+     *
+     * @example Reading the legacy modifier notice
+     *     \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier::Extended->deprecation(\SqlSemantics\Contract\GrammarRelease::MySql5744)?->code() // => 1681
+     */
+    public function deprecation(\SqlSemantics\Contract\GrammarRelease $release): ?\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated
+    {
+        $notice = $this === self::Extended ? \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ExplainExtended : \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ExplainPartitions;
+        return $notice->warnedIn($release) ? $notice : null;
+    }
 }

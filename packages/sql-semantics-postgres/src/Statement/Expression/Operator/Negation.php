@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -32,13 +31,17 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class Negation implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The negated condition
      */
-    public function __construct(public readonly Scalar $operand)
+    public function __construct(public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->after($operand, Precedence::NOT), 'The operand of NOT needs parentheses to keep its place.');
     }
 

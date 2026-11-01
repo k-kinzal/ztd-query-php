@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Reference;
  * @visibility public
  * @example Reading the reaction of a foreign key action
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent ON UPDATE SET NULL)');
- *     $create->statement->columns[0]->constraints[0]->arguments[0]->reaction // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceReaction::SetNull
+ *     $create->columns[0]->constraints[0]->arguments[0]->reaction // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ReferenceReaction::SetNull
  */
 enum ReferenceReaction: string
 {

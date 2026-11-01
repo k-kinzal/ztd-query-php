@@ -5,15 +5,19 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Expression\TemporalResult;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -31,20 +35,25 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Subtracting an interval
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE DATE '2024-01-31' - INTERVAL 1 MONTH");
- *     [$query->statement->where->subtract, $query->facts->scalar($query->statement->where)->type->descriptor->name()] // => [true, 'DATE']
+ *     [$query->query->where->subtract, $query->query->where->scalarInformation()->type->descriptor->name()] // => [true, 'DATE']
  */
 final class IntervalArithmetic implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The date or time value
      * @param Interval $interval The interval added or subtracted
      * @param bool $subtract Whether the interval is subtracted
      */
-    public function __construct(public readonly Scalar $operand, public readonly Interval $interval, public readonly bool $subtract = false)
+    public function __construct(public readonly Scalar $operand, public readonly Interval $interval, public readonly bool $subtract = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->fits($operand, Precedence::ADDITIVE, Precedence::ADDITIVE), 'The operand of interval arithmetic needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -54,9 +63,12 @@ final class IntervalArithmetic implements Scalar
     {
         $operands = new Operands();
         $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
-        $operands->single($derivation->scalar($this->interval->quantity, $environment), $derivation);
+        $quantity = $operands->single($derivation->scalar($this->interval->quantity, $environment), $derivation);
 
-        return new ScalarFact((new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar), Nullability::Nullable);
+        $domain = (new Precision())->domain($operand->type);
+        $type = $domain === null ? (new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar) : new Known(($moments = new Moments(Settings::of($derivation->context)))->shifted($domain, $this->interval->unit, $moments->quantity((new Precision())->domain($quantity->type)), in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
+
+        return new ScalarFact($type, Nullability::Nullable);
     }
 
     /**

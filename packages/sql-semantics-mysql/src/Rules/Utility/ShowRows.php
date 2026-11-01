@@ -66,7 +66,7 @@ final class ShowRows
      *
      * @return list<array{string, string}>
      */
-    public function columns(Report $report, GrammarRelease $release): array
+    public function columns(Report $report, GrammarRelease $release, bool $strict = true): array
     {
         $tables = SchemaReports::ROWS + ServerReports::ROWS + ReplicationReports::ROWS + ExplainReports::ROWS;
         $row = null;
@@ -76,6 +76,9 @@ final class ShowRows
             }
         }
         Check::invariant($row !== null, 'The release ' . $release->value . ' has no ' . $report->value . ' layout.');
+        if (!$strict && in_array($report, [Report::Columns, Report::FullColumns], true)) {
+            $row = str_replace(['Field:v?', 'Extra:v?'], ['Field:v', 'Extra:v'], $row);
+        }
         $columns = [];
         foreach (explode('|', $row) as $column) {
             $colon = (int) strrpos($column, ':');
@@ -110,7 +113,7 @@ final class ShowRows
     public function type(string $code): TypeFact
     {
         if (isset(self::CHARACTERS[$code])) {
-            return new Known(new Character(self::CHARACTERS[$code]));
+            return new Known($code === 'v' ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily() : new Character(self::CHARACTERS[$code]));
         }
         if (isset(self::INTEGERS[$code])) {
             [$kind, $unsigned] = self::INTEGERS[$code];

@@ -59,7 +59,7 @@ final class SchemaReports
         ],
         'keys' => [
             'mysql-5.6.51 mysql-5.7.44' => 'Table:v|Non_unique:b|Key_name:v|Seq_in_index:b|Column_name:v|Collation:v?|Cardinality:b?|Sub_part:b?|Packed:v?|Null:v|Index_type:v|Comment:v?|Index_comment:v',
-            'mysql-8.0.44 mysql-8.1.0 mysql-8.2.0 mysql-8.3.0 mysql-8.4.7 mysql-9.0.1 mysql-9.1.0' => 'Table:v|Non_unique:i|Key_name:v?|Seq_in_index:I|Column_name:v?|Collation:v?|Cardinality:b?|Sub_part:b?|Packed:n?|Null:v|Index_type:v|Comment:v|Index_comment:v|Visible:v|Expression:l?',
+            'mysql-8.0.44 mysql-8.1.0 mysql-8.2.0 mysql-8.3.0 mysql-8.4.7 mysql-9.0.1 mysql-9.1.0' => 'Table:v|Non_unique:i|Key_name:v|Seq_in_index:I|Column_name:v?|Collation:v?|Cardinality:b?|Sub_part:b?|Packed:n?|Null:v|Index_type:v|Comment:v|Index_comment:v|Visible:v|Expression:l?',
         ],
         'create_database' => [
             'mysql-5.6.51 mysql-5.7.44 mysql-8.0.44 mysql-8.1.0 mysql-8.2.0 mysql-8.3.0 mysql-8.4.7 mysql-9.0.1 mysql-9.1.0' => 'Database:v|Create Database:v',

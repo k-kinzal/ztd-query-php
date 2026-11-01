@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -37,13 +36,13 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class IntervalDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntervalFields|null $fields The fields the interval is restricted to
      * @param IntegerConstant|null $precision The number of fractional second digits
      */
-    public function __construct(public readonly ?IntervalFields $fields = null, public readonly ?IntegerConstant $precision = null)
+    public function __construct(public readonly ?IntervalFields $fields = null, public readonly ?IntegerConstant $precision = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($precision === null || $fields === null || $fields->seconds(), 'Only the seconds field of an interval takes a precision.');
     }

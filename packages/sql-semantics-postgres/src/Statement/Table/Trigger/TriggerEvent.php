@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One event a trigger fires on; UPDATE may name columns.
@@ -20,11 +19,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an UPDATE OF event
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRIGGER g AFTER UPDATE OF a, b ON t EXECUTE FUNCTION f()');
- *     count($statement->statement->events[0]->columns) // => 2
+ *     count($statement->events[0]->columns) // => 2
  */
 final class TriggerEvent implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The columns of UPDATE OF
@@ -35,7 +34,7 @@ final class TriggerEvent implements Node
      * @param TriggerEventKind $kind The event
      * @param list<Name> $columns The columns of UPDATE OF
      */
-    public function __construct(public readonly TriggerEventKind $kind, array $columns = [])
+    public function __construct(public readonly TriggerEventKind $kind, array $columns = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'UPDATE OF names columns.');
         Check::input($this->columns === [] || $kind === TriggerEventKind::Update, 'Only UPDATE names columns.');

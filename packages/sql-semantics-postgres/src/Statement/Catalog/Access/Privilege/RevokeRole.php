@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the option a revoke turns off
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REVOKE ADMIN OPTION FOR staff FROM joe');
- *     [$operation->statement->option?->value, $operation->statement->roles[0]->privilege()] // => ['admin', 'staff']
+ *     [$operation->option?->value, $operation->roles[0]->privilege()] // => ['admin', 'staff']
  */
-final class RevokeRole implements Statement
+final class RevokeRole extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Privilege> The revoked roles in the order written
@@ -52,8 +51,11 @@ final class RevokeRole implements Statement
      * @param RoleSpec|null $grantor The role of GRANTED BY, when written
      * @param DropBehavior|null $behavior CASCADE or RESTRICT, when written
      */
-    public function __construct(array $roles, array $members, public readonly ?Name $option = null, public readonly ?RoleSpec $grantor = null, public readonly ?DropBehavior $behavior = null)
+    public function __construct(array $roles, array $members, public readonly ?Name $option = null, public readonly ?RoleSpec $grantor = null, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->roles = (new PrivilegeLists())->roles($roles);
         $this->members = Check::listOf($members, RoleSpec::class, 'A role revoke names at least one member.', 1);
     }

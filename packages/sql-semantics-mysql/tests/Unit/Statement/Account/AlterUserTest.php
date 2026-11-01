@@ -10,20 +10,27 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash;
 
 #[CoversClass(AlterUser::class)]
 #[Medium]
 final class AlterUserTest extends TestCase
 {
-    public function testDeriveStatementReportsFactorAndPasswordHashProblems(): void
+    public function testDeriveStatementAcceptsPluginAuthenticationStrings(): void
     {
-        $factors = (new Semantics(Dialect::MySql))->analyze('ALTER USER u MODIFY 2 FACTOR IDENTIFIED BY \'a\' MODIFY 2 FACTOR IDENTIFIED BY \'b\'');
-        $hash = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("ALTER USER u IDENTIFIED BY PASSWORD '*AB'");
+        $hash = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("ALTER USER u IDENTIFIED WITH mysql_native_password AS '*0123456789012345678901234567890123456789'");
 
-        self::assertInstanceOf(InvalidFactorPair::class, $factors->facts->diagnostics[0]);
-        self::assertInstanceOf(RejectedPasswordHash::class, $hash->facts->diagnostics[0]);
+        self::assertSame([], $hash->diagnostics());
+    }
+
+    public function testDeriveStatementPublishesAConditionForTheRetainedLegacyHash(): void
+    {
+        $statement = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("ALTER USER u IDENTIFIED BY PASSWORD 'hash'");
+        self::assertInstanceOf(AlterUser::class, $statement);
+        $warning = $statement->statementInformation()->warnings[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash::class, $warning->problem);
+        self::assertTrue($warning->aborts);
+        self::assertSame(36, $statement->statementInformation()->warningSubject($warning)?->source()?->offset);
     }
 
     public function testRenderWritesEveryClause(): void

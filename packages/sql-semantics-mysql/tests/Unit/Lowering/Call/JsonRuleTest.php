@@ -22,6 +22,33 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 #[Small]
 final class JsonRuleTest extends TestCase
 {
+    public function testValueRetainsTheSingleCharsetOccurrenceCreatedByLowering(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $leaves = new Leaves();
+        $lowering = new Lowering($platform->productions($profile), $leaves, $profile);
+        $node = $platform->parser($profile)->parse("SELECT JSON_VALUE('{}', '$' RETURNING CHAR(3) CHARACTER SET utf8mb3)")->find('function_call_keyword')[0];
+        $call = (new JsonRule($lowering))->value($lowering->form($node));
+        $names = array_values(array_filter($leaves->all(), static fn ($leaf): bool => $leaf instanceof \SqlSemantics\Statement\Identifier\Name));
+
+        self::assertSame([$call->returning?->charset?->charset], $names);
+    }
+
+    public function testProblemRetainsOnlyDecimalDiagnosticBoundaries(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT JSON_VALUE('{}', '$' RETURNING DECIMAL(66,0))")->find('function_call_keyword')[0];
+        $problem = (new JsonRule($lowering))->problem($lowering->form($node));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput::class, $problem);
+        self::assertSame(18, $problem->start);
+        self::assertSame(22, $problem->end);
+        self::assertSame('', $problem->problem->name);
+        self::assertSame(66, $problem->problem->actual);
+    }
+
     public function testValueLowersJsonValue(): void
     {
         $platform = new Platform();
@@ -31,6 +58,20 @@ final class JsonRuleTest extends TestCase
         $rule = new JsonRule($lowering);
         $call = $rule->value($lowering->form($node));
 
+        self::assertSame(CastKind::Char, $call->returning?->kind);
+        self::assertSame(JsonResponseKind::Default, $call->onEmpty?->kind);
+        self::assertSame(JsonResponseKind::Error, $call->onError?->kind);
+    }
+
+    public function testValueRetainsANonScalarDocumentWithItsOptions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT JSON_VALUE((a, 2), '$.b' RETURNING CHAR(3) DEFAULT 'x' ON EMPTY ERROR ON ERROR)")->find('function_call_keyword')[0];
+        $call = (new JsonRule($lowering))->value($lowering->form($node));
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Json\DeferredJsonValueCall::class, $call);
         self::assertSame(CastKind::Char, $call->returning?->kind);
         self::assertSame(JsonResponseKind::Default, $call->onEmpty?->kind);
         self::assertSame(JsonResponseKind::Error, $call->onError?->kind);

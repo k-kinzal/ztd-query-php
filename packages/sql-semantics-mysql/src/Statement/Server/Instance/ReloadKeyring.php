@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RELOAD KEYRING`: reinitialize the keyring component from its configuration (MySQL 8.0.24 and later).
@@ -19,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ReloadKeyring implements InstanceAction
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes the action.
@@ -27,5 +26,11 @@ final class ReloadKeyring implements InstanceAction
     public function render(Output $out): void
     {
         $out->keyword('RELOAD', 'KEYRING');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

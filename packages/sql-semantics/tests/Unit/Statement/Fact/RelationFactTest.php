@@ -24,7 +24,7 @@ final class RelationFactTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
         $query = $semantics->analyze('SELECT a FROM t', [$table]);
 
-        $fact = $query->facts->relation($query->singleNamedInput());
+        $fact = $query->singleNamedInput()->relationInformation();
 
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
         self::assertSame($table->declarations()[0], $fact->table->table);
@@ -38,8 +38,8 @@ final class RelationFactTest extends TestCase
         $input = $query->inputRelation();
 
         self::assertInstanceOf(DerivedQuery::class, $input);
-        self::assertNull($query->facts->relation($input)->table);
-        self::assertCount(1, $query->facts->relation($input)->shape->slots);
+        self::assertNull($input->relationInformation()->table);
+        self::assertCount(1, $input->relationInformation()->shape->slots);
     }
 
     public function testTableDefaultsToNullOnConstruction(): void

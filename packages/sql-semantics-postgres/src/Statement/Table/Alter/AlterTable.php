@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,12 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Resolving the altered table
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE IF EXISTS ONLY t ADD c int CHECK (c > a), ALTER b DROP NOT NULL');
- *     $statement->facts->relation($statement->statement)->table::class // => 'SqlSemantics\\Statement\\Reference\\Table\\UndeclaredTable'
+ *     $statement->relationInformation()->table::class // => 'SqlSemantics\\Statement\\Reference\\Table\\UndeclaredTable'
  */
-final class AlterTable implements Statement, Relation
+final class AlterTable extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AlterCommand> The actions in order
@@ -50,7 +50,16 @@ final class AlterTable implements Statement, Relation
         public readonly RelationReference $relation,
         array $commands,
         public readonly bool $ifExists = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->commands = Check::listOf($commands, AlterCommand::class, 'ALTER takes at least one action.', 1);
         Check::input((new Alterations())->admits($this->commands), 'A partition action stands alone.');
         Check::input(!$relation->only || $target === AlterTarget::Table || $target === AlterTarget::ForeignTable, 'ONLY is written for tables and foreign tables.');

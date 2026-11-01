@@ -20,9 +20,9 @@ final class SetTransactionTest extends TestCase
     public function testDeriveStatementDerivesNothing(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET PERSIST_ONLY TRANSACTION ISOLATION LEVEL READ UNCOMMITTED');
-        self::assertInstanceOf(SetTransaction::class, $set->statement);
-        self::assertSame(VariableScope::PersistOnly, $set->statement->scope);
-        self::assertNull($set->shape());
+        self::assertInstanceOf(SetTransaction::class, $set);
+        self::assertSame(VariableScope::PersistOnly, $set->scope);
+        self::assertSame([], $set->declarations());
     }
 
     public function testRenderKeepsTheOrder(): void
@@ -34,5 +34,21 @@ final class SetTransactionTest extends TestCase
     {
         $this->expectExceptionMessage('SET TRANSACTION writes at most one characteristic of each kind.');
         new SetTransaction([AccessMode::ReadOnly, AccessMode::ReadWrite]);
+    }
+
+    public function testToStringReconstructsTheConcreteOperands(): void
+    {
+        self::assertSame('SET TRANSACTION READ ONLY', (new SetTransaction([AccessMode::ReadOnly]))->toString());
+    }
+
+    public function testProfileRetainsTheSelectedRelease(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        self::assertSame($profile, (new SetTransaction([AccessMode::ReadOnly], profile: $profile))->profile());
+    }
+
+    public function testDeclarationsIntroducesNoSchemaObjects(): void
+    {
+        self::assertSame([], (new SetTransaction([AccessMode::ReadOnly]))->declarations());
     }
 }

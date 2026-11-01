@@ -16,6 +16,6 @@ final class PositionOutOfRangeTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT 1 GROUP BY 3');
-        self::assertSame('GROUP BY position 3 is not in select list', $query->facts->diagnostics[0]->message());
+        self::assertSame('GROUP BY position 3 is not in select list', $query->diagnostics()[0]->message());
     }
 }

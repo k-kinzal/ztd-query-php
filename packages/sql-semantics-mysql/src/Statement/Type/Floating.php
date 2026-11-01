@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An approximate numeric type: FLOAT, REAL or DOUBLE with its optional precision and scale.
@@ -21,13 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/floating-point-types.html.
  *
  * @visibility public
+ * @example Requiring both display dimensions for REAL
+ *     new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Real, '12') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Requiring both display dimensions for DOUBLE
+ *     new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Double, '12') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Reading an approximate type
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Floating(\SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind::Float, '7', '3');
  *     [$type->name(), $type->precision, $type->scale] // => ['FLOAT', '7', '3']
  */
-final class Floating implements TypeName
+final class Floating implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<NumericModifier> The attributes in the order written; an attribute may repeat
@@ -39,12 +42,16 @@ final class Floating implements TypeName
      * @param string|null $precision The precision or display length exactly as written
      * @param string|null $scale The number of decimals exactly as written; requires a precision
      * @param list<NumericModifier> $modifiers The attributes in the order written
+     * @param Keyword\FloatingAlias|null $alias The written synonym; null uses the canonical keyword form
      */
-    public function __construct(public readonly FloatingKind $kind, public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [])
+    public function __construct(public readonly FloatingKind $kind, public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?Keyword\FloatingAlias $alias = null)
     {
+        Check::input($alias === null || $alias->kind() === $kind, 'A type synonym must match its canonical type role.');
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
         Check::input($scale === null || ($precision !== null && preg_match('/\A[0-9]+\z/', $scale) === 1), 'A scale is an unsigned integer written after a precision.');
+        Check::input($precision === null || $scale !== null || $kind === FloatingKind::Float, 'Only FLOAT permits a precision without a scale.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**
@@ -60,7 +67,7 @@ final class Floating implements TypeName
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->kind->value);
+        $out->keyword(...explode(' ', $this->alias->value ?? $this->kind->value));
         if ($this->precision !== null) {
             $out->glue()->symbol('(')->spelled($this->precision);
             if ($this->scale !== null) {

@@ -24,8 +24,9 @@ final class AlterRenameColumnTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
         $operation = $semantics->analyze('ALTER TABLE t RENAME COLUMN a TO c', [$table]);
 
-        self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement)->table);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
+        self::assertInstanceOf(DeclaredTable::class, $operation->relationInformation()->table);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame([], $operation->declarations());
         self::assertSame('a', $table->declarations()[0]->columns[0]->name->value);
     }
@@ -35,8 +36,8 @@ final class AlterRenameColumnTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
 
-        self::assertInstanceOf(UnknownColumn::class, $semantics->analyze('ALTER TABLE t RENAME x TO c', [$table])->facts->diagnostics[0]);
-        self::assertInstanceOf(DuplicateColumn::class, $semantics->analyze('ALTER TABLE t RENAME a TO B', [$table])->facts->diagnostics[0]);
+        self::assertInstanceOf(UnknownColumn::class, $semantics->analyze('ALTER TABLE t RENAME x TO c', [$table])->diagnostics()[0]);
+        self::assertInstanceOf(DuplicateColumn::class, $semantics->analyze('ALTER TABLE t RENAME a TO B', [$table])->diagnostics()[0]);
     }
 
     public function testDeriveStatementAcceptsANewNameThatOnlyChangesTheCase(): void
@@ -44,14 +45,14 @@ final class AlterRenameColumnTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
 
-        self::assertSame([], $semantics->analyze('ALTER TABLE t RENAME a TO A', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t RENAME a TO A', [$table])->diagnostics());
     }
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('alter table t rename column a to b');
 
-        self::assertInstanceOf(AlterRenameColumn::class, $operation->statement);
+        self::assertInstanceOf(AlterRenameColumn::class, $operation);
         self::assertSame('ALTER TABLE t RENAME a TO b', $operation->toString());
     }
 }

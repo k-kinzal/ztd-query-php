@@ -7,8 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
 /**
  * The aggregate functions that take one argument, or for COUNT(DISTINCT ...) several, and an optional quantifier.
  *
- * Each case holds the keyword. STDDEV and STDDEV_POP are the keyword STD,
- * VAR_POP is VARIANCE to the lexer.
+ * Each case identifies an aggregate operation and its canonical keyword.
+ * AggregateAlias retains STDDEV, STDDEV_POP and VAR_POP when written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/spatial-aggregate-functions.html.
  *

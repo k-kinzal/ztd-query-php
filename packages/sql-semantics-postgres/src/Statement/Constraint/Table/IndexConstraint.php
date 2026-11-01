@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A UNIQUE or PRIMARY KEY constraint built on an existing unique index: `USING INDEX name`.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a constraint on an existing index
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ADD CONSTRAINT k PRIMARY KEY USING INDEX i');
- *     [$alter->statement->commands[0]->constraint->primary, $alter->statement->commands[0]->constraint->index->value] // => [true, 'i']
+ *     [$alter->commands[0]->constraint->primary, $alter->commands[0]->constraint->index->value] // => [true, 'i']
  */
 final class IndexConstraint implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ConstraintAttribute> The attributes in the order written
@@ -43,7 +42,7 @@ final class IndexConstraint implements Constraint
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      * @param Name|null $name The constraint name
      */
-    public function __construct(public readonly bool $primary, public readonly Name $index, array $attributes = [], public readonly ?Name $name = null)
+    public function __construct(public readonly bool $primary, public readonly Name $index, array $attributes = [], public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->attributes = (new Attributes())->checked($attributes);
     }

@@ -24,14 +24,14 @@ final class DefaultLiteralTest extends TestCase
     public function testDeriveConstraintDerivesTheLiteral(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT 5)', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $default = $statement->columns[0]->constraints[0];
         self::assertInstanceOf(DefaultLiteral::class, $default);
         self::assertInstanceOf(IntegerLiteral::class, $default->literal);
-        self::assertEquals(new Known(Storage::Integer), $operation->facts->scalar($default->literal)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertEquals(new Known(Storage::Integer), $default->literal->scalarInformation()->type);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheWrittenSign(): void
@@ -39,8 +39,8 @@ final class DefaultLiteralTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $negative = $semantics->analyze('create table t (a default -1.5)');
         $positive = $semantics->analyze("create table t (a default +'x')");
-        $statement = $negative->statement;
-        $other = $positive->statement;
+        $statement = $negative;
+        $other = $positive;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(CreateTable::class, $other);
@@ -55,7 +55,7 @@ final class DefaultLiteralTest extends TestCase
     public function testRenderWritesEveryKindOfLiteral(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a DEFAULT NULL, b DEFAULT 'x', c DEFAULT x'0A', d DEFAULT CURRENT_TIMESTAMP)");
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(DefaultLiteral::class, $statement->columns[3]->constraints[0]);

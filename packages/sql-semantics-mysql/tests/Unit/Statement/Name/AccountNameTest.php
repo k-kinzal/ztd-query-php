@@ -13,6 +13,7 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
@@ -23,6 +24,30 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class AccountNameTest extends TestCase
 {
+    public function testWarningsBelongToTheWrittenUserAndHostOperands(): void
+    {
+        $account = new AccountName(new Name('full', \SqlSemantics\Statement\Identifier\NameQuote::Bare), new Name('FULL', \SqlSemantics\Statement\Identifier\NameQuote::Bare));
+        self::assertSame([4119, 4119], array_map(static fn (\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation $warning): int => $warning->code(), $account->warnings(GrammarRelease::MySql847)));
+        self::assertSame([], $account->warnings(GrammarRelease::MySql5744));
+        self::assertSame([], (new AccountName(new Name('full', \SqlSemantics\Statement\Identifier\NameQuote::Backtick)))->warnings(GrammarRelease::MySql847));
+    }
+
+    public function testUsernameRemovesOnlySurroundingAsciiWhitespace(): void
+    {
+        $account = new AccountName(new Name(" \t\n\r\v\fbo b\f\v\r\n\t "));
+
+        self::assertSame('bo b', $account->username());
+        self::assertSame(" \t\n\r\v\fbo b\f\v\r\n\t ", $account->user->value);
+        self::assertSame("\0\x1f\x7f\u{a0}\u{3000}bob\u{3000}\u{a0}\x7f\x1f\0", (new AccountName(new Name("\0\x1f\x7f\u{a0}\u{3000}bob\u{3000}\u{a0}\x7f\x1f\0")))->username());
+    }
+
+    public function testHostnamePreservesCaseAndAnOmittedHost(): void
+    {
+        self::assertSame('HOST', (new AccountName(new Name('bob'), new Name(" \t\n\r\v\fHOST\f\v\r\n\t ")))->hostname());
+        self::assertSame('', (new AccountName(new Name('bob'), new Name(' ')))->hostname());
+        self::assertNull((new AccountName(new Name('bob')))->hostname());
+    }
+
     public function testRenderWritesTheUserAndTheHostJoinedByAtWithoutSpaces(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
@@ -34,6 +59,20 @@ final class AccountNameTest extends TestCase
         self::assertSame('bob@localhost', (new Lexical())->join($pieces));
     }
 
+    public function testRenderRetainsStringAccountOperands(): void
+    {
+        $out = new Output(new Codec(GrammarRelease::MySql847));
+        (new AccountName(new Name('bob'), new Name('localhost'), userQuotation: new Notation(), hostQuotation: new Notation()))->render($out);
+
+        self::assertSame("'bob'@'localhost'", (new Lexical())->join($out->pieces()));
+    }
+
+    public function testAccountNameRejectsAStringHostWithoutAnOperand(): void
+    {
+        $this->expectExceptionMessage('A string host operand is present and has no identifier delimiter.');
+        new AccountName(new Name('bob'), hostQuotation: new Notation());
+    }
+
     public function testRenderQuotesAPartThatNeedsQuoting(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
@@ -42,12 +81,34 @@ final class AccountNameTest extends TestCase
         self::assertSame('`bo b`@`10.0.%`', (new Lexical())->join($out->pieces()));
     }
 
+    public function testAccountNameRejectsEscapesThatDoNotDecodeToItsOperand(): void
+    {
+        $this->expectExceptionMessage('An escape must decode to the string bytes at its offset.');
+        new AccountName(new Name('bob'), userQuotation: new Notation(escapes: [0 => \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Escape::Newline]));
+    }
+
+
     public function testRenderOmitsAnAbsentHost(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
         (new AccountName(new Name('bob')))->render($out);
 
         self::assertSame('bob', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testRenderUsesStringOperandsToPreserveEmbeddedNuls(): void
+    {
+        $out = new Output(new Codec(GrammarRelease::MySql847));
+        (new AccountName(new Name("a\0b"), new Name("h\0tail")))->render($out);
+        $sql = (new Lexical())->join($out->pieces());
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $name = $lowering->users->account($platform->parser($profile)->parse('DROP USER ' . $sql)->find('user')[0]);
+
+        self::assertSame("'a\\0b'@'h\\0tail'", $sql);
+        self::assertInstanceOf(AccountName::class, $name);
+        self::assertSame(["a\0b", "h\0tail"], [$name->user->value, $name->host?->value]);
     }
 
     public function testLoweredAccountHoldsTheDecodedParts(): void

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Lowering\Utility\Show;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateEvent;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowCreateFunction;
@@ -27,7 +28,6 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowOpenTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTriggers;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers the SHOW statements of MySQL 8.0 and later about databases, tables and stored programs.
@@ -62,26 +62,26 @@ final class ObjectRule
         $clauses = new ClauseRule($this->lowering);
         switch ($form->signature) {
             case 'show_databases_stmt: SHOW DATABASES opt_wild_or_where':
-                return new ShowDatabases($clauses->filter($form->node(2)));
+                return $clauses->inspection(new ShowDatabases(listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\DatabaseListing::from(strtoupper($form->token(1)->text))), $form->node(2));
             case 'show_tables_stmt: SHOW opt_show_cmd_type TABLES opt_db opt_wild_or_where':
-                return new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowTables($clauses->listing($form->node(1)), $clauses->database($form->node(3)), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_triggers_stmt: SHOW opt_full TRIGGERS_SYM opt_db opt_wild_or_where':
-                return new ShowTriggers($clauses->listing($form->node(1)) !== null, $clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowTriggers($clauses->listing($form->node(1)) !== null, $clauses->database($form->node(3)), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_events_stmt: SHOW EVENTS_SYM opt_db opt_wild_or_where':
-                return new ShowEvents($clauses->database($form->node(2)), $clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowEvents($clauses->database($form->node(2)), databaseIn: $clauses->usesIn($form->node(2))), $form->node(3));
             case 'show_table_status_stmt: SHOW TABLE_SYM STATUS_SYM opt_db opt_wild_or_where':
-                return new ShowTableStatus($clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowTableStatus($clauses->database($form->node(3)), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_open_tables_stmt: SHOW OPEN_SYM TABLES opt_db opt_wild_or_where':
-                return new ShowOpenTables($clauses->database($form->node(3)), $clauses->filter($form->node(4)));
+                return $clauses->inspection(new ShowOpenTables($clauses->database($form->node(3), true), databaseIn: $clauses->usesIn($form->node(3))), $form->node(4));
             case 'show_columns_stmt: SHOW opt_show_cmd_type COLUMNS from_or_in table_ident opt_db opt_wild_or_where':
                 $clauses->preposition($form->node(3));
 
-                return new ShowColumns($this->table($form, 4), $clauses->listing($form->node(1)), $clauses->database($form->node(5)), $clauses->filter($form->node(6)));
+                return $clauses->inspection(new ShowColumns($this->table($form, 4), $clauses->listing($form->node(1)), $clauses->database($form->node(5)), tableIn: $clauses->usesIn($form->node(3)), databaseIn: $clauses->usesIn($form->node(5)), fieldsKeyword: strtoupper($form->token(2)->text) === 'FIELDS'), $form->node(6));
             case 'show_keys_stmt: SHOW opt_extended keys_or_index from_or_in table_ident opt_db opt_where_clause':
                 $this->lowering->options->skip($form->node(2));
                 $clauses->preposition($form->node(3));
 
-                return new ShowKeys($this->table($form, 4), $clauses->extended($form->node(1)), $clauses->database($form->node(5)), $clauses->where($form->node(6)));
+                return $clauses->inspection(new ShowKeys($this->table($form, 4), $clauses->extended($form->node(1)), $clauses->database($form->node(5)), listing: \SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\IndexListing::from(strtoupper($this->lowering->form($form->node(2))->token(0)->text)), databaseIn: $clauses->usesIn($form->node(5)), tableIn: $clauses->usesIn($form->node(3))), $form->node(6));
             default:
                 return $this->definition($form);
         }
@@ -98,7 +98,7 @@ final class ObjectRule
         $clauses = new ClauseRule($this->lowering);
         switch ($form->signature) {
             case 'show_create_database_stmt: SHOW CREATE DATABASE opt_if_not_exists ident':
-                return new ShowCreateDatabase($names->identifier($form->node(4)), $this->lowering->options->present($form->node(3)));
+                return new ShowCreateDatabase($names->identifier($form->node(4)), $this->lowering->options->present($form->node(3)), databaseWord: \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseWord::from(strtoupper($form->token(2)->text)));
             case 'show_create_table_stmt: SHOW CREATE TABLE_SYM table_ident':
                 return new ShowCreateTable($this->table($form, 3));
             case 'show_create_view_stmt: SHOW CREATE VIEW_SYM table_ident':
@@ -112,9 +112,9 @@ final class ObjectRule
             case 'show_create_event_stmt: SHOW CREATE EVENT_SYM sp_name':
                 return new ShowCreateEvent($names->qualified($form->node(3)));
             case 'show_procedure_status_stmt: SHOW PROCEDURE_SYM STATUS_SYM opt_wild_or_where':
-                return new ShowProcedureStatus($clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowProcedureStatus(), $form->node(3));
             case 'show_function_status_stmt: SHOW FUNCTION_SYM STATUS_SYM opt_wild_or_where':
-                return new ShowFunctionStatus($clauses->filter($form->node(3)));
+                return $clauses->inspection(new ShowFunctionStatus(), $form->node(3));
             case 'show_procedure_code_stmt: SHOW PROCEDURE_SYM CODE_SYM sp_name':
                 return new ShowProcedureCode($names->qualified($form->node(3)));
             case 'show_function_code_stmt: SHOW FUNCTION_SYM CODE_SYM sp_name':

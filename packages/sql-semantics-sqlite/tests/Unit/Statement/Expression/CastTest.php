@@ -36,7 +36,7 @@ final class CastTest extends TestCase
         self::assertEquals(new Known(Storage::Blob), $operation->field(2)->type);
         self::assertEquals(new Known(Storage::Real), $operation->field(3)->type);
         self::assertEquals(new Known(Storage::Real), $operation->field(4)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarGivesIntegerOrRealForNumericAffinity(): void
@@ -73,7 +73,7 @@ final class CastTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT CAST(a AS VARCHAR(10)), CAST(1 AS) FROM t', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -86,7 +86,7 @@ final class CastTest extends TestCase
         self::assertSame('VARCHAR', $cast->target->text());
         self::assertSame(Affinity::Text, $cast->target->affinity());
         self::assertCount(1, $cast->target->arguments);
-        $resolution = $operation->facts->scalar($cast->operand)->resolution;
+        $resolution = $cast->operand->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($create->declarations()[0]->columns[0], $resolution->slot->column);
         self::assertNull($statement->columns[1]->expression->target);

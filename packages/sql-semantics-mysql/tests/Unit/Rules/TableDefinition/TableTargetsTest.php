@@ -58,7 +58,7 @@ final class TableTargetsTest extends TestCase
     public function testScopeSeesTheTableOnly(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));

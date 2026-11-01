@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,16 +20,19 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EVENT TRIGGER e DISABLE');
  *     $statement->toString() // => 'ALTER EVENT TRIGGER e DISABLE'
  */
-final class AlterEventTrigger implements Statement
+final class AlterEventTrigger extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The trigger name
      * @param FiringState $state The new state
      */
-    public function __construct(public readonly Name $name, public readonly FiringState $state)
+    public function __construct(public readonly Name $name, public readonly FiringState $state, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

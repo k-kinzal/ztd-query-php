@@ -1,0 +1,221 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Command;
+
+use MySqlMemory\Command\DatabaseCommand;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use MySqlMemory\Result\Completion;
+use MySqlMemory\Result\ResultSet;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
+
+#[CoversClass(DatabaseCommand::class)]
+#[Small]
+final class DatabaseCommandTest extends TestCase
+{
+    #[DataProvider('providerLockedDatabases')]
+    public function testExecuteChecksDatabaseLocksBeforeExistence(string $version, string $sql, int $code): void
+    {
+        $session = (new Instance($version, databases: ['test', 'existing']))->connect(database: 'test');
+        $session->query('CREATE TABLE t (id INT); LOCK TABLES t READ');
+        $schemas = array_keys($session->instance->dictionary->schemas);
+        $replies = $session->run($sql);
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame($code, $replies[0]->getCode());
+        self::assertSame($schemas, array_keys($session->instance->dictionary->schemas));
+        self::assertSame('test', $session->variables->database);
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerLockedDatabases(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['CREATE DATABASE existing', 'CREATE DATABASE IF NOT EXISTS existing', 'CREATE DATABASE absent', 'DROP DATABASE existing', 'DROP DATABASE absent', 'DROP DATABASE IF EXISTS absent'] as $sql) {
+                yield $version . '/' . $sql => [$version, $sql, 1192];
+            }
+            foreach (['CREATE DATABASE performance_schema', 'DROP DATABASE performance_schema'] as $sql) {
+                yield $version . '/' . $sql => [$version, $sql, version_compare($version, '8.0', '<') ? 1192 : 1044];
+            }
+            foreach (['CREATE DATABASE information_schema', 'DROP DATABASE information_schema'] as $sql) {
+                yield $version . '/' . $sql => [$version, $sql, 1044];
+            }
+        }
+    }
+
+    public function testExecuteBoundsEncryptionDiagnosticText(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1525);
+        $this->expectExceptionMessage("Incorrect argument (should be Y or N) value: '" . str_repeat('a', 128) . "'");
+
+        $session->query("CREATE DATABASE d ENCRYPTION = '" . str_repeat('a', 160) . "'");
+    }
+
+    public function testClearsDiagnosticsAnswersTrue(): void
+    {
+        self::assertTrue((new DatabaseCommand())->clearsDiagnostics());
+    }
+
+    public function testCreateAddsADatabaseWithOneAffectedRow(): void
+    {
+        $session = (new Instance())->connect();
+
+        $reply = $session->query('CREATE DATABASE d')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([1, 0, 0, ''], [$reply->affectedRows, $reply->lastInsertId, $reply->warnings, $reply->info]);
+        self::assertSame('utf8mb4_0900_ai_ci', $session->instance->dictionary->schema('d')?->collation);
+    }
+
+    public function testExecuteCreatesADatabaseWithTheCollationItNames(): void
+    {
+        $session = (new Instance())->connect();
+
+        $session->query('CREATE DATABASE d COLLATE UTF8MB4_BIN');
+
+        self::assertSame('utf8mb4_bin', $session->instance->dictionary->schema('d')?->collation);
+    }
+
+    public function testExecuteCreatesADatabaseWithTheDefaultCollationOfTheCharacterSetItNames(): void
+    {
+        $session = (new Instance())->connect();
+
+        $session->query('CREATE DATABASE l CHARACTER SET latin1; CREATE DATABASE b COLLATE latin1_bin CHARACTER SET latin1');
+
+        self::assertSame(['latin1_swedish_ci', 'latin1_bin'], [$session->instance->dictionary->schema('l')?->collation, $session->instance->dictionary->schema('b')?->collation]);
+    }
+
+    public function testEncryptionUsesTheSessionDefaultAndLastExplicitSetting(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET default_table_encryption=ON');
+        $command = new DatabaseCommand();
+        $plain = new CreateDatabase(false, new \SqlSemantics\Statement\Identifier\Name('d'));
+        $explicit = new CreateDatabase(false, new \SqlSemantics\Statement\Identifier\Name('d'), [new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled), new \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled)]);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Enabled, $command->encryption($plain, $session));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Database\Encryption::Disabled, $command->encryption($explicit, $session));
+    }
+
+    public function testCollationPrefersTheCollationItNamesToTheCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+        $named = $session->analyze('CREATE DATABASE b COLLATE latin1_bin CHARACTER SET latin1');
+        $charset = $session->analyze('CREATE DATABASE l CHARACTER SET latin1');
+        $plain = $session->analyze('CREATE DATABASE p');
+        self::assertInstanceOf(CreateDatabase::class, $named);
+        self::assertInstanceOf(CreateDatabase::class, $charset);
+        self::assertInstanceOf(CreateDatabase::class, $plain);
+
+        self::assertSame(['latin1_bin', 'latin1_swedish_ci', 'utf8mb4_0900_ai_ci'], [(new DatabaseCommand())->collation($named, $session), (new DatabaseCommand())->collation($charset, $session), (new DatabaseCommand())->collation($plain, $session)]);
+    }
+
+    public function testExecuteRefusesToCreateAnExistingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1007);
+        $this->expectExceptionMessage("Can't create database 'd'; database exists");
+
+        $session->query('CREATE DATABASE d');
+    }
+
+    public function testExecuteCreatesAnExistingDatabaseIfNotExistsWithANote(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+
+        $reply = $session->query('CREATE DATABASE IF NOT EXISTS d')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([1, 1], [$reply->affectedRows, $reply->warnings]);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Note', '1007', "Can't create database 'd'; database exists"]], $warnings->rows);
+    }
+
+    public function testExecuteUsesADatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+
+        $reply = $session->query('USE d')[0];
+        $current = $session->query('SELECT DATABASE()')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->affectedRows);
+        self::assertInstanceOf(ResultSet::class, $current);
+        self::assertSame([['d']], $current->rows);
+    }
+
+    public function testExecuteDropsADatabaseCountingItsTables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
+
+        $reply = $session->query('DROP DATABASE d')[0];
+        $current = $session->query('SELECT DATABASE()')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(2, $reply->affectedRows);
+        self::assertNull($session->instance->dictionary->schema('d'));
+        self::assertInstanceOf(ResultSet::class, $current);
+        self::assertSame([[null]], $current->rows);
+    }
+
+    public function testExecuteRefusesToDropAMissingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1008);
+        $this->expectExceptionMessage("Can't drop database 'd'; database doesn't exist");
+
+        $session->query('DROP DATABASE d');
+    }
+
+    public function testExecuteDropsAMissingDatabaseIfExistsWithANote(): void
+    {
+        $session = (new Instance())->connect();
+
+        $reply = $session->query('DROP DATABASE IF EXISTS d')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([0, 1], [$reply->affectedRows, $reply->warnings]);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Note', '1008', "Can't drop database 'd'; database doesn't exist"]], $warnings->rows);
+    }
+
+    public function testCollationTakesTheCollationOfTheServerByDefault(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+
+        self::assertSame('latin1_swedish_ci', $session->instance->dictionary->schema('d')?->collation);
+    }
+
+    public function testExecuteRefusesAnEncryptionOtherThanYOrNBeforeAnExistingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1525);
+        $this->expectExceptionMessage("Incorrect argument (should be Y or N) value: 'x'");
+
+        $session->query("CREATE DATABASE IF NOT EXISTS d ENCRYPTION 'x'");
+    }
+
+}

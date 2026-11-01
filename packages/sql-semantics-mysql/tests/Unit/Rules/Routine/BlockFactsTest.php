@@ -25,31 +25,47 @@ use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 #[Medium]
 final class BlockFactsTest extends TestCase
 {
+    public function testDerivePreservesTheProgramsDatabaseThroughNestedVariableScopes(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE d.p() BEGIN DECLARE x INT; BEGIN DECLARE y INT; DROP TABLE t, d.t; END; END');
+        self::assertInstanceOf(CreateProcedure::class, $statement);
+        $conditions = array_values(array_filter($statement->diagnostics(), static fn (Diagnostic $condition): bool => $condition instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable));
+        self::assertCount(1, $conditions);
+        self::assertSame('Table d.t is named more than once.', $conditions[0]->message());
+    }
+
     public function testDeriveResolvesTheVariableOfTheInnermostBlock(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; BEGIN DECLARE x CHAR(1); SELECT x; END; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $outer = $create->body;
         self::assertInstanceOf(Block::class, $outer);
         $inner = $outer->statements[0];
         self::assertInstanceOf(Block::class, $inner);
         $select = $inner->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
-        $resolution = $operation->facts->scalar($item->expression)->resolution;
+        $resolution = $item->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($inner->declarations[0], $resolution->relation);
     }
 
     public function testDeriveEndsTheScopeOfTheDeclarationsWithTheBlock(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; END; SELECT x; OPEN c; END');
 
-        self::assertSame(['Column x does not exist.', 'Undefined CURSOR: c'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; END; SELECT x; OPEN c; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undefined CURSOR: c', $failure->problem->message());
+        }
     }
 
     public function testDeriveDerivesTheCursorQueryInTheScopeOfTheBlock(): void
@@ -57,31 +73,36 @@ final class BlockFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $operation = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT a FROM t WHERE a = x; OPEN c; END', [$table]);
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $cursor = $block->declarations[1];
         self::assertInstanceOf(CursorDeclaration::class, $cursor);
-        $query = $cursor->query;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $cursor->query);
+        $query = $cursor->query->query;
         self::assertInstanceOf(Select::class, $query);
         $where = $query->where;
         self::assertInstanceOf(Comparison::class, $where);
-        $resolution = $operation->facts->scalar($where->right)->resolution;
+        $resolution = $where->right->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
-        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT zz FROM t; END', [$table])->facts->diagnostics));
+        self::assertSame(['Column zz does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT zz FROM t; END', [$table])->diagnostics()));
     }
 
     public function testDeriveDerivesTheHandlerStatementWithTheDeclarationsBeforeIt(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-
-        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN SET x = 1; CLOSE c; END; END')->facts->diagnostics);
-        self::assertSame(['Undeclared variable: y'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND FETCH c INTO x, y; END')->facts->diagnostics));
-        self::assertSame(['LEAVE with no matching label: b'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b')->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND BEGIN SET x = 1; CLOSE c; END; END')->diagnostics());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() b: BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION LEAVE b; END b');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('LEAVE with no matching label: b', $failure->problem->message());
+        }
     }
 
     /**
@@ -92,7 +113,7 @@ final class BlockFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -100,12 +121,6 @@ final class BlockFactsTest extends TestCase
      */
     public static function providerDeriveReportsTheBrokenRule(): iterable
     {
-        yield 'a duplicate variable in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; END', ['Duplicate variable: x']];
-        yield 'a duplicate condition in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE C CONDITION FOR 1052; END', ['Duplicate condition: C']];
-        yield 'a duplicate cursor in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE cur CURSOR FOR SELECT 1; DECLARE cur CURSOR FOR SELECT 2; END', ['Duplicate cursor: cur']];
-        yield 'an undefined handler condition' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c BEGIN END; END', ['Undefined CONDITION: c']];
-        yield 'a bad SQLSTATE of a handler' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '00000' BEGIN END; END", ["Bad SQLSTATE: '00000'"]];
-        yield 'a bad SQLSTATE of a condition' => ['mysql-5.7.44', "CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR SQLSTATE '00123'; END", ["Bad SQLSTATE: '00123'"]];
         yield 'an unknown name in a cursor query' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT z; END', ['Column z does not exist.']];
         yield 'an unknown name in the statements' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; SELECT x, z; END', ['Column z does not exist.']];
     }
@@ -118,7 +133,7 @@ final class BlockFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -128,11 +143,6 @@ final class BlockFactsTest extends TestCase
     {
         yield 'every kind in order' => ['CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE e CONDITION FOR 1051; DECLARE c CURSOR FOR SELECT x; DECLARE d CURSOR FOR SELECT 1; DECLARE EXIT HANDLER FOR e CLOSE c; DECLARE CONTINUE HANDLER FOR SQLWARNING CLOSE d; END', []];
         yield 'a condition before a variable' => ['CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE x INT; END', []];
-        yield 'a variable after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE x INT; END', ['Variable or condition declaration after cursor or handler declaration']];
-        yield 'a condition after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE e CONDITION FOR 1051; END', ['Variable or condition declaration after cursor or handler declaration']];
-        yield 'a variable after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE x INT; END', ['Variable or condition declaration after cursor or handler declaration']];
-        yield 'a cursor after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE c CURSOR FOR SELECT 1; END', ['Cursor declaration after handler declaration']];
-        yield 'a variable after a cursor and a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE x INT; END', ['Variable or condition declaration after cursor or handler declaration']];
         yield 'each block on its own' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; BEGIN DECLARE x INT; END; END', []];
     }
 
@@ -144,7 +154,7 @@ final class BlockFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -152,67 +162,61 @@ final class BlockFactsTest extends TestCase
      */
     public static function providerDistinctComparesNamesWithoutRegardToLetterCase(): iterable
     {
-        yield 'conditions in another case' => ["CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE E CONDITION FOR SQLSTATE '42S02'; END", ['Duplicate condition: E']];
-        yield 'cursors in another case' => ['CREATE PROCEDURE p() BEGIN DECLARE cur CURSOR FOR SELECT 1; DECLARE CUR CURSOR FOR SELECT 2; END', ['Duplicate cursor: CUR']];
         yield 'distinct conditions and cursors' => ['CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE f CONDITION FOR 1052; DECLARE c CURSOR FOR SELECT 1; DECLARE d CURSOR FOR SELECT 2; END', []];
         yield 'a condition and a cursor of one name' => ['CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE e CURSOR FOR SELECT 1; END', []];
         yield 'the same names in a nested block' => ['CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE c CURSOR FOR SELECT 1; BEGIN DECLARE e CONDITION FOR 1052; DECLARE c CURSOR FOR SELECT 2; END; END', []];
     }
 
-    public function testVariablesReportsADuplicateNameAndKeepsTheFirstMeaning(): void
+    public function testVariablesRejectsADuplicateNameBeforePublication(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y, X CHAR(1); SELECT x, y; END');
-        $create = $operation->statement;
-        self::assertInstanceOf(CreateProcedure::class, $create);
-        $block = $create->body;
-        self::assertInstanceOf(Block::class, $block);
-        $select = $block->statements[0];
-        self::assertInstanceOf(Select::class, $select);
-        $first = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $first);
-        $second = $select->items[1];
-        self::assertInstanceOf(SelectExpression::class, $second);
-        $x = $operation->facts->scalar($first->expression)->resolution;
-        self::assertInstanceOf(ResolvedColumn::class, $x);
-        $y = $operation->facts->scalar($second->expression)->resolution;
-        self::assertInstanceOf(ResolvedColumn::class, $y);
 
-        self::assertSame(['Duplicate variable: X'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
-        self::assertSame($block->declarations[0], $x->relation);
-        self::assertSame($block->declarations[1], $y->relation);
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y, X CHAR(1); SELECT x, y; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Duplicate variable: X', $failure->problem->message());
+        }
     }
 
     public function testVariablesReportsANameRepeatedInOneDeclaration(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y, x INT; END');
 
-        self::assertSame(['Duplicate variable: x'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y, x INT; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Duplicate variable: x', $failure->problem->message());
+        }
     }
 
     public function testVariablesMakesTheNamesVisibleAfterTheDeclarationOnly(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y INT DEFAULT x; END')->facts->diagnostics);
-        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y INT DEFAULT y; END')->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 1; DECLARE y INT DEFAULT x; END')->diagnostics());
+        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE x, y INT DEFAULT y; END')->diagnostics()));
     }
 
     public function testVariablesHidesAParameterOfTheSameName(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p(x INT) BEGIN DECLARE x CHAR(1); SELECT x; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $select = $block->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);
         self::assertInstanceOf(ColumnUse::class, $item->expression);
-        $resolution = $operation->facts->scalar($item->expression)->resolution;
+        $resolution = $item->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -224,7 +228,7 @@ final class BlockFactsTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -232,12 +236,138 @@ final class BlockFactsTest extends TestCase
      */
     public static function providerHandledReportsAConditionValueHandledTwiceInTheBlock(): iterable
     {
-        yield 'a general condition of two handlers in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END', ['Duplicate handler declared in the same block']];
-        yield 'one error number in two spellings in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1051, 0x41b BEGIN END; END', ['Duplicate handler declared in the same block']];
-        yield 'a condition name for a handled number' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR 1051 BEGIN END; DECLARE EXIT HANDLER FOR c BEGIN END; END', ['Duplicate handler declared in the same block']];
-        yield 'one SQLSTATE value' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '42S02', SQLSTATE VALUE '42S02' BEGIN END; END", ['Duplicate handler declared in the same block']];
         yield 'distinct values' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1051, SQLSTATE '42S02', NOT FOUND BEGIN END; DECLARE EXIT HANDLER FOR SQLWARNING, SQLEXCEPTION BEGIN END; END", []];
         yield 'the same value in a nested block' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1051 BEGIN END; BEGIN DECLARE CONTINUE HANDLER FOR 1051 BEGIN END; END; END', []];
-        yield 'an undefined condition name twice' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c, c BEGIN END; END', ['Undefined CONDITION: c', 'Undefined CONDITION: c']];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerDeriveRejectsUnboundHandlerNamesBeforePublication(): iterable
+    {
+        yield 'one missing condition' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c BEGIN END; END'];
+        yield 'the same missing condition twice' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR c, c BEGIN END; END'];
+    }
+
+    #[DataProvider('providerDeriveRejectsUnboundHandlerNamesBeforePublication')]
+    public function testDeriveRejectsUnboundHandlerNamesBeforePublication(string $sql): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undefined CONDITION: c', $failure->problem->message());
+        }
+    }
+    public function testDeriveRejectsAnUnboundHandlerFetchTarget(): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR NOT FOUND FETCH c INTO x, y; END');
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame('Undeclared variable: y', $failure->problem->message());
+        }
+    }
+
+
+    #[DataProvider('providerDeriveReportsTheBrokenRuleRefusesTheDefinition')]
+    public function testDeriveReportsTheBrokenRuleRefusesTheDefinition(string $release, string $sql, string $message): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function providerDeriveReportsTheBrokenRuleRefusesTheDefinition(): iterable
+    {
+        yield 'a duplicate variable in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE x INT; END', 'Duplicate variable: x'];
+        yield 'a duplicate condition in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE C CONDITION FOR 1052; END', 'Duplicate condition: C'];
+        yield 'a duplicate cursor in 9.1' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE cur CURSOR FOR SELECT 1; DECLARE cur CURSOR FOR SELECT 2; END', 'Duplicate cursor: cur'];
+    }
+
+
+    #[DataProvider('providerOrderedReportsADeclarationAfterOneItMustPrecedeRefusesTheDefinition')]
+    public function testOrderedReportsADeclarationAfterOneItMustPrecedeRefusesTheDefinition(string $sql, string $message): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerOrderedReportsADeclarationAfterOneItMustPrecedeRefusesTheDefinition(): iterable
+    {
+        yield 'a variable after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE x INT; END', 'Variable or condition declaration after cursor or handler declaration'];
+        yield 'a condition after a cursor' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE e CONDITION FOR 1051; END', 'Variable or condition declaration after cursor or handler declaration'];
+        yield 'a variable after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE x INT; END', 'Variable or condition declaration after cursor or handler declaration'];
+        yield 'a cursor after a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE c CURSOR FOR SELECT 1; END', 'Cursor declaration after handler declaration'];
+        yield 'a variable after a cursor and a handler' => ['CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE x INT; END', 'Variable or condition declaration after cursor or handler declaration'];
+    }
+
+
+    #[DataProvider('providerDistinctComparesNamesWithoutRegardToLetterCaseRefusesTheDefinition')]
+    public function testDistinctComparesNamesWithoutRegardToLetterCaseRefusesTheDefinition(string $sql, string $message): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDistinctComparesNamesWithoutRegardToLetterCaseRefusesTheDefinition(): iterable
+    {
+        yield 'conditions in another case' => ["CREATE PROCEDURE p() BEGIN DECLARE e CONDITION FOR 1051; DECLARE E CONDITION FOR SQLSTATE '42S02'; END", 'Duplicate condition: E'];
+        yield 'cursors in another case' => ['CREATE PROCEDURE p() BEGIN DECLARE cur CURSOR FOR SELECT 1; DECLARE CUR CURSOR FOR SELECT 2; END', 'Duplicate cursor: CUR'];
+    }
+
+
+    #[DataProvider('providerHandledReportsAConditionValueHandledTwiceInTheBlockRefusesTheDefinition')]
+    public function testHandledReportsAConditionValueHandledTwiceInTheBlockRefusesTheDefinition(string $release, string $sql, string $message): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($message, $failure->problem->message());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function providerHandledReportsAConditionValueHandledTwiceInTheBlockRefusesTheDefinition(): iterable
+    {
+        yield 'a general condition of two handlers in 5.6' => ['mysql-5.6.51', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END', 'Duplicate handler declared in the same block'];
+        yield 'one error number in two spellings in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR 1051, 0x41b BEGIN END; END', 'Duplicate handler declared in the same block'];
+        yield 'a condition name for a handled number' => ['mysql-9.1.0', 'CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR 1051; DECLARE CONTINUE HANDLER FOR 1051 BEGIN END; DECLARE EXIT HANDLER FOR c BEGIN END; END', 'Duplicate handler declared in the same block'];
+        yield 'one SQLSTATE value' => ['mysql-9.1.0', "CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLSTATE '42S02', SQLSTATE VALUE '42S02' BEGIN END; END", 'Duplicate handler declared in the same block'];
     }
 }

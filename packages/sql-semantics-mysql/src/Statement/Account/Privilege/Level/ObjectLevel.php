@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ON [TABLE|FUNCTION|PROCEDURE] [db.]name`: one table or stored routine.
@@ -23,17 +22,21 @@ use SqlSemantics\Statement\Snapshot;
  * @example Resolving the table of a grant
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $grant = $semantics->analyze('GRANT SELECT ON t TO u', [$semantics->analyze('CREATE TABLE t (a INT)')]);
- *     $grant->facts->relation($grant->statement->level)->table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable // => true
+ *     $grant->level->relationInformation()->table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable // => true
  */
-final class ObjectLevel implements PrivilegeLevel
+final class ObjectLevel implements PrivilegeLevel, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The object name with its optional database
      */
-    public function __construct(public readonly QualifiedName $name)
+    public function __construct(public readonly QualifiedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($name->catalog === null, 'An object is qualified by at most a database.');
     }
 

@@ -19,7 +19,7 @@ final class ReassignOwnedTest extends TestCase
 
     public function testDeriveStatementReportsPublic(): void
     {
-        self::assertSame(['role "public" does not exist', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REASSIGN OWNED BY PUBLIC TO PUBLIC')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REASSIGN OWNED BY PUBLIC TO PUBLIC')->diagnostics()));
     }
 
     public function testRejectsNoOwner(): void

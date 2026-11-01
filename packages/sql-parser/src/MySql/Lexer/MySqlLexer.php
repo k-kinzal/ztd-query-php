@@ -33,6 +33,7 @@ final class MySqlLexer
      * @param OperatorScanner $operators Reads operators
      * @param VariableScanner $variables Reads what follows an at sign
      * @param ParameterSyntax $parameters Which parameter markers are read
+     * @param string|null $clientCharset Input character set for unquoted identifiers
      */
     public function __construct(
         private readonly KeywordTable $keywords,
@@ -45,6 +46,7 @@ final class MySqlLexer
         private readonly OperatorScanner $operators = new OperatorScanner(),
         private readonly VariableScanner $variables = new VariableScanner(),
         private readonly ParameterSyntax $parameters = ParameterSyntax::Native,
+        private readonly ?string $clientCharset = null,
     ) {
     }
 
@@ -59,7 +61,7 @@ final class MySqlLexer
      */
     public function scan(string $sql): array
     {
-        $scan = new Scan(new Cursor($sql), $this->keywords, $this->mode, $this->version, $this->parameters);
+        $scan = new Scan(new Cursor($sql), $this->keywords, $this->mode, $this->version, $this->parameters, $this->clientCharset);
         $lexemes = [];
         while (true) {
             if ($scan->next === LexerState::Start) {

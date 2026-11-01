@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Target;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An INSERT of one row of column defaults: `INSERT INTO table DEFAULT VALUES`.
@@ -30,9 +29,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('insert into t default values returning *');
  *     $insert->toString() // => 'INSERT INTO t DEFAULT VALUES RETURNING *'
  */
-final class InsertDefaults implements Modification
+final class InsertDefaults extends \SqlSemantics\Statement\SqlStatement implements Modification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Target> The RETURNING list in written order
@@ -52,7 +52,16 @@ final class InsertDefaults implements Modification
         public readonly TargetTable $target,
         public readonly ConflictDoNothing|ConflictDoUpdate|null $conflict = null,
         array $returning = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         Check::input(!$target->table->only, 'The table of an INSERT is written without ONLY.');
         $this->returning = Check::listOf($returning, Target::class, 'RETURNING holds output items.');
     }

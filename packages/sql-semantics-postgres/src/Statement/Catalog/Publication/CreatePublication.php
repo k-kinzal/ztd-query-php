@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\PublicationList;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Publishing every table
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')");
- *     [$operation->statement->allTables, $operation->toString()] // => [true, "CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')"]
+ *     [$operation->allTables, $operation->toString()] // => [true, "CREATE PUBLICATION p FOR ALL TABLES WITH (publish = 'insert')"]
  */
-final class CreatePublication implements Statement
+final class CreatePublication extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PublicationMember> The tables and schemas in the order written
@@ -49,8 +48,11 @@ final class CreatePublication implements Statement
      * @param list<PublicationMember> $objects The tables and schemas in the order written; empty with FOR ALL TABLES
      * @param list<Definition> $options The publication parameters
      */
-    public function __construct(public readonly Name $name, public readonly bool $allTables = false, array $objects = [], array $options = [])
+    public function __construct(public readonly Name $name, public readonly bool $allTables = false, array $objects = [], array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->objects = Check::listOf($objects, PublicationMember::class, 'Publication objects are a list.');
         $this->options = Check::listOf($options, Definition::class, 'Publication parameters are definitions.');
         Check::input(!$allTables || $this->objects === [], 'FOR ALL TABLES has no object list.');

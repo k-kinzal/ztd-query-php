@@ -33,11 +33,11 @@ final class UpdateTest extends TestCase
         $joined = $semantics->analyze('UPDATE t SET a = u.a FROM u');
         $plain = $semantics->analyze('UPDATE t SET a = 1');
 
-        self::assertInstanceOf(Update::class, $joined->statement);
-        self::assertInstanceOf(TableInput::class, $joined->statement->input());
+        self::assertInstanceOf(Update::class, $joined);
+        self::assertInstanceOf(TableInput::class, $joined->input());
         self::assertSame('u', $joined->singleNamedInput()->name()->name->value);
-        self::assertInstanceOf(Update::class, $plain->statement);
-        self::assertNull($plain->statement->input());
+        self::assertInstanceOf(Update::class, $plain);
+        self::assertNull($plain->input());
         self::assertNull($plain->inputRelation());
     }
 
@@ -48,17 +48,17 @@ final class UpdateTest extends TestCase
         $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $query = $semantics->analyze('UPDATE t SET a = u.a FROM u WHERE u.c = t.b', [$t, $u]);
 
-        self::assertInstanceOf(Update::class, $query->statement);
-        self::assertInstanceOf(Assignment::class, $query->statement->assignments[0]);
-        $value = $query->facts->scalar($query->statement->assignments[0]->value)->resolution;
+        self::assertInstanceOf(Update::class, $query);
+        self::assertInstanceOf(Assignment::class, $query->assignments[0]);
+        $value = $query->assignments[0]->value->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $value);
-        self::assertSame($query->statement->from, $value->relation);
+        self::assertSame($query->from, $value->relation);
         self::assertSame($u->declarations()[0]->columns[0], $value->declaration());
-        self::assertInstanceOf(Binary::class, $query->statement->where);
-        $right = $query->facts->scalar($query->statement->where->right)->resolution;
+        self::assertInstanceOf(Binary::class, $query->where);
+        $right = $query->where->right->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $right);
-        self::assertSame($query->statement->target, $right->relation);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame($query->target, $right->relation);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveWithinLetsReturningSeeTheTargetOnly(): void
@@ -72,7 +72,7 @@ final class UpdateTest extends TestCase
         self::assertSame(['id', 'a', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $star->fields()->items ?? []));
         self::assertSame($t->declarations()[0]->columns[0], $star->field('id')->column());
         self::assertInstanceOf(MissingColumn::class, $foreign->field(0)->resolution);
-        self::assertInstanceOf(MissingColumn::class, $foreign->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingColumn::class, $foreign->diagnostics()[0]);
     }
 
     public function testDeriveStatementReportsAnAssignmentToAColumnTheTableLacks(): void
@@ -81,16 +81,16 @@ final class UpdateTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('UPDATE t SET zz = 1', [$t]);
 
-        self::assertInstanceOf(MissingColumn::class, $query->facts->diagnostics[0]);
-        self::assertSame('zz', $query->facts->diagnostics[0]->name->value);
-        self::assertSame([], $semantics->analyze('UPDATE t SET zz = 1')->facts->diagnostics);
+        self::assertInstanceOf(MissingColumn::class, $query->diagnostics()[0]);
+        self::assertSame('zz', $query->diagnostics()[0]->name->value);
+        self::assertSame([], $semantics->analyze('UPDATE t SET zz = 1')->diagnostics());
     }
 
     public function testDeriveWithinAnswersNullWithoutReturning(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
-        $statement = $semantics->analyze('UPDATE t SET a = 1 WHERE b IS NULL', [$t])->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('UPDATE t SET a = 1 WHERE b IS NULL', [$t]));
         $derivation = new Derivation($semantics->context([$t]));
 
         self::assertInstanceOf(Update::class, $statement);
@@ -103,8 +103,8 @@ final class UpdateTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('UPDATE t SET a = RAISE(IGNORE)');
 
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::RaiseOutsideTrigger, $query->diagnostics()[0]->rule);
     }
 
     public function testRenderWritesEveryClauseInGrammarOrder(): void

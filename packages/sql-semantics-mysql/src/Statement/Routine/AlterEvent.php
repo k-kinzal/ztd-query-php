@@ -17,11 +17,10 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\Completion;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Schedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * ALTER EVENT: changes the schedule, name, status, comment or statement of an event.
@@ -34,11 +33,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the changes of an event
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER EVENT e RENAME TO shop.f ENABLE');
- *     [$alter->statement->newName->name->value, $alter->statement->status, $alter->statement->schedule] // => ['f', \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable, null]
+ *     [$alter->newName->name->value, $alter->status, $alter->schedule] // => ['f', \SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus::Enable, null]
  */
-final class AlterEvent implements Statement
+final class AlterEvent extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var ProgramStatement|Statement|null The new statement of the event, when written
@@ -65,18 +64,36 @@ final class AlterEvent implements Statement
         public readonly ?Text $comment = null,
         ?Node $body = null,
         public readonly ?Account $definer = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Definition\DefinitionSource $definitionSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        ProgramNames::check($name);
+        if ($newName !== null) {
+            ProgramNames::check($newName);
+        }
         Check::input($name->catalog === null && $newName?->catalog === null, 'An event name has at most a database qualifier.');
         Check::input($comment === null || $comment->radix === null, 'A comment is written as a quoted string.');
+        Check::input($schedule !== null || $completion !== null || $newName !== null || $status !== null || $comment !== null || $body !== null, 'ALTER EVENT changes at least one event property after its name.');
         $this->body = $body === null ? null : (new StatementSequence())->member($body);
+        Check::input($this->body === null || (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->refusal($this->body, ProgramKind::Event, $name, null, [], $definitionSource?->bodyRefusalOffset) === null, 'An event body satisfies the stored program restrictions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives the schedule and the body, when written.
+     * Derives the schedule and the body, when written; DISABLE ON SLAVE is deprecated from MySQL 8.4 (verified on live 8.0.44, 8.4.7 and 9.1.0 servers).
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->definer]);
+        if ($this->status === EventStatus::DisableOnSlave) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
+        }
         (new ProgramFacts())->event($this->schedule, $this->body, $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Definition\BodyConditions())->order($this, $derivation);
     }
 
     /**

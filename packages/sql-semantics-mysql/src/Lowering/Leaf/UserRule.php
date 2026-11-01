@@ -50,11 +50,26 @@ final class UserRule
         $names = $this->lowering->names;
 
         return $this->lowering->leaves->record(match ($form->signature) {
-            'user: ident_or_text', 'user_ident_or_text: ident_or_text', 'role: role_ident_or_text' => new AccountName($names->identifier($form->node(0))),
-            'user: ident_or_text @ ident_or_text', 'user_ident_or_text: ident_or_text @ ident_or_text', 'role: role_ident_or_text @ ident_or_text' => new AccountName($names->identifier($form->node(0)), $names->identifier($form->node(2))),
+            'user: ident_or_text', 'user_ident_or_text: ident_or_text', 'role: role_ident_or_text' => $this->named($names->identifier($form->node(0)), null, $form->node),
+            'user: ident_or_text @ ident_or_text', 'user_ident_or_text: ident_or_text @ ident_or_text', 'role: role_ident_or_text @ ident_or_text' => $this->named($names->identifier($form->node(0)), $names->identifier($form->node(2)), $form->node),
             'user: CURRENT_USER optional_braces' => new CurrentUser($this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted),
             default => throw ImplementationGap::production($form),
         });
+    }
+
+    /**
+     * Publishes the complete decoded account, retaining operands outside its release's domain.
+     *
+     */
+    public function named(\SqlSemantics\Statement\Identifier\Name $user, ?\SqlSemantics\Statement\Identifier\Name $host, ?Node $source = null): AccountName
+    {
+        $form = $source === null ? null : $this->lowering->form($source);
+        return new AccountName(
+            $user,
+            $host,
+            userQuotation: $form === null ? null : $this->lowering->names->quotation($form->node(0)),
+            hostQuotation: $form === null || $host === null ? null : $this->lowering->names->quotation($form->node(2)),
+        );
     }
 
     /**

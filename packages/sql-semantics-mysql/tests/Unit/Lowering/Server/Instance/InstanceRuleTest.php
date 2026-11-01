@@ -28,7 +28,7 @@ final class InstanceRuleTest extends TestCase
 
     public function testLocalLowersTheDirectory(): void
     {
-        self::assertSame("CLONE LOCAL DATA DIRECTORY '/d'", (new Semantics(Dialect::MySql))->analyze("clone local data directory = '/d'")->toString());
+        self::assertSame("CLONE LOCAL DATA DIRECTORY = '/d'", (new Semantics(Dialect::MySql))->analyze("clone local data directory = '/d'")->toString());
     }
 
     public function testRemoteRejectsASpaceAroundTheColon(): void
@@ -55,9 +55,14 @@ final class InstanceRuleTest extends TestCase
 
     public function testRotateRejectsBinlogIn57(): void
     {
-        $this->expectException(AnalysisException::class);
-
-        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER INSTANCE ROTATE BINLOG MASTER KEY');
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER INSTANCE ROTATE BINLOG MASTER KEY');
+            self::fail('A 5.7 instance cannot rotate the binary log key.');
+        } catch (AnalysisException $error) {
+            $cause = $error->getPrevious();
+            self::assertInstanceOf(\SqlParser\Parser\SyntaxException::class, $cause);
+            self::assertSame(22, $cause->token->offset);
+        }
     }
 
     public function testRedoRejectsOtherNames(): void

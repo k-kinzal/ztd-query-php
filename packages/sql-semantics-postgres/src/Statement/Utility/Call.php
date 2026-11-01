@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Statement\Shape\OpenStar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -29,19 +28,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the open result of a procedure call
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CALL app.p(1)');
- *     [$operation->statement->call->name->last()->value, $operation->shape()->complete(), $operation->shape()->missing[0]->describe()] // => ['p', false, 'the signature of routine p']
+ *     [$operation->call->name->last()->value, $operation->shape()->complete(), $operation->shape()->missing[0]->describe()] // => ['p', false, 'the signature of routine p']
  * @example Refusing a window call
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Call(new \SqlSemantics\Platform\PostgreSql\Statement\Invocation\FunctionCall(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('p')]), [], false, false, false, [], false, null, new \SqlSemantics\Statement\Identifier\Name('w'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Call implements Statement
+final class Call extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FunctionCall $call The procedure name and its arguments
      */
-    public function __construct(public readonly FunctionCall $call)
+    public function __construct(public readonly FunctionCall $call, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($call->filter === null && $call->over === null && !$call->withinGroup, 'A procedure call takes no FILTER, OVER or WITHIN GROUP.');
     }
 

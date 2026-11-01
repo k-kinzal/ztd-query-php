@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of CREATE DATABASE or ALTER DATABASE: a name and a value.
@@ -24,17 +23,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an option written as an identifier
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d is_template = true');
- *     $operation->statement->options[0]->option() // => 'is_template'
+ *     $operation->options[0]->option() // => 'is_template'
  */
 final class DatabaseOption implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DatabaseOptionKeyword|Name $name The keyword spelling or the identifier that names the option
      * @param OptionArgument $value The value
      */
-    public function __construct(public readonly DatabaseOptionKeyword|Name $name, public readonly OptionArgument $value)
+    public function __construct(public readonly DatabaseOptionKeyword|Name $name, public readonly OptionArgument $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

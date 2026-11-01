@@ -20,8 +20,8 @@ final class ParameterDeclarationsTest extends TestCase
     public function testInfersUndeclaredInPrepareOnly(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
-        $prepare = $semantics->analyze('PREPARE p (integer) AS SELECT $1')->statement;
-        $function = $semantics->analyze('CREATE FUNCTION f(a integer) RETURNS integer RETURN $1')->statement;
+        $prepare = $semantics->analyze('PREPARE p (integer) AS SELECT $1');
+        $function = $semantics->analyze('CREATE FUNCTION f(a integer) RETURNS integer RETURN $1');
         self::assertInstanceOf(Prepare::class, $prepare);
         self::assertInstanceOf(CreateFunction::class, $function);
         self::assertInstanceOf(ParameterDeclarations::class, $prepare->parameters);

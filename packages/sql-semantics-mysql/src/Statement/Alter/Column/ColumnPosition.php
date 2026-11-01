@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FIRST` or `AFTER column`: where an added or changed column goes in the column order of the table.
@@ -23,12 +22,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnPosition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $after The column the column follows, or null for FIRST
      */
-    public function __construct(public readonly ?Name $after)
+    public function __construct(public readonly ?Name $after, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

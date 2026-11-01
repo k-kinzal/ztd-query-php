@@ -9,7 +9,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The uniqueness constraint an upsert clause reacts to: indexed columns and the predicate of a partial index.
@@ -19,11 +18,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a conflict target
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) WHERE a > 0 DO NOTHING');
- *     [count($insert->statement->upserts[0]->target->terms), $insert->statement->upserts[0]->target->where !== null] // => [1, true]
+ *     [count($insert->upserts[0]->target->terms), $insert->upserts[0]->target->where !== null] // => [1, true]
  */
 final class ConflictTarget implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SortTerm> The indexed columns or expressions in written order
@@ -34,7 +33,7 @@ final class ConflictTarget implements Node
      * @param list<SortTerm> $terms The indexed columns or expressions; at least one
      * @param Scalar|null $where The predicate of a partial index
      */
-    public function __construct(array $terms, public readonly ?Scalar $where = null)
+    public function __construct(array $terms, public readonly ?Scalar $where = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->terms = Check::listOf($terms, SortTerm::class, 'A conflict target names at least one indexed column.', 1);
     }

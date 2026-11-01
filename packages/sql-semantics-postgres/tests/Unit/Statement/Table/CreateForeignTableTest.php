@@ -29,9 +29,9 @@ final class CreateForeignTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE FOREIGN TABLE f (a int) SERVER s', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateForeignTable::class, $n1);
-        self::assertSame(1, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(1, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($semantics->context([])), new \SqlSemantics\Resolution\Environment($semantics->context([])))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

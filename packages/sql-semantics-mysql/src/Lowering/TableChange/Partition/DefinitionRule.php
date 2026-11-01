@@ -70,27 +70,94 @@ final class DefinitionRule
     }
 
     /**
+     * Checks a partition identifier before lowering options or checking list counts.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the identifier exceeds 64 characters
+     */
+    public function name(Node $node): \SqlSemantics\Statement\Identifier\Name
+    {
+        $name = $this->lowering->names->identifier($node);
+        if ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnNameRule())->length($name->value) > 64) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong($name), (new \SqlSemantics\Construction\SourceRanges())->span($node)[1] ?? 0);
+        }
+        return $name;
+    }
+
+    /**
+     * Preserves a completed partition name refusal before a later syntax error.
+     */
+    public function completed(Node $node): ?\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure
+    {
+        if (!in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) || !in_array($node->name, ['part_name', 'sub_name', 'part_definition', 'sub_part_definition'], true)) {
+            return null;
+        }
+        $form = $this->lowering->form($node);
+        $name = $form->node(in_array($node->name, ['part_name', 'sub_name'], true) ? 0 : 1);
+        if (in_array($name->name, ['part_name', 'sub_name'], true)) {
+            return null;
+        }
+        try {
+            $this->name($name);
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            return new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true);
+        }
+        return null;
+    }
+
+    /**
      * Lowers the definitions of a partitioning or of a partition change; an absent list is empty.
      *
+     * The values of each definition are checked against the method of the
+     * partitioning that holds the list, when there is one.
+     *
      * @return list<PartitionDefinition>
+     * @throws \SqlSemantics\Construction\RejectedInput When subpartition counts disagree or values do not suit the method
      * @throws ImplementationGap When a production has no rule
      */
-    public function definitions(Node $list): array
+    public function definitions(Node $list, ?int $count = null, ?int $start = null, ?\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod $method = null): array
     {
         $form = $this->lowering->form($list);
         if ($form->signature === 'part_defs:' || $form->signature === 'opt_part_defs:') {
             return [];
         }
         if ($form->signature === 'part_defs: ( part_def_list )' || $form->signature === 'opt_part_defs: ( part_def_list )') {
-            return $this->definitions($form->node(1));
+            return $this->definitions($form->node(1), $count, $form->token(0)->offset, $method);
         }
         $this->spine($list);
         $definitions = [];
+        $expected = $count;
+        $start ??= (new \SqlSemantics\Construction\SourceRanges())->span($list)[0] ?? 0;
         foreach ((new Lists())->items($list) as $item) {
-            $definitions[] = $this->definition($item);
+            $this->opening($item, $start, $expected);
+            $definition = $this->definition($item);
+            if ($definitions === [] && $definition->subpartitions === []) {
+                $expected = 0;
+            }
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->problem($definition, $method, $expected);
+            if ($problem !== null) {
+                throw (new DefinitionFailure($this->lowering))->failure($problem, $item, $start, $expected);
+            }
+            $expected ??= count($definition->subpartitions);
+            $definitions[] = $definition;
+            $start = (new \SqlSemantics\Construction\SourceRanges())->span($item)[1] ?? $start;
         }
 
         return $definitions;
+    }
+
+    /**
+     * Checks the owning partition name and a forbidden subpartition list before its children.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the owner name or list opening is refused
+     */
+    public function opening(Node $definition, int $start, ?int $expected): void
+    {
+        $form = $this->lowering->form($definition);
+        if ($expected === 0 && $form->node(4)->tokens() !== []) {
+            $name = $form->node(1);
+            $this->name($name->name === 'part_name' ? $this->lowering->form($name)->node(0) : $name);
+            throw (new DefinitionFailure($this->lowering))->failure(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount, $definition, $start, $expected);
+        }
     }
 
     /**
@@ -109,6 +176,8 @@ final class DefinitionRule
     /**
      * Lowers one partition definition: a node of `part_definition`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the name exceeds the identifier domain
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function definition(Node $definition): PartitionDefinition
@@ -123,12 +192,12 @@ final class DefinitionRule
             throw ImplementationGap::production($name);
         }
 
-        return new PartitionDefinition(
-            $this->lowering->names->identifier($name === null ? $form->node(1) : $name->node(0)),
+        return $this->lowering->origins->record(new PartitionDefinition(
+            $this->name($name === null ? $form->node(1) : $name->node(0)),
             $this->bound($form->node(2)),
             (new OptionRule($this->lowering))->options($form->node(3)),
             $this->subpartitions($form->node(4)),
-        );
+        ), $definition);
     }
 
     /**
@@ -218,7 +287,7 @@ final class DefinitionRule
 
         return match ($form->signature) {
             'part_value_expr_item: MAX_VALUE_SYM', 'part_value_item: MAX_VALUE_SYM' => new PartitionMaximum(),
-            'part_value_expr_item: bit_expr', 'part_value_item: bit_expr' => $this->lowering->expressions->bitExpression($form->node(0)),
+            'part_value_expr_item: bit_expr', 'part_value_item: bit_expr' => $this->lowering->origins->record($this->lowering->expressions->bitExpression($form->node(0)), $form->node(0)),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -250,6 +319,8 @@ final class DefinitionRule
     /**
      * Lowers one subpartition: a node of `sub_part_definition`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When the name exceeds the identifier domain
+     *
      * @throws ImplementationGap When a production has no rule
      */
     public function subpartition(Node $definition): SubpartitionDefinition
@@ -265,7 +336,7 @@ final class DefinitionRule
         }
 
         return new SubpartitionDefinition(
-            $this->lowering->names->identifier($name === null ? $form->node(1) : $name->node(0)),
+            $this->name($name === null ? $form->node(1) : $name->node(0)),
             (new OptionRule($this->lowering))->options($form->node(2)),
         );
     }

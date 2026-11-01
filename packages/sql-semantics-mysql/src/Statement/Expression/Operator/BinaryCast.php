@@ -8,14 +8,17 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * The BINARY operator: `BINARY x`, the cast of a value to a binary string (`Item_typecast_char` with the binary character set).
@@ -32,28 +35,36 @@ use SqlSemantics\Statement\Type\Known;
  * @visibility public
  * @example Typing a binary cast
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT a FROM t WHERE BINARY a = 'x'");
- *     $query->facts->scalar($query->statement->where->left)->type->descriptor->name() // => 'VARBINARY'
+ *     $query->query->where->left->scalarInformation()->type->descriptor->name() // => 'VARBINARY'
  */
 final class BinaryCast implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The cast expression
      */
-    public function __construct(public readonly Scalar $operand)
+    public function __construct(public readonly Scalar $operand, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of BINARY needs a grouping to keep its place.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives the operand; the result is a binary string.
+     * Derives the operand; MySQL 5.6 preserves its NULL fact, while later releases mark the binary result nullable.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->binary($this->operand, $derivation);
 
-        return new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), $fact->nullability);
+        $operand = (new Precision())->domain($fact->type);
+
+        return new ScalarFact(new Known($operand === null ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true) : (new Texts(Settings::of($derivation->context)))->binary($operand)), $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $fact->nullability : Nullability::Nullable);
     }
 
     /**

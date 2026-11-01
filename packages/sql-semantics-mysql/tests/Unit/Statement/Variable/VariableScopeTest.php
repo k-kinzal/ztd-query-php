@@ -13,8 +13,13 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 #[Small]
 final class VariableScopeTest extends TestCase
 {
+    public function testSessionRecognizesBothWrittenSessionScopes(): void
+    {
+        self::assertSame([false, true, true, false, false], array_map(static fn (VariableScope $scope): bool => $scope->session(), VariableScope::cases()));
+    }
+
     public function testCasesSpellEveryScope(): void
     {
-        self::assertSame(['GLOBAL', 'SESSION', 'PERSIST', 'PERSIST_ONLY'], array_column(VariableScope::cases(), 'value'));
+        self::assertSame(['GLOBAL', 'SESSION', 'LOCAL', 'PERSIST', 'PERSIST_ONLY'], array_column(VariableScope::cases(), 'value'));
     }
 }

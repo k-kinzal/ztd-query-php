@@ -23,9 +23,16 @@ final class LeaveTest extends TestCase
     #[DataProvider('providerDeriveProgramLooksTheLabelUp')]
     public function testDeriveProgramLooksTheLabelUp(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $actual = (static function () use ($sql): array {
+            try {
+                $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+                return [$failure->problem->message()];
+            }
+        })();
+        self::assertSame($messages, $actual);
     }
 
     /**

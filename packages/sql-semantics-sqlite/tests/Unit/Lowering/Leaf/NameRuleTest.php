@@ -28,7 +28,7 @@ final class NameRuleTest extends TestCase
 {
     public function testNameDecodesAnIdentifierAtANamePosition(): void
     {
-        $select = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM "my table" AS [the alias]')->statement;
+        $select = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM "my table" AS [the alias]');
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(TableInput::class, $select->from);
@@ -40,14 +40,14 @@ final class NameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE 'tbl' (a)");
 
-        self::assertInstanceOf(CreateTable::class, $operation->statement);
-        self::assertSame('tbl', $operation->statement->name->name->value);
+        self::assertInstanceOf(CreateTable::class, $operation);
+        self::assertSame('tbl', $operation->name->name->value);
         self::assertSame('CREATE TABLE tbl (a)', $operation->toString());
     }
 
     public function testTokenDecodesAnIdentifierTokenAndKeepsItsCase(): void
     {
-        $select = (new Semantics(Dialect::Sqlite))->analyze('SELECT [a b], `C``d`, MixedCase FROM t')->statement;
+        $select = (new Semantics(Dialect::Sqlite))->analyze('SELECT [a b], `C``d`, MixedCase FROM t');
 
         self::assertInstanceOf(Select::class, $select);
         self::assertSame(['a b', 'C`d', 'MixedCase'], array_map(static function (object $column): string {
@@ -61,8 +61,8 @@ final class NameRuleTest extends TestCase
     public function testScopedReadsTheSchemaWhenASecondNameFollows(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('SELECT * FROM t')->statement;
-        $scoped = $semantics->analyze('SELECT * FROM main.t')->statement;
+        $plain = $semantics->analyze('SELECT * FROM t');
+        $scoped = $semantics->analyze('SELECT * FROM main.t');
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(Select::class, $scoped);
@@ -77,8 +77,8 @@ final class NameRuleTest extends TestCase
     public function testQualifiedLowersAFullnameWithAndWithoutASchema(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END')->statement;
-        $qualified = $semantics->analyze('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END')->statement;
+        $plain = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END');
+        $qualified = $semantics->analyze('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $plain);
         self::assertInstanceOf(CreateTrigger::class, $qualified);
@@ -91,15 +91,15 @@ final class NameRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('DELETE FROM temp.log');
 
-        self::assertInstanceOf(Delete::class, $operation->statement);
-        self::assertSame('temp', $operation->statement->target->name->schema?->value);
-        self::assertSame('log', $operation->statement->target->name->name->value);
+        self::assertInstanceOf(Delete::class, $operation);
+        self::assertSame('temp', $operation->target->name->schema?->value);
+        self::assertSame('log', $operation->target->name->name->value);
         self::assertSame('DELETE FROM `temp`.log', $operation->toString());
     }
 
     public function testListLowersTheNamesOfAnIdlistInWrittenOrder(): void
     {
-        $insert = (new Semantics(Dialect::Sqlite))->analyze('INSERT INTO t (a, "b c", [d]) VALUES (1, 2, 3)')->statement;
+        $insert = (new Semantics(Dialect::Sqlite))->analyze('INSERT INTO t (a, "b c", [d]) VALUES (1, 2, 3)');
 
         self::assertInstanceOf(InsertRows::class, $insert);
         self::assertSame(['a', 'b c', 'd'], array_map(static fn (Name $name): string => $name->value, $insert->into->columns));
@@ -108,8 +108,8 @@ final class NameRuleTest extends TestCase
     public function testOptionalListGivesNoColumnsWithoutParentheses(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('INSERT INTO t VALUES (1)')->statement;
-        $listed = $semantics->analyze('INSERT INTO t (a) VALUES (1)')->statement;
+        $bare = $semantics->analyze('INSERT INTO t VALUES (1)');
+        $listed = $semantics->analyze('INSERT INTO t (a) VALUES (1)');
 
         self::assertInstanceOf(InsertRows::class, $bare);
         self::assertInstanceOf(InsertRows::class, $listed);
@@ -119,7 +119,7 @@ final class NameRuleTest extends TestCase
 
     public function testCollationLowersTheCollationNameOrNullWhenNoneIsWritten(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('WITH c (a COLLATE nocase, b, d COLLATE "no case") AS (SELECT 1, 2, 3) SELECT * FROM c')->statement;
+        $query = (new Semantics(Dialect::Sqlite))->analyze('WITH c (a COLLATE nocase, b, d COLLATE "no case") AS (SELECT 1, 2, 3) SELECT * FROM c');
 
         self::assertInstanceOf(WithQuery::class, $query);
         $columns = $query->with->tables[0]->columns;
@@ -130,7 +130,7 @@ final class NameRuleTest extends TestCase
 
     public function testCollationOfAnExpressionIsDecodedLikeAnyName(): void
     {
-        $select = (new Semantics(Dialect::Sqlite))->analyze("SELECT a COLLATE 'no case' FROM t")->statement;
+        $select = (new Semantics(Dialect::Sqlite))->analyze("SELECT a COLLATE 'no case' FROM t");
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(ResultColumn::class, $select->columns[0]);

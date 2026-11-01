@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One `(from_db, to_db)` pair of REPLICATE_REWRITE_DB: events of the first database are applied to the second.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DatabaseRewrite implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $from The database of the source
      * @param Name $to The database on the replica
      */
-    public function __construct(public readonly Name $from, public readonly Name $to)
+    public function __construct(public readonly Name $from, public readonly Name $to, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

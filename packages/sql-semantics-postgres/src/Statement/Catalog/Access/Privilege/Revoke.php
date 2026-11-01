@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeTa
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of a revoke
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REVOKE GRANT OPTION FOR SELECT ON accounts FROM joe CASCADE');
- *     [$operation->statement->grantOptionOnly, $operation->statement->behavior?->value] // => [true, 'CASCADE']
+ *     [$operation->grantOptionOnly, $operation->behavior?->value] // => [true, 'CASCADE']
  */
-final class Revoke implements Statement
+final class Revoke extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Privilege> The privileges in the order written; empty for ALL PRIVILEGES
@@ -52,8 +51,11 @@ final class Revoke implements Statement
      * @param RoleSpec|null $grantor The role of GRANTED BY, when written
      * @param DropBehavior|null $behavior CASCADE or RESTRICT, when written
      */
-    public function __construct(array $privileges, public readonly PrivilegeTarget $target, array $grantees, public readonly bool $grantOptionOnly = false, public readonly ?RoleSpec $grantor = null, public readonly ?DropBehavior $behavior = null)
+    public function __construct(array $privileges, public readonly PrivilegeTarget $target, array $grantees, public readonly bool $grantOptionOnly = false, public readonly ?RoleSpec $grantor = null, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->privileges = (new PrivilegeLists())->privileges($privileges);
         $this->grantees = Check::listOf($grantees, RoleSpec::class, 'A revoke names at least one role.', 1);
     }

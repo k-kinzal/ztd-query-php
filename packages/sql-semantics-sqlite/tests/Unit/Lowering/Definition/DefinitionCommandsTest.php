@@ -25,25 +25,25 @@ final class DefinitionCommandsTest extends TestCase
 {
     public function testCommandLowersATransactionCommand(): void
     {
-        self::assertInstanceOf(Begin::class, (new Semantics(Dialect::Sqlite))->analyze('BEGIN')->statement);
+        self::assertInstanceOf(Begin::class, (new Semantics(Dialect::Sqlite))->analyze('BEGIN'));
     }
 
     public function testCommandLowersACommandOfEveryFamily(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        self::assertInstanceOf(Pragma::class, $semantics->analyze('PRAGMA a')->statement);
-        self::assertInstanceOf(Detach::class, $semantics->analyze('DETACH a')->statement);
-        self::assertInstanceOf(CreateTable::class, $semantics->analyze('CREATE TABLE t (a)')->statement);
-        self::assertInstanceOf(Drop::class, $semantics->analyze('DROP TABLE t')->statement);
-        self::assertInstanceOf(CreateVirtualTable::class, $semantics->analyze('CREATE VIRTUAL TABLE t USING m')->statement);
+        self::assertInstanceOf(Pragma::class, $semantics->analyze('PRAGMA a'));
+        self::assertInstanceOf(Detach::class, $semantics->analyze('DETACH a'));
+        self::assertInstanceOf(CreateTable::class, $semantics->analyze('CREATE TABLE t (a)'));
+        self::assertInstanceOf(Drop::class, $semantics->analyze('DROP TABLE t'));
+        self::assertInstanceOf(CreateVirtualTable::class, $semantics->analyze('CREATE VIRTUAL TABLE t USING m'));
     }
 
     public function testExplainedWrapsTheCommandInTheWrittenRequest(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $program = $semantics->analyze('EXPLAIN BEGIN')->statement;
-        $plan = $semantics->analyze('EXPLAIN QUERY PLAN BEGIN')->statement;
+        $program = $semantics->analyze('EXPLAIN BEGIN');
+        $plan = $semantics->analyze('EXPLAIN QUERY PLAN BEGIN');
 
         self::assertInstanceOf(Explain::class, $program);
         self::assertInstanceOf(Explain::class, $plan);

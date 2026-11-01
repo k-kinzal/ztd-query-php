@@ -19,7 +19,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Spelling\Layout;
 use SqlSemantics\Statement\Spelling\Spelled;
@@ -32,8 +31,8 @@ final class ResultColumnTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('select 1 one, a as "x y", b from t');
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        $columns = $query->statement->columns;
+        self::assertInstanceOf(Select::class, $query);
+        $columns = $query->columns;
         self::assertInstanceOf(ResultColumn::class, $columns[0]);
         self::assertSame('one', $columns[0]->alias?->value);
         self::assertInstanceOf(ResultColumn::class, $columns[1]);
@@ -49,7 +48,7 @@ final class ResultColumnTest extends TestCase
     public function testRenderWritesANewlyBuiltColumn(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('1'), new Name('n'), null, false), new ResultColumn(new IntegerLiteral('2')), new ResultColumn(new Binary(BinaryOperator::Add, new IntegerLiteral('1'), new IntegerLiteral('1')), null, new Layout([new Spelled('', '1'), new Spelled('', '+'), new Spelled('', '1')]))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new IntegerLiteral('1'), new Name('n'), null, false), new ResultColumn(new IntegerLiteral('2')), new ResultColumn(new Binary(BinaryOperator::Add, new IntegerLiteral('1'), new IntegerLiteral('1')), null, new Layout([new Spelled('', '1'), new Spelled('', '+'), new Spelled('', '1')]))]));
 
         self::assertSame('SELECT 1 n, 2, 1+1', $operation->toString());
         self::assertSame(['n', '2', '1+1'], array_map(static fn (Field $field): ?string => $field->name?->value, $operation->fields()->items ?? []));
@@ -58,8 +57,8 @@ final class ResultColumnTest extends TestCase
     public function testRenderWritesTheExpressionInItsLayout(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze("SELECT 1 + /* one */ 1, a  COLLATE  nocase, (select 2 x), 'y' AS y FROM t");
-        self::assertInstanceOf(Select::class, $query->statement);
-        $columns = $query->statement->columns;
+        self::assertInstanceOf(Select::class, $query);
+        $columns = $query->columns;
 
         self::assertInstanceOf(ResultColumn::class, $columns[0]);
         self::assertSame('1 + /* one */ 1', $columns[0]->layout?->text());
@@ -73,8 +72,8 @@ final class ResultColumnTest extends TestCase
     public function testRenderKeepsNoLayoutForTheCanonicalSpelling(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 + 1, a FROM t');
-        self::assertInstanceOf(Select::class, $query->statement);
-        $columns = $query->statement->columns;
+        self::assertInstanceOf(Select::class, $query);
+        $columns = $query->columns;
 
         self::assertInstanceOf(ResultColumn::class, $columns[0]);
         self::assertNull($columns[0]->layout);
@@ -126,8 +125,8 @@ final class ResultColumnTest extends TestCase
     public function testRenderKeepsTheCommentAfterTheExpression(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze("SELECT 1+1 /*c*/ ,2, 3 -- d\n");
-        self::assertInstanceOf(Select::class, $query->statement);
-        $columns = $query->statement->columns;
+        self::assertInstanceOf(Select::class, $query);
+        $columns = $query->columns;
 
         self::assertInstanceOf(ResultColumn::class, $columns[0]);
         self::assertSame(' /*c*/ ', $columns[0]->layout?->trail);
@@ -171,7 +170,7 @@ final class ResultColumnTest extends TestCase
     {
         $this->expectExceptionMessage('The spelled SQL is not the rendered SQL at token 1');
 
-        new Operation((new Semantics(Dialect::Sqlite))->context(), new Select([new ResultColumn(new IntegerLiteral('1'), null, new Layout([new Spelled('', '2')]))]));
+        Semantics::fromStatement((new Semantics(Dialect::Sqlite))->context(), new Select([new ResultColumn(new IntegerLiteral('1'), null, new Layout([new Spelled('', '2')]))]))->toString();
     }
 
     public function testRenderKeepsDigitSeparatorsThatNameAColumn(): void

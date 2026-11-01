@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Shape\OpenStar;
  * @visibility public
  * @example Reading the alias of a select-list item
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS one');
- *     $query->statement->targets[0]->alias->value // => 'one'
+ *     $query->targets[0]->alias->value // => 'one'
  */
 interface Target extends Node
 {

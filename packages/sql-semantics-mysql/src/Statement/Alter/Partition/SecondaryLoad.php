@@ -10,7 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SECONDARY_LOAD` or `SECONDARY_UNLOAD` (8.0 and later), with `PARTITION (p, …)` from 9.0 on: a request to load the table into or unload it from its secondary engine.
@@ -20,11 +19,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Loading a table into the secondary engine
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t SECONDARY_LOAD')->statement->commands[0]->load // => true
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t SECONDARY_LOAD')->commands[0]->load // => true
  */
 final class SecondaryLoad implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The partitions in order; empty for the whole table
@@ -35,7 +34,7 @@ final class SecondaryLoad implements StandaloneCommand
      * @param bool $load Whether SECONDARY_LOAD (true) or SECONDARY_UNLOAD (false) is written
      * @param list<Name> $partitions The partitions in order; empty for the whole table
      */
-    public function __construct(public readonly bool $load, array $partitions = [])
+    public function __construct(public readonly bool $load, array $partitions = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->partitions = Check::listOf($partitions, Name::class, 'The partitions of a secondary load are a list of names.');
     }

@@ -54,7 +54,7 @@ final class TriggerOrderTest extends TestCase
     public function testRenderWritesThePlacementAndTheOtherTrigger(string $release, string $sql, string $expected, OrderPlacement $placement, string $other): void
     {
         $create = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertNotNull($statement->order);
 

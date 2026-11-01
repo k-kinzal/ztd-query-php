@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Table;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option written after the closing parenthesis of a table definition.
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Telling a known option from an unknown one
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT "rowid"');
- *     [$create->statement->options[0]->kind(), $create->statement->options[1]->kind()] // => [\SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind::Strict, null]
+ *     [$create->options[0]->kind(), $create->options[1]->kind()] // => [\SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind::Strict, null]
  */
 final class TableOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Word $word The option word with its quoting
      * @param bool $without Whether WITHOUT is written before the word
      */
-    public function __construct(public readonly Word $word, public readonly bool $without = false)
+    public function __construct(public readonly Word $word, public readonly bool $without = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

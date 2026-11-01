@@ -25,7 +25,7 @@ final class AlterRoutineTest extends TestCase
     public function testDeriveStatementReportsAttributesOfProcedures(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER PROCEDURE p() IMMUTABLE');
-        self::assertEquals([new RoutineProblem(RoutineProblemKind::ProcedureAttribute)], $operation->facts->diagnostics);
+        self::assertEquals([new RoutineProblem(RoutineProblemKind::ProcedureAttribute)], $operation->diagnostics());
     }
 
     public function testRenderDropsTheIgnoredRestrict(): void

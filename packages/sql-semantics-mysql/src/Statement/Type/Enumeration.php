@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An ENUM or SET type with its permitted values in declaration order and its character set attribute.
@@ -22,9 +21,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Enumeration(\SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind::Enum, [new \SqlSemantics\Platform\MySql\Statement\Literal\Text('s'), new \SqlSemantics\Platform\MySql\Statement\Literal\Text('m')]);
  *     [$type->name(), $type->members[1]->value] // => ['ENUM', 'm']
  */
-final class Enumeration implements TypeName
+final class Enumeration implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Text> The permitted values in declaration order
@@ -36,9 +35,10 @@ final class Enumeration implements TypeName
      * @param list<Text> $members The permitted values in declaration order; at least one
      * @param CharsetAttribute|null $charset The character set attribute
      */
-    public function __construct(public readonly EnumerationKind $kind, array $members, public readonly ?CharsetAttribute $charset = null)
+    public function __construct(public readonly EnumerationKind $kind, array $members, public readonly ?CharsetAttribute $charset = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->members = Check::listOf($members, Text::class, 'An enumeration declares at least one member.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**

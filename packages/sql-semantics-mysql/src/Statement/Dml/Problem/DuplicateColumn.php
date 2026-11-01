@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the column written twice
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a, a) VALUES (1, 2)');
- *     $insert->facts->diagnostics[0]->message() // => "Column 'a' specified twice"
+ *     $insert->diagnostics()[0]->message() // => "Column 'a' specified twice"
  */
 final class DuplicateColumn implements Diagnostic
 {

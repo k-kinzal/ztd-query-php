@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -33,6 +34,12 @@ final class ExpressionFacts
      */
     public function derive(QueryExpression $expression, Derivation $derivation, Environment $outer): QueryFact
     {
+        if ($derivation->written($expression) !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->deferred($expression, $derivation, fn () => $expression->with?->bind($derivation, $outer));
+            $fact = $derivation->query($expression->body, $outer);
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->deferred($expression, $derivation, fn () => $this->ordering($fact, $expression->orderBy, $expression->limit, $derivation, $outer));
+            return $fact;
+        }
         $environment = $expression->with === null ? $outer : $expression->with->bind($derivation, $outer);
         $fact = $derivation->query($expression->body, $environment);
         $this->ordering($fact, $expression->orderBy, $expression->limit, $derivation, $environment);
@@ -43,7 +50,7 @@ final class ExpressionFacts
     /**
      * Derives an ORDER BY and a LIMIT that apply to the rows of a query in an environment.
      *
-     * @param list<OrderItem> $orderBy
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy
      */
     public function ordering(QueryFact $fact, array $orderBy, ?Limit $limit, Derivation $derivation, Environment $environment): void
     {

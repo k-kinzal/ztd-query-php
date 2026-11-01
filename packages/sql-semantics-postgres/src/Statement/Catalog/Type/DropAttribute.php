@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP ATTRIBUTE [ IF EXISTS ] name [ CASCADE | RESTRICT ]`.
@@ -21,18 +20,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Dropping an attribute if it exists
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair DROP ATTRIBUTE IF EXISTS b');
- *     $operation->statement->changes[0]->ifExists // => true
+ *     $operation->changes[0]->ifExists // => true
  */
 final class DropAttribute implements AttributeChange
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The attribute name
      * @param bool $ifExists Whether IF EXISTS is written
      * @param DropBehavior|null $behavior Whether typed tables are changed too, when written
      */
-    public function __construct(public readonly Name $name, public readonly bool $ifExists = false, public readonly ?DropBehavior $behavior = null)
+    public function __construct(public readonly Name $name, public readonly bool $ifExists = false, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

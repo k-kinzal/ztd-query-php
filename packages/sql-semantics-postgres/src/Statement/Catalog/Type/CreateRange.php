@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\RangeAttribute;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Defining a range type without its subtype
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE floatrange AS RANGE (subtype_diff = float8mi)');
- *     $operation->facts->diagnostics[0]->message() // => 'type attribute "subtype" is required'
+ *     $operation->diagnostics()[0]->message() // => 'type attribute "subtype" is required'
  */
-final class CreateRange implements Statement
+final class CreateRange extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Attribute> The attributes in written order
@@ -45,8 +44,11 @@ final class CreateRange implements Statement
      * @param DottedName $name The type name
      * @param list<Attribute> $options The attributes in written order, at least one
      */
-    public function __construct(public readonly DottedName $name, array $options)
+    public function __construct(public readonly DottedName $name, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, Attribute::class, 'Range type attributes are definition attributes.', 1);
         foreach ($this->options as $option) {
             Check::input($option->known === null ? RangeAttribute::tryFrom($option->name->value) === null : $option->known instanceof RangeAttribute, 'A range type attribute is recognized exactly when CREATE TYPE ... AS RANGE knows its name.');

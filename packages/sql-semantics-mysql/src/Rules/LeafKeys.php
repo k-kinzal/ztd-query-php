@@ -31,7 +31,8 @@ use SqlSemantics\Platform\MySql\Rules\Noise\UtilityNoise;
  * identifier token, a keyword at a keyword-as-identifier production, a string
  * at a production that reads it as a name, and a host name are keyed by the
  * decoded name. A string literal is keyed by its decoded bytes under the
- * escape setting of the profile, a number by its exact text, a hexadecimal
+ * escape setting of the profile, a number by its exact text (CPU indices by
+ * their integer value, since leading zeroes do not affect that request), a hexadecimal
  * or bit literal by its digits whatever its spelling, an introducer by its
  * character set, a parameter marker by its text. A position a family noise
  * table lists has no key; a position a family synonym table lists has the
@@ -81,6 +82,9 @@ final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
         $synonym = self::synonyms()[$signature][$position] ?? null;
         if ($synonym !== null) {
             return $synonym;
+        }
+        if ($token->name === 'NUM' && in_array($signature, ['vcpu_num_or_range: NUM', 'vcpu_num_or_range: NUM - NUM'], true)) {
+            return 'number:' . (string) (int) $token->text;
         }
         if (isset(self::NAME_RULES[substr($signature, 0, (int) strpos($signature, ':'))])) {
             return 'name:' . $this->name($token);

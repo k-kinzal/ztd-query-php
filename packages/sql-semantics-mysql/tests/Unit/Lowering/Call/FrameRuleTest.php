@@ -74,6 +74,7 @@ final class FrameRuleTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('SELECT RANK() OVER (ROWS ? PRECEDING)')->find('window_frame_start')[0];
+        $lowering->parameters($node->tokens());
         $rule = new FrameRule($lowering);
         self::assertInstanceOf(Parameter::class, $rule->bound($node)->offset);
     }

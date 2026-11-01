@@ -20,15 +20,15 @@ final class ReleaseTest extends TestCase
         $operation = (new Semantics(Dialect::Sqlite))->analyze('RELEASE s1', []);
 
         self::assertNull($operation->shape());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('release savepoint s1');
 
-        self::assertInstanceOf(Release::class, $operation->statement);
-        self::assertSame('s1', $operation->statement->name->value);
+        self::assertInstanceOf(Release::class, $operation);
+        self::assertSame('s1', $operation->name->value);
         self::assertSame('RELEASE s1', $operation->toString());
     }
 }

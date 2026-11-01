@@ -17,7 +17,7 @@ final class TablespaceCommandTest extends TestCase
 {
     public function testDeriveCommandDerivesNothing(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t IMPORT TABLESPACE')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t IMPORT TABLESPACE')->diagnostics());
     }
 
     public function testRenderWritesTheAction(): void

@@ -18,7 +18,7 @@ final class CreateAssertionTest extends TestCase
         $statement = $semantics->analyze('CREATE ASSERTION a CHECK (1 = 1)', []);
         self::assertSame([
           0 => 'CREATE ASSERTION is not yet implemented',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

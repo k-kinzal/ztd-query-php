@@ -58,6 +58,7 @@ final class WindowRuleTest extends TestCase
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('SELECT LEAD(a, ?, 0) OVER w')->find('opt_lead_lag_info')[0];
+        $lowering->parameters($node->tokens());
         $rule = new WindowRule($lowering, new FrameRule($lowering));
         $arguments = $rule->offset($node);
 

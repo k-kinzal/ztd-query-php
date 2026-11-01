@@ -25,4 +25,12 @@ final class FlushItemTest extends TestCase
     {
         self::assertNull((new FlushItem(FlushOption::Logs))->channel);
     }
+    public function testDeprecationIdentifiesQueryCacheOnlyOn57(): void
+    {
+        $cache = new FlushItem(FlushOption::QueryCache);
+        $hosts = new FlushItem(FlushOption::Hosts);
+
+        self::assertSame([null, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::FlushQueryCache, null], [$cache->deprecation(\SqlSemantics\Contract\GrammarRelease::MySql5651), $cache->deprecation(\SqlSemantics\Contract\GrammarRelease::MySql5744), $hosts->deprecation(\SqlSemantics\Contract\GrammarRelease::MySql5744)]);
+    }
+
 }

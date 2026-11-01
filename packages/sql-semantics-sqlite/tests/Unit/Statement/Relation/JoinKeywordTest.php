@@ -27,9 +27,9 @@ final class JoinKeywordTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM t natural Left outer JOIN u');
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(JoinChain::class, $query->statement->from);
-        self::assertSame([JoinKeyword::Natural, JoinKeyword::Left, JoinKeyword::Outer], $query->statement->from->steps[0]->operator->words);
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(JoinChain::class, $query->from);
+        self::assertSame([JoinKeyword::Natural, JoinKeyword::Left, JoinKeyword::Outer], $query->from->steps[0]->operator->words);
         self::assertSame('SELECT * FROM t NATURAL LEFT OUTER JOIN u', $query->toString());
     }
 }

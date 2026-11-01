@@ -22,15 +22,15 @@ final class CreateTableRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        self::assertInstanceOf(CreateTable::class, $semantics->analyze('CREATE TABLE t (a)')->statement);
-        self::assertInstanceOf(CreateTableAs::class, $semantics->analyze('CREATE TABLE t AS SELECT 1')->statement);
+        self::assertInstanceOf(CreateTable::class, $semantics->analyze('CREATE TABLE t (a)'));
+        self::assertInstanceOf(CreateTableAs::class, $semantics->analyze('CREATE TABLE t AS SELECT 1'));
     }
 
     public function testCommandKeepsTheHeaderFlagsAndTheName(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('CREATE TABLE t (a)')->statement;
-        $full = $semantics->analyze('CREATE TEMP TABLE IF NOT EXISTS aux.t (a)')->statement;
+        $plain = $semantics->analyze('CREATE TABLE t (a)');
+        $full = $semantics->analyze('CREATE TEMP TABLE IF NOT EXISTS aux.t (a)');
 
         self::assertInstanceOf(CreateTable::class, $plain);
         self::assertInstanceOf(CreateTable::class, $full);
@@ -44,12 +44,12 @@ final class CreateTableRuleTest extends TestCase
 
     public function testCreatedAcceptsTheCreateKeywordOfEveryDefinition(): void
     {
-        self::assertInstanceOf(CreateView::class, (new Semantics(Dialect::Sqlite))->analyze('CREATE VIEW v AS SELECT 1')->statement);
+        self::assertInstanceOf(CreateView::class, (new Semantics(Dialect::Sqlite))->analyze('CREATE VIEW v AS SELECT 1'));
     }
 
     public function testColumnsKeepTheirWrittenOrder(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (c, a, b)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (c, a, b)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame(['c', 'a', 'b'], array_map(static fn (object $column): string => $column->name->value, $statement->columns));

@@ -7,11 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of TRIM(): a string without the leading, trailing or both occurrences of a removed string, by default spaces.
@@ -31,15 +31,20 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Trim implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $subject The string to trim
      * @param TrimSide|null $side The side, when written
      * @param Scalar|null $removed The string to remove, when written
      */
-    public function __construct(public readonly Scalar $subject, public readonly ?TrimSide $side = null, public readonly ?Scalar $removed = null)
+    public function __construct(public readonly Scalar $subject, public readonly ?TrimSide $side = null, public readonly ?Scalar $removed = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -53,7 +58,9 @@ final class Trim implements Scalar
         }
         $facts[] = (new Arguments())->one($this->subject, $derivation, $environment);
 
-        return (new ResultTyping())->fact('SP', $facts);
+        $arguments = $this->removed === null ? [$this->subject] : [$this->removed, $this->subject];
+
+        return (new Results())->refine('TRIM', $arguments, $facts, (new ResultTyping())->fact('SY', $facts), $derivation);
     }
 
     /**

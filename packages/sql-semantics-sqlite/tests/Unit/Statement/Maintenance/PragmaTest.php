@@ -16,7 +16,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(Pragma::class)]
@@ -29,18 +28,18 @@ final class PragmaTest extends TestCase
 
         self::assertNull($operation->shape());
         self::assertSame([], $operation->declarations());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementDerivesTheNumberOfASignedValue(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('PRAGMA cache_size = -2000');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Pragma::class, $statement);
         self::assertInstanceOf(SignedNumber::class, $statement->value);
         self::assertSame(NumberSign::Minus, $statement->value->sign);
-        self::assertEquals(new Known(Storage::Integer), $operation->facts->scalar($statement->value->number)->type);
+        self::assertEquals(new Known(Storage::Integer), $statement->value->number->scalarInformation()->type);
     }
 
     public function testRenderWritesBothValueNotationsWithAnEqualSign(): void
@@ -59,12 +58,12 @@ final class PragmaTest extends TestCase
         $name = $semantics->analyze("PRAGMA journal_mode = 'delete'");
         $word = $semantics->analyze('PRAGMA journal_mode = wal');
 
-        self::assertInstanceOf(Pragma::class, $keyword->statement);
-        self::assertInstanceOf(Pragma::class, $name->statement);
-        self::assertInstanceOf(Pragma::class, $word->statement);
-        self::assertSame(PragmaKeyword::Delete, $keyword->statement->value);
-        self::assertInstanceOf(Name::class, $name->statement->value);
-        self::assertSame('delete', $name->statement->value->value);
+        self::assertInstanceOf(Pragma::class, $keyword);
+        self::assertInstanceOf(Pragma::class, $name);
+        self::assertInstanceOf(Pragma::class, $word);
+        self::assertSame(PragmaKeyword::Delete, $keyword->value);
+        self::assertInstanceOf(Name::class, $name->value);
+        self::assertSame('delete', $name->value->value);
         self::assertSame('PRAGMA journal_mode = DELETE', $keyword->toString());
         self::assertSame('PRAGMA journal_mode = `delete`', $name->toString());
         self::assertSame('PRAGMA journal_mode = wal', $word->toString());
@@ -73,7 +72,7 @@ final class PragmaTest extends TestCase
     public function testRenderWritesANewlyBuiltPragma(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Pragma(new QualifiedName(new Name('synchronous'), new Name('aux')), PragmaKeyword::On));
+        $operation = Semantics::fromStatement($semantics->context(), new Pragma(new QualifiedName(new Name('synchronous'), new Name('aux')), PragmaKeyword::On));
 
         self::assertSame('PRAGMA aux.synchronous = ON', $operation->toString());
     }

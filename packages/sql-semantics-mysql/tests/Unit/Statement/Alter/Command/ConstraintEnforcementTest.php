@@ -19,7 +19,7 @@ final class ConstraintEnforcementTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
-        self::assertSame([], $semantics->analyze('ALTER TABLE t ALTER CONSTRAINT c ENFORCED', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('ALTER TABLE t ALTER CONSTRAINT c ENFORCED', [$table])->diagnostics());
     }
 
     public function testRenderWritesTheEnforcement(): void

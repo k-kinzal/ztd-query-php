@@ -41,10 +41,10 @@ final class SortScopesTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a AS b, b AS a FROM t ORDER BY a', [$create]);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(Select::class, $select);
         $from = $select->from;
-        $output = $query->facts->output;
+        $output = $query->output();
         self::assertNotNull($from);
         self::assertNotNull($output);
         $projection = $output->projection;
@@ -68,8 +68,8 @@ final class SortScopesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze("SELECT 1 AS a, 'x' AS b");
-        $select = $query->statement;
-        $output = $query->facts->output;
+        $select = $query;
+        $output = $query->output();
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($output);
         $projection = $output->projection;

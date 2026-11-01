@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\TypeChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Adding a label before another
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER TYPE mood ADD VALUE IF NOT EXISTS 'calm' BEFORE 'happy'");
- *     [$operation->statement->label->value, $operation->statement->position?->after] // => ['calm', false]
+ *     [$operation->label->value, $operation->position?->after] // => ['calm', false]
  */
-final class AddEnumLabel implements Statement
+final class AddEnumLabel extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $type The enum type
@@ -35,8 +34,11 @@ final class AddEnumLabel implements Statement
      * @param StringConstant $label The new label
      * @param EnumPosition|null $position Where the label goes, when written
      */
-    public function __construct(public readonly DottedName $type, public readonly bool $ifNotExists, public readonly StringConstant $label, public readonly ?EnumPosition $position = null)
+    public function __construct(public readonly DottedName $type, public readonly bool $ifNotExists, public readonly StringConstant $label, public readonly ?EnumPosition $position = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

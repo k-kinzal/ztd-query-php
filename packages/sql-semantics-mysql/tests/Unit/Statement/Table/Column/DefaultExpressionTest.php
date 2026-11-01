@@ -22,7 +22,7 @@ final class DefaultExpressionTest extends TestCase
     public function testDeriveAttributeResolvesColumnsOfTheTable(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT DEFAULT (a + 1))');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element1 = $statement->elements[1];
         self::assertInstanceOf(ColumnDefinition::class, $element1);
@@ -30,7 +30,7 @@ final class DefaultExpressionTest extends TestCase
 
         self::assertInstanceOf(DefaultExpression::class, $attribute);
         self::assertInstanceOf(Arithmetic::class, $attribute->expression);
-        $resolution = $create->facts->scalar($attribute->expression->left)->resolution;
+        $resolution = $attribute->expression->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($create->declarations()[0]->columns[0], $resolution->slot->column);
     }

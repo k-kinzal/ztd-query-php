@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting an unknown storage word
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b AS (a) PERSISTED)');
- *     $create->facts->diagnostics[0]->message() // => 'Generated column storage PERSISTED is neither VIRTUAL nor STORED.'
+ *     $create->diagnostics()[0]->message() // => 'Generated column storage PERSISTED is neither VIRTUAL nor STORED.'
  */
 final class UnknownStorage implements Diagnostic
 {

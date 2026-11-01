@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `WITH UNIQUE [KEYS]` or `WITHOUT UNIQUE [KEYS]`: whether duplicate object keys are rejected.
@@ -22,12 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonUniqueKeys implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $unique Whether WITH UNIQUE is written, rather than WITHOUT UNIQUE
      */
-    public function __construct(public readonly bool $unique)
+    public function __construct(public readonly bool $unique, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

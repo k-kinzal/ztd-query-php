@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Partition\Bound;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The keyword MAXVALUE as one partition value: a value greater than every other value.
@@ -21,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionMaximum implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes the keyword.
@@ -29,5 +28,11 @@ final class PartitionMaximum implements Node
     public function render(Output $out): void
     {
         $out->keyword('MAXVALUE');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

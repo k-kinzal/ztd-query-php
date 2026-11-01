@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlParser\MySql;
 
+use Closure;
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\ParameterSyntax;
@@ -13,7 +14,7 @@ use SqlParser\MySql\Lexer\KeywordTable;
 use SqlParser\MySql\Lexer\MySqlLexer;
 use SqlParser\Parser\LrParser;
 use SqlParser\Parser\Node;
-use SqlParser\Parser\SqlParser;
+use SqlParser\Parser\ReductionParser;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\Resource\VersionRegistry;
 use SqlParser\Table\ParseTable;
@@ -46,13 +47,15 @@ use SqlParser\Table\TableFile;
  *     $parser = new \SqlParser\MySql\MySqlParser(parameters: \SqlParser\Lexer\ParameterSyntax::Named);
  *     $parser->tokenize('SELECT id FROM users WHERE id = :id')[7]->name // => 'PARAM_MARKER'
  */
-final class MySqlParser implements SqlParser
+final class MySqlParser implements ReductionParser
 {
     private readonly MySqlVersion $version;
 
     private readonly ParseTable $table;
 
-    private readonly MySqlLexer $lexer;
+    private MySqlLexer $lexer;
+
+    private readonly KeywordTable $keywords;
 
     /**
      * Loads the parser of one release.
@@ -61,14 +64,29 @@ final class MySqlParser implements SqlParser
      * @param SqlMode $mode The `sql_mode` flags that change tokenization
      * @param VersionRegistry $registry Record of shipped releases
      * @param ParameterSyntax $parameters Which parameter markers are read; the server reads only `?`
+     * @param string|null $clientCharset Input character set; Latin-1 uses its single-byte letter classes
      *
      * @throws RuntimeException When the release is not shipped or its resources are missing
      */
-    public function __construct(?string $version = null, SqlMode $mode = new SqlMode(), VersionRegistry $registry = new VersionRegistry(), ParameterSyntax $parameters = ParameterSyntax::Native)
+    public function __construct(?string $version = null, SqlMode $mode = new SqlMode(), VersionRegistry $registry = new VersionRegistry(), ParameterSyntax $parameters = ParameterSyntax::Native, ?string $clientCharset = null)
     {
         $this->version = MySqlVersion::resolve($version, $registry);
         $this->table = (new TableFile())->load($this->version->release->tablePath);
-        $this->lexer = new MySqlLexer(KeywordTable::load($this->version->release->keywordPath), $this->version, $mode, parameters: $parameters);
+        $this->keywords = KeywordTable::load($this->version->release->keywordPath);
+        $this->lexer = new MySqlLexer($this->keywords, $this->version, $mode, parameters: $parameters, clientCharset: $clientCharset);
+    }
+
+    /**
+     * Creates an independent lexical view over this parser's loaded grammar.
+     *
+     * The grammar and keyword tables are shared; neither this parser nor its
+     * lexer changes. Enumerating input interpretations need not reload artifacts.
+     */
+    public function withSettings(SqlMode $mode, ParameterSyntax $parameters = ParameterSyntax::Native, ?string $clientCharset = null): self
+    {
+        $parser = clone $this;
+        $parser->lexer = new MySqlLexer($this->keywords, $this->version, $mode, parameters: $parameters, clientCharset: $clientCharset);
+        return $parser;
     }
 
     /**
@@ -103,15 +121,16 @@ final class MySqlParser implements SqlParser
      * Parses one statement.
      *
      * @param string $sql The SQL text
+     * @param (Closure(Node, Token): void)|null $reduced Receives each completed visible production before success or failure
      *
      * @return Node The tree, rooted at the grammar's start symbol, holding every byte of the text
      *
      * @throws LexicalException When the text holds something no token starts with
      * @throws SyntaxException When the statement is not in the grammar of the release
      */
-    public function parse(string $sql): Node
+    public function parse(string $sql, ?Closure $reduced = null): Node
     {
-        return (new LrParser($this->table))->parse($this->tokenize($sql), $sql);
+        return (new LrParser($this->table))->parse($this->tokenize($sql), $sql, $reduced);
     }
 
     /**

@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The frame of a window: its mode, its start, an optional end, and an optional exclusion.
@@ -36,7 +35,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class WindowFrame implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FrameMode $mode How the bounds are measured
@@ -49,6 +48,7 @@ final class WindowFrame implements Clause
         public readonly FrameBound $start,
         public readonly ?FrameBound $end = null,
         public readonly ?FrameExclusion $exclusion = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         $last = $end === null ? FrameBoundKind::CurrentRow : $end->kind;
         Check::input($start->kind !== FrameBoundKind::UnboundedFollowing, 'A frame does not start at UNBOUNDED FOLLOWING.');

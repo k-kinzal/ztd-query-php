@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * @visibility public
  * @example Reading the kind of a column constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int NOT NULL)');
- *     $create->statement->definition->elements[0]->qualifiers[0]->kind() // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind::NotNull
+ *     $create->definition->elements[0]->qualifiers[0]->kind() // => \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintKind::NotNull
  */
 interface Constraint extends Clause
 {

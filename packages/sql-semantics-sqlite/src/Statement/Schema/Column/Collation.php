@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A COLLATE column constraint: the default collating sequence of the column.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the collation of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a TEXT COLLATE NOCASE)');
- *     $create->statement->columns[0]->constraints[0]->name->value // => 'NOCASE'
+ *     $create->columns[0]->constraints[0]->name->value // => 'NOCASE'
  */
 final class Collation implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The collating sequence
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

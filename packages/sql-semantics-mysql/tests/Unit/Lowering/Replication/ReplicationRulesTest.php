@@ -42,6 +42,12 @@ final class ReplicationRulesTest extends TestCase
         self::assertSame("STOP REPLICA FOR CHANNEL 'c'", (new Semantics(Dialect::MySql))->analyze("stop replica for channel 'c'")->toString());
     }
 
+    public function testChannelRefusesLineFeedBeforePublishingAStatement(): void
+    {
+        $this->expectExceptionMessage(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::LineFeed->value);
+        (new Semantics(Dialect::MySql))->analyze("SHOW RELAYLOG EVENTS FOR CHANNEL 'a\\nb'");
+    }
+
     public function testTerminologyAnswersTheWrittenSpelling(): void
     {
         self::assertSame('STOP SLAVE', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('stop slave')->toString());

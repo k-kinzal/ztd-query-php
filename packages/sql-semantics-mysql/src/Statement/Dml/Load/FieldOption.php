@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Load;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of the FIELDS clause of a text file format: `TERMINATED BY`, `[OPTIONALLY] ENCLOSED BY` or `ESCAPED BY` a string.
@@ -17,17 +16,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the field terminator of INTO OUTFILE
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'f' FIELDS TERMINATED BY ','");
- *     [$query->statement->into->format->fields[0]->kind, $query->statement->into->format->fields[0]->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, ',']
+ *     [$query->query->into->format->fields[0]->kind, $query->query->into->format->fields[0]->text->value] // => [\SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind::Terminated, ',']
  */
 final class FieldOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FieldOptionKind $kind What the option sets
      * @param Text $text The string it sets
      */
-    public function __construct(public readonly FieldOptionKind $kind, public readonly Text $text)
+    public function __construct(public readonly FieldOptionKind $kind, public readonly Text $text, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The terms of a FROM clause joined from left to right.
@@ -32,14 +31,15 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the terms of a join chain
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t JOIN u ON t.a = u.a, v');
- *     [$query->statement->from->first->name->name->value, count($query->statement->from->steps), $query->statement->from->steps[1]->operator->comma] // => ['t', 2, true]
+ *     [$query->from->first->name->name->value, count($query->from->steps), $query->from->steps[1]->operator->comma] // => ['t', 2, true]
  * @example Refusing a chain that joins nothing and constrains nothing
- *     $table = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t')->statement->from;
+ *     $table = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t')->from;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain($table, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class JoinChain implements Relation
+final class JoinChain implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<JoinStep> The further terms in written order
@@ -51,8 +51,11 @@ final class JoinChain implements Relation
      * @param list<JoinStep> $steps The further terms in written order
      * @param JoinOn|JoinUsing|null $constraint The constraint written after the first term
      */
-    public function __construct(public readonly Relation $first, array $steps, public readonly JoinOn|JoinUsing|null $constraint = null)
+    public function __construct(public readonly Relation $first, array $steps, public readonly JoinOn|JoinUsing|null $constraint = null, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->steps = Check::listOf($steps, JoinStep::class, 'The further terms of a join chain are join steps.');
         Check::input(!$first instanceof self, 'A join chain used as a term is written in parentheses.');
         Check::input($steps !== [] || $constraint !== null, 'A single term without a constraint is no join chain.');

@@ -8,10 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CREATE {DATABASE | SCHEMA} [IF NOT EXISTS] name [option …]`: a request to create a database.
@@ -19,18 +18,18 @@ use SqlSemantics\Statement\Statement;
  * Mirrors SQLCOM_CREATE_DB with HA_CREATE_INFO. Rule:
  * MYSQL-CREATE-DATABASE-001. The options are kept in written order. A
  * database holds no columns, so the statement declares no relation.
- * SCHEMA is a synonym of DATABASE, which the lexer folds.
+ * SCHEMA is a synonym of DATABASE; databaseWord retains the selected keyword.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
  * Status: Implemented.
  *
  * @visibility public
  * @example Creating a database with options
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('create schema if not exists shop default charset utf8mb4 collate utf8mb4_bin');
- *     [$create->toString(), count($create->statement->options)] // => ['CREATE DATABASE IF NOT EXISTS shop CHARACTER SET utf8mb4 COLLATE utf8mb4_bin', 2]
+ *     [$create->toString(), count($create->options)] // => ['CREATE SCHEMA IF NOT EXISTS shop DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin', 2]
  */
-final class CreateDatabase implements Statement
+final class CreateDatabase extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<DatabaseOption> The options in written order
@@ -43,19 +42,25 @@ final class CreateDatabase implements Statement
      * @param list<DatabaseOption> $options The options in written order
      * @throws InvalidConstruction When an option is READ ONLY, which only ALTER DATABASE takes
      */
-    public function __construct(public readonly bool $ifNotExists, public readonly Name $name, array $options = [])
+    public function __construct(public readonly bool $ifNotExists, public readonly Name $name, array $options = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DatabaseWord $databaseWord = DatabaseWord::Database)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, DatabaseOption::class, 'CREATE DATABASE takes a list of options.');
         foreach ($this->options as $option) {
             Check::input(!$option instanceof DatabaseReadOnly, 'READ ONLY is an option of ALTER DATABASE.');
         }
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->conflict($this->options) === null, 'CREATE DATABASE options do not conflict.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Has nothing to derive: a database is no relation.
+     * Resolves the character set and collation names without changing database state.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Server\DatabaseOptions())->derive($this->options, $derivation);
     }
 
     /**
@@ -63,7 +68,7 @@ final class CreateDatabase implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('CREATE', 'DATABASE');
+        $out->keyword('CREATE', $this->databaseWord->value);
         if ($this->ifNotExists) {
             $out->keyword('IF', 'NOT', 'EXISTS');
         }

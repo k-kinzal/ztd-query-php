@@ -33,15 +33,15 @@ final class AlterRoutineTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $alter = $semantics->analyze("ALTER PROCEDURE shop.p COMMENT 'c' MODIFIES SQL DATA", [$table]);
 
-        self::assertSame([], $alter->facts->diagnostics);
-        self::assertSame([], $alter->facts->declarations);
-        self::assertNull($alter->facts->output);
+        self::assertSame([], $alter->diagnostics());
+        self::assertSame([], $alter->declarations());
+        self::assertNull($alter->output());
     }
 
     public function testDeriveStatementReadsTheKindTheNameAndTheCharacteristics(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER FUNCTION shop.f NO SQL SQL SECURITY INVOKER');
-        $statement = $alter->statement;
+        $statement = $alter;
         self::assertInstanceOf(AlterRoutine::class, $statement);
 
         self::assertSame(ProgramKind::Function, $statement->kind);

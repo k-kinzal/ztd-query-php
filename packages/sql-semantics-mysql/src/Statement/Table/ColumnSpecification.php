@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Table;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Node;
 
@@ -22,7 +22,7 @@ interface ColumnSpecification extends Node
     /**
      * Answers the declared data type.
      */
-    public function dataType(): TypeName;
+    public function dataType(): DeclaredName;
 
     /**
      * Answers the column attributes in written order.

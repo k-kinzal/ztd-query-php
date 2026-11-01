@@ -1,0 +1,369 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Server;
+
+use Closure;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use MySqlMemory\Protocol\Capability;
+use MySqlMemory\Protocol\MalformedPacket;
+use MySqlMemory\Protocol\Messages;
+use MySqlMemory\Protocol\PayloadReader;
+use MySqlMemory\Result\Completion;
+use MySqlMemory\Result\Reply;
+use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\Session;
+
+/**
+ * One client connection: the handshake, then the commands of the client/server protocol, each answered from a session.
+ *
+ * Any password is accepted for any user. Statements of a COM_QUERY run in order; each result
+ * but the last carries SERVER_MORE_RESULTS_EXISTS, and the first error ends them.
+ * Source: https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_command_phase.html.
+ *
+ * @visibility MySqlMemory
+ */
+final class Client
+{
+    private string $buffer = '';
+
+    private int $sequence = 0;
+
+    private ?Session $session = null;
+
+    private int $capabilities = 0;
+
+    private bool $quit = false;
+
+    private bool $abortCounted = false;
+
+    private readonly int $generation;
+
+    /**
+     * Builds the payloads the connection sends.
+     */
+    public readonly Messages $messages;
+
+    /**
+     * The prepared statements of the connection.
+     */
+    public readonly Statements $statements;
+
+    /**
+     * Receives LOAD LOCAL file packets without starting another command.
+     */
+    public readonly FileTransfer $files;
+
+    /**
+     * @param Instance $instance The server
+     * @param int $id The connection id
+     * @param Closure $send Sends bytes to the client: fn (string): void
+     * @param string $host The address the client connects from
+     * @param int|null $port The client's TCP source port, or null for a Unix socket
+     */
+    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly Closure $send, public readonly string $host = 'localhost', public readonly ?int $port = null)
+    {
+        $this->generation = $instance->registry->status->generation;
+        $this->messages = new Messages();
+        $this->statements = new Statements($this);
+        $this->files = new FileTransfer($this);
+    }
+
+    /**
+     * Sends the initial handshake.
+     */
+    public function greet(): void
+    {
+        $this->sequence = 0;
+        $connection = $this->instance->catalog->find('collation_server');
+        $collation = $connection === null ? null : \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named((string) $this->instance->globals->value($connection));
+        $this->packet($this->messages->handshake($this->instance->version, $this->id, random_bytes(20), 2, $collation->id ?? 255));
+    }
+
+    /**
+     * Takes bytes from the client and answers every complete packet; answers false when the connection ends.
+     */
+    public function receive(string $bytes): bool
+    {
+        $this->buffer .= $bytes;
+        while (strlen($this->buffer) >= 4) {
+            $length = ord($this->buffer[0]) | (ord($this->buffer[1]) << 8) | (ord($this->buffer[2]) << 16);
+            if (strlen($this->buffer) < 4 + $length) {
+                break;
+            }
+            if ($this->generation === $this->instance->registry->status->generation) {
+                $this->instance->registry->status->add('Bytes_received', $this->id, 4 + $length);
+            }
+            $this->sequence = (ord($this->buffer[3]) + 1) & 0xFF;
+            $payload = substr($this->buffer, 4, $length);
+            $this->buffer = substr($this->buffer, 4 + $length);
+            try {
+                if (!$this->handle($payload)) {
+                    return false;
+                }
+                if ($this->files->active && $this->files->complete) {
+                    break;
+                }
+            } catch (MalformedPacket $failure) {
+                $this->packet($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message()));
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Answers one packet; answers false when the client quits.
+     *
+     * @throws MalformedPacket When the packet does not follow the protocol
+     */
+    public function handle(string $payload): bool
+    {
+        if ($this->files->active) {
+            $this->files->receive($payload);
+            return true;
+        }
+        if ($this->session === null) {
+            return $this->authenticate(new PayloadReader($payload));
+        }
+        $reader = new PayloadReader($payload);
+        $command = $reader->integer(1);
+        if ($command === 0x01) {
+            $this->quit = true;
+
+            return false;
+        }
+        $running = $this->session->running;
+        $previous = $running->respond;
+        $fileReader = $running->readFile;
+        $running->readFile = $this->files->request(...);
+        $running->respond = function (ResultSet $result) use ($command): void {
+            $this->reply($result, 8, $command === 0x17);
+        };
+        try {
+            return match ($command) {
+                0x02 => $this->initDatabase($reader->rest()),
+                0x03 => $this->query($reader->rest()),
+                0x04 => $this->send($this->messages->eof(0, $this->status())),
+                0x07 => (new Refresh($this))->answer($reader),
+                0x0E, 0x1F => $this->ping($command === 0x1F),
+                0x1B => $this->setOption($reader),
+                0x09 => (new Statistics($this))->answer(),
+                0x16, 0x17, 0x18, 0x19, 0x1A, 0x1C => $this->statements->handle($command, $reader),
+                default => $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message())),
+            };
+        } finally {
+            $running->respond = $previous;
+            $running->readFile = $fileReader;
+        }
+    }
+
+    /**
+     * Reads the handshake response and opens the session.
+     *
+     * @throws MalformedPacket When the handshake response ends before a field
+     */
+    public function authenticate(PayloadReader $reader): bool
+    {
+        $this->capabilities = $reader->integer(4);
+        $reader->integer(4);
+        $collation = (new ConnectionEncoding())->collation($this->instance, $reader->integer(1));
+        $reader->bytes(23);
+        $user = $reader->nulTerminated();
+        if (($this->capabilities & Capability::PLUGIN_AUTH_LENENC_CLIENT_DATA) !== 0) {
+            $reader->lengthEncodedString();
+        } else {
+            $reader->bytes($reader->integer(1));
+        }
+        $database = null;
+        if (($this->capabilities & Capability::CONNECT_WITH_DB) !== 0 && $reader->remaining() > 0) {
+            $database = (new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($reader->nulTerminated(), $collation?->charset);
+            $database = $database === '' ? null : $database;
+        }
+        try {
+            $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database, $this->port, $this->id);
+            (new ConnectionEncoding())->apply($this->session, $collation);
+            $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
+        } catch (SqlError $error) {
+            $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) ($this->session?->variables->read('character_set_results') ?? 'utf8mb4')));
+
+            return false;
+        }
+
+        return $this->send($this->messages->ok(0, 0, $this->status(), 0));
+    }
+
+    /**
+     * Answers the session of the connection.
+     */
+    public function session(): Session
+    {
+        assert($this->session !== null);
+
+        return $this->session;
+    }
+
+    /**
+     * Counts authenticated connections ended without COM_QUIT, then releases the session and its traffic records.
+     * Repeated cleanup counts an abort only once; abandoned handshakes are not connected clients.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html#statvar_Aborted_clients.
+     */
+    public function close(): void
+    {
+        if ($this->session !== null && !$this->quit && !$this->abortCounted && $this->generation === $this->instance->registry->status->generation) {
+            $this->instance->registry->status->add('Aborted_clients');
+            $this->abortCounted = true;
+        }
+        $this->session?->close();
+        $this->instance->registry->status->clear($this->id);
+    }
+
+    /**
+     * Tells whether another connection or a statement has ended this session.
+     */
+    public function ended(): bool
+    {
+        return $this->session?->released === true;
+    }
+
+    /**
+     * Answers the server status flags of the session.
+     */
+    public function status(): int
+    {
+        if ($this->session === null) {
+            return 2;
+        }
+        $autocommit = in_array(strtoupper((string) $this->session->variables->read('autocommit')), ['ON', '1'], true) ? 2 : 0;
+
+        return $autocommit | ($this->session->transaction->active() ? 1 : 0) | ($this->session->modes()->has('NO_BACKSLASH_ESCAPES') ? 512 : 0);
+    }
+
+    /**
+     * Answers COM_INIT_DB.
+     */
+    public function initDatabase(string $database): bool
+    {
+        \MySqlMemory\Session\State\StatementCounters::received($this->session());
+        \MySqlMemory\Session\State\StatementCounters::command($this->session(), 'Com_change_db');
+        try {
+            $this->session()->use((new \SqlSemantics\Platform\MySql\Rules\Text\NameEncoding())->decode($database, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named((string) $this->session()->variables->read('character_set_client'))));
+        } catch (SqlError $error) {
+            return $this->send($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage(), (string) ($this->session?->variables->read('character_set_results') ?? 'utf8mb4')));
+        }
+
+        return $this->send($this->messages->ok(0, 0, $this->status(), 0));
+    }
+
+    /**
+     * Counts COM_SET_OPTION and updates the multi-statement capability.
+     * Unknown options report ER_UNKNOWN_COM_ERROR after counting the command.
+     * Source: MySQL 8.4.7 sql/sql_parse.cc, dispatch_command(COM_SET_OPTION).
+     *
+     * @throws MalformedPacket When the two-byte option is missing
+     */
+    public function setOption(PayloadReader $reader): bool
+    {
+        $option = $reader->integer(2);
+        \MySqlMemory\Session\State\StatementCounters::received($this->session());
+        \MySqlMemory\Session\State\StatementCounters::command($this->session(), 'Com_set_option');
+        if ($option > 1) {
+            return $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message()));
+        }
+        $this->capabilities = $option === 0 ? $this->capabilities | Capability::MULTI_STATEMENTS : $this->capabilities & ~Capability::MULTI_STATEMENTS;
+        return $this->send($this->messages->eof(0, $this->status()));
+    }
+
+    /**
+     * Answers COM_PING and COM_RESET_CONNECTION.
+     */
+    public function ping(bool $reset): bool
+    {
+        if ($reset) {
+            $this->session = $this->instance->reset($this->session());
+            $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
+        }
+
+        return $this->send($this->messages->ok(0, 0, $this->status(), 0));
+    }
+
+    /**
+     * Answers COM_QUERY; answers false once a statement released the session, as the server then closes the connection.
+     */
+    public function query(string $sql): bool
+    {
+        $session = $this->session();
+        foreach ((new \MySqlMemory\Session\Script\Replies($session))->run($sql) as [$answer, $more]) {
+            if ($answer instanceof SqlError) {
+                $this->send($this->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage(), (string) $session->variables->read('character_set_results')));
+                continue;
+            }
+            $this->reply($answer, $more ? 8 : 0, false);
+        }
+
+        return !$session->released;
+    }
+
+    /**
+     * Sends a reply in the text or binary protocol.
+     */
+    public function reply(Reply $reply, int $more, bool $binary): void
+    {
+        if ($reply instanceof ResultSet && $reply->moreResults !== null) {
+            $more = $reply->moreResults ? 8 : 0;
+        }
+        $status = $this->status() | $more;
+        if ($reply instanceof Completion) {
+            $affected = $reply->affectedRows;
+            $this->packet($this->messages->ok($affected, $reply->lastInsertId, $status, $reply->warnings, $reply->info));
+
+            return;
+        }
+        assert($reply instanceof ResultSet);
+        $this->packet($this->messages->columnCount(count($reply->columns)));
+        foreach ($reply->columns as $column) {
+            $this->packet($this->messages->column($column));
+        }
+        $this->packet($this->messages->eof(0, $status));
+        foreach ($reply->rows as $index => $row) {
+            foreach ($reply->interruptions[$index] ?? [] as $interruption) {
+                $this->reply($interruption, 0, $binary);
+            }
+            $this->packet($binary ? (new \MySqlMemory\Protocol\Binary())->row($reply->columns, array_values(array_replace($row, $reply->binaryValues[$index] ?? []))) : $this->messages->textRow($row));
+        }
+        foreach ($reply->interruptions[count($reply->rows)] ?? [] as $interruption) {
+            $this->reply($interruption, 0, $binary);
+        }
+        if ($reply->complete) {
+            $this->packet($this->messages->eof($reply->warnings, $status));
+        }
+    }
+
+    /**
+     * Sends one packet and answers true.
+     */
+    public function send(string $payload): bool
+    {
+        $this->packet($payload);
+
+        return true;
+    }
+
+    /**
+     * Sends one packet with the next sequence number.
+     */
+    public function packet(string $payload): void
+    {
+        $length = strlen($payload);
+        ($this->send)(chr($length & 0xFF) . chr(($length >> 8) & 0xFF) . chr(($length >> 16) & 0xFF) . chr($this->sequence) . $payload);
+        if ($this->generation === $this->instance->registry->status->generation) {
+            $this->instance->registry->status->add('Bytes_sent', $this->id, 4 + $length);
+        }
+        $this->sequence = ($this->sequence + 1) & 0xFF;
+    }
+}

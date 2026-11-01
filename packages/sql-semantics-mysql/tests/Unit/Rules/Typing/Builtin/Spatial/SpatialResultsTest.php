@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Rules\Typing\Builtin\Spatial;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Invocation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Spatial\SpatialResults;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+
+#[CoversClass(SpatialResults::class)]
+#[Small]
+final class SpatialResultsTest extends TestCase
+{
+    public function testRulesResolveSridReadingAndReplacementSeparately(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'));
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $rules = (new SpatialResults())->rules();
+        $read = $rules['ST_SRID'](new Invocation([Domain::null()], [], $settings, $derivation));
+        $write = $rules['ST_SRID'](new Invocation([Domain::null(), Domain::integer()], [], $settings, $derivation));
+
+        self::assertNotNull($read);
+        self::assertNotNull($write);
+        self::assertSame([Field::LongLong, 10, false, Field::Geometry], [$read->field, $read->length, $read->unsigned, $write->field]);
+    }
+
+    public function testRulesResolvePropertyWidthsAndTheConnectionCollation(): void
+    {
+        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $rules = (new SpatialResults())->rules();
+        $type = $rules['ST_GEOMETRYTYPE']($call);
+
+        self::assertSame(15, $type?->length);
+        self::assertSame('utf8mb4_0900_ai_ci', $type->collation->name);
+        self::assertSame(1, $rules['ST_ISEMPTY']($call)?->length);
+        self::assertSame(10, $rules['ST_NUMGEOMETRIES']($call)?->length);
+        self::assertSame(10, $rules['ST_NUMPOINTS']($call)?->length);
+        self::assertSame(10, $rules['ST_NUMINTERIORRING']($call)?->length);
+        self::assertSame(1, $rules['ST_ISCLOSED']($call)?->length);
+        self::assertSame(Field::Long, $rules['ST_DIMENSION']($call)?->storageField);
+        self::assertSame(21, $rules['CONTAINS']($call)?->length);
+        self::assertSame(Field::LongLong, $rules['CONTAINS']($call)->field);
+    }
+    public function testRulesResolveGeometryAsBinaryWithCoercibleCollation(): void
+    {
+        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $rules = (new SpatialResults())->rules();
+        $geometry = new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible);
+        self::assertEquals($geometry, $rules['POINT']($call));
+        self::assertEquals($geometry, $rules['ST_GEOMFROMTEXT']($call));
+        self::assertEquals($geometry, $rules['ST_MULTIPOINTFROMTEXT']($call));
+        self::assertEquals($geometry, $rules['GEOMETRYCOLLECTION']($call));
+        self::assertEquals($geometry, $rules['ST_POINTN']($call));
+    }
+
+    public function testRulesResolveGeometryOutputFormatsWithoutExecutionState(): void
+    {
+        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $rules = (new SpatialResults())->rules();
+        $text = $rules['ST_ASTEXT']($call);
+        $binary = $rules['ST_ASWKB']($call);
+        self::assertSame([Field::LongBlob, 67108864, 'utf8mb4_0900_ai_ci'], [$text?->field, $text?->length, $text?->collation->name]);
+        self::assertSame([Field::LongBlob, 4294967295, 'binary'], [$binary?->field, $binary?->length, $binary?->collation->name]);
+        self::assertSame(Field::Geometry, $rules['ST_SWAPXY']($call)?->field);
+    }
+    public function testRulesDistinguishCoordinateNumbersFromReplacedGeometry(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'));
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $rules = (new SpatialResults())->rules();
+        $read = $rules['ST_X'](new Invocation([Domain::null()], [], $settings, $derivation));
+        $write = $rules['ST_X'](new Invocation([Domain::null(), Domain::double()], [], $settings, $derivation));
+        self::assertSame([Field::Double, 23, 31], [$read?->field, $read?->length, $read?->decimals]);
+        self::assertSame([Field::Geometry, 4294967295, 0], [$write?->field, $write?->length, $write?->decimals]);
+    }
+
+}

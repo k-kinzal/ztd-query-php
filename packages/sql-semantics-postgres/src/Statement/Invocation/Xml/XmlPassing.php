@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The PASSING clause of XMLEXISTS and XMLTABLE: the document the path is evaluated on.
@@ -28,12 +27,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class XmlPassing implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $document The XML document
      */
-    public function __construct(public readonly Scalar $document)
+    public function __construct(public readonly Scalar $document, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new Precedence())->primary($document), 'The document passed is a primary expression; group it.');
     }

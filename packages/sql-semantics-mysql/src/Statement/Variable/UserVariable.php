@@ -6,14 +6,16 @@ namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Rules\Typing\Variables;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -30,17 +32,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Naming the session state a variable depends on
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a = @total');
- *     [$query->statement->where->right->name->value, $query->facts->scalar($query->statement->where->right)->type->missing[0]->describe()] // => ['total', 'the session state: user variable @total']
+ *     [$query->query->where->right->name->value, $query->query->where->right->scalarInformation()->type->missing[0]->describe()] // => ['total', 'the session state: user variable @total']
  */
 final class UserVariable implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The variable name without the at sign
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**
@@ -48,7 +54,17 @@ final class UserVariable implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent);
+        $settings = Settings::of($derivation->context);
+        $name = strtolower($this->name->value);
+        $introduced = $derivation->introducedVariables[$name] ?? null;
+        if ($introduced !== null) {
+            return new ScalarFact($introduced, Nullability::Nullable, new UserVariableBinding($this->name, true));
+        }
+        $domain = (new Variables($settings, $derivation->context->profile->grammar))->read($name);
+        if ($domain === null) {
+            return new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent);
+        }
+        return new ScalarFact(new Known($domain), Nullability::Nullable, new UserVariableBinding($this->name, isset($settings->userVariables[$name])));
     }
 
     /**
@@ -56,6 +72,6 @@ final class UserVariable implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->symbol('@')->glue()->name($this->name, NameUse::Label);
+        $out->symbol('@')->glue()->name($this->name, NameUse::Variable);
     }
 }

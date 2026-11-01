@@ -34,9 +34,10 @@ final class NameConversion implements MissingInput
     use Snapshot;
 
     /**
+     * @param string $text The name bytes to convert, after removing leading controls and stopping at NUL
      * @param string $charset The character set of the introducer, as written in lower case
      */
-    public function __construct(public readonly string $charset)
+    public function __construct(public readonly string $charset, public readonly string $text)
     {
     }
 

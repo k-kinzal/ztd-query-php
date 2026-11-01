@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An object named within the table or domain it belongs to: `name ON table` or `name ON DOMAIN domain`.
@@ -29,17 +28,22 @@ use SqlSemantics\Statement\Snapshot;
  *     $member = new \SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\MemberName(new \SqlSemantics\Statement\Identifier\Name('audit'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('orders')));
  *     [$member->name->value, $member->table()?->name->value] // => ['audit', 'orders']
  */
-final class MemberName implements ObjectReference
+final class MemberName implements ObjectReference, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The object name
      * @param DottedName|QualifiedName $owner The table or domain the object belongs to
      * @param bool $domain Whether the owner is a domain, written ON DOMAIN
      */
-    public function __construct(public readonly Name $name, public readonly DottedName|QualifiedName $owner, public readonly bool $domain = false)
+    public function __construct(public readonly Name $name, public readonly DottedName|QualifiedName $owner, public readonly bool $domain = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 
     /**

@@ -28,10 +28,10 @@ enum Comparison
     }
 
     /**
-     * Folds ASCII letters only; every other byte is kept, independent of the host locale.
+     * Answers a comparison key: sensitive names stay unchanged; otherwise only ASCII letters fold.
      */
     public function fold(string $name): string
     {
-        return strtr($name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
+        return $this === self::Sensitive ? $name : strtr($name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
     }
 }

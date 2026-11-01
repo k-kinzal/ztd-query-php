@@ -7,11 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Explain;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * HELP: searches the help tables of the server for a topic.
@@ -28,17 +28,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the topic
  *     $help = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("HELP 'contents'");
- *     [$help->statement->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, 'HELP contents']
+ *     [$help->topic->value, $help->shape()?->complete(), $help->toString()] // => ['contents', false, "HELP 'contents'"]
  */
-final class Help implements Statement
+final class Help extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param Name $topic The search string
+     * @param Name|Text $topic The named topic or quoted search string
      */
-    public function __construct(public readonly Name $topic)
+    public function __construct(public readonly Name|Text $topic, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input(!$topic instanceof Text || $topic->radix === null, 'A HELP string is quoted character text.');
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -55,6 +60,11 @@ final class Help implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('HELP')->name($this->topic, NameUse::Label);
+        $out->keyword('HELP');
+        if ($this->topic instanceof Text) {
+            $out->node($this->topic);
+        } else {
+            $out->name($this->topic, NameUse::Label);
+        }
     }
 }

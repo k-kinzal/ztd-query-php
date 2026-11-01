@@ -22,7 +22,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -53,11 +52,12 @@ use SqlSemantics\Statement\Statement;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a, b)');
  *     $index = $semantics->analyze('CREATE UNIQUE INDEX i ON t (b DESC) WHERE a IS NOT NULL', [$table]);
- *     [$index->facts->relation($index->statement)->table->table === $table->declarations()[0], $index->facts->scalar($index->statement->terms[0]->expression)->resolution->slot->column === $table->declarations()[0]->columns[1]] // => [true, true]
+ *     [$index->relationInformation()->table->table === $table->declarations()[0], $index->terms[0]->expression->scalarInformation()->resolution->slot->column === $table->declarations()[0]->columns[1]] // => [true, true]
  */
-final class CreateIndex implements Statement, Relation
+final class CreateIndex extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<SortTerm> The indexed columns and expressions in order
@@ -79,7 +79,16 @@ final class CreateIndex implements Statement, Relation
         public readonly ?Scalar $where = null,
         public readonly bool $unique = false,
         public readonly bool $ifNotExists = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($name->catalog === null, 'An index name has at most a schema qualifier.');
         $this->terms = Check::listOf($terms, SortTerm::class, 'An index has at least one term.', 1);
         foreach ($this->terms as $term) {

@@ -20,7 +20,7 @@ final class ColumnForeignOptionsTest extends TestCase
         $statement = $semantics->analyze('ALTER FOREIGN TABLE t ALTER zz OPTIONS (ADD x \'y\')', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

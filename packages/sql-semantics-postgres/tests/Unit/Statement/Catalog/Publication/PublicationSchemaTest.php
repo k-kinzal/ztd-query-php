@@ -24,7 +24,7 @@ final class PublicationSchemaTest extends TestCase
 
     public function testRenderReadsABareNameAfterASchemaAsASchema(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA a, b')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLES IN SCHEMA a, b');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationSchema::class, $statement->objects[1]::class);
     }

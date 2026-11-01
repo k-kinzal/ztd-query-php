@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,18 +23,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a release of a savepoint
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('RELEASE SAVEPOINT s');
- *     [$operation->statement->name->value, $operation->toString()] // => ['s', 'RELEASE s']
+ *     [$operation->name->value, $operation->toString()] // => ['s', 'RELEASE s']
  */
-final class SavepointCommand implements Statement
+final class SavepointCommand extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SavepointAction $action What is done with the savepoint
      * @param Name $name The savepoint name
      */
-    public function __construct(public readonly SavepointAction $action, public readonly Name $name)
+    public function __construct(public readonly SavepointAction $action, public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

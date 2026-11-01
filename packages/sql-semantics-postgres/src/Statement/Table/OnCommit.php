@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
  * @visibility public
  * @example Reading the ON COMMIT action
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TEMP TABLE t (a int) ON COMMIT DELETE ROWS');
- *     $create->statement->onCommit // => \SqlSemantics\Platform\PostgreSql\Statement\Table\OnCommit::DeleteRows
+ *     $create->onCommit // => \SqlSemantics\Platform\PostgreSql\Statement\Table\OnCommit::DeleteRows
  */
 enum OnCommit: string
 {

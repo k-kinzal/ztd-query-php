@@ -18,7 +18,7 @@ final class ShowEngineLogsTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW ENGINE ALL LOGS');
-        self::assertInstanceOf(ShowEngineLogs::class, $show->statement);
+        self::assertInstanceOf(ShowEngineLogs::class, $show);
         self::assertSame('Type', $show->field(0)->name?->value);
     }
 

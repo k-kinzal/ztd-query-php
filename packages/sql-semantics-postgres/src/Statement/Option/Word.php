@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An identifier or non-reserved keyword written as an option or parameter value.
@@ -24,12 +23,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Word implements OptionArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $word The decoded word
      */
-    public function __construct(public readonly Name $word)
+    public function __construct(public readonly Name $word, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

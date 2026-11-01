@@ -20,16 +20,16 @@ final class RollbackToTest extends TestCase
         $operation = (new Semantics(Dialect::Sqlite))->analyze('ROLLBACK TO s1', []);
 
         self::assertNull($operation->shape());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheSavepointAndTheIgnoredTransactionName(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('rollback transaction t1 to savepoint s1');
 
-        self::assertInstanceOf(RollbackTo::class, $operation->statement);
-        self::assertSame('s1', $operation->statement->savepoint->value);
-        self::assertSame('t1', $operation->statement->name?->value);
+        self::assertInstanceOf(RollbackTo::class, $operation);
+        self::assertSame('s1', $operation->savepoint->value);
+        self::assertSame('t1', $operation->name?->value);
         self::assertSame('ROLLBACK TRANSACTION t1 TO s1', $operation->toString());
     }
 

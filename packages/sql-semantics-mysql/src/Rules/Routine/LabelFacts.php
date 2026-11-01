@@ -32,7 +32,7 @@ final class LabelFacts
         if ($label !== null && ($scope->holds($scope->blocks, $label) || $scope->holds($scope->loops, $label))) {
             $derivation->report(new ProgramProblem(ProgramRule::RedefinedLabel, $label->value));
         }
-        if ($end !== null && ($label === null || strcasecmp($label->value, $end->value) !== 0)) {
+        if ($end !== null && ($label === null || mb_strtolower($label->value, 'UTF-8') !== mb_strtolower($end->value, 'UTF-8'))) {
             $derivation->report(new ProgramProblem(ProgramRule::EndLabelMismatch, $end->value));
         }
 

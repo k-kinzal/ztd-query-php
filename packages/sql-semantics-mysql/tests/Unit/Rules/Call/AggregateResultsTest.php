@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Rules\Call\AggregateResults;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
-use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
@@ -47,20 +46,33 @@ final class AggregateResultsTest extends TestCase
         self::assertSame(Nullability::NotNull, $bits->nullability);
     }
 
-    public function testAggregateReportsDistinctInAWindow(): void
+    public function testAggregateAllowsInertDistinctInAMinimumWindow(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $int = [new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull)];
-        (new AggregateResults())->aggregate(new Aggregate(AggregateFunction::Sum, [new NumberLiteral('1')], true, false, new Name('w')), $int, $derivation);
+        $call = new Aggregate(AggregateFunction::Minimum, [new NumberLiteral('1')], true, false, new Name('w'));
+        (new AggregateResults())->aggregate($call, $int, $derivation);
 
-        self::assertInstanceOf(UnsupportedWindowing::class, $derivation->facts()->diagnostics[0]);
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testSumIsDecimalForExactNumbersAndDoubleOtherwise(): void
     {
         self::assertEquals(new Known(TypeClass::Floating->descriptor()), (new AggregateResults())->sum(new Known(TypeClass::Character->descriptor())));
         self::assertEquals(new Choice([TypeClass::Decimal->descriptor(), TypeClass::Floating->descriptor()]), (new AggregateResults())->sum(new NullOnly()));
+    }
+
+    public function testAggregateAllowsDistinctSpatialWindowing(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $int = [new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull)];
+        $result = (new AggregateResults())->aggregate(new Aggregate(AggregateFunction::Collect, [new NumberLiteral('1')], true, false, new Name('w')), $int, $derivation);
+
+        self::assertSame([], $derivation->facts()->diagnostics);
+        self::assertEquals(new Known(TypeClass::Spatial->descriptor()), $result->type);
+        self::assertSame(Nullability::Nullable, $result->nullability);
     }
 
     public function testBitsIsBinaryForABinaryString(): void

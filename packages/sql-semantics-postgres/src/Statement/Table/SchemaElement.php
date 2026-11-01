@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the schema written on an element
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE s.t (a int)');
- *     $create->statement->createdSchema()?->value // => 's'
+ *     $create->createdSchema()?->value // => 's'
  */
 interface SchemaElement extends Statement
 {

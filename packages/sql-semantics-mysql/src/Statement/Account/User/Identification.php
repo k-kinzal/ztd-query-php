@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One authentication method of an account: `IDENTIFIED [WITH plugin] [BY 'password' | BY RANDOM PASSWORD | AS 'string']`.
@@ -28,14 +27,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Identification implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $plugin The authentication plugin, when WITH names one
      * @param Credential $credential What the clause gives the plugin
      * @param Text|null $secret The password, hash or authentication string, for a credential that carries one
      */
-    public function __construct(public readonly ?Name $plugin, public readonly Credential $credential, public readonly ?Text $secret = null)
+    public function __construct(public readonly ?Name $plugin, public readonly Credential $credential, public readonly ?Text $secret = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($secret !== null) === $credential->written(), 'A password, hash or authentication string is written exactly when the credential carries one.');
         Check::input($plugin !== null || ($credential !== Credential::None && $credential !== Credential::Hash), 'Only a named plugin is identified alone or by an authentication string.');

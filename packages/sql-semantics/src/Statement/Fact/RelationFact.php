@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)');
  *     $query = $semantics->analyze('SELECT a FROM t', [$table]);
- *     count($query->facts->relation($query->inputRelation())->shape->slots) // => 2
+ *     count($query->inputRelation()->relationInformation()->shape->slots) // => 2
  */
 final class RelationFact
 {

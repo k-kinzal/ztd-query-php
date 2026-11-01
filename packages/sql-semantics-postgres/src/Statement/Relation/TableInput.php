@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One occurrence of a named table, view or common table as query input.
@@ -31,9 +30,10 @@ use SqlSemantics\Statement\Snapshot;
  * @example Refusing column names without a correlation name
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), null, [new \SqlSemantics\Statement\Identifier\Name('a')]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class TableInput implements NamedRelation
+final class TableInput implements NamedRelation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names written after the correlation name
@@ -46,8 +46,11 @@ final class TableInput implements NamedRelation
      * @param list<Name> $columns The column names written after the correlation name
      * @param TableSample|null $sample The TABLESAMPLE clause
      */
-    public function __construct(public readonly RelationReference $table, public readonly ?Name $alias = null, array $columns = [], public readonly ?TableSample $sample = null)
+    public function __construct(public readonly RelationReference $table, public readonly ?Name $alias = null, array $columns = [], public readonly ?TableSample $sample = null, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'Column aliases are names.');
         Check::input($alias !== null || $this->columns === [], 'Column aliases are written after a correlation name.');
     }

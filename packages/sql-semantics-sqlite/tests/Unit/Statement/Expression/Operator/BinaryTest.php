@@ -22,7 +22,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Choice;
@@ -144,10 +143,10 @@ final class BinaryTest extends TestCase
 
         self::assertInstanceOf(Binary::class, $sum);
         self::assertSame(BinaryOperator::Add, $sum->operator);
-        self::assertInstanceOf(ResolvedColumn::class, $query->facts->scalar($sum->left)->resolution);
-        self::assertSame(Nullability::NotNull, $query->facts->scalar($sum->left)->nullability);
-        self::assertSame(Nullability::Nullable, $query->facts->scalar($sum->right)->nullability);
-        self::assertNull($query->facts->scalar($sum)->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $sum->left->scalarInformation()->resolution);
+        self::assertSame(Nullability::NotNull, $sum->left->scalarInformation()->nullability);
+        self::assertSame(Nullability::Nullable, $sum->right->scalarInformation()->nullability);
+        self::assertNull($sum->scalarInformation()->resolution);
     }
 
     public function testDeriveScalarDependsOnAnUnboundParameter(): void
@@ -162,7 +161,7 @@ final class BinaryTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2) < (1, 3), (1, 2) IS (1, 2), (SELECT 1, 2) = (1, 2)', []);
 
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
         self::assertSame(Nullability::NotNull, $query->field(1)->nullability);
@@ -172,21 +171,21 @@ final class BinaryTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2) = 3', []);
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $query->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::TooManyValueColumns, $query->facts->diagnostics[0]->rule);
-        self::assertSame('row value misused', $query->facts->diagnostics[0]->message());
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(Misuse::class, $query->diagnostics()[0]);
+        self::assertSame(MisuseRule::TooManyValueColumns, $query->diagnostics()[0]->rule);
+        self::assertSame('row value misused', $query->diagnostics()[0]->message());
     }
 
     public function testDeriveScalarReportsRowsOfDifferentWidths(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2) = (1, 2, 3)', []);
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
-        self::assertSame(ArityRule::RowComparison, $query->facts->diagnostics[0]->rule);
-        self::assertSame(2, $query->facts->diagnostics[0]->expected);
-        self::assertSame(3, $query->facts->diagnostics[0]->actual);
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(ArityMismatch::class, $query->diagnostics()[0]);
+        self::assertSame(ArityRule::RowComparison, $query->diagnostics()[0]->rule);
+        self::assertSame(2, $query->diagnostics()[0]->expected);
+        self::assertSame(3, $query->diagnostics()[0]->actual);
     }
 
     public function testDeriveScalarReportsARowValueOperandOfAnyOtherOperator(): void
@@ -195,11 +194,11 @@ final class BinaryTest extends TestCase
         $sum = $semantics->analyze('SELECT (1, 2) + 1', []);
         $conjunction = $semantics->analyze('SELECT (1, 2) AND 1', []);
 
-        self::assertCount(1, $sum->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $sum->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::TooManyValueColumns, $sum->facts->diagnostics[0]->rule);
-        self::assertCount(1, $conjunction->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $conjunction->facts->diagnostics[0]);
+        self::assertCount(1, $sum->diagnostics());
+        self::assertInstanceOf(Misuse::class, $sum->diagnostics()[0]);
+        self::assertSame(MisuseRule::TooManyValueColumns, $sum->diagnostics()[0]->rule);
+        self::assertCount(1, $conjunction->diagnostics());
+        self::assertInstanceOf(Misuse::class, $conjunction->diagnostics()[0]);
     }
 
     public function testRenderWritesWordedOperatorsAsKeywordsAndOthersAsSymbols(): void
@@ -227,7 +226,7 @@ final class BinaryTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $product = new Binary(BinaryOperator::Multiply, new IntegerLiteral('2'), new IntegerLiteral('3'));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Binary(BinaryOperator::Add, new IntegerLiteral('1'), $product))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new Binary(BinaryOperator::Add, new IntegerLiteral('1'), $product))]));
 
         self::assertSame('SELECT 1 + 2 * 3', $operation->toString());
         self::assertInstanceOf(Choice::class, $operation->field(0)->type);

@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of a role membership grant: ADMIN, INHERIT or SET with OPTION, TRUE or FALSE.
@@ -21,11 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a membership option
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT staff TO joe WITH INHERIT FALSE');
- *     [$operation->statement->options[0]->name->value, $operation->statement->options[0]->recognized(), $operation->statement->options[0]->setting->enabled()] // => ['inherit', true, false]
+ *     [$operation->options[0]->name->value, $operation->options[0]->recognized(), $operation->options[0]->setting->enabled()] // => ['inherit', true, false]
  */
 final class MembershipOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The option names the server recognizes.
@@ -36,7 +35,7 @@ final class MembershipOption implements Node
      * @param Name $name The option name as decoded
      * @param MembershipSetting $setting The value
      */
-    public function __construct(public readonly Name $name, public readonly MembershipSetting $setting)
+    public function __construct(public readonly Name $name, public readonly MembershipSetting $setting, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A privilege the server or a component registers at runtime, such as `BACKUP_ADMIN` (8.0+).
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading a dynamic privilege
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT BACKUP_ADMIN ON *.* TO u')->statement->privileges[0]->name->value // => 'BACKUP_ADMIN'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GRANT BACKUP_ADMIN ON *.* TO u')->privileges[0]->name->value // => 'BACKUP_ADMIN'
  */
-final class DynamicPrivilege implements Grantable
+final class DynamicPrivilege implements Privilege
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column list as written; none when absent
@@ -39,7 +38,7 @@ final class DynamicPrivilege implements Grantable
      * @param Name $name The privilege name as written
      * @param list<Name> $columns The column list as written; none when absent
      */
-    public function __construct(public readonly Name $name, array $columns = [])
+    public function __construct(public readonly Name $name, array $columns = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A column list holds column names.');
     }

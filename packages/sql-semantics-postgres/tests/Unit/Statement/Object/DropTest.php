@@ -32,27 +32,29 @@ final class DropTest extends TestCase
     {
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('DROP TABLE t, u', [$table]);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(Drop::class, $statement);
-        $resolution = $operation->facts->relation($statement->objects[0])->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $statement->objects[0]);
+        $resolution = $statement->objects[0]->relationInformation()->table;
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($table, $resolution->table);
-        self::assertSame(['Relation u does not exist.'], [$operation->facts->diagnostics[0]->message()]);
+        self::assertSame(['Relation u does not exist.'], [$operation->diagnostics()[0]->message()]);
     }
 
     public function testDeriveStatementSkipsAMissingTableUnderIfExists(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('DROP VIEW IF EXISTS v', []);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(Drop::class, $statement);
-        self::assertNull($operation->facts->relation($statement->objects[0])->table);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $statement->objects[0]);
+        self::assertNull($statement->objects[0]->relationInformation()->table);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementReportsConcurrentDrops(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('DROP INDEX CONCURRENTLY i, j CASCADE');
-        self::assertEquals([new ObjectProblem(ObjectProblemKind::ConcurrentMultiple), new ObjectProblem(ObjectProblemKind::ConcurrentCascade)], $operation->facts->diagnostics);
+        self::assertEquals([new ObjectProblem(ObjectProblemKind::ConcurrentMultiple), new ObjectProblem(ObjectProblemKind::ConcurrentCascade)], $operation->diagnostics());
     }
 
     public function testRenderWritesEachKind(): void
@@ -86,7 +88,7 @@ final class DropTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP TABLE IF EXISTS v, t', $context)->facts->diagnostics));
-        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP SEQUENCE t', $context)->facts->diagnostics));
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP TABLE IF EXISTS v, t', $context)->diagnostics()));
+        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP SEQUENCE t', $context)->diagnostics()));
     }
 }

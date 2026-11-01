@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Partition;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The keyword ALL in place of a partition list: every partition of the table.
@@ -18,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AllPartitions implements PartitionSelection
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes the keyword.
@@ -26,5 +25,11 @@ final class AllPartitions implements PartitionSelection
     public function render(Output $out): void
     {
         $out->keyword('ALL');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

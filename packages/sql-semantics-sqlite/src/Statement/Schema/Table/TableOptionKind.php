@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Table;
  * @visibility public
  * @example Reading the kind of a table option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID');
- *     $create->statement->options[0]->kind() // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind::WithoutRowid
+ *     $create->options[0]->kind() // => \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind::WithoutRowid
  */
 enum TableOptionKind
 {

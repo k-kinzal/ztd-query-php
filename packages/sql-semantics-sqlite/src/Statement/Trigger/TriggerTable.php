@@ -13,7 +13,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The table or view a trigger watches; the rows NEW and OLD refer to are rows of it.
@@ -25,17 +24,21 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the table of a trigger
  *     $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TRIGGER r AFTER DELETE ON main.t BEGIN SELECT 1; END');
- *     [$trigger->statement->table->name()->schema->value, $trigger->statement->table->name()->name->value] // => ['main', 't']
+ *     [$trigger->table->name()->schema->value, $trigger->table->name()->name->value] // => ['main', 't']
  */
-final class TriggerTable implements NamedRelation
+final class TriggerTable implements NamedRelation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The table name
      */
-    public function __construct(public readonly QualifiedName $name)
+    public function __construct(public readonly QualifiedName $name, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 
     /**

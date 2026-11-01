@@ -18,7 +18,7 @@ final class NodegroupOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' NODEGROUP 3", (new Semantics(Dialect::MySql))->analyze("create logfile group g add undofile 'f' nodegroup = 3")->toString());
+        self::assertSame("CREATE LOGFILE GROUP g ADD UNDOFILE 'f' NODEGROUP = 3", (new Semantics(Dialect::MySql))->analyze("create logfile group g add undofile 'f' nodegroup = 3")->toString());
     }
 
     public function testKeywordNamesTheOption(): void

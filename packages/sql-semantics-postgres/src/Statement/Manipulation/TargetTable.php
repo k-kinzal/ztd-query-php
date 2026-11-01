@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The table an INSERT, UPDATE, DELETE, MERGE or COPY writes to or reads from, with its correlation name.
@@ -27,18 +26,22 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the table a statement writes to
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('UPDATE ONLY app.t AS x SET a = 1');
- *     [$update->statement->target->name()->schema?->value, $update->statement->target->table->only, $update->statement->target->alias()?->value] // => ['app', true, 'x']
+ *     [$update->target->name()->schema?->value, $update->target->table->only, $update->target->alias()?->value] // => ['app', true, 'x']
  */
-final class TargetTable implements NamedRelation
+final class TargetTable implements NamedRelation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RelationReference $table The table, with ONLY when its descendant tables are excluded
      * @param Name|null $alias The correlation name
      */
-    public function __construct(public readonly RelationReference $table, public readonly ?Name $alias = null)
+    public function __construct(public readonly RelationReference $table, public readonly ?Name $alias = null, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 
     /**

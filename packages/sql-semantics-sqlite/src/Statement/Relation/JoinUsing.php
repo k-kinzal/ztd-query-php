@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The USING constraint of a join: the columns both sides are joined on and merged by.
@@ -17,11 +16,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the columns of a USING constraint
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t JOIN u USING (a, b)');
- *     $query->statement->from->steps[0]->constraint->columns[1]->value // => 'b'
+ *     $query->from->steps[0]->constraint->columns[1]->value // => 'b'
  */
 final class JoinUsing implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The column names in written order
@@ -31,7 +30,7 @@ final class JoinUsing implements Node
     /**
      * @param list<Name> $columns The column names in written order; at least one
      */
-    public function __construct(array $columns)
+    public function __construct(array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'USING names at least one column.', 1);
     }

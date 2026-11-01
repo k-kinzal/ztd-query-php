@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ON constraint of a join.
@@ -15,16 +14,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the condition of a join
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 FROM t JOIN u ON t.a = u.a');
- *     $query->statement->from->steps[0]->constraint->condition->right->qualifier->name->value // => 'u'
+ *     $query->from->steps[0]->constraint->condition->right->qualifier->name->value // => 'u'
  */
 final class JoinOn implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $condition The join condition
      */
-    public function __construct(public readonly Scalar $condition)
+    public function __construct(public readonly Scalar $condition, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

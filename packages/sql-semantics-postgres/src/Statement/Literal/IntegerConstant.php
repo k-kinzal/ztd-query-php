@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The value of a numeric constant written as an integer that fits 32 bits.
@@ -23,18 +22,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a hexadecimal integer
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 0x1_F');
- *     $query->statement->targets[0]->expression->value->digits // => '31'
+ *     $query->targets[0]->expression->value->digits // => '31'
  * @example Rejecting digits that are not canonical
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('007') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class IntegerConstant implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $digits The decimal digits without leading zeros, at most 2147483647
      */
-    public function __construct(public readonly string $digits)
+    public function __construct(public readonly string $digits, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(preg_match('/\A(?:0|[1-9][0-9]*)\z/', $digits) === 1, 'An integer constant is canonical decimal digits.');
         Check::input((new Numerals())->within($digits, '2147483647'), 'An integer constant fits 32 bits; a larger integer is a numeric constant.');

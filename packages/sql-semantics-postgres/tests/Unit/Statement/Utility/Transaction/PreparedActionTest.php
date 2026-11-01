@@ -14,7 +14,7 @@ final class PreparedActionTest extends TestCase
 {
     public function testEachStepIsRead(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK PREPARED \'x\'')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK PREPARED \'x\'');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\PreparedTransaction::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\PreparedAction::Rollback, $statement->action);
     }

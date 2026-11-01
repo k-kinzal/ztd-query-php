@@ -29,7 +29,7 @@ final class RowExpressionTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT (a, b) = (1, 2), (a, a, 3) = (1, 2, 3) FROM t', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -41,19 +41,19 @@ final class RowExpressionTest extends TestCase
         $row = $statement->columns[0]->expression->left;
         self::assertCount(2, $row->items);
         self::assertInstanceOf(ColumnUse::class, $row->items[0]);
-        $fact = $operation->facts->scalar($row);
+        $fact = $row->scalarInformation();
         self::assertEquals(new Known(new Vector(2)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
         self::assertNull($fact->resolution);
-        self::assertEquals(new Known(new Vector(3)), $operation->facts->scalar($statement->columns[1]->expression->left)->type);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($statement->columns[1]->expression->left)->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertEquals(new Known(new Vector(3)), $statement->columns[1]->expression->left->scalarInformation()->type);
+        self::assertSame(Nullability::NotNull, $statement->columns[1]->expression->left->scalarInformation()->nullability);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarCombinesTheNullFactsOfTheElements(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, ?) = (1, 2), (NULL, 1) = (1, 2), (1, 2) = (3, 4)', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         $rows = array_map(static function (object $column): RowExpression {
@@ -63,17 +63,17 @@ final class RowExpressionTest extends TestCase
 
             return $column->expression->left;
         }, $statement->columns);
-        self::assertSame(Nullability::Dependent, $operation->facts->scalar($rows[0])->nullability);
-        self::assertSame(Nullability::Nullable, $operation->facts->scalar($rows[1])->nullability);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($rows[2])->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame(Nullability::Dependent, $rows[0]->scalarInformation()->nullability);
+        self::assertSame(Nullability::Nullable, $rows[1]->scalarInformation()->nullability);
+        self::assertSame(Nullability::NotNull, $rows[2]->scalarInformation()->nullability);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarAsAResultColumnIsReportedByTheSelection(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2)', []);
 
-        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->diagnostics());
         self::assertEquals(new Known(new Vector(2)), $operation->field(0)->type);
     }
 

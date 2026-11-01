@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use SqlSemantics\Rendering\Output;
@@ -15,8 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW OPEN TABLES: the tables open in the table cache.
@@ -31,18 +30,27 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW OPEN TABLES FROM shop LIKE 'a%'");
- *     [$show->statement->database?->value, $show->toString()] // => ['shop', "SHOW OPEN TABLES FROM shop LIKE 'a%'"]
+ *     [$show->database?->value, $show->toString()] // => ['shop', "SHOW OPEN TABLES FROM shop LIKE 'a%'"]
  */
-final class ShowOpenTables implements Statement, Relation
+final class ShowOpenTables extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ?Name $database The database written after FROM or IN; null for the current database
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
+     * @param bool $databaseIn Whether the database is introduced by IN instead of FROM
      */
-    public function __construct(public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null)
+    public function __construct(public readonly ?Name $database = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $databaseIn = false)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -68,7 +76,7 @@ final class ShowOpenTables implements Statement, Relation
     {
         $out->keyword('SHOW', 'OPEN', 'TABLES');
         if ($this->database !== null) {
-            $out->keyword('FROM')->name($this->database, NameUse::Qualifier);
+            $out->keyword($this->databaseIn ? 'IN' : 'FROM')->name($this->database, NameUse::Qualifier);
         }
         $out->node($this->filter);
     }

@@ -10,8 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Expression\TemporalResult;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
@@ -29,7 +27,7 @@ final class TemporalResultTest extends TestCase
         $missing = new Dependent([new SessionState('x')]);
 
         self::assertEquals(new Known(new Temporal(TemporalKind::DateTime)), $results->interval(new Known(new Temporal(TemporalKind::Timestamp)), IntervalUnit::Day, GrammarRelease::MySql847));
-        self::assertEquals(new Known(new Character(CharacterKind::VarChar)), $results->interval(new NullOnly(), IntervalUnit::Day, GrammarRelease::MySql847));
+        self::assertEquals(new Known(new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()), $results->interval(new NullOnly(), IntervalUnit::Day, GrammarRelease::MySql847));
         self::assertEquals($missing, $results->interval($missing, IntervalUnit::Day, GrammarRelease::MySql847));
     }
 
@@ -45,7 +43,7 @@ final class TemporalResultTest extends TestCase
         $results = new TemporalResult();
 
         self::assertEquals(
-            [new Temporal(TemporalKind::Time), new Character(CharacterKind::VarChar), new Temporal(TemporalKind::DateTime)],
+            [new Temporal(TemporalKind::Time), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(), new Temporal(TemporalKind::DateTime)],
             [$results->time(IntervalUnit::HourMinute, GrammarRelease::MySql847), $results->time(IntervalUnit::Hour, GrammarRelease::MySql5651), $results->time(IntervalUnit::Week, GrammarRelease::MySql847)],
         );
     }

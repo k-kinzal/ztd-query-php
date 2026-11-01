@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A LIKE clause: the new table takes the columns of another table at this position.
@@ -35,9 +34,11 @@ use SqlSemantics\Statement\Snapshot;
  *     $copy = $semantics->analyze('CREATE TABLE t (LIKE u INCLUDING DEFAULTS, extra boolean)', $source->declarations());
  *     array_map(static fn ($column) => $column->name->value, $copy->declarations()[0]->columns) // => ['id', 'name', 'extra']
  */
-final class LikeClause implements Clause
+final class LikeClause implements Clause, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<LikeOption> The options in the order written
@@ -48,8 +49,11 @@ final class LikeClause implements Clause
      * @param QualifiedName $table The source table
      * @param list<LikeOption> $options The options in the order written
      */
-    public function __construct(public readonly QualifiedName $table, array $options = [])
+    public function __construct(public readonly QualifiedName $table, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->options = Check::listOf($options, LikeOption::class, 'LIKE options are INCLUDING and EXCLUDING options.');
     }
 

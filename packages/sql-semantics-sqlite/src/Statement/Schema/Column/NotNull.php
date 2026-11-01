@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A NOT NULL column constraint.
@@ -21,16 +20,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the conflict resolution of a NOT NULL constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a INT NOT NULL ON CONFLICT IGNORE)');
- *     $create->statement->columns[0]->constraints[0]->conflict // => \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore
+ *     $create->columns[0]->constraints[0]->conflict // => \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore
  */
 final class NotNull implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ConflictResolution|null $conflict The written ON CONFLICT resolution
      */
-    public function __construct(public readonly ?ConflictResolution $conflict = null)
+    public function __construct(public readonly ?ConflictResolution $conflict = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -24,7 +24,7 @@ final class AlterRoleSettingTest extends TestCase
 
     public function testAnalysisKeepsNoRoleForAll(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE ALL IN DATABASE app RESET work_mem')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE ALL IN DATABASE app RESET work_mem');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\AlterRoleSetting::class, $statement);
         self::assertNull($statement->role);
         self::assertSame('app', $statement->database?->value);
@@ -32,12 +32,12 @@ final class AlterRoleSettingTest extends TestCase
 
     public function testDeriveStatementReportsPublic(): void
     {
-        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE public RESET ALL')->facts->diagnostics));
+        self::assertSame(['role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE public RESET ALL')->diagnostics()));
     }
 
     public function testDeriveStatementAcceptsAll(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE ALL RESET ALL')->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE ALL RESET ALL')->diagnostics()));
     }
 
     public function testRejectsTheGroupWord(): void

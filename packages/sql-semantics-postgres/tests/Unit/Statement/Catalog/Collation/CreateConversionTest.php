@@ -19,6 +19,6 @@ final class CreateConversionTest extends TestCase
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONVERSION s.c FOR \'UTF8\' TO \'LATIN1\' FROM s.f')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONVERSION s.c FOR \'UTF8\' TO \'LATIN1\' FROM s.f')->diagnostics());
     }
 }

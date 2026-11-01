@@ -82,4 +82,18 @@ final class ItemLayoutTest extends TestCase
         self::assertSame([[' ', 'WITH'], [' /* c */ ', 'ROLLUP']], $layout->words(' ', 'WITH /* c */ ROLLUP'));
         self::assertSame([[' ', 'a']], $layout->words(' ', 'a'));
     }
+    public function testNamesConvertsOnlyTheTypedNameSlots(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $node = $platform->parser($profile)->parse("SELECT `é` + 'é'")->find('expr')[0];
+        $rules = new ItemLayout($profile->grammar);
+        $layout = $rules->of($node);
+        $lowering = new \SqlSemantics\Platform\MySql\Lowering\Lowering($platform->productions($profile), new \SqlSemantics\Lowering\Leaves(), $profile);
+        $expression = $lowering->expressions->expression($node);
+        $decoded = $rules->names($layout, $expression, $profile, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'));
+        self::assertSame("`Ã©` + 'é'", $decoded->text());
+        self::assertSame("`é` + 'é'", $layout->text());
+    }
+
 }

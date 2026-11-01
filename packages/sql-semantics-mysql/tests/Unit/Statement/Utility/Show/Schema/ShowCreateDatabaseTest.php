@@ -18,7 +18,7 @@ final class ShowCreateDatabaseTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW CREATE DATABASE db');
-        self::assertInstanceOf(ShowCreateDatabase::class, $show->statement);
+        self::assertInstanceOf(ShowCreateDatabase::class, $show);
         self::assertSame('Database', $show->field(0)->name?->value);
     }
 

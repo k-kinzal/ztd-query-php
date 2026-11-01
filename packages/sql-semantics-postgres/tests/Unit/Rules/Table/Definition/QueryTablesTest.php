@@ -33,7 +33,7 @@ final class QueryTablesTest extends TestCase
            [
             0 => 'too many column names were specified',
           ],
-        ], [array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns), array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics)]);
+        ], [array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns), array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics())]);
     }
 
     public function testTableDeclaresEveryNamedColumnOfADependentType(): void

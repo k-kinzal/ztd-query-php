@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A CHECK constraint, as a table element or as a column attribute.
@@ -26,18 +25,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a check constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CONSTRAINT positive CHECK (a > 0) NOT ENFORCED)');
- *     [$create->statement->elements[1]->name->name->column->value, $create->statement->elements[1]->enforced] // => ['positive', false]
+ *     [$create->elements[1]->name->name->column->value, $create->elements[1]->enforced] // => ['positive', false]
  */
 final class CheckConstraint implements TableElement, ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $condition The condition every row must not make false
      * @param ConstraintName|null $name The CONSTRAINT clause, when written
      * @param bool|null $enforced Whether ENFORCED (true) or NOT ENFORCED (false) is written after a table constraint; null when absent
      */
-    public function __construct(public readonly Scalar $condition, public readonly ?ConstraintName $name = null, public readonly ?bool $enforced = null)
+    public function __construct(public readonly Scalar $condition, public readonly ?ConstraintName $name = null, public readonly ?bool $enforced = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

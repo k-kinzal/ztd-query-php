@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,17 +22,20 @@ use SqlSemantics\Statement\Statement;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s');
  *     $operation->toString() // => 'DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER s'
  */
-final class DropUserMapping implements Statement
+final class DropUserMapping extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $ifExists Whether IF EXISTS is written
      * @param RoleSpec|MappingUser $user The user
      * @param Name $server The foreign server
      */
-    public function __construct(public readonly bool $ifExists, public readonly RoleSpec|MappingUser $user, public readonly Name $server)
+    public function __construct(public readonly bool $ifExists, public readonly RoleSpec|MappingUser $user, public readonly Name $server, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

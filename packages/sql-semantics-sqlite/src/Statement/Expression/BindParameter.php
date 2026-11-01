@@ -11,7 +11,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a numbered parameter
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT ?2');
- *     [$query->statement->columns[0]->expression->label, $query->field(0)->type->missing[0]->marker] // => ['2', '?2']
+ *     [$query->columns[0]->expression->label, $query->field(0)->type->missing[0]->marker] // => ['2', '?2']
  * @example Refusing a label that would not be read back as one parameter
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter(\SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix::Colon, 'a b') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing letters after a question mark
@@ -38,14 +37,18 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class BindParameter implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ParameterPrefix $prefix The prefix character
      * @param string $label The text after the prefix: empty or digits after a question mark, a name otherwise
      */
-    public function __construct(public readonly ParameterPrefix $prefix, public readonly string $label = '')
+    public function __construct(public readonly ParameterPrefix $prefix, public readonly string $label = '', ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $pattern = $prefix === ParameterPrefix::Question ? '/\A[0-9]*\z/' : '/\A(?:[A-Za-z0-9_$\x80-\xff]|::)+(?:\([^\s()]*\))?\z/';
         Check::input(preg_match($pattern, $label) === 1, 'The label does not spell one bind parameter.');
     }

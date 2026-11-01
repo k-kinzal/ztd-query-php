@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A NOT NULL constraint added to a domain in release 17: `[ CONSTRAINT name ] NOT NULL attributes`.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Adding a named not-null constraint
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d ADD CONSTRAINT nn NOT NULL');
- *     $operation->statement->constraint->name?->value // => 'nn'
+ *     $operation->constraint->name?->value // => 'nn'
  */
 final class DomainNotNull implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ConstraintAttribute> The attributes in the order written
@@ -40,7 +39,7 @@ final class DomainNotNull implements Clause
      * @param Name|null $name The constraint name, when CONSTRAINT is written
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      */
-    public function __construct(public readonly ?Name $name = null, array $attributes = [])
+    public function __construct(public readonly ?Name $name = null, array $attributes = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->attributes = Check::listOf($attributes, ConstraintAttribute::class, 'Constraint attributes are a list.');
     }

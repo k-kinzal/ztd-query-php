@@ -33,6 +33,7 @@ final class Scan
      * @param SqlMode $mode Mode the text is read under
      * @param MySqlVersion $version Release the text is read for
      * @param ParameterSyntax $parameters Which parameter markers are read
+     * @param string|null $clientCharset Input character set for unquoted identifiers
      */
     public function __construct(
         public readonly Cursor $cursor,
@@ -40,6 +41,7 @@ final class Scan
         public readonly SqlMode $mode,
         public readonly MySqlVersion $version,
         public readonly ParameterSyntax $parameters = ParameterSyntax::Native,
+        public readonly ?string $clientCharset = null,
     ) {
     }
 
@@ -61,10 +63,17 @@ final class Scan
      *
      * @param string $byte The byte, or an empty string at the end
      *
-     * @return bool True for letters, digits, underscore, dollar and every byte of a multi-byte character
+     * Latin-1 classes were observed through SQL on MySQL 5.7.44 and 8.4.7,
+     * testing every high-bit byte independently. They are not UTF-8 byte classes.
+     *
+     * @param string|null $clientCharset Input character set
+     * @return bool True for letters, digits, underscore, dollar and multibyte identifier bytes
      */
-    public static function isIdentifierByte(string $byte): bool
+    public static function isIdentifierByte(string $byte, ?string $clientCharset = null): bool
     {
+        if ($byte !== '' && ord($byte) >= 0x80 && strtolower($clientCharset ?? '') === 'latin1') {
+            return preg_match('/^[\x83\x8A\x8C\x8E\x9A\x9C\x9E\x9F\xC0-\xD6\xD8-\xF6\xF8-\xFF]$/', $byte) === 1;
+        }
         return $byte !== '' && ((\SqlParser\Lexer\Ascii::letter($byte) || \SqlParser\Lexer\Ascii::digit($byte)) || $byte === '_' || $byte === '$' || ord($byte) >= 0x80);
     }
 }

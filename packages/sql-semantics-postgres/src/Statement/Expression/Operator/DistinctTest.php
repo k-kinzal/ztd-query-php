@@ -12,7 +12,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -33,15 +32,19 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DistinctTest implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $left The left operand
      * @param Scalar $right The right operand
      * @param bool $negated Whether NOT is written, so that the test is for equality
      */
-    public function __construct(public readonly Scalar $left, public readonly Scalar $right, public readonly bool $negated)
+    public function __construct(public readonly Scalar $left, public readonly Scalar $right, public readonly bool $negated, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->before($left, Precedence::IS), 'The left operand needs parentheses to keep its place.');
         Check::input($precedence->after($right, Precedence::IS), 'The right operand needs parentheses to keep its place.');

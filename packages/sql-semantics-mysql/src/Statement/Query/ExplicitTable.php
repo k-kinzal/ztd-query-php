@@ -16,8 +16,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The TABLE statement: every row and column of one table (MySQL 8.0.19 and later).
@@ -32,18 +30,28 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the table of a TABLE statement
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('TABLE shop.t');
- *     [$query->statement->name()->schema?->value, $query->statement->name()->name->value] // => ['shop', 't']
+ *     [$query->query->name()->schema?->value, $query->query->name()->name->value] // => ['shop', 't']
  */
-final class ExplicitTable implements Statement, Query, NamedRelation
+final class ExplicitTable implements Query, NamedRelation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table name with its optional database
      */
-    public function __construct(public readonly QualifiedName $table)
+    public function __construct(public readonly QualifiedName $table, ?RelationFact $relationInformation = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($table);
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -60,14 +68,6 @@ final class ExplicitTable implements Statement, Query, NamedRelation
     public function alias(): ?Name
     {
         return null;
-    }
-
-    /**
-     * Derives the statement as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
     }
 
     /**

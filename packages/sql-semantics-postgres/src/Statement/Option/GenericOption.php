@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of an `OPTIONS ( name 'value', ... )` list of a foreign-data object.
@@ -23,13 +22,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class GenericOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The option name
      * @param StringConstant $value The option value
      */
-    public function __construct(public readonly Name $name, public readonly StringConstant $value)
+    public function __construct(public readonly Name $name, public readonly StringConstant $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

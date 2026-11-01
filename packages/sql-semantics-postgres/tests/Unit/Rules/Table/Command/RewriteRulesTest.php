@@ -20,7 +20,7 @@ final class RewriteRulesTest extends TestCase
         $statement = $semantics->analyze('CREATE RULE r AS ON INSERT TO t DO ALSO SELECT new.a, b', $context);
         self::assertSame([
           0 => 'Column b does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testWriteWritesTheRule(): void
@@ -34,7 +34,7 @@ final class RewriteRulesTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a'), $semantics->analyze('CREATE FOREIGN TABLE f (a int) SERVER x')];
-        self::assertSame(['rules on materialized views are not supported'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE RULE r AS ON INSERT TO m DO INSTEAD NOTHING', $context)->facts->diagnostics));
-        self::assertSame(['relation "f" cannot have rules'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE RULE r AS ON INSERT TO f DO INSTEAD NOTHING', $context)->facts->diagnostics));
+        self::assertSame(['rules on materialized views are not supported'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE RULE r AS ON INSERT TO m DO INSTEAD NOTHING', $context)->diagnostics()));
+        self::assertSame(['relation "f" cannot have rules'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE RULE r AS ON INSERT TO f DO INSTEAD NOTHING', $context)->diagnostics()));
     }
 }

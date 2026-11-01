@@ -14,7 +14,7 @@ final class BeginTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('BEGIN ISOLATION LEVEL SERIALIZABLE')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('BEGIN ISOLATION LEVEL SERIALIZABLE')->diagnostics());
     }
 
     public function testRenderDropsTheNoiseWordAndCommas(): void

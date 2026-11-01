@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -44,18 +43,25 @@ use SqlSemantics\Statement\Statement;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
  *     $alter = $semantics->analyze('ALTER TABLE t ADD COLUMN b TEXT CHECK (b <> a)', [$table]);
- *     [count($alter->facts->relation($alter->statement)->shape->slots), $alter->toString()] // => [2, 'ALTER TABLE t ADD b TEXT CHECK (b <> a)']
+ *     [count($alter->relationInformation()->shape->slots), $alter->toString()] // => [2, 'ALTER TABLE t ADD b TEXT CHECK (b <> a)']
  */
-final class AlterAddColumn implements Statement, Relation
+final class AlterAddColumn extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table to change
      * @param ColumnDefinition $column The definition of the new column
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ColumnDefinition $column)
+    public function __construct(public readonly QualifiedName $table, public readonly ColumnDefinition $column, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($table->catalog === null, 'A table name has at most a schema qualifier.');
     }
 

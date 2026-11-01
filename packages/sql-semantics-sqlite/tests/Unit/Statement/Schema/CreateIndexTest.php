@@ -26,7 +26,7 @@ final class CreateIndexTest extends TestCase
 {
     public function testIndexedGivesTheTableTheSchemaOfTheIndexName(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE INDEX aux.i ON t (a)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE INDEX aux.i ON t (a)');
 
         self::assertInstanceOf(CreateIndex::class, $statement);
         self::assertSame('aux', $statement->indexed()->schema?->value);
@@ -38,21 +38,21 @@ final class CreateIndexTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
         $operation = $semantics->analyze('CREATE INDEX i ON t (b, a COLLATE nocase) WHERE rowid > 0', [$table]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateIndex::class, $statement);
-        $resolution = $operation->facts->relation($statement)->table;
+        $resolution = $statement->relationInformation()->table;
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($table->declarations()[0], $resolution->table);
-        $column = $operation->facts->scalar($statement->terms[0]->expression)->resolution;
+        $column = $statement->terms[0]->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $column);
         self::assertSame($table->declarations()[0]->columns[1], $column->slot->column);
         self::assertSame($statement, $column->relation);
         self::assertInstanceOf(Collate::class, $statement->terms[1]->expression);
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($statement->terms[1]->expression->operand)->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $statement->terms[1]->expression->operand->scalarInformation()->resolution);
         self::assertInstanceOf(Binary::class, $statement->where);
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($statement->where->left)->resolution);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(ResolvedColumn::class, $statement->where->left->scalarInformation()->resolution);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame([], $operation->declarations());
     }
 
@@ -62,8 +62,8 @@ final class CreateIndexTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a)');
         $operation = $semantics->analyze('CREATE INDEX i ON t (a + rowid)', [$table]);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveStatementReportsWhatAnIndexExpressionAndACondionMayNotContain(): void
@@ -71,7 +71,7 @@ final class CreateIndexTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a)');
         $operation = $semantics->analyze('CREATE INDEX i ON t (t.a, random()) WHERE a IN (SELECT 1) AND ? AND current_time > 0', [$table]);
-        $reported = array_map(static fn (object $diagnostic): array => $diagnostic instanceof ProhibitedExpression ? [$diagnostic->construct->name, $diagnostic->position->name] : [$diagnostic::class], $operation->facts->diagnostics);
+        $reported = array_map(static fn (object $diagnostic): array => $diagnostic instanceof ProhibitedExpression ? [$diagnostic->construct->name, $diagnostic->position->name] : [$diagnostic::class], $operation->diagnostics());
 
         self::assertSame([
             ['DotOperator', 'IndexExpression'],
@@ -87,14 +87,14 @@ final class CreateIndexTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a)');
 
-        self::assertInstanceOf(MissingTable::class, $semantics->analyze('CREATE INDEX i ON u (a)', [$table])->facts->diagnostics[0]);
-        self::assertInstanceOf(MissingColumn::class, $semantics->analyze('CREATE INDEX i ON t (zz)', [$table])->facts->diagnostics[0]);
+        self::assertInstanceOf(MissingTable::class, $semantics->analyze('CREATE INDEX i ON u (a)', [$table])->diagnostics()[0]);
+        self::assertInstanceOf(MissingColumn::class, $semantics->analyze('CREATE INDEX i ON t (zz)', [$table])->diagnostics()[0]);
     }
 
     public function testDeriveRelationKeepsAnUndeclaredTableOpen(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $statement = $semantics->analyze('CREATE INDEX i ON t (a)')->statement;
+        $statement = $semantics->analyze('CREATE INDEX i ON t (a)');
         $derivation = new Derivation($semantics->context());
 
         self::assertInstanceOf(CreateIndex::class, $statement);

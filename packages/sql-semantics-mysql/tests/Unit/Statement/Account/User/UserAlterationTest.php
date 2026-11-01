@@ -22,9 +22,9 @@ final class UserAlterationTest extends TestCase
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER USER u, v DROP 2 FACTOR');
 
-        self::assertInstanceOf(AlterUser::class, $alter->statement);
-        self::assertContainsOnlyInstancesOf(UserAlteration::class, $alter->statement->users);
-        self::assertInstanceOf(UserSpecification::class, $alter->statement->users[0]);
-        self::assertInstanceOf(FactorChange::class, $alter->statement->users[1]);
+        self::assertInstanceOf(AlterUser::class, $alter);
+        self::assertContainsOnlyInstancesOf(UserAlteration::class, $alter->users);
+        self::assertInstanceOf(UserSpecification::class, $alter->users[0]);
+        self::assertInstanceOf(FactorChange::class, $alter->users[1]);
     }
 }

@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Table\Column;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Call\Clock;
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ON UPDATE clause of a TIMESTAMP or DATETIME column: the current timestamp function that updates the column when another column of the row changes.
@@ -18,17 +19,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the clause of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate // => true
+ *     $create->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate // => true
  */
 final class OnUpdate implements ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param Scalar $value The value
+     * @param ClockCall|Value\CurrentTimestamp $value The value
      */
-    public function __construct(public readonly Scalar $value)
+    public function __construct(public readonly ClockCall|Value\CurrentTimestamp $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input(!$value instanceof ClockCall || $value->clock === Clock::Now, 'A column timestamp clause accepts only CURRENT_TIMESTAMP and its synonyms.');
     }
 
     /**
@@ -36,7 +38,9 @@ final class OnUpdate implements ColumnAttribute
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {
-        $derivation->scalar($this->value, $scope);
+        if (!$this->value instanceof Value\CurrentTimestamp) {
+            $derivation->scalar($this->value, $scope);
+        }
     }
 
     /**

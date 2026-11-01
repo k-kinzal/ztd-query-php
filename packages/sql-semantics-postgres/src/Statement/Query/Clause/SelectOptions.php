@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Limit\RowLimit;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ORDER BY, LIMIT, OFFSET, FETCH and locking clauses written after a query body.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the options of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1');
- *     [count($query->statement->options->order), $query->statement->options->lockingFirst, $query->toString()] // => [1, true, 'SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1']
+ *     [count($query->options->order), $query->options->lockingFirst, $query->toString()] // => [1, true, 'SELECT 1 ORDER BY 1 FOR UPDATE LIMIT 1']
  * @example Refusing an integer constant that is not given as a position
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions([new \SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class SelectOptions implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<SortItem> The ORDER BY items in written order
@@ -50,7 +49,7 @@ final class SelectOptions implements Node
      * @param bool $readOnly Whether FOR READ ONLY is written instead of locking clauses
      * @param bool $lockingFirst Whether the locking clauses are written before the limit
      */
-    public function __construct(array $order = [], public readonly ?RowLimit $limit = null, array $locking = [], public readonly bool $readOnly = false, public readonly bool $lockingFirst = false)
+    public function __construct(array $order = [], public readonly ?RowLimit $limit = null, array $locking = [], public readonly bool $readOnly = false, public readonly bool $lockingFirst = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->order = Check::listOf($order, SortItem::class, 'ORDER BY holds sort items.');
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses are locking clauses.');

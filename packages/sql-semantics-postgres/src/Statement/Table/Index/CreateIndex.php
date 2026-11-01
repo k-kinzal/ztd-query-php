@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create an index.
@@ -35,11 +34,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index
  *     $index = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0');
- *     [$index->statement->unique, $index->statement->table->only, $index->toString()] // => [true, true, 'CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0']
+ *     [$index->unique, $index->table->only, $index->toString()] // => [true, true, 'CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS i ON ONLY t USING btree (a) INCLUDE (b) NULLS NOT DISTINCT WITH (fillfactor = 70) TABLESPACE x WHERE a > 0']
  */
-final class CreateIndex implements SchemaElement, Relation
+final class CreateIndex extends \SqlSemantics\Statement\SqlStatement implements SchemaElement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<IndexElement> The keys
@@ -83,7 +83,16 @@ final class CreateIndex implements SchemaElement, Relation
         array $options = [],
         public readonly ?Name $tablespace = null,
         public readonly ?Scalar $where = null,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->elements = Check::listOf($elements, IndexElement::class, 'An index has at least one key.', 1);
         $this->included = Check::listOf($included, IndexElement::class, 'Included columns are index elements.');
         $this->options = Check::listOf($options, Definition::class, 'Index storage parameters are definitions.');

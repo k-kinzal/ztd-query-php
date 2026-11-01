@@ -19,8 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Type\Floating;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -37,7 +36,7 @@ final class FullTextSearchTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $fact = $derivation->scalar(new FullTextSearch([new ColumnUse(new Name('a'))], new StringLiteral(['x'])), $derivation->environment());
 
-        self::assertEquals(new Known(new Floating(FloatingKind::Double)), $fact->type);
+        self::assertEquals(new Known(Domain::double(23)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 

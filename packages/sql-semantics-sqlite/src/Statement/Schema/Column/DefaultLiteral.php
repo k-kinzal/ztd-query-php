@@ -10,7 +10,6 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A DEFAULT column constraint whose value is a literal, optionally signed.
@@ -26,18 +25,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a negative default
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a INT DEFAULT -1)');
- *     $default = $create->statement->columns[0]->constraints[0];
+ *     $default = $create->columns[0]->constraints[0];
  *     [$default->sign, $default->literal->digits] // => [\SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign::Minus, '1']
  */
 final class DefaultLiteral implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $literal The literal; one of the literal expression classes
      * @param NumberSign|null $sign The sign written before the literal
      */
-    public function __construct(public readonly Scalar $literal, public readonly ?NumberSign $sign = null)
+    public function __construct(public readonly Scalar $literal, public readonly ?NumberSign $sign = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(str_starts_with($literal::class, 'SqlSemantics\\Platform\\Sqlite\\Statement\\Expression\\Literal\\'), 'An unparenthesized default is a literal; any other expression is written in parentheses.');
     }

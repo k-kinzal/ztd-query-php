@@ -82,4 +82,35 @@ final class NativeFunctions
 
         return $rows;
     }
+    /**
+     * Describes a native call that cannot be formed in the selected release.
+     * An unknown native name remains available to stored or loadable functions.
+     */
+    public function problem(GrammarRelease $release, \SqlSemantics\Statement\Identifier\Name $name, int $arguments, bool $named): \SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction|\SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument|\SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount|null
+    {
+        $rows = $this->rows($release, $name->value);
+        return match (true) {
+            $rows === [] => null,
+            in_array(true, array_column($rows, 3), true) => new \SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction($name),
+            $this->row($release, $name->value, $arguments) === null => new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount($name, $arguments),
+            $named => new \SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument($name),
+            default => null,
+        };
+    }
+
+    /**
+     * Tells whether an unqualified generic call has an interpretation in any supported MySQL language.
+     * This checks constructor operands only; availability and execution of stored functions remain session concerns.
+     */
+    public function possible(\SqlSemantics\Statement\Identifier\Name $name, int $arguments, bool $named): bool
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if ($release->database() === 'mysql' && $this->problem($release, $name, $arguments, $named) === null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

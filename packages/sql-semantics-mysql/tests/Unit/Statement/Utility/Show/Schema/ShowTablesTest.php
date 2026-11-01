@@ -18,14 +18,14 @@ final class ShowTablesTest extends TestCase
     public function testDeriveStatementLeavesTheShapeOpenWithoutADatabase(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW EXTENDED FULL TABLES');
-        self::assertInstanceOf(ShowTables::class, $show->statement);
+        self::assertInstanceOf(ShowTables::class, $show);
         self::assertFalse($show->shape()?->complete());
     }
 
     public function testDeriveRelationNamesTheColumnAfterTheContextDatabase(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW EXTENDED FULL TABLES');
-        self::assertInstanceOf(ShowTables::class, $show->statement);
+        self::assertInstanceOf(ShowTables::class, $show);
         $named = (new Semantics(Dialect::MySql))->analyze('SHOW FULL TABLES', new \SqlSemantics\Contract\AnalysisContext($show->profile(), [new \SqlSemantics\Statement\Identifier\Name('shop')]));
         self::assertSame(['Tables_in_shop', 'Table_type'], [$named->field(0)->name?->value, $named->field(1)->name?->value]);
     }

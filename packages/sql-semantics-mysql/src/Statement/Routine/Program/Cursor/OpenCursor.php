@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Rules\Routine\ProgramScope;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * OPEN: opens a declared cursor.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the cursor an OPEN names
- *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() OPEN c');
- *     [$create->statement->body->cursor->value, $create->facts->diagnostics[0]->message()] // => ['c', 'Undefined CURSOR: c']
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; OPEN c; END');
+ *     [$create->body->statements[0]->cursor->value, $create->diagnostics()] // => ['c', []]
  */
 final class OpenCursor implements ProgramStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $cursor The cursor name
      */
-    public function __construct(public readonly Name $cursor)
+    public function __construct(public readonly Name $cursor, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

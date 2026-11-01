@@ -22,31 +22,31 @@ final class ForeignKeyTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a, b, FOREIGN KEY (a, B) REFERENCES parent)', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveConstraintReportsAChildColumnTheTableDoesNotHave(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a, FOREIGN KEY (rowid) REFERENCES parent)', []);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(UnknownColumn::class, $operation->facts->diagnostics[0]);
-        self::assertSame('rowid', $operation->facts->diagnostics[0]->column->value);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(UnknownColumn::class, $operation->diagnostics()[0]);
+        self::assertSame('rowid', $operation->diagnostics()[0]->column->value);
     }
 
     public function testDeriveConstraintReportsDecoratedColumnsOnBothSides(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (a, FOREIGN KEY (a DESC) REFERENCES parent (id ASC))', []);
 
-        self::assertCount(2, $operation->facts->diagnostics);
-        self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(DecoratedColumnName::class, $operation->facts->diagnostics[1]);
+        self::assertCount(2, $operation->diagnostics());
+        self::assertInstanceOf(DecoratedColumnName::class, $operation->diagnostics()[0]);
+        self::assertInstanceOf(DecoratedColumnName::class, $operation->diagnostics()[1]);
     }
 
     public function testRenderWritesTheColumnsTheParentAndTheDeferrability(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table c (a, b, foreign key (a, b) references parent (x, y) on delete cascade deferrable initially deferred)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $key = $statement->constraints[0]->items[0];

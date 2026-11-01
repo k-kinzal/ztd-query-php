@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Error;
+
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\ProgramErrors;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
+use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+
+#[CoversClass(ProgramErrors::class)]
+#[Small]
+final class ProgramErrorsTest extends TestCase
+{
+    public function testLanguagePreservesTheReleaseSpelling(): void
+    {
+        $errors = new ProgramErrors();
+        self::assertSame('No Language component available', $errors->language(\SqlSemantics\Contract\GrammarRelease::MySql820)->getMessage());
+        self::assertSame('Language component: Not available.', $errors->language(\SqlSemantics\Contract\GrammarRelease::MySql847)->getMessage());
+    }
+
+    public function testErrorKeepsTheMessageOfTheProblem(): void
+    {
+        $error = (new ProgramErrors())->error(new ProgramProblem(ProgramRule::UndefinedCondition, 'PROCESS'));
+
+        self::assertSame([1319, '42000', 'Undefined CONDITION: PROCESS'], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+    }
+
+    public function testRelationNamesTheObjectTheStatementNeeds(): void
+    {
+        $errors = new ProgramErrors();
+
+        self::assertSame(["'d.t' is not VIEW", "Unknown table 'e.v'"], [$errors->relation(new WrongRelationKind(new QualifiedName(new Name('t')), KindRefusal::NotView), 'd')->getMessage(), $errors->relation(new WrongRelationKind(new QualifiedName(new Name('v'), new Name('e')), KindRefusal::UnknownTable), 'd')->getMessage()]);
+    }
+
+    public function testErrorFormatsRejectedConditionBytesForTheRelease(): void
+    {
+        $errors = new ProgramErrors();
+        $unicode = new ProgramProblem(ProgramRule::BadSqlState, 'é猫Ω😀');
+
+        self::assertSame("Bad SQLSTATE: 'A'", $errors->error(new ProgramProblem(ProgramRule::BadSqlState, "A\0AAA"))->getMessage());
+        self::assertSame("Bad SQLSTATE: 'é猫Ω'", $errors->error($unicode, \SqlSemantics\Contract\GrammarRelease::MySql5744)->getMessage());
+        self::assertSame("Bad SQLSTATE: 'é猫Ω😀'", $errors->error($unicode, \SqlSemantics\Contract\GrammarRelease::MySql847)->getMessage());
+        self::assertSame('é猫Ω😀', $unicode->subject);
+    }
+
+    public function testCodesHoldEveryRule(): void
+    {
+        self::assertSame(array_map(static fn (ProgramRule $rule): string => $rule->name, ProgramRule::cases()), array_keys(ProgramErrors::CODES));
+    }
+
+    public function testCodeAnswersTheNumberOfEachRule(): void
+    {
+        $errors = new ProgramErrors();
+
+        self::assertSame([ProgramError::BadSqlState, ProgramError::DuplicateSignalItem, ProgramError::LabelMissing, ProgramError::TriggerRowChange], [$errors->code(ProgramRule::BadSqlState), $errors->code(ProgramRule::DuplicateSignalItem), $errors->code(ProgramRule::IterateWithoutLabel), $errors->code(ProgramRule::AfterRowUpdate)]);
+    }
+    public function testErrorBoundsLongParameterNamesWithoutChangingTheirOperands(): void
+    {
+        $problem = new ProgramProblem(ProgramRule::NameTooLong, str_repeat('猫', 65));
+        $errors = new ProgramErrors();
+
+        self::assertSame("Identifier name '" . str_repeat('猫', 33) . "?' is too long", $errors->error($problem)->getMessage());
+        self::assertSame("Identifier name '" . str_repeat('猫', 33) . "' is too long", $errors->error($problem, \SqlSemantics\Contract\GrammarRelease::MySql5651)->getMessage());
+        self::assertSame(str_repeat('猫', 65), $problem->subject);
+    }
+
+    public function testErrorReportsTheSqlStateOfAnIncorrectParameterName(): void
+    {
+        $error = (new ProgramErrors())->error(new ProgramProblem(ProgramRule::IncorrectName, 'x '));
+
+        self::assertSame([1458, '42000', "Incorrect routine name 'x '"], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+    }
+
+}

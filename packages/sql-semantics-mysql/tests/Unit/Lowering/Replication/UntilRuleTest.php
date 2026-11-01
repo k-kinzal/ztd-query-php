@@ -25,4 +25,12 @@ final class UntilRuleTest extends TestCase
     {
         self::assertSame("START REPLICA UNTIL RELAY_LOG_POS = 4, RELAY_LOG_FILE = 'r', SOURCE_LOG_POS = 5", (new Semantics(Dialect::MySql))->analyze("start replica until relay_log_pos = 4, relay_log_file = 'r', source_log_pos = 5")->toString());
     }
+
+    public function testConditionsRetainsIncompleteCoordinatesWithTheirDiagnostic(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('START REPLICA UNTIL SOURCE_LOG_POS=4');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica::class, $statement);
+        self::assertSame('START REPLICA UNTIL SOURCE_LOG_POS = 4', $statement->toString());
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::UntilCondition), $statement->diagnostics()[0]);
+    }
 }

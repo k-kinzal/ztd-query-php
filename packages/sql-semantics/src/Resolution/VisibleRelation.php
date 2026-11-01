@@ -26,7 +26,7 @@ final class VisibleRelation
      * @param RowShape $shape The row shape visible at this position
      * @param Name|null $alias The correlation name; when present it is the only qualifier
      * @param QualifiedName|null $name The relation name that qualifies the occurrence when it has no alias
-     * @param list<int> $hidden The slot positions an unqualified name and a star do not see, such as the duplicate of a merged join column
+     * @param list<int> $hidden The slot positions an unqualified name and a star do not see, such as the duplicate of a merged join column; a position past the slots of the shape is an implicit slot, counted after them
      * @param list<ImplicitSlot> $implicit The slots found by name only
      */
     public function __construct(

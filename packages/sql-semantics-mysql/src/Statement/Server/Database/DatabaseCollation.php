@@ -6,29 +6,29 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[DEFAULT] COLLATE [=] collation`: the default collation of the database's tables.
  *
- * DEFAULT before the option and the equals sign are optional and not
- * written. The name DEFAULT, accepted by MySQL 5.x, takes the collation of
+ * DEFAULT before the option and the optional equals sign are retained. The name DEFAULT, accepted by MySQL 5.x, takes the collation of
  * the character set.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-database.html.
  *
  * @visibility public
  * @example Reading the collation
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER DATABASE d COLLATE utf8mb4_bin');
- *     $alter->statement->options[0]->collation->name?->value // => 'utf8mb4_bin'
+ *     $alter->options[0]->collation->name?->value // => 'utf8mb4_bin'
  */
 final class DatabaseCollation implements DatabaseOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CollationName $collation The collation
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
+     * @param bool $defaultKeyword Whether the optional DEFAULT keyword is written
      */
-    public function __construct(public readonly CollationName $collation)
+    public function __construct(public readonly CollationName $collation, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null, public readonly bool $defaultKeyword = false)
     {
     }
 
@@ -37,6 +37,13 @@ final class DatabaseCollation implements DatabaseOption
      */
     public function render(Output $out): void
     {
-        $out->keyword('COLLATE')->node($this->collation);
+        if ($this->defaultKeyword) {
+            $out->keyword('DEFAULT');
+        }
+        $out->keyword('COLLATE');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
+        }
+        $out->node($this->collation);
     }
 }

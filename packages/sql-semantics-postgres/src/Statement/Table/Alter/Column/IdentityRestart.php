@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * RESTART [ [ WITH ] value ] of an identity column.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Restarting an identity
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t ALTER a RESTART');
- *     $statement->statement->commands[0]->options[0]->value // => null
+ *     $statement->commands[0]->options[0]->value // => null
  */
 final class IdentityRestart implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SignedNumber|null $value The value; null restarts at the start value
      */
-    public function __construct(public readonly ?SignedNumber $value = null)
+    public function __construct(public readonly ?SignedNumber $value = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

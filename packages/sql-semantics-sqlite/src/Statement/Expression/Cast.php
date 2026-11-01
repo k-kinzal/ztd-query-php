@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\NullOnly;
 
 /**
@@ -28,18 +27,22 @@ use SqlSemantics\Statement\Type\NullOnly;
  * @visibility public
  * @example Reading the type of a CAST
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT CAST(a AS VARCHAR(10)) FROM t');
- *     [$query->statement->columns[0]->expression->target->text(), $query->field(0)->type->descriptor] // => ['VARCHAR', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
+ *     [$query->columns[0]->expression->target->text(), $query->field(0)->type->descriptor] // => ['VARCHAR', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Text]
  */
 final class Cast implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The converted expression
      * @param TypeName|null $target The type name; null when none is written
      */
-    public function __construct(public readonly Scalar $operand, public readonly ?TypeName $target = null)
+    public function __construct(public readonly Scalar $operand, public readonly ?TypeName $target = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

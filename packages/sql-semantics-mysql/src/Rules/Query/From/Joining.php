@@ -33,6 +33,11 @@ use SqlSemantics\Statement\Type\Nullability;
  * operands). A USING column that an operand certainly lacks, or selects
  * twice, is reported. The common columns of a NATURAL join are not known
  * while an operand has undeclared columns, so nothing is merged then.
+ * An INVISIBLE column a USING list names is found by name like any other
+ * column and, once merged, `*` selects it among the merged columns; a
+ * qualified star still leaves it out. A NATURAL join neither merges an
+ * INVISIBLE column nor selects one an operand merged before
+ * (https://dev.mysql.com/doc/refman/8.4/en/invisible-columns.html).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/join.html ("Natural joins
  * and joins with USING, including outer join variants, are processed
  * according to the SQL:2003 standard"). Status: Implemented.
@@ -46,23 +51,30 @@ final class Joining
      */
     public function join(Derivation $derivation, JoinedInput $left, JoinedInput $right, JoinedTable $join): JoinedInput
     {
+        $natural = $join->operator->natural();
         $offset = count($left->visible);
         $visible = [...$left->visible, ...$right->visible];
-        $first = $left->star;
+        $first = $natural ? $this->declared($left->visible, $left->star) : $left->star;
         $second = [];
-        foreach ($right->star as [$relation, $position]) {
+        foreach ($natural ? $this->declared($right->visible, $right->star) : $right->star as [$relation, $position]) {
             $second[] = [$relation + $offset, $position];
         }
+        $ranges = [[0, $offset], [$offset, count($visible)]];
         if ($join->operator->keepsRight()) {
             [$first, $second] = [$second, $first];
+            $ranges = [$ranges[1], $ranges[0]];
         }
         $merged = [];
         foreach ($this->names($derivation, $join, $left, $right) as $name) {
-            $kept = $this->locate($derivation, $visible, $first, $name, $join->operator->keepsRight() ? $right : $left);
-            $dropped = $this->locate($derivation, $visible, $second, $name, $join->operator->keepsRight() ? $left : $right);
+            $keptStar = $natural ? $first : $this->reveal($derivation, $visible, $first, $name, $ranges[0]);
+            $droppedStar = $natural ? $second : $this->reveal($derivation, $visible, $second, $name, $ranges[1]);
+            $kept = $this->locate($derivation, $visible, $keptStar, $name, $join->operator->keepsRight() ? $right : $left);
+            $dropped = $this->locate($derivation, $visible, $droppedStar, $name, $join->operator->keepsRight() ? $left : $right);
             if ($kept === null || $dropped === null) {
                 continue;
             }
+            $first = $keptStar;
+            $second = $droppedStar;
             $merged[] = $first[$kept];
             $relation = $visible[$second[$dropped][0]];
             $visible[$second[$dropped][0]] = new VisibleRelation($relation->relation, $relation->shape, $relation->alias, $relation->name, [...$relation->hidden, $second[$dropped][1]], $relation->implicit);
@@ -95,12 +107,12 @@ final class Joining
         $names = [];
         $columns = $derivation->context->columnNames;
         [$first, $second] = $join->operator->keepsRight() ? [$right, $left] : [$left, $right];
-        foreach ($first->star as $entry) {
+        foreach ($this->declared($first->visible, $first->star) as $entry) {
             $name = $first->slot($entry)->name;
             if ($name === null) {
                 continue;
             }
-            foreach ($second->star as $other) {
+            foreach ($this->declared($second->visible, $second->star) as $other) {
                 $candidate = $second->slot($other)->name;
                 if ($candidate !== null && $columns->equal($candidate->value, $name->value)) {
                     $names[] = $name;
@@ -121,20 +133,71 @@ final class Joining
     public function locate(Derivation $derivation, array $visible, array $star, Name $name, JoinedInput $operand): ?int
     {
         $found = [];
+        $named = null;
         foreach ($star as $index => [$relation, $position]) {
-            $slot = $visible[$relation]->shape->slots[$position];
+            $slot = JoinedInput::member($visible[$relation], $position);
             if ($slot->name !== null && $derivation->context->columnNames->equal($slot->name->value, $name->value)) {
                 $found[] = $index;
+                $named ??= $slot->name;
             }
         }
         if (count($found) > 1) {
-            $derivation->report(new Misuse(MisuseRule::AmbiguousJoinColumn));
+            $derivation->report(new Misuse(MisuseRule::AmbiguousJoinColumn, $named));
         }
         if ($found === [] && $operand->complete()) {
             $derivation->report(new MissingColumn($name));
         }
 
         return count($found) === 1 ? $found[0] : null;
+    }
+
+    /**
+     * Answers the star entries that select a declared column, leaving out the INVISIBLE columns an earlier USING merged.
+     *
+     * @param list<VisibleRelation> $visible The relations of the operand
+     * @param list<array{int, int}> $star The star entries of the operand
+     * @return list<array{int, int}>
+     */
+    public function declared(array $visible, array $star): array
+    {
+        return array_values(array_filter($star, static fn (array $entry): bool => $entry[1] < count($visible[$entry[0]]->shape->slots)));
+    }
+
+    /**
+     * Adds to the star entries of an operand the INVISIBLE column a USING name denotes, when no entry selects a column of the name.
+     *
+     * The entry of an implicit slot holds its position after the slots of the shape. A hidden
+     * implicit slot, the duplicate of a column an earlier USING merged, is not found.
+     *
+     * @param array<int, VisibleRelation> $visible
+     * @param list<array{int, int}> $star The star entries of the operand
+     * @param array{int, int} $range The first index of the relations of the operand and the index past its last
+     * @return list<array{int, int}>
+     */
+    public function reveal(Derivation $derivation, array $visible, array $star, Name $name, array $range): array
+    {
+        $columns = $derivation->context->columnNames;
+        foreach ($star as [$relation, $position]) {
+            $slot = JoinedInput::member($visible[$relation], $position);
+            if ($slot->name !== null && $columns->equal($slot->name->value, $name->value)) {
+                return $star;
+            }
+        }
+        for ($relation = $range[0]; $relation < $range[1]; $relation++) {
+            $declared = count($visible[$relation]->shape->slots);
+            foreach ($visible[$relation]->implicit as $index => $implicit) {
+                if (in_array($declared + $index, $visible[$relation]->hidden, true)) {
+                    continue;
+                }
+                foreach ($implicit->names as $candidate) {
+                    if ($columns->equal($candidate->value, $name->value)) {
+                        return [...$star, [$relation, $declared + $index]];
+                    }
+                }
+            }
+        }
+
+        return $star;
     }
 
     /**

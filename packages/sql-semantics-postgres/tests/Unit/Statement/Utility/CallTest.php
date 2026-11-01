@@ -24,9 +24,9 @@ final class CallTest extends TestCase
     public function testDeriveStatementDerivesTheArguments(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze("CALL p('a' || 1)");
-        self::assertInstanceOf(Call::class, $operation->statement);
-        self::assertTrue($operation->facts->covers($operation->statement->call));
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(Call::class, $operation);
+        self::assertTrue($operation->call->hasBinding());
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheCall(): void

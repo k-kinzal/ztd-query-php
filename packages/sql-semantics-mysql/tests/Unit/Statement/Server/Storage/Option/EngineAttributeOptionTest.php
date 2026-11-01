@@ -18,7 +18,7 @@ final class EngineAttributeOptionTest extends TestCase
 {
     public function testRenderWritesTheOption(): void
     {
-        self::assertSame("CREATE TABLESPACE ts ENGINE_ATTRIBUTE '{}'", (new Semantics(Dialect::MySql))->analyze("create tablespace ts engine_attribute = '{}'")->toString());
+        self::assertSame("CREATE TABLESPACE ts ENGINE_ATTRIBUTE = '{}'", (new Semantics(Dialect::MySql))->analyze("create tablespace ts engine_attribute = '{}'")->toString());
     }
 
     public function testKeywordNamesTheOption(): void

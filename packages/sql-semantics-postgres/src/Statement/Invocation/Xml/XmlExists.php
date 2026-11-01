@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `XMLEXISTS (path PASSING document)`: whether an XPath expression returns any node.
@@ -32,14 +31,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class XmlExists implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $path The XPath expression
      * @param XmlPassing $passing The document
      */
-    public function __construct(public readonly Scalar $path, public readonly XmlPassing $passing)
+    public function __construct(public readonly Scalar $path, public readonly XmlPassing $passing, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->primary($path), 'The path of XMLEXISTS is a primary expression; group it.');
     }
 

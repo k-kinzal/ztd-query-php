@@ -7,10 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER TABLESPACE name {READ_ONLY | READ_WRITE | NOT ACCESSIBLE}`: a request to change the access mode of a tablespace (MySQL 5.6 and 5.7).
@@ -25,18 +24,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Making a tablespace read-only
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('alter tablespace ts not accessible');
- *     [$alter->toString(), $alter->statement->access] // => ['ALTER TABLESPACE ts NOT ACCESSIBLE', \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess::NotAccessible]
+ *     [$alter->toString(), $alter->access] // => ['ALTER TABLESPACE ts NOT ACCESSIBLE', \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\TablespaceAccess::NotAccessible]
  */
-final class AlterTablespaceAccess implements Statement
+final class AlterTablespaceAccess extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The tablespace name
      * @param TablespaceAccess $access The access mode
      */
-    public function __construct(public readonly Name $name, public readonly TablespaceAccess $access)
+    public function __construct(public readonly Name $name, public readonly TablespaceAccess $access, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

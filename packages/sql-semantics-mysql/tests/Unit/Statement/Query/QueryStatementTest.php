@@ -31,19 +31,21 @@ final class QueryStatementTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 FROM t INTO @x');
 
-        self::assertInstanceOf(QueryStatement::class, $operation->statement);
-        self::assertSame($operation->facts->query($operation->statement->query), $operation->facts->output);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryStatement::class, $operation->query);
+        self::assertSame($operation->query->query->queryInformation(), $operation->output());
     }
 
     public function testDeriveQueryDerivesTheTargetsAndReportsTheirCount(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2 FROM t FOR UPDATE INTO @x, @y');
 
-        self::assertInstanceOf(QueryStatement::class, $operation->statement);
-        self::assertSame(IntoPosition::AfterLocking, $operation->statement->intoPosition);
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(CountMismatch::class, $operation->facts->diagnostics[0]);
-        self::assertSame(CountedList::IntoVariables, $operation->facts->diagnostics[0]->list);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(QueryStatement::class, $operation->query);
+        self::assertSame(IntoPosition::AfterLocking, $operation->query->intoPosition);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(CountMismatch::class, $operation->diagnostics()[0]);
+        self::assertSame(CountedList::IntoVariables, $operation->diagnostics()[0]->list);
     }
 
     public function testRenderWritesTheClausesInWrittenOrder(): void
@@ -51,7 +53,9 @@ final class QueryStatementTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame('SELECT 1 UNION SELECT 2 FROM t INTO @x FOR UPDATE', $semantics->analyze('select 1 union select 2 from t into @x for update')->toString());
-        self::assertInstanceOf(QueryStatement::class, $semantics->analyze('select 1 union select 2 from t into @x for update')->statement);
+        $root = $semantics->analyze('select 1 union select 2 from t into @x for update');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $root);
+        self::assertInstanceOf(QueryStatement::class, $root->query);
         self::assertSame('(SELECT 1) FOR SHARE INTO @x', $semantics->analyze('(select 1) for share into @x')->toString());
     }
 

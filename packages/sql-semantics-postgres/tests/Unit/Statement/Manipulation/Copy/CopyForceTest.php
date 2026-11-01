@@ -19,7 +19,7 @@ final class CopyForceTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('COPY t FROM STDIN CSV FORCE NULL a FORCE NOT NULL *', [$t, $u]);
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $statement);
         self::assertSame(['force_null', 'force_not_null'], [$statement->legacy[1]->option(), $statement->legacy[2]->option()]);
     }

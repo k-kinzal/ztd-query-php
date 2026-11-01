@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SUBPARTITION BY [LINEAR] HASH|KEY … [SUBPARTITIONS n]`: the subpartitioning of each partition.
@@ -29,15 +28,17 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Subpartitioning implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionMethod $method The HASH or KEY method
      * @param Numeral|null $count The SUBPARTITIONS count, when written
      */
-    public function __construct(public readonly PartitionMethod $method, public readonly ?Numeral $count)
+    public function __construct(public readonly PartitionMethod $method, public readonly ?Numeral $count, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-        Check::input($method instanceof HashMethod || $method instanceof KeyMethod, 'Only HASH and KEY subpartition a partition.');
+        Check::input($count === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($count) || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($count, '0'), 'The explicit subpartition count is positive.');
+        Check::input($method instanceof HashMethod || $method instanceof KeyMethod || $method instanceof Method\DeferredMethod && $method->kind === null, 'Only HASH and KEY subpartition a partition.');
+        Check::input(!$method instanceof KeyMethod || $method->columns !== [], 'KEY subpartitioning names at least one column.');
     }
 
     /**
@@ -45,6 +46,9 @@ final class Subpartitioning implements Node
      */
     public function deriveSubpartitioning(Derivation $derivation, Environment $scope): void
     {
+        if ($this->count !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->count);
+        }
         $this->method->deriveMethod($derivation, $scope);
     }
 

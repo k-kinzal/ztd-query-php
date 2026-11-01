@@ -31,9 +31,16 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerBranchesDerivesEveryConditionAndStatement')]
     public function testBranchesDerivesEveryConditionAndStatement(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $actual = (static function () use ($release, $sql): array {
+            try {
+                $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+                return [$failure->problem->message()];
+            }
+        })();
+        self::assertSame($messages, $actual);
     }
 
     /**
@@ -50,7 +57,7 @@ final class FlowFactsTest extends TestCase
     public function testBranchesResolvesAVariableInTheCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; IF x > 0 THEN SELECT 1; END IF; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -58,10 +65,10 @@ final class FlowFactsTest extends TestCase
         self::assertInstanceOf(IfStatement::class, $if);
         $condition = $if->branches[0]->condition;
         self::assertInstanceOf(Comparison::class, $condition);
-        $resolution = $operation->facts->scalar($condition->left)->resolution;
+        $resolution = $condition->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -71,9 +78,16 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerLoopDerivesTheLabelsTheConditionAndTheStatements')]
     public function testLoopDerivesTheLabelsTheConditionAndTheStatements(string $release, string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $actual = (static function () use ($release, $sql): array {
+            try {
+                $operation = (new Semantics(Dialect::MySql, $release))->analyze($sql);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+                return [$failure->problem->message()];
+            }
+        })();
+        self::assertSame($messages, $actual);
     }
 
     /**
@@ -83,7 +97,8 @@ final class FlowFactsTest extends TestCase
     {
         yield 'WHILE with an unknown name in 5.7' => ['mysql-5.7.44', 'CREATE PROCEDURE p(x INT) w: WHILE x > y DO ITERATE w; END WHILE w', ['Column y does not exist.']];
         yield 'REPEAT with its label in 8.0' => ['mysql-8.0.44', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL x < 0 END REPEAT r', []];
-        yield 'REPEAT with another end label' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT s', ['End-label s without match', 'Column q does not exist.']];
+        yield 'REPEAT with another end label' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT s', ['End-label s without match']];
+        yield 'REPEAT with coherent labels and an unknown condition' => ['mysql-9.1.0', 'CREATE PROCEDURE p(x INT) r: REPEAT SET x = x - 1; UNTIL q END REPEAT r', ['Column q does not exist.']];
         yield 'LOOP with an unknown name' => ['mysql-9.1.0', 'CREATE PROCEDURE p() l: LOOP SELECT z; LEAVE l; END LOOP', ['Column z does not exist.']];
         yield 'a redefined loop label' => ['mysql-9.1.0', 'CREATE PROCEDURE p() a: BEGIN a: WHILE 1 DO LEAVE a; END WHILE; END', ['Redefining label a']];
     }
@@ -91,7 +106,7 @@ final class FlowFactsTest extends TestCase
     public function testLoopResolvesAVariableInTheCondition(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 3; WHILE x > 0 DO SET x = x - 1; END WHILE; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -99,10 +114,10 @@ final class FlowFactsTest extends TestCase
         self::assertInstanceOf(WhileLoop::class, $loop);
         $condition = $loop->condition;
         self::assertInstanceOf(Comparison::class, $condition);
-        $resolution = $operation->facts->scalar($condition->left)->resolution;
+        $resolution = $condition->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
     }
 
@@ -112,9 +127,16 @@ final class FlowFactsTest extends TestCase
     #[DataProvider('providerJumpChecksTheLabel')]
     public function testJumpChecksTheLabel(string $sql, array $messages): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
-
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        $actual = (static function () use ($sql): array {
+            try {
+                $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+                return array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics());
+            } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+                self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+                return [$failure->problem->message()];
+            }
+        })();
+        self::assertSame($messages, $actual);
     }
 
     /**
@@ -140,7 +162,7 @@ final class FlowFactsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $operation = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INT)')]);
 
-        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame($messages, array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
     }
 
     /**
@@ -150,24 +172,47 @@ final class FlowFactsTest extends TestCase
     {
         yield 'a function' => ['CREATE FUNCTION f(x INT) RETURNS INT BEGIN IF x THEN RETURN 1; END IF; RETURN x; END', []];
         yield 'an unknown name in a function' => ['CREATE FUNCTION f(x INT) RETURNS INT RETURN y', ['Column y does not exist.']];
-        yield 'a procedure' => ['CREATE PROCEDURE p() BEGIN RETURN 1; END', ['RETURN is only allowed in a FUNCTION']];
-        yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN NEW.a', ['RETURN is only allowed in a FUNCTION']];
-        yield 'an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO RETURN 1', ['RETURN is only allowed in a FUNCTION']];
     }
 
     public function testReturnedResolvesTheValueToALocalVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE FUNCTION f() RETURNS INT BEGIN DECLARE x INT DEFAULT 2; RETURN x; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateFunction::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
         $return = $block->statements[0];
         self::assertInstanceOf(ReturnStatement::class, $return);
-        $resolution = $operation->facts->scalar($return->value)->resolution;
+        $resolution = $return->value->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame($block->declarations[0], $resolution->relation);
+    }
+
+    /**
+     * @return iterable<string, array{string, non-empty-list<string>}>
+     */
+    public static function providerRefusesIntrinsicBodyConditions(): iterable
+    {
+        yield 'a procedure' => ['CREATE PROCEDURE p() BEGIN RETURN 1; END', ['RETURN is only allowed in a FUNCTION']];
+        yield 'a trigger' => ['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN NEW.a', ['RETURN is only allowed in a FUNCTION']];
+        yield 'an event' => ['CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO RETURN 1', ['RETURN is only allowed in a FUNCTION']];
+    }
+
+    /**
+     * @param non-empty-list<string> $messages
+     */
+    #[DataProvider('providerRefusesIntrinsicBodyConditions')]
+    public function testRefusesIntrinsicBodyConditions(string $sql, array $messages): void
+    {
+
+        try {
+            (new Semantics(Dialect::MySql))->analyze($sql);
+            self::fail('The body has a definition condition.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\RefusedProgramBody::class, $failure->problem);
+            self::assertSame($messages[0], $failure->problem->message());
+        }
     }
 }

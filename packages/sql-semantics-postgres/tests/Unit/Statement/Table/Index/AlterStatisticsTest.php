@@ -17,7 +17,7 @@ final class AlterStatisticsTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('ALTER STATISTICS s SET STATISTICS 5', []);
         self::assertSame([
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

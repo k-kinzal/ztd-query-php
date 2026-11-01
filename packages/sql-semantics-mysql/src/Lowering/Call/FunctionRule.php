@@ -18,6 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
 use SqlSemantics\Platform\MySql\Statement\Call\TrimSide;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCall;
+use SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredCallArgument;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -29,8 +31,8 @@ use SqlSemantics\Statement\Scalar;
  * function_call_generic, opt_udf_expr_list, udf_expr_list, udf_expr. Each
  * keyword production names its function and the positions of its
  * arguments (an expression, or an expression list that continues the
- * arguments). SUBSTRING with FROM and FOR is SUBSTRING with commas (the
- * synonyms of CallNoise). Constructs: KeywordCall, CharCall, Trim,
+ * arguments). SUBSTRING retains FROM and FOR or commas; each call retains
+ * its selected keyword synonym. Constructs: KeywordCall, CharCall, Trim,
  * Position, FunctionCall, CallArgument. Terminates: the argument list is flattened in
  * a loop; every other child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/function-resolution.html,
@@ -149,7 +151,7 @@ final class FunctionRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function call(Form $form): Scalar
+    public function call(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         if (isset(self::KEYWORDS[$form->signature])) {
             return $this->keyword($form, ...self::KEYWORDS[$form->signature]);
@@ -157,23 +159,98 @@ final class FunctionRule
         if (isset(self::TRIMS[$form->signature])) {
             [$side, $removed, $subject] = self::TRIMS[$form->signature];
 
-            return new Trim($this->expression($form, $subject), $side, $removed === null ? null : $this->expression($form, $removed));
+            return $this->trim($form, $subject, $side, $removed);
         }
         $expressions = $this->lowering->expressions;
 
         return match ($form->signature) {
-            'function_call_keyword: CHAR_SYM ( expr_list )' => new CharCall($expressions->expressions($form->node(2))),
-            'function_call_keyword: CHAR_SYM ( expr_list USING charset_name )' => new CharCall($expressions->expressions($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
+            'function_call_keyword: CHAR_SYM ( expr_list )' => $this->character($expressions->operands($form->node(2))),
+            'function_call_keyword: CHAR_SYM ( expr_list USING charset_name )' => $this->character($expressions->operands($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
             'function_call_keyword: CURRENT_USER optional_braces' => $this->niladic($form, KeywordFunction::CurrentUser),
-            'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => new Position($expressions->bitExpression($form->node(2)), $this->expression($form, 4)),
-            'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => new FunctionCall($this->lowering->names->identifier($form->node(0)), $this->arguments($form->node(2))),
-            'function_call_generic: ident . ident ( opt_expr_list )' => new FunctionCall(
-                $this->lowering->names->identifier($form->node(2)),
-                array_map(static fn (Scalar $argument): CallArgument => new CallArgument($argument), $expressions->expressions($form->node(4))),
-                $this->lowering->names->identifier($form->node(0)),
-            ),
+            'function_call_nonkeyword: POSITION_SYM ( bit_expr IN_SYM expr )' => $this->position((new \SqlSemantics\Platform\MySql\Lowering\Expression\BitRule($this->lowering))->bitExpression($form->node(2)), $expressions->operand($form->node(4))),
+            'function_call_generic: IDENT_sys ( opt_udf_expr_list )' => $this->generic($form),
+            'function_call_generic: ident . ident ( opt_expr_list )' => $this->qualified($form),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Preserves every CHAR code when a template retains a non-scalar operand.
+     *
+     * @param list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand> $arguments
+     */
+    public function character(array $arguments, ?\SqlSemantics\Platform\MySql\Statement\Name\CharsetName $charset = null): CharCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredChar
+    {
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredChar($arguments, $charset);
+        }
+        $scalars = [];
+        foreach ($arguments as $argument) {
+            \SqlSemantics\Diagnostic\Check::invariant($argument instanceof Scalar, 'An ordinary CHAR call retains only scalar codes.');
+            $scalars[] = $argument;
+        }
+        return new CharCall($scalars, $charset);
+    }
+
+    /**
+     * Keeps POSITION's operand roles when its query is deferred.
+     */
+    public function position(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $substring, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $string): Position|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredPosition
+    {
+        return $substring instanceof Scalar && $string instanceof Scalar ? new Position($substring, $string)
+            : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredPosition($substring, $string);
+    }
+
+    /**
+     * Checks the native signature before its arguments from 5.7 onward, after them in 5.6.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a completed native call is outside its operand domain
+     */
+    public function generic(Form $form): FunctionCall|DeferredCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall
+    {
+        $name = $this->lowering->names->identifier($form->node(0));
+        if ($this->lowering->contextualized && $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $problem = (new SyntaxCalls())->signature($form, $this->lowering, $name);
+            if ($problem !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+            }
+        }
+        $arguments = $this->argumentRules($name)->arguments($form->node(2));
+        $named = array_filter($arguments, static fn (CallArgument|DeferredCallArgument $argument): bool => $argument->alias !== null) !== [];
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->problem($this->lowering->profile->grammar, $name, count($arguments), $named);
+        if ($problem !== null && !$this->lowering->contextualized) {
+            return (new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->possible($name, count($arguments), $named)
+                ? $this->compose($name, $arguments) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DormantCall($name, $arguments);
+        }
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        }
+
+        return $this->compose($name, $arguments);
+    }
+
+    /**
+     * Retains a qualified call and its arguments before assigning a scalar role.
+     */
+    public function qualified(Form $form): FunctionCall|DeferredCall
+    {
+        $name = $this->lowering->names->identifier($form->node(2));
+        $schema = $this->lowering->names->identifier($form->node(0));
+        $rules = $this->argumentRules($name);
+        $arguments = $rules->lowering->expressions->operands($form->node(4));
+        return $this->compose($name, array_map($rules->argumentValue(...), $arguments), $schema);
+    }
+
+    /**
+     * Retains inner signatures when an outer routine identity cannot contextualize.
+     */
+    public function argumentRules(\SqlSemantics\Statement\Identifier\Name $name): self
+    {
+        if (\SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($name) === null || !$this->lowering->contextualized) {
+            return $this;
+        }
+        $lowering = $this->lowering->unprepared();
+        return new self($lowering);
     }
 
     /**
@@ -182,17 +259,26 @@ final class FunctionRule
      * @param list<int> $positions The positions of the expressions
      * @param int|null $list The position of an expression list that follows them
      */
-    public function keyword(Form $form, KeywordFunction $function, array $positions, ?int $list): KeywordCall
+    public function keyword(Form $form, KeywordFunction $function, array $positions, ?int $list): KeywordCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall
     {
+        $alias = \SqlSemantics\Platform\MySql\Statement\Call\Keyword\KeywordAlias::tryFrom(strtoupper($form->token(0)->text));
+        $syntax = str_contains($form->signature, ' FROM ') ? \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax::FromFor : \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ArgumentSyntax::Commas;
         $arguments = [];
         foreach ($positions as $position) {
-            $arguments[] = $this->expression($form, $position);
+            $arguments[] = $this->lowering->expressions->operand($form->node($position));
         }
         if ($list !== null) {
-            array_push($arguments, ...$this->lowering->expressions->expressions($form->node($list)));
+            array_push($arguments, ...$this->lowering->expressions->operands($form->node($list)));
         }
-
-        return new KeywordCall($function, $arguments);
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredKeywordCall($function, $arguments, alias: $alias, syntax: $syntax);
+        }
+        $scalars = [];
+        foreach ($arguments as $argument) {
+            \SqlSemantics\Diagnostic\Check::invariant($argument instanceof Scalar, 'An ordinary keyword call retains only scalar arguments.');
+            $scalars[] = $argument;
+        }
+        return new KeywordCall($function, $scalars, alias: $alias, syntax: $syntax);
     }
 
     /**
@@ -201,6 +287,28 @@ final class FunctionRule
     public function niladic(Form $form, KeywordFunction $function): KeywordCall
     {
         return new KeywordCall($function, [], $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted);
+    }
+
+    /**
+     * @return list<int>|null The subject followed by the removed operand, or null for another call
+     */
+    public function trimOrder(Form $form): ?array
+    {
+        if (!isset(self::TRIMS[$form->signature])) {
+            return null;
+        }
+        [, $removed, $subject] = self::TRIMS[$form->signature];
+        return $removed === null ? [$subject] : [$subject, $removed];
+    }
+
+    /**
+     * Retains both TRIM roles before checking their scalar interpretation.
+     */
+    public function trim(Form $form, int $subject, ?TrimSide $side, ?int $removed): Trim|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim
+    {
+        $value = $this->lowering->expressions->operand($form->node($subject));
+        $remove = $removed === null ? null : $this->lowering->expressions->operand($form->node($removed));
+        return $value instanceof Scalar && ($remove === null || $remove instanceof Scalar) ? new Trim($value, $side, $remove) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTrim($value, $side, $remove);
     }
 
     /**
@@ -214,7 +322,7 @@ final class FunctionRule
     /**
      * Lowers the arguments of an unqualified call: a node of opt_udf_expr_list.
      *
-     * @return list<CallArgument>
+     * @return list<CallArgument|DeferredCallArgument>
      * @throws ImplementationGap When a production has no rule
      */
     public function arguments(Node $list): array
@@ -241,19 +349,52 @@ final class FunctionRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function argument(Node $argument): CallArgument
+    public function argument(Node $argument): CallArgument|DeferredCallArgument
     {
         $form = $this->lowering->form($argument);
         if ($form->signature === 'udf_expr: remember_name expr remember_end select_alias') {
             $this->lowering->options->skip($form->node(0));
             $this->lowering->options->skip($form->node(2));
 
-            return new CallArgument($this->expression($form, 1), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)));
+            return $this->argumentValue($this->lowering->expressions->operand($form->node(1)), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)), $form->node(1), $form->node(3));
         }
         if ($form->signature !== 'udf_expr: expr select_alias') {
             throw ImplementationGap::production($form);
         }
 
-        return new CallArgument($this->expression($form, 0), $this->lowering->queries->alias($form->node(1)), $this->lowering->queries->mark($form->node(1)));
+        return $this->argumentValue($this->lowering->expressions->operand($form->node(0)), $this->lowering->queries->alias($form->node(1)), $this->lowering->queries->mark($form->node(1)), $form->node(0), $form->node(1));
     }
+
+    /**
+     * Retains a call argument's scalar, row or deferred-computation role.
+     */
+    public function argumentValue(Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand $operand, ?\SqlSemantics\Statement\Identifier\Name $alias = null, \SqlSemantics\Platform\MySql\Statement\Name\AliasMark $mark = \SqlSemantics\Platform\MySql\Statement\Name\AliasMark::As, ?Node $syntax = null, ?Node $aliasSyntax = null): CallArgument|DeferredCallArgument
+    {
+        if (!$operand instanceof Scalar) {
+            return new DeferredCallArgument($operand, $alias, $mark);
+        }
+        $item = $alias !== null || $syntax === null || $aliasSyntax === null ? null : $this->lowering->queries->named($operand, $syntax, $aliasSyntax);
+        return new CallArgument($operand, $alias, $mark, $item?->layout, $item?->spellingProfile);
+    }
+
+    /**
+     * Selects ordinary or deferred call construction from the retained argument roles.
+     *
+     * @param list<CallArgument|DeferredCallArgument> $arguments The interpreted arguments
+     */
+    public function compose(\SqlSemantics\Statement\Identifier\Name $name, array $arguments, ?\SqlSemantics\Statement\Identifier\Name $schema = null): FunctionCall|DeferredCall
+    {
+        if (\SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($name) !== null) {
+            return new DeferredCall($name, $arguments, $schema);
+        }
+        $scalars = [];
+        foreach ($arguments as $argument) {
+            if ($argument instanceof DeferredCallArgument) {
+                return new DeferredCall($name, $arguments, $schema);
+            }
+            $scalars[] = $argument;
+        }
+        return new FunctionCall($name, $scalars, $schema);
+    }
+
 }

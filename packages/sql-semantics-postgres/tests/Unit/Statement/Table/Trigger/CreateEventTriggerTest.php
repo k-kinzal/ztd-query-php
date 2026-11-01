@@ -19,7 +19,7 @@ final class CreateEventTriggerTest extends TestCase
         self::assertSame([
           0 => 'unrecognized event name "ddl_command_middle"',
           1 => 'unrecognized filter variable "size"',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

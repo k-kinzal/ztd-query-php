@@ -18,7 +18,7 @@ final class TargetsTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context($context));
         $value = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->resolve($derivation, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')));
         $n1 = $value->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n1);
@@ -31,7 +31,7 @@ final class TargetsTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context($context));
         self::assertSame(3, count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->shape($context[0])->slots));
     }
 
@@ -41,7 +41,7 @@ final class TargetsTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context($context));
         self::assertSame(6, count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->implicit((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->resolve($derivation, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))))));
     }
 
@@ -52,14 +52,14 @@ final class TargetsTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE INDEX ON t (a, ctid)', $context);
         self::assertSame([
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testExistingOpensTheShapeOfAMissingRelationUnderIfExists(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('SELECT 1', []);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $derivation = new \SqlSemantics\Construction\Derivation($semantics->context([]));
         $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('nope'));
         $skipped = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->existing($derivation, $name, true);
         $missing = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->existing($derivation, $name, false);

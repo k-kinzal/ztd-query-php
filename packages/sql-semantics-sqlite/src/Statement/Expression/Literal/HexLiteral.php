@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the digits of a hexadecimal literal
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 0x1f AS h');
- *     [$query->statement->columns[0]->expression->digits, $query->toString()] // => ['1F', 'SELECT 0x1F AS h']
+ *     [$query->columns[0]->expression->digits, $query->toString()] // => ['1F', 'SELECT 0x1F AS h']
  * @example Refusing lower-case digits, which are another spelling of the same value
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral('1f') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing an empty digit sequence
@@ -38,13 +37,17 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class HexLiteral implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $digits The hexadecimal digits in upper case, without prefix or separators
      */
-    public function __construct(public readonly string $digits)
+    public function __construct(public readonly string $digits, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(preg_match('/\A[0-9A-F]+\z/', $digits) === 1, 'A hexadecimal literal is a sequence of upper-case hexadecimal digits.');
     }
 

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,18 +22,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the savepoint a rollback returns to
  *     $rollback = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ROLLBACK TO SAVEPOINT before_import');
- *     [$rollback->statement->savepoint->value, $rollback->toString()] // => ['before_import', 'ROLLBACK TO before_import']
+ *     [$rollback->savepoint->value, $rollback->toString()] // => ['before_import', 'ROLLBACK TO before_import']
  */
-final class RollbackTo implements Statement
+final class RollbackTo extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $savepoint The savepoint to return to
      * @param Name|null $name The name written after TRANSACTION, which SQLite ignores
      */
-    public function __construct(public readonly Name $savepoint, public readonly ?Name $name = null)
+    public function __construct(public readonly Name $savepoint, public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

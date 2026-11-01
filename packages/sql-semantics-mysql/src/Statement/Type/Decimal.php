@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Type;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The exact fixed-point type DECIMAL with its optional precision and scale.
@@ -21,9 +20,9 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('10', '2');
  *     [$type->name(), $type->precision, $type->scale] // => ['DECIMAL', '10', '2']
  */
-final class Decimal implements TypeName
+final class Decimal implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<NumericModifier> The attributes in the order written; an attribute may repeat
@@ -34,12 +33,14 @@ final class Decimal implements TypeName
      * @param string|null $precision The precision exactly as written
      * @param string|null $scale The scale exactly as written; requires a precision
      * @param list<NumericModifier> $modifiers The attributes in the order written
+     * @param Keyword\DecimalWord $word The fixed-point keyword retained for reconstruction
      */
-    public function __construct(public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [])
+    public function __construct(public readonly ?string $precision = null, public readonly ?string $scale = null, array $modifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly Keyword\DecimalWord $word = Keyword\DecimalWord::Decimal)
     {
         Check::input($precision === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $precision) === 1, 'A precision is an unsigned number.');
         Check::input($scale === null || ($precision !== null && preg_match('/\A[0-9]+\z/', $scale) === 1), 'A scale is an unsigned integer written after a precision.');
         $this->modifiers = Check::listOf($modifiers, NumericModifier::class, 'Numeric attributes are SIGNED, UNSIGNED and ZEROFILL.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**
@@ -55,7 +56,7 @@ final class Decimal implements TypeName
      */
     public function render(Output $out): void
     {
-        $out->keyword('DECIMAL');
+        $out->keyword($this->word->value);
         if ($this->precision !== null) {
             $out->glue()->symbol('(')->spelled($this->precision);
             if ($this->scale !== null) {

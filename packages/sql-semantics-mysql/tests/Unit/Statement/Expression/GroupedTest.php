@@ -28,10 +28,38 @@ final class GroupedTest extends TestCase
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
-        $fact = $derivation->scalar(new Grouped(new NullLiteral()), $derivation->environment());
+        $operand = new NullLiteral();
+        $fact = $derivation->scalar(new Grouped($operand), $derivation->environment());
 
         self::assertInstanceOf(NullOnly::class, $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
+        self::assertSame($operand, $fact->replacement);
+    }
+
+    public function testDeriveScalarRetainsTheBoundColumnThroughNestedParentheses(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(id INT PRIMARY KEY)');
+        $query = $semantics->analyze('SELECT ((t.id)) AS x FROM t', [$table]);
+        $field = $query->field(0);
+
+        self::assertInstanceOf(Grouped::class, $field->expression);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $field->resolution);
+        self::assertSame('id', $field->column()?->name->value);
+        self::assertSame($field->resolution, $field->expression->operand->scalarInformation()->resolution);
+    }
+
+    public function testDeriveScalarKeepsTheReplacementOfAReducedOperand(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operand = $semantics->analyze('SELECT (SELECT 1 LIMIT 0)')->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $operand);
+        $operand = \SqlSemantics\Platform\MySql\Construction\Occurrences::fresh($operand);
+        $derivation = new Derivation($semantics->context());
+        $fact = $derivation->scalar(new Grouped($operand), $derivation->environment());
+
+        self::assertInstanceOf(NumberLiteral::class, $fact->replacement);
+        self::assertSame('1', $fact->replacement->text);
     }
 
     public function testRenderLetsAWeakerOperandStandOnTheRight(): void

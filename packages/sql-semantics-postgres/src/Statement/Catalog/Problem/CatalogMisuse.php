@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a duplicated database option
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d OWNER a OWNER b');
- *     $operation->facts->diagnostics[0]->message() // => 'conflicting or redundant options'
+ *     $operation->diagnostics()[0]->message() // => 'conflicting or redundant options'
  */
 final class CatalogMisuse implements Diagnostic
 {

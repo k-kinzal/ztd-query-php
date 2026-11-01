@@ -18,7 +18,7 @@ final class ShowCreateFunctionTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW CREATE FUNCTION db.x');
-        self::assertInstanceOf(ShowCreateFunction::class, $show->statement);
+        self::assertInstanceOf(ShowCreateFunction::class, $show);
         self::assertSame('Function', $show->field(0)->name?->value);
     }
 
@@ -26,4 +26,11 @@ final class ShowCreateFunctionTest extends TestCase
     {
         self::assertSame('SHOW CREATE FUNCTION db.x', (new Semantics(Dialect::MySql))->analyze('SHOW CREATE FUNCTION db.x')->toString());
     }
+
+    public function testNameRejectsACatalogQualifier(): void
+    {
+        $this->expectExceptionMessage('A stored-program name has at most a database qualifier.');
+        new ShowCreateFunction(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('db'), new \SqlSemantics\Statement\Identifier\Name('catalog')));
+    }
+
 }

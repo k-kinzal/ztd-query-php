@@ -75,6 +75,7 @@ final class TargetRule
     public function wildcards(Node $list): array
     {
         $items = (new ListRule($this->lowering))->items($list, [
+            'table_wild_list: table_wild_one', 'table_wild_list: table_wild_list , table_wild_one',
             'table_alias_ref_list: table_alias_ref', 'table_alias_ref_list: table_alias_ref_list , table_alias_ref',
             'table_alias_ref_list: table_ident_opt_wild', 'table_alias_ref_list: table_alias_ref_list , table_ident_opt_wild',
         ]);

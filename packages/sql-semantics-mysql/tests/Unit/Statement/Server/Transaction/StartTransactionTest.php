@@ -21,16 +21,32 @@ final class StartTransactionTest extends TestCase
         self::assertSame('START TRANSACTION READ WRITE, WITH CONSISTENT SNAPSHOT, READ WRITE', (new Semantics(Dialect::MySql))->analyze('start transaction read write, with consistent snapshot, read write')->toString());
     }
 
-    public function testDeriveStatementHasNoFacts(): void
+    public function testDeriveStatementPublishesTheConcreteTransaction(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('START TRANSACTION');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertInstanceOf(StartTransaction::class, $operation);
+        self::assertSame([], $operation->declarations());
     }
 
     public function testCharacteristicsAreKeptAsWritten(): void
     {
         self::assertSame([TransactionCharacteristic::ReadOnly], (new StartTransaction([TransactionCharacteristic::ReadOnly]))->characteristics);
+    }
+
+    public function testToStringReconstructsTheConcreteOperands(): void
+    {
+        self::assertSame('START TRANSACTION', (new StartTransaction())->toString());
+    }
+
+    public function testProfileRetainsTheSelectedRelease(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        self::assertSame($profile, (new StartTransaction(profile: $profile))->profile());
+    }
+
+    public function testDeclarationsIntroducesNoSchemaObjects(): void
+    {
+        self::assertSame([], (new StartTransaction())->declarations());
     }
 }

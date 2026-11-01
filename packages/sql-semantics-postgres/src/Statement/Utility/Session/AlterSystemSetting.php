@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the setting of ALTER SYSTEM
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SYSTEM SET wal_level = replica');
- *     [$operation->statement->setting->parameter->text(), $operation->toString()] // => ['wal_level', 'ALTER SYSTEM SET wal_level TO replica']
+ *     [$operation->setting->parameter->text(), $operation->toString()] // => ['wal_level', 'ALTER SYSTEM SET wal_level TO replica']
  * @example Refusing a transaction-local setting
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\AlterSystemSetting(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameterFrom(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Statement\Identifier\Name('a')]),
@@ -29,15 +28,18 @@ use SqlSemantics\Statement\Statement;
  *         true,
  *     )) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class AlterSystemSetting implements Statement
+final class AlterSystemSetting extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SetParameter|SetParameterFrom|Reset $setting The SET or RESET applied to the configuration file
      */
-    public function __construct(public readonly SetParameter|SetParameterFrom|Reset $setting)
+    public function __construct(public readonly SetParameter|SetParameterFrom|Reset $setting, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($setting instanceof Reset || !$setting->local, 'ALTER SYSTEM takes no LOCAL.');
         Check::input(!$setting instanceof SetParameterFrom || $setting->source === ParameterSource::Default, 'ALTER SYSTEM takes no FROM CURRENT.');
         Check::input(!$setting instanceof Reset || $setting->parameter instanceof ParameterName || $setting->parameter === SpecialParameter::All, 'ALTER SYSTEM resets a named parameter or ALL.');

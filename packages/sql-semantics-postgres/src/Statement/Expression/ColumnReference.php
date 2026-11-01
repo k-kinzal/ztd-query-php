@@ -39,11 +39,12 @@ use SqlSemantics\Statement\Scalar;
  * @visibility public
  * @example Reading a qualified column reference
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT t.a FROM t');
- *     [count($query->statement->targets[0]->expression->parts), $query->field(0)->name->value] // => [2, 'a']
+ *     [count($query->targets[0]->expression->parts), $query->field(0)->name->value] // => [2, 'a']
  */
 final class ColumnReference implements Scalar, OutputNaming
 {
-    use \SqlSemantics\Statement\Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The parts of the name as written, the column last
@@ -53,8 +54,11 @@ final class ColumnReference implements Scalar, OutputNaming
     /**
      * @param list<Name> $parts The parts of the name as written; at least one
      */
-    public function __construct(array $parts)
+    public function __construct(array $parts, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->parts = Check::listOf($parts, Name::class, 'A column reference has at least one name part.', 1);
     }
 

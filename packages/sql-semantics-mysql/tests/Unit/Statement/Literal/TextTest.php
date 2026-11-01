@@ -14,7 +14,6 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Lexical;
@@ -24,6 +23,16 @@ use SqlSemantics\Rendering\Output;
 #[Small]
 final class TextTest extends TestCase
 {
+    public function testBytesDecodesEachSpellingWithoutLosingLeadingZeroes(): void
+    {
+        self::assertSame("a\x00b", (new Text("a\x00b"))->bytes());
+        self::assertSame("\x00\x0f", (new Text('000f', Radix::Hexadecimal))->bytes());
+        self::assertSame("\x0f", (new Text('f', Radix::Hexadecimal))->bytes());
+        self::assertSame("\x01\x01", (new Text('100000001', Radix::Bit))->bytes());
+        self::assertSame('', (new Text('', Radix::Bit))->bytes());
+        self::assertSame('', (new Text('', Radix::Hexadecimal))->bytes());
+    }
+
     public function testRenderWritesAQuotedStringUnderTheBackslashRule(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
@@ -35,8 +44,8 @@ final class TextTest extends TestCase
 
     public function testRenderKeepsBackslashesUnderTheVerbatimRule(): void
     {
-        $out = new Output(new Codec(GrammarRelease::MySql847));
-        (new Text('a\\b', EscapeRule::Verbatim))->render($out);
+        $out = new Output(new Codec(GrammarRelease::MySql847, new \SqlSemantics\Contract\LexicalSettings('NO_BACKSLASH_ESCAPES')));
+        (new Text('a\\b'))->render($out);
 
         self::assertSame("'a\\b'", (new Lexical())->join($out->pieces()));
     }
@@ -44,8 +53,8 @@ final class TextTest extends TestCase
     public function testRenderSpellsHexadecimalDigitsByTheirCount(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
-        (new Text('4142', EscapeRule::Backslash, Radix::Hexadecimal))->render($out);
-        (new Text('A', EscapeRule::Backslash, Radix::Hexadecimal))->render($out);
+        (new Text('4142', Radix::Hexadecimal))->render($out);
+        (new Text('A', Radix::Hexadecimal))->render($out);
 
         self::assertSame("x'4142' 0xA", (new Lexical())->join($out->pieces()));
     }
@@ -53,8 +62,8 @@ final class TextTest extends TestCase
     public function testRenderQuotesBitDigits(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
-        (new Text('101', EscapeRule::Backslash, Radix::Bit))->render($out);
-        (new Text('', EscapeRule::Backslash, Radix::Bit))->render($out);
+        (new Text('101', Radix::Bit))->render($out);
+        (new Text('', Radix::Bit))->render($out);
 
         self::assertSame("b'101' b''", (new Lexical())->join($out->pieces()));
     }
@@ -71,7 +80,6 @@ final class TextTest extends TestCase
 
         self::assertSame("a\nb", $quoted->value);
         self::assertNull($quoted->radix);
-        self::assertSame(EscapeRule::Backslash, $quoted->escapes);
         self::assertSame('41', $hexadecimal->value);
         self::assertSame(Radix::Hexadecimal, $hexadecimal->radix);
         self::assertSame('1', $bit->value);
@@ -88,7 +96,6 @@ final class TextTest extends TestCase
         $text->render($out);
 
         self::assertSame('a\\nb', $text->value);
-        self::assertSame(EscapeRule::Verbatim, $text->escapes);
         self::assertSame("'a\\nb'", (new Lexical())->join($out->pieces()));
     }
 
@@ -96,13 +103,13 @@ final class TextTest extends TestCase
     {
         $this->expectExceptionMessage('A hexadecimal text holds hexadecimal digits.');
 
-        new Text('G', EscapeRule::Backslash, Radix::Hexadecimal);
+        new Text('G', Radix::Hexadecimal);
     }
 
     public function testRejectsNonBinaryDigits(): void
     {
         $this->expectExceptionMessage('A bit text holds binary digits.');
 
-        new Text('2', EscapeRule::Backslash, Radix::Bit);
+        new Text('2', Radix::Bit);
     }
 }

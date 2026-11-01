@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An operator class or family named with its index access method: `name USING method`.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class OperatorGroupName implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The class or family name
      * @param Name $method The index access method
      */
-    public function __construct(public readonly DottedName $name, public readonly Name $method)
+    public function __construct(public readonly DottedName $name, public readonly Name $method, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\View;
  * @visibility public
  * @example Reading the check option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE VIEW v AS SELECT 1 AS a WITH LOCAL CHECK OPTION');
- *     $create->statement->checkOption->cascaded() // => false
+ *     $create->checkOption->cascaded() // => false
  */
 enum CheckOption: string
 {

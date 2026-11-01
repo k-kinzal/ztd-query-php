@@ -21,9 +21,9 @@ final class DiagnosticTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT b FROM t', []);
 
-        self::assertSame(['Relation t does not exist.', 'Column b does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
-        self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[1]);
+        self::assertSame(['Relation t does not exist.', 'Column b does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
+        self::assertInstanceOf(MissingTable::class, $operation->diagnostics()[0]);
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[1]);
     }
 
     public function testMessageIsNotNeededForAStatementWithoutProblems(): void
@@ -31,6 +31,6 @@ final class DiagnosticTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (b INTEGER)');
 
-        self::assertSame([], $semantics->analyze('SELECT b FROM t', [$table])->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('SELECT b FROM t', [$table])->diagnostics());
     }
 }

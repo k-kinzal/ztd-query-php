@@ -1,0 +1,413 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Plan;
+
+use LogicException;
+use MySqlMemory\Dictionary\Dictionary;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Evaluation\Compile\Compiler;
+use MySqlMemory\Evaluation\Compile\Connection;
+use MySqlMemory\Evaluation\Compile\Settings;
+use MySqlMemory\Evaluation\Compile\Walker;
+use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Operator\Storage\SetConversion;
+use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Plan\Path\AccessPath;
+use MySqlMemory\Plan\Path\Combine\SetOperation as SetPath;
+use MySqlMemory\Plan\Path\SetKind;
+use MySqlMemory\Plan\Path\Source\Inline;
+use MySqlMemory\Plan\Path\Source\WorkingTable;
+use MySqlMemory\Plan\Path\Transform\Project;
+use MySqlMemory\Plan\Path\Transform\Sort;
+use MySqlMemory\Result\ColumnFlag;
+use MySqlMemory\Typing\Domain;
+use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
+use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\With\With;
+use SqlSemantics\Platform\MySql\Statement\StatementSemantics;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Statement;
+
+/**
+ * Plans the queries of a bound statement into access paths: the step of the server that builds the access path tree.
+ *
+ * The emulator does not optimize: tables are scanned, joins are nested loops, and grouping,
+ * ordering and duplicate removal read their whole input.
+ *
+ * @visibility MySqlMemory
+ */
+final class Planner
+{
+    /**
+     * The compiler of the expressions of the statement.
+     */
+    public readonly Compiler $compiler;
+
+    /**
+     * The planner of query blocks.
+     */
+    public readonly Blocks $blocks;
+
+    /**
+     * The planner of FROM clauses.
+     */
+    public readonly Relations $relations;
+
+    /**
+     * @var array<int, array{CommonTableExpression, Scope|null}> The common table expressions in reach, by object id
+     */
+    public array $definitions = [];
+
+    /**
+     * @var array<int, QueryPlan> The plans of common table expressions, by object id
+     */
+    public array $commonTables = [];
+
+    /**
+     * @var array<int, array{WorkingTable, list<Domain>, list<string>}> The working tables of the recursive expressions being planned, by object id
+     */
+    public array $recursions = [];
+
+    /**
+     * The query block whose rows carry the row of its FROM clause after the select list, for ON DUPLICATE KEY UPDATE of INSERT ... SELECT to read.
+     */
+    public ?Select $carrying = null;
+
+    /**
+     * @var array{int, Scope}|null The position the carried row starts at in each row of the block that carries it, and the scope that places its relations
+     */
+    public ?array $carried = null;
+
+    /**
+     * @param Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete $statement The bound statement, query or stored expression being prepared
+     * @param StatementSemantics $facts The facts of the statement
+     * @param Settings $settings The session settings
+     * @param Connection $connection What the statement reads of its connection
+     * @param Dictionary $dictionary The databases of the server
+     * @param \MySqlMemory\Dictionary\Temporaries|null $temporaries The visible session tables; null inside a stored view
+     * @param \MySqlMemory\Dictionary\Binding\Declarations $declarations Bound catalog inputs supplied before planning; required for stored view reads
+     */
+    public function __construct(public readonly Statement|Query|\SqlSemantics\Statement\Operand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection|\SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredEvaluation|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertRows|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertSet|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertQuery|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredMultipleDelete|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDelete $statement, StatementSemantics $facts, public readonly Settings $settings, Connection $connection, public readonly Dictionary $dictionary, public readonly ?\MySqlMemory\Dictionary\Temporaries $temporaries = null, public readonly \MySqlMemory\Dictionary\Binding\Declarations $declarations = new \MySqlMemory\Dictionary\Binding\Declarations())
+    {
+        $this->compiler = new Compiler($facts, $settings, $this, $connection);
+        $this->blocks = new Blocks($this);
+        $this->relations = new Relations($this);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadDependencies())->with($statement)->tables ?? [] as $table) {
+            $this->definitions[spl_object_id($table)] = [$table, null];
+        }
+    }
+
+    /**
+     * Plans a query inside the scope of the block that reads it, or at the top for none.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the query cannot be planned
+     * @throws LogicException When no planner implements the query
+     */
+    public function query(Query $query, ?Scope $outer): QueryPlan
+    {
+        return match (true) {
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody => (new \MySqlMemory\Evaluation\Compile\Selections())->bound($query->selection, $this, $outer),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredValuesQuery => (new \MySqlMemory\Evaluation\Compile\Selections())->values($query, $this, $outer),
+            $query instanceof Select => $this->blocks->select($query, $outer),
+            $query instanceof QueryExpression, $query instanceof OrderedSetOperation => $this->expression($query, $outer),
+            $query instanceof ParenthesizedQuery => $this->query($query->query, $outer),
+            $query instanceof QueryStatement => $this->query($query->query, $outer),
+            $query instanceof SetOperation => $this->set($query, $outer),
+            $query instanceof ValuesQuery => $this->values($query, $outer),
+            $query instanceof ExplicitTable => (new Projection\TableFields())->apply($query, $this->blocks->table($query, $outer), $this->compiler, $outer),
+            default => throw new LogicException('No query planner for ' . $query::class),
+        };
+    }
+
+    /**
+     * Plans a query with a WITH clause, an ORDER BY or a LIMIT around its body.
+     *
+     * The server leaves the rows of a VALUES statement in written order:
+     * it resolves an ORDER BY of one but does not sort by it, and like the
+     * ORDER BY of a query block it leaves out a key constant for the
+     * statement without evaluating it (verified on a live 8.4 server).
+     */
+    public function expression(QueryExpression|OrderedSetOperation $query, ?Scope $outer): QueryPlan
+    {
+        if ($query instanceof QueryExpression && $query->with instanceof With) {
+            foreach ($query->with->tables as $table) {
+                $this->definitions[spl_object_id($table)] = [$table, $outer];
+            }
+        }
+        $body = $query instanceof QueryExpression ? $query->body : $query;
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null) {
+            (new \MySqlMemory\Evaluation\Compile\Selections())->set($body, $this, $outer);
+        }
+        $plan = $query instanceof OrderedSetOperation ? $this->set($query, $outer) : $this->query($body, $outer);
+        if ($query->orderBy === [] && $query->limit === null) {
+            return $plan;
+        }
+        $scope = new Scope($outer);
+        $scope->place($body, $plan->domains, $plan->names);
+        $scope->output = true;
+        $scope->clause = 'order clause';
+        $expressions = array_map(static fn ($domain, int $position) => new ColumnRead($domain, $position), $plan->domains, array_keys($plan->domains));
+        $keys = [];
+        while ($body instanceof ParenthesizedQuery) {
+            $body = $body->query;
+        }
+        foreach ($body instanceof ValuesQuery ? [] : $query->orderBy as $item) {
+            $key = $this->compiler->compile($item->expression, $scope);
+            if ($this->compiler->constancy($item->expression)->constant() && (new Walker())->find($item->expression, Query::class) === []) {
+                continue;
+            }
+            $keys[] = [count($expressions), $key->domain(), $item->direction?->value === 'DESC'];
+            $expressions[] = $key;
+        }
+        $root = $keys === [] ? $plan->root : new Sort(new Project($plan->root, $expressions), $keys);
+        $legacy = (new Union\Bounds($this))->plan($root, $query, $outer);
+        if ($legacy !== null) {
+            return new QueryPlan($legacy, $plan->domains, $plan->names, $plan->origins);
+        }
+        $root = $query->limit !== null && !$this->settings->legacy() ? (new Union\Streaming())->apply($root) : $root;
+
+        return new QueryPlan($this->blocks->limit($root, $query->limit, $outer), $plan->domains, $plan->names, $plan->origins);
+    }
+
+    /**
+     * Answers the plan of a common table expression, planned once in the scope it is defined in.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the expression is not in reach
+     */
+    public function commonTable(Node $definition): QueryPlan
+    {
+        $id = spl_object_id($definition);
+        if (isset($this->recursions[$id])) {
+            [$working, $domains, $names] = $this->recursions[$id];
+
+            return new QueryPlan($working, $domains, $names);
+        }
+        if (!isset($this->commonTables[$id])) {
+            if (!isset($this->definitions[$id]) || !$definition instanceof CommonTableExpression) {
+                throw StatementError::NotSupportedYet->error('this common table expression');
+            }
+            $plan = (new Recursion($this))->plan($definition, $this->definitions[$id][1]) ?? $this->query($definition->query, $this->definitions[$id][1]);
+            $names = $definition->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $definition->columns);
+            $this->commonTables[$id] = new QueryPlan($plan->root, $plan->domains, $names, $plan->origins);
+        }
+
+        return $this->commonTables[$id];
+    }
+
+    /**
+     * Plans UNION, INTERSECT and EXCEPT.
+     *
+     * @param list<Domain>|null $settled The types the rows are held in, those of an operation this one is an operand of; its own when null
+     */
+    public function set(SetOperation|OrderedSetOperation|LeadingUnion $operation, ?Scope $outer, ?array $settled = null): QueryPlan
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($operation) !== null || (new Union\Widths())->differ($operation->left, $operation->right, $this->compiler->facts)) {
+            (new \MySqlMemory\Evaluation\Compile\Selections())->set($operation, $this, $outer);
+        }
+        \SqlSemantics\Diagnostic\Check::invariant(!$operation instanceof LeadingUnion || $settled !== null, 'A leading union receives the enclosing result domains.');
+        if ($settled === null && !$this->typed($operation)) {
+            $this->missingRelations($operation, $outer);
+        }
+        $domains = $settled ?? $this->outputs($operation);
+        $left = $this->operand($operation->left, $outer, $domains);
+        $right = $this->operand($operation->right, $outer, $domains);
+        if (count($left->domains) !== count($right->domains)) {
+            throw QueryError::WrongNumberOfColumnsInSelect->error();
+        }
+        $kind = match ($operation instanceof LeadingUnion ? SetOperator::Union : $operation->operator) {
+            SetOperator::Union => SetKind::Union,
+            SetOperator::Intersect => SetKind::Intersect,
+            SetOperator::Except => SetKind::Except,
+        };
+
+        $distinct = $operation->quantifier !== SetQuantifier::All;
+        $retain = !$this->compiler->settings->legacy() || $kind !== SetKind::Union || $distinct;
+
+        $origins = $this->materialized($domains);
+        if ($this->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || $distinct) {
+            $origins = array_map(static fn (?ColumnOrigin $origin, string $name): ColumnOrigin => new ColumnOrigin('', '', '', $name, $origin->flags ?? 0), $origins, $left->names);
+        }
+        return new QueryPlan(new SetPath($kind, $distinct, $this->settled($left, $domains), $this->settled($right, $domains), $domains, $retain), $domains, $left->names, $origins);
+    }
+
+    /**
+     * Answers whether SQL Semantics resolved the type of every column of the operation.
+     */
+    public function typed(Query $query): bool
+    {
+        foreach ($query->queryInformation()->shape->slots as $slot) {
+            if (!$slot->type instanceof \SqlSemantics\Statement\Type\Known || !$slot->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Plans the operands of an operation whose column types depend on relations the analysis did not know.
+     *
+     * A column keeps a dependent type when its relation was not declared to the analysis; at execution such a
+     * relation does not exist, and the server reports it before typing the combined result
+     * (verified on a live 8.4 server). Each operand is planned on its own so its missing relation is raised.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an operand reads a relation that does not exist
+     */
+    public function missingRelations(SetOperation|OrderedSetOperation|LeadingUnion $operation, ?Scope $outer): void
+    {
+        foreach ([$operation->left, $operation->right] as $operand) {
+            $inner = $operand;
+            while ($inner instanceof ParenthesizedQuery) {
+                $inner = $inner->query;
+            }
+            if ($inner instanceof SetOperation || $inner instanceof OrderedSetOperation || $inner instanceof LeadingUnion) {
+                $this->missingRelations($inner, $outer);
+            } elseif ($inner instanceof Query) {
+                $this->query($inner, $outer);
+            }
+        }
+    }
+
+    /**
+     * Plans an operand of a set operation; an operand that is itself a set operation, in parentheses or not, holds its rows in the types of the outermost one.
+     *
+     * The server settles the operands of nested set operations in one temporary table, so
+     * `SELECT 1 UNION SELECT 2.5 UNION SELECT 'x'` converts 1 straight into a string (verified on
+     * live 8.0 and 8.4 servers).
+     *
+     * @param list<Domain> $domains The types of the columns of the outermost operation
+     */
+    public function operand(Query|LeadingUnion $operand, ?Scope $outer, array $domains): QueryPlan
+    {
+        if ($operand instanceof LeadingUnion) {
+            return $this->set($operand, $outer, $domains);
+        }
+        $inner = $operand;
+        while ($inner instanceof ParenthesizedQuery) {
+            $inner = $inner->query;
+        }
+
+        return $inner instanceof SetOperation ? $this->set($inner, $outer, $domains) : $this->query($operand, $outer);
+    }
+
+    /**
+     * Answers the rows of an operand of a set operation as the temporary table of the operation holds them: each value converted into the type of its column.
+     *
+     * A decimal is rescaled even when its resolved type matches: variable reads can retain
+     * fewer fractional digits at runtime. Other values whose types match are kept; another is converted
+     * into the resolved field, so an integer gains the scale of a decimal column, a date the time of a
+     * datetime one, an unsigned integer its digits in a string or decimal one, and a string the
+     * character set of its column. Numeric storage saturates instead of applying an explicit CAST's
+     * wraparound or overflow diagnostic (verified on live 5.6, 5.7 and 8.4 servers).
+     *
+     * @param list<Domain> $domains The types of the columns of the operation
+     */
+    public function settled(QueryPlan $operand, array $domains): AccessPath
+    {
+        $expressions = [];
+        $converted = false;
+        foreach ($domains as $position => $domain) {
+            $from = $operand->domains[$position];
+            $read = new ColumnRead($from, $position);
+            $differs = $domain->kind === Kind::Decimal || $from->kind !== $domain->kind || $from->field !== $domain->field || $from->decimals !== $domain->decimals || $from->unsigned !== $domain->unsigned
+                || ($domain->kind === Kind::String && $from->collation->charset !== $domain->collation->charset);
+            $converted = $converted || $differs;
+            $expressions[] = $differs && $from->kind !== Kind::Null ? new SetConversion($read, $domain, ($operand->origins[$position] ?? null) !== null) : $read;
+        }
+
+        return $converted ? new Project($operand->root, $expressions) : $operand->root;
+    }
+
+    /**
+     * Plans VALUES ROW(...), ...: columns named column_0, column_1 and so on.
+     */
+    public function values(ValuesQuery $query, ?Scope $outer): QueryPlan
+    {
+        $scope = new Scope($outer);
+        $rows = [];
+        $columns = [];
+        foreach ($query->rows as $row) {
+            if ($row->values === []) {
+                throw QueryError::ValuesEmptyRow->error();
+            }
+            $compiled = [];
+            foreach ($row->values as $position => $value) {
+                if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest) {
+                    throw QueryError::ValuesDefault->error();
+                }
+                $evaluable = $this->compiler->compile($value, $scope);
+                $compiled[] = $evaluable;
+                $columns[$position][] = $evaluable->domain();
+            }
+            $rows[] = $compiled;
+        }
+        $domains = $this->outputs($query);
+        $names = array_map(static fn (int $position): string => 'column_' . $position, array_keys($domains));
+
+        return new QueryPlan(new Inline($rows, count($domains)), $domains, $names);
+    }
+
+    /**
+     * Answers the origins of the columns of a temporary table: none, but a blob column is flagged as one and a YEAR column as ZEROFILL.
+     *
+     * @param list<Domain> $domains
+     * @return list<ColumnOrigin|null>
+     */
+    public function materialized(array $domains): array
+    {
+        return array_map(static fn ($domain): ?ColumnOrigin => $domain->field->blob() || $domain->field === Field::Year ? new ColumnOrigin('', '', '', '', $domain->field->blob() ? ColumnFlag::Blob->value : ColumnFlag::ZeroFill->value) : null, $domains);
+    }
+
+
+    /**
+     * Answers the types of the columns a query returns, as SQL Semantics resolved them.
+     *
+     * @return list<Domain>
+     *
+     * @throws \MySqlMemory\Error\SqlError When SQL Semantics resolved only the class of a type
+     */
+    public function outputs(Query $query, ?\SqlSemantics\Statement\Fact\QueryFact $fact = null): array
+    {
+        $domains = [];
+        foreach (($fact ?? $query->queryInformation())->shape->slots as $slot) {
+            $type = $slot->type;
+            if (!$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+                throw StatementError::NotSupportedYet->error('the type of a set operation column');
+            }
+            $domains[] = Domain::of($type->descriptor, $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull);
+        }
+
+        return $domains;
+    }
+
+    /**
+     * Applies separately resolved statement fields to the final result. The access
+     * path retains the domains used for intermediate and materialized rows.
+     */
+    public function result(QueryPlan $plan): QueryPlan
+    {
+        $output = $this->compiler->facts->output;
+        if (!$this->statement instanceof Query || $output === null || $output === $this->statement->queryInformation()) {
+            return $plan;
+        }
+
+        return new QueryPlan($plan->root, $this->outputs($this->statement, $output), $plan->names);
+    }
+
+}

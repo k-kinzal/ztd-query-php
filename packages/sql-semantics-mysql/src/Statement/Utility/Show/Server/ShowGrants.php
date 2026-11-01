@@ -10,10 +10,9 @@ use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW GRANTS: the GRANT statements that reproduce the privileges of an account or role.
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the column named after the account
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW GRANTS FOR 'u'@'localhost' USING r");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Grants for u@localhost', 'SHOW GRANTS FOR u@localhost USING r']
+ *     [$show->field(0)->name?->value, $show->toString()] // => ['Grants for u@localhost', 'SHOW GRANTS FOR \'u\'@\'localhost\' USING r']
  */
-final class ShowGrants implements Statement
+final class ShowGrants extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Account> The roles of USING in order
@@ -45,10 +44,14 @@ final class ShowGrants implements Statement
      * @param Account|null $user The account or role after FOR; null when FOR is not written
      * @param list<Account> $using The roles of USING in order; only with an account
      */
-    public function __construct(public readonly ?Account $user = null, array $using = [])
+    public function __construct(public readonly ?Account $user = null, array $using = [], ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->using = Check::listOf($using, Account::class, 'USING names a list of roles.');
         Check::input($user !== null || $this->using === [], 'USING requires FOR.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -56,13 +59,14 @@ final class ShowGrants implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user, ...$this->using]);
         $facts = new ShowFacts();
         if (!$this->user instanceof AccountName) {
             $derivation->output($facts->query($facts->open(new SessionState('the current user'))->shape, $derivation->context->columnNames));
 
             return;
         }
-        $name = 'Grants for ' . $this->user->user->value . '@' . ($this->user->host->value ?? '%');
+        $name = 'Grants for ' . $this->user->username() . '@' . ($this->user->hostname() ?? '%');
         $derivation->output($facts->query($facts->shape($derivation, Report::Grants, $name), $derivation->context->columnNames));
     }
 

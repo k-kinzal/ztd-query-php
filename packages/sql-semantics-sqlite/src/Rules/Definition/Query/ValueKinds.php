@@ -26,7 +26,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\LiteralColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
@@ -83,7 +82,7 @@ final class ValueKinds
     /**
      * Answers the kinds of value an expression can produce, or null when they are not determined.
      */
-    public function of(Scalar $expression, Facts $facts): ?int
+    public function of(Scalar $expression): ?int
     {
         while ($expression instanceof Collate || $expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus)) {
             $expression = $expression->operand;
@@ -95,14 +94,14 @@ final class ValueKinds
             return self::TEXT;
         }
         if ($expression instanceof CaseExpression) {
-            return $this->results($expression, $facts);
+            return $this->results($expression);
         }
-        if ($expression instanceof DoubleQuotedWord && ($facts->covers($expression) ? $facts->scalar($expression)->resolution : null) === null) {
+        if ($expression instanceof DoubleQuotedWord && ($expression->hasBinding() ? $expression->scalarInformation()->resolution : null) === null) {
             return self::TEXT;
         }
         if ($expression instanceof ColumnUse || $expression instanceof DoubleQuotedWord || $expression instanceof LiteralColumn
             || $expression instanceof ScalarSubquery || $expression instanceof Cast || $expression instanceof RowExpression) {
-            return $this->affined((new ExpressionAffinity())->of($expression, $facts));
+            return $this->affined((new ExpressionAffinity())->of($expression));
         }
 
         return self::NUMBER;
@@ -111,7 +110,7 @@ final class ValueKinds
     /**
      * Answers the kinds of value a CASE can produce: the union over its results.
      */
-    public function results(CaseExpression $expression, Facts $facts): ?int
+    public function results(CaseExpression $expression): ?int
     {
         $kinds = 0;
         $results = array_map(static fn (object $branch): Scalar => $branch->then, $expression->branches);
@@ -119,7 +118,7 @@ final class ValueKinds
             $results[] = $expression->otherwise;
         }
         foreach ($results as $result) {
-            $kind = $this->of($result, $facts);
+            $kind = $this->of($result);
             if ($kind === null) {
                 return null;
             }
@@ -147,19 +146,19 @@ final class ValueKinds
     /**
      * Answers the kinds of value the result of an arm at a position can produce; an expanded star is a column reference.
      */
-    public function arm(Select|ValueRow $arm, int $position, Facts $facts): ?int
+    public function arm(Select|ValueRow $arm, int $position): ?int
     {
         if ($arm instanceof ValueRow) {
-            return isset($arm->values[$position]) ? $this->of($arm->values[$position], $facts) : null;
+            return isset($arm->values[$position]) ? $this->of($arm->values[$position]) : null;
         }
-        $item = $facts->covers($arm) ? ($facts->query($arm)->projection[$position] ?? null) : null;
+        $item = $arm->hasBinding() ? ($arm->queryInformation()->projection[$position] ?? null) : null;
         if (!$item instanceof Field) {
             return null;
         }
         if ($item->expression !== null) {
-            return $this->of($item->expression, $facts);
+            return $this->of($item->expression);
         }
 
-        return $item->resolution instanceof ResolvedColumn ? $this->affined((new ExpressionAffinity())->resolved($item->resolution, $facts)) : null;
+        return $item->resolution instanceof ResolvedColumn ? $this->affined((new ExpressionAffinity())->resolved($item->resolution)) : null;
     }
 }

@@ -17,7 +17,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A call of a function, aggregate or window function written with the function's name.
@@ -56,7 +55,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FunctionCall implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Argument> The arguments in order
@@ -89,7 +89,12 @@ final class FunctionCall implements Scalar, OutputNaming
         public readonly bool $withinGroup = false,
         public readonly ?Scalar $filter = null,
         public readonly WindowSpecification|Name|null $over = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = Check::listOf($arguments, Argument::class, 'Call arguments are arguments.');
         $this->order = Check::listOf($order, SortItem::class, 'An aggregate ordering is a list of sort items.');
         Check::input(!$star || ($this->arguments === [] && !$distinct && !$variadic && ($this->order === [] || $withinGroup)), 'The star form takes no argument, DISTINCT, VARIADIC or ordering inside the parentheses.');

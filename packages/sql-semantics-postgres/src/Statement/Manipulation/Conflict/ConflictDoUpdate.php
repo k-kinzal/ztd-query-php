@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\RowAssign
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ON CONFLICT [ conflict_target ] DO UPDATE SET ... [ WHERE condition ]`: the existing row that conflicts is updated instead.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the assignments of an upsert
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0');
- *     [count($insert->statement->conflict->assignments), $insert->toString()] // => [1, 'INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0']
+ *     [count($insert->conflict->assignments), $insert->toString()] // => [1, 'INSERT INTO t VALUES (1) ON CONFLICT (a) DO UPDATE SET a = excluded.a WHERE t.a > 0']
  * @example Refusing DO UPDATE without an assignment
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\ConflictDoUpdate(null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ConflictDoUpdate implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Assignment|RowAssignment> The SET items in written order
@@ -45,7 +44,7 @@ final class ConflictDoUpdate implements Node
      *
      * @throws InvalidConstruction When there is no SET item
      */
-    public function __construct(public readonly IndexInference|ConstraintInference|null $target, array $assignments, public readonly ?Scalar $where = null)
+    public function __construct(public readonly IndexInference|ConstraintInference|null $target, array $assignments, public readonly ?Scalar $where = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->assignments = (new ClosedList())->of($assignments, [Assignment::class, RowAssignment::class], 'DO UPDATE SET holds at least one assignment.', 1);
     }

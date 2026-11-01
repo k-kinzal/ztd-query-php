@@ -16,8 +16,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a named argument
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT abs(1 AS x)');
- *     $query->facts->diagnostics[0]->message() // => "Incorrect parameters in the call to native function 'abs'"
+ *     (new \SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument(new \SqlSemantics\Statement\Identifier\Name('abs')))->message() // => "Incorrect parameters in the call to native function 'abs'"
  */
 final class NamedArgument implements Diagnostic
 {

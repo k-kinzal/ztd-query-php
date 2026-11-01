@@ -14,7 +14,7 @@ final class AlterSystemSettingTest extends TestCase
 {
     public function testDeriveStatementDerivesTheSetting(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SYSTEM SET a = \'x\', 1')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SYSTEM SET a = \'x\', 1')->diagnostics());
     }
 
     public function testRenderWritesTheSettingAfterTheCommand(): void

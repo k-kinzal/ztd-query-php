@@ -8,9 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Expression\TemporalMerge;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
@@ -24,7 +22,7 @@ final class TemporalMergeTest extends TestCase
         $merge = new TemporalMerge();
 
         self::assertEquals(
-            [new Temporal(TemporalKind::Timestamp), new Temporal(TemporalKind::DateTime), new Integral(IntegralKind::SmallInt), new Character(CharacterKind::VarChar), new Character(CharacterKind::VarChar)],
+            [new Temporal(TemporalKind::Timestamp), new Temporal(TemporalKind::DateTime), new Integral(IntegralKind::SmallInt), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()],
             [
                 $merge->merge(new Temporal(TemporalKind::Timestamp, '3'), new Temporal(TemporalKind::Timestamp)),
                 $merge->merge(new Temporal(TemporalKind::Time), new Temporal(TemporalKind::Date)),

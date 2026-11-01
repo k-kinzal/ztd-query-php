@@ -20,7 +20,7 @@ final class TriggersTest extends TestCase
         $statement = $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON t FOR EACH STATEMENT WHEN (a > 0) EXECUTE FUNCTION f()', $context);
         self::assertSame([
           0 => 'Column a is ambiguous.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testDeriveConstraintChecksTheAttributes(): void
@@ -31,7 +31,7 @@ final class TriggersTest extends TestCase
         $statement = $semantics->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t NOT VALID FOR EACH ROW EXECUTE FUNCTION f()', $context);
         self::assertSame([
           0 => 'TRIGGER constraints cannot be marked NOT VALID',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testEventReportsAnUnknownEvent(): void
@@ -40,7 +40,7 @@ final class TriggersTest extends TestCase
         $statement = $semantics->analyze('CREATE EVENT TRIGGER e ON whenever EXECUTE FUNCTION f()', []);
         self::assertSame([
           0 => 'unrecognized event name "whenever"',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testWriteWritesTheTrigger(): void
@@ -68,7 +68,7 @@ final class TriggersTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TRIGGER g AFTER INSERT OR TRUNCATE ON v EXECUTE FUNCTION f()', $context)->facts->diagnostics));
-        self::assertSame([], $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON v EXECUTE FUNCTION f()', $context)->facts->diagnostics);
+        self::assertSame(['"v" is a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TRIGGER g AFTER INSERT OR TRUNCATE ON v EXECUTE FUNCTION f()', $context)->diagnostics()));
+        self::assertSame([], $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON v EXECUTE FUNCTION f()', $context)->diagnostics());
     }
 }

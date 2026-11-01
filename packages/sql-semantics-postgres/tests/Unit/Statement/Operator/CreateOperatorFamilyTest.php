@@ -18,7 +18,7 @@ final class CreateOperatorFamilyTest extends TestCase
     public function testDeriveStatementRecordsNothing(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE OPERATOR FAMILY f USING btree', []);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheMethod(): void

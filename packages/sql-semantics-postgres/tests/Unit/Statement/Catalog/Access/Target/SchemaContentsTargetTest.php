@@ -19,7 +19,7 @@ final class SchemaContentsTargetTest extends TestCase
 
     public function testDeriveTargetResolvesNothing(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON ALL TABLES IN SCHEMA app TO joe', [])->diagnostics()));
     }
 
     public function testRenderWritesThePluralOfTheKind(): void

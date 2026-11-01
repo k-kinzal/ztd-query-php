@@ -17,7 +17,7 @@ final class PartitionRowTest extends TestCase
 {
     public function testDeriveRowDerivesTheValuesWithoutColumns(): void
     {
-        self::assertSame('Column a does not exist.', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE (a) (PARTITION p VALUES LESS THAN (a))')->facts->diagnostics[0]->message());
+        self::assertSame('Column a does not exist.', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE (a) (PARTITION p VALUES LESS THAN (a))')->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheValues(): void

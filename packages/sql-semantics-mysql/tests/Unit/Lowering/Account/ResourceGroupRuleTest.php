@@ -15,6 +15,13 @@ use SqlSemantics\Platform\MySql\Lowering\Account\ResourceGroupRule;
 #[Medium]
 final class ResourceGroupRuleTest extends TestCase
 {
+    public function testOperatorRetainsEachClauseSignAndOmission(): void
+    {
+        self::assertSame('ALTER RESOURCE GROUP g VCPU := 1 THREAD_PRIORITY = 2', (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g VCPU := 1 THREAD_PRIORITY = 2')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g VCPU 1 THREAD_PRIORITY := 2', (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g VCPU 1 THREAD_PRIORITY := 2')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g DISABLE', (new Semantics(Dialect::MySql))->analyze('ALTER RESOURCE GROUP g DISABLE')->toString());
+    }
+
     public function testStatementLowersEveryStatement(): void
     {
         self::assertSame('SET RESOURCE GROUP g', (new Semantics(Dialect::MySql))->analyze('set resource group g')->toString());
@@ -27,17 +34,17 @@ final class ResourceGroupRuleTest extends TestCase
 
     public function testCpusLowersTheVcpuList(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g VCPU = 1, 2, 3', (new Semantics(Dialect::MySql))->analyze('alter resource group g vcpu = 1 2, 3')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g VCPU = 1 2, 3', (new Semantics(Dialect::MySql))->analyze('alter resource group g vcpu = 1 2, 3')->toString());
     }
 
     public function testRangeLowersARange(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g VCPU = 1 - 4', (new Semantics(Dialect::MySql))->analyze('alter resource group g vcpu 1-4')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g VCPU 1 - 4', (new Semantics(Dialect::MySql))->analyze('alter resource group g vcpu 1-4')->toString());
     }
 
     public function testPriorityLowersTheSign(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g THREAD_PRIORITY = 2', (new Semantics(Dialect::MySql))->analyze('alter resource group g thread_priority 2')->toString());
+        self::assertSame('ALTER RESOURCE GROUP g THREAD_PRIORITY 2', (new Semantics(Dialect::MySql))->analyze('alter resource group g thread_priority 2')->toString());
     }
 
     public function testEnabledLowersTheKeyword(): void
@@ -52,16 +59,24 @@ final class ResourceGroupRuleTest extends TestCase
 
     public function testThreadsLowersTheThreadList(): void
     {
-        self::assertSame('SET RESOURCE GROUP g FOR 1, 2, 3', (new Semantics(Dialect::MySql))->analyze('set resource group g for 1 2, 3')->toString());
+        self::assertSame('SET RESOURCE GROUP g FOR 1 2, 3', (new Semantics(Dialect::MySql))->analyze('set resource group g for 1 2, 3')->toString());
     }
 
     public function testNumberKeepsTheText(): void
     {
-        self::assertSame('ALTER RESOURCE GROUP g VCPU = 007', (new Semantics(Dialect::MySql))->analyze('alter resource group g vcpu 007')->toString());
+        self::assertSame('SET RESOURCE GROUP g FOR 007', (new Semantics(Dialect::MySql))->analyze('set resource group g for 007')->toString());
     }
 
     public function testClaimedConfirmsTheList(): void
     {
         self::assertSame('SET RESOURCE GROUP g FOR 9', (new Semantics(Dialect::MySql))->analyze('set resource group g for 9')->toString());
     }
+    public function testNameRefusesAnOperandBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Identifier name '" . str_repeat('猫', 22) . "' is too long");
+
+        (new Semantics(Dialect::MySql))->analyze('DROP RESOURCE GROUP `' . str_repeat('猫', 22) . '`');
+    }
+
 }

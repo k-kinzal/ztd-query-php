@@ -19,4 +19,10 @@ final class ServerOptionTest extends TestCase
     {
         self::assertSame("ALTER SERVER s OPTIONS (PORT 1, SOCKET '/s')", (new Semantics(Dialect::MySql))->analyze("alter server s options (port 1, socket '/s')")->toString());
     }
+    public function testValueRejectsRadixStrings(): void
+    {
+        $this->expectExceptionMessage('A server option string is quoted text.');
+
+        new ServerOption(\SqlSemantics\Platform\MySql\Statement\Server\ForeignServer\ServerOptionKind::Socket, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('ab', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

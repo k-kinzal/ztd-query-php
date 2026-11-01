@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query\Ordering;
  * @visibility public
  * @example Reading a written direction
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t ORDER BY a DESC');
- *     $query->statement->orderBy[0]->direction // => \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection::Descending
+ *     $query->orderBy[0]->direction // => \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortDirection::Descending
  */
 enum SortDirection: string
 {

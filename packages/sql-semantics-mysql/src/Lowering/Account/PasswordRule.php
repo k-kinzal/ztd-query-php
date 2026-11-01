@@ -62,18 +62,19 @@ final class PasswordRule
             throw ImplementationGap::production($form);
         }
         [$user, $position] = self::FORMS[$form->signature];
+        $operator = $position === null ? \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal : $this->lowering->options->assignment($form->node($user === null ? 1 : 3));
         $account = $user === null ? null : $this->lowering->users->account($form->node($user));
         $password = $position === null ? null : $this->password($form->node($position));
         if (str_ends_with($form->signature, 'PASSWORD ( password )') && $password !== null) {
             $password = new Password($password->text, PasswordFunction::Password);
         }
         if (!str_ends_with($form->signature, 'opt_replace_password opt_retain_current_password')) {
-            return new SetPassword($account, $password);
+            return new SetPassword($account, $password, operator: $operator);
         }
         $identifications = new IdentificationRule($this->lowering);
         $last = count($form->node->children) - 1;
 
-        return new SetPassword($account, $password, $identifications->replace($form->node($last - 1)), $identifications->retain($form->node($last)));
+        return new SetPassword($account, $password, $identifications->replace($form->node($last - 1)), $identifications->retain($form->node($last)), operator: $operator);
     }
 
     /**

@@ -1,0 +1,293 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Iterator\Transform;
+
+use MySqlMemory\Evaluation\Aggregate\Accumulation;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Instance;
+use MySqlMemory\Iterator\Source\WorkingTableIterator;
+use MySqlMemory\Iterator\Transform\AggregateIterator;
+use MySqlMemory\Plan\Path\Source\WorkingTable;
+use MySqlMemory\Plan\Path\Transform\Aggregate;
+use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Typing\Domain;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
+#[CoversClass(AggregateIterator::class)]
+#[Small]
+final class AggregateIteratorTest extends TestCase
+{
+    public function testGatherPreparesLegacyNestedCountBeforeReadingAnEmptyInput(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(1);CREATE TABLE e(n INT);SET @x=0');
+        $result = $session->query('SELECT @x:=@x+1,(SELECT COUNT(DISTINCT @x:=2) FROM e WHERE e.n=t.n),@x FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '2']], $result->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<list<int|string|null>>}>
+     */
+    public static function providerEmptyRollup(): iterable
+    {
+        yield 'MySQL 8.0' => ['8.0.44', []];
+        yield 'MySQL 8.4' => ['8.4.7', []];
+        yield 'MySQL 9.1' => ['9.1.0', [[null, '0', null, '1']]];
+    }
+
+    /**
+     * @param list<list<int|string|null>> $expected
+     */
+    #[DataProvider('providerEmptyRollup')]
+    public function testRollupAnswersAnEmptyGrandTotalOnMySql91(string $version, array $expected): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT)');
+        $result = $session->query('SELECT n,COUNT(*),SUM(n),GROUPING(n) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame($expected, $result->rows);
+    }
+
+    public function testSortedAppliesDescendingRollupInputBeforeFoldingTotals(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2)');
+        $result = $session->query('SELECT n,GROUP_CONCAT(n),ROW_NUMBER() OVER () FROM t GROUP BY n WITH ROLLUP ORDER BY n DESC')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '2,2', '1'], ['1', '1', '2'], [null, '2,2,1', '3']], $result->rows);
+    }
+
+    public function testEmitEvaluatesStreamingGroupArgumentsInGroupingOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @x=0');
+        $result = $session->query('SELECT GROUP_CONCAT(@x:=@x+1) FROM t GROUP BY n')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['2,3']], $result->rows);
+        self::assertSame(3, $session->variables->user('x')[0]);
+    }
+
+    public function testFoldRollupVisitsEveryLevelBeforeAdvancingToTheNextAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @y=0');
+        $result = $session->query('SELECT SUM(@y:=@y+1),SUM(@y:=@y+10) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '22'], ['70', '110'], ['69', '102']], $result->rows);
+        self::assertSame(66, $session->variables->user('y')[0]);
+    }
+
+    public function testInitLeavesAggregateArgumentsUnreadWhenHavingRejectsEveryGroup(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT SUM(1/0) FROM DUAL HAVING 0')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    public function testReadRetainsAggregatesAfterAnOffsetDiscardsTheirRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql; CREATE TABLE t(id INT,a INT); INSERT INTO t VALUES(1,10),(2,20)');
+        $result = $session->query('SELECT (SELECT MIN(id),MAX(a) FROM t LIMIT 0 OFFSET 2) <=> (NULL,NULL), (SELECT MIN(id),MAX(a) FROM t LIMIT 0) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1']], $result->rows);
+    }
+
+    public function testGatherAnswersTheFirstRowAndTheAggregatesOfEachGroupInGroupOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [['b', 1], ['a', 2], ['B', 3], [null, 4]];
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), 0)], [$count]), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([null, 4, 1], $iterator->read());
+        self::assertSame(['a', 2, 1], $iterator->read());
+        self::assertSame(['b', 1, 2], $iterator->read());
+        self::assertNull($iterator->read());
+    }
+
+    public function testInitAnswersOneGroupForAnEmptyInputWithoutGroupingExpressions(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [], [$count]), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([null, null, 0], $iterator->read());
+        self::assertNull($iterator->read());
+    }
+
+    public function testInitAnswersNoGroupForAnEmptyInputWithGroupingExpressions(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(1);
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0)], [$count]), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertNull($iterator->read());
+    }
+
+    public function testInitFoldsOnlyTheNonNullArgumentsOfAnAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(1);
+        $working->rows = [[1], [null], [3]];
+        $count = new Accumulation(AggregateFunction::Count, [new ColumnRead(Domain::integer(), 0)], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [], [$count]), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([1, 2], $iterator->read());
+    }
+
+    public function testSortedOrdersGroupsByTheirGroupingValues(): void
+    {
+        $working = new WorkingTable(2);
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 1)], []), new WorkingTableIterator($working));
+
+        $sorted = $iterator->sorted([[[2, 1], [2, 1], []], [[1, 9], [1, 9], []], [[2, 0], [2, 0], []], [[null, 5], [null, 5], []]]);
+
+        self::assertSame([[null, 5], [1, 9], [2, 0], [2, 1]], array_column($sorted, 0));
+    }
+
+    public function testEmitAppendsTheResultOfEachAccumulatorToTheFirstRow(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(2);
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [], [$count]), new WorkingTableIterator($working));
+        $accumulator = $count->start();
+        $accumulator->add($frame);
+        $accumulator->add($frame);
+
+        self::assertSame([[7, 'x', 2], [8, 'y', 0]], $iterator->emit([[[7, 'x'], [], [$accumulator], []], [[8, 'y'], [], [$count->start()], []]], $frame));
+    }
+
+    public function testReadAnswersNullAfterTheLastGroup(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(1);
+        $working->rows = [[1], [1]];
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0)], []), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([[1], null], [$iterator->read(), $iterator->read()]);
+    }
+
+    public function testInitAddsTheSuperAggregateRowsWithRollup(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [[2, 'x'], [1, 'y'], [1, 'x'], [2, 'x']];
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $groups = [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), 1)];
+        $iterator = new AggregateIterator(new Aggregate($working, $groups, [$count], true, [0, 1]), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame(
+            [[1, 'x', 1, 1, 'x', 0], [1, 'y', 1, 1, 'y', 0], [1, null, 2, 1, null, 1], [2, 'x', 2, 2, 'x', 0], [2, null, 2, 2, null, 1], [null, null, 4, null, null, 2], null],
+            [$iterator->read(), $iterator->read(), $iterator->read(), $iterator->read(), $iterator->read(), $iterator->read(), $iterator->read()],
+        );
+    }
+
+    public function testRollupKeepsAColumnThatAKeptGroupingExpressionReads(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 0)], [$count], true, [0, 0]), new WorkingTableIterator($working));
+        $started = $count->start();
+
+        self::assertSame([[5, 1, 5, 5, 0], [5, 1, 5, null, 1], [null, 1, null, null, 2]], $iterator->rollup([[[5], [5, 5], [$started], [[5]]]], $frame));
+    }
+
+    public function testAgreeComparesTheLeadingGroupingValues(): void
+    {
+        $working = new WorkingTable(2);
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 1)], [], true, [0, 1]), new WorkingTableIterator($working));
+
+        self::assertSame([true, true, false], [$iterator->agree([1, 2], [1, 3], 0), $iterator->agree([1, 2], [1, 3], 1), $iterator->agree([1, 2], [1, 3], 2)]);
+    }
+
+    public function testRowAppendsTheAggregatesTheGroupingValuesAndTheRolledUpCount(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0)], [$count], true, [0]), new WorkingTableIterator($working));
+
+        self::assertSame([null, 0, null, 1], $iterator->row([null], [$count->start()], [null], 1, $frame));
+    }
+
+    public function testSortedKeepsTheGroupsInTheOrderTheyFirstAppearForATemporaryTable(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [['b', 1], ['a', 2], ['b', 3], [null, 4]];
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), 0)], [$count], false, [], false), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([['b', 1, 2], ['a', 2, 1], [null, 4, 1]], [$iterator->read(), $iterator->read(), $iterator->read()]);
+    }
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield 'MySQL 5.6' => ['5.6.51'];
+        yield 'MySQL 5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testFoldRollupEvaluatesEveryLeafAggregateBeforeLegacyTotals(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @y=0');
+        $result = $session->query('SELECT SUM(@y:=@y+1),SUM(@y:=@y+10) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '11'], ['68', '88'], ['102', '132']], $result->rows);
+        self::assertSame(66, $session->variables->user('y')[0]);
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testFoldRollupSharesLegacyTupleInputsAtTheirLeafPosition(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @y=0');
+        $result = $session->query('SELECT SUM(@y:=@y+1),GROUP_CONCAT(@y:=@y+10) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '11'], ['38', '23,35'], ['72', '11,23,35']], $result->rows);
+        self::assertSame(36, $session->variables->user('y')[0]);
+    }
+
+}

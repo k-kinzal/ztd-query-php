@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -21,17 +20,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Closing a cursor
  *     $close = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CLOSE c');
- *     $close->statement->cursor->value // => 'c'
+ *     $close->cursor->value // => 'c'
  */
-final class Close implements Statement
+final class Close extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $cursor The cursor name; null for ALL
      */
-    public function __construct(public readonly ?Name $cursor)
+    public function __construct(public readonly ?Name $cursor, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

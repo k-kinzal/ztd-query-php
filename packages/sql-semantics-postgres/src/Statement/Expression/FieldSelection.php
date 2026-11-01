@@ -9,7 +9,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The indirection step `.name`: the selection of a field, or a further part of a dotted name.
@@ -22,12 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FieldSelection implements IndirectionStep
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The field name
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

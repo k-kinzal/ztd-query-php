@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A name of one or more parts separated by dots, as `any_name` and `func_name` write it.
@@ -24,12 +23,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a schema-qualified type name
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT pg_catalog.int4 '1'");
- *     $name = $query->statement->targets[0]->expression->type->designation->name;
+ *     $name = $query->targets[0]->expression->type->designation->name;
  *     [$name->qualified()?->schema?->value, $name->last()->value] // => ['pg_catalog', 'int4']
  */
-final class DottedName implements ObjectReference
+final class DottedName implements ObjectReference, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The parts from the outermost qualifier to the object name
@@ -39,8 +40,11 @@ final class DottedName implements ObjectReference
     /**
      * @param list<Name> $parts The parts from the outermost qualifier to the object name; at least one
      */
-    public function __construct(array $parts)
+    public function __construct(array $parts, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->parts = Check::listOf($parts, Name::class, 'A dotted name has at least one part.', 1);
     }
 

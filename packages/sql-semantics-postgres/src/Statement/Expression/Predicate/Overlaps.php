@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Known;
 
@@ -34,14 +33,18 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class Overlaps implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RowConstructor $left The first period
      * @param RowConstructor $right The second period
      */
-    public function __construct(public readonly RowConstructor $left, public readonly RowConstructor $right)
+    public function __construct(public readonly RowConstructor $left, public readonly RowConstructor $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

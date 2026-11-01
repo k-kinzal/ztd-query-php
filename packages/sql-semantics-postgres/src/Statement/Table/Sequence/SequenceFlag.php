@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A sequence option without an operand: CYCLE, NO CYCLE, NO MINVALUE, NO MAXVALUE, RESTART, LOGGED or UNLOGGED.
@@ -17,16 +16,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a flag
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SEQUENCE s NO CYCLE');
- *     $create->statement->options[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::NoCycle
+ *     $create->options[0]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceFlagKind::NoCycle
  */
 final class SequenceFlag implements SequenceOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SequenceFlagKind $kind The option
      */
-    public function __construct(public readonly SequenceFlagKind $kind)
+    public function __construct(public readonly SequenceFlagKind $kind, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

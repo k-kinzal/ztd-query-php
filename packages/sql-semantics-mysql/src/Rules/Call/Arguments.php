@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Operand;
 
 /**
  * Derives an operand of a function-like expression, which takes one value.
@@ -28,7 +28,7 @@ final class Arguments
     /**
      * Derives one operand and reports a row.
      */
-    public function one(Scalar $operand, Derivation $derivation, Environment $environment): ScalarFact
+    public function one(Operand $operand, Derivation $derivation, Environment $environment): ScalarFact
     {
         return (new Operands())->single($derivation->scalar($operand, $environment), $derivation);
     }

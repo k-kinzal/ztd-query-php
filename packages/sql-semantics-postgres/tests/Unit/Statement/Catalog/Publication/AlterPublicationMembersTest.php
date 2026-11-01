@@ -19,12 +19,12 @@ final class AlterPublicationMembersTest extends TestCase
 
     public function testDeriveStatementReportsAFilterOnDrop(): void
     {
-        self::assertSame('cannot use a WHERE clause when removing a table from a publication', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p DROP TABLE t WHERE (true)')->facts->diagnostics[0]->message());
+        self::assertSame('cannot use a WHERE clause when removing a table from a publication', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p DROP TABLE t WHERE (true)')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsColumnsOnDrop(): void
     {
-        self::assertSame('column list must not be specified in ALTER PUBLICATION ... DROP', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p DROP TABLE t (a)')->facts->diagnostics[0]->message());
+        self::assertSame('column list must not be specified in ALTER PUBLICATION ... DROP', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER PUBLICATION p DROP TABLE t (a)')->diagnostics()[0]->message());
     }
 
     public function testRejectsABareTableAfterASchema(): void

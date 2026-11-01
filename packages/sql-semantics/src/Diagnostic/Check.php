@@ -53,6 +53,29 @@ final class Check
     }
 
     /**
+     * Narrows an ordered list of pairs to two specified object types.
+     *
+     * @template TLeft of object
+     * @template TRight of object
+     * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $items
+     * @param class-string<TLeft> $left
+     * @param class-string<TRight> $right
+     * @return list<array{TLeft, TRight}>
+     * @throws InvalidConstruction When a pair or its ordered list is malformed
+     */
+    public static function pairs(array $items, string $left, string $right, string $message): array
+    {
+        self::input(array_is_list($items), $message);
+        $pairs = [];
+        foreach ($items as $pair) {
+            self::input(is_array($pair) && array_is_list($pair) && count($pair) === 2 && $pair[0] instanceof $left && $pair[1] instanceof $right, $message);
+            $pairs[] = [$pair[0], $pair[1]];
+        }
+
+        return $pairs;
+    }
+
+    /**
      * Rejects a candidate that violates an internal integrity or correspondence condition.
      *
      * @phpstan-assert true $condition

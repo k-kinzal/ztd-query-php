@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The ENGINE_ATTRIBUTE or SECONDARY_ENGINE_ATTRIBUTE of a column: a JSON document passed to the storage engine (MySQL 8.0.21 and later).
@@ -18,25 +17,28 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the attribute of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT ENGINE_ATTRIBUTE \'{}\')');
- *     $create->statement->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\EngineAttribute // => true
+ *     $create->elements[0]->specification->attributes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\EngineAttribute // => true
  */
 final class EngineAttribute implements ColumnAttribute
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $attribute The attribute document
      * @param bool $secondary Whether it is the SECONDARY_ENGINE_ATTRIBUTE
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly Text $attribute, public readonly bool $secondary = false)
+    public function __construct(public readonly Text $attribute, public readonly bool $secondary = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
+        \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::check($attribute);
     }
 
     /**
-     * Derives nothing: the attribute holds no expression.
+     * Publishes the JSON document condition without discarding its enclosing definition.
      */
     public function deriveAttribute(Derivation $derivation, Environment $scope): void
     {
+        \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::derive($this->attribute, $derivation, $this);
     }
 
     /**
@@ -44,6 +46,10 @@ final class EngineAttribute implements ColumnAttribute
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->secondary ? 'SECONDARY_ENGINE_ATTRIBUTE' : 'ENGINE_ATTRIBUTE')->node($this->attribute);
+        $out->keyword($this->secondary ? 'SECONDARY_ENGINE_ATTRIBUTE' : 'ENGINE_ATTRIBUTE');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
+        }
+        $out->node($this->attribute);
     }
 }

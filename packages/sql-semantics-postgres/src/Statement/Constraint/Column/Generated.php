@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A GENERATED ... AS ( expression ) STORED column constraint: the column always holds the value of an expression of the other columns.
@@ -30,19 +29,19 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example A generated column refers to other columns
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)');
- *     $generated = $create->statement->definition->elements[1]->qualifiers[0];
- *     $create->facts->scalar($generated->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
+ *     $generated = $create->definition->elements[1]->qualifiers[0];
+ *     $generated->expression->left->scalarInformation()->resolution->slot->column === $create->declarations()[0]->columns[0] // => true
  */
 final class Generated implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param GeneratedWhen $when When the column takes the generated value
      * @param Scalar $expression The generation expression
      * @param Name|null $name The constraint name
      */
-    public function __construct(public readonly GeneratedWhen $when, public readonly Scalar $expression, public readonly ?Name $name = null)
+    public function __construct(public readonly GeneratedWhen $when, public readonly Scalar $expression, public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

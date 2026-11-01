@@ -1,0 +1,50 @@
+{
+    "HIGH_NOT_PRECEDENCE": {
+        "not#1": {},
+        "not2#1": {
+            "simple_statement": [
+                76
+            ],
+            "expr": [
+                10
+            ],
+            "simple_expr": [
+                16,
+                6
+            ],
+            "literal_or_null": [
+                0
+            ],
+            "literal": [
+                4
+            ]
+        }
+    },
+    "PIPES_AS_CONCAT": {
+        "simple_expr#12": {
+            "simple_statement": [
+                76
+            ],
+            "expr": [
+                10
+            ],
+            "simple_expr": [
+                12,
+                6,
+                6
+            ],
+            "literal_or_null": [
+                0,
+                0
+            ],
+            "literal": [
+                0,
+                0
+            ],
+            "text_literal": [
+                0,
+                0
+            ]
+        }
+    }
+}

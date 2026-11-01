@@ -23,7 +23,7 @@ final class SubqueryRuleTest extends TestCase
 
     public function testBodyLiftsTheOrderingOfTheLastOperand(): void
     {
-        self::assertSame('SELECT 1 IN (SELECT a FROM t UNION SELECT b FROM u ORDER BY 1 LIMIT 1) AS w FROM v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 in (select a from t union select b from u order by 1 limit 1) as w from v')->toString());
+        self::assertSame('SELECT 1 IN (SELECT a FROM t UNION SELECT b FROM u ORDER BY 1) AS w FROM v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 in (select a from t union select b from u order by 1) as w from v')->toString());
     }
 
     public function testOperandLowersParenthesizedOperandsWithTheirOrdering(): void

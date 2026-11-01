@@ -5,72 +5,27 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Account;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption;
-use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\CommentKind;
-use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsRequirement;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\UserComment;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidUserAttribute;
-use SqlSemantics\Platform\MySql\Statement\Account\Problem\RepeatedTlsAttribute;
-use SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction;
-use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use stdClass;
 
 /**
- * Derives the diagnostics of the account clauses of CREATE USER, ALTER USER and GRANT.
+ * Derives the attribute diagnostic of CREATE USER and ALTER USER.
  *
  * Rule: MYSQL-ACCOUNT-CHECKS-001. A REQUIRE clause that names a property
- * twice is RepeatedTlsAttribute (ER_DUP_ARGUMENT). PASSWORD EXPIRE INTERVAL
- * takes 1 to 65535 days, FAILED_LOGIN_ATTEMPTS and PASSWORD_LOCK_TIME 0 to
- * 32767, every other number of an option any integer (MYSQL-ACCOUNT-NUMBER-001).
+ * twice is refused before construction. Numeric options retain their values;
+ * their integer-token and range conditions are derived here.
  * An ATTRIBUTE string that is not a JSON object is InvalidUserAttribute;
  * the JSON text is read with the JSON grammar of RFC 8259, which the server
- * also implements. A factor change names factors 2 or 3, two changes name
- * different factors, and two ADDs add 2 before 3 (InvalidFactorPair). No
- * type facts: the clauses hold no expressions. Terminates: one pass over
- * each list. Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html,
+ * also implements. The clause holds no expressions and contributes no type
+ * facts. Terminates: one bounded JSON decode. Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-user.html. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
 final class AccountChecks
 {
-    /**
-     * Reports the problems of a REQUIRE clause, when one is written.
-     */
-    public function tls(Derivation $derivation, ?TlsRequirement $tls): void
-    {
-        $seen = [];
-        foreach ($tls === null ? [] : $tls->conditions as $condition) {
-            if (isset($seen[$condition->attribute->value])) {
-                $derivation->report(new RepeatedTlsAttribute($condition->attribute));
-            }
-            $seen[$condition->attribute->value] = true;
-        }
-    }
-
-    /**
-     * Reports the numbers of password and locking options outside their range.
-     *
-     * @param list<AccountOption> $options
-     */
-    public function options(Derivation $derivation, array $options): void
-    {
-        $numbers = new NumberChecks();
-        $ranges = [
-            AccountOptionKind::ExpireInterval->name => ['DAY', '1', '65535'],
-            AccountOptionKind::FailedLoginAttempts->name => ['FAILED_LOGIN_ATTEMPTS', '0', '32767'],
-            AccountOptionKind::LockTime->name => ['PASSWORD_LOCK_TIME', '0', '32767'],
-        ];
-        foreach ($options as $option) {
-            if ($option->number !== null) {
-                [$name, $minimum, $maximum] = $ranges[$option->kind->name] ?? [implode(' ', $option->kind->words()), '0', null];
-                $numbers->range($derivation, $option->number, $name, $minimum, $maximum);
-            }
-        }
-    }
-
     /**
      * Reports an ATTRIBUTE string that is not a JSON object.
      */
@@ -82,22 +37,22 @@ final class AccountChecks
     }
 
     /**
-     * Reports the factor numbers and the factor pair of an ALTER USER factor change.
+     * Publishes numeric option conditions without losing later options or accounts.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption> $options The written options
      */
-    public function factors(Derivation $derivation, FactorChange $change): void
+    public function options(Derivation $derivation, array $options): void
     {
-        $numbers = new NumberChecks();
-        foreach ($change->steps as $step) {
-            $numbers->factor($derivation, $step->factor);
-        }
-        if (count($change->steps) === 2) {
-            $first = $change->steps[0]->factor->text;
-            $second = $change->steps[1]->factor->text;
-            if ($first === $second) {
-                $derivation->report(new InvalidFactorPair(true));
-            } elseif ($change->action === FactorAction::Add && $numbers->compare($first, $second) > 0) {
-                $derivation->report(new InvalidFactorPair(false));
+        foreach ($options as $option) {
+            if ($option->number === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $option->number)) {
+                continue;
+            }
+            $problem = (new NumberChecks())->option($option->kind, $option->number);
+            if ($problem !== null) {
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
             }
         }
     }
+
 }

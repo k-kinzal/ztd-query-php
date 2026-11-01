@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -33,21 +32,28 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading ORDER BY after a set operation
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS a UNION SELECT 2 ORDER BY a');
- *     [$query->statement->body instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation, count($query->statement->options->order)] // => [true, 1]
+ *     [$query->body instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation, count($query->options->order)] // => [true, 1]
  * @example Refusing clauses that belong to a selection
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression(null, new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([]), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions(readOnly: true)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class QueryExpression implements Statement, Query, OutputNaming
+final class QueryExpression extends \SqlSemantics\Statement\SqlStatement implements Statement, Query, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param WithClause|null $with The WITH clause
      * @param Query $body The query body
      * @param SelectOptions|null $options The ORDER BY, LIMIT and locking clauses written after the body
      */
-    public function __construct(public readonly ?WithClause $with, public readonly Query $body, public readonly ?SelectOptions $options = null)
+    public function __construct(public readonly ?WithClause $with, public readonly Query $body, public readonly ?SelectOptions $options = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         Check::input($with !== null || $options !== null, 'A query expression adds a WITH clause or clauses after its body.');
         Check::input(
             $body instanceof Select || $body instanceof TableQuery || $body instanceof SetOperation || $body instanceof ValuesList || $body instanceof ParenthesizedQuery,

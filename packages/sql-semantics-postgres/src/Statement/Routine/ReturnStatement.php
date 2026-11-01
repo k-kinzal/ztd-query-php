@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RETURN expression` in an SQL-standard function body: the value the function returns.
@@ -25,12 +24,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ReturnStatement implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $value The returned expression
      */
-    public function __construct(public readonly Scalar $value)
+    public function __construct(public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

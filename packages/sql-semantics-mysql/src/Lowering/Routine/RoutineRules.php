@@ -11,7 +11,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Condition\DiagnosticsRule;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Condition\SignalRule;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The entry rules of the routine family: the methods other families and the statement dispatcher call.

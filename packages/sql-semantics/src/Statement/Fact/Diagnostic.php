@@ -14,7 +14,7 @@ namespace SqlSemantics\Statement\Fact;
  * @example Reading the problems of a statement
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
- *     $semantics->analyze('SELECT b FROM t', [$table])->facts->diagnostics[0]->message() // => 'Column b does not exist.'
+ *     $semantics->analyze('SELECT b FROM t', [$table])->diagnostics()[0]->message() // => 'Column b does not exist.'
  */
 interface Diagnostic
 {

@@ -21,11 +21,24 @@ final class HashMethodTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $alter = $semantics->analyze('ALTER TABLE t PARTITION BY HASH (a)', [$table]);
 
-        self::assertSame([], $alter->facts->diagnostics);
+        self::assertSame([], $alter->diagnostics());
     }
 
     public function testRenderWritesTheExpression(): void
     {
         self::assertSame('ALTER TABLE t PARTITION BY LINEAR HASH (a + 1)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY LINEAR HASH (a+1)')->toString());
+    }
+
+    public function testRenderRequiresGroupingForAPredicateOperand(): void
+    {
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\NullTest(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'));
+        $this->expectExceptionMessage('A partition expression needs a grouping to keep its place.');
+        new HashMethod(false, $expression);
+    }
+
+    public function testRenderPreservesAGroupedPredicateOperand(): void
+    {
+        $sql = 'ALTER TABLE t PARTITION BY HASH ((a IS NULL))';
+        self::assertSame($sql, (new Semantics(Dialect::MySql))->analyze($sql)->toString());
     }
 }

@@ -19,6 +19,6 @@ final class AlterSubscriptionOptionsTest extends TestCase
 
     public function testDeriveStatementDerivesTheParameters(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s SET (binary = true)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s SET (binary = true)')->diagnostics());
     }
 }

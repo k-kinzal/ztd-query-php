@@ -23,6 +23,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CollationNameTest extends TestCase
 {
+    public function testDeprecationUsesTheResolvedNameAndRelease(): void
+    {
+        self::assertSame(4079, (new CollationName(new Name('UCS2_BIN')))->deprecation(GrammarRelease::MySql847)?->code());
+        self::assertSame(3778, (new CollationName(new Name('utf8_bin')))->deprecation(GrammarRelease::MySql847)?->code());
+        self::assertNull((new CollationName(new Name('ucs2_bin')))->deprecation(GrammarRelease::MySql5744));
+        self::assertNull((new CollationName(new Name('utf8mb4_bin')))->deprecation(GrammarRelease::MySql847));
+        self::assertNull((new CollationName(null))->deprecation(GrammarRelease::MySql847));
+    }
+
     public function testRenderWritesTheNameAsWritten(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));
@@ -58,7 +67,7 @@ final class CollationNameTest extends TestCase
         self::assertSame('utf8_bin', $plain?->name?->value);
         self::assertSame('utf8_bin', $quoted?->name?->value);
         self::assertSame('binary', $binary?->name?->value);
-        self::assertSame('`binary`', (new Lexical())->join($out->pieces()));
+        self::assertSame('binary', (new Lexical())->join($out->pieces()));
     }
 
     public function testLoweredDefaultHasNoName(): void

@@ -31,6 +31,8 @@ final class TableOptionRuleTest extends TestCase
 
         self::assertInstanceOf(EngineOption::class, $options[0]);
         self::assertInstanceOf(NumberOption::class, $options[1]);
+        self::assertSame([23, 10], [$lowering->origins->publish()->of($options[0])?->offset, $lowering->origins->publish()->of($options[0])?->length]);
+        self::assertSame(35, $lowering->origins->publish()->of($options[1])?->offset);
     }
 
     public function testOptionLowersOneOption(): void

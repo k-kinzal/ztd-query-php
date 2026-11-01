@@ -21,11 +21,18 @@ final class QueryContextRule implements RewriteRule
     {
         foreach ($sequence->occurrences('as_create_query_expression') as $id) {
             $range = $sequence->range($id);
-            if ($range !== null && $sequence->nameAt($range[0]) !== 'AS') {
-                $sequence = $sequence->replace($range[0], 0, [
-                    $sequence->insertedFor('AS', $id, 'sql/sql_yacc.yy:as_create_query_expression'),
-                ], 'sql/sql_yacc.yy:as_create_query_expression');
+            if ($range === null || $sequence->nameAt($range[0]) === 'AS') {
+                continue;
             }
+            $owner = $sequence->terminals[$range[0]]->ancestor('create_table_stmt');
+            $prefix = $owner === null ? null : $sequence->range($owner);
+            $partitioned = $prefix !== null && in_array('PARTITION_SYM', array_slice($sequence->names(), $prefix[0], $range[0] - $prefix[0]), true);
+            if ($sequence->nameAt($range[0]) !== '(' && !$partitioned) {
+                continue;
+            }
+            $sequence = $sequence->replace($range[0], 0, [
+                $sequence->insertedFor('AS', $id, 'sql/sql_yacc.yy:as_create_query_expression'),
+            ], 'sql/sql_yacc.yy:as_create_query_expression');
         }
         for ($index = count($sequence->terminals) - 1; $index >= 0; --$index) {
             $terminal = $sequence->terminals[$index];

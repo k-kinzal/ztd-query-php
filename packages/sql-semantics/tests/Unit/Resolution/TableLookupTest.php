@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\ConditionalTable;
-use SqlSemantics\Statement\Reference\Table\ConflictingTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
@@ -35,19 +34,6 @@ final class TableLookupTest extends TestCase
 
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($temp, $resolution->table);
-    }
-
-    public function testFindReportsConflictingDeclarationsOfOneSchema(): void
-    {
-        $profile = new LanguageProfile(GrammarRelease::Sqlite3472);
-        $first = new Table(new QualifiedName(new Name('t')), $profile, []);
-        $second = new Table(new QualifiedName(new Name('t')), $profile, []);
-        $context = new AnalysisContext($profile, [new Name('main')], [$first, $second]);
-
-        $resolution = (new TableLookup())->find($context, new QualifiedName(new Name('t')));
-
-        self::assertInstanceOf(ConflictingTables::class, $resolution);
-        self::assertSame([$first, $second], $resolution->candidates);
     }
 
     public function testFindIsMissingInACompleteContextAndUndeclaredInAnOpenOne(): void

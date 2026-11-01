@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a COPY of a query
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COPY (SELECT 1) TO '/tmp/x' CSV");
- *     [$copy->statement->query instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $copy->toString()] // => [true, "COPY (SELECT 1) TO '/tmp/x' CSV"]
+ *     [$copy->query instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $copy->toString()] // => [true, "COPY (SELECT 1) TO '/tmp/x' CSV"]
  */
-final class CopyQuery implements Statement
+final class CopyQuery extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<CopyFlag|CopyText|CopyForce> The options of the old syntax in written order
@@ -53,8 +52,11 @@ final class CopyQuery implements Statement
      *
      * @throws InvalidConstruction When the query is no statement, both kinds of options are written, or a list holds a foreign item
      */
-    public function __construct(public readonly Query $query, public readonly bool $program, public readonly StringConstant|CopyStream $file, array $legacy = [], array $options = [])
+    public function __construct(public readonly Query $query, public readonly bool $program, public readonly StringConstant|CopyStream $file, array $legacy = [], array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input((new Sources())->statement($query) || $query instanceof Modification, 'COPY copies a query statement or a data-modifying statement.');
         $this->legacy = (new ClosedList())->of($legacy, [CopyFlag::class, CopyText::class, CopyForce::class], 'The old COPY options are keyword, string and FORCE options.');
         $this->options = Check::listOf($options, CopyOption::class, 'The parenthesized COPY options are options.');

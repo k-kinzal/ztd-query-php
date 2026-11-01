@@ -19,6 +19,6 @@ final class CreateTablespaceTest extends TestCase
 
     public function testDeriveStatementDerivesTheParameters(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLESPACE fast LOCATION \'/ssd\'')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLESPACE fast LOCATION \'/ssd\'')->diagnostics());
     }
 }

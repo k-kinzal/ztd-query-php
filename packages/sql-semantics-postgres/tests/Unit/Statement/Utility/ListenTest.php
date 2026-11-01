@@ -18,7 +18,7 @@ final class ListenTest extends TestCase
     public function testDeriveStatementRecordsNothing(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('LISTEN jobs');
-        self::assertSame([[], null], [$operation->facts->diagnostics, $operation->facts->output]);
+        self::assertSame([[], null], [$operation->diagnostics(), $operation->output()]);
     }
 
     public function testRenderQuotesWhatFoldingWouldChange(): void

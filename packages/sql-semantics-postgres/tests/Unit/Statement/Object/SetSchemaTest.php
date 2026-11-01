@@ -21,10 +21,11 @@ final class SetSchemaTest extends TestCase
     public function testDeriveStatementResolvesAMovedTable(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER TABLE IF EXISTS t SET SCHEMA s', []);
-        self::assertSame([], $operation->facts->diagnostics);
-        $statement = $operation->statement;
+        self::assertSame([], $operation->diagnostics());
+        $statement = $operation;
         self::assertInstanceOf(SetSchema::class, $statement);
-        self::assertNull($operation->facts->relation($statement->object)->table);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $statement->object);
+        self::assertNull($statement->object->relationInformation()->table);
     }
 
     public function testRenderWritesTheSchema(): void
@@ -49,7 +50,7 @@ final class SetSchemaTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE TABLE t (a int)')];
-        self::assertSame(['"t" is not a foreign table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER FOREIGN TABLE t SET SCHEMA x', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE t SET SCHEMA x', $context)->facts->diagnostics));
+        self::assertSame(['"t" is not a foreign table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER FOREIGN TABLE t SET SCHEMA x', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE t SET SCHEMA x', $context)->diagnostics()));
     }
 }

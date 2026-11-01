@@ -17,7 +17,7 @@ final class SequenceReferenceTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE SEQUENCE s OWNED BY t.a', []);
         self::assertSame([
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void
@@ -31,8 +31,8 @@ final class SequenceReferenceTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a'), $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['sequence cannot be owned by relation "m"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE SEQUENCE q OWNED BY m.a', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE SEQUENCE q OWNED BY v.a', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE SEQUENCE q OWNED BY NONE', $context)->facts->diagnostics));
+        self::assertSame(['sequence cannot be owned by relation "m"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE SEQUENCE q OWNED BY m.a', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE SEQUENCE q OWNED BY v.a', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE SEQUENCE q OWNED BY NONE', $context)->diagnostics()));
     }
 }

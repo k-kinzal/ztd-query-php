@@ -18,16 +18,16 @@ final class ShowDatabasesTest extends TestCase
     public function testDeriveStatementResolvesTheConditionAgainstTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze("SHOW DATABASES WHERE `Database` LIKE 'a%'");
-        self::assertInstanceOf(ShowDatabases::class, $show->statement);
-        self::assertSame([], $show->facts->diagnostics);
+        self::assertInstanceOf(ShowDatabases::class, $show);
+        self::assertSame([], $show->diagnostics());
         self::assertSame('Database', $show->field(0)->name?->value);
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze("SHOW DATABASES WHERE `Database` LIKE 'a%'");
-        self::assertInstanceOf(ShowDatabases::class, $show->statement);
-        self::assertSame('Database', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
+        self::assertInstanceOf(ShowDatabases::class, $show);
+        self::assertSame('Database', $show->relationInformation()->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

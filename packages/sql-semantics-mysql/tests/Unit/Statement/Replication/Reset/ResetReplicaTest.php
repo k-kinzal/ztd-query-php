@@ -12,21 +12,33 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(ResetReplica::class)]
 #[Medium]
 final class ResetReplicaTest extends TestCase
 {
+    public function testValueRejectsASynonymInTheOriginalTerminology(): void
+    {
+        $this->expectExceptionMessage('The SLAVE synonym applies to current replication terminology.');
+
+        new ResetReplica(Terminology::Legacy, synonym: true);
+    }
+
     public function testDeriveTargetRejectsTheVocabularyOfAnotherRelease(): void
     {
         $this->expectExceptionMessage('RESET REPLICA is written in the vocabulary of the release.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Reset([new ResetReplica(Terminology::Current)]));
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Reset([new ResetReplica(Terminology::Current)]), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderWritesTheLegacySpellingWithChannel(): void
     {
         self::assertSame("RESET SLAVE ALL FOR CHANNEL 'c'", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("reset slave all for channel 'c'")->toString());
+    }
+
+    public function testRenderWritesTheSpellingOfTheSynonym(): void
+    {
+        self::assertSame("RESET SLAVE ALL FOR CHANNEL 'c'", (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("reset slave all for channel 'c'")->toString());
+        self::assertSame('RESET REPLICA ALL', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset replica all')->toString());
     }
 }

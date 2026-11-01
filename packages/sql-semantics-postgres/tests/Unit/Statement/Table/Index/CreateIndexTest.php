@@ -16,7 +16,7 @@ final class CreateIndexTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE INDEX ON s.t (a)', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         self::assertSame('s', $n1->createdSchema()?->value);
     }
@@ -27,22 +27,22 @@ final class CreateIndexTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE INDEX i ON t (a) WHERE zz', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
-        $n2 = $statement->facts->relation($n1)->table;
+        $n2 = $n1->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n2);
         self::assertSame([
           0 => 'Column zz does not exist.',
-        ], $n2->table === $context[0] ? array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics) : null);
+        ], $n2->table === $context[0] ? array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()) : null);
     }
 
     public function testDeriveElementLocatesTheTableInTheSchema(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE INDEX ON t (a)');
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $statement->statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
-        $n1 = $statement->statement;
+        $statement = (new \SqlSemantics\Construction\Occurrences())->copy((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE INDEX ON t (a)'));
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement);
+        $derivation = new \SqlSemantics\Construction\Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context());
+        $statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
         $n2 = $derivation->facts()->relation($n1)->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\UndeclaredTable::class, $n2);
@@ -55,9 +55,9 @@ final class CreateIndexTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE INDEX ON t (a)', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
-        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($semantics->context($context)), new \SqlSemantics\Resolution\Environment($semantics->context($context)))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

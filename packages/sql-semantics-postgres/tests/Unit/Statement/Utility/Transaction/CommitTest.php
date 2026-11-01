@@ -14,7 +14,7 @@ final class CommitTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COMMIT')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COMMIT')->diagnostics());
     }
 
     public function testRenderWritesTheChaining(): void
@@ -24,7 +24,7 @@ final class CommitTest extends TestCase
 
     public function testChainingIsNullWhenNotWritten(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COMMIT')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COMMIT');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Commit::class, $statement);
         self::assertSame(null, $statement->chaining);
     }

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Emptying tables
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('TRUNCATE TABLE ONLY a, b RESTART IDENTITY CASCADE');
- *     [count($statement->statement->tables), $statement->toString()] // => [2, 'TRUNCATE ONLY a, b RESTART IDENTITY CASCADE']
+ *     [count($statement->tables), $statement->toString()] // => [2, 'TRUNCATE ONLY a, b RESTART IDENTITY CASCADE']
  */
-final class TruncateTable implements Statement
+final class TruncateTable extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RelationReference> The tables
@@ -48,7 +47,12 @@ final class TruncateTable implements Statement
         array $tables,
         public readonly ?bool $restartIdentity = null,
         public readonly ?DropBehavior $behavior = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = Check::listOf($tables, RelationReference::class, 'TRUNCATE names at least one table.', 1);
     }
 

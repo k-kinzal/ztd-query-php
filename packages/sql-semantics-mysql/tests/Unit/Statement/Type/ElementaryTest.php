@@ -49,7 +49,7 @@ final class ElementaryTest extends TestCase
         self::assertSame('SERIAL', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderWritesBoolForTheBooleanSpelling(): void
+    public function testRenderRetainsTheBooleanKeyword(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-5.6.51', null, ParameterStyle::Native);
@@ -61,7 +61,7 @@ final class ElementaryTest extends TestCase
         self::assertSame(ElementaryKind::Boolean, $type->kind);
         self::assertNull($type->length);
         $type->render($out);
-        self::assertSame('BOOL', (new Lexical())->join($out->pieces()));
+        self::assertSame('BOOLEAN', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesAVectorWithItsLengthUnderTheNewestRelease(): void

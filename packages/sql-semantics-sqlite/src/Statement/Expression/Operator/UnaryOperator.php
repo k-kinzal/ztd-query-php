@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
  * @visibility public
  * @example Reading the operator of a negation
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT NOT 1');
- *     $query->statement->columns[0]->expression->operator // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Not
+ *     $query->columns[0]->expression->operator // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\UnaryOperator::Not
  */
 enum UnaryOperator: string
 {

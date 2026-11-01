@@ -12,7 +12,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -33,18 +32,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a pragma with a schema and a value
  *     $pragma = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('PRAGMA main.cache_size(4000)');
- *     [$pragma->statement->name->schema?->value, $pragma->statement->name->name->value, $pragma->statement->value->number->digits, $pragma->toString()] // => ['main', 'cache_size', '4000', 'PRAGMA main.cache_size = 4000']
+ *     [$pragma->name->schema?->value, $pragma->name->name->value, $pragma->value->number->digits, $pragma->toString()] // => ['main', 'cache_size', '4000', 'PRAGMA main.cache_size = 4000']
  */
-final class Pragma implements Statement
+final class Pragma extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The pragma name with its optional schema
      * @param SignedNumber|Name|PragmaKeyword|null $value The value: a signed number, a name, a keyword, or null when none is written
      */
-    public function __construct(public readonly QualifiedName $name, public readonly SignedNumber|Name|PragmaKeyword|null $value = null)
+    public function __construct(public readonly QualifiedName $name, public readonly SignedNumber|Name|PragmaKeyword|null $value = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($name->catalog === null, 'A pragma name has at most a schema qualifier.');
     }
 

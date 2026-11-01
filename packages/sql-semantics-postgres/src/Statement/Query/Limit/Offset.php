@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Query\Limit;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * OFFSET start: the number of rows skipped before rows are returned.
@@ -22,12 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Offset implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $start The number of rows to skip
      */
-    public function __construct(public readonly Scalar $start)
+    public function __construct(public readonly Scalar $start, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -10,10 +10,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\AdminRows;
 use SqlSemantics\Platform\MySql\Rules\Server\TableNames;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `CACHE INDEX t [INDEX (…)], … IN {cache | DEFAULT}`: a request to assign the indexes of MyISAM tables to a key cache.
@@ -31,14 +30,14 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Assigning indexes to a key cache
  *     $cache = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('cache index t key (primary, i), u in hot');
- *     [$cache->toString(), $cache->statement->cache?->value] // => ['CACHE INDEX t INDEX (PRIMARY, i), u IN hot', 'hot']
+ *     [$cache->toString(), $cache->cache?->value] // => ['CACHE INDEX t KEY (PRIMARY, i), u IN hot', 'hot']
  */
-final class CacheIndex implements Statement
+final class CacheIndex extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<CachedTable> The tables in written order; at least one
+     * @var non-empty-list<CachedTable> The tables in written order; at least one
      */
     public readonly array $tables;
 
@@ -47,12 +46,17 @@ final class CacheIndex implements Statement
      * @param Name|null $cache The key cache name; null for DEFAULT
      * @throws InvalidConstruction When the list is empty, or a table with partitions is not the only one
      */
-    public function __construct(array $tables, public readonly ?Name $cache)
+    public function __construct(array $tables, public readonly ?Name $cache, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->tables = Check::listOf($tables, CachedTable::class, 'CACHE INDEX names at least one table.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (CachedTable $table): array => [$table->table, null, $table], $this->tables)) === null, 'CACHE INDEX names each table once.');
         foreach ($this->tables as $table) {
             Check::input($table->partitions === null || count($this->tables) === 1, 'A table with partitions is the only table of CACHE INDEX.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

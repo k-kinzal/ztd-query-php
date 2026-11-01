@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup;
 
-use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One CPU number or range `n-m` of the VCPU option of a resource group.
@@ -23,14 +22,15 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CpuRange implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param Numeral $first The CPU number, or the first of the range
-     * @param Numeral|null $last The last CPU of the range, when one is written
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $first The first CPU index, including leading zeros
+     * @param \SqlSemantics\Platform\MySql\Statement\Literal\Numeral|null $last The last CPU index when a range is written
      */
-    public function __construct(public readonly Numeral $first, public readonly ?Numeral $last = null)
+    public function __construct(public readonly \SqlSemantics\Platform\MySql\Statement\Literal\Numeral $first, public readonly ?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $last = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input($first->isIntegerToken() && ($last === null || $last->isIntegerToken()), 'A CPU index is an integer from 0 through 2147483647.');
     }
 
     /**

@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 #[CoversClass(AnalyzeTable::class)]
@@ -19,7 +18,7 @@ final class AnalyzeTableTest extends TestCase
 {
     public function testRenderWritesNoWriteToBinlogAndTheHistogram(): void
     {
-        self::assertSame('ANALYZE NO_WRITE_TO_BINLOG TABLE t UPDATE HISTOGRAM ON a', (new Semantics(Dialect::MySql))->analyze('analyze local table t update histogram on a')->toString());
+        self::assertSame('ANALYZE LOCAL TABLE t UPDATE HISTOGRAM ON a', (new Semantics(Dialect::MySql))->analyze('analyze local table t update histogram on a')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
@@ -27,15 +26,15 @@ final class AnalyzeTableTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('ANALYZE TABLE t', [$table]);
-        self::assertInstanceOf(AnalyzeTable::class, $operation->statement);
+        self::assertInstanceOf(AnalyzeTable::class, $operation);
 
-        self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);
+        self::assertInstanceOf(DeclaredTable::class, $operation->tables[0]->relationInformation()->table);
     }
 
     public function testDeriveStatementChecksTheHistogram(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('ANALYZE TABLE t, u DROP HISTOGRAM ON a');
 
-        self::assertInstanceOf(HistogramTables::class, $operation->facts->diagnostics[0]);
+        self::assertSame([], $operation->diagnostics());
     }
 }

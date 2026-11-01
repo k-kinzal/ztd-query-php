@@ -31,7 +31,7 @@ final class AmbiguousColumnTest extends TestCase
         self::assertCount(2, $resolution->candidates);
         self::assertSame($declarations[0]->declarations()[0]->columns[0], $resolution->candidates[0]->declaration());
         self::assertSame($declarations[1]->declarations()[0]->columns[0], $resolution->candidates[1]->declaration());
-        self::assertSame([$resolution], $query->facts->diagnostics);
+        self::assertSame([$resolution], $query->diagnostics());
     }
 
     public function testMessageIsNotReachedWithFewerThanTwoCandidates(): void
@@ -44,5 +44,16 @@ final class AmbiguousColumnTest extends TestCase
         $this->expectExceptionMessage('An ambiguous column has at least two candidates.');
 
         new AmbiguousColumn(new Name('a'), [$resolution]);
+    }    public function testMessageRetainsTheRequestedRelationQualifier(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $tables = [$semantics->analyze('CREATE TABLE t(a INTEGER)'), $semantics->analyze('CREATE TABLE u(a INTEGER)')];
+        $resolution = $semantics->analyze('SELECT a FROM t,u', $tables)->field('a')->resolution;
+        self::assertInstanceOf(AmbiguousColumn::class, $resolution);
+        $qualifier = new \SqlSemantics\Statement\Identifier\QualifiedName(new Name('q'));
+        $qualified = new AmbiguousColumn($resolution->name, $resolution->candidates, $qualifier);
+        self::assertSame($qualifier, $qualified->qualifier);
+        self::assertSame('Column q.a is ambiguous.', $qualified->message());
     }
+
 }

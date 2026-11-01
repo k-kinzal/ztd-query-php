@@ -26,22 +26,22 @@ final class TransactionRuleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
 
-        self::assertInstanceOf(Begin::class, $semantics->analyze('BEGIN')->statement);
-        self::assertInstanceOf(Commit::class, $semantics->analyze('COMMIT')->statement);
-        self::assertInstanceOf(Commit::class, $semantics->analyze('END')->statement);
-        self::assertInstanceOf(Rollback::class, $semantics->analyze('ROLLBACK')->statement);
-        self::assertInstanceOf(Savepoint::class, $semantics->analyze('SAVEPOINT s')->statement);
-        self::assertInstanceOf(Release::class, $semantics->analyze('RELEASE s')->statement);
-        self::assertInstanceOf(RollbackTo::class, $semantics->analyze('ROLLBACK TO s')->statement);
+        self::assertInstanceOf(Begin::class, $semantics->analyze('BEGIN'));
+        self::assertInstanceOf(Commit::class, $semantics->analyze('COMMIT'));
+        self::assertInstanceOf(Commit::class, $semantics->analyze('END'));
+        self::assertInstanceOf(Rollback::class, $semantics->analyze('ROLLBACK'));
+        self::assertInstanceOf(Savepoint::class, $semantics->analyze('SAVEPOINT s'));
+        self::assertInstanceOf(Release::class, $semantics->analyze('RELEASE s'));
+        self::assertInstanceOf(RollbackTo::class, $semantics->analyze('ROLLBACK TO s'));
     }
 
     public function testBehaviorKeepsTheWrittenWordAndItsAbsence(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('BEGIN')->statement;
-        $deferred = $semantics->analyze('BEGIN DEFERRED')->statement;
-        $immediate = $semantics->analyze('BEGIN IMMEDIATE')->statement;
-        $exclusive = $semantics->analyze('BEGIN EXCLUSIVE')->statement;
+        $plain = $semantics->analyze('BEGIN');
+        $deferred = $semantics->analyze('BEGIN DEFERRED');
+        $immediate = $semantics->analyze('BEGIN IMMEDIATE');
+        $exclusive = $semantics->analyze('BEGIN EXCLUSIVE');
 
         self::assertInstanceOf(Begin::class, $plain);
         self::assertInstanceOf(Begin::class, $deferred);
@@ -56,8 +56,8 @@ final class TransactionRuleTest extends TestCase
     public function testNameIsNullUnlessANameFollowsTheKeyword(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('ROLLBACK TRANSACTION')->statement;
-        $named = $semantics->analyze('ROLLBACK TRANSACTION t1')->statement;
+        $bare = $semantics->analyze('ROLLBACK TRANSACTION');
+        $named = $semantics->analyze('ROLLBACK TRANSACTION t1');
 
         self::assertInstanceOf(Rollback::class, $bare);
         self::assertInstanceOf(Rollback::class, $named);
@@ -68,8 +68,8 @@ final class TransactionRuleTest extends TestCase
     public function testSavepointReadsTheNameWithOrWithoutTheKeyword(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $short = $semantics->analyze('RELEASE s1')->statement;
-        $long = $semantics->analyze('RELEASE SAVEPOINT s1')->statement;
+        $short = $semantics->analyze('RELEASE s1');
+        $long = $semantics->analyze('RELEASE SAVEPOINT s1');
 
         self::assertInstanceOf(Release::class, $short);
         self::assertInstanceOf(Release::class, $long);

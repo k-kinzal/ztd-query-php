@@ -23,12 +23,14 @@ final class NullLiteralTest extends TestCase
     public function testDeriveScalarAnswersTheNullOnlyTypeThatIsNullable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = NULL');
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $literal = $select->where->right;
         self::assertInstanceOf(NullLiteral::class, $literal);
-        $fact = $operation->facts->scalar($literal);
+        $fact = $literal->scalarInformation();
 
         self::assertInstanceOf(NullOnly::class, $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
@@ -37,7 +39,9 @@ final class NullLiteralTest extends TestCase
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('select null');
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
         self::assertInstanceOf(SelectExpression::class, $item);

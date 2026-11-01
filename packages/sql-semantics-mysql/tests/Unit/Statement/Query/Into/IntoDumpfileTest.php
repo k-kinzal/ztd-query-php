@@ -21,8 +21,9 @@ final class IntoDumpfileTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze("select a from t into dumpfile 'a.bin'");
 
         self::assertSame("SELECT a FROM t INTO DUMPFILE 'a.bin'", $operation->toString());
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(IntoDumpfile::class, $operation->statement->into);
-        self::assertSame('a.bin', $operation->statement->into->file->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(IntoDumpfile::class, $operation->query->into);
+        self::assertSame('a.bin', $operation->query->into->file->value);
     }
 }

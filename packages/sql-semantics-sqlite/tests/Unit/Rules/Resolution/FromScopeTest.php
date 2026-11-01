@@ -159,7 +159,8 @@ final class FromScopeTest extends TestCase
         $chain = new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [new JoinStep(new JoinOperator(), new TableInput(new QualifiedName(new Name('u'))), new JoinUsing([new Name('a')]))]);
         $node = new NestedInput($chain, new Name('j'));
         $aliased = $scope->nested($node, $derivation, $derivation->environment(), true);
-        $plain = $scope->nested(new NestedInput($chain), $derivation, $derivation->environment(), false);
+        $plainChain = (new \SqlSemantics\Construction\Occurrences())->copy($chain);
+        $plain = $scope->nested(new NestedInput($plainChain), $derivation, $derivation->environment(), false);
 
         self::assertCount(3, $aliased->visible);
         self::assertSame($node, $aliased->visible[2]->relation);
@@ -167,7 +168,7 @@ final class FromScopeTest extends TestCase
         self::assertSame([ColumnResolver::QUALIFIED_ONLY], $aliased->visible[2]->hidden);
         self::assertSame($aliased->fact->shape, $aliased->visible[2]->shape);
         self::assertCount(2, $plain->visible);
-        self::assertSame($chain->first, $plain->visible[0]->relation);
+        self::assertSame($plainChain->first, $plain->visible[0]->relation);
     }
 
     public function testStarListsTheUnhiddenSlotsOfQualifiableRelationsOnly(): void

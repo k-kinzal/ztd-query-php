@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Replication;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
@@ -48,7 +49,28 @@ final class ReplicaRuleTest extends TestCase
 
     public function testThreadsLowersTheListInOrder(): void
     {
-        self::assertSame('START REPLICA IO_THREAD, SQL_THREAD, IO_THREAD', (new Semantics(Dialect::MySql))->analyze('start replica io_thread, sql_thread, relay_thread')->toString());
+        self::assertSame('START REPLICA IO_THREAD, SQL_THREAD, RELAY_THREAD', (new Semantics(Dialect::MySql))->analyze('start replica io_thread, sql_thread, relay_thread')->toString());
+    }
+
+    #[DataProvider('providerThreadSpellings')]
+    public function testThreadsRetainsReceiverSynonymsAcrossReleases(string $version, string $sql): void
+    {
+        self::assertSame($sql, (new Semantics(Dialect::MySql, 'mysql-' . $version))->analyze(strtolower($sql))->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerThreadSpellings(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            foreach (['START', 'STOP'] as $verb) {
+                foreach (['IO_THREAD', 'RELAY_THREAD', 'RELAY_THREAD, SQL_THREAD', 'IO_THREAD, RELAY_THREAD, SQL_THREAD'] as $threads) {
+                    $sql = $verb . (str_starts_with($version, '5.') ? ' SLAVE ' : ' REPLICA ') . $threads;
+                    yield $version . ':' . $sql => [$version, $sql];
+                }
+            }
+        }
     }
 
     public function testNodeRejectsAToken(): void

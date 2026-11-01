@@ -13,15 +13,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Statement\Type\TypeDescriptor;
@@ -72,10 +71,12 @@ enum TypeClass
             $descriptor instanceof Floating => self::Floating,
             $descriptor instanceof Character, $descriptor instanceof Enumeration => self::Character,
             $descriptor instanceof Binary => self::Binary,
+            $descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\StringFamily => $descriptor->binary ? self::Binary : self::Character,
             $descriptor instanceof Temporal => self::temporal($descriptor->kind),
             $descriptor instanceof Spatial => self::Spatial,
             $descriptor instanceof Elementary => self::elementary($descriptor->kind),
             $descriptor instanceof CastTarget => self::cast($descriptor->kind),
+            $descriptor instanceof Domain => self::of($descriptor->declared()),
             default => self::foreign(),
         };
     }
@@ -164,8 +165,8 @@ enum TypeClass
             self::Unsigned => new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned]),
             self::Decimal => new Decimal(),
             self::Floating => new Floating(FloatingKind::Double),
-            self::Character => new Character(CharacterKind::VarChar),
-            self::Binary => new Binary(BinaryKind::VarBinary),
+            self::Character => new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(),
+            self::Binary => new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true),
             self::Date => new Temporal(TemporalKind::Date),
             self::Time => new Temporal(TemporalKind::Time),
             self::DateTime => new Temporal(TemporalKind::DateTime),

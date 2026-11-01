@@ -18,10 +18,10 @@ final class PasswordAssignmentTest extends TestCase
     public function testDeriveItemDerivesNothing(): void
     {
         $set = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SET @a = 1, PASSWORD = PASSWORD('x')");
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
-        self::assertInstanceOf(PasswordAssignment::class, $set->statement->items[1]);
-        self::assertNull($set->statement->items[1]->user);
-        self::assertSame([], $set->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set);
+        self::assertInstanceOf(PasswordAssignment::class, $set->items[1]);
+        self::assertNull($set->items[1]->user);
+        self::assertSame([], $set->diagnostics());
     }
 
     public function testRenderWritesTheAccount(): void

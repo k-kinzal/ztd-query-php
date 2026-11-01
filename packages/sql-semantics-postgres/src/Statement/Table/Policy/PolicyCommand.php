@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Policy;
  *
  * @visibility public
  * @example Reading the command of a policy
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE POLICY p ON t FOR SELECT USING (true)')->statement->command // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\PolicyCommand::Select
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE POLICY p ON t FOR SELECT USING (true)')->command // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\PolicyCommand::Select
  */
 enum PolicyCommand: string
 {

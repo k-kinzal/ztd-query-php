@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * DROP [ COLUMN ]: removes a column.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DropColumn implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column
@@ -38,6 +37,7 @@ final class DropColumn implements AlterCommand
         public readonly Name $column,
         public readonly bool $ifExists = false,
         public readonly ?DropBehavior $behavior = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
     }
 

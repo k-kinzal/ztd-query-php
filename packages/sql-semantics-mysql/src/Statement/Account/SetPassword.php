@@ -8,9 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `SET PASSWORD [FOR account] {= 'password' | TO RANDOM} [REPLACE 'current'] [RETAIN CURRENT PASSWORD]`: a request to set an account's password.
@@ -28,26 +27,34 @@ use SqlSemantics\Statement\Statement;
  * @example Setting the password of another account
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("set password for app = 'pw' retain current password")->toString() // => "SET PASSWORD FOR app = 'pw' RETAIN CURRENT PASSWORD"
  */
-final class SetPassword implements Statement
+final class SetPassword extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Account|null $user The account of FOR, when written
      * @param Password|null $password The password; null for TO RANDOM
      * @param Text|null $replace The current password REPLACE names
      * @param bool $retainCurrent Whether RETAIN CURRENT PASSWORD is written
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly ?Account $user, public readonly ?Password $password, public readonly ?Text $replace = null, public readonly bool $retainCurrent = false)
+    public function __construct(public readonly ?Account $user, public readonly ?Password $password, public readonly ?Text $replace = null, public readonly bool $retainCurrent = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        Check::input($replace === null || $replace->radix === null, 'A replaced password is quoted text.');
         Check::input($password?->function === null || ($replace === null && !$retainCurrent), 'A password written with a function has no REPLACE and no RETAIN.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives nothing: the statement names no relation and no expression.
+     * Derives the retained password function notice.
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user]);
+        $this->password?->derivePassword($derivation);
     }
 
     /**
@@ -62,7 +69,7 @@ final class SetPassword implements Statement
         if ($this->password === null) {
             $out->keyword('TO', 'RANDOM');
         } else {
-            $out->symbol('=')->node($this->password);
+            $out->symbol($this->operator->value)->node($this->password);
         }
         if ($this->replace !== null) {
             $out->keyword('REPLACE')->node($this->replace);

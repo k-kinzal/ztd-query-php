@@ -16,6 +16,7 @@ final class WindowingLimitTest extends TestCase
     public function testCasesHoldTheWordsOfTheServer(): void
     {
         self::assertSame('GROUPS', WindowingLimit::GroupsUnit->value);
+        self::assertSame('group_concat as window function', WindowingLimit::GroupConcat->value);
         self::assertCount(6, WindowingLimit::cases());
     }
 }

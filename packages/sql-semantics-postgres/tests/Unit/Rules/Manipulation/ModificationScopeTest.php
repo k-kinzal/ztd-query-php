@@ -31,7 +31,7 @@ final class ModificationScopeTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t USING (SELECT t.a) AS s', [$t, $u]);
-        self::assertSame(['Column t.a does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
+        self::assertSame(['Column t.a does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->diagnostics()));
     }
 
     public function testConflictsReportsTheSameNameTwice(): void
@@ -41,7 +41,7 @@ final class ModificationScopeTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t USING u AS t', [$t, $u]);
-        self::assertSame(['table name "t" specified more than once'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
+        self::assertSame(['table name "t" specified more than once'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->diagnostics()));
     }
 
     public function testConflictsAcceptsTablesOfDifferentSchemas(): void
@@ -51,7 +51,7 @@ final class ModificationScopeTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t USING other.t', [$t, $u]);
-        self::assertSame(['Relation t does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
+        self::assertSame(['Relation t does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->diagnostics()));
     }
 
     public function testReturningSeesTheTargetAndTheOtherInputs(): void
@@ -70,14 +70,14 @@ final class ModificationScopeTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['cannot change sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('INSERT INTO s VALUES (1, 0, false)', $context)->facts->diagnostics));
-        self::assertSame(['cannot execute MERGE on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('MERGE INTO s USING (SELECT 1 AS b) x ON true WHEN MATCHED THEN DELETE', $context)->facts->diagnostics));
+        self::assertSame(['cannot change sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('INSERT INTO s VALUES (1, 0, false)', $context)->diagnostics()));
+        self::assertSame(['cannot execute MERGE on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('MERGE INTO s USING (SELECT 1 AS b) x ON true WHEN MATCHED THEN DELETE', $context)->diagnostics()));
     }
 
     public function testInputsReportsASequenceInFrom(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DELETE FROM t USING s', $context)->facts->diagnostics));
+        self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DELETE FROM t USING s', $context)->diagnostics()));
     }
 }

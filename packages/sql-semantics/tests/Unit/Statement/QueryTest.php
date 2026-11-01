@@ -24,13 +24,13 @@ final class QueryTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL)');
         $operation = $semantics->analyze('SELECT (SELECT t.a FROM t AS inner_t) FROM t', [$table]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
         $subquery = $statement->columns[0]->expression;
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
-        $fields = $operation->facts->query($subquery->query)->fields();
+        $fields = $subquery->query->queryInformation()->fields();
         self::assertNotNull($fields);
         self::assertSame('a', $fields->at(0)->name?->value);
         $resolution = $fields->at(0)->resolution;
@@ -42,9 +42,32 @@ final class QueryTest extends TestCase
     public function testDeriveQueryOfTheRootIsTheOutputOfTheOperation(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS one');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Query::class, $statement);
-        self::assertSame($operation->facts->output, $operation->facts->query($statement));
+        self::assertSame($operation->output(), $statement->queryInformation());
+    }
+
+    public function testInitializeQueryInformationPublishesTheOccurrenceMeaning(): void
+    {
+        $node = new Select([new ResultColumn(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'))]);
+        $information = new \SqlSemantics\Statement\Fact\QueryFact([], \SqlSemantics\Statement\Identifier\Comparison::Sensitive);
+        $node->initializeQueryInformation($information);
+        self::assertSame($information, $node->queryInformation());
+    }
+
+    public function testQueryInformationIsOwnedByTheOccurrence(): void
+    {
+        $node = new Select([new ResultColumn(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'))]);
+        $this->expectExceptionMessage('A query occurrence must be resolved before use.');
+        $node->queryInformation();
+    }
+
+    public function testHasQueryInformationDistinguishesAnUnresolvedOccurrence(): void
+    {
+        $node = new Select([new ResultColumn(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1'))]);
+        self::assertFalse($node->hasQueryInformation());
+        $node->initializeQueryInformation(new \SqlSemantics\Statement\Fact\QueryFact([], \SqlSemantics\Statement\Identifier\Comparison::Sensitive));
+        self::assertTrue($node->hasQueryInformation());
     }
 }

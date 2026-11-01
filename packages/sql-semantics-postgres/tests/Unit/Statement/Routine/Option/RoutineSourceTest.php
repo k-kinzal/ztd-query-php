@@ -33,17 +33,17 @@ final class RoutineSourceTest extends TestCase
     public function testAnalyzeKeepsAnSqlDefinitionUnanalysedWithItsLanguage(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('CREATE FUNCTION f(a int4) RETURNS int4 AS $$ SELECT a FROM missing $$ LANGUAGE sql');
-        $function = $operation->statement;
+        $function = $operation;
         self::assertInstanceOf(CreateFunction::class, $function);
         $definition = $function->options[0];
         self::assertInstanceOf(RoutineDefinition::class, $definition);
-        self::assertSame(['sql', ' SELECT a FROM missing ', []], [$definition->source->language?->value, $definition->source->text->value, $operation->facts->diagnostics]);
+        self::assertSame(['sql', ' SELECT a FROM missing ', []], [$definition->source->language?->value, $definition->source->text->value, $operation->diagnostics()]);
     }
 
     public function testAnalyzeNamesNoLanguageWithoutALanguageOption(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze("CREATE FUNCTION f() RETURNS int4 AS 'x'");
-        $function = $operation->statement;
+        $function = $operation;
         self::assertInstanceOf(CreateFunction::class, $function);
         $definition = $function->options[0];
         self::assertInstanceOf(RoutineDefinition::class, $definition);

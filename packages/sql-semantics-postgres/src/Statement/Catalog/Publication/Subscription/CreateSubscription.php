@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the publications of a subscription
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE SUBSCRIPTION s CONNECTION 'host=a' PUBLICATION p1, p2 WITH (enabled = false)");
- *     count($operation->statement->publications) // => 2
+ *     count($operation->publications) // => 2
  */
-final class CreateSubscription implements Statement
+final class CreateSubscription extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The publications on the publisher
@@ -47,8 +46,11 @@ final class CreateSubscription implements Statement
      * @param list<Name> $publications The publications on the publisher; at least one
      * @param list<Definition> $options The parameters
      */
-    public function __construct(public readonly Name $name, public readonly StringConstant $connection, array $publications, array $options = [])
+    public function __construct(public readonly Name $name, public readonly StringConstant $connection, array $publications, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->publications = Check::listOf($publications, Name::class, 'A subscription names at least one publication.', 1);
         $this->options = Check::listOf($options, Definition::class, 'Subscription parameters are definitions.');
     }

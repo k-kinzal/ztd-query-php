@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -39,14 +38,14 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class TypeName implements OptionArgument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeDesignation $designation The element type
      * @param bool $setOf Whether SETOF is written
      * @param ArraySpecifier|null $array The array part
      */
-    public function __construct(public readonly TypeDesignation $designation, public readonly bool $setOf = false, public readonly ?ArraySpecifier $array = null)
+    public function __construct(public readonly TypeDesignation $designation, public readonly bool $setOf = false, public readonly ?ArraySpecifier $array = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($array === null || !$designation instanceof ColumnDesignation, 'A column type reference takes no array part.');
     }

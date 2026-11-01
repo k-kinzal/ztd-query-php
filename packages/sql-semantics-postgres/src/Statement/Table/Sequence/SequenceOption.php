@@ -16,7 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * @visibility public
  * @example Reading the options of a sequence
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SEQUENCE s INCREMENT BY 2 NO CYCLE');
- *     count($create->statement->options) // => 2
+ *     count($create->options) // => 2
  */
 interface SequenceOption extends Clause
 {

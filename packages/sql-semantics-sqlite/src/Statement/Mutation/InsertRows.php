@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the rows of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a");
- *     [count($insert->statement->rows->rows), count($insert->statement->returning), $insert->toString()] // => [2, 1, "INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a"]
+ *     [count($insert->rows->rows), count($insert->returning), $insert->toString()] // => [2, 1, "INSERT INTO t (a, b) VALUES (1, 'x'), (2, 'y') RETURNING a"]
  */
-final class InsertRows implements Statement
+final class InsertRows extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Upsert> The ON CONFLICT clauses in written order
@@ -53,8 +52,11 @@ final class InsertRows implements Statement
      * @param list<ResultColumn|Star|TableStar> $returning The RETURNING columns
      * @throws InvalidConstruction When a RETURNING column is of no result column class
      */
-    public function __construct(public readonly InsertInto $into, public readonly ValuesClause $rows, array $upserts = [], array $returning = [])
+    public function __construct(public readonly InsertInto $into, public readonly ValuesClause $rows, array $upserts = [], array $returning = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->upserts = Check::listOf($upserts, Upsert::class, 'The ON CONFLICT clauses of an INSERT are upsert clauses.');
         foreach ($this->upserts as $position => $upsert) {
             Check::input($upsert->target !== null || $position === count($this->upserts) - 1, 'Only the last ON CONFLICT clause may omit the conflict target.');

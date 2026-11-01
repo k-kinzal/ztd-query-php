@@ -14,7 +14,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,18 +29,26 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a table rename
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ALTER TABLE main.t RENAME TO u');
- *     [$alter->statement->table->name->value, $alter->statement->newName->value, $alter->declarations()] // => ['t', 'u', []]
+ *     [$alter->table->name->value, $alter->newName->value, $alter->declarations()] // => ['t', 'u', []]
  */
-final class AlterRenameTable implements Statement
+final class AlterRenameTable extends \SqlSemantics\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table to rename
      * @param Name $newName The new table name
      */
-    public function __construct(public readonly QualifiedName $table, public readonly Name $newName)
+    public function __construct(public readonly QualifiedName $table, public readonly Name $newName, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($table->catalog === null, 'A table name has at most a schema qualifier.');
     }
 

@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Declaration\RelationKind;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A sequence option that names an object: OWNED BY a column (or NONE) or SEQUENCE NAME.
@@ -24,17 +23,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the owner of a sequence
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SEQUENCE s OWNED BY t.id');
- *     [$create->statement->options[0]->owned, $create->statement->options[0]->name->last()->value] // => [true, 'id']
+ *     [$create->options[0]->owned, $create->options[0]->name->last()->value] // => [true, 'id']
  */
 final class SequenceReference implements SequenceOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $owned Whether the option is OWNED BY; SEQUENCE NAME otherwise
      * @param DottedName $name The object named
      */
-    public function __construct(public readonly bool $owned, public readonly DottedName $name)
+    public function __construct(public readonly bool $owned, public readonly DottedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

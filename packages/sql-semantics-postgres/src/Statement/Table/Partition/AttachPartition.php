@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ATTACH PARTITION: makes a table a partition of the altered partitioned table.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AttachPartition implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ParentTable $partition The table that becomes a partition
      * @param PartitionBound $bound Its bound
      */
-    public function __construct(public readonly ParentTable $partition, public readonly PartitionBound $bound)
+    public function __construct(public readonly ParentTable $partition, public readonly PartitionBound $bound, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A PRIMARY KEY table constraint: the key columns are unique together and never NULL.
@@ -32,7 +31,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TablePrimaryKey implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name> The key columns
@@ -62,7 +61,7 @@ final class TablePrimaryKey implements Constraint
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      * @param Name|null $name The constraint name
      */
-    public function __construct(array $columns, array $included = [], array $options = [], public readonly ?Name $tablespace = null, array $attributes = [], public readonly ?Name $name = null)
+    public function __construct(array $columns, array $included = [], array $options = [], public readonly ?Name $tablespace = null, array $attributes = [], public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A primary key has at least one key column.', 1);
         $this->included = Check::listOf($included, Name::class, 'Included columns are names.');

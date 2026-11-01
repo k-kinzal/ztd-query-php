@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The COMPRESSION clause of a column: the compression method of its values, or DEFAULT.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the compression of a column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a text COMPRESSION DEFAULT)');
- *     $create->statement->definition->elements[0]->compression->method // => null
+ *     $create->definition->elements[0]->compression->method // => null
  */
 final class ColumnCompression implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $method The method; null for DEFAULT
      */
-    public function __construct(public readonly ?Name $method)
+    public function __construct(public readonly ?Name $method, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

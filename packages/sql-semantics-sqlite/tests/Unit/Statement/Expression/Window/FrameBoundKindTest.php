@@ -26,7 +26,7 @@ final class FrameBoundKindTest extends TestCase
 
     public function testCasesMatchTheBoundariesOfAnAnalyzedFrame(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING), sum(a) OVER (ROWS 2 PRECEDING) FROM t')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING), sum(a) OVER (ROWS 2 PRECEDING) FROM t');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);

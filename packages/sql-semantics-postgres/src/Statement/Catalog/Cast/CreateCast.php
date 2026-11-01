@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a binary-coercible implicit cast
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CAST (int4 AS myint) WITHOUT FUNCTION AS IMPLICIT');
- *     [$operation->statement->method, $operation->statement->context] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastConversion::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastContext::Implicit]
+ *     [$operation->method, $operation->context] // => [\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastConversion::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Cast\CastContext::Implicit]
  */
-final class CreateCast implements Statement
+final class CreateCast extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $source The source type
@@ -36,8 +35,11 @@ final class CreateCast implements Statement
      * @param ObjectReference|CastConversion $method The function, or how the cast converts without one
      * @param CastContext|null $context Where the cast applies unwritten; null for explicit casts only
      */
-    public function __construct(public readonly TypeName $source, public readonly TypeName $target, public readonly ObjectReference|CastConversion $method, public readonly ?CastContext $context = null)
+    public function __construct(public readonly TypeName $source, public readonly TypeName $target, public readonly ObjectReference|CastConversion $method, public readonly ?CastContext $context = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -40,7 +39,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class KeywordCall implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Argument> The arguments in order
@@ -51,8 +51,11 @@ final class KeywordCall implements Scalar, OutputNaming
      * @param KeywordFunction $function The function
      * @param list<Argument> $arguments The arguments in order
      */
-    public function __construct(public readonly KeywordFunction $function, array $arguments)
+    public function __construct(public readonly KeywordFunction $function, array $arguments, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->arguments = Check::listOf($arguments, Argument::class, 'Call arguments are arguments.', $function === KeywordFunction::JsonObject ? 1 : 0);
     }
 

@@ -30,7 +30,7 @@ final class AlterOperatorTest extends TestCase
     public function testDeriveStatementReportsAPostfixOperator(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER OPERATOR ! (int4, NONE) SET (restrict = NONE)');
-        self::assertEquals([new RoutineProblem(RoutineProblemKind::PostfixOperator)], $operation->facts->diagnostics);
+        self::assertEquals([new RoutineProblem(RoutineProblemKind::PostfixOperator)], $operation->diagnostics());
     }
 
     public function testRenderWritesTheAttributes(): void
@@ -58,6 +58,6 @@ final class AlterOperatorTest extends TestCase
             'operator attribute "commutator" cannot be changed',
             'operator attribute "leftarg" cannot be changed',
             'operator attribute "sort1" not recognized',
-        ], array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $operation->diagnostics()));
     }
 }

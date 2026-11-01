@@ -6,8 +6,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Statement\Type\TypeDescriptor;
@@ -71,8 +69,9 @@ final class TemporalResult
      */
     public function result(?TypeDescriptor $type, IntervalUnit $unit, GrammarRelease $release): TypeDescriptor
     {
+        $unit = $unit->canonical();
         if (!$type instanceof Temporal) {
-            return new Character(CharacterKind::VarChar);
+            return new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily();
         }
         $dateOnly = in_array($unit, self::DATE_UNITS, true);
 
@@ -80,7 +79,7 @@ final class TemporalResult
             TemporalKind::Date => new Temporal($dateOnly ? TemporalKind::Date : TemporalKind::DateTime),
             TemporalKind::DateTime, TemporalKind::Timestamp => new Temporal(TemporalKind::DateTime),
             TemporalKind::Time => $this->time($unit, $release),
-            TemporalKind::Year => new Character(CharacterKind::VarChar),
+            TemporalKind::Year => new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(),
         };
     }
 
@@ -89,11 +88,12 @@ final class TemporalResult
      */
     public function time(IntervalUnit $unit, GrammarRelease $release): TypeDescriptor
     {
+        $unit = $unit->canonical();
         if (!in_array($unit, self::TIME_UNITS, true)) {
             return new Temporal(TemporalKind::DateTime);
         }
         $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
 
-        return $legacy ? new Character(CharacterKind::VarChar) : new Temporal(TemporalKind::Time);
+        return $legacy ? new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily() : new Temporal(TemporalKind::Time);
     }
 }

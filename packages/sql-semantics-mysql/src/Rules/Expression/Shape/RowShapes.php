@@ -1,0 +1,100 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Rules\Expression\Shape;
+
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\GroupedRow;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
+use SqlSemantics\Platform\MySql\Statement\Expression\Row;
+use SqlSemantics\Platform\MySql\Statement\Expression\RowOperand;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\RowSubquery;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Statement\Scalar;
+
+/**
+ * Checks the nested shape of compared operands without resolving names.
+ *
+ * Unknown subquery output is a catalog constraint. Written row widths and
+ * explicit projections are intrinsic and cannot contradict one another.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class RowShapes
+{
+    /**
+     * Answers immediate fields, an empty list for one value, or null for an unknown width.
+     * A null field denotes a scalar output column of a subquery.
+     *
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
+     * @return list<Scalar|RowOperand|null>|null
+     */
+    public function parts(Scalar|RowOperand|null $operand, array $common = []): ?array
+    {
+        while ($operand instanceof Grouped || $operand instanceof GroupedRow) {
+            $operand = $operand->operand;
+        }
+        if ($operand instanceof Row) {
+            return $operand->elements;
+        }
+        if ($operand instanceof ScalarSubquery || $operand instanceof RowSubquery) {
+            $width = (new QueryWidth())->of($operand->query, common: $common);
+            return $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null));
+        }
+        return [];
+    }
+
+    /**
+     * Finds the first incompatible position, including nested row fields.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
+     */
+    public function problem(Scalar|RowOperand|null $left, Scalar|RowOperand|null $right, array $common = []): ?OperandColumns
+    {
+        return $this->pairs($this->parts($left, $common), $this->parts($right, $common), $common);
+    }
+
+    /**
+     * Compares an operand with a query whose width may depend on declarations.
+     * An unresolved projection can vary in width, but each output column is scalar.
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
+     */
+    public function query(Scalar|RowOperand $operand, \SqlSemantics\Statement\Query $query, array $common = []): OperandColumns|Misuse|null
+    {
+        $width = (new QueryWidth())->of($query, common: $common);
+        if ($width === 0) {
+            return new Misuse(MisuseRule::EmptyValuesRow);
+        }
+        $parts = $this->parts($operand, $common);
+        if ($width === null && $parts !== null) {
+            return $this->pairs($parts, array_fill(0, count($parts), null), $common);
+        }
+        return $this->pairs($parts, $width === null ? null : ($width === 1 ? [] : array_fill(0, $width, null)), $common);
+    }
+
+    /**
+     * Checks corresponding immediate fields.
+     *
+     * @param list<Scalar|RowOperand|null>|null $one
+     * @param list<Scalar|RowOperand|null>|null $two
+     * @param array<string, list<\SqlSemantics\Statement\Identifier\Name|null>|null> $common Enclosing common-table outputs
+     */
+    public function pairs(?array $one, ?array $two, array $common = []): ?OperandColumns
+    {
+        if ($one === null || $two === null) {
+            return null;
+        }
+        if (max(1, count($one)) !== max(1, count($two))) {
+            return new OperandColumns(max(1, count($one)), max(1, count($two)));
+        }
+        foreach ($one as $index => $element) {
+            $problem = $this->problem($element, $two[$index], $common);
+            if ($problem !== null) {
+                return $problem;
+            }
+        }
+        return null;
+    }
+}

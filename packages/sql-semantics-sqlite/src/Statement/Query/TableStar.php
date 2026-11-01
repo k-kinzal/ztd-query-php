@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The result column `t.*`: every column of the input relations a name denotes.
@@ -16,16 +15,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the relation a qualified star names
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT u.* FROM t JOIN u');
- *     $query->statement->columns[0]->table->value // => 'u'
+ *     $query->columns[0]->table->value // => 'u'
  */
 final class TableStar implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $table The correlation or table name
      */
-    public function __construct(public readonly Name $table)
+    public function __construct(public readonly Name $table, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

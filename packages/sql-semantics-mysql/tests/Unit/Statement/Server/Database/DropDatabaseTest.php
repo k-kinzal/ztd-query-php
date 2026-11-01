@@ -24,7 +24,7 @@ final class DropDatabaseTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('DROP DATABASE d');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

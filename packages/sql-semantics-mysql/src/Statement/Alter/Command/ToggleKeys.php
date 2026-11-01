@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ENABLE KEYS` or `DISABLE KEYS`: a request to start or stop updating the nonunique indexes of a MyISAM table.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Stopping index updates
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t DISABLE KEYS')->statement->commands[0]->enable // => false
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t DISABLE KEYS')->commands[0]->enable // => false
  */
 final class ToggleKeys implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $enable Whether ENABLE (true) or DISABLE (false) is written
      */
-    public function __construct(public readonly bool $enable)
+    public function __construct(public readonly bool $enable, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

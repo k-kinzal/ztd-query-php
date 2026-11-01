@@ -99,6 +99,8 @@ final class ItemRule
      * Lowers one action: a node of `alter_list_item`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function item(Node $item): AlterCommand
     {
@@ -127,7 +129,7 @@ final class ItemRule
         $definitions = $this->lowering->tableDefinitions;
 
         return match (self::SIMPLE[$form->signature] ?? throw ImplementationGap::production($form)) {
-            'constraint' => new AddConstraint($definitions->tableElement($form->node(1))),
+            'constraint' => new AddConstraint((new \SqlSemantics\Platform\MySql\Lowering\TableDefinition\Key\KeyRule($this->lowering))->element($form->node(1))),
             'disable' => new ToggleKeys(false),
             'enable' => new ToggleKeys(true),
             'rename' => $this->rename($form),
@@ -147,9 +149,10 @@ final class ItemRule
     public function drop(Form $form): DropElement
     {
         [$kind, $name, $behavior] = self::DROPS[$form->signature];
+        $keyword = null;
         $second = $form->node->children[1] ?? null;
         if ($second instanceof Node && $second->name === 'key_or_index') {
-            $this->lowering->options->skip($second);
+            $keyword = $this->lowering->options->indexWord($second);
         } elseif ($second instanceof Node) {
             (new ColumnItemRule($this->lowering))->optional($second);
         }
@@ -159,6 +162,8 @@ final class ItemRule
             $kind,
             $name === null ? null : $columns->name($form->node($name)),
             $behavior === null ? null : $this->lowering->options->dropBehavior($form->node($behavior)),
+            $kind === ElementKind::Column ? $columns->column($form) : null,
+            keyword: $keyword,
         );
     }
 
@@ -171,11 +176,9 @@ final class ItemRule
     {
         $columns = new ColumnItemRule($this->lowering);
         if ($form->token(0)->name === 'RENAME') {
-            if ($kind === ElementKind::Index) {
-                $this->lowering->options->skip($form->node(1));
-            }
+            $keyword = $kind === ElementKind::Index ? $this->lowering->options->indexWord($form->node(1)) : null;
 
-            return new RenameElement($kind, $columns->name($form->node(2)), $columns->name($form->node(4)));
+            return new RenameElement($kind, $columns->name($form->node(2)), $columns->name($form->node(4)), keyword: $keyword);
         }
         $name = $this->lowering->names->identifier($form->node(2));
         if ($kind === ElementKind::Index) {
@@ -197,7 +200,7 @@ final class ItemRule
             throw ImplementationGap::production($to);
         }
 
-        return new RenameTo($this->lowering->names->qualified($form->node(2)));
+        return new RenameTo($this->lowering->names->qualified($form->node(2)), mark: \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameMark::from($to->node->children === [] ? '' : strtoupper($to->token(0)->text)));
     }
 
     /**
@@ -209,8 +212,8 @@ final class ItemRule
     {
         $this->lowering->options->skip($form->node(2));
         $charsets = $this->lowering->charsets;
-        $charset = $form->node->children[3] instanceof Node ? $charsets->charset($form->node(3)) : $this->lowering->leaves->record(new CharsetName(null));
+        $charset = $form->node->children[3] instanceof Node ? $charsets->charset($form->node(3), true) : $this->lowering->leaves->record(new CharsetName(null));
 
-        return new ConvertCharset($charset, $charsets->collation($form->node(4)));
+        return new ConvertCharset($charset, $charsets->collation($form->node(4)), form: \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::from(strtoupper(implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(2)->tokens())))));
     }
 }

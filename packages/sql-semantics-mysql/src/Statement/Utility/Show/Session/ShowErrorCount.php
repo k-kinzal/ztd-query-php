@@ -7,9 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Session;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW COUNT(*) ERRORS: the number of errors of the last statement of the session.
@@ -25,9 +24,9 @@ use SqlSemantics\Statement\Statement;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW COUNT(*) ERRORS');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['@@session.error_count', 'SHOW COUNT(*) ERRORS']
  */
-final class ShowErrorCount implements Statement
+final class ShowErrorCount extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
 
     /**
@@ -44,5 +43,14 @@ final class ShowErrorCount implements Statement
     public function render(Output $out): void
     {
         $out->keyword('SHOW', 'COUNT')->glue()->symbol('(')->symbol('*')->symbol(')')->keyword('ERRORS');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 }

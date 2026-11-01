@@ -18,7 +18,7 @@ final class ShowWarningCountTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW COUNT(*) WARNINGS');
-        self::assertInstanceOf(ShowWarningCount::class, $show->statement);
+        self::assertInstanceOf(ShowWarningCount::class, $show);
         self::assertSame('@@session.warning_count', $show->field(0)->name?->value);
     }
 

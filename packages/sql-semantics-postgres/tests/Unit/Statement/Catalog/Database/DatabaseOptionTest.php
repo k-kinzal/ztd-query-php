@@ -14,14 +14,14 @@ final class DatabaseOptionTest extends TestCase
 {
     public function testOptionOfAnIdentifier(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d is_template = true')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d is_template = true');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\CreateDatabase::class, $statement);
         self::assertSame('is_template', $statement->options[0]->option());
     }
 
     public function testOptionOfAKeywordSpelling(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d CONNECTION LIMIT 3')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d CONNECTION LIMIT 3');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\CreateDatabase::class, $statement);
         self::assertSame('connection_limit', $statement->options[0]->option());
     }
@@ -33,7 +33,7 @@ final class DatabaseOptionTest extends TestCase
 
     public function testDeriveClauseDerivesTheValue(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d WITH strategy = wal_log')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d WITH strategy = wal_log')->diagnostics());
     }
 
     public function testRenderKeepsAnIdentifierSpelledLikeAKeywordQuoted(): void

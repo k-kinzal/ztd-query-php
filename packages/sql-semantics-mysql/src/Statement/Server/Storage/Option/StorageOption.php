@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the keyword of an option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd' FILE_BLOCK_SIZE = 8192");
- *     $create->statement->options[0]->keyword() // => 'FILE_BLOCK_SIZE'
+ *     $create->options[0]->keyword() // => 'FILE_BLOCK_SIZE'
  */
 interface StorageOption extends Node
 {

@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -22,18 +21,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Removing the default
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DOMAIN d DROP DEFAULT');
- *     $operation->statement->default // => null
+ *     $operation->default // => null
  */
-final class DomainDefaultChange implements Statement
+final class DomainDefaultChange extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The domain name
      * @param Scalar|null $default The new default; null for DROP DEFAULT
      */
-    public function __construct(public readonly DottedName $name, public readonly ?Scalar $default)
+    public function __construct(public readonly DottedName $name, public readonly ?Scalar $default, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

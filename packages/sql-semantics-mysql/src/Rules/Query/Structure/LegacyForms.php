@@ -1,0 +1,126 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Rules\Query\Structure;
+
+use SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel;
+use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevelRange;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
+use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
+use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
+use SqlSemantics\Platform\MySql\Statement\Replication\Source\SourceOption;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
+use SqlSemantics\Platform\MySql\Statement\Server\Storage\AlterTablespaceAccess;
+use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
+
+/**
+ * Identifies query forms removed before MySQL 8.0.
+ *
+ * @visibility SqlSemantics\Platform\MySql
+ */
+final class LegacyForms
+{
+    /**
+     * Identifies forms that require a grammar from before MySQL 8.0.
+     */
+    public function requires(object $value): bool
+    {
+        return in_array($value::class, [\SqlSemantics\Platform\MySql\Statement\Server\Database\UpgradeDatabaseName::class, ProcedureAnalyse::class, LateOrdering::class, LeadingUnion::class, OrderedSetOperation::class, WeightLevel::class, WeightLevelRange::class, EscapedRelation::class, AlterTablespaceAccess::class, ResetQueryCache::class, \SqlSemantics\Platform\MySql\Statement\Alter\Partition\UpgradePartitioning::class, ExplainModifier::class, \SqlSemantics\Platform\MySql\Statement\Utility\Set\PasswordAssignment::class], true)
+            || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn && !(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value->expression))
+            || in_array($value, [\SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\LogFileKind::Redo, SelectOption::Cache, KeywordFunction::Password, KeywordFunction::OldPassword, PasswordFunction::Password, PasswordFunction::OldPassword, AliasMark::Equals], true)
+            || ($value instanceof NestedRelation && $value->relation instanceof DerivedTable)
+            || (($value instanceof ColumnUse || $value instanceof TableReference) && $value->dot === OptionalWords::Written)
+            || $value === \SqlSemantics\Platform\MySql\Statement\Account\User\Credential::PasswordHash
+            || ($value instanceof DatabaseCollation && $value->collation->name === null)
+            || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredCollated && $value->operand instanceof \SqlSemantics\Statement\Scalar)
+            || (($value instanceof ResetReplica || $value instanceof SourceOption) && $value->terminology === Terminology::Legacy)
+            || $this->conditionAssignment($value)
+            || $this->definition($value)
+            || ($value instanceof \SqlSemantics\Statement\Query && $this->query($value));
+    }
+    /**
+     * Legacy condition grammars admit assignments and then refuse their operand role.
+     */
+    public function conditionAssignment(object $condition): bool
+    {
+        $value = match (true) {
+            $condition instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem => $condition->value,
+            $condition instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionDiagnostics => $condition->number,
+            default => null,
+        };
+        return $value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment;
+    }
+
+    /**
+     * Identifies ordering and set operands that only legacy query grammars admit.
+     */
+    public function query(\SqlSemantics\Statement\Query $value): bool
+    {
+        return ($value instanceof QueryExpression && $value->body instanceof Select && $value->orderBy !== [])
+            || ($value instanceof SetOperation && ($value->left instanceof Select && $value->left->trailed() || $value->left instanceof QueryExpression));
+    }
+
+    /**
+     * Identifies removed options of account, table and routine declarations.
+     */
+    public function definition(object $value): bool
+    {
+        return match (true) {
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropTablespace,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\DropLogfileGroup => $value->leadingComma,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod => $value->columns === [],
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetNames => $value->collation !== null && ($value->charset->name === null || $value->collation->name === null),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnName => $value->table !== null || $value->dot === OptionalWords::Written,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition => \SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewColumns::explicit($value->columns) !== null,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\DropProgram => $value->legacyName(),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable => $value->charset !== null && $value->charset->name === null,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlgorithmOption => strtoupper($value->algorithm->value ?? '') === 'DEFAULT',
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption => strtoupper($value->lock->value ?? '') === 'DEFAULT',
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ColumnList => array_filter($value->columns, static fn ($column): bool => $column instanceof \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard) !== [],
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredGrouping => array_filter($value->items, static fn (\SqlSemantics\Platform\MySql\Statement\Query\OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem $item): bool => $item->direction !== null) !== [],
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy => $this->grant($value),
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption => $value->charset->name === null,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable => $value->dot === OptionalWords::Written,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable => $value->ignore || $value->dot === OptionalWords::Written,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption => $value->collation->name === null,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable => $value->temporaryWords > 1,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Parameter => $value->collation !== null && $value->collation->name === null,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction,
+            $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration => $value->collation !== null && $value->collation->name === null,
+            default => false,
+        };
+    }
+    /**
+     * Identifies authentication and WITH options only legacy GRANT syntax admits.
+     */
+    public function grant(\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges|\SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy $value): bool
+    {
+        if (array_filter($value->grantees, static fn (\SqlSemantics\Platform\MySql\Statement\Account\User\Grantee $user): bool => $user->identification !== null) !== []) {
+            return true;
+        }
+        return !$value instanceof \SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy
+            && ($value->tls !== null || count($value->options) > 1 || array_filter($value->options, static fn (\SqlSemantics\Platform\MySql\Statement\Account\Privilege\WithOption $option): bool => $option instanceof \SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit) !== []);
+    }
+
+}

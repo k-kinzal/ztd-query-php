@@ -31,13 +31,14 @@ final class AlterAddColumnTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
         $operation = $semantics->analyze('ALTER TABLE t ADD COLUMN b TEXT', [$table]);
-        $resolution = $operation->facts->relation($operation->statement)->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
+        $resolution = $operation->relationInformation()->table;
 
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($table->declarations()[0], $resolution->table);
         self::assertSame([], $operation->declarations());
         self::assertCount(1, $table->declarations()[0]->columns);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveStatementDerivesTheConstraintsAgainstTheTableWithTheNewColumn(): void
@@ -45,19 +46,19 @@ final class AlterAddColumnTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
         $operation = $semantics->analyze('ALTER TABLE t ADD b TEXT CHECK (b <> a)', [$table]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
         $check = $statement->column->constraints[0];
         self::assertInstanceOf(ColumnCheck::class, $check);
         self::assertInstanceOf(Binary::class, $check->expression);
-        $existing = $operation->facts->scalar($check->expression->right)->resolution;
-        $added = $operation->facts->scalar($check->expression->left)->resolution;
+        $existing = $check->expression->right->scalarInformation()->resolution;
+        $added = $check->expression->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $existing);
         self::assertInstanceOf(ResolvedColumn::class, $added);
         self::assertSame($table->declarations()[0]->columns[0], $existing->slot->column);
         self::assertNull($added->slot->column);
-        $type = $operation->facts->relation($statement)->shape->slots[1]->type;
+        $type = $statement->relationInformation()->shape->slots[1]->type;
         self::assertInstanceOf(Known::class, $type);
         self::assertSame('TEXT', $type->descriptor->name());
     }
@@ -70,17 +71,17 @@ final class AlterAddColumnTest extends TestCase
         $key = $semantics->analyze('ALTER TABLE t ADD b INTEGER PRIMARY KEY', [$table]);
         $missing = $semantics->analyze('ALTER TABLE u ADD b', [$table]);
 
-        self::assertInstanceOf(DuplicateColumn::class, $duplicate->facts->diagnostics[0]);
-        self::assertInstanceOf(AlterationRefused::class, $key->facts->diagnostics[0]);
-        self::assertSame(AlterationObstacle::PrimaryKeyColumn, $key->facts->diagnostics[0]->obstacle);
-        self::assertInstanceOf(MissingTable::class, $missing->facts->diagnostics[0]);
+        self::assertInstanceOf(DuplicateColumn::class, $duplicate->diagnostics()[0]);
+        self::assertInstanceOf(AlterationRefused::class, $key->diagnostics()[0]);
+        self::assertSame(AlterationObstacle::PrimaryKeyColumn, $key->diagnostics()[0]->obstacle);
+        self::assertInstanceOf(MissingTable::class, $missing->diagnostics()[0]);
     }
 
     public function testDeriveRelationAppendsTheNewColumnToTheShapeOfTheTable(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
-        $statement = $semantics->analyze('ALTER TABLE t ADD b TEXT NOT NULL DEFAULT 0')->statement;
+        $statement = $semantics->analyze('ALTER TABLE t ADD b TEXT NOT NULL DEFAULT 0');
         $derivation = new Derivation($semantics->context([$table]));
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);

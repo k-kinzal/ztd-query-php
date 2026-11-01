@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ALTER ATTRIBUTE name [ SET DATA ] TYPE type [ COLLATE collation ] [ CASCADE | RESTRICT ]`.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class RetypeAttribute implements AttributeChange
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The attribute name
@@ -36,7 +35,7 @@ final class RetypeAttribute implements AttributeChange
      * @param DottedName|null $collation The collation, when COLLATE is written
      * @param DropBehavior|null $behavior Whether typed tables are changed too, when written
      */
-    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?DottedName $collation = null, public readonly ?DropBehavior $behavior = null)
+    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?DottedName $collation = null, public readonly ?DropBehavior $behavior = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

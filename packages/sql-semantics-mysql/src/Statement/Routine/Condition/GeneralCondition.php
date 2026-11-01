@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Routine\Condition;
 
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A class of conditions in a handler declaration: SQLWARNING, NOT FOUND or SQLEXCEPTION.
@@ -15,16 +14,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the class a handler names
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END');
- *     $create->statement->body->declarations[0]->conditions[0]->class // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass::SqlException
+ *     $create->body->declarations[0]->conditions[0]->class // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass::SqlException
  */
 final class GeneralCondition implements Condition
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ConditionClass $class The class of conditions
      */
-    public function __construct(public readonly ConditionClass $class)
+    public function __construct(public readonly ConditionClass $class, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

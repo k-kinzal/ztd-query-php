@@ -30,7 +30,7 @@ final class SchemaTarget
             }
             $rendered = $operation->toString();
             $again = $this->semantics->analyze($rendered, []);
-            $difference = (new Equivalence())->difference($operation->statement, $again->statement);
+            $difference = (new Equivalence())->difference($operation, $again);
             if ($difference !== null) {
                 throw new Error('The structure of the rendered definition differs from the structure of the input at ' . $difference);
             }
@@ -45,7 +45,7 @@ final class SchemaTarget
                 throw new Error('The table declared by the rendered definition differs from the table declared by the input at ' . $difference);
             }
             $dependent = $this->semantics->analyze($rendered, [$operation]);
-            $difference = (new Equivalence())->difference($operation->statement, $dependent->statement);
+            $difference = (new Equivalence())->difference($operation, $dependent);
             if ($difference !== null) {
                 throw new Error('The declaration context changed the structure of the definition at ' . $difference);
             }

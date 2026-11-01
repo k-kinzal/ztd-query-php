@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading a table constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b, UNIQUE (a, b))');
- *     $create->statement->constraints[0]->items[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint // => true
+ *     $create->constraints[0]->items[0] instanceof \SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableConstraint // => true
  */
 interface TableConstraint extends Node
 {

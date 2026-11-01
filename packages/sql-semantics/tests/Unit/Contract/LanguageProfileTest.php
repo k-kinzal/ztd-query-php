@@ -52,4 +52,13 @@ final class LanguageProfileTest extends TestCase
 
         new LanguageProfile(GrammarRelease::Sqlite3472, new LexicalSettings('PIPES_AS_CONCAT'));
     }
+
+    public function testSharesDeclarationsWithIgnoresLexicalSettingsAndParameterStyle(): void
+    {
+        $plain = new LanguageProfile(GrammarRelease::MySql847);
+
+        self::assertTrue($plain->sharesDeclarationsWith(new LanguageProfile(GrammarRelease::MySql847, new LexicalSettings('ANSI_QUOTES'), ParameterStyle::Named)));
+        self::assertFalse($plain->sharesDeclarationsWith(new LanguageProfile(GrammarRelease::MySql5744)));
+    }
+
 }

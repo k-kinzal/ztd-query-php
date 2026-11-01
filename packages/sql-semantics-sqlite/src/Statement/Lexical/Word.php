@@ -9,7 +9,6 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\BareWords;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A word at a position where SQLite looks at the written text: the name and how it is quoted.
@@ -37,13 +36,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Word implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The decoded word
      * @param WordQuote $quote How the word is delimited
      */
-    public function __construct(public readonly Name $name, public readonly WordQuote $quote = WordQuote::Bare)
+    public function __construct(public readonly Name $name, public readonly WordQuote $quote = WordQuote::Bare, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($quote !== WordQuote::Bare || (new BareWords())->usable($name->value), 'An unquoted word is one identifier that is not a reserved keyword.');
         Check::input($quote !== WordQuote::Bracket || !str_contains($name->value, ']'), 'A bracketed word cannot contain a closing bracket.');

@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TableRenaming;
 use SqlSemantics\Platform\MySql\Statement\Alter\TargetTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the statements of the table change family other than the actions of ALTER TABLE.
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Statement;
  * MYSQL-ALTER-STATEMENT-001. TABLE and TABLES are synonyms; the TABLE of
  * TRUNCATE is optional. RENAME USER belongs to the account family, which
  * lowers its list. Constructs: DropTable, DropIndex, RenameTable,
- * TableRenaming, TruncateTable, TargetTable, PartitionEntry. Terminates:
+ * TableRenaming, TruncateTable, TargetTable. Standalone partitioning is refused. Terminates:
  * lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/drop-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/drop-index.html,
@@ -77,6 +77,8 @@ final class StatementRule
      * Lowers one statement of the family.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When a declared operand is invalid
      */
     public function statement(Form $form): Statement
     {
@@ -99,13 +101,19 @@ final class StatementRule
      * Lowers DROP TABLE.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table is named twice
      */
     public function dropTable(Form $form): DropTable
     {
-        $this->lowering->options->skip($form->node(2));
+        $word = $this->lowering->options->tableWord($form->node(2));
+        $names = $this->lowering->names->qualifiedList($form->node(4));
         $tables = [];
-        foreach ($this->lowering->names->qualifiedList($form->node(4)) as $name) {
+        foreach ($names as $name) {
             $tables[] = new TargetTable($name);
+        }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (TargetTable $table): array => [$table->name, null, $table], $tables));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node(4))[1] ?? 0, false);
         }
 
         return new DropTable(
@@ -113,6 +121,7 @@ final class StatementRule
             $this->lowering->options->present($form->node(3)),
             $tables,
             $this->lowering->options->dropBehavior($form->node(5)),
+            tableWord: $word,
         );
     }
 
@@ -123,7 +132,7 @@ final class StatementRule
      */
     public function rename(Form $form): RenameTable
     {
-        $this->lowering->options->skip($form->node(1));
+        $word = $this->lowering->options->tableWord($form->node(1));
         $list = $this->lowering->form($form->node(2));
         if ($list->signature !== 'table_to_table_list: table_to_table' && $list->signature !== 'table_to_table_list: table_to_table_list , table_to_table') {
             throw ImplementationGap::production($list);
@@ -137,7 +146,7 @@ final class StatementRule
             $renamings[] = new TableRenaming($this->lowering->names->qualified($pair->node(0)), $this->lowering->names->qualified($pair->node(2)));
         }
 
-        return new RenameTable($renamings);
+        return new RenameTable($renamings, tableWord: $word);
     }
 
     /**
@@ -151,7 +160,10 @@ final class StatementRule
             $this->lowering->options->skip($form->node(2));
         }
 
-        return $this->lowering->accounts->renameUsers($form->node(count($form->node->children) - 1));
+        $statement = $this->lowering->accounts->renameUsers($form->node(count($form->node->children) - 1));
+        $range = (new \SqlSemantics\Construction\SourceRanges())->span($form->node);
+        $source = $range === null ? null : new \SqlSemantics\Statement\Source\Span($range[0], $range[1] - $range[0]);
+        return new \SqlSemantics\Platform\MySql\Statement\Account\RenameUser($statement->renamings, $statement->profile, $statement->client, $source);
     }
 
     /**
@@ -166,6 +178,6 @@ final class StatementRule
             throw ImplementationGap::production($word);
         }
 
-        return new TruncateTable($this->lowering->names->qualified($form->node(2)));
+        return new TruncateTable($this->lowering->names->qualified($form->node(2)), tableWord: $word->node->children === [] ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
     }
 }

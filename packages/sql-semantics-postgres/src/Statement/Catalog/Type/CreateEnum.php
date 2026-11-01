@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\TypeChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the labels of an enum type
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE TYPE mood AS ENUM ('sad', 'happy')");
- *     $operation->statement->labels[1]->value // => 'happy'
+ *     $operation->labels[1]->value // => 'happy'
  */
-final class CreateEnum implements Statement
+final class CreateEnum extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<StringConstant> The labels in sort order
@@ -38,8 +37,11 @@ final class CreateEnum implements Statement
      * @param DottedName $name The type name
      * @param list<StringConstant> $labels The labels in sort order
      */
-    public function __construct(public readonly DottedName $name, array $labels)
+    public function __construct(public readonly DottedName $name, array $labels, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->labels = Check::listOf($labels, StringConstant::class, 'Enum labels are string constants.');
     }
 

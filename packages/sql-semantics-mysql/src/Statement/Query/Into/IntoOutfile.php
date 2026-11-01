@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Into;
 use SqlSemantics\Platform\MySql\Statement\Dml\FileFormat;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `INTO OUTFILE 'file'` with its character set and field and line format.
@@ -20,13 +19,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class IntoOutfile implements IntoDestination
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $file The file name
      * @param FileFormat $format The character set and the field and line format
      */
-    public function __construct(public readonly Text $file, public readonly FileFormat $format)
+    public function __construct(public readonly Text $file, public readonly FileFormat $format, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

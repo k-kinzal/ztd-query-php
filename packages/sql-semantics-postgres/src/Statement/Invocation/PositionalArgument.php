@@ -9,7 +9,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An argument passed by position: `func_arg_expr: a_expr`.
@@ -23,12 +22,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PositionalArgument implements Argument
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $value The value passed
      */
-    public function __construct(public readonly Scalar $value)
+    public function __construct(public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

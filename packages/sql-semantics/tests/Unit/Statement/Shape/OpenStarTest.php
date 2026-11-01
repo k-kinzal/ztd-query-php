@@ -20,7 +20,7 @@ final class OpenStarTest extends TestCase
 {
     public function testMissingNamesTheUndeclaredRelationBehindAStar(): void
     {
-        $fact = (new Semantics(Dialect::Sqlite))->analyze('SELECT t.*, u.a FROM t, u')->facts->output;
+        $fact = (new Semantics(Dialect::Sqlite))->analyze('SELECT t.*, u.a FROM t, u')->output();
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);
@@ -34,7 +34,7 @@ final class OpenStarTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $view = $semantics->analyze('CREATE VIRTUAL TABLE v USING fts5(a)');
 
-        $fact = $semantics->analyze('SELECT * FROM v', [$view])->facts->output;
+        $fact = $semantics->analyze('SELECT * FROM v', [$view])->output();
 
         self::assertNotNull($fact);
         self::assertInstanceOf(OpenStar::class, $fact->projection[0]);

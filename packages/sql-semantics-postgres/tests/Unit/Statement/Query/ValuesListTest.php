@@ -16,7 +16,7 @@ final class ValuesListTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('VALUES (1)');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList::class, $statement);
         self::assertSame('column1', $statement->outputName()->value);
     }
@@ -32,7 +32,7 @@ final class ValuesListTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('VALUES (1), (1, 2)');
-        self::assertSame('VALUES lists must all be the same length', $query->facts->diagnostics[0]->message());
+        self::assertSame('VALUES lists must all be the same length', $query->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheRows(): void

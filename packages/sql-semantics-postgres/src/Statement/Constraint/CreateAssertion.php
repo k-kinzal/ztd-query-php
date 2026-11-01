@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading an assertion
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE ASSERTION a CHECK (1 = 1)');
- *     $statement->facts->diagnostics[0]->message() // => 'CREATE ASSERTION is not yet implemented'
+ *     $statement->diagnostics()[0]->message() // => 'CREATE ASSERTION is not yet implemented'
  */
-final class CreateAssertion implements Statement
+final class CreateAssertion extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ConstraintAttribute> The attributes in the order written
@@ -42,8 +41,11 @@ final class CreateAssertion implements Statement
      * @param Scalar $condition The condition
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      */
-    public function __construct(public readonly DottedName $name, public readonly Scalar $condition, array $attributes = [])
+    public function __construct(public readonly DottedName $name, public readonly Scalar $condition, array $attributes = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->attributes = (new Attributes())->checked($attributes);
     }
 

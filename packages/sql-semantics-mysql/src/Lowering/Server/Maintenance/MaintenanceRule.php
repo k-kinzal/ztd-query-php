@@ -24,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\UpdateHistogram;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers the table maintenance statements and their options.
@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Statement;
  * opt_mi_repair_type, opt_mi_repair_types, mi_repair_types, mi_repair_type,
  * opt_histogram, opt_histogram_update_param, opt_histogram_num_buckets,
  * opt_histogram_auto_update. TABLE and TABLES are synonyms and LOCAL is
- * NO_WRITE_TO_BINLOG (LeafNoise). The options are kept in written order. The
+ * NO_WRITE_TO_BINLOG; both keyword choices are retained. The options are kept in written order. The
  * bucket count is a NUM token, kept as written. Constructs: AnalyzeTable,
  * CheckTable, ChecksumTable, OptimizeTable, RepairTable, MaintainedTable,
  * UpdateHistogram, LoadHistogram, DropHistogram. Terminates: lists are
@@ -102,16 +102,16 @@ final class MaintenanceRule
     public function statement(Form $form): Statement
     {
         [$kind, $local, $list, $options] = self::STATEMENTS[$form->signature] ?? throw ImplementationGap::production($form);
-        $this->lowering->options->skip($form->node($list - 1));
-        $noWrite = $local !== null && $this->lowering->options->present($form->node($local));
+        $word = $this->lowering->options->tableWord($form->node($list - 1));
+        $binlog = $local === null ? null : $this->lowering->options->binlog($form->node($local));
         $tables = $this->tables($form->node($list));
 
         return match ($kind) {
-            'analyze' => new AnalyzeTable($noWrite, $tables, $options === null ? null : $this->histogram($form->node($options))),
-            'check' => new CheckTable($tables, $this->checkOptions($form->node((int) $options))),
-            'optimize' => new OptimizeTable($noWrite, $tables),
-            'repair' => new RepairTable($noWrite, $tables, $this->repairOptions($form->node((int) $options))),
-            'checksum' => new ChecksumTable($tables, $this->checksum($form->node((int) $options))),
+            'analyze' => new AnalyzeTable($binlog, $tables, $options === null ? null : $this->histogram($form->node($options)), tableWord: $word),
+            'check' => new CheckTable($tables, $this->checkOptions($form->node((int) $options)), tableWord: $word),
+            'optimize' => new OptimizeTable($binlog, $tables, tableWord: $word),
+            'repair' => new RepairTable($binlog, $tables, $this->repairOptions($form->node((int) $options)), tableWord: $word),
+            'checksum' => new ChecksumTable($tables, $this->checksum($form->node((int) $options)), tableWord: $word),
         };
     }
 
@@ -120,12 +120,18 @@ final class MaintenanceRule
      *
      * @return list<MaintainedTable>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a table is named twice
      */
     public function tables(Node $list): array
     {
         $tables = [];
-        foreach ($this->lowering->names->qualifiedList($list) as $name) {
-            $tables[] = new MaintainedTable($name);
+        foreach ($this->lowering->names->qualifiedNodes($list) as $node) {
+            $tables[] = $this->lowering->origins->record(new MaintainedTable($this->lowering->names->qualified($node), dot: $this->lowering->names->dotted($node) ? \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written : \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Omitted), $node);
+        }
+
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (MaintainedTable $table): array => [$table->name, null, $table], $tables));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0, false);
         }
 
         return $tables;

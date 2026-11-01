@@ -17,7 +17,7 @@ final class SetRoleTest extends TestCase
 {
     public function testDeriveStatementRecordsNoFact(): void
     {
-        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SET ROLE DEFAULT')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('SET ROLE DEFAULT')->diagnostics());
     }
 
     public function testRenderWritesTheSelection(): void

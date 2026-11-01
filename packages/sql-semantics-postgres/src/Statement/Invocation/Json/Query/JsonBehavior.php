@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One behavior of an SQL/JSON function: a fixed result, an error, or `DEFAULT expression`.
@@ -27,13 +26,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class JsonBehavior implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param JsonBehaviorKind $kind The behavior
      * @param Scalar|null $default The expression of DEFAULT; given exactly for that kind
      */
-    public function __construct(public readonly JsonBehaviorKind $kind, public readonly ?Scalar $default = null)
+    public function __construct(public readonly JsonBehaviorKind $kind, public readonly ?Scalar $default = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($kind === JsonBehaviorKind::Default) === ($default !== null), 'A JSON behavior has an expression exactly when it is DEFAULT.');
     }

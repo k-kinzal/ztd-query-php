@@ -70,7 +70,7 @@ $query = $semantics->analyze('SELECT name FROM users', [$users]);
 
 $query->field('name')->column() === $users->columns[1]; // => true
 $query->field('name')->type->descriptor->name(); // => 'TEXT'
-$semantics->analyze('SELECT rowid FROM users', [$users])->facts->diagnostics[0]->message(); // => 'Column rowid does not exist.'
+$semantics->analyze('SELECT rowid FROM users', [$users])->diagnostics()[0]->message(); // => 'Column rowid does not exist.'
 ```
 
 A declaration belongs to one language profile; a declaration of another profile is refused with `InvalidConstruction`.
@@ -121,11 +121,18 @@ $orders = new Table(new QualifiedName(new Name('orders')), $semantics->profile()
     new Column(new Name('total'), new ColumnDomain('INTEGER'), generated: true),
 ]);
 
-$semantics->analyze('DROP TABLE active_users', [$view])->facts->diagnostics[0]->message(); // => 'Relation active_users is a view: DROP TABLE removes only a table.'
-$semantics->analyze('UPDATE orders SET total = 2', [$orders])->facts->diagnostics[0]->message(); // => 'cannot UPDATE generated column "total"'
+$semantics->analyze('DROP TABLE active_users', [$view])->diagnostics()[0]->message(); // => 'Relation active_users is a view: DROP TABLE removes only a table.'
+$semantics->analyze('UPDATE orders SET total = 2', [$orders])->diagnostics()[0]->message(); // => 'cannot UPDATE generated column "total"'
 $semantics->analyze('SELECT total FROM orders', [$orders])->field('total')->column()->generated; // => true
 $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))')->declarations()[0]->columns[1]->generated; // => true
 ```
+
+A `Column` also distinguishes expression references from stored fields with `expression`
+(false by default). MySQL marks columns of merged views as expression references,
+while materialized views retain field semantics. The distinction affects operations
+such as temporal sort weights even when the declared type is identical. Catalog
+refreshes and renamings must preserve this property. It is independent of
+`generated`: a generated table column still reads as a field.
 
 A declaration keeps neither the query of a view nor the expression of a generated column. Checks that need them are not made; the database packages list them among their limitations.
 
@@ -144,8 +151,8 @@ $second = $semantics->analyze('CREATE TABLE t (b TEXT)');
 
 count($semantics->context([$first, $first, $first->declarations()[0]])->tables); // => 1
 $query = $semantics->analyze('SELECT 1 FROM t', [$first, $second]);
-$query->facts->relation($query->inputRelation())->table instanceof ConflictingTables; // => true
-$query->facts->diagnostics[0]->message(); // => 'Relation t has conflicting declarations.'
+$query->inputRelation()->relationInformation()->table instanceof ConflictingTables; // => true
+$query->diagnostics()[0]->message(); // => 'Relation t has conflicting declarations.'
 ```
 
 ## Completeness
@@ -171,9 +178,9 @@ $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY)');
 $partial = $semantics->context([$users], false);
 
 $unqualified = $semantics->analyze('SELECT id FROM users', $partial);
-$unqualified->facts->relation($unqualified->inputRelation())->table instanceof ConditionalTable; // => true
+$unqualified->inputRelation()->relationInformation()->table instanceof ConditionalTable; // => true
 $qualified = $semantics->analyze('SELECT id FROM main.users', $partial);
-$qualified->facts->relation($qualified->inputRelation())->table instanceof DeclaredTable; // => true
+$qualified->inputRelation()->relationInformation()->table instanceof DeclaredTable; // => true
 ```
 
 A complete context enumerates relations only. Version 1 contexts cannot declare routines, data types or session state; facts that need them are `Dependent` and name the missing input, also in a complete context.
@@ -231,9 +238,9 @@ $create = $semantics->analyze('CREATE TABLE t (a INTEGER)');
 $alter = $semantics->analyze('ALTER TABLE t ADD COLUMN d INTEGER', [$create]);
 
 $alter->declarations(); // => []
-$semantics->analyze('SELECT d FROM t', [$create, $alter])->facts->diagnostics[0]->message(); // => 'Column d does not exist.'
+$semantics->analyze('SELECT d FROM t', [$create, $alter])->diagnostics()[0]->message(); // => 'Column d does not exist.'
 ```
 
 In the same way, `analyze()` of a script and `analyzeAll()` pass the same context to every statement; a CREATE earlier in the script is not applied for the statements after it. Context order is not execution order.
 
-To describe the database after a change, provide the declarations of the new state, for example by analyzing the CREATE statement the changed table would have. To analyze a statement against different declarations, analyze its SQL again with the other context. An existing operation is never re-resolved; its facts stay those of its own context. Because a statement structure holds no bindings, `new Operation($otherContext, $operation->statement)` is also possible: it is a new root whose facts are derived from scratch, with the checks of a construction but without the checks against an input text.
+To describe the database after a change, provide the declarations of the new state, for example by analyzing the CREATE statement the changed table would have. To analyze a statement against different declarations, analyze its SQL again with the other context. An existing operation is never re-resolved; its facts stay those of its own context. `Semantics::fromStatement($otherContext, $operation)` makes fresh occurrences from the concrete statement operands and derives their local bindings against the other context. The original statement keeps its own bindings. This path needs no SQL text or parser.

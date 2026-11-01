@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\DefaultPrivilegeChecks;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the action of the request
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DEFAULT PRIVILEGES IN SCHEMA app GRANT SELECT ON TABLES TO PUBLIC');
- *     [$operation->statement->scopes[0]->option(), $operation->statement->action->objects->value] // => ['schemas', 'TABLES']
+ *     [$operation->scopes[0]->option(), $operation->action->objects->value] // => ['schemas', 'TABLES']
  */
-final class AlterDefaultPrivileges implements Statement
+final class AlterDefaultPrivileges extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<DefaultScope> The limiting clauses in the order written
@@ -40,8 +39,11 @@ final class AlterDefaultPrivileges implements Statement
      * @param list<DefaultScope> $scopes The limiting clauses in the order written
      * @param DefaultGrant|DefaultRevoke $action The GRANT or REVOKE action
      */
-    public function __construct(array $scopes, public readonly DefaultGrant|DefaultRevoke $action)
+    public function __construct(array $scopes, public readonly DefaultGrant|DefaultRevoke $action, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->scopes = Check::listOf($scopes, DefaultScope::class, 'The limiting clauses are IN SCHEMA or FOR ROLE clauses.');
     }
 

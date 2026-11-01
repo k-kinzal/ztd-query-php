@@ -18,7 +18,7 @@ final class ShowErrorCountTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW COUNT(*) ERRORS');
-        self::assertInstanceOf(ShowErrorCount::class, $show->statement);
+        self::assertInstanceOf(ShowErrorCount::class, $show);
         self::assertSame('@@session.error_count', $show->field(0)->name?->value);
     }
 

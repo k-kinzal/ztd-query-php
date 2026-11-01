@@ -21,7 +21,8 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * Derives the parts that the data manipulation statements share: written columns, values and assignments.
  *
  * Rule: MYSQL-DML-SCOPE-001. A written column is a column use resolved
- * among the tables the statement writes; it becomes a field with the type
+ * among the tables the statement writes, never a variable of a stored
+ * program (MYSQL-PROGRAM-VARIABLE-LOOKUP-001); it becomes a field with the type
  * and nullability of the column. A value is derived where the statement
  * says; the value DEFAULT is derived where the only field of the
  * environment is the column it is assigned to (MYSQL-DML-DEFAULT-001).
@@ -46,9 +47,17 @@ final class WriteScope
     }
 
     /**
+     * Answers the environment that names the columns a statement writes: the same relations, where a name is never a variable of a stored program.
+     */
+    public function written(Environment $environment): Environment
+    {
+        return new Environment($environment->context, $environment->outer, $environment->relations, $environment->commonTables, $environment->aliases, true);
+    }
+
+    /**
      * Derives a value assigned to a column.
      */
-    public function value(Scalar $value, Field $column, Derivation $derivation, Environment $environment): ScalarFact
+    public function value(Scalar|DefaultRequest $value, Field $column, Derivation $derivation, Environment $environment): ScalarFact
     {
         if ($value instanceof DefaultRequest) {
             return $derivation->scalar($value, new Environment($derivation->context, $environment, [], [], [$column]));
@@ -60,7 +69,7 @@ final class WriteScope
     /**
      * Derives assignments: each column where the written tables are visible, each value in its environment.
      *
-     * @param list<Assignment> $assignments
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $assignments
      * @param bool $distinct Whether the server requires distinct columns
      * @return list<Field> The assigned columns in written order
      */
@@ -68,8 +77,12 @@ final class WriteScope
     {
         $fields = [];
         foreach ($assignments as $position => $assignment) {
-            $field = $this->field($position, $assignment->column, $derivation->scalar($assignment->column, $columns));
-            $this->value($assignment->value, $field, $derivation, $values);
+            $field = $this->field($position, $assignment->column, $derivation->scalar($assignment->column, $this->written($columns)));
+            if ($assignment instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment) {
+                $derivation->scalar($assignment->value, $values);
+            } else {
+                $this->value($assignment->value, $field, $derivation, $values);
+            }
             $fields[] = $field;
         }
         if ($distinct) {

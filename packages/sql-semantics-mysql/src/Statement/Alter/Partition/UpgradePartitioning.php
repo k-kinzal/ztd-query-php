@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `UPGRADE PARTITIONING` (5.7): a request to convert a table to native InnoDB partitioning.
@@ -21,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class UpgradePartitioning implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Derives nothing: the action holds no expression.
@@ -36,5 +35,11 @@ final class UpgradePartitioning implements AlterCommand
     public function render(Output $out): void
     {
         $out->keyword('UPGRADE', 'PARTITIONING');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

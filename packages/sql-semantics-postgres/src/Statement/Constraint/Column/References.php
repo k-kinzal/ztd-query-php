@@ -16,7 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A REFERENCES column constraint: a foreign key of one column.
@@ -31,11 +30,13 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
  *     $parent = $semantics->analyze('CREATE TABLE p (id int PRIMARY KEY)');
  *     $child = $semantics->analyze('CREATE TABLE c (p int REFERENCES p (id) ON DELETE CASCADE)', $parent->declarations());
- *     $child->facts->relation($child->statement->definition->elements[0]->qualifiers[0])->table->table === $parent->declarations()[0] // => true
+ *     $child->definition->elements[0]->qualifiers[0]->relationInformation()->table->table === $parent->declarations()[0] // => true
  */
-final class References implements Constraint
+final class References implements Constraint, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The referenced columns; none means the primary key of the referenced table
@@ -54,8 +55,11 @@ final class References implements Constraint
      * @param list<ReferentialAction> $actions The ON UPDATE and ON DELETE clauses, in the order written
      * @param Name|null $name The constraint name
      */
-    public function __construct(public readonly QualifiedName $table, array $columns = [], public readonly ?KeyMatch $match = null, array $actions = [], public readonly ?Name $name = null)
+    public function __construct(public readonly QualifiedName $table, array $columns = [], public readonly ?KeyMatch $match = null, array $actions = [], public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'Referenced columns are names.');
         $this->actions = (new ForeignKeys())->actions($actions);
     }

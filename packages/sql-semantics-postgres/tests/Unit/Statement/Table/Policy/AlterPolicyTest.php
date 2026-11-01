@@ -21,7 +21,7 @@ final class AlterPolicyTest extends TestCase
         self::assertSame([
           0 => 'Column zz does not exist.',
           1 => 'argument of POLICY must be type boolean',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testDeriveRelationResolvesTheTable(): void
@@ -30,9 +30,9 @@ final class AlterPolicyTest extends TestCase
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('ALTER POLICY p ON t TO bob', $context);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\AlterPolicy::class, $n1);
-        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($semantics->context($context)), new \SqlSemantics\Resolution\Environment($semantics->context($context)))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

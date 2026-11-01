@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One assignment of GET DIAGNOSTICS: a target and the information item it receives.
@@ -22,17 +21,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the items of GET DIAGNOSTICS
  *     $get = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GET DIAGNOSTICS @n = NUMBER, @r = ROW_COUNT');
- *     [$get->statement->information->items[1]->target->name->value, $get->statement->information->items[1]->item->value] // => ['r', 'ROW_COUNT']
+ *     [$get->information->items[1]->target->name->value, $get->information->items[1]->item->value] // => ['r', 'ROW_COUNT']
  */
 final class InformationItem implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|UserVariable $target The variable that receives the item: a user variable or the name of a parameter or local variable
      * @param ConditionItemName|StatementItemName $item The information item read
      */
-    public function __construct(public readonly Name|UserVariable $target, public readonly ConditionItemName|StatementItemName $item)
+    public function __construct(public readonly Name|UserVariable $target, public readonly ConditionItemName|StatementItemName $item, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

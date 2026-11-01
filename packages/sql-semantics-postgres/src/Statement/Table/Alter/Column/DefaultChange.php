@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER [ COLUMN ] ... SET DEFAULT: the value a column takes when none is given.
@@ -26,13 +25,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DefaultChange implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column
      * @param Scalar $value The default expression
      */
-    public function __construct(public readonly Name $column, public readonly Scalar $value)
+    public function __construct(public readonly Name $column, public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

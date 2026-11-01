@@ -21,9 +21,9 @@ final class KeywordAttributeTest extends TestCase
     public function testDeriveAttributeDerivesNothing(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT KEY)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $column = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $column);
@@ -35,6 +35,6 @@ final class KeywordAttributeTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a INT PRIMARY KEY)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT KEY)')->toString());
+        self::assertSame('CREATE TABLE t (a INT KEY)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT KEY)')->toString());
     }
 }

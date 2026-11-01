@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `LANGUAGE name` in DO: the procedural language the code is written in.
@@ -20,16 +19,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the language of an anonymous block
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("DO LANGUAGE plpgsql 'BEGIN END'");
- *     $operation->statement->items[0]->name() // => 'plpgsql'
+ *     $operation->items[0]->name() // => 'plpgsql'
  */
 final class DoLanguage implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Word|StringConstant $language The language name
      */
-    public function __construct(public readonly Word|StringConstant $language)
+    public function __construct(public readonly Word|StringConstant $language, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

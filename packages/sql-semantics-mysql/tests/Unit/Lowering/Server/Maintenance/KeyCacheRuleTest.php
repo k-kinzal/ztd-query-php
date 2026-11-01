@@ -37,7 +37,7 @@ final class KeyCacheRuleTest extends TestCase
 
     public function testEntryLowersTheIndexList(): void
     {
-        self::assertSame('CACHE INDEX t INDEX (i, j) IN k', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('cache index t key (i, j) in k')->toString());
+        self::assertSame('CACHE INDEX t KEY (i, j) IN k', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('cache index t key (i, j) in k')->toString());
     }
 
     public function testPartitionsLowersAll(): void
@@ -68,5 +68,11 @@ final class KeyCacheRuleTest extends TestCase
     public function testCacheLowersDefault(): void
     {
         self::assertSame('CACHE INDEX t IN DEFAULT', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('cache index t in default')->toString());
+    }
+
+    public function testKeywordRetainsKeyInTheCacheAndPreloadForms(): void
+    {
+        self::assertSame('CACHE INDEX t KEY (i) IN DEFAULT', (new Semantics(Dialect::MySql))->analyze('CACHE INDEX t KEY (i) IN DEFAULT')->toString());
+        self::assertSame('LOAD INDEX INTO CACHE t KEY (i)', (new Semantics(Dialect::MySql))->analyze('LOAD INDEX INTO CACHE t KEY (i)')->toString());
     }
 }

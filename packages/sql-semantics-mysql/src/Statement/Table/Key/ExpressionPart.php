@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A functional key part: an expression in parentheses that the index stores (MySQL 8.0.13 and later).
@@ -17,21 +16,30 @@ use SqlSemantics\Statement\Snapshot;
  * The expression sees the columns of the indexed table. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/create-index.html#create-index-functional-key-parts.
  *
+ * @example Refusing an array conversion in an ordinary expression part
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart(new \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), new \SqlSemantics\Platform\MySql\Statement\Type\CastTarget(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind::Signed), true)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @visibility public
  * @example Reading a functional key part
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY ((a + 1)))');
- *     $create->statement->elements[1]->parts[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart // => true
+ *     $create->elements[1]->parts[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart // => true
  */
 final class ExpressionPart implements KeyPart
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The indexed expression
      * @param Direction|null $direction The sort direction, when written
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Direction $direction = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?Direction $direction = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        $ungrouped = $expression;
+        while ($ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
+            $ungrouped = $ungrouped->operand;
+        }
+        \SqlSemantics\Diagnostic\Check::input(!$ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast || !$ungrouped->array, 'An array conversion belongs to an ArrayPart, not an ordinary expression key.');
+        \SqlSemantics\Diagnostic\Check::input(!$ungrouped instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse, 'A functional key expression cannot consist only of a column reference.');
+        \SqlSemantics\Diagnostic\Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Key\Operands())->ordinary($expression), 'An ordinary functional key has an index-expression role.');
     }
 
     /**

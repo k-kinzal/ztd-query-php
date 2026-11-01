@@ -7,9 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Account\Privilege;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `REVOKE [IF EXISTS] ALL [PRIVILEGES], GRANT OPTION FROM accounts [IGNORE UNKNOWN USER]`: a request to revoke every privilege at every level.
@@ -22,14 +21,14 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Revoking everything
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL, GRANT OPTION FROM u'
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('REVOKE ALL PRIVILEGES, GRANT OPTION FROM u')->toString() // => 'REVOKE ALL PRIVILEGES, GRANT OPTION FROM u'
  */
-final class RevokeAll implements Statement
+final class RevokeAll extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, PrivilegeChange, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<UserSpecification> The accounts
+     * @var non-empty-list<UserSpecification> The accounts
      */
     public readonly array $users;
 
@@ -37,13 +36,19 @@ final class RevokeAll implements Statement
      * @param bool $ifExists Whether IF EXISTS is written
      * @param list<UserSpecification> $users The accounts; at least one
      * @param bool $ignoreUnknownUser Whether IGNORE UNKNOWN USER is written
+     * @param bool $privileges Whether the optional PRIVILEGES word is written
      */
-    public function __construct(public readonly bool $ifExists, array $users, public readonly bool $ignoreUnknownUser = false)
+    public function __construct(public readonly bool $ifExists, array $users, public readonly bool $ignoreUnknownUser = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly bool $privileges = false)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->users = Check::listOf($users, UserSpecification::class, 'REVOKE names at least one account.', 1);
         foreach ($this->users as $user) {
             Check::input($user->granted(), 'A REVOKE account is a named account with at most one authentication method.');
+            Check::input($user->identification === null, 'A REVOKE account has no authentication clause.');
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -51,6 +56,7 @@ final class RevokeAll implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, $this->users);
     }
 
     /**
@@ -62,7 +68,11 @@ final class RevokeAll implements Statement
         if ($this->ifExists) {
             $out->keyword('IF', 'EXISTS');
         }
-        $out->keyword('ALL')->symbol(',')->keyword('GRANT', 'OPTION', 'FROM')->list($this->users);
+        $out->keyword('ALL');
+        if ($this->privileges) {
+            $out->keyword('PRIVILEGES');
+        }
+        $out->symbol(',')->keyword('GRANT', 'OPTION', 'FROM')->list($this->users);
         if ($this->ignoreUnknownUser) {
             $out->keyword('IGNORE', 'UNKNOWN', 'USER');
         }

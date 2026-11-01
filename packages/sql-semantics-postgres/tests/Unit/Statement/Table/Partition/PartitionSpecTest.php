@@ -18,7 +18,7 @@ final class PartitionSpecTest extends TestCase
         $statement = $semantics->analyze('CREATE TABLE n (a int) PARTITION BY tree (a)', []);
         self::assertSame([
           0 => 'unrecognized partitioning strategy "tree"',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

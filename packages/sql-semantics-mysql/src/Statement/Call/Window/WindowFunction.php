@@ -9,17 +9,14 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\WindowResults;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
-use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
-use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 
 /**
  * A call of a function that is only a window function: ranking, distribution, and the value functions LEAD, LAG, FIRST_VALUE, LAST_VALUE and NTH_VALUE.
@@ -35,23 +32,37 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Typing a ranking function
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT RANK() OVER w');
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT RANK() OVER w WINDOW w AS ()');
  *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['BIGINT', \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing an offset that is not a stable integer
  *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Tile, [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()], new \SqlSemantics\Statement\Identifier\Name('w')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a fractional ROWS offset in an ordinary invocation
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Rows, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::Preceding, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.5'))));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a fixed frame in an ordinary scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(frame: new \SqlSemantics\Platform\MySql\Statement\Call\Window\Frame(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameUnit::Groups, new \SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBound(\SqlSemantics\Platform\MySql\Statement\Call\Window\FrameBoundKind::CurrentRow)));
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a dependent partition in an ordinary window scalar
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(new \SqlSemantics\Statement\Identifier\Name('w'), partition: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1.1'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a window call in the same specification's ordering
+ *     $inner = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec());
+ *     $window = new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec(order: [new \SqlSemantics\Platform\MySql\Statement\Query\OrderItem($inner)]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::RowNumber, [], $window) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class WindowFunction implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<Scalar> The arguments in order
+     * @var list<Scalar|RoutineVariable> The arguments in order
      */
     public readonly array $arguments;
 
     /**
      * @param WindowFunctionKind $kind The function
-     * @param list<Scalar> $arguments The arguments in order
+     * @param list<Scalar|RoutineVariable> $arguments The arguments in order
      * @param Name|WindowSpecification $over The window written after OVER
      * @param NullTreatment|null $nulls The written RESPECT NULLS or IGNORE NULLS
      * @param CountingEdge|null $edge The written FROM FIRST or FROM LAST of NTH_VALUE
@@ -62,15 +73,23 @@ final class WindowFunction implements Scalar
         public readonly Name|WindowSpecification $over,
         public readonly ?NullTreatment $nulls = null,
         public readonly ?CountingEdge $edge = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
-        $this->arguments = Check::listOf($arguments, Scalar::class, 'Window function arguments are expressions.');
-        [$minimum, $maximum] = $kind->arity();
-        Check::input(count($arguments) >= $minimum && count($arguments) <= $maximum, 'The grammar does not accept this number of arguments for ' . $kind->value . '.');
-        Check::input($nulls === null || $kind->treatsNulls(), $kind->value . ' takes no NULL treatment.');
-        Check::input($edge === null || $kind === WindowFunctionKind::NthValue, 'Only NTH_VALUE counts from an edge.');
-        $counted = $arguments[$kind->counted() ?? -1] ?? null;
-        Check::input($counted === null || $counted instanceof NumberLiteral || $counted instanceof Parameter || $counted instanceof UserVariable || $counted instanceof RoutineVariable, 'The count is an integer, a parameter marker or a variable.');
-        Check::input($kind !== WindowFunctionKind::NthValue || (new Precedence())->admits($arguments[1], Precedence::SIMPLE_EXPR), 'The row number of NTH_VALUE needs a grouping.');
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
+        $values = [];
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->checked($kind, $arguments, $nulls, $edge) as $argument) {
+            Check::input($argument instanceof Scalar || $argument instanceof RoutineVariable, 'An ordinary window call requires scalar arguments.');
+            $values[] = $argument;
+        }
+        $limit = (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Arguments())->limitation($nulls, $edge);
+        Check::input($limit === null, 'An ordinary window call cannot use an unsupported option: ' . ($limit->value ?? '') . '.');
+        Check::input(!(new \SqlSemantics\Platform\MySql\Rules\Call\Window\Counts())->invalid($kind, $values), 'An ordinary window count or offset literal belongs to its signed integer domain.');
+        $this->arguments = $values;
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) === null, 'An ordinary scalar invocation requires a window without fixed contradictions.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -80,11 +99,13 @@ final class WindowFunction implements Scalar
     {
         $facts = [];
         foreach ($this->arguments as $argument) {
-            $facts[] = (new Arguments())->one($argument, $derivation, $environment);
+            $facts[] = $argument instanceof RoutineVariable ? $derivation->scalar($argument, $environment) : (new Arguments())->one($argument, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        $fact = (new WindowResults())->result($this, $facts, $derivation);
+        $domain = (new WindowResults())->domain($this, $facts, $derivation);
 
-        return (new WindowResults())->result($this, $facts, $derivation);
+        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
     }
 
     /**

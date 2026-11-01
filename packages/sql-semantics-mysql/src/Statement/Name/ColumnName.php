@@ -6,11 +6,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Name;
 
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The name of a column at a position that defines or alters it, with the table qualifier MySQL 5.x allows there.
@@ -27,15 +27,33 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The column name
      * @param QualifiedName|null $table The table qualifier, and its database when written
+     * @param OptionalWords $dot Whether the unqualified name has the legacy dot prefix
      */
-    public function __construct(public readonly Name $column, public readonly ?QualifiedName $table = null)
+    public function __construct(public readonly Name $column, public readonly ?QualifiedName $table = null, public readonly OptionalWords $dot = OptionalWords::Omitted, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($table === null || $table->catalog === null, 'A column name is qualified by a table and at most a database.');
+        Check::input($dot === OptionalWords::Omitted || $table === null, 'A definition name with a dot prefix has no table qualifier.');
+    }
+
+    /**
+     * Resolves the definition qualifier and records its legacy dot-prefix notice.
+     */
+    public function deriveName(\SqlSemantics\Construction\Derivation $derivation, ?QualifiedName $target = null): void
+    {
+        if ($this->dot === OptionalWords::Written) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotDefinitionName, $derivation, $this);
+        }
+        $context = $derivation->context;
+        $problem = $target === null ? null : (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Name\ColumnQualifiers())->problem($this, $target, $context->relationNames, $context->declarationSchema);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this);
+        }
     }
 
     /**
@@ -43,6 +61,9 @@ final class ColumnName implements Node
      */
     public function render(Output $out): void
     {
+        if ($this->dot === OptionalWords::Written) {
+            (new \SqlSemantics\Platform\MySql\Rendering\LeadingDot())->write($out);
+        }
         if ($this->table?->schema !== null) {
             $out->name($this->table->schema, NameUse::Qualifier)->symbol('.');
         }

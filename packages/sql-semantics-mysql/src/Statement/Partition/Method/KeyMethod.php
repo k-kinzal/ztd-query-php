@@ -11,7 +11,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `[LINEAR] KEY [ALGORITHM = n] (columns)`: partitioning by the server's hash of column values.
@@ -26,10 +25,12 @@ use SqlSemantics\Statement\Snapshot;
  * @example Holding a linear key partitioning
  *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(true, null, [new \SqlSemantics\Statement\Identifier\Name('id')]);
  *     [$method->linear, $method->columns[0]->value] // => [true, 'id']
+ * @example Retaining an algorithm without a hash interpretation
+ *     (new \SqlSemantics\Platform\MySql\Statement\Partition\Method\KeyMethod(false, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('', true), []))->algorithm?->text // => ''
  */
 final class KeyMethod implements PartitionMethod
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The partitioning columns in order; empty for the primary key
@@ -41,7 +42,7 @@ final class KeyMethod implements PartitionMethod
      * @param Numeral|null $algorithm The ALGORITHM number, when written
      * @param list<Name> $columns The partitioning columns in order; empty for the primary key
      */
-    public function __construct(public readonly bool $linear, public readonly ?Numeral $algorithm, array $columns)
+    public function __construct(public readonly bool $linear, public readonly ?Numeral $algorithm, array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'Key partitioning columns are a list of names.');
     }
@@ -51,6 +52,11 @@ final class KeyMethod implements PartitionMethod
      */
     public function deriveMethod(Derivation $derivation, Environment $scope): void
     {
+        $problem = $this->algorithm === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Partition\KeyAlgorithms())->problem($this->algorithm);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->algorithm);
+        }
         (new ColumnNames())->check($this->columns, $derivation, $scope);
     }
 

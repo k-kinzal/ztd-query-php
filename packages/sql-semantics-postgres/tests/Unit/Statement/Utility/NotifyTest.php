@@ -18,12 +18,12 @@ final class NotifyTest extends TestCase
 {
     public function testDeriveStatementAcceptsAPayloadBelowTheLimit(): void
     {
-        self::assertSame([], (new Semantics(Dialect::PostgreSql))->analyze("NOTIFY c, '" . str_repeat('x', 7999) . "'")->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::PostgreSql))->analyze("NOTIFY c, '" . str_repeat('x', 7999) . "'")->diagnostics());
     }
 
     public function testDeriveStatementReportsAPayloadAtTheLimit(): void
     {
-        self::assertSame(['payload string too long'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze("NOTIFY c, '" . str_repeat('é', 4000) . "'")->facts->diagnostics));
+        self::assertSame(['payload string too long'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::PostgreSql))->analyze("NOTIFY c, '" . str_repeat('é', 4000) . "'")->diagnostics()));
     }
 
     public function testRenderWritesThePayloadAfterAComma(): void

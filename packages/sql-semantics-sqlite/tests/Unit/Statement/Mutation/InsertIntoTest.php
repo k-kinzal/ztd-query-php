@@ -30,19 +30,19 @@ final class InsertIntoTest extends TestCase
         $with = $semantics->analyze('with w as (select 1 as q) insert into t select q from w');
 
         self::assertSame('REPLACE INTO t (a, b) VALUES (1, 2)', $replace->toString());
-        self::assertInstanceOf(InsertRows::class, $replace->statement);
-        self::assertTrue($replace->statement->into->replace);
-        self::assertNull($replace->statement->into->resolution);
-        self::assertSame(['a', 'b'], array_map(static fn (Name $name): string => $name->value, $replace->statement->into->columns));
+        self::assertInstanceOf(InsertRows::class, $replace);
+        self::assertTrue($replace->into->replace);
+        self::assertNull($replace->into->resolution);
+        self::assertSame(['a', 'b'], array_map(static fn (Name $name): string => $name->value, $replace->into->columns));
         self::assertSame('INSERT OR ABORT INTO main.t AS x (a) VALUES (1)', $insert->toString());
-        self::assertInstanceOf(InsertRows::class, $insert->statement);
-        self::assertFalse($insert->statement->into->replace);
-        self::assertSame(ConflictResolution::Abort, $insert->statement->into->resolution);
-        self::assertSame('x', $insert->statement->into->target->alias?->value);
+        self::assertInstanceOf(InsertRows::class, $insert);
+        self::assertFalse($insert->into->replace);
+        self::assertSame(ConflictResolution::Abort, $insert->into->resolution);
+        self::assertSame('x', $insert->into->target->alias?->value);
         self::assertSame('WITH w AS (SELECT 1 AS q) INSERT INTO t SELECT q FROM w', $with->toString());
-        self::assertInstanceOf(InsertSelect::class, $with->statement);
-        self::assertNotNull($with->statement->into->with);
-        self::assertSame([], $with->statement->into->columns);
+        self::assertInstanceOf(InsertSelect::class, $with);
+        self::assertNotNull($with->into->with);
+        self::assertSame([], $with->into->columns);
     }
 
     public function testRejectsReplaceWithAConflictResolution(): void

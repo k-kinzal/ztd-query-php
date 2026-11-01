@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER [ COLUMN ] ... SET STATISTICS: the statistics target of a column, or DEFAULT.
@@ -24,17 +23,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Setting a statistics target
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER INDEX i ALTER COLUMN 1 SET STATISTICS 100');
- *     $statement->statement->commands[0]->column->digits // => '1'
+ *     $statement->commands[0]->column->digits // => '1'
  */
 final class ColumnStatistics implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|IntegerConstant $column The column, by name or, for an index, by number
      * @param SignedNumber|null $target The target; null for DEFAULT
      */
-    public function __construct(public readonly Name|IntegerConstant $column, public readonly ?SignedNumber $target)
+    public function __construct(public readonly Name|IntegerConstant $column, public readonly ?SignedNumber $target, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

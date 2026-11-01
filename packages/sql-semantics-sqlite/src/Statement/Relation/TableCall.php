@@ -19,7 +19,6 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One occurrence of a table-valued function as query input: a name with arguments.
@@ -35,11 +34,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a table-valued function call
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT * FROM json_each('[1]') AS j", []);
- *     [$query->statement->from->name->name->value, count($query->statement->from->arguments), $query->shape()->missing[0]->describe()] // => ['json_each', 1, 'the signature of routine json_each']
+ *     [$query->from->name->name->value, count($query->from->arguments), $query->shape()->missing[0]->describe()] // => ['json_each', 1, 'the signature of routine json_each']
  */
-final class TableCall implements Relation
+final class TableCall implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The arguments in order
@@ -53,8 +53,11 @@ final class TableCall implements Relation
      * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias
      */
-    public function __construct(public readonly QualifiedName $name, array $arguments, public readonly ?Name $alias = null, public readonly bool $as = true)
+    public function __construct(public readonly QualifiedName $name, array $arguments, public readonly ?Name $alias = null, public readonly bool $as = true, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($as || $alias !== null, 'AS is left out only before an alias.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'The arguments of a table-valued function are expressions.');
     }

@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,11 +22,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the changes
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE pair ADD ATTRIBUTE c text, DROP ATTRIBUTE a');
- *     count($operation->statement->changes) // => 2
+ *     count($operation->changes) // => 2
  */
-final class AlterComposite implements Statement
+final class AlterComposite extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AttributeChange> The changes in order
@@ -38,8 +37,11 @@ final class AlterComposite implements Statement
      * @param DottedName $name The type name
      * @param list<AttributeChange> $changes The changes in order; at least one
      */
-    public function __construct(public readonly DottedName $name, array $changes)
+    public function __construct(public readonly DottedName $name, array $changes, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->changes = Check::listOf($changes, AttributeChange::class, 'ALTER TYPE changes at least one attribute.', 1);
     }
 

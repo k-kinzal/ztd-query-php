@@ -34,15 +34,15 @@ final class StandaloneRuleTest extends TestCase
 
     public function testPairLowersTheOperationsWithTwoOperands(): void
     {
-        self::assertSame('ALTER TABLE t COALESCE PARTITION NO_WRITE_TO_BINLOG 2', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION LOCAL 2')->toString());
+        self::assertSame('ALTER TABLE t COALESCE PARTITION LOCAL 2', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t COALESCE PARTITION LOCAL 2')->toString());
     }
 
     public function testMaintainLowersTheOperationOnPartitions(): void
     {
-        self::assertSame('ALTER TABLE t REBUILD PARTITION NO_WRITE_TO_BINLOG ALL', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REBUILD PARTITION LOCAL ALL')->toString());
+        self::assertSame('ALTER TABLE t REBUILD PARTITION LOCAL ALL', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t REBUILD PARTITION LOCAL ALL')->toString());
     }
 
-    public function testLocalLowersNoWriteToBinlog(): void
+    public function testBinlogLowersNoWriteToBinlog(): void
     {
         self::assertSame('ALTER TABLE t ANALYZE PARTITION NO_WRITE_TO_BINLOG p', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ANALYZE PARTITION NO_WRITE_TO_BINLOG p')->toString());
     }

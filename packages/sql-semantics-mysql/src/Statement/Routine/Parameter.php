@@ -7,11 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One parameter of a stored procedure or function: its optional direction, its name and its type.
@@ -23,21 +22,40 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a parameter
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p(INOUT total DECIMAL(10, 2)) BEGIN END');
- *     $parameter = $create->statement->parameters->parameters[0];
+ *     $parameter = $create->parameters->parameters[0];
  *     [$parameter->mode, $parameter->name->value, $parameter->type->name()] // => [\SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode::InOut, 'total', 'DECIMAL']
  */
 final class Parameter implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The parameter name
-     * @param TypeName $type The declared type
-     * @param CollationName|null $collation The COLLATE clause of the type
+     * @param DeclaredName $type The declared type
+     * @param CollationName|null $collation The COLLATE clause; a named override requires a character set carried by the type, and known names must be compatible
      * @param ParameterMode|null $mode The direction keyword, when written
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the name contains NUL
      */
-    public function __construct(public readonly Name $name, public readonly TypeName $type, public readonly ?CollationName $collation = null, public readonly ?ParameterMode $mode = null)
+    public function __construct(public readonly Name $name, public readonly DeclaredName $type, public readonly ?CollationName $collation = null, public readonly ?ParameterMode $mode = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input(!str_contains($name->value, "\0"), 'A routine parameter name cannot contain NUL.');
+        (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->check($type, $collation);
+    }
+
+    /**
+     * Describes a name refused by MySQL 8.0 and later; legacy releases accept it.
+     */
+    public static function nameProblem(Name $name): ?Problem\ProgramProblem
+    {
+        return ProgramNames::problem($name);
+    }
+
+    /**
+     * Answers the parameter's case- and accent-insensitive identity.
+     */
+    public function key(): string
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Ordering\GeneralWeights())->key($this->name->value);
     }
 
     /**

@@ -25,7 +25,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Replication;
  *
  * @visibility public
  * @example Reading the vocabulary of a statement
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('STOP SLAVE')->statement->terminology // => \SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('STOP SLAVE')->terminology // => \SqlSemantics\Platform\MySql\Statement\Replication\Terminology::Legacy
  */
 enum Terminology
 {

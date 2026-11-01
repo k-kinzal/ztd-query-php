@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
 
 use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -12,8 +14,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a star without input
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->message() // => 'No tables used'
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT *');
+ *     $query->diagnostics()[0]->message() // => 'No tables used'
  */
 final class Misuse implements Diagnostic
 {
@@ -21,9 +23,12 @@ final class Misuse implements Diagnostic
 
     /**
      * @param MisuseRule $rule The broken rule
+     * @param \SqlSemantics\Platform\MySql\Statement\Query\ValueRow|null $valueRow The empty VALUES row that owns the condition, when supplied
+     * @param Name|QualifiedName|null $name The name the rule is broken for, as the server names it: the alias, common table, column, window or locked table
      */
-    public function __construct(public readonly MisuseRule $rule)
+    public function __construct(public readonly MisuseRule $rule, public readonly Name|QualifiedName|null $name = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\Query\ValueRow $valueRow = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($valueRow === null || ($rule === MisuseRule::EmptyValuesRow && $valueRow->values === []), 'An empty-row condition identifies an empty VALUES row.');
     }
 
     /**
@@ -31,6 +36,10 @@ final class Misuse implements Diagnostic
      */
     public function message(): string
     {
+        if ($this->rule === MisuseRule::WindowOutsideQuery && $this->name !== null) {
+            return sprintf("You cannot use the window function '%s' in this context.'", $this->name instanceof Name ? $this->name->value : $this->name->name->value);
+        }
+
         return $this->rule->value;
     }
 }

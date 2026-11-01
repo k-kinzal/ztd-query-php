@@ -16,7 +16,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A DELETE: removal of the rows of a table that meet a condition, optionally joined with USING items.
@@ -28,11 +27,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parts of a DELETE
  *     $delete = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *');
- *     [$delete->statement->target->table->only, $delete->toString()] // => [true, 'DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *']
+ *     [$delete->target->table->only, $delete->toString()] // => [true, 'DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING *']
  */
-final class Delete implements Modification
+final class Delete extends \SqlSemantics\Statement\SqlStatement implements Modification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Target> The RETURNING list in written order
@@ -54,7 +54,16 @@ final class Delete implements Modification
         public readonly ?Relation $using = null,
         public readonly Scalar|CurrentOf|null $where = null,
         array $returning = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->returning = Check::listOf($returning, Target::class, 'RETURNING holds output items.');
     }
 

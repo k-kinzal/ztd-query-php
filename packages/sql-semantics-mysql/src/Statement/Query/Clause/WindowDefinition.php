@@ -9,7 +9,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One named window of a WINDOW clause.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the name of a window
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WINDOW w AS (ORDER BY a)');
- *     $query->statement->windows[0]->name->value // => 'w'
+ *     $query->query->windows[0]->name->value // => 'w'
  */
 final class WindowDefinition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The window name
      * @param WindowSpecification $specification The window
      */
-    public function __construct(public readonly Name $name, public readonly WindowSpecification $specification)
+    public function __construct(public readonly Name $name, public readonly WindowSpecification $specification, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

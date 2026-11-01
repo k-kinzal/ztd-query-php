@@ -19,9 +19,9 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 /**
  * Derives condition values, SIGNAL and RESIGNAL, and the targets of GET DIAGNOSTICS.
  *
- * Rule: MYSQL-PROGRAM-CONDITIONS-001. An SQLSTATE value is five digits or
- * upper-case letters and does not begin with `00`, which means success
- * (ER_SP_BAD_SQLSTATE); an error code is not 0 (ER_WRONG_VALUE). Two
+ * Rule: MYSQL-PROGRAM-CONDITIONS-001. SQLSTATE requires five digits or
+ * upper-case letters outside success class `00`; an error-code operand must
+ * be nonzero before its 32-bit conversion. Both conditions retain the operand. Two
  * condition values are the same when they are the same general condition,
  * the same error number or the same SQLSTATE value; a condition name stands
  * for the value it is declared for. A condition name must be declared around the
@@ -42,19 +42,47 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 final class ConditionFacts
 {
     /**
-     * Checks a condition value: the form of an SQLSTATE value, the declaration of a condition name.
+     * Finds an information item assigned twice, independently of runtime values.
+     *
+     * @param list<SignalItem> $items Written assignments
+     */
+    public function repeated(array $items): ?SignalItem
+    {
+        $seen = [];
+        foreach ($items as $item) {
+            if (in_array($item->name, $seen, true)) {
+                return $item;
+            }
+            $seen[] = $item->name;
+        }
+        return null;
+    }
+
+    /**
+     * Publishes literal-domain conditions or resolves a named condition.
      */
     public function value(Condition $value, Derivation $derivation, ProgramScope $scope): void
     {
-        if ($value instanceof ErrorCode && !$value->valid()) {
-            $derivation->report(new ProgramProblem(ProgramRule::ZeroErrorCode));
-        }
-        if ($value instanceof SqlState && !$value->valid()) {
-            $derivation->report(new ProgramProblem(ProgramRule::BadSqlState, $value->state->value));
-        }
         if ($value instanceof ConditionName && $scope->condition($value->name) === null) {
             $derivation->report(new ProgramProblem(ProgramRule::UndefinedCondition, $value->name->value));
         }
+        $problem = $this->problem($value);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $value);
+        }
+    }
+
+    /**
+     * Answers a literal condition's intrinsic SQL error without discarding its value.
+     */
+    public function problem(Condition $value): ?ProgramProblem
+    {
+        return match (true) {
+            $value instanceof SqlState && !$value->valid() => new ProgramProblem(ProgramRule::BadSqlState, $value->state->value),
+            $value instanceof ErrorCode && !$value->valid() => new ProgramProblem(ProgramRule::ZeroErrorCode),
+            default => null,
+        };
     }
 
     /**
@@ -89,15 +117,36 @@ final class ConditionFacts
             $this->value($condition, $derivation, $scope);
         }
         if ($condition instanceof ConditionName && $scope->condition($condition->name)?->value instanceof ErrorCode) {
-            $derivation->report(new ProgramProblem(ProgramRule::SignalConditionKind));
+            $problem = new ProgramProblem(ProgramRule::SignalConditionKind);
+            $derivation->report($problem);
         }
         $seen = [];
         foreach ($items as $item) {
+            $this->operand($item->value, $derivation, $scope);
             if (in_array($item->name, $seen, true)) {
-                $derivation->report(new ProgramProblem(ProgramRule::DuplicateSignalItem, $item->name->value));
+                $problem = new ProgramProblem(ProgramRule::DuplicateSignalItem, $item->name->value);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $item);
             }
             $seen[] = $item->name;
-            $derivation->scalar($item->value, $scope->environment);
+        }
+    }
+
+    /**
+     * Derives a SIGNAL item or GET DIAGNOSTICS condition number during grammar actions.
+     * MySQL itemizes signal_allowed_expr before it checks a repeated item name.
+     * Source: https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy#L4253-L4259.
+     */
+    public function operand(\SqlSemantics\Platform\MySql\Statement\LiteralExpression|\SqlSemantics\Platform\MySql\Statement\Name\ColumnUse|\SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable|UserVariable|\SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment $value, Derivation $derivation, ProgramScope $scope): void
+    {
+        $fact = $derivation->scalar($value, $scope->environment, $value instanceof \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral ? fn () => $value->deriveScalar($derivation, $scope->environment, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax) : null);
+        if ($value instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment || $value instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Operator\DeferredAssignment) {
+            if ($fact->type instanceof \SqlSemantics\Statement\Type\Invalid && ($fact->type->cause instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision || $fact->type->cause instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $fact->type->cause instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\CastSizeInput)) {
+                return;
+            }
+            $problem = new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\AssignedConditionOperand($value);
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $value);
         }
     }
 

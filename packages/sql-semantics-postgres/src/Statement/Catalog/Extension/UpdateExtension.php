@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Updating to a version
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("ALTER EXTENSION hstore UPDATE TO '2.0'");
- *     $operation->statement->versions[0]->value // => '2.0'
+ *     $operation->versions[0]->value // => '2.0'
  */
-final class UpdateExtension implements Statement
+final class UpdateExtension extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Word|StringConstant> The versions written after TO, in order
@@ -41,8 +40,11 @@ final class UpdateExtension implements Statement
      * @param Name $name The extension name
      * @param list<Word|StringConstant> $versions The versions written after TO, in order
      */
-    public function __construct(public readonly Name $name, array $versions = [])
+    public function __construct(public readonly Name $name, array $versions = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $checked = [];
         foreach (Check::listOf($versions, \SqlSemantics\Statement\Node::class, 'Versions are a list.') as $version) {
             Check::input($version instanceof Word || $version instanceof StringConstant, 'A version is a word or a string.');

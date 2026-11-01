@@ -33,7 +33,7 @@ final class CaseExpressionTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze("SELECT CASE a WHEN 1 THEN 'x' ELSE 2 END FROM t", [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -43,9 +43,9 @@ final class CaseExpressionTest extends TestCase
         self::assertInstanceOf(IntegerLiteral::class, $case->branches[0]->when);
         self::assertInstanceOf(TextLiteral::class, $case->branches[0]->then);
         self::assertInstanceOf(IntegerLiteral::class, $case->otherwise);
-        self::assertEquals(new Choice([Storage::Integer, Storage::Text]), $operation->facts->scalar($case)->type);
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($case)->nullability);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertEquals(new Choice([Storage::Integer, Storage::Text]), $case->scalarInformation()->type);
+        self::assertSame(Nullability::NotNull, $case->scalarInformation()->nullability);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveScalarIsNullableWithoutElse(): void
@@ -91,8 +91,8 @@ final class CaseExpressionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CASE WHEN (1, 2) THEN 1 END', []);
 
-        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
-        self::assertSame('row value misused', $operation->facts->diagnostics[0]->message());
+        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->diagnostics());
+        self::assertSame('row value misused', $operation->diagnostics()[0]->message());
         self::assertEquals(new Known(Storage::Integer), $operation->field(0)->type);
     }
 
@@ -100,21 +100,21 @@ final class CaseExpressionTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CASE WHEN 1 THEN (1, 2) END', []);
 
-        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->diagnostics());
     }
 
     public function testDeriveScalarReportsARowValueComparedWithASingleBase(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CASE 1 WHEN (1, 2) THEN 1 END', []);
 
-        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::TooManyValueColumns)], $operation->diagnostics());
     }
 
     public function testDeriveScalarAcceptsRowValuesOfTheSameWidthAroundABase(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT CASE (1, 2) WHEN (1, 2) THEN 1 END', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertEquals(new Known(Storage::Integer), $operation->field(0)->type);
     }
 

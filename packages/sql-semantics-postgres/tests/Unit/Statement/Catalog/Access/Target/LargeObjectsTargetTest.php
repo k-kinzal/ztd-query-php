@@ -19,12 +19,12 @@ final class LargeObjectsTargetTest extends TestCase
 
     public function testDeriveTargetAcceptsAnObjectIdentifier(): void
     {
-        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT, UPDATE ON LARGE OBJECT 16385 TO joe', [])->facts->diagnostics));
+        self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT, UPDATE ON LARGE OBJECT 16385 TO joe', [])->diagnostics()));
     }
 
     public function testDeriveTargetReportsANumberThatIsNoObjectIdentifier(): void
     {
-        self::assertSame(['invalid input syntax for type oid: "16385.5"'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON LARGE OBJECT 16385.5 TO joe')->facts->diagnostics));
+        self::assertSame(['invalid input syntax for type oid: "16385.5"'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON LARGE OBJECT 16385.5 TO joe')->diagnostics()));
     }
 
     public function testRenderWritesTheIdentifiers(): void

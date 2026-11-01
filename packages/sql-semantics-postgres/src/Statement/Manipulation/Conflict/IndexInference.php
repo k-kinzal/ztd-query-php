@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The conflict target `( index_column_or_expression, ... ) [ WHERE predicate ]` that infers the unique indexes ON CONFLICT arbitrates on.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the inferred index columns
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t VALUES (1) ON CONFLICT (a) DO NOTHING');
- *     count($insert->statement->conflict->target->elements) // => 1
+ *     count($insert->conflict->target->elements) // => 1
  * @example Refusing an empty list of index elements
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict\IndexInference([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class IndexInference implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Clause> The index columns and expressions, in order
@@ -41,7 +40,7 @@ final class IndexInference implements Node
      *
      * @throws InvalidConstruction When there is no element
      */
-    public function __construct(array $elements, public readonly ?Scalar $where = null)
+    public function __construct(array $elements, public readonly ?Scalar $where = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->elements = Check::listOf($elements, Clause::class, 'A conflict target names at least one index element.', 1);
     }

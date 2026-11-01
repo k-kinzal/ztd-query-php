@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Scalar;
  * clock function are optional and change nothing; whether they are written
  * is kept (OptionalWords), since it is part of the text MySQL names an
  * unaliased select list expression after;
- * ADDDATE and SUBDATE with INTERVAL are DATE_ADD and DATE_SUB (CallNoise).
+ * ADDDATE and SUBDATE with INTERVAL retain their names and the matching operation.
  * Constructs: ClockCall, DateArithmetic, Extract, GetFormat, TimestampCall.
  * Terminates: every child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html.
@@ -96,25 +96,24 @@ final class TemporalRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function call(Form $form): Scalar
+    public function call(Form $form): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         if (isset(self::CLOCKS[$form->signature])) {
             [$clock, $precise] = self::CLOCKS[$form->signature];
             if ($precise) {
-                return new ClockCall($clock, $this->precision($form->node(1)), $this->parentheses($form->node(1)));
+                return $this->clock($clock, $form->node(1), \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::tryFrom(strtoupper($form->token(0)->text)));
             }
 
-            return new ClockCall($clock, null, $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted);
+            return new ClockCall($clock, null, $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted, alias: \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::tryFrom(strtoupper($form->token(0)->text)));
         }
-        $expressions = $this->lowering->expressions;
         if (isset(self::ARITHMETIC[$form->signature])) {
-            return new DateArithmetic(self::ARITHMETIC[$form->signature], $expressions->expression($form->node(2)), $expressions->expression($form->node(5)), $expressions->intervalUnit($form->node(6)));
+            return $this->arithmetic($form, self::ARITHMETIC[$form->signature]);
         }
 
         return match ($form->signature) {
             'function_call_nonkeyword: now' => $this->currentTimestamp($form->node(0)),
-            'function_call_nonkeyword: EXTRACT_SYM ( interval FROM expr )' => new Extract($expressions->intervalUnit($form->node(2)), $expressions->expression($form->node(4))),
-            'function_call_nonkeyword: GET_FORMAT ( date_time_type , expr )' => new GetFormat($this->format($form->node(2)), $expressions->expression($form->node(4))),
+            'function_call_nonkeyword: EXTRACT_SYM ( interval FROM expr )' => $this->extract($form),
+            'function_call_nonkeyword: GET_FORMAT ( date_time_type , expr )' => $this->getFormat($form),
             'function_call_nonkeyword: TIMESTAMP_ADD ( interval_time_stamp , expr , expr )' => $this->timestamp($form, TimestampOperation::Add),
             'function_call_nonkeyword: TIMESTAMP_DIFF ( interval_time_stamp , expr , expr )' => $this->timestamp($form, TimestampOperation::Difference),
             default => throw ImplementationGap::production($form),
@@ -122,13 +121,48 @@ final class TemporalRule
     }
 
     /**
+     * Retains both date-arithmetic operands before interpreting their scalar use.
+     */
+    public function arithmetic(Form $form, bool $subtract): DateArithmetic|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic
+    {
+        $date = $this->lowering->expressions->operand($form->node(2));
+        $quantity = $this->lowering->expressions->operand($form->node(5));
+        $unit = $this->lowering->expressions->intervalUnit($form->node(6));
+        $alias = \SqlSemantics\Platform\MySql\Statement\Call\Keyword\DateArithmeticAlias::tryFrom(strtoupper($form->token(0)->text));
+        return $date instanceof Scalar && $quantity instanceof Scalar ? new DateArithmetic($subtract, $date, $quantity, $unit, alias: $alias) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredDateArithmetic($subtract, $date, $quantity, $unit, alias: $alias);
+    }
+
+    /**
+     * Retains EXTRACT's unit and complete scalar, row or deferred source.
+     */
+    public function extract(Form $form): Extract|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredExtract
+    {
+        $source = $this->lowering->expressions->operand($form->node(4));
+        $unit = $this->lowering->expressions->intervalUnit($form->node(2));
+        return $source instanceof Scalar ? new Extract($unit, $source) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredExtract($unit, $source);
+    }
+
+    /**
+     * Retains GET_FORMAT's kind and complete standard operand.
+     */
+    public function getFormat(Form $form): GetFormat|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredGetFormat
+    {
+        $standard = $this->lowering->expressions->operand($form->node(4));
+        $kind = $this->format($form->node(2));
+        return $standard instanceof Scalar ? new GetFormat($kind, $standard) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredGetFormat($kind, $standard);
+    }
+
+    /**
      * Lowers TIMESTAMPADD or TIMESTAMPDIFF.
      */
-    public function timestamp(Form $form, TimestampOperation $operation): TimestampCall
+    public function timestamp(Form $form, TimestampOperation $operation): TimestampCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp
     {
         $expressions = $this->lowering->expressions;
 
-        return new TimestampCall($operation, $expressions->intervalUnit($form->node(2)), $expressions->expression($form->node(4)), $expressions->expression($form->node(6)));
+        $unit = $expressions->intervalUnit($form->node(2));
+        $first = $expressions->operand($form->node(4));
+        $second = $expressions->operand($form->node(6));
+        return $first instanceof Scalar && $second instanceof Scalar ? new TimestampCall($operation, $unit, $first, $second) : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredTimestamp($operation, $unit, $first, $second);
     }
 
     /**
@@ -136,14 +170,25 @@ final class TemporalRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function currentTimestamp(Node $now): ClockCall
+    public function currentTimestamp(Node $now): ClockCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock
     {
         $form = $this->lowering->form($now);
         if ($form->signature !== 'now: NOW_SYM func_datetime_precision') {
             throw ImplementationGap::production($form);
         }
 
-        return new ClockCall(Clock::Now, $this->precision($form->node(1)), $this->parentheses($form->node(1)));
+        return $this->clock(Clock::Now, $form->node(1), \SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias::tryFrom(strtoupper($form->token(0)->text)));
+    }
+
+    /**
+     * Separates an ordinary scalar clock from a stored precision condition.
+     */
+    public function clock(Clock $clock, Node $operand, ?\SqlSemantics\Platform\MySql\Statement\Call\Keyword\ClockAlias $alias = null): ClockCall|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock
+    {
+        $precision = $this->precision($operand);
+        return $precision !== null && (int) $precision->text % 256 > 6
+            ? new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Time\DeferredClock($clock, $precision, alias: $alias)
+            : new ClockCall($clock, $precision, $this->parentheses($operand), alias: $alias);
     }
 
     /**

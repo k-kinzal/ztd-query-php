@@ -19,9 +19,9 @@ final class ArityRuleTest extends TestCase
     public function testCasesTellWhereTheCountsDisagree(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $compound = $semantics->analyze('SELECT 1 UNION SELECT 2, 3')->facts->diagnostics[0];
-        $values = $semantics->analyze('VALUES (1), (2, 3)')->facts->diagnostics[0];
-        $common = $semantics->analyze('WITH c(x, y) AS (SELECT 1) SELECT * FROM c')->facts->diagnostics[0];
+        $compound = $semantics->analyze('SELECT 1 UNION SELECT 2, 3')->diagnostics()[0];
+        $values = $semantics->analyze('VALUES (1), (2, 3)')->diagnostics()[0];
+        $common = $semantics->analyze('WITH c(x, y) AS (SELECT 1) SELECT * FROM c')->diagnostics()[0];
 
         self::assertInstanceOf(ArityMismatch::class, $compound);
         self::assertSame(ArityRule::CompoundArms, $compound->rule);

@@ -19,7 +19,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Field selections, subscripts and slices applied to a value: `(x).f`, `$1[2]`, `a[1:2]`, `(SELECT …).f`.
@@ -45,7 +44,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Indirection implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<IndirectionStep> The steps in order
@@ -56,8 +56,11 @@ final class Indirection implements Scalar, OutputNaming
      * @param Scalar $base The value the steps apply to
      * @param list<IndirectionStep> $steps The steps in order; at least one
      */
-    public function __construct(public readonly Scalar $base, array $steps)
+    public function __construct(public readonly Scalar $base, array $steps, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->steps = Check::listOf($steps, IndirectionStep::class, 'An indirection has at least one step.', 1);
         Check::input(
             $base instanceof Grouped || $base instanceof PositionalParameter || $base instanceof NamedParameter || $base instanceof ScalarSubquery

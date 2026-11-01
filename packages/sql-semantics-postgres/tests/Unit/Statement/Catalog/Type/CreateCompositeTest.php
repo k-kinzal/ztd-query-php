@@ -21,6 +21,6 @@ final class CreateCompositeTest extends TestCase
 
     public function testDeriveStatementReportsARepeatedAttribute(): void
     {
-        self::assertSame('column "a" specified more than once', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE pair AS (a int4, b text, a int8)')->facts->diagnostics[0]->message());
+        self::assertSame('column "a" specified more than once', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE pair AS (a int4, b text, a int8)')->diagnostics()[0]->message());
     }
 }

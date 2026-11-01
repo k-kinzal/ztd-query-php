@@ -164,4 +164,41 @@ final class TypeRuleTest extends TestCase
         self::assertTrue($rule->doublePrecision($parser->parse('SELECT CAST(a AS DOUBLE PRECISION)')->find('real_type')[0]));
         self::assertFalse($rule->doublePrecision($parser->parse('SELECT CAST(a AS DOUBLE)')->find('real_type')[0]));
     }
+
+    public function testSizedRefusesAnOversizedColumnTypeBeforeConstructingIt(): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (c BINARY(256))');
+            self::fail('The BINARY length exceeds 255.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Column length too big for column 'c' (max = 255); use BLOB or TEXT instead", $failure->problem->message());
+        }
+        self::assertSame('CREATE TABLE t (a BIT(0))', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE TABLE t (a BIT(0))')->toString());
+    }
+
+    /**
+     * @return iterable<string, array{string, list<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated>}>
+     */
+    public static function providerRefusedTypeNotices(): iterable
+    {
+        yield 'integer width and zerofill' => ['INT(300) UNSIGNED ZEROFILL', [\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Zerofill, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisplayWidth]];
+        yield 'floating digits and unsigned' => ['FLOAT(300,2) UNSIGNED', [\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::FloatingDigits, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnsignedFraction]];
+        yield 'decimal precision' => ['DECIMAL(70)', []];
+        yield 'bit width' => ['BIT(65)', []];
+        yield 'character length' => ['CHAR(300)', []];
+    }
+
+    /**
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated> $notices
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRefusedTypeNotices')]
+    public function testDeprecationsReadsTheNoticesOfARefusedTypeFromItsParts(string $type, array $notices): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a ' . $type . ')')->find('type')[0];
+
+        self::assertSame($notices, (new TypeRule($lowering))->deprecations($node));
+    }
 }

@@ -209,6 +209,7 @@ final class ResultTyping
      */
     public function dateArithmetic(TypeFact $date, IntervalUnit $unit): TypeFact
     {
+        $unit = $unit->canonical();
         if ($date instanceof NullOnly) {
             return $date;
         }

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `PARTITION BY method [PARTITIONS n] [SUBPARTITION BY …] [(definitions)]`: how a table is partitioned.
@@ -21,7 +20,11 @@ use SqlSemantics\Statement\Snapshot;
  * expression gets the facts of its column references, a column name the
  * completely known table does not have is the diagnostic UnknownColumn. The
  * partition values are constants and see no column. An empty definition
- * list means none is written. Terminates: one pass over the definitions.
+ * list means none is written. RANGE and LIST define every partition with
+ * their own kind of values, no other method takes values, and a written
+ * PARTITIONS count equals the number of definitions; the server refuses
+ * anything else before it opens a table. Terminates: one pass over the
+ * definitions.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  * Status: Implemented.
@@ -33,7 +36,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PartitionClause implements Partitioning
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionDefinition> The partition definitions in order
@@ -51,8 +54,13 @@ final class PartitionClause implements Partitioning
         public readonly ?Numeral $partitions,
         public readonly ?Subpartitioning $subpartitioning,
         array $definitions,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'Partition definitions are a list of partition definitions.');
+        Check::input($partitions === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($partitions) || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($partitions, '0'), 'The explicit partition count is positive.');
+        (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions, $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->clause($method, $partitions, $this->definitions);
+        Check::input($problem === null, $problem?->message() ?? 'The definitions agree with the method and the count.');
     }
 
     /**
@@ -60,6 +68,9 @@ final class PartitionClause implements Partitioning
      */
     public function derivePartitioning(Derivation $derivation, Environment $scope): void
     {
+        if ($this->partitions !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->partitions);
+        }
         $this->method->deriveMethod($derivation, $scope);
         $this->subpartitioning?->deriveSubpartitioning($derivation, $scope);
         foreach ($this->definitions as $definition) {

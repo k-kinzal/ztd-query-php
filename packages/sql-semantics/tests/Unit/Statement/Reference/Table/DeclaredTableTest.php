@@ -21,7 +21,7 @@ final class DeclaredTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
         $query = $semantics->analyze('SELECT a FROM t', [$table]);
 
-        $resolution = $query->facts->relation($query->singleNamedInput())->table;
+        $resolution = $query->singleNamedInput()->relationInformation()->table;
 
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($table->declarations()[0], $resolution->table);
@@ -33,6 +33,6 @@ final class DeclaredTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
         $query = $semantics->analyze('SELECT a FROM main.t', [$table]);
 
-        self::assertInstanceOf(DeclaredTable::class, $query->facts->relation($query->singleNamedInput())->table);
+        self::assertInstanceOf(DeclaredTable::class, $query->singleNamedInput()->relationInformation()->table);
     }
 }

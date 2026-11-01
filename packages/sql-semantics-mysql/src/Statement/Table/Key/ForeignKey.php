@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A FOREIGN KEY constraint: the child columns and the reference to the parent table.
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a foreign key
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE c (p INT, CONSTRAINT fk FOREIGN KEY (p) REFERENCES p (id))');
- *     [$create->statement->elements[1]->constraint->name->column->value, $create->statement->elements[1]->references->table->name->value] // => ['fk', 'p']
+ *     [$create->elements[1]->constraint->name->column->value, $create->elements[1]->references->table->name->value] // => ['fk', 'p']
  */
 final class ForeignKey implements TableElement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ColumnPart> The child columns in order
@@ -41,7 +40,7 @@ final class ForeignKey implements TableElement
      * @param ColumnName|null $name The index name written after FOREIGN KEY
      * @param ConstraintName|null $constraint The CONSTRAINT clause, when written
      */
-    public function __construct(array $columns, public readonly References $references, public readonly ?ColumnName $name = null, public readonly ?ConstraintName $constraint = null)
+    public function __construct(array $columns, public readonly References $references, public readonly ?ColumnName $name = null, public readonly ?ConstraintName $constraint = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, ColumnPart::class, 'A foreign key has at least one column.', 1);
     }

@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Query;
 final class Trailer
 {
     /**
-     * @param list<OrderItem> $orderBy The ORDER BY items
+     * @param list<OrderItem|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredOrderItem> $orderBy The ORDER BY items
      * @param Limit|null $limit The LIMIT clause
      * @param ProcedureAnalyse|null $procedure The PROCEDURE ANALYSE clause
      * @param list<LockingClause> $locking The locking clauses

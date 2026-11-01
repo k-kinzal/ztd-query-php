@@ -21,7 +21,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Nullability;
@@ -39,15 +38,15 @@ final class JoinChainTest extends TestCase
         $natural = $semantics->analyze('SELECT * FROM t NATURAL JOIN u', [$t, $u]);
         $fields = $using->fields();
 
-        self::assertInstanceOf(Select::class, $using->statement);
-        self::assertInstanceOf(JoinChain::class, $using->statement->from);
+        self::assertInstanceOf(Select::class, $using);
+        self::assertInstanceOf(JoinChain::class, $using->from);
         self::assertNotNull($fields);
         self::assertSame(['id', 'a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $fields->items));
         self::assertSame(['id', 'a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $natural->fields()->items ?? []));
         self::assertSame($t->declarations()[0]->columns[1], $using->field('a')->column());
-        self::assertNull($using->facts->relation($using->statement->from)->table);
-        self::assertCount(4, $using->facts->relation($using->statement->from)->shape->slots);
-        self::assertSame([], $using->facts->diagnostics);
+        self::assertNull($using->from->relationInformation()->table);
+        self::assertCount(4, $using->from->relationInformation()->shape->slots);
+        self::assertSame([], $using->diagnostics());
     }
 
     public function testDeriveRelationMakesTheExtendedSideNullable(): void
@@ -90,14 +89,14 @@ final class JoinChainTest extends TestCase
         $on = $semantics->analyze('SELECT * FROM t ON 1', [$t]);
         $using = $semantics->analyze('SELECT * FROM t USING (a)', [$t]);
 
-        self::assertInstanceOf(Select::class, $on->statement);
-        self::assertInstanceOf(JoinChain::class, $on->statement->from);
-        self::assertInstanceOf(JoinOn::class, $on->statement->from->constraint);
-        self::assertSame([], $on->statement->from->steps);
-        self::assertInstanceOf(Misuse::class, $on->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::OnWithoutJoin, $on->facts->diagnostics[0]->rule);
-        self::assertInstanceOf(Misuse::class, $using->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::UsingWithoutJoin, $using->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Select::class, $on);
+        self::assertInstanceOf(JoinChain::class, $on->from);
+        self::assertInstanceOf(JoinOn::class, $on->from->constraint);
+        self::assertSame([], $on->from->steps);
+        self::assertInstanceOf(Misuse::class, $on->diagnostics()[0]);
+        self::assertSame(MisuseRule::OnWithoutJoin, $on->diagnostics()[0]->rule);
+        self::assertInstanceOf(Misuse::class, $using->diagnostics()[0]);
+        self::assertSame(MisuseRule::UsingWithoutJoin, $using->diagnostics()[0]->rule);
         self::assertCount(3, $on->fields()->items ?? []);
     }
 
@@ -110,14 +109,14 @@ final class JoinChainTest extends TestCase
         $named = $semantics->analyze('SELECT * FROM t LEFT WRONG JOIN u', [$t, $u]);
         $natural = $semantics->analyze('SELECT * FROM t NATURAL JOIN u ON 1', [$t, $u]);
 
-        self::assertInstanceOf(Misuse::class, $unknown->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::UnknownJoinType, $unknown->facts->diagnostics[0]->rule);
+        self::assertInstanceOf(Misuse::class, $unknown->diagnostics()[0]);
+        self::assertSame(MisuseRule::UnknownJoinType, $unknown->diagnostics()[0]->rule);
         self::assertCount(5, $unknown->fields()->items ?? []);
-        self::assertInstanceOf(Misuse::class, $named->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::UnknownJoinType, $named->facts->diagnostics[0]->rule);
-        self::assertInstanceOf(Misuse::class, $natural->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::NaturalJoinWithConstraint, $natural->facts->diagnostics[0]->rule);
-        self::assertCount(1, $natural->facts->diagnostics);
+        self::assertInstanceOf(Misuse::class, $named->diagnostics()[0]);
+        self::assertSame(MisuseRule::UnknownJoinType, $named->diagnostics()[0]->rule);
+        self::assertInstanceOf(Misuse::class, $natural->diagnostics()[0]);
+        self::assertSame(MisuseRule::NaturalJoinWithConstraint, $natural->diagnostics()[0]->rule);
+        self::assertCount(1, $natural->diagnostics());
     }
 
     public function testDeriveRelationListsCommaSeparatedTablesSideBySide(): void
@@ -127,11 +126,11 @@ final class JoinChainTest extends TestCase
         $u = $semantics->analyze('CREATE TABLE u (a INTEGER NOT NULL, c TEXT)');
         $query = $semantics->analyze('SELECT * FROM t, u', [$t, $u]);
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(JoinChain::class, $query->statement->from);
-        self::assertTrue($query->statement->from->steps[0]->operator->comma);
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(JoinChain::class, $query->from);
+        self::assertTrue($query->from->steps[0]->operator->comma);
         self::assertSame(['id', 'a', 'b', 'a', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $query->fields()->items ?? []));
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveRelationLeavesTheShapeOpenForUndeclaredTables(): void
@@ -143,7 +142,7 @@ final class JoinChainTest extends TestCase
         self::assertNotNull($shape);
         self::assertSame([], $shape->slots);
         self::assertSame(['the declaration of relation t', 'the declaration of relation u'], array_map(static fn (object $missing): string => $missing->describe(), $shape->missing));
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testRenderWritesTheFirstTermItsConstraintAndEachStep(): void
@@ -151,7 +150,7 @@ final class JoinChainTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $t = new TableInput(new QualifiedName(new Name('t')));
         $u = new TableInput(new QualifiedName(new Name('u')));
-        $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain($t, [new JoinStep(new JoinOperator(true), $u, new JoinUsing([new Name('a')]))])));
+        $built = Semantics::fromStatement($semantics->context(), new Select([new Star()], new JoinChain($t, [new JoinStep(new JoinOperator(true), $u, new JoinUsing([new Name('a')]))])));
 
         self::assertSame('SELECT * FROM t, u USING (a)', $built->toString());
         self::assertSame('SELECT * FROM t LEFT OUTER JOIN u ON t.a = u.a CROSS JOIN t t2', $semantics->analyze('select * from t left outer join u on t.a = u.a cross join t t2')->toString());

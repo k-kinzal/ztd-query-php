@@ -1,0 +1,335 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Evaluation\Compile;
+
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Compile\Connection;
+use MySqlMemory\Evaluation\Compile\Subqueries;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Instance;
+use MySqlMemory\Plan\Planner;
+use MySqlMemory\Result\ResultSet;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+
+#[CoversClass(Subqueries::class)]
+#[Small]
+final class SubqueriesTest extends TestCase
+{
+    public function testScalarReadsTheValueOfASubqueryOrNullForNoRow(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT (SELECT 5), (SELECT 1 FROM DUAL WHERE 0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['5', null]], $result->rows);
+    }
+
+    public function testRowPlansAMultiColumnSubqueryUsedAsAMembershipOperand(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT 1,2) IN (SELECT 1,2 UNION ALL SELECT 3,4), (SELECT 1,2 WHERE 0) IN (SELECT 1,2)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', null]], $result->rows);
+    }
+
+    public function testRowReevaluatesSeededRandomCallsForEachOuterRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY)');
+        $session->query('INSERT INTO t VALUES (1),(2),(3),(4),(5)');
+        $result = $session->query('SELECT id,(0.5,1)<(SELECT RAND(17),1) FROM t ORDER BY id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0'], ['2', '1'], ['3', '0'], ['4', '0'], ['5', '1']], $result->rows);
+    }
+
+    public function testScalarRefusesASubqueryOfMoreThanOneColumn(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        $this->expectExceptionMessage('Operand should contain 1 column(s)');
+
+        $session->query('SELECT (SELECT 1, 2)');
+    }
+
+    public function testScalarRefusesASubqueryOfMoreThanOneRow(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1242);
+        $this->expectExceptionMessage('Subquery returns more than 1 row');
+
+        $session->query('SELECT (SELECT 1 UNION SELECT 2)');
+    }
+
+    public function testExistsTellsWhetherTheSubqueryHasARow(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT EXISTS (SELECT 1), EXISTS (SELECT 1 FROM DUAL WHERE 0), NOT EXISTS (SELECT NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '0']], $result->rows);
+    }
+
+    public function testInTellsWhetherAValueIsAmongTheRowsOfTheSubquery(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT 2 IN (SELECT 1 UNION SELECT 2), 3 IN (SELECT 1 UNION SELECT NULL), 3 NOT IN (SELECT 1 UNION SELECT 2), NULL IN (SELECT 1), 1 IN (SELECT 1 FROM DUAL WHERE 0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', null, '1', null, '0']], $result->rows);
+    }
+
+    public function testQuantifiedComparisonComparesWithAnyOrAllRows(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT 2 > ALL (SELECT 1 UNION SELECT 2), 2 > ANY (SELECT 1 UNION SELECT 2), 2 = SOME (SELECT 3), 1 = ALL (SELECT 1 FROM DUAL WHERE 0), 1 = ANY (SELECT 1 FROM DUAL WHERE 0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '0', '1', '0']], $result->rows);
+    }
+
+    public function testLegacyRetainsTablelessExpressionsAcrossFalseAndDynamicFilters(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $result = $session->query('SELECT 7 IN (SELECT 7 FROM DUAL WHERE FALSE),7 <= ANY (SELECT 7 FROM DUAL WHERE @v),NULL <= ALL (SELECT 7 FROM DUAL WHERE FALSE),7 <= ANY (SELECT 7 FROM DUAL WHERE FALSE)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', null, '0']], $result->rows);
+    }
+
+    public function testFilteredSingleRetainsTheNativeModernNegationReduction(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT 10 NOT IN (SELECT 7 WHERE TRUE),7 NOT IN (SELECT 7 WHERE 1=1),10 NOT IN (SELECT 7),0x37 = ANY (SELECT 7 WHERE TRUE)')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '1', '0']], $result->rows);
+    }
+
+    public function testMembershipCompilesRowConstructorElementsAgainstSubqueryColumns(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (1, 2) IN (SELECT 1, 2), (1, 2) <> ALL (SELECT 1, 2)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0']], $result->rows);
+    }
+
+    public function testMembershipKeyRestrictsConversionToTheSelectedPrimaryKeyRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'a'),(2,'b')");
+        $result = $session->query('SELECT (0,2) IN (SELECT s,id FROM t)')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
+    }
+
+    public function testMembershipColumnsMapACompleteCompositeKeyInIndexOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, part INT, s VARCHAR(20), PRIMARY KEY(id,part))');
+        $session->query("INSERT INTO t VALUES (1,1,'a'),(2,1,'b')");
+        $session->query('SELECT (1,0,2) IN (SELECT part,s,id FROM t)');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
+    }
+
+    public function testMembershipConstantCachesTheKeyedResultAcrossOuterRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'a'),(2,'b')");
+        $result = $session->query('SELECT id,(0,2) IN (SELECT s,id FROM t) FROM t ORDER BY id')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1'], ['2', '1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
+    }
+
+    public function testMembershipUnknownKeepsLegacyNullComparisonsAheadOfKeyLookup(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'a')");
+        $result = $session->query('SELECT (1,0,99) IN (SELECT s,NULL,id FROM t WHERE id=99), (1,0,99) NOT IN (SELECT s,NULL,id FROM t WHERE RAND(17)<0), (1,0,99) IN (SELECT s,NULL,id FROM t WHERE 0), (1,0,99) NOT IN (SELECT s,NULL,id FROM t WHERE 0)')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, null, '0', '1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    public function testMembershipUnknownKeepsNullBeforeFalseFiltersOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY)');
+        $result = $session->query('SELECT (0,99) IN (SELECT NULL,id FROM t WHERE 0), (0,99) NOT IN (SELECT NULL,id FROM t WHERE 0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, null]], $result->rows);
+    }
+
+    public function testQuantifiedRefusesASubqueryOfMoreThanOneColumn(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1241);
+        $this->expectExceptionMessage('Operand should contain 1 column(s)');
+
+        $session->query('SELECT 1 IN (SELECT 1, 2)');
+    }
+
+    public function testQuantifiedComparesWithTheRowOfASubqueryWithoutATable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+        $result = $session->query("SELECT CONCAT('x') = ALL (SELECT 1), 2 NOT IN (VALUES ROW(1)), CONCAT('x') > ALL (SELECT 1) FROM t")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '0'], ['0', '1', '0'], ['0', '1', '0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'x'"]], $warnings->rows);
+    }
+
+    public function testSingleAnswersTheExpressionOfARowWithoutATable(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT (SELECT 1), (VALUES ROW(2)), (SELECT MAX(3)), (SELECT 4 UNION SELECT 5)');
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $select = $operation->field(0)->expression;
+        $values = $operation->field(1)->expression;
+        $aggregate = $operation->field(2)->expression;
+        $union = $operation->field(3)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $select);
+        self::assertInstanceOf(ScalarSubquery::class, $values);
+        self::assertInstanceOf(ScalarSubquery::class, $aggregate);
+        self::assertInstanceOf(ScalarSubquery::class, $union);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertInstanceOf(NumberLiteral::class, $subqueries->single($select->query));
+        self::assertInstanceOf(NumberLiteral::class, $subqueries->single($values->query));
+        self::assertNull($subqueries->single($aggregate->query));
+        self::assertNull($subqueries->single($union->query));
+    }
+
+    public function testScalarRunsAnUncorrelatedSubqueryOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+        $session->query('SELECT (SELECT 1/0 FROM t LIMIT 1), (SELECT MAX(1/0)) FROM t');
+        $once = $session->query('SHOW COUNT(*) WARNINGS')[0];
+        $session->query('SELECT (SELECT 1/0), (SELECT 1/0 FROM t AS u WHERE u.a = t.a) FROM t');
+        $everyRow = $session->query('SHOW COUNT(*) WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $once);
+        self::assertSame([['2']], $once->rows);
+        self::assertInstanceOf(ResultSet::class, $everyRow);
+        self::assertSame([['6']], $everyRow->rows);
+    }
+
+    public function testSubstitutedHoldsForASelectOfOneExpressionWithoutATableOrAnAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT (SELECT 1 FROM DUAL WHERE 1), (SELECT MAX(1)), (SELECT 1 HAVING 1)');
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $where = $operation->field(0)->expression;
+        $aggregate = $operation->field(1)->expression;
+        $having = $operation->field(2)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $where);
+        self::assertInstanceOf(ScalarSubquery::class, $aggregate);
+        self::assertInstanceOf(ScalarSubquery::class, $having);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertSame([true, false, false], [$subqueries->substituted($where->query), $subqueries->substituted($aggregate->query), $subqueries->substituted($having->query)]);
+    }
+
+    public function testInnermostRemovesTheParenthesesAndTheQueryExpressionsWithoutAWithClause(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT ((SELECT 1)), (WITH c AS (SELECT 1) SELECT 2)');
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $parenthesized = $operation->field(0)->expression;
+        $with = $operation->field(1)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $parenthesized);
+        self::assertInstanceOf(ScalarSubquery::class, $with);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertInstanceOf(Select::class, $subqueries->innermost($parenthesized->query));
+        self::assertInstanceOf(QueryExpression::class, $subqueries->innermost($with->query));
+    }
+
+    public function testSelectedAnswersTheExpressionOfASelectWithoutATableOrAnAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT (SELECT 1), (SELECT 1 FROM DUAL WHERE 1), (SELECT MAX(3))');
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $plain = $operation->field(0)->expression;
+        $where = $operation->field(1)->expression;
+        $aggregate = $operation->field(2)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $plain);
+        self::assertInstanceOf(ScalarSubquery::class, $where);
+        self::assertInstanceOf(ScalarSubquery::class, $aggregate);
+        self::assertInstanceOf(Select::class, $plain->query);
+        self::assertInstanceOf(Select::class, $where->query);
+        self::assertInstanceOf(Select::class, $aggregate->query);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertInstanceOf(NumberLiteral::class, $subqueries->selected($plain->query));
+        self::assertNull($subqueries->selected($where->query));
+        self::assertNull($subqueries->selected($aggregate->query));
+    }
+
+    public function testAggregatedTellsWhetherAnExpressionHoldsAnAggregateOfItsBlock(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("SELECT 1 + MAX(2), GROUP_CONCAT('a'), JSON_OBJECTAGG('k', 1), 1 + (SELECT MAX(2))");
+        $planner = new Planner($operation, $operation->statementInformation(), $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $maximum = $operation->field(0)->expression;
+        $concatenation = $operation->field(1)->expression;
+        $object = $operation->field(2)->expression;
+        $nested = $operation->field(3)->expression;
+        self::assertNotNull($maximum);
+        self::assertNotNull($concatenation);
+        self::assertNotNull($object);
+        self::assertNotNull($nested);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertSame([true, true, true, false], [$subqueries->aggregated($maximum), $subqueries->aggregated($concatenation), $subqueries->aggregated($object), $subqueries->aggregated($nested)]);
+    }
+}

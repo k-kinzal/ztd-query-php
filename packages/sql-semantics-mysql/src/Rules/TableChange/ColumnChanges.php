@@ -164,7 +164,7 @@ final class ColumnChanges
             $this->drop($command->name->column);
         } elseif ($command instanceof RenameElement && $command->kind === ElementKind::Column) {
             $this->rename($command->from->column, $command->to->column);
-        } elseif ($command instanceof DefaultSetting) {
+        } elseif ($command instanceof DefaultSetting || $command instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredDefaultSetting) {
             $this->altered($command->column->column, $added);
         } elseif ($command instanceof ColumnVisibility) {
             $this->altered($command->column->column, $added);

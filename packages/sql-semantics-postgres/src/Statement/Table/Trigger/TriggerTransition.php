@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One REFERENCING item: a name for the old or new transition table.
@@ -19,18 +18,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Naming a transition table
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRIGGER g AFTER INSERT ON t REFERENCING NEW TABLE AS fresh FOR EACH STATEMENT EXECUTE FUNCTION f()');
- *     $statement->statement->transitions[0]->name->value // => 'fresh'
+ *     $statement->transitions[0]->name->value // => 'fresh'
  */
 final class TriggerTransition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $new Whether the item names the new rows; the old ones otherwise
      * @param bool $table Whether TABLE is written; ROW otherwise
      * @param Name $name The name
      */
-    public function __construct(public readonly bool $new, public readonly bool $table, public readonly Name $name)
+    public function __construct(public readonly bool $new, public readonly bool $table, public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

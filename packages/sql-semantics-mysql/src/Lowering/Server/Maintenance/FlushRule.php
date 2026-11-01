@@ -15,8 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushItem;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushLock;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
-use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\MaintainedTable;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers FLUSH.
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  * `opt_flush_lock` action (ER_NO_TABLES_USED as a parse error) and is
  * rejected as such. The channel of RELAY LOGS goes through the replication
  * family's channel rule. TABLE and TABLES are synonyms and LOCAL is
- * NO_WRITE_TO_BINLOG (LeafNoise). Constructs: Flush, FlushItem,
+ * NO_WRITE_TO_BINLOG; both keyword choices are retained. Constructs: Flush, FlushItem,
  * FlushTables. Terminates: the item list is flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  * Status: Implemented.
@@ -68,7 +67,7 @@ final class FlushRule
         if ($form->signature !== 'flush: FLUSH_SYM opt_no_write_to_binlog flush_options') {
             throw ImplementationGap::production($form);
         }
-        $noWrite = $this->lowering->options->present($form->node(1));
+        $noWrite = $this->lowering->options->binlog($form->node(1));
         $options = $this->lowering->form($form->node(2));
 
         return match ($options->signature) {
@@ -84,13 +83,10 @@ final class FlushRule
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When FOR EXPORT has no table list
      */
-    public function tables(bool $noWriteToBinlog, Form $form): FlushTables
+    public function tables(?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $noWriteToBinlog, Form $form): FlushTables
     {
-        $this->lowering->options->skip($form->node(0));
-        $tables = [];
-        foreach ($this->lowering->names->qualifiedList($form->node(1)) as $name) {
-            $tables[] = new MaintainedTable($name);
-        }
+        $word = $this->lowering->options->tableWord($form->node(0));
+        $tables = (new MaintenanceRule($this->lowering))->tables($form->node(1));
         $lock = $this->lowering->form($form->node(2));
         $mode = match ($lock->signature) {
             'opt_flush_lock:' => null,
@@ -102,7 +98,7 @@ final class FlushRule
             throw new AnalysisException('Syntax error: FLUSH TABLES ... FOR EXPORT names the tables (no tables used).');
         }
 
-        return new FlushTables($noWriteToBinlog, $tables, $mode);
+        return new FlushTables($noWriteToBinlog, $tables, $mode, tableWord: $word);
     }
 
     /**

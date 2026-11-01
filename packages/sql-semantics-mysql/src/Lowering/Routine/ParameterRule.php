@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Routine;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\RejectedInput;
+use SqlSemantics\Construction\SourceRanges;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterMode;
-use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
+use SqlSemantics\Platform\MySql\Statement\Type\DeclaredName;
 
 /**
  * Lowers the parameter lists of stored routines and the data types of parameters, variables and return values.
@@ -50,7 +52,11 @@ final class ParameterRule
     /**
      * Lowers a parameter list: a node of `sp_fdparam_list` or `sp_pdparam_list`.
      *
+     * The server refuses a repeated parameter name when it reads the parameter; MySQL 8.0 and
+     * later also refuse a name that is not a routine name. Reading stops at that parameter.
+     *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When a parameter collation has no compatible declared character set, a name repeats, or a name is refused
      */
     public function parameters(Node $list): ParameterList
     {
@@ -59,10 +65,18 @@ final class ParameterRule
         $items = match ($form->signature) {
             'sp_fdparam_list:', 'sp_pdparam_list:' => [],
             'sp_fdparam_list: sp_fdparams', 'sp_pdparam_list: sp_pdparams' => (new Sequence($this->lowering))->items($form->node(0), self::LISTS),
+            'sp_fdparams: sp_fdparams , sp_fdparam', 'sp_fdparams: sp_fdparam', 'sp_pdparams: sp_pdparams , sp_pdparam', 'sp_pdparams: sp_pdparam' => (new Sequence($this->lowering))->items($list, self::LISTS),
             default => throw ImplementationGap::production($form),
         };
+        $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         foreach ($items as $item) {
-            $parameters[] = $this->parameter($item);
+            $parameter = $this->parameter($item);
+            $parameters[] = $parameter;
+            $problem = $legacy ? null : Parameter::nameProblem($parameter->name);
+            $problem ??= ParameterList::repeated($parameters) === null ? null : new \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem(\SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule::DuplicateParameter, $parameter->name->value);
+            if ($problem !== null) {
+                throw new RejectedInput($problem, (new SourceRanges())->span($item)[1] ?? 0);
+            }
         }
 
         return new ParameterList($parameters);
@@ -72,6 +86,7 @@ final class ParameterRule
      * Lowers one parameter: a node of `sp_fdparam` or `sp_pdparam`.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When the collation has no compatible declared character set
      */
     public function parameter(Node $parameter): Parameter
     {
@@ -96,15 +111,22 @@ final class ParameterRule
         }
         [$declared, $collate] = $this->declared($form->node($type), $collation === null ? null : $form->node($collation));
 
-        return new Parameter($this->lowering->names->identifier($form->node($name)), $declared, $collate, $direction);
+        $identifier = $this->lowering->names->identifier($form->node($name));
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($declared, '', $this->lowering->profile->grammar);
+        if ($size !== null) {
+            throw new RejectedInput($size, (new SourceRanges())->span($parameter)[1] ?? 0);
+        }
+
+        return $this->lowering->origins->record(new Parameter($identifier, $declared, $collate, $direction), $parameter);
     }
 
     /**
      * Lowers a data type with its optional COLLATE clause: a node of `type_with_opt_collate`, or a node
      * of `type` and the node of `opt_collate` that follows it.
      *
-     * @return array{TypeName, CollationName|null}
+     * @return array{DeclaredName, CollationName|null}
      * @throws ImplementationGap When a production has no rule
+     * @throws RejectedInput When a named collation has no compatible declared character set
      */
     public function declared(Node $type, ?Node $collation): array
     {
@@ -116,6 +138,16 @@ final class ParameterRule
             [$type, $collation] = [$form->node(0), $form->node(1)];
         }
 
-        return [$this->lowering->types->type($type), $this->lowering->charsets->collation($collation)];
+        $declared = $this->lowering->types->type($type);
+        $collate = $this->lowering->charsets->collation($collation);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Routine\Declaration\DeclaredCollation())->problem($declared, $collate, $this->lowering->profile->grammar);
+        if ($problem !== null) {
+            if ($collate?->name !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::forName($collate->name->value, $this->lowering->profile->grammar) === null) {
+                throw new RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($collate->name->value), (new SourceRanges())->span($collation)[1] ?? 0);
+            }
+            throw new RejectedInput($problem, (new SourceRanges())->span($collation)[1] ?? 0);
+        }
+
+        return [$declared, $collate];
     }
 }

@@ -9,7 +9,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An assignment of one value to one column of the written table.
@@ -17,17 +16,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an assignment
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('UPDATE t SET a = 1');
- *     [$update->statement->assignments[0]->column->value, $update->statement->assignments[0]->value->digits] // => ['a', '1']
+ *     [$update->assignments[0]->column->value, $update->assignments[0]->value->digits] // => ['a', '1']
  */
 final class Assignment implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $column The assigned column
      * @param Scalar $value The new value
      */
-    public function __construct(public readonly Name $column, public readonly Scalar $value)
+    public function __construct(public readonly Name $column, public readonly Scalar $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

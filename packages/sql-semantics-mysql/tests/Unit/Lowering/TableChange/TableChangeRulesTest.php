@@ -15,9 +15,27 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\TableChangeRules;
 #[Medium]
 final class TableChangeRulesTest extends TestCase
 {
+    public function testIgnoredRecognizesTheCompletedAlterationTargetBeforeLaterSyntax(): void
+    {
+        $parser = new \SqlParser\MySql\MySqlParser('mysql-5.6.51');
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $sql = 'ALTER IGNORE TABLE t ALTER a SET DEFAULT (1)';
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AlterIgnore], array_column((new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, $sql, strlen($sql), $profile), 1));
+        self::assertSame([], (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, 'ALTER IGNORE TABLE', 18, $profile));
+        self::assertSame([], (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed($parser, 'UPDATE IGNORE t SET a=', 21, $profile));
+    }
+
+    public function testCompletedRetainsAnUnknownModifierInAProgramBody(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() ALTER TABLE t LOCK=bad');
+        self::assertSame('CREATE PROCEDURE p() ALTER TABLE t LOCK = bad', $statement->toString());
+        self::assertSame('bad is not a LOCK the server knows.', $statement->diagnostics()[0]->message());
+    }
+
     public function testStatementLowersAStatementNode(): void
     {
-        self::assertSame('TRUNCATE TABLE t', (new Semantics(Dialect::MySql))->analyze('TRUNCATE t')->toString());
+        self::assertSame('TRUNCATE t', (new Semantics(Dialect::MySql))->analyze('TRUNCATE t')->toString());
     }
 
     public function testDefinitionLowersARoutedProduction(): void

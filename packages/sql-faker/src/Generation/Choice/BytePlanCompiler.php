@@ -9,6 +9,8 @@ use SqlFaker\Generation\Plan\GenerationPlan;
 
 /**
  * Decodes bytes at the plan entry point and returns frozen production and lexical instructions.
+ * Inputs of at most four bytes also supply production choices, so initial fuzz
+ * mutations can select statements before the separate choice body grows.
  */
 final class BytePlanCompiler
 {
@@ -36,7 +38,7 @@ final class BytePlanCompiler
         for ($index = 3; $index >= 0; --$index) {
             $header = ($header * 256 + (isset($input[$index]) ? ord($input[$index]) : 0)) % $range;
         }
-        $structure = '';
+        $structure = strlen($input) <= 4 ? $input : '';
         $lexical = '';
         foreach (str_split(substr($input, 4), 2) as $pair) {
             $structure .= $pair[0] ?? '';

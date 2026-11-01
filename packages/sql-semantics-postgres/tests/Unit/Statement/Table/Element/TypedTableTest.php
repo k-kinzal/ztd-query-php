@@ -16,7 +16,7 @@ final class TypedTableTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE TABLE t OF ty (PRIMARY KEY (id))', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable::class, $n1);
         $n2 = $n1->definition;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TypedTable::class, $n2);

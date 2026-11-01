@@ -23,6 +23,11 @@ use SqlSemantics\Statement\Statement;
 interface Platform
 {
     /**
+     * Publishes a concrete analyzed statement from temporary binding inputs.
+     */
+    public function publish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement;
+
+    /**
      * Fixes the language profile of a release, session mode and parameter style.
      *
      * @throws InvalidArgumentException When the release is not shipped, the mode belongs to another database, or the installed grammar artifacts differ from the pinned ones
@@ -32,14 +37,19 @@ interface Platform
     /**
      * Answers the parser of a profile.
      */
-    public function parser(LanguageProfile $profile): SqlParser;
+    public function parser(LanguageProfile $profile, ?Session $session = null): SqlParser;
 
     /**
      * Lowers a parse tree into the statements it contains, recording the operand leaves it creates.
      *
+     * @param \SqlSemantics\Construction\Origins|null $origins The optional recorder for original input locations
+     * @param Session|null $session Session settings needed to interpret input operands
+     * @param bool $canonicalNames Whether identifier bytes use the model encoding while session settings remain attached to the resulting values
      * @return list<Statement>
+     * @throws \SqlSemantics\Construction\RejectedInput When an operand is outside a semantic constructor domain
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When grammar-action constraints reject complete input
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array;
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?Session $session = null, bool $canonicalNames = false): array;
 
     /**
      * Answers the grammar productions of a profile's release.
@@ -47,9 +57,9 @@ interface Platform
     public function productions(LanguageProfile $profile): Productions;
 
     /**
-     * Answers the name codec of a profile.
+     * Answers the name codec of a profile and its optional session character set.
      */
-    public function codec(LanguageProfile $profile): Codec;
+    public function codec(LanguageProfile $profile, ?Session $session = null): Codec;
 
     /**
      * Answers the token comparison keys of a profile.

@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\NamedRelation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The table a data change statement writes to, with its optional correlation name and index choice.
@@ -30,19 +29,23 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
  *     $delete = $semantics->analyze('DELETE FROM t AS x WHERE x.a = 1', [$table]);
- *     [$delete->statement->target->alias()->value, $delete->facts->relation($delete->statement->target)->table->table === $table->declarations()[0]] // => ['x', true]
+ *     [$delete->target->alias()->value, $delete->target->relationInformation()->table->table === $table->declarations()[0]] // => ['x', true]
  */
-final class MutationTarget implements NamedRelation
+final class MutationTarget implements NamedRelation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The table name
      * @param Name|null $alias The correlation name
      * @param IndexChoice|null $index The demanded index
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, public readonly ?IndexChoice $index = null)
+    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, public readonly ?IndexChoice $index = null, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
     }
 
     /**

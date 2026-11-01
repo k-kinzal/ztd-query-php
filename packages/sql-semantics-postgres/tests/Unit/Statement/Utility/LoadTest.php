@@ -18,7 +18,7 @@ final class LoadTest extends TestCase
     public function testDeriveStatementRecordsNothing(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze("LOAD 'x'");
-        self::assertSame([[], null], [$operation->facts->diagnostics, $operation->facts->output]);
+        self::assertSame([[], null], [$operation->diagnostics(), $operation->output()]);
     }
 
     public function testRenderWritesTheFileString(): void

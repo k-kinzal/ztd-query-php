@@ -28,7 +28,7 @@ final class SelectFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $select = $semantics->analyze('SELECT a AS x, b FROM t WHERE x > 1 GROUP BY b HAVING count(*) > 1 WINDOW w AS (PARTITION BY a) ORDER BY x LIMIT 1 OFFSET 2')->statement;
+        $select = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT a AS x, b FROM t WHERE x > 1 GROUP BY b HAVING count(*) > 1 WINDOW w AS (PARTITION BY a) ORDER BY x LIMIT 1 OFFSET 2'));
         self::assertInstanceOf(Select::class, $select);
         $derivation = new Derivation($semantics->context([$create]));
 
@@ -54,9 +54,9 @@ final class SelectFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $having = $semantics->analyze('SELECT a FROM t HAVING 1')->statement;
-        $ordered = $semantics->analyze('SELECT a FROM t ORDER BY max(b)')->statement;
-        $plain = $semantics->analyze('SELECT a FROM t WHERE max(b) > 1')->statement;
+        $having = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT a FROM t HAVING 1'));
+        $ordered = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT a FROM t ORDER BY max(b)'));
+        $plain = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT a FROM t WHERE max(b) > 1'));
         self::assertInstanceOf(Select::class, $having);
         self::assertInstanceOf(Select::class, $ordered);
         self::assertInstanceOf(Select::class, $plain);
@@ -72,8 +72,8 @@ final class SelectFactsTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('SELECT a, *, b AS x, 1 AS y, a + 1 FROM t', [$create]);
-        $select = $query->statement;
-        $output = $query->facts->output;
+        $select = $query;
+        $output = $query->output();
         self::assertInstanceOf(Select::class, $select);
         self::assertNotNull($output);
 
@@ -88,7 +88,7 @@ final class SelectFactsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $select = $semantics->analyze('SELECT a FROM t LIMIT a OFFSET 2')->statement;
+        $select = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT a FROM t LIMIT a OFFSET 2'));
         self::assertInstanceOf(Select::class, $select);
         $limit = $select->limit;
         self::assertNotNull($limit);

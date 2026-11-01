@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A temporal interval: `INTERVAL quantity unit`, the operand of interval arithmetic and of DATE_ADD and DATE_SUB.
@@ -21,17 +20,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the quantity and the unit
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a + INTERVAL 2 DAY_HOUR');
- *     [$query->statement->where->interval->quantity->text, $query->statement->where->interval->unit->value] // => ['2', 'DAY_HOUR']
+ *     [$query->query->where->interval->quantity->text, $query->query->where->interval->unit->value] // => ['2', 'DAY_HOUR']
  */
 final class Interval implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $quantity The number of units, or the formatted string of a compound unit
      * @param IntervalUnit $unit The unit
      */
-    public function __construct(public readonly Scalar $quantity, public readonly IntervalUnit $unit)
+    public function __construct(public readonly Scalar $quantity, public readonly IntervalUnit $unit, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

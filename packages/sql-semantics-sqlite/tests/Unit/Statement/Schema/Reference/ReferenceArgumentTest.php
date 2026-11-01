@@ -22,7 +22,7 @@ final class ReferenceArgumentTest extends TestCase
     public function testRenderWritesEveryKindOfClauseInWrittenOrder(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent ON UPDATE CASCADE MATCH simple ON DELETE RESTRICT)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $clause = $statement->columns[0]->constraints[0];

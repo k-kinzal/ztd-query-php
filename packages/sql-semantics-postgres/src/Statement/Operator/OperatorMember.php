@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `OPERATOR strategy operator [(types)] [FOR SEARCH | FOR ORDER BY family]`: an operator of an operator class or family.
@@ -27,14 +26,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class OperatorMember implements OperatorClassItem
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntegerConstant $strategy The strategy number
      * @param OperatorName|OperatorSignature $operator The operator, with or without operand types, written without OPERATOR(...)
      * @param MemberPurpose|null $purpose What the operator is for, if written
      */
-    public function __construct(public readonly IntegerConstant $strategy, public readonly OperatorName|OperatorSignature $operator, public readonly ?MemberPurpose $purpose = null)
+    public function __construct(public readonly IntegerConstant $strategy, public readonly OperatorName|OperatorSignature $operator, public readonly ?MemberPurpose $purpose = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$operator instanceof OperatorName || !$operator->explicit, 'An operator class names an operator without OPERATOR(...).');
     }

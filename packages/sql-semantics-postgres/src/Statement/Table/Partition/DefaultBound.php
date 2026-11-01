@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Partition;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The DEFAULT bound: the partition holds the rows no other partition holds.
@@ -21,7 +20,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class DefaultBound implements PartitionBound
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    /**
+ * Constructs a SQL occurrence with optional publication information.
+ */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+    }
 
     /**
      * Derives nothing: the bound has no value.

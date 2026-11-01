@@ -7,11 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
+use SqlSemantics\Platform\MySql\Statement\Table\IndexWord;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption;
 use SqlSemantics\Platform\MySql\Statement\Table\TableElement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An index or key of a table definition: INDEX, PRIMARY KEY, UNIQUE, FULLTEXT or SPATIAL with its parts and options.
@@ -30,11 +30,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index definition
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT, UNIQUE KEY ab (a, b))');
- *     [$create->statement->elements[2]->kind, $create->statement->elements[2]->name->column->value, count($create->statement->elements[2]->parts)] // => [\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Unique, 'ab', 2]
+ *     [$create->elements[2]->kind, $create->elements[2]->name->column->value, count($create->elements[2]->parts)] // => [\SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind::Unique, 'ab', 2]
  */
 final class IndexDefinition implements TableElement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<KeyPart> The key parts in order
@@ -47,13 +47,19 @@ final class IndexDefinition implements TableElement
     public readonly array $options;
 
     /**
+     * The index keyword, absent for PRIMARY KEY and omitted optional keywords.
+     */
+    public readonly ?IndexWord $keyword;
+
+    /**
      * @param IndexKind $kind The kind of index
      * @param list<KeyPart> $parts The key parts in order; at least one
      * @param ColumnName|null $name The index name, when written
      * @param IndexAlgorithm|null $algorithm The USING clause written before the key parts
      * @param list<IndexOption> $options The options after the key parts, in written order
      * @param ConstraintName|null $constraint The CONSTRAINT clause of a PRIMARY KEY or UNIQUE index
-     * @param bool $keyword Whether INDEX or KEY is written after UNIQUE, FULLTEXT or SPATIAL
+     * @param IndexWord|null $keyword The written INDEX or KEY; optional after UNIQUE, FULLTEXT and SPATIAL
+     * @param bool $typeKeyword Whether TYPE introduces the algorithm instead of USING
      */
     public function __construct(
         public readonly IndexKind $kind,
@@ -62,13 +68,18 @@ final class IndexDefinition implements TableElement
         public readonly ?IndexAlgorithm $algorithm = null,
         array $options = [],
         public readonly ?ConstraintName $constraint = null,
-        public readonly bool $keyword = false,
+        ?IndexWord $keyword = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly bool $typeKeyword = false
     ) {
         $this->parts = Check::listOf($parts, KeyPart::class, 'An index has at least one key part.', 1);
         $this->options = Check::listOf($options, IndexOption::class, 'Index options are an ordered list of index options.');
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\IndexOptions())->check($kind, $this->options);
         Check::input($constraint === null || $kind === IndexKind::Primary || $kind === IndexKind::Unique, 'Only a primary key or a unique index has a CONSTRAINT clause.');
-        Check::input(!$keyword || $kind === IndexKind::Unique || $kind === IndexKind::FullText || $kind === IndexKind::Spatial, 'Only UNIQUE, FULLTEXT and SPATIAL are followed by an optional INDEX.');
+        Check::input($keyword === null || $kind !== IndexKind::Primary, 'PRIMARY KEY has no interchangeable index keyword.');
+        $this->keyword = $kind === IndexKind::Index ? ($keyword ?? IndexWord::Index) : $keyword;
         Check::input($algorithm === null || ($kind !== IndexKind::FullText && $kind !== IndexKind::Spatial), 'A full-text or spatial index has no USING clause before its key parts.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -76,6 +87,14 @@ final class IndexDefinition implements TableElement
      */
     public function deriveElement(Derivation $derivation, Environment $scope): void
     {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Names())->definition($this);
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
+        $shape = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Index\Shapes())->problem($this->kind, $this->parts);
+        if ($shape !== null) {
+            $derivation->report($shape);
+        }
         foreach ($this->parts as $part) {
             $part->deriveKeyPart($derivation, $scope);
         }
@@ -86,13 +105,16 @@ final class IndexDefinition implements TableElement
      */
     public function render(Output $out): void
     {
-        $out->node($this->constraint)->keyword(...explode(' ', $this->kind->value));
-        if ($this->keyword) {
-            $out->keyword('INDEX');
+        $out->node($this->constraint);
+        if ($this->kind !== IndexKind::Index) {
+            $out->keyword(...explode(' ', $this->kind->value));
+        }
+        if ($this->keyword !== null) {
+            $out->keyword($this->keyword->value);
         }
         $out->node($this->name);
         if ($this->algorithm !== null) {
-            $out->keyword('USING', $this->algorithm->value);
+            $out->keyword($this->typeKeyword ? 'TYPE' : 'USING', $this->algorithm->value);
         }
         $out->symbol('(')->list($this->parts)->symbol(')');
         foreach ($this->options as $option) {

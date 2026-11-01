@@ -15,7 +15,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
  * @visibility public
  * @example Reading the operator of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 UNION SELECT 2');
- *     $query->statement->operator // => \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union
+ *     $query->query->operator // => \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union
  */
 enum SetOperator: string
 {

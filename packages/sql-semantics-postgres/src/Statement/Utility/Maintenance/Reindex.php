@@ -19,7 +19,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -40,13 +39,15 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a concurrent REINDEX of a table
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REINDEX (VERBOSE) TABLE CONCURRENTLY app.t');
- *     [$operation->statement->target, $operation->statement->concurrently, $operation->statement->object->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Table, true, 't']
+ *     [$operation->target, $operation->concurrently, $operation->object->name->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Table, true, 't']
  * @example Refusing a schema named like a relation
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\Reindex(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\ReindexTarget::Schema, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('s'))) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Reindex implements Statement
+final class Reindex extends \SqlSemantics\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<UtilityOption> The parenthesized options in the order written
@@ -64,7 +65,16 @@ final class Reindex implements Statement
         public readonly QualifiedName|Name|null $object,
         array $options = [],
         public readonly bool $concurrently = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null,
+        ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->options = Check::listOf($options, UtilityOption::class, 'The options of REINDEX are utility options.');
         Check::input(match ($target) {
             ReindexTarget::Index, ReindexTarget::Table => $object instanceof QualifiedName,

@@ -20,7 +20,7 @@ final class TypeChangeTest extends TestCase
         $statement = $semantics->analyze('ALTER TABLE t ALTER b TYPE text USING zz', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

@@ -20,7 +20,7 @@ final class DefaultChangeTest extends TestCase
         $statement = $semantics->analyze('ALTER TABLE t ALTER b SET DEFAULT a', $context);
         self::assertSame([
           0 => 'Column a does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

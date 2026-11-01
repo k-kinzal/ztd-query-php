@@ -21,5 +21,5 @@ enum WindowingLimit: string
     case IgnoreNulls = 'IGNORE NULLS';
     case FromLast = 'FROM LAST';
     case DistinctAggregate = '<window function>(DISTINCT ..)';
-    case GroupConcat = 'GROUP_CONCAT as window function';
+    case GroupConcat = 'group_concat as window function';
 }

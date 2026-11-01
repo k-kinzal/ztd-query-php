@@ -17,7 +17,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
  * @visibility public
  * @example Reading which lengths disagree
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1 UNION SELECT 1, 2');
- *     $query->facts->diagnostics[0]->list // => \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList::SetOperands
+ *     $query->diagnostics()[0]->list // => \SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList::SetOperands
  */
 enum CountedList: string
 {

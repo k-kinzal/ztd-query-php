@@ -18,7 +18,7 @@ final class ShowBinaryLogStatusTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze('SHOW MASTER STATUS');
-        self::assertInstanceOf(ShowBinaryLogStatus::class, $show->statement);
+        self::assertInstanceOf(ShowBinaryLogStatus::class, $show);
         self::assertSame('Executed_Gtid_Set', $show->field(4)->name?->value);
     }
 

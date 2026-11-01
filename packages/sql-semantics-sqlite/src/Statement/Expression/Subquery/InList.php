@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -31,14 +30,15 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the values of a membership test
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a NOT IN (1, 2) FROM t');
- *     [$query->statement->columns[0]->expression->negated, count($query->statement->columns[0]->expression->items)] // => [true, 2]
+ *     [$query->columns[0]->expression->negated, count($query->columns[0]->expression->items)] // => [true, 2]
  * @example Refusing an operand that the test would not cover when written
- *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t')->statement->columns[0]->expression;
+ *     $or = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a OR b FROM t')->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InList($or, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class InList implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The values in order
@@ -50,8 +50,11 @@ final class InList implements Scalar
      * @param list<Scalar> $items The values in order; possibly none
      * @param bool $negated Whether NOT is written before IN
      */
-    public function __construct(public readonly Scalar $operand, array $items, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar $operand, array $items, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->items = Check::listOf($items, Scalar::class, 'The values of IN are expressions.');
         Check::input((new Precedence())->closing($operand) >= Precedence::EQUALITY, 'The operand needs parentheses to keep its place.');
     }

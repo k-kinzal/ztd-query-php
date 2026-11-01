@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A column an INSERT column list or an assignment writes, with the subscripts and fields of the part written.
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the element an assignment writes
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('UPDATE t SET a[1] = 2');
- *     [$update->statement->assignments[0]->column->column->value, count($update->statement->assignments[0]->column->steps)] // => ['a', 1]
+ *     [$update->assignments[0]->column->column->value, count($update->assignments[0]->column->steps)] // => ['a', 1]
  */
 final class ColumnTarget implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<IndirectionStep> The subscripts and field selections after the column name
@@ -43,7 +42,7 @@ final class ColumnTarget implements Clause
      *
      * @throws InvalidConstruction When a step is not an indirection step
      */
-    public function __construct(public readonly Name $column, array $steps = [])
+    public function __construct(public readonly Name $column, array $steps = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->steps = Check::listOf($steps, IndirectionStep::class, 'The steps of an assignment target are indirection steps.');
     }

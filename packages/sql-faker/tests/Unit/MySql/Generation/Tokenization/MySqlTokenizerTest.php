@@ -12,9 +12,32 @@ use SqlFaker\Generation\Exception\LexicalException;
 use SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer;
 
 #[CoversClass(MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\IntegerToken::class)]
 #[UsesClass(LexicalException::class)]
 final class MySqlTokenizerTest extends TestCase
 {
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerOperatorModes')]
+    public function testTokenizeUsesTheConfiguredOperatorModes(bool $highNotPrecedence, bool $pipesAsConcat, array $expected): void
+    {
+        $tokenizer = new MySqlTokenizer(['NOT' => 'NOT_SYM', '||' => 'OR_OR_SYM'], [], false, $highNotPrecedence, $pipesAsConcat);
+
+        self::assertSame($expected, $tokenizer->tokenize('NOT || !'));
+    }
+
+    /**
+     * @return iterable<string, array{bool, bool, list<string>}>
+     */
+    public static function providerOperatorModes(): iterable
+    {
+        yield 'default' => [false, false, ['NOT_SYM', 'OR2_SYM', '!']];
+        yield 'unary NOT' => [true, false, ['NOT2_SYM', 'OR2_SYM', '!']];
+        yield 'concatenation' => [false, true, ['NOT_SYM', 'OR_OR_SYM', '!']];
+        yield 'both modes' => [true, true, ['NOT2_SYM', 'OR_OR_SYM', '!']];
+    }
+
     /**
      * @param list<string> $expected
      */

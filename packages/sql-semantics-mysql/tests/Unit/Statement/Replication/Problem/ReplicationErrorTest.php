@@ -15,7 +15,7 @@ final class ReplicationErrorTest extends TestCase
 {
     public function testCasesNameTheServerErrors(): void
     {
-        self::assertCount(13, ReplicationError::cases());
+        self::assertCount(15, ReplicationError::cases());
         self::assertStringContainsString('ER_BAD_REPLICA_UNTIL_COND', ReplicationError::UntilCondition->value);
     }
 }

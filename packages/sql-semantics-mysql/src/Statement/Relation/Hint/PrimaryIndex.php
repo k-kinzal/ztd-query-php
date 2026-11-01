@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation\Hint;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The primary key index named by the PRIMARY keyword in an index list.
@@ -16,11 +15,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the primary key in an index hint
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t USE INDEX (PRIMARY, i)');
- *     $query->statement->from->indexHints[0]->indexes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex // => true
+ *     $query->query->from->indexHints[0]->indexes[0] instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex // => true
  */
 final class PrimaryIndex implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Writes the keyword.
@@ -28,5 +27,11 @@ final class PrimaryIndex implements Node
     public function render(Output $out): void
     {
         $out->keyword('PRIMARY');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

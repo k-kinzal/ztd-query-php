@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Access\RoleChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -24,11 +23,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the members removed from a group
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER GROUP staff DROP USER joe, ann');
- *     [$operation->statement->action->value, count($operation->statement->members)] // => ['DROP', 2]
+ *     [$operation->action->value, count($operation->members)] // => ['DROP', 2]
  */
-final class AlterGroupMembers implements Statement
+final class AlterGroupMembers extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RoleSpec> The members in the order written
@@ -40,8 +39,11 @@ final class AlterGroupMembers implements Statement
      * @param AddOrDrop $action Whether the members are added or removed
      * @param list<RoleSpec> $members The members in the order written, at least one
      */
-    public function __construct(public readonly RoleSpec $group, public readonly AddOrDrop $action, array $members)
+    public function __construct(public readonly RoleSpec $group, public readonly AddOrDrop $action, array $members, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->members = Check::listOf($members, RoleSpec::class, 'A role list names at least one role.', 1);
     }
 

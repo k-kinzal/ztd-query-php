@@ -37,7 +37,7 @@ final class ItemRuleTest extends TestCase
 
     public function testRenameLowersEveryWord(): void
     {
-        self::assertSame('ALTER TABLE t RENAME TO u', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t RENAME AS u')->toString());
+        self::assertSame('ALTER TABLE t RENAME AS u', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t RENAME AS u')->toString());
     }
 
     public function testConvertLowersDefault(): void

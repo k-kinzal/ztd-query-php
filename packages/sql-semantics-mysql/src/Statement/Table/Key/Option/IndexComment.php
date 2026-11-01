@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The COMMENT of an index.
@@ -16,17 +15,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an index option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, KEY (a) COMMENT \'x\')');
- *     $create->statement->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexComment // => true
+ *     $create->elements[1]->options[0] instanceof \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexComment // => true
  */
 final class IndexComment implements IndexOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Text $comment The comment
      */
-    public function __construct(public readonly Text $comment)
+    public function __construct(public readonly Text $comment, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        \SqlSemantics\Diagnostic\Check::input($comment->radix === null, 'An index comment is a quoted text string.');
     }
 
     /**

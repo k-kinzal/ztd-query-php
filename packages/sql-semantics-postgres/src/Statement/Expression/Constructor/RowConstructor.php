@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\OutputSlot;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,7 +38,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class RowConstructor implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The fields in order
@@ -50,8 +50,11 @@ final class RowConstructor implements Scalar, OutputNaming
      * @param list<Scalar> $fields The fields in order
      * @param RowSpelling $spelling How the row is written
      */
-    public function __construct(array $fields, public readonly RowSpelling $spelling = RowSpelling::Explicit)
+    public function __construct(array $fields, public readonly RowSpelling $spelling = RowSpelling::Explicit, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->fields = Check::listOf($fields, Scalar::class, 'A row holds expressions.');
         Check::input($spelling === RowSpelling::Explicit || count($this->fields) >= 2, 'A row without ROW has at least two fields.');
     }

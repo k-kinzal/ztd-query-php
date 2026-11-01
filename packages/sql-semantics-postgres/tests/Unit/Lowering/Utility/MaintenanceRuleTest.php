@@ -55,19 +55,19 @@ final class MaintenanceRuleTest extends TestCase
                 $semantics->analyze('EXPLAIN EXECUTE p(1)')->toString(),
             ],
         );
-        self::assertInstanceOf(Explain::class, $semantics->analyze('EXPLAIN MERGE INTO t USING u ON true WHEN MATCHED THEN DELETE')->statement);
+        self::assertInstanceOf(Explain::class, $semantics->analyze('EXPLAIN MERGE INTO t USING u ON true WHEN MATCHED THEN DELETE'));
     }
 
     public function testTargetsLowersTheTablesAndColumns(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('VACUUM (ANALYZE) a (x, y), b')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('VACUUM (ANALYZE) a (x, y), b');
         self::assertInstanceOf(Vacuum::class, $statement);
         self::assertSame([2, 0], [count($statement->targets[0]->columns), count($statement->targets[1]->columns)]);
     }
 
     public function testIndexIsNullWithoutUsing(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE) t')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('CLUSTER (VERBOSE) t');
         self::assertInstanceOf(Cluster::class, $statement);
         self::assertNull($statement->index);
     }
@@ -75,7 +75,7 @@ final class MaintenanceRuleTest extends TestCase
     public function testRebuiltLowersEachTarget(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
-        $statements = [$semantics->analyze('REINDEX INDEX i')->statement, $semantics->analyze('REINDEX TABLE t')->statement, $semantics->analyze('REINDEX SCHEMA s')->statement, $semantics->analyze('REINDEX SYSTEM')->statement, $semantics->analyze('REINDEX DATABASE d')->statement];
+        $statements = [$semantics->analyze('REINDEX INDEX i'), $semantics->analyze('REINDEX TABLE t'), $semantics->analyze('REINDEX SCHEMA s'), $semantics->analyze('REINDEX SYSTEM'), $semantics->analyze('REINDEX DATABASE d')];
         self::assertSame(
             ReindexTarget::cases(),
             array_map(static fn (object $statement): ?ReindexTarget => $statement instanceof Reindex ? $statement->target : null, $statements),
@@ -84,14 +84,14 @@ final class MaintenanceRuleTest extends TestCase
 
     public function testReindexOptionsLowersTheParenthesizedList(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('REINDEX (VERBOSE, CONCURRENTLY) INDEX i')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('REINDEX (VERBOSE, CONCURRENTLY) INDEX i');
         self::assertInstanceOf(Reindex::class, $statement);
         self::assertSame(['verbose', 'concurrently'], [$statement->options[0]->option(), $statement->options[1]->option()]);
     }
 
     public function testLockLowersTheModeAndNowait(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('LOCK TABLE t IN ROW EXCLUSIVE MODE NOWAIT')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('LOCK TABLE t IN ROW EXCLUSIVE MODE NOWAIT');
         self::assertInstanceOf(Lock::class, $statement);
         self::assertSame([LockMode::RowExclusive, true], [$statement->mode, $statement->nowait]);
     }

@@ -17,7 +17,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -32,9 +31,10 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER POLICY p ON t TO PUBLIC USING (true)');
  *     $statement->toString() // => 'ALTER POLICY p ON t TO public USING (TRUE)'
  */
-final class AlterPolicy implements Statement, Relation
+final class AlterPolicy extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<RoleSpec> The new roles; none keeps them
@@ -54,7 +54,16 @@ final class AlterPolicy implements Statement, Relation
         array $roles = [],
         public readonly ?Scalar $using = null,
         public readonly ?Scalar $check = null,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->roles = Check::listOf($roles, RoleSpec::class, 'Policy roles are roles.');
     }
 

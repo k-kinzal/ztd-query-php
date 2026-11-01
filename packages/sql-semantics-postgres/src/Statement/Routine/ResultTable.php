@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The result of a function declared `RETURNS TABLE ( column type, ... )`: a set of rows of these columns.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ResultTable implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ResultColumn> The columns in order
@@ -33,7 +32,7 @@ final class ResultTable implements Clause
     /**
      * @param list<ResultColumn> $columns The columns in order; at least one
      */
-    public function __construct(array $columns)
+    public function __construct(array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, ResultColumn::class, 'A result table has at least one column.', 1);
     }

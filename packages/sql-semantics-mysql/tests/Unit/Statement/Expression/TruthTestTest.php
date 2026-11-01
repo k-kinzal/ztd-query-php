@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
 use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -33,7 +33,7 @@ final class TruthTestTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new TruthTest(new NullLiteral(), Truth::Unknown), $derivation->environment());
 
-        self::assertEquals([new Known(new Integral(IntegralKind::BigInt)), Nullability::NotNull], [$fact->type, $fact->nullability]);
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 1)), Nullability::NotNull], [$fact->type, $fact->nullability]);
     }
 
     public function testRenderWritesTheNegatedTest(): void

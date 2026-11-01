@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Table\Key;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The CONSTRAINT clause before a key or check: the keyword with an optional constraint symbol.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the symbol of a constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, CONSTRAINT c UNIQUE (a))');
- *     $create->statement->elements[1]->constraint->name->column->value // => 'c'
+ *     $create->elements[1]->constraint->name->column->value // => 'c'
  */
 final class ConstraintName implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnName|null $name The constraint symbol, when written
      */
-    public function __construct(public readonly ?ColumnName $name = null)
+    public function __construct(public readonly ?ColumnName $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

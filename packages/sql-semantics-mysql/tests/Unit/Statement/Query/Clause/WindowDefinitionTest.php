@@ -23,16 +23,17 @@ final class WindowDefinitionTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('select a from t window w as (), v as (w)');
 
         self::assertSame('SELECT a FROM t WINDOW w AS (), v AS (w)', $operation->toString());
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame('v', $operation->statement->windows[1]->name->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertSame('v', $operation->query->windows[1]->name->value);
     }
 
     public function testANameDefinedTwiceIsReported(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WINDOW w AS (), W AS ()');
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() SELECT a FROM t WINDOW w AS (), W AS ()');
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::DuplicateWindow, $operation->facts->diagnostics[0]->rule);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(Misuse::class, $operation->diagnostics()[0]);
+        self::assertSame(MisuseRule::DuplicateWindow, $operation->diagnostics()[0]->rule);
     }
 }

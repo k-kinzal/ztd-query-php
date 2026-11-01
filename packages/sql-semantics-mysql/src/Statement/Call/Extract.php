@@ -7,12 +7,14 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 
 /**
  * A call of EXTRACT(unit FROM date): the part of a date or time a unit names.
@@ -30,14 +32,19 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Extract implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntervalUnit $unit The part to extract
      * @param Scalar $source The date or time
      */
-    public function __construct(public readonly IntervalUnit $unit, public readonly Scalar $source)
+    public function __construct(public readonly IntervalUnit $unit, public readonly Scalar $source, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -45,7 +52,11 @@ final class Extract implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('IY', [(new Arguments())->one($this->source, $derivation, $environment)]);
+        $fact = (new ResultTyping())->fact('IY', [(new Arguments())->one($this->source, $derivation, $environment)]);
+
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+
+        return new ScalarFact(new Known((new Moments(Settings::of($derivation->context)))->extract($this->unit, $legacy)), $fact->nullability);
     }
 
     /**

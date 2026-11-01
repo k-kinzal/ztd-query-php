@@ -20,7 +20,7 @@ final class OperatorFamilyRemovalTest extends TestCase
     public function testDeriveStatementRecordsNothing(): void
     {
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (int4, int8)', []);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesTheMembers(): void

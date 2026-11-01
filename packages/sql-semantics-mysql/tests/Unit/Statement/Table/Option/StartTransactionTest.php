@@ -19,14 +19,14 @@ final class StartTransactionTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t START TRANSACTION AS SELECT 1 AS a');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $option = $statement->options[0];
 
         self::assertInstanceOf(StartTransaction::class, $option);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
         self::assertSame('CREATE TABLE t START TRANSACTION AS SELECT 1 AS a', $create->toString());
     }
 }

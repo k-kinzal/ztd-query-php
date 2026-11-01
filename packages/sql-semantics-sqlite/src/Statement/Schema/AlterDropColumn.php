@@ -15,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -34,18 +33,26 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a column removal
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('ALTER TABLE t DROP COLUMN b');
- *     [$alter->statement->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t DROP b']
+ *     [$alter->column->value, $alter->toString()] // => ['b', 'ALTER TABLE t DROP b']
  */
-final class AlterDropColumn implements Statement
+final class AlterDropColumn extends \SqlSemantics\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table to change
      * @param Name $column The column to remove
      */
-    public function __construct(public readonly QualifiedName $table, public readonly Name $column)
+    public function __construct(public readonly QualifiedName $table, public readonly Name $column, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null, ?\SqlSemantics\Statement\Fact\RelationFact $relationInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($table->catalog === null, 'A table name has at most a schema qualifier.');
     }
 

@@ -56,7 +56,7 @@ final class DecimalTest extends TestCase
         self::assertSame('DECIMAL', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderWritesDecimalForTheSynonymsDecAndNumericAndFixed(): void
+    public function testRenderRetainsTheDecimalKeywordWithItsCanonicalKind(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -74,7 +74,7 @@ final class DecimalTest extends TestCase
         self::assertSame(['5', null], [$numeric->precision, $numeric->scale]);
         self::assertSame([null, null], [$fixed->precision, $fixed->scale]);
         $dec->render($out);
-        self::assertSame('DECIMAL(10, 2)', (new Lexical())->join($out->pieces()));
+        self::assertSame('DEC(10, 2)', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesTheAttributesLoweredUnderTheOldestRelease(): void

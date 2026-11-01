@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -36,7 +35,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class QuantifiedArray implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The compared value
@@ -44,8 +44,11 @@ final class QuantifiedArray implements Scalar
      * @param Quantifier $quantifier The quantifier
      * @param Scalar $array The array; not a scalar subquery
      */
-    public function __construct(public readonly Scalar $operand, public readonly OperatorName|MatchKeyword $comparator, public readonly Quantifier $quantifier, public readonly Scalar $array)
+    public function __construct(public readonly Scalar $operand, public readonly OperatorName|MatchKeyword $comparator, public readonly Quantifier $quantifier, public readonly Scalar $array, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$comparator instanceof OperatorName || $comparator->explicit || $comparator->qualifiers === [], 'An expression writes a qualified operator with OPERATOR(...).');
         Check::input(!$array instanceof ScalarSubquery, 'A scalar subquery after ANY or ALL is read as a subquery comparison.');
         $precedence = new Precedence();

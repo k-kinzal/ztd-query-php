@@ -43,11 +43,11 @@ final class ColumnTypingTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (n, e "", t VARCHAR(5), i INTEGER)');
         $query = $semantics->analyze('SELECT (t), t COLLATE nocase, n, e, rowid, (SELECT t FROM s UNION ALL SELECT i FROM s), 1, "t", zz FROM s', [$table]);
-        $select = $query->statement;
+        $select = $query;
         $rule = new ColumnTyping();
 
         self::assertInstanceOf(Select::class, $select);
-        $texts = array_map(static fn (int $position): ?string => $rule->arm($select, $position, $query->facts), range(0, 8));
+        $texts = array_map(static fn (int $position): ?string => $rule->arm($select, $position), range(0, 8));
         self::assertSame(['VARCHAR(5)', null, null, '', 'INTEGER', 'INTEGER', null, 'VARCHAR(5)', null], $texts);
     }
 
@@ -64,9 +64,9 @@ final class ColumnTypingTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $derived);
         self::assertInstanceOf(ResolvedColumn::class, $common);
         self::assertInstanceOf(ResolvedColumn::class, $declared);
-        self::assertSame('NVARCHAR(9)', $rule->resolved($derived, $query->facts));
-        self::assertSame('NVARCHAR(9)', $rule->resolved($common, $query->facts));
-        self::assertSame('VARCHAR(5)', $rule->resolved($declared, $query->facts));
+        self::assertSame('NVARCHAR(9)', $rule->resolved($derived));
+        self::assertSame('NVARCHAR(9)', $rule->resolved($common));
+        self::assertSame('VARCHAR(5)', $rule->resolved($declared));
     }
 
     public function testLeftmostReadsTheLeftmostArmOfADefiningQuery(): void
@@ -74,11 +74,11 @@ final class ColumnTypingTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (t VARCHAR(5), t2 NVARCHAR(9))');
         $query = $semantics->analyze('SELECT t AS x FROM s UNION ALL SELECT t2 FROM s', [$table]);
-        $compound = $query->statement;
+        $compound = $query;
 
         self::assertInstanceOf(Compound::class, $compound);
-        self::assertSame('VARCHAR(5)', (new ColumnTyping())->leftmost($compound, 0, $query->facts));
-        self::assertNull((new ColumnTyping())->leftmost($compound, 1, $query->facts));
+        self::assertSame('VARCHAR(5)', (new ColumnTyping())->leftmost($compound, 0));
+        self::assertNull((new ColumnTyping())->leftmost($compound, 1));
     }
 
     public function testColumnReadsEachKindOfTypeDescriptor(): void
@@ -98,16 +98,16 @@ final class ColumnTypingTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE s (t VARCHAR(5))');
         $query = $semantics->analyze('SELECT * FROM s', [$table]);
         $rows = $semantics->analyze('VALUES (1)');
-        $values = $rows->statement;
-        $select = $query->statement;
+        $values = $rows;
+        $select = $query;
         $rule = new ColumnTyping();
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(ValuesClause::class, $values);
-        self::assertSame('VARCHAR(5)', $rule->arm($select, 0, $query->facts));
-        self::assertNull($rule->arm($select, 1, $query->facts));
-        self::assertNull($rule->arm($values->rows[0], 0, $rows->facts));
-        self::assertNull($rule->arm($values->rows[0], 1, $rows->facts));
+        self::assertSame('VARCHAR(5)', $rule->arm($select, 0));
+        self::assertNull($rule->arm($select, 1));
+        self::assertNull($rule->arm($values->rows[0], 0));
+        self::assertNull($rule->arm($values->rows[0], 1));
     }
 
     public function testFieldReadsTheExpressionOrTheColumnAnExpandedStarExposes(): void
@@ -117,9 +117,9 @@ final class ColumnTypingTest extends TestCase
         $query = $semantics->analyze('SELECT *, (t), 1 FROM s', [$table]);
         $rule = new ColumnTyping();
 
-        self::assertSame('VARCHAR(5)', $rule->field($query->field(0), $query->facts));
-        self::assertSame('VARCHAR(5)', $rule->field($query->field(1), $query->facts));
-        self::assertNull($rule->field($query->field(2), $query->facts));
+        self::assertSame('VARCHAR(5)', $rule->field($query->field(0)));
+        self::assertSame('VARCHAR(5)', $rule->field($query->field(1)));
+        self::assertNull($rule->field($query->field(2)));
     }
 
     public function testViewTypeRecordsTheCarriedTextOrTheStandardName(): void

@@ -50,6 +50,8 @@ final class LexicalGrammar implements LexicalGrammarContract
      * @param FakerGenerator $faker Source of the choices realization makes
      * @param string $profileVersion Exact server version to generate for, e.g. "mysql-8.4.7"
      * @param KeywordIndex|null $index Inverts the profile's terminal-to-spelling maps
+     * @param bool $highNotPrecedence Whether NOT has unary precedence
+     * @param bool $pipesAsConcat Whether || denotes concatenation
      *
      * @throws RuntimeException When the exact release has no declaration
      */
@@ -57,6 +59,8 @@ final class LexicalGrammar implements LexicalGrammarContract
         private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
         ?KeywordIndex $index = null,
+        bool $highNotPrecedence = false,
+        bool $pipesAsConcat = false,
     ) {
         $definition = (new DefinitionFactory())->create($profileVersion);
         $index ??= new KeywordIndex();
@@ -67,6 +71,8 @@ final class LexicalGrammar implements LexicalGrammarContract
             $index->reversed($definition->keywords),
             $index->reversed($definition->functions),
             in_array($profileVersion, $definition->dollarVersions, true),
+            $highNotPrecedence,
+            $pipesAsConcat,
         );
     }
 

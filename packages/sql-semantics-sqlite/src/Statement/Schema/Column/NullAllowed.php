@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A bare NULL column constraint: the statement that the column may hold NULL.
@@ -26,12 +25,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class NullAllowed implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ConflictResolution|null $conflict The written ON CONFLICT resolution
      */
-    public function __construct(public readonly ?ConflictResolution $conflict = null)
+    public function __construct(public readonly ?ConflictResolution $conflict = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

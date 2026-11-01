@@ -91,14 +91,19 @@ final class QuotedScanner
      *
      * @return Lexeme The lexeme
      *
-     * @throws LexicalException When the identifier never closes
+     * @throws LexicalException When the identifier never closes or contains NUL
      */
     public function quotedIdentifier(Scan $scan, string $quote): Lexeme
     {
         $cursor = $scan->cursor;
         $start = $cursor->offset();
-        if ($cursor->takeQuoted($quote) === null) {
+        $text = $cursor->takeQuoted($quote);
+        if ($text === null) {
             throw LexicalException::unterminated('quoted identifier', $cursor->source, $start);
+        }
+
+        if (str_contains($text, "\0")) {
+            throw LexicalException::unexpectedCharacter($cursor->source, $start);
         }
 
         return $scan->lexeme('IDENT_QUOTED', $start);

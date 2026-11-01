@@ -87,6 +87,8 @@ final class StorageOptions
      * @param list<string> $accepted The keywords of the accepted options
      * @param int $minimum The least number of options
      * @return list<StorageOption>
+     * @example Checking the options a DROP statement accepts
+     *     count((new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->checked([new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineOption(new \SqlSemantics\Statement\Identifier\Name('InnoDB')), new \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption(true)], \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions::DROP)) // => 2
      */
     public function checked(array $options, array $accepted, int $minimum = 0): array
     {
@@ -94,8 +96,33 @@ final class StorageOptions
         foreach ($checked as $option) {
             Check::input(in_array($option->keyword(), $accepted, true), 'The statement takes no ' . $option->keyword() . ' option.');
         }
+        Check::input($this->repeated($checked) === null, 'A storage option is written once.');
 
         return $checked;
+    }
+
+    /**
+     * Finds the first conflicting setting, preserving the unset sentinels.
+     *
+     * @param list<StorageOption> $options The options in written order
+     * @param bool $legacy Whether consecutive NO_WAIT settings are also forbidden
+     */
+    public function repeated(array $options, bool $legacy = false): ?StorageProblem
+    {
+        $set = [];
+        $wait = true;
+        foreach ($options as $option) {
+            $keyword = $option->keyword();
+            if (isset(self::ONCE[$keyword], $set[$keyword]) || ($legacy && $option instanceof WaitOption && !$option->wait && !$wait)) {
+                return new StorageProblem(StorageRule::RepeatedOption, $option instanceof WaitOption ? 'NO_WAIT' : $keyword);
+            }
+            if (isset(self::ONCE[$keyword]) && !$this->unset($option)) {
+                $set[$keyword] = true;
+            }
+            $wait = $option instanceof WaitOption ? $option->wait : $wait;
+        }
+
+        return null;
     }
 
     /**
@@ -110,16 +137,23 @@ final class StorageOptions
         $wait = true;
         $magnitudes = new Magnitudes();
         foreach ($options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\EngineAttributeOption) {
+                \SqlSemantics\Platform\MySql\Rules\Text\Json\Attribute::derive($option->attribute, $derivation, $option);
+            }
             $keyword = $option->keyword();
             if (isset(self::ONCE[$keyword], $set[$keyword])) {
-                $derivation->report(new StorageProblem(StorageRule::RepeatedOption, $keyword));
+                $problem = new StorageProblem(StorageRule::RepeatedOption, $keyword);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
             }
             if (isset(self::ONCE[$keyword]) && !$this->unset($option)) {
                 $set[$keyword] = true;
             }
             if ($option instanceof WaitOption) {
                 if ($legacy && !$option->wait && !$wait) {
-                    $derivation->report(new StorageProblem(StorageRule::RepeatedOption, 'NO_WAIT'));
+                    $problem = new StorageProblem(StorageRule::RepeatedOption, 'NO_WAIT');
+                    $derivation->report($problem);
+                    $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $option);
                 }
                 $wait = $option->wait;
             }
@@ -151,20 +185,10 @@ final class StorageOptions
      */
     public function size(Derivation $derivation, string $keyword, ByteSize $size): void
     {
-        if ($size->number !== null) {
-            (new Magnitudes())->integer($derivation, $size->number);
-
-            return;
-        }
-        $word = $size->word === null ? '' : $size->word->value;
-        if (preg_match('/\A([0-9]*)[KMGkmg]\z/', $word, $match) !== 1) {
-            $derivation->report(new StorageProblem(StorageRule::WrongSize, $keyword));
-
-            return;
-        }
-        $digits = ltrim($match[1], '0');
-        if (strlen($digits) > 10 || (strlen($digits) === 10 && strcmp($digits, '2147483648') >= 0)) {
-            $derivation->report(new StorageProblem(StorageRule::SizeOverflow, $keyword));
+        $problem = (new StorageSizes())->problem($size->number, $size->word);
+        if ($problem !== null) {
+            $derivation->report($problem);
+            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $size);
         }
     }
 

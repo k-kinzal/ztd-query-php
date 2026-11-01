@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading why a column of a derived table cannot be decided by name
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT x FROM (SELECT 1 AS a, 2 AS a, 3 AS a, 4 AS a, 5 AS a, 6 AS a)', []);
- *     $query->facts->scalar($query->statement->columns[0]->expression)->resolution->missing[0]->describe() // => 'the name SQLite picks at random for a column whose name repeats five earlier names'
+ *     $query->columns[0]->expression->scalarInformation()->resolution->missing[0]->describe() // => 'the name SQLite picks at random for a column whose name repeats five earlier names'
  */
 final class RandomColumnName implements MissingInput
 {

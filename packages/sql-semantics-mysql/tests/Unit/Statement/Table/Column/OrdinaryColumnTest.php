@@ -19,10 +19,37 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 #[Medium]
 final class OrdinaryColumnTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName, list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute>}>
+     */
+    public static function providerContradictions(): iterable
+    {
+        $bit = new \SqlSemantics\Platform\MySql\Statement\Type\Elementary(\SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit);
+        $clock = new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now);
+        yield 'clock default' => [$bit, [new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($clock)]];
+        yield 'clock update' => [$bit, [new \SqlSemantics\Platform\MySql\Statement\Table\Column\OnUpdate($clock)]];
+        yield 'automatic increment' => [$bit, [new KeywordAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::AutoIncrement)]];
+        yield 'serial default' => [$bit, [new KeywordAttribute(\SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword::SerialDefaultValue)]];
+        yield 'nonspatial srid' => [$bit, [new \SqlSemantics\Platform\MySql\Statement\Table\Column\SridAttribute(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1'))]];
+        yield 'clock precision' => [new \SqlSemantics\Platform\MySql\Statement\Type\Temporal(\SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind::Timestamp, '3'), [new \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral($clock)]];
+    }
+
+    /**
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerContradictions')]
+    public function testIncompatibleAttributesRemainInTheDeclaredRequest(\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName $type, array $attributes): void
+    {
+        $column = new OrdinaryColumn($type, $attributes);
+        self::assertSame($type, $column->dataType());
+        self::assertSame($attributes, $column->columnAttributes());
+        self::assertNotEmpty((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->incompatible($type, $attributes));
+    }
+
     public function testDataTypeAnswersTheType(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT UNSIGNED)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element0 = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $element0);
@@ -35,7 +62,7 @@ final class OrdinaryColumnTest extends TestCase
     public function testColumnAttributesAnswersTheAttributesInOrder(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL NULL)');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $element0 = $statement->elements[0];
         self::assertInstanceOf(ColumnDefinition::class, $element0);
@@ -49,7 +76,7 @@ final class OrdinaryColumnTest extends TestCase
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT CHECK (a > 0))');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheTypeTheAttributesAndTheReference(): void

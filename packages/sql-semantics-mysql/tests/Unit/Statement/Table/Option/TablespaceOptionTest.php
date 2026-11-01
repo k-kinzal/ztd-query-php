@@ -19,14 +19,14 @@ final class TablespaceOptionTest extends TestCase
     public function testRenderWritesTheOption(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) TABLESPACE = ts');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $option = $statement->options[0];
 
         self::assertInstanceOf(TablespaceOption::class, $option);
         self::assertSame('ts', $option->tablespace->value);
-        self::assertSame('CREATE TABLE t (a INT) TABLESPACE ts', $create->toString());
+        self::assertSame('CREATE TABLE t (a INT) TABLESPACE = ts', $create->toString());
     }
 }

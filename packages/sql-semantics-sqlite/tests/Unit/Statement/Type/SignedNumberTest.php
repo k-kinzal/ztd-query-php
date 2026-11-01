@@ -21,7 +21,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
 use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
 use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(SignedNumber::class)]
@@ -53,7 +52,7 @@ final class SignedNumberTest extends TestCase
     public function testRenderWritesAPragmaValue(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('pragma cache_size = -2000');
-        $pragma = $operation->statement;
+        $pragma = $operation;
 
         self::assertInstanceOf(Pragma::class, $pragma);
         self::assertInstanceOf(SignedNumber::class, $pragma->value);
@@ -67,7 +66,7 @@ final class SignedNumberTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $target = new TypeName([new Word(new Name('DECIMAL'))], [new SignedNumber(NumberSign::Plus, new IntegerLiteral('10')), new SignedNumber(null, new RealLiteral('2', '5'))]);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Cast(new IntegerLiteral('1'), $target))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new Cast(new IntegerLiteral('1'), $target))]));
 
         self::assertSame('SELECT CAST(1 AS DECIMAL(+10,2.5))', $operation->toString());
     }

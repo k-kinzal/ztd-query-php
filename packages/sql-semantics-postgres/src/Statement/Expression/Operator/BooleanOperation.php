@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -36,15 +35,19 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class BooleanOperation implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param BooleanOperator $operator The operator
      * @param Scalar $left The left condition
      * @param Scalar $right The right condition
      */
-    public function __construct(public readonly BooleanOperator $operator, public readonly Scalar $left, public readonly Scalar $right)
+    public function __construct(public readonly BooleanOperator $operator, public readonly Scalar $left, public readonly Scalar $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         $level = $operator === BooleanOperator::And ? Precedence::AND : Precedence::OR;
         Check::input($precedence->before($left, $level), 'The left operand needs parentheses to keep its place.');

@@ -20,10 +20,12 @@ use SqlSemantics\Resolution\Environment;
  * @visibility public
  * @example Reading the attributes of a table constraint
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, UNIQUE (a) DEFERRABLE INITIALLY DEFERRED)');
- *     $create->statement->definition->elements[1]->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::Deferrable, \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::InitiallyDeferred]
+ *     $create->definition->elements[1]->attributes // => [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::Deferrable, \SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::InitiallyDeferred]
  */
 enum ConstraintAttribute: string implements Clause
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case Deferrable = 'DEFERRABLE';
     case NotDeferrable = 'NOT DEFERRABLE';
     case InitiallyDeferred = 'INITIALLY DEFERRED';

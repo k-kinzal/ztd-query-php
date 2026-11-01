@@ -136,14 +136,16 @@
             "@compat",
             "@loc-guard",
             "@tree-guard",
-            "@deptrac"
+            "@deptrac",
+            "@schema:check"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=1G",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
-        "tree-guard": "tree-guard --config=tree.yaml"
+        "tree-guard": "tree-guard --config=tree.yaml",
+        "schema:check": "@php vendor/k-kinzal/sql-semantics/bin/value-schema.php"
     },
     "scripts-descriptions": {
         "autoload:check": "Check that the PSR-4 autoload mapping is strict and unambiguous.",
@@ -163,13 +165,14 @@
         "fuzz:schema": "Fuzz immutable pre-state declarations using sql-faker generation plans.",
         "fuzz:smoke": "Replay both corpora and run 100 mutations of state and statement analysis.",
         "ledger": "Check that the lowering rules claim every production of every shipped grammar release.",
-        "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",
+        "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, layer dependencies, and retained-field schemas.",
         "loc-guard": "Check file size limits.",
         "phpstan": "Run PHPStan.",
         "test": "Run all test suites in parallel.",
         "test:coverage": "Run the unit tests in parallel and write the coverage and JUnit reports to build/.",
         "test:unit": "Run the unit tests.",
-        "tree-guard": "Check the directory structure rules."
+        "tree-guard": "Check the directory structure rules.",
+        "schema:check": "Check every retained semantic field against the reviewed value schema."
     },
     "config": {
         "allow-plugins": {

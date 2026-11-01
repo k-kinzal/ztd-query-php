@@ -18,8 +18,18 @@ use SqlSemantics\Statement\Fact\RelationFact;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t');
  *     $operation->inputRelation() instanceof \SqlSemantics\Statement\Relation // => true
  */
-interface Relation extends Node
+interface Relation extends TableUse
 {
+    /**
+     * Returns the row shape and table binding owned by this occurrence.
+     */
+    public function relationInformation(): RelationFact;
+
+    /**
+     * Completes this occurrence during semantic construction.
+     */
+    public function initializeRelationInformation(RelationFact $information): void;
+
     /**
      * Derives the ordered row shape this occurrence contributes.
      */

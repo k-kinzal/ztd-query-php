@@ -19,6 +19,6 @@ final class TransformFunctionTest extends TestCase
 
     public function testDeriveClauseDerivesTheSignature(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION f(numeric(4, 2)))')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TRANSFORM FOR t LANGUAGE l (FROM SQL WITH FUNCTION f(numeric(4, 2)))')->diagnostics());
     }
 }

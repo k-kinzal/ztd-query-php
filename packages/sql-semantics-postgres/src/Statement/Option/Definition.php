@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One named option of a definition or storage-parameter list: `name`, `name = value` or `namespace.name = value`.
@@ -30,14 +29,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Definition implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The option name
      * @param OptionArgument|null $argument The value; null when the option is given alone
      * @param Name|null $qualifier The namespace written before the name, such as `toast`
      */
-    public function __construct(public readonly Name $name, public readonly ?OptionArgument $argument = null, public readonly ?Name $qualifier = null)
+    public function __construct(public readonly Name $name, public readonly ?OptionArgument $argument = null, public readonly ?Name $qualifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

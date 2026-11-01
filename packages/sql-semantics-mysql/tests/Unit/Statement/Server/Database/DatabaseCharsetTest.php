@@ -17,6 +17,6 @@ final class DatabaseCharsetTest extends TestCase
 {
     public function testRenderWritesCharacterSet(): void
     {
-        self::assertSame('ALTER DATABASE d CHARACTER SET latin1', (new Semantics(Dialect::MySql))->analyze('alter database d charset = latin1')->toString());
+        self::assertSame('ALTER DATABASE d CHARSET = latin1', (new Semantics(Dialect::MySql))->analyze('alter database d charset = latin1')->toString());
     }
 }

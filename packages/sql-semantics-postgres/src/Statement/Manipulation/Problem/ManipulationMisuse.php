@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a column written twice
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t (a, a) VALUES (1, 2)');
- *     $insert->facts->diagnostics[0]->message() // => 'column "a" specified more than once'
+ *     $insert->diagnostics()[0]->message() // => 'column "a" specified more than once'
  * @example Refusing a message without its subjects
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule::RepeatedInsertColumn) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

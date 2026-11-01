@@ -9,7 +9,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Account\Password;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * The entry rules of the account family: the methods other families and the statement dispatcher call.
@@ -82,7 +82,7 @@ final class AccountRules
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function renameUsers(Node $list): Statement
+    public function renameUsers(Node $list): \SqlSemantics\Platform\MySql\Statement\Account\RenameUser
     {
         return (new UserStatementRule($this->lowering))->rename($list);
     }

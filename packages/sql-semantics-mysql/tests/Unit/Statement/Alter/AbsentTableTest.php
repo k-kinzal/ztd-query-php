@@ -20,8 +20,8 @@ final class AbsentTableTest extends TestCase
     {
         $drop = (new Semantics(Dialect::MySql))->analyze('DROP TABLE IF EXISTS t', []);
 
-        self::assertInstanceOf(DropTable::class, $drop->statement);
-        self::assertInstanceOf(AbsentTable::class, $drop->facts->relation($drop->statement->tables[0])->table);
-        self::assertSame([], $drop->facts->diagnostics);
+        self::assertInstanceOf(DropTable::class, $drop);
+        self::assertInstanceOf(AbsentTable::class, $drop->tables[0]->relationInformation()->table);
+        self::assertSame([], $drop->diagnostics());
     }
 }

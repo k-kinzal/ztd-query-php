@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
@@ -34,20 +33,24 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the field an ordering position denotes
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS a ORDER BY 1');
- *     $query->facts->scalar($query->statement->options->order[0]->expression)->resolution->field->name->value // => 'a'
+ *     $query->options->order[0]->expression->scalarInformation()->resolution->field->name->value // => 'a'
  * @example Refusing a position that is not an integer constant
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral(), \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\OrderingClause::OrderBy) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class OutputPosition implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $position The integer constant as written
      * @param OrderingClause $clause The clause the position is written in
      */
-    public function __construct(public readonly Scalar $position, public readonly OrderingClause $clause)
+    public function __construct(public readonly Scalar $position, public readonly OrderingClause $clause, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Positions())->value($position) !== null, 'An output position is an integer constant.');
     }
 

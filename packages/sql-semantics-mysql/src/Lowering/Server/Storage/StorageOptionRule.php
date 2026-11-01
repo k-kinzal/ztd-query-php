@@ -37,8 +37,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\Storage\Option\WaitOption;
  * opt_logfile_group_options, opt_alter_logfile_group_options,
  * opt_drop_ts_options, drop_ts_option_list and the ts_option_* rules. The
  * list rules (empty, wrapping, left recursive with or without a comma) are
- * walked with an explicit stack; the commas are optional (ServerNoise,
- * LeafNoise opt_comma), as are STORAGE and the equals signs (LeafNoise).
+ * walked with an explicit stack. Statement owners retain optional commas;
+ * the options retain STORAGE and their equals signs.
  * Constructs: SizeOption, NodegroupOption, CommentOption, EngineOption,
  * WaitOption, EncryptionOption, EngineAttributeOption. Terminates: every
  * node is visited once.
@@ -163,6 +163,7 @@ final class StorageOptionRule
      *
      * @return list<StorageOption>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a size operand is invalid
      */
     public function options(Node $list): array
     {
@@ -190,6 +191,10 @@ final class StorageOptionRule
                 }
             }
         }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Server\StorageOptions())->repeated($options, in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($list)[1] ?? 0);
+        }
 
         return $options;
     }
@@ -198,28 +203,27 @@ final class StorageOptionRule
      * Lowers one option: a node of an opt_ts_* or ts_option_* rule, or of ts_wait.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a size operand is invalid
      */
     public function option(Node $option): StorageOption
     {
         $form = $this->lowering->form($option);
         if (isset(self::SIZES[$form->signature])) {
             [$kind, $position] = self::SIZES[$form->signature];
-            if ($position === 2) {
-                $this->lowering->options->present($form->node(1));
-            }
+            $operator = $this->lowering->options->optionalAssignment(($position === 2 ? $form : $this->lowering->form($form->node(0)))->node(1));
 
-            return new SizeOption($kind, $this->lowering->numbers->size($form->node($position)));
+            return new SizeOption($kind, $this->lowering->numbers->size($form->node($position)), operator: $operator);
         }
         $kind = self::OTHERS[$form->signature] ?? throw ImplementationGap::production($form);
 
         return match ($kind) {
-            'nodegroup' => new NodegroupOption($this->lowering->numbers->numeral($this->value($form, 2))),
-            'comment' => new CommentOption($this->lowering->literals->text($this->value($form, 2))),
+            'nodegroup' => new NodegroupOption($this->lowering->numbers->numeral($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'comment' => new CommentOption($this->lowering->literals->text($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
             'engine' => $this->engine($form),
             'wait' => new WaitOption(true),
             'noWait' => new WaitOption(false),
-            'encryption' => new EncryptionOption($this->lowering->literals->text($this->value($form, 2))),
-            'attribute' => new EngineAttributeOption($this->lowering->literals->text($this->value($form, 2))),
+            'encryption' => new EncryptionOption($this->lowering->literals->text($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
+            'attribute' => new EngineAttributeOption($this->lowering->literals->text($this->value($form, 2)), operator: $this->lowering->options->optionalAssignment($form->node(1))),
         };
     }
 
@@ -242,8 +246,8 @@ final class StorageOptionRule
      */
     public function engine(Form $form): EngineOption
     {
-        $this->lowering->options->present($form->node(0));
+        $storage = $this->lowering->options->present($form->node(0));
 
-        return new EngineOption($this->lowering->names->identifier($this->value($form, 3)));
+        return new EngineOption($this->lowering->names->identifier($this->value($form, 3)), operator: $this->lowering->options->optionalAssignment($form->node(2)), storageKeyword: $storage);
     }
 }

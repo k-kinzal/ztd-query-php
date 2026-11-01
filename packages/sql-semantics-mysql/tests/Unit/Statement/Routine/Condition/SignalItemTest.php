@@ -35,14 +35,14 @@ final class SignalItemTest extends TestCase
     public function testRenderWritesEveryKindOfValue(): void
     {
         $signal = (new Semantics(Dialect::MySql))->analyze("SIGNAL SQLSTATE '45000' SET message_text = @m, mysql_errno = NULL, class_origin = x'41', table_name = 't'");
-        $statement = $signal->statement;
+        $statement = $signal;
         self::assertInstanceOf(Signal::class, $statement);
 
         self::assertSame(
             [ConditionItemName::MessageText, ConditionItemName::MysqlErrno, ConditionItemName::ClassOrigin, ConditionItemName::TableName],
             array_map(static fn (SignalItem $item): ConditionItemName => $item->name, $statement->items),
         );
-        self::assertEquals(new UserVariable(new Name('m')), $statement->items[0]->value);
+        self::assertNull((new \SqlSemantics\Validation\Equivalence())->difference(new UserVariable(new Name('m')), $statement->items[0]->value));
         self::assertSame("SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = @m, MYSQL_ERRNO = NULL, CLASS_ORIGIN = x'41', TABLE_NAME = 't'", $signal->toString());
     }
 

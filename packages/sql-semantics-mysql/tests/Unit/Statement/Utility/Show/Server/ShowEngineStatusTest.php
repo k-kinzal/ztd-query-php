@@ -18,7 +18,7 @@ final class ShowEngineStatusTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW ENGINE ALL STATUS');
-        self::assertInstanceOf(ShowEngineStatus::class, $show->statement);
+        self::assertInstanceOf(ShowEngineStatus::class, $show);
         self::assertSame('Type', $show->field(0)->name?->value);
     }
 

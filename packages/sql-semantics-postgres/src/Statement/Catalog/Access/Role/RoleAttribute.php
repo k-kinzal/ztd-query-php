@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A role option written as a plain word, such as SUPERUSER, NOCREATEDB or LOGIN.
@@ -22,16 +21,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the attribute a word names
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE ROLE joe CREATEDB');
- *     $operation->statement->options[0]->flag() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleFlag::CreateDb
+ *     $operation->options[0]->flag() // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleFlag::CreateDb
  */
 final class RoleAttribute implements RoleOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $word The word as decoded
      */
-    public function __construct(public readonly Name $word)
+    public function __construct(public readonly Name $word, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

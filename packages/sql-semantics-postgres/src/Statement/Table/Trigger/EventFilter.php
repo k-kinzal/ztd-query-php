@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One WHEN item of an event trigger: a filter variable and the values it must have.
@@ -20,11 +19,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an event filter
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE EVENT TRIGGER e ON ddl_command_start WHEN TAG IN ('CREATE TABLE', 'DROP TABLE') EXECUTE FUNCTION f()");
- *     count($statement->statement->filters[0]->values) // => 2
+ *     count($statement->filters[0]->values) // => 2
  */
 final class EventFilter implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<StringConstant> The accepted values
@@ -35,7 +34,7 @@ final class EventFilter implements Node
      * @param Name $variable The filter variable
      * @param list<StringConstant> $values The accepted values
      */
-    public function __construct(public readonly Name $variable, array $values)
+    public function __construct(public readonly Name $variable, array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->values = Check::listOf($values, StringConstant::class, 'A filter accepts at least one string.', 1);
     }

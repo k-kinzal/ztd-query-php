@@ -17,10 +17,12 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading an option of the old syntax
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('COPY t TO STDOUT WITH CSV HEADER');
- *     [$copy->statement->legacy[1]->option(), $copy->toString()] // => ['header', 'COPY t TO STDOUT CSV HEADER']
+ *     [$copy->legacy[1]->option(), $copy->toString()] // => ['header', 'COPY t TO STDOUT CSV HEADER']
  */
 enum CopyFlag: string implements Node
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case Binary = 'BINARY';
     case Freeze = 'FREEZE';
     case Csv = 'CSV';

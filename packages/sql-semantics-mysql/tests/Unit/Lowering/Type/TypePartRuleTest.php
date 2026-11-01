@@ -120,4 +120,34 @@ final class TypePartRuleTest extends TestCase
         self::assertSame(CharsetForm::CharacterSet, $rule->named($parser->parse('SELECT CAST(a AS CHAR CHARACTER SET latin1)')->find('character_set')[0]));
         self::assertSame(CharsetForm::Named, $rule->named($parser->parse('SELECT CAST(a AS CHAR CHARSET latin1)')->find('character_set')[0]));
     }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerUnknownColumnCharsets(): iterable
+    {
+        yield 'read while parsing on 8.4' => ['mysql-8.4.7', true];
+        yield 'read after the statement on 5.7' => ['mysql-5.7.44', false];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerUnknownColumnCharsets')]
+    public function testKnownRefusesACharacterSetTheReleaseDoesNotKnow(string $release, bool $aborts): void
+    {
+        try {
+            (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release))->analyze('CREATE TABLE t (a CHAR(1) CHARACTER SET nosuch)');
+            self::fail('The character set does not exist.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame("Unknown character set: 'nosuch'", $failure->problem->message());
+            self::assertSame($aborts, $failure->aborts);
+        }
+    }
+
+    public function testKnownAnswersTheNameOfACharacterSetTheReleaseKnows(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a CHAR(1) CHARACTER SET utf8mb4)')->find('charset_name')[0];
+
+        self::assertSame('utf8mb4', (new TypePartRule(new Lowering($platform->productions($profile), new Leaves(), $profile)))->known($node)?->value);
+    }
 }

@@ -45,7 +45,7 @@ final class ColumnLookup
                     return $this->conditional($column, $found, $open);
                 }
 
-                return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found);
+                return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found, $qualifier);
             }
             $open = [...$open, ...$level->open()];
             $depth++;

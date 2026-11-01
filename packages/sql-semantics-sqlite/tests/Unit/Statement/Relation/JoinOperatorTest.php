@@ -72,15 +72,15 @@ final class JoinOperatorTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('select * from t, u left wrong join t as t2 inner join u as u2');
 
-        self::assertInstanceOf(Select::class, $query->statement);
-        self::assertInstanceOf(JoinChain::class, $query->statement->from);
-        self::assertTrue($query->statement->from->steps[0]->operator->comma);
-        self::assertSame([], $query->statement->from->steps[0]->operator->words);
-        self::assertFalse($query->statement->from->steps[1]->operator->comma);
-        self::assertSame(JoinKeyword::Left, $query->statement->from->steps[1]->operator->words[0]);
-        self::assertInstanceOf(Name::class, $query->statement->from->steps[1]->operator->words[1]);
-        self::assertSame('wrong', $query->statement->from->steps[1]->operator->words[1]->value);
-        self::assertSame([JoinKeyword::Inner], $query->statement->from->steps[2]->operator->words);
+        self::assertInstanceOf(Select::class, $query);
+        self::assertInstanceOf(JoinChain::class, $query->from);
+        self::assertTrue($query->from->steps[0]->operator->comma);
+        self::assertSame([], $query->from->steps[0]->operator->words);
+        self::assertFalse($query->from->steps[1]->operator->comma);
+        self::assertSame(JoinKeyword::Left, $query->from->steps[1]->operator->words[0]);
+        self::assertInstanceOf(Name::class, $query->from->steps[1]->operator->words[1]);
+        self::assertSame('wrong', $query->from->steps[1]->operator->words[1]->value);
+        self::assertSame([JoinKeyword::Inner], $query->from->steps[2]->operator->words);
         self::assertSame('SELECT * FROM t, u LEFT wrong JOIN t AS t2 INNER JOIN u AS u2', $query->toString());
     }
 

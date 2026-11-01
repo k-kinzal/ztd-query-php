@@ -14,7 +14,7 @@ final class AccessProblemTest extends TestCase
 {
     public function testMessageNamesTheSubjects(): void
     {
-        self::assertSame(['invalid privilege type EXECUTE for schema'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT EXECUTE ON SCHEMA s TO joe')->facts->diagnostics));
+        self::assertSame(['invalid privilege type EXECUTE for schema'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT EXECUTE ON SCHEMA s TO joe')->diagnostics()));
     }
 
     public function testMessageWithoutSubject(): void

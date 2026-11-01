@@ -1,0 +1,274 @@
+{
+    "role_or_privilege#2": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#3": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#4": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#5": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#7": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#8": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#9": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#10": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#11": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#12": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#13": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#14": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#15": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#16": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#17": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#18": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#19": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#20": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#21": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#22": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#23": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#24": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#25": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#26": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#27": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#28": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#29": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#30": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#31": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#32": {
+        "grant": [
+            1
+        ]
+    },
+    "role_or_privilege#33": {
+        "grant": [
+            1
+        ]
+    },
+    "opt_column_list#1": {
+        "grant": [
+            1
+        ]
+    },
+    "column_list#0": {
+        "grant": [
+            1
+        ]
+    },
+    "column_list#1": {
+        "grant": [
+            1
+        ]
+    },
+    "sp_proc_stmt_return#0": {
+        "simple_statement": [
+            21
+        ],
+        "create": [
+            1
+        ],
+        "definer_tail": [
+            3
+        ],
+        "no_definer_tail": [
+            3
+        ]
+    },
+    "sp_proc_stmt#1": {
+        "simple_statement": [
+            21
+        ],
+        "create": [
+            1
+        ],
+        "definer_tail": [
+            3
+        ],
+        "no_definer_tail": [
+            3
+        ]
+    },
+    "column_attribute#6": {
+        "type": [
+            0
+        ]
+    },
+    "column_attribute#7": {
+        "type": [
+            0
+        ]
+    },
+    "function_call_nonkeyword#16": {
+        "func_datetime_precision": [
+            1
+        ]
+    },
+    "start_transaction_option_list#1": {
+        "start_transaction_option": [
+            0,
+            1
+        ]
+    },
+    "opt_and#1": {
+        "require_list_element": [
+            0,
+            1
+        ]
+    },
+    "column_attribute#17": {
+        "column_attribute_list": [
+            0,
+            1
+        ],
+        "column_attribute": [
+            16
+        ]
+    },
+    "ident_keywords_unambiguous#3": {
+        "simple_statement": [
+            26
+        ],
+        "create_table_stmt": [
+            0
+        ]
+    },
+    "ident_keywords_unambiguous#370": {
+        "simple_statement": [
+            26
+        ],
+        "create_table_stmt": [
+            0
+        ]
+    },
+    "ident_keywords_unambiguous#372": {
+        "simple_statement": [
+            26
+        ],
+        "create_table_stmt": [
+            0
+        ]
+    },
+    "as_create_query_expression#1": {
+        "opt_create_table_options_etc": [
+            1
+        ],
+        "opt_create_partitioning_etc": [
+            1
+        ],
+        "opt_duplicate_as_qe": [
+            2
+        ],
+        "query_primary": [
+            0
+        ]
+    }
+}

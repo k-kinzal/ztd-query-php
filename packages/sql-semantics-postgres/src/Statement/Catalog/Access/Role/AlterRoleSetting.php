@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\RoleWord;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,9 +27,9 @@ use SqlSemantics\Statement\Statement;
  * @example Telling that the request is a statement of its own
  *     is_subclass_of(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\AlterRoleSetting::class, \SqlSemantics\Statement\Statement::class) // => true
  */
-final class AlterRoleSetting implements Statement
+final class AlterRoleSetting extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RoleWord $word The statement word: ROLE or USER
@@ -38,8 +37,11 @@ final class AlterRoleSetting implements Statement
      * @param Name|null $database The database of IN DATABASE, when written
      * @param Statement $setting The SET or RESET request
      */
-    public function __construct(public readonly RoleWord $word, public readonly ?RoleSpec $role, public readonly ?Name $database, public readonly Statement $setting)
+    public function __construct(public readonly RoleWord $word, public readonly ?RoleSpec $role, public readonly ?Name $database, public readonly Statement $setting, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($word !== RoleWord::Group, 'ALTER GROUP changes members only.');
     }
 

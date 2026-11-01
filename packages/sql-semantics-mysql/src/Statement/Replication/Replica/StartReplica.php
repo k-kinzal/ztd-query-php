@@ -14,9 +14,8 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
 use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `START REPLICA [threads] [UNTIL …] [USER = …] [PASSWORD = …] [DEFAULT_AUTH = …] [PLUGIN_DIR = …] [FOR CHANNEL …]`, or START SLAVE.
@@ -36,11 +35,11 @@ use SqlSemantics\Statement\Statement;
  *
  * @visibility public
  * @example Starting the receiver thread with credentials
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA IO_THREAD USER = 'u' PASSWORD = 'p'"
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("start replica relay_thread user = 'u' password = 'p'")->toString() // => "START REPLICA RELAY_THREAD USER = 'u' PASSWORD = 'p'"
  */
-final class StartReplica implements Statement
+final class StartReplica extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ReplicaThread> The threads in written order; empty for both
@@ -66,8 +65,18 @@ final class StartReplica implements Statement
         public readonly ?Text $defaultAuth = null,
         public readonly ?Text $pluginDir = null,
         public readonly ?Text $channel = null,
+        ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        foreach ([$user, $password, $defaultAuth, $pluginDir, $channel] as $text) {
+            Check::input($text === null || $text->radix === null, 'Replication credentials and channel names are quoted text.');
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\ChannelName())->check($channel);
         $this->threads = Check::listOf($threads, ReplicaThread::class, 'START REPLICA names a list of threads.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -75,6 +84,7 @@ final class StartReplica implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Replication\Vocabulary())->derive($this, $derivation);
         $release = $derivation->context->profile->grammar;
         $releases = new Releases();
         Check::input($releases->replica($release, $this->terminology), 'START ' . ($this->terminology === Terminology::Legacy ? 'SLAVE' : 'REPLICA') . ' is not a statement of this release.');
@@ -87,7 +97,9 @@ final class StartReplica implements Statement
             (new SourceSettings())->options($derivation, $this->until->positions);
             $error = $conditions->until($this->until);
             if ($error !== null) {
-                $derivation->report(new RefusedSetting($error));
+                $problem = new RefusedSetting($error);
+                $derivation->report($problem);
+                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true), $this->until);
             }
         }
         $credentials = $this->user !== null || $this->password !== null || $this->defaultAuth !== null || $this->pluginDir !== null;

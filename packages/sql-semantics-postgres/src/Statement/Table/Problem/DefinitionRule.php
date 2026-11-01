@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Problem;
  * @visibility public
  * @example Reading which rule a definition breaks
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, a text)');
- *     $create->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule::DuplicateColumn
+ *     $create->diagnostics()[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule::DuplicateColumn
  */
 enum DefinitionRule: string
 {

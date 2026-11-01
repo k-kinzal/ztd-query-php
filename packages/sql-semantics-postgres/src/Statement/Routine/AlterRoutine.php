@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignature;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the altered routine
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER FUNCTION f(int4) IMMUTABLE');
- *     [$operation->statement->kind->value, $operation->statement->signature->name->last()->value] // => ['FUNCTION', 'f']
+ *     [$operation->kind->value, $operation->signature->name->last()->value] // => ['FUNCTION', 'f']
  */
-final class AlterRoutine implements Statement
+final class AlterRoutine extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RoutineOption> The changed options in written order
@@ -41,8 +40,11 @@ final class AlterRoutine implements Statement
      * @param RoutineSignature $signature The routine
      * @param list<RoutineOption> $options The changed options; at least one, each one CREATE and ALTER share
      */
-    public function __construct(public readonly ObjectKind $kind, public readonly RoutineSignature $signature, array $options)
+    public function __construct(public readonly ObjectKind $kind, public readonly RoutineSignature $signature, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(in_array($kind, [ObjectKind::Function, ObjectKind::Procedure, ObjectKind::Routine], true), 'ALTER names a function, a procedure or a routine.');
         $this->options = Check::listOf($options, RoutineOption::class, 'ALTER changes at least one routine option.', 1);
         foreach ($this->options as $option) {

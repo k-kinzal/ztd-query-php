@@ -7,14 +7,13 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Server;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CHARACTER SET (SHOW CHARSET): the character sets of the server.
@@ -29,17 +28,27 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW CHARACTER SET WHERE Maxlen > 1");
- *     [$show->field(0)->name?->value, $show->toString()] // => ['Charset', "SHOW CHARSET WHERE Maxlen > 1"]
+ *     [$show->field(0)->name?->value, $show->toString()] // => ['Charset', "SHOW CHARACTER SET WHERE Maxlen > 1"]
  */
-final class ShowCharacterSet implements Statement, Relation
+final class ShowCharacterSet extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $form The written named character-set form
      */
-    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null)
+    public function __construct(public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm $form = \SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm::Named)
     {
+        \SqlSemantics\Diagnostic\Check::input($form->named(), 'SHOW character sets uses a named character-set form.');
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -63,6 +72,6 @@ final class ShowCharacterSet implements Statement, Relation
      */
     public function render(Output $out): void
     {
-        $out->keyword('SHOW', 'CHARSET')->node($this->filter);
+        $out->keyword('SHOW')->keyword(...explode(' ', $this->form->value))->node($this->filter);
     }
 }

@@ -17,7 +17,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One attribute of a definition, `name` or `name = value`, as the defining command reads it.
@@ -35,14 +34,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a recognized attribute
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
- *     $attribute = $operation->statement->definition[2];
+ *     $attribute = $operation->definition[2];
  *     [$attribute->known, $attribute->value->kind] // => [\SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute::Function, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Function]
  * @example Rejecting a recognized attribute whose value is left as written although the command reads it
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute(new \SqlSemantics\Statement\Identifier\Name('function'), \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute::Function, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('int4eq')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Attribute implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The attribute name as written, decoded
@@ -53,6 +52,7 @@ final class Attribute implements Clause
         public readonly Name $name,
         public readonly ?KnownAttribute $known,
         public readonly AttributeArgument|TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant|null $value = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         Check::input($known === null || $known->text() === $name->value, 'A recognized attribute is the member its name names.');
         if ($value instanceof AttributeArgument) {

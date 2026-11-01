@@ -42,6 +42,7 @@ final class ProgramScope
      * @param list<Name> $cursors The cursors in scope
      * @param TriggerTime|null $time The action time of the trigger the position belongs to; null outside a trigger
      * @param TriggerEvent|null $event The event of the trigger the position belongs to; null outside a trigger
+     * @param bool $complete Whether all enclosing parameter and local declarations are known
      */
     public function __construct(
         public readonly Environment $environment,
@@ -52,6 +53,7 @@ final class ProgramScope
         public readonly array $cursors = [],
         public readonly ?TriggerTime $time = null,
         public readonly ?TriggerEvent $event = null,
+        public readonly bool $complete = true,
     ) {
     }
 
@@ -63,7 +65,7 @@ final class ProgramScope
     public function holds(array $names, Name $name): bool
     {
         foreach ($names as $candidate) {
-            if (strcasecmp($candidate->value, $name->value) === 0) {
+            if (mb_strtolower($candidate->value, 'UTF-8') === mb_strtolower($name->value, 'UTF-8')) {
                 return true;
             }
         }
@@ -102,7 +104,7 @@ final class ProgramScope
             return $this;
         }
 
-        return new self($this->environment, $this->kind, $loop ? $this->blocks : [...$this->blocks, $label], $loop ? [...$this->loops, $label] : $this->loops, $this->conditions, $this->cursors, $this->time, $this->event);
+        return new self($this->environment, $this->kind, $loop ? $this->blocks : [...$this->blocks, $label], $loop ? [...$this->loops, $label] : $this->loops, $this->conditions, $this->cursors, $this->time, $this->event, $this->complete);
     }
 
     /**
@@ -113,7 +115,7 @@ final class ProgramScope
      */
     public function declared(Environment $environment, array $conditions, array $cursors): self
     {
-        return new self($environment, $this->kind, $this->blocks, $this->loops, $conditions, $cursors, $this->time, $this->event);
+        return new self($environment, $this->kind, $this->blocks, $this->loops, $conditions, $cursors, $this->time, $this->event, $this->complete);
     }
 
     /**
@@ -121,6 +123,6 @@ final class ProgramScope
      */
     public function handler(): self
     {
-        return new self($this->environment, $this->kind, [], [], $this->conditions, $this->cursors, $this->time, $this->event);
+        return new self($this->environment, $this->kind, [], [], $this->conditions, $this->cursors, $this->time, $this->event, $this->complete);
     }
 }

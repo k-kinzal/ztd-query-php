@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Query\TailFacts;
+use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
@@ -15,8 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * INTO and locking clauses written after a set operation, a parenthesized query or another query that is not a single query block.
@@ -33,14 +31,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the INTO destination of a union
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t UNION SELECT b FROM u INTO @x');
- *     $query->statement->into->targets[0]->name->value // => 'x'
+ *     $query->query->into->targets[0]->name->value // => 'x'
  * @example Refusing a query statement without clauses
  *     $one = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]);
  *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($one)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a locking clause after a union that names a table of an earlier operand only
+ *     $first = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))));
+ *     $last = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\Star()], new \SqlSemantics\Platform\MySql\Statement\Relation\TableReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u'))));
+ *     $clause = new \SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause(\SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength::Update, [new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))]);
+ *     new \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement(new \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation($first, \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union, null, $last), [$clause]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class QueryStatement implements Statement, Query
+final class QueryStatement implements Query
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<LockingClause> The locking clauses in written order
@@ -53,23 +57,20 @@ final class QueryStatement implements Statement, Query
      * @param IntoDestination|null $into The INTO destination
      * @param IntoPosition|null $intoPosition Where INTO is written: after the query or after the locking clauses; given exactly when there is a destination
      */
-    public function __construct(public readonly Query $query, array $locking = [], public readonly ?IntoDestination $into = null, public readonly ?IntoPosition $intoPosition = null)
+    public function __construct(public readonly Query $query, array $locking = [], public readonly ?IntoDestination $into = null, public readonly ?IntoPosition $intoPosition = null, ?QueryFact $queryInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->locking = Check::listOf($locking, LockingClause::class, 'The locking clauses of a query are locking clauses.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Tail\LockedNames())->statement($query, $this->locking) === null, 'A locking clause after a query names a table of the FROM clause of its last block by its correlation name or table name, each once, and no derived or JSON table.');
         Check::input($locking !== [] || $into !== null, 'A query statement holds an INTO or a locking clause.');
         Check::input(($into === null) === ($intoPosition === null), 'An INTO destination is written at exactly one position.');
         Check::input($intoPosition !== IntoPosition::AfterItems, 'An INTO after a whole query is written after the query or after its locking clauses.');
         Check::input($intoPosition !== IntoPosition::AfterLocking || $locking !== [], 'An INTO after the locking clauses follows at least one of them.');
         Check::input(!$query instanceof self && !$query instanceof Select && !($query instanceof QueryExpression && $query->body instanceof Select), 'The INTO and locking clauses of a single query block belong to the block.');
         Check::input(!$query instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
-    }
-
-    /**
-     * Derives the query as a statement root and records its rows as the output.
-     */
-    public function deriveStatement(Derivation $derivation): void
-    {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -78,7 +79,11 @@ final class QueryStatement implements Statement, Query
     public function deriveQuery(Derivation $derivation, Environment $outer): QueryFact
     {
         $fact = $derivation->query($this->query, $outer);
-        (new TailFacts())->derive($derivation, $outer, $fact, $this->into, $this->locking, null);
+        if ($derivation->written($this) !== null) {
+            (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->deferred($this, $derivation, fn () => (new TailFacts())->derive($derivation, $outer, $fact, $this));
+        } else {
+            (new TailFacts())->derive($derivation, $outer, $fact, $this);
+        }
 
         return $fact;
     }

@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting arms of different widths
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 UNION SELECT 1, 2');
- *     $query->facts->diagnostics[0]->message() // => 'each UNION query must have the same number of columns'
+ *     $query->diagnostics()[0]->message() // => 'each UNION query must have the same number of columns'
  * @example Refusing equal counts
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch(\SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule::ValuesRows, 'VALUES', 2, 2) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */

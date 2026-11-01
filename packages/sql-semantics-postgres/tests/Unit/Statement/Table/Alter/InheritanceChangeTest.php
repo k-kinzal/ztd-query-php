@@ -16,11 +16,11 @@ final class InheritanceChangeTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('ALTER TABLE t INHERIT p', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable::class, $n1);
         $n2 = $n1->commands[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\InheritanceChange::class, $n2);
-        $n3 = $statement->facts->relation($n2->parent)->table;
+        $n3 = $n2->parent->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $n3);
         self::assertSame('SqlSemantics\\Statement\\Reference\\Table\\MissingTable', $n3::class);
     }

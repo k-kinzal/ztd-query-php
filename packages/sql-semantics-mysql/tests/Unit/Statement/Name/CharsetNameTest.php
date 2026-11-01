@@ -56,7 +56,7 @@ final class CharsetNameTest extends TestCase
 
         self::assertSame('binary', $binary->name?->value);
         self::assertSame('latin1', $quoted->name?->value);
-        self::assertSame('`binary`', (new Lexical())->join($out->pieces()));
+        self::assertSame('binary', (new Lexical())->join($out->pieces()));
     }
 
     public function testLoweredDefaultHasNoName(): void

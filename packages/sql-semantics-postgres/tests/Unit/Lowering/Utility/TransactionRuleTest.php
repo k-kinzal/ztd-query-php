@@ -46,8 +46,8 @@ final class TransactionRuleTest extends TestCase
 
     public function testRollbackToLowersBothSpellings(): void
     {
-        $long = (new Semantics(Dialect::PostgreSql))->analyze('ROLLBACK WORK TO SAVEPOINT s')->statement;
-        $short = (new Semantics(Dialect::PostgreSql))->analyze('ROLLBACK TO s')->statement;
+        $long = (new Semantics(Dialect::PostgreSql))->analyze('ROLLBACK WORK TO SAVEPOINT s');
+        $short = (new Semantics(Dialect::PostgreSql))->analyze('ROLLBACK TO s');
         self::assertInstanceOf(SavepointCommand::class, $long);
         self::assertInstanceOf(SavepointCommand::class, $short);
         self::assertSame([SavepointAction::RollbackTo, 's'], [$long->action, $short->name->value]);
@@ -62,7 +62,7 @@ final class TransactionRuleTest extends TestCase
     public function testChainingLowersEachClause(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
-        $statements = [$semantics->analyze('COMMIT AND CHAIN')->statement, $semantics->analyze('ROLLBACK WORK AND NO CHAIN')->statement, $semantics->analyze('END')->statement];
+        $statements = [$semantics->analyze('COMMIT AND CHAIN'), $semantics->analyze('ROLLBACK WORK AND NO CHAIN'), $semantics->analyze('END')];
         self::assertSame(
             [Chaining::Chain, Chaining::NoChain, null],
             array_map(static fn (object $statement): ?Chaining => $statement instanceof Commit || $statement instanceof Rollback ? $statement->chaining : null, $statements),
@@ -71,21 +71,21 @@ final class TransactionRuleTest extends TestCase
 
     public function testOptionalModesIsEmptyWithoutModes(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('BEGIN TRANSACTION')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('BEGIN TRANSACTION');
         self::assertInstanceOf(Begin::class, $statement);
         self::assertSame([], $statement->modes);
     }
 
     public function testModesKeepsTheOrderWithOrWithoutCommas(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('START TRANSACTION READ ONLY, DEFERRABLE ISOLATION LEVEL READ COMMITTED')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('START TRANSACTION READ ONLY, DEFERRABLE ISOLATION LEVEL READ COMMITTED');
         self::assertInstanceOf(Begin::class, $statement);
         self::assertSame([TransactionMode::ReadOnly, TransactionMode::Deferrable, TransactionMode::ReadCommitted], $statement->modes);
     }
 
     public function testModeLowersEachMode(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('BEGIN ISOLATION LEVEL READ UNCOMMITTED, ISOLATION LEVEL REPEATABLE READ, ISOLATION LEVEL SERIALIZABLE, READ WRITE, NOT DEFERRABLE')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('BEGIN ISOLATION LEVEL READ UNCOMMITTED, ISOLATION LEVEL REPEATABLE READ, ISOLATION LEVEL SERIALIZABLE, READ WRITE, NOT DEFERRABLE');
         self::assertInstanceOf(Begin::class, $statement);
         self::assertSame([TransactionMode::ReadUncommitted, TransactionMode::RepeatableRead, TransactionMode::Serializable, TransactionMode::ReadWrite, TransactionMode::NotDeferrable], $statement->modes);
     }

@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Node;
  * @visibility public
  * @example Reading the declarations of a block
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT; END');
- *     $create->statement->body->declarations[0] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration // => true
+ *     $create->body->declarations[0] instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Declaration // => true
  */
 interface Declaration extends Node
 {

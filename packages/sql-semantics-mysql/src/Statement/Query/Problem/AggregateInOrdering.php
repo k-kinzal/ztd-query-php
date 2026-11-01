@@ -1,0 +1,40 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
+
+use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Snapshot;
+
+/**
+ * An aggregate call forbidden by the query block or its DISTINCT ordering.
+ *
+ * @visibility public
+ * @example Reading the rejected ordering position
+ *     $problem = new \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering(2);
+ *     $problem->position // => 2
+ */
+final class AggregateInOrdering implements Diagnostic
+{
+    use Snapshot;
+
+    /**
+     * @param int $position The one-based position of the ordering expression
+     * @param bool $distinct Whether an unselected aggregate violates DISTINCT ordering
+     */
+    public function __construct(public readonly int $position, public readonly bool $distinct = false)
+    {
+    }
+
+    /**
+     * Describes the problem in the words of the server.
+     */
+    public function message(): string
+    {
+        if ($this->distinct) {
+            return sprintf('Expression #%d of ORDER BY clause is not in SELECT list, contains aggregate function; this is incompatible with DISTINCT', $this->position);
+        }
+        return sprintf('Expression #%d of ORDER BY contains aggregate function and applies to the result of a non-aggregated query', $this->position);
+    }
+}

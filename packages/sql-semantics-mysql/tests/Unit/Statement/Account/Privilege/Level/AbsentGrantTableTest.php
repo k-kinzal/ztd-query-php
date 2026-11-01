@@ -20,8 +20,9 @@ final class AbsentGrantTableTest extends TestCase
     {
         $grant = (new Semantics(Dialect::MySql))->analyze('GRANT CREATE, SELECT ON shop.t TO u', []);
 
-        self::assertInstanceOf(GrantPrivileges::class, $grant->statement);
-        self::assertInstanceOf(AbsentGrantTable::class, $grant->facts->relation($grant->statement->level)->table);
-        self::assertSame([], $grant->facts->diagnostics);
+        self::assertInstanceOf(GrantPrivileges::class, $grant);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $grant->level);
+        self::assertInstanceOf(AbsentGrantTable::class, $grant->level->relationInformation()->table);
+        self::assertSame([], $grant->diagnostics());
     }
 }

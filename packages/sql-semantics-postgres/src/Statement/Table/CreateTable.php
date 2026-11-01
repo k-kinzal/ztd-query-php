@@ -18,7 +18,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A request to create a table.
@@ -41,9 +40,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $table = $create->declarations()[0];
  *     [array_map(static fn ($column) => $column->type->name(), $table->columns), $table->columns[2]->nullability, $table->implicit[0]->names[0]->value] // => [['integer', 'character varying(20)', 'text'], \SqlSemantics\Statement\Type\Nullability::Nullable, 'tableoid']
  */
-final class CreateTable implements SchemaElement, Relation
+final class CreateTable extends \SqlSemantics\Statement\SqlStatement implements SchemaElement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Definition> The storage parameters
@@ -71,7 +71,16 @@ final class CreateTable implements SchemaElement, Relation
         array $options = [],
         public readonly ?OnCommit $onCommit = null,
         public readonly ?Name $tablespace = null,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->options = Check::listOf($options, Definition::class, 'Storage parameters are definitions.');
     }
 

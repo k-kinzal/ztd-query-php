@@ -166,6 +166,8 @@ jobs:
         run: composer tree-guard
       - name: Check the architecture layers
         run: composer deptrac
+      - name: Check the retained semantic value schemas
+        run: composer schema:check
 
   bench:
     name: Benchmark (${{ matrix.package }})

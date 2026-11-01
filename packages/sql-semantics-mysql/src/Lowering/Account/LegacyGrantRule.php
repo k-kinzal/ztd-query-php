@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Account;
 
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\SyntaxException;
+use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
@@ -12,10 +15,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Level\ObjectKind;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeAll;
-use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokePrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\RevokeProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers GRANT and REVOKE of MySQL 5.6 and 5.7.
@@ -64,6 +66,17 @@ final class LegacyGrantRule
      */
     public function grant(Form $form): Statement
     {
+        return $this->request($form);
+    }
+
+    /**
+     * Retains complete legacy privilege and account operands before deriving conditions.
+     *
+     * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a standalone request names a privilege outside its level
+     */
+    public function request(Form $form): GrantPrivileges|GrantProxy
+    {
         if ($form->signature !== 'grant: GRANT clear_privileges grant_command') {
             throw ImplementationGap::production($form);
         }
@@ -78,14 +91,14 @@ final class LegacyGrantRule
         $this->table($command);
         $privileges = new PrivilegeRule($this->lowering);
 
-        return new GrantPrivileges(
-            $privileges->privileges($command->node(0)),
-            $kind,
-            $privileges->level($command->node(3)),
-            $lists->granted($command->node(5)),
-            $clauses->tls($command->node(6)),
-            $clauses->grantOptions($command->node(7)),
-        );
+        $items = $privileges->privileges($command->node(0));
+        $level = $privileges->level($command->node(3));
+        $users = $lists->granted($command->node(5));
+        $tls = $clauses->tls($command->node(6));
+        $options = $clauses->grantOptions($command->node(7));
+        $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+
+        return (new Privilege\LevelRule($this->lowering))->checked(new GrantPrivileges($items, $kind, $level, $users, $tls, $options, tableKeyword: $command->node->children[2] instanceof Node && $command->node(2)->children !== []), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**
@@ -104,7 +117,7 @@ final class LegacyGrantRule
         if ($command->signature === 'revoke_command: ALL opt_privileges , GRANT OPTION FROM grant_list' || $command->signature === 'revoke_command: ALL opt_privileges , GRANT OPTION FROM user_list') {
             $privileges->words($command->node(1));
 
-            return new RevokeAll(false, $this->users($command->node(6)));
+            return new RevokeAll(false, $this->users($command->node(6)), privileges: $command->node(1)->children !== []);
         }
         if ($command->signature === 'revoke_command: PROXY_SYM ON user FROM grant_list' || $command->signature === 'revoke_command: PROXY_SYM ON user FROM user_list') {
             return new RevokeProxy(false, $this->lowering->users->account($command->node(2)), $this->users($command->node(4)));
@@ -112,7 +125,11 @@ final class LegacyGrantRule
         $kind = self::KINDS[$command->signature] ?? throw ImplementationGap::production($command);
         $this->table($command);
 
-        return new RevokePrivileges(false, $privileges->privileges($command->node(0)), $kind, $privileges->level($command->node(3)), $this->users($command->node(5)));
+        $items = $privileges->privileges($command->node(0));
+        $level = $privileges->level($command->node(3));
+        $users = $this->users($command->node(5));
+        $privileges->columnKind($items, $kind, $level, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        return (new Privilege\RevokeRule($this->lowering))->statement(false, $items, $kind, $level, $users, end: (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, tableKeyword: $command->node->children[2] instanceof Node && $command->node(2)->children !== []);
     }
 
     /**
@@ -131,11 +148,25 @@ final class LegacyGrantRule
      *
      * @return non-empty-list<UserSpecification>
      * @throws ImplementationGap When a production has no rule
+     * @throws AnalysisException When a REVOKE account contains authentication
      */
     public function users(Node $list): array
     {
         if ($list->name === 'grant_list') {
-            return (new UserListRule($this->lowering, new IdentificationRule($this->lowering)))->granted($list);
+            $rule = new UserListRule($this->lowering, new IdentificationRule($this->lowering));
+            $users = [];
+            foreach ($rule->spine($list) as $item) {
+                $user = $rule->grant($item);
+                if ($user->identification !== null) {
+                    $tokens = $item->tokens();
+                    $last = $tokens[count($tokens) - 1];
+                    $at = $user->identification->secret === null ? new Token(0, '$end', '', $last->end()) : $last;
+                    throw new AnalysisException('Syntax error: REVOKE takes no authentication clause.', 0, new SyntaxException($at, [], ''));
+                }
+                $users[] = $user;
+            }
+
+            return $users;
         }
 
         return (new GrantRule($this->lowering))->specifications($list);

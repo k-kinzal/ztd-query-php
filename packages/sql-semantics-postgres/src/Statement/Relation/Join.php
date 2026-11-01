@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A join of two FROM items.
@@ -26,15 +25,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a join
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 FROM a NATURAL LEFT OUTER JOIN b');
- *     [$query->statement->from->kind->value, $query->statement->from->natural, $query->toString()] // => ['LEFT', true, 'SELECT 1 FROM a NATURAL LEFT JOIN b']
+ *     [$query->from->kind->value, $query->from->natural, $query->toString()] // => ['LEFT', true, 'SELECT 1 FROM a NATURAL LEFT JOIN b']
  * @example Refusing a qualified join without a condition
  *     $a = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('a'))));
  *     $b = new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('b'))));
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Relation\Join($a, \SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind::Left, $b) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Join implements Relation
+final class Join implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Relation $left The left side
@@ -49,7 +49,12 @@ final class Join implements Relation
         public readonly Relation $right,
         public readonly JoinOn|JoinUsing|null $condition = null,
         public readonly bool $natural = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input(!$left instanceof RelationList && !$right instanceof RelationList, 'A join side is one FROM item.');
         Check::input($kind !== JoinKind::Cross || (!$natural && $condition === null), 'A CROSS join has no condition.');
         Check::input(!$natural || $condition === null, 'A NATURAL join has no condition.');

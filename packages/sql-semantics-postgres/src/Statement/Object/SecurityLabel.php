@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -27,11 +26,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the provider
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SECURITY LABEL FOR selinux ON SCHEMA app IS 'x'");
- *     $operation->statement->provider?->word->value // => 'selinux'
+ *     $operation->provider?->word->value // => 'selinux'
  */
-final class SecurityLabel implements Statement
+final class SecurityLabel extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ObjectKind $kind The kind of the object
@@ -44,7 +43,12 @@ final class SecurityLabel implements Statement
         public readonly ObjectReference $object,
         public readonly ?StringConstant $label,
         public readonly Word|StringConstant|null $provider = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $forms = new ObjectForms();
         Check::input(in_array($forms->form($object), $forms->label($kind), true), 'SECURITY LABEL names the object as the grammar names objects of its kind.');
     }

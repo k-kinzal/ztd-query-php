@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the new schema
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION hstore SET SCHEMA util');
- *     $operation->statement->schema->value // => 'util'
+ *     $operation->schema->value // => 'util'
  */
-final class SetSchema implements Statement
+final class SetSchema extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ObjectKind $kind The kind of the object
@@ -40,8 +39,11 @@ final class SetSchema implements Statement
      * @param Name $schema The new schema
      * @param bool $ifExists Whether IF EXISTS is written; for relations only
      */
-    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly Name $schema, public readonly bool $ifExists = false)
+    public function __construct(public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly Name $schema, public readonly bool $ifExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $forms = new ObjectForms();
         Check::input(in_array($forms->form($object), $forms->altered($kind, 'schema'), true), 'SET SCHEMA names the object as the grammar names objects of its kind.');
         Check::input(!$ifExists || in_array($kind->value, ObjectForms::ALTERED_RELATION, true), 'SET SCHEMA accepts IF EXISTS for relations only.');

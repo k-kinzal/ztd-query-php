@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\LeafKeys;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
+use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -54,6 +55,14 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class Platform implements \SqlSemantics\Contract\Platform
 {
+    /**
+     * Publishes the concrete MySQL statement with information owned by its occurrences.
+     */
+    public function publish(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources): \SqlSemantics\Statement\AnalyzedStatement
+    {
+        return (new Construction\Publication())->publish($context, $statement, $sources);
+    }
+
     /**
      * @var array<string, SqlParser>
      */
@@ -89,13 +98,14 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Answers the parser of a profile, created once per profile.
      */
-    public function parser(LanguageProfile $profile): SqlParser
+    public function parser(LanguageProfile $profile, ?\SqlSemantics\Contract\Session $session = null): SqlParser
     {
         $lexical = $profile->lexical;
+        $client = $session instanceof Statement\Type\Resolved\Settings ? $session->client?->name : null;
         $mode = new SqlMode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace);
-        $key = $profile->grammar->value . '|' . (new Mode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace))->toString() . '|' . $profile->parameters->value;
+        $key = $profile->grammar->value . '|' . (new Mode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace))->toString() . '|' . $profile->parameters->value . '|' . ($client ?? '');
 
-        return $this->parsers[$key] ??= new MySqlParser($profile->grammar->value, $mode, new VersionRegistry(), $profile->parameters === ParameterStyle::Named ? ParameterSyntax::Named : ParameterSyntax::Native);
+        return $this->parsers[$key] ??= new MySqlParser($profile->grammar->value, $mode, new VersionRegistry(), $profile->parameters === ParameterStyle::Named ? ParameterSyntax::Named : ParameterSyntax::Native, $client);
     }
 
     /**
@@ -108,18 +118,19 @@ final class Platform implements \SqlSemantics\Contract\Platform
 
     /**
      * Lowers a parse tree into its statements.
+     * @throws \SqlSemantics\Diagnostic\AnalysisException When grammar-action constraints reject complete input
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null, ?\SqlSemantics\Contract\Session $session = null, bool $canonicalNames = false): array
     {
-        return (new Lowering($this->productions($profile), $leaves, $profile))->statements($tree);
+        return (new Lowering($this->productions($profile), $leaves, $profile, $origins ?? new \SqlSemantics\Construction\Origins(), $session instanceof Statement\Type\Resolved\Settings ? $session->client : null, canonicalNames: $canonicalNames))->statements($tree);
     }
 
     /**
      * Answers the name codec of the release.
      */
-    public function codec(LanguageProfile $profile): Codec
+    public function codec(LanguageProfile $profile, ?\SqlSemantics\Contract\Session $session = null): Codec
     {
-        return new Codec($profile->grammar);
+        return new Codec($profile->grammar, $profile->lexical, $session instanceof Statement\Type\Resolved\Settings ? $session->client : null);
     }
 
     /**
@@ -133,6 +144,10 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Creates a context: one current database, exact table and database names, column names without regard to ASCII case.
      *
+     * The name of INFORMATION_SCHEMA and the names of its tables are compared without regard to
+     * case, whatever lower_case_table_names says.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html.
+     *
      * @throws InvalidArgumentException When the path names more than the current database
      */
     public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
@@ -141,7 +156,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
             throw new InvalidArgumentException('MySQL searches an unqualified table name in the current database only.');
         }
 
-        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive);
+        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive, null, null, [SystemTables::INFORMATION_SCHEMA]);
     }
 
     /**

@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StopReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Lowers START SLAVE, START REPLICA, STOP SLAVE and STOP REPLICA of every release.
@@ -211,7 +211,8 @@ final class ReplicaRule
         $threads = [];
         foreach ((new Spine($this->lowering))->items($form->node(0), $spine) as $item) {
             $thread = $this->lowering->form($item);
-            $threads[] = self::THREADS[$thread->signature] ?? throw ImplementationGap::production($thread);
+            $kind = self::THREADS[$thread->signature] ?? throw ImplementationGap::production($thread);
+            $threads[] = $kind === ReplicaThread::Receiver && strtoupper($thread->token(0)->text) === 'RELAY_THREAD' ? ReplicaThread::Relay : $kind;
         }
 
         return $threads;

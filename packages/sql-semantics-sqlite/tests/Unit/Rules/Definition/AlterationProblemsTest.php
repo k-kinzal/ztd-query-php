@@ -64,7 +64,7 @@ final class AlterationProblemsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $derivation = new Derivation($semantics->context([$semantics->analyze('CREATE TABLE t (a)')]));
-        $statement = $semantics->analyze('ALTER TABLE t ADD b integer NOT NULL DEFAULT 1')->statement;
+        $statement = $semantics->analyze('ALTER TABLE t ADD b integer NOT NULL DEFAULT 1');
 
         self::assertInstanceOf(AlterAddColumn::class, $statement);
         $slot = (new AlterationProblems())->slot((new TableShapes())->target($derivation, new QualifiedName(new Name('t'))), $statement->column);
@@ -78,7 +78,7 @@ final class AlterationProblemsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a INT) STRICT');
-        $obstacles = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic instanceof AlterationRefused ? $diagnostic->obstacle->name : $diagnostic::class, $semantics->analyze($sql, [$table])->facts->diagnostics);
+        $obstacles = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): string => $diagnostic instanceof AlterationRefused ? $diagnostic->obstacle->name : $diagnostic::class, $semantics->analyze($sql, [$table])->diagnostics());
 
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT NOT NULL DEFAULT 0'));
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT AS (a) VIRTUAL NOT NULL'));

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The head of an INSERT statement: the verb, the conflict resolution, the written table and the column list.
@@ -22,13 +21,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the head of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('INSERT OR IGNORE INTO t (a, b) VALUES (1, 2)');
- *     [$insert->statement->into->resolution, $insert->statement->into->target->name->name->value, count($insert->statement->into->columns)] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore, 't', 2]
+ *     [$insert->into->resolution, $insert->into->target->name->name->value, count($insert->into->columns)] // => [\SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore, 't', 2]
  * @example Refusing a conflict resolution next to REPLACE
  *     new \SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto(new \SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), [], true, \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class InsertInto implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The columns that receive values, in written order; none when the list is absent
@@ -48,6 +47,7 @@ final class InsertInto implements Node
         public readonly bool $replace = false,
         public readonly ?ConflictResolution $resolution = null,
         public readonly ?WithClause $with = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         $this->columns = Check::listOf($columns, Name::class, 'The column list of an INSERT holds column names.');
         Check::input(!$replace || $resolution === null, 'REPLACE takes no conflict resolution.');

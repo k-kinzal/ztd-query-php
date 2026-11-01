@@ -25,7 +25,7 @@ final class UtilityRulesTest extends TestCase
 
     public function testBinaryLogsWordAcceptsBothKeywords(): void
     {
-        self::assertSame('SHOW BINARY LOGS', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('show master logs')->toString());
-        self::assertSame('SHOW BINARY LOGS', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('show master logs')->toString());
+        self::assertSame('SHOW MASTER LOGS', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('show master logs')->toString());
+        self::assertSame('SHOW MASTER LOGS', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('show master logs')->toString());
     }
 }

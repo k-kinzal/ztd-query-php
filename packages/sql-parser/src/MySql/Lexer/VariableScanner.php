@@ -88,7 +88,7 @@ final class VariableScanner
     {
         $cursor = $scan->cursor;
         $start = $cursor->offset();
-        $text = $words->consume($cursor);
+        $text = $words->consume($cursor, $scan->clientCharset);
         if ($text === '') {
             throw LexicalException::unexpectedCharacter($cursor->source, $start);
         }

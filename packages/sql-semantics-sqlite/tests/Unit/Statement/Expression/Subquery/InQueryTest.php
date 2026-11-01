@@ -18,7 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -36,7 +35,7 @@ final class InQueryTest extends TestCase
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
         self::assertSame(Nullability::NotNull, $query->field(0)->nullability);
         self::assertSame(Nullability::NotNull, $query->field(1)->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveScalarCanBeNullWhenTheOperandOrAComparedColumnCan(): void
@@ -57,7 +56,7 @@ final class InQueryTest extends TestCase
         self::assertInstanceOf(Known::class, $star->field(0)->type);
         self::assertSame(Storage::Integer, $star->field(0)->type->descriptor);
         self::assertSame(Nullability::Dependent, $star->field(0)->nullability);
-        self::assertSame([], $star->facts->diagnostics);
+        self::assertSame([], $star->diagnostics());
         self::assertSame(Nullability::Dependent, $column->field(0)->nullability);
     }
 
@@ -66,12 +65,12 @@ final class InQueryTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT 1 IN (SELECT a, b FROM t)', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
-        self::assertCount(1, $query->facts->diagnostics);
-        self::assertInstanceOf(ArityMismatch::class, $query->facts->diagnostics[0]);
-        self::assertSame(ArityRule::ScalarSubquery, $query->facts->diagnostics[0]->rule);
-        self::assertSame(1, $query->facts->diagnostics[0]->expected);
-        self::assertSame(2, $query->facts->diagnostics[0]->actual);
-        self::assertSame('Sub-select returns 2 columns - expected 1.', $query->facts->diagnostics[0]->message());
+        self::assertCount(1, $query->diagnostics());
+        self::assertInstanceOf(ArityMismatch::class, $query->diagnostics()[0]);
+        self::assertSame(ArityRule::ScalarSubquery, $query->diagnostics()[0]->rule);
+        self::assertSame(1, $query->diagnostics()[0]->expected);
+        self::assertSame(2, $query->diagnostics()[0]->actual);
+        self::assertSame('Sub-select returns 2 columns - expected 1.', $query->diagnostics()[0]->message());
     }
 
     public function testDeriveScalarAdmitsARowOperandOfTheWidthOfTheQuery(): void
@@ -79,7 +78,7 @@ final class InQueryTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $query = $semantics->analyze('SELECT (1, 2) IN (SELECT a, b FROM t)', [$semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)')]);
 
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
         self::assertSame(Nullability::Nullable, $query->field(0)->nullability);
     }
 
@@ -90,9 +89,9 @@ final class InQueryTest extends TestCase
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InQuery::class, $test);
-        self::assertCount(1, $query->facts->query($test->query)->shape->slots);
-        self::assertSame(Nullability::NotNull, $query->facts->query($test->query)->shape->slots[0]->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertCount(1, $test->query->queryInformation()->shape->slots);
+        self::assertSame(Nullability::NotNull, $test->query->queryInformation()->shape->slots[0]->nullability);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testRenderWritesTheNegationAndTheQuery(): void
@@ -109,7 +108,7 @@ final class InQueryTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $test = new InQuery(new IntegerLiteral('1'), new Select([new ResultColumn(new IntegerLiteral('2'))]));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($test)]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn($test)]));
 
         self::assertSame('SELECT 1 IN (SELECT 2)', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

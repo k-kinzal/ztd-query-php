@@ -19,11 +19,11 @@ final class OrderingTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT b AS a FROM t ORDER BY a', [$t, $u]);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $term = $select->options?->order[0]->expression;
         self::assertNotNull($term);
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\AliasTarget::class, $query->facts->scalar($term)->resolution);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\AliasTarget::class, $term->scalarInformation()->resolution);
     }
 
     public function testGroupPrefersTheInputColumn(): void
@@ -33,25 +33,25 @@ final class OrderingTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT b AS a FROM t GROUP BY a', [$t, $u]);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $item = $select->groupBy[0];
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $item);
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $query->facts->scalar($item)->resolution);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $item->scalarInformation()->resolution);
     }
 
     public function testOutputsReportsAnExpressionAfterASetOperation(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT 1 AS a UNION SELECT 2 ORDER BY a + 1');
-        self::assertSame('invalid UNION/INTERSECT/EXCEPT ORDER BY clause', $query->facts->diagnostics[0]->message());
+        self::assertSame('invalid UNION/INTERSECT/EXCEPT ORDER BY clause', $query->diagnostics()[0]->message());
     }
 
     public function testTermReportsANonIntegerConstant(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze("SELECT 1 ORDER BY 'x'");
-        self::assertSame('non-integer constant in ORDER BY', $query->facts->diagnostics[0]->message());
+        self::assertSame('non-integer constant in ORDER BY', $query->diagnostics()[0]->message());
     }
 
     public function testPositionsListsTheKnownFields(): void
@@ -75,7 +75,7 @@ final class OrderingTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT a, a FROM t ORDER BY a', [$t, $u]);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testSameComparesTheExpressions(): void
@@ -94,7 +94,7 @@ final class OrderingTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT 1 AS x, 2 AS y GROUP BY ROLLUP ((x, 2))', []);
-        $select = $query->statement;
+        $select = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
         $set = $select->groupBy[0];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet::class, $set);
@@ -102,13 +102,13 @@ final class OrderingTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow::class, $row);
         $name = $row->members[0];
         self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $name);
-        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\AliasTarget::class, $query->facts->scalar($name)->resolution);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\AliasTarget::class, $name->scalarInformation()->resolution);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testGroupReportsAPositionOutOfRangeInsideARow(): void
     {
         $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS x GROUP BY (x, 3)', []);
-        self::assertSame('GROUP BY position 3 is not in select list', $query->facts->diagnostics[0]->message());
+        self::assertSame('GROUP BY position 3 is not in select list', $query->diagnostics()[0]->message());
     }
 }

@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reporting DROP TABLE of a view
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $view = $semantics->analyze('CREATE VIEW v AS SELECT 1');
- *     $semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message() // => 'Relation v is a view: DROP TABLE removes only a table.'
+ *     $semantics->analyze('DROP TABLE v', [$view])->diagnostics()[0]->message() // => 'Relation v is a view: DROP TABLE removes only a table.'
  */
 final class WrongRelationKind implements Diagnostic
 {

@@ -27,7 +27,7 @@ final class CreateAsRuleTest extends TestCase
     {
         $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('CREATE TABLE IF NOT EXISTS t AS EXECUTE q');
-        $execute = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('EXECUTE q')->statement;
+        $execute = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('EXECUTE q');
         $value = (new \SqlSemantics\Platform\PostgreSql\Lowering\Table\CreateAsRule($lowering))->tableAsExecute($lowering->productions->form($tree->find('ExecuteStmt')[0]), $execute);
         self::assertSame(true, $value->ifNotExists);
     }

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DISCARD | IMPORT [PARTITION ALL | p, …] TABLESPACE`: a request to detach or attach the tablespace files of a table or of partitions.
@@ -20,17 +19,17 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Discarding the tablespace of a table
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER TABLE t DISCARD TABLESPACE');
- *     [$alter->statement->commands[0]->import, $alter->toString()] // => [false, 'ALTER TABLE t DISCARD TABLESPACE']
+ *     [$alter->commands[0]->import, $alter->toString()] // => [false, 'ALTER TABLE t DISCARD TABLESPACE']
  */
 final class TablespaceCommand implements StandaloneCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $import Whether IMPORT (true) or DISCARD (false) is written
      * @param PartitionSelection|null $partitions The partitions, or null for the whole table
      */
-    public function __construct(public readonly bool $import, public readonly ?PartitionSelection $partitions = null)
+    public function __construct(public readonly bool $import, public readonly ?PartitionSelection $partitions = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

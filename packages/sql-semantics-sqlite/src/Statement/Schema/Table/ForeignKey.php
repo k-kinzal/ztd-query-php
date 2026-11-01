@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\UnknownColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\Deferrability;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Reference\ForeignKeyClause;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A FOREIGN KEY table constraint.
@@ -27,12 +26,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a composite foreign key
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE c (a, b, FOREIGN KEY (a, b) REFERENCES parent (x, y) DEFERRABLE INITIALLY DEFERRED)');
- *     $key = $create->statement->constraints[0]->items[0];
+ *     $key = $create->constraints[0]->items[0];
  *     [count($key->columns), $key->clause->table->value, $key->deferrability?->deferred()] // => [2, 'parent', true]
  */
 final class ForeignKey implements TableConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ListedColumn> The child columns in written order
@@ -44,7 +43,7 @@ final class ForeignKey implements TableConstraint
      * @param ForeignKeyClause $clause The parent, its key columns and the actions
      * @param Deferrability|null $deferrability The written DEFERRABLE clause
      */
-    public function __construct(array $columns, public readonly ForeignKeyClause $clause, public readonly ?Deferrability $deferrability = null)
+    public function __construct(array $columns, public readonly ForeignKeyClause $clause, public readonly ?Deferrability $deferrability = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, ListedColumn::class, 'A foreign key has at least one child column.', 1);
     }

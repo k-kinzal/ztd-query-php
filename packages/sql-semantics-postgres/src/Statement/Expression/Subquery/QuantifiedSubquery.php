@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -38,7 +37,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class QuantifiedSubquery implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The compared value
@@ -46,8 +46,11 @@ final class QuantifiedSubquery implements Scalar
      * @param Quantifier $quantifier The quantifier
      * @param Query $query The query inside the parentheses
      */
-    public function __construct(public readonly Scalar $operand, public readonly OperatorName|MatchKeyword $comparator, public readonly Quantifier $quantifier, public readonly Query $query)
+    public function __construct(public readonly Scalar $operand, public readonly OperatorName|MatchKeyword $comparator, public readonly Quantifier $quantifier, public readonly Query $query, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$comparator instanceof OperatorName || $comparator->explicit || $comparator->qualifiers === [], 'An expression writes a qualified operator with OPERATOR(...).');
         $precedence = new Precedence();
         Check::input($precedence->before($operand, $comparator instanceof OperatorName ? $precedence->operator($comparator) : Precedence::PATTERN), 'The compared value needs parentheses to keep its place.');

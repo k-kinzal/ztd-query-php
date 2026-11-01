@@ -31,7 +31,10 @@ final class MaintainedTables
      */
     public function checked(array $tables): array
     {
-        return Check::listOf($tables, MaintainedTable::class, 'The statement names at least one table.', 1);
+        $tables = Check::listOf($tables, MaintainedTable::class, 'The statement names at least one table.', 1);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (MaintainedTable $table): array => [$table->name, null, $table], $tables)) === null, 'A table list names each table once.');
+
+        return $tables;
     }
 
     /**
@@ -44,6 +47,9 @@ final class MaintainedTables
     {
         $named = [];
         foreach ($tables as $table) {
+            if ($table->dot === \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written) {
+                \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable, $derivation, $table, false);
+            }
             $named[] = [$table, $table->name, null];
         }
         return (new TableNames())->record($derivation, $named);
@@ -55,11 +61,11 @@ final class MaintainedTables
      * @param list<string> $keywords The words before the table list, TABLE included
      * @param list<MaintainedTable> $tables
      */
-    public function render(Output $out, array $keywords, bool $noWriteToBinlog, array $tables): void
+    public function render(Output $out, array $keywords, ?\SqlSemantics\Platform\MySql\Statement\Server\BinlogOption $binlog, array $tables): void
     {
         $out->keyword($keywords[0]);
-        if ($noWriteToBinlog) {
-            $out->keyword('NO_WRITE_TO_BINLOG');
+        if ($binlog !== null) {
+            $out->keyword($binlog->value);
         }
         $out->keyword(...array_slice($keywords, 1))->list($tables);
     }

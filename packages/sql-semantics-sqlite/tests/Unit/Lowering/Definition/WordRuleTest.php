@@ -21,7 +21,7 @@ final class WordRuleTest extends TestCase
 {
     public function testWordKeepsTheQuotingOfTheToken(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT x, b DEFAULT "x", c DEFAULT [x], d DEFAULT `x`)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT x, b DEFAULT "x", c DEFAULT [x], d DEFAULT `x`)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $quotes = array_map(static fn (object $column): ?WordQuote => $column->constraints[0] instanceof DefaultWord ? $column->constraints[0]->word->quote : null, $statement->columns);
@@ -30,7 +30,7 @@ final class WordRuleTest extends TestCase
 
     public function testWordDecodesTheName(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b AS (a) "my ""word""")')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, b AS (a) "my ""word""")');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $generated = $statement->columns[1]->constraints[0];
@@ -40,7 +40,7 @@ final class WordRuleTest extends TestCase
 
     public function testNameReadsAnIdentifierOrAStringToken(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a) WITHOUT rowid, 'strict'")->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TABLE t (a) WITHOUT rowid, 'strict'");
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame(WordQuote::Bare, $statement->options[0]->word->quote);

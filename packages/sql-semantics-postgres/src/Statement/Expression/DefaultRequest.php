@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -32,7 +31,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class DefaultRequest implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Derives the pseudo-type the assignment resolves.
@@ -48,5 +48,14 @@ final class DefaultRequest implements Scalar
     public function render(Output $out): void
     {
         $out->keyword('DEFAULT');
+    }
+    /**
+     * Constructs the operand with optional source and local semantic information.
+     */
+    public function __construct(?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 }

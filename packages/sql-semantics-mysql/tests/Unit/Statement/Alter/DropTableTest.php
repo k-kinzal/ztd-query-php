@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
-use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
@@ -22,17 +21,49 @@ final class DropTableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
-        $drop = $semantics->analyze('DROP TABLE t, u, t', [$table]);
+        $drop = $semantics->analyze('DROP TABLE t, u', [$table]);
 
-        self::assertInstanceOf(DropTable::class, $drop->statement);
-        self::assertInstanceOf(DeclaredTable::class, $drop->facts->relation($drop->statement->tables[0])->table);
-        self::assertInstanceOf(MissingTable::class, $drop->facts->relation($drop->statement->tables[1])->table);
-        self::assertInstanceOf(RepeatedTable::class, $drop->facts->diagnostics[1]);
+        self::assertInstanceOf(DropTable::class, $drop);
+        self::assertInstanceOf(DeclaredTable::class, $drop->tables[0]->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $drop->tables[1]->relationInformation()->table);
     }
 
     public function testRenderWritesEveryPart(): void
     {
-        self::assertSame('DROP TEMPORARY TABLE IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
+        self::assertSame('DROP TEMPORARY TABLES IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
+    }
+
+    public function testRenderPreservesTheTableIdentitiesInOrder(): void
+    {
+        $drop = new DropTable(false, false, [
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))),
+            new \SqlSemantics\Platform\MySql\Statement\Alter\TargetTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'), new \SqlSemantics\Statement\Identifier\Name('d'))),
+        ]);
+        $published = (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql))->context(), $drop);
+        self::assertSame('DROP TABLE t, d.t', $published->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReleases')]
+    public function testDeriveStatementRetainsAWrittenDatabaseNamingTheCurrentOneAsAnOrderedCondition(string $version): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-' . $version);
+        $drop = $semantics->analyze('DROP TEMPORARY TABLES t, pbt.t', $semantics->context(searchPath: new \SqlSemantics\Contract\SearchPath('pbt')));
+        self::assertInstanceOf(DropTable::class, $drop);
+        self::assertCount(2, $drop->tables);
+        self::assertSame('DROP TEMPORARY TABLES t, pbt.t', $drop->toString());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $drop->warnings()[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable::class, $drop->warnings()[0]->problem);
+        self::assertSame($drop->tables[1]->name, $drop->warnings()[0]->problem->name);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerReleases(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.1.0', '8.2.0', '8.3.0', '8.4.7', '9.0.1', '9.1.0'] as $version) {
+            yield $version => [$version];
+        }
     }
 
     public function testDeriveStatementRefusesAViewWithoutIfExists(): void
@@ -41,7 +72,7 @@ final class DropTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['v is a view: DROP TABLE reports it as an unknown table.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE v', [$table, $view])->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE IF EXISTS v', [$table, $view])->facts->diagnostics));
+        self::assertSame(['v is a view: DROP TABLE reports it as an unknown table.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE v', [$table, $view])->diagnostics()));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE IF EXISTS v', [$table, $view])->diagnostics()));
     }
 }

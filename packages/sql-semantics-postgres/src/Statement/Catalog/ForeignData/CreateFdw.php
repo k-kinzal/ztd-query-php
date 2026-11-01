@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the handler of a wrapper
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')");
- *     [$operation->statement->functions[0]->function?->last()->value, $operation->toString()] // => ['h', "CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')"]
+ *     [$operation->functions[0]->function?->last()->value, $operation->toString()] // => ['h', "CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR OPTIONS (debug 'true')"]
  */
-final class CreateFdw implements Statement
+final class CreateFdw extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FunctionClause> The handler and validator clauses in the order written
@@ -47,8 +46,11 @@ final class CreateFdw implements Statement
      * @param list<FunctionClause> $functions The handler and validator clauses in the order written
      * @param list<GenericOption> $options The options
      */
-    public function __construct(public readonly Name $name, array $functions = [], array $options = [])
+    public function __construct(public readonly Name $name, array $functions = [], array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->functions = Check::listOf($functions, FunctionClause::class, 'Wrapper functions are a list of function clauses.');
         $this->options = Check::listOf($options, GenericOption::class, 'Wrapper options are a list of options.');
     }

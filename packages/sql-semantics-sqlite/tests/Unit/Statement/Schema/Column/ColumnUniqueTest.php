@@ -21,13 +21,13 @@ final class ColumnUniqueTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a UNIQUE)', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderKeepsTheConflictResolution(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table t (a unique on conflict rollback)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(ColumnUnique::class, $statement->columns[0]->constraints[0]);

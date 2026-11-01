@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of the parenthesized COPY option list: a name and an optional argument.
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the options of COPY
  *     $copy = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("COPY t TO STDOUT (FORMAT csv, FORCE_QUOTE *, HEADER)");
- *     [$copy->statement->options[0]->name->value, $copy->statement->options[2]->argument, $copy->toString()] // => ['format', null, 'COPY t TO STDOUT (format csv, force_quote *, header)']
+ *     [$copy->options[0]->name->value, $copy->options[2]->argument, $copy->toString()] // => ['format', null, 'COPY t TO STDOUT (format csv, force_quote *, header)']
  */
 final class CopyOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The option name
@@ -40,7 +39,7 @@ final class CopyOption implements Node
      *
      * @throws InvalidConstruction When the argument is of another kind
      */
-    public function __construct(public readonly Name $name, public readonly ?OptionArgument $argument = null)
+    public function __construct(public readonly Name $name, public readonly ?OptionArgument $argument = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(
             $argument === null || $argument instanceof Toggle || $argument instanceof Word || $argument instanceof StringConstant || $argument instanceof SignedNumber

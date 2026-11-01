@@ -23,8 +23,8 @@ final class AggregateChecksTest extends TestCase
         $accepted = $semantics->analyze('DROP AGGREGATE a(VARIADIC int4[] ORDER BY VARIADIC int4[])', []);
         $rejected = $semantics->analyze('DROP AGGREGATE a(VARIADIC int4[] ORDER BY VARIADIC text[])', []);
         $counted = $semantics->analyze('DROP AGGREGATE a(VARIADIC int4[] ORDER BY int4, int4)', []);
-        self::assertSame([], $accepted->facts->diagnostics);
-        self::assertEquals([new RoutineProblem(RoutineProblemKind::OrderedSetVariadic)], $rejected->facts->diagnostics);
-        self::assertEquals([new RoutineProblem(RoutineProblemKind::OrderedSetVariadic)], $counted->facts->diagnostics);
+        self::assertSame([], $accepted->diagnostics());
+        self::assertEquals([new RoutineProblem(RoutineProblemKind::OrderedSetVariadic)], $rejected->diagnostics());
+        self::assertEquals([new RoutineProblem(RoutineProblemKind::OrderedSetVariadic)], $counted->diagnostics());
     }
 }

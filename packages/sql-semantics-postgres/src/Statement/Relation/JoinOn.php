@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Relation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ON condition: the join condition of a qualified join.
@@ -19,16 +18,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a join condition
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 FROM a JOIN b ON TRUE');
- *     $query->statement->from->condition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn // => true
+ *     $query->from->condition instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn // => true
  */
 final class JoinOn implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $condition The join condition
      */
-    public function __construct(public readonly Scalar $condition)
+    public function __construct(public readonly Scalar $condition, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

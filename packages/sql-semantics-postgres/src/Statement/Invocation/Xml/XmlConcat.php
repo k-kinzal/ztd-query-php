@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 
 /**
@@ -31,7 +30,8 @@ use SqlSemantics\Statement\Type\Known;
  */
 final class XmlConcat implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Scalar> The values in order
@@ -41,8 +41,11 @@ final class XmlConcat implements Scalar, OutputNaming
     /**
      * @param list<Scalar> $values The values in order; at least one
      */
-    public function __construct(array $values)
+    public function __construct(array $values, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $this->values = Check::listOf($values, Scalar::class, 'XMLCONCAT takes at least one value.', 1);
     }
 

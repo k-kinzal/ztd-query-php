@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter;
  *
  * @visibility public
  * @example Reading the kind of altered relation
- *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER MATERIALIZED VIEW m SET TABLESPACE s')->statement->target // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTarget::MaterializedView
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER MATERIALIZED VIEW m SET TABLESPACE s')->target // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTarget::MaterializedView
  */
 enum AlterTarget: string
 {

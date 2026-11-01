@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Problem;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -19,8 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reporting a row where a single value is required
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE (a, b) + 1');
- *     $query->facts->diagnostics[0]->message() // => 'Operand should contain 1 column(s), not 2.'
+ *     (new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns(1, 2))->message() // => 'Operand should contain 1 column(s), not 2.'
  */
 final class OperandColumns implements Diagnostic
 {
@@ -29,8 +29,9 @@ final class OperandColumns implements Diagnostic
     /**
      * @param int $expected The number of columns the position takes
      * @param int $actual The number of columns the operand has
+     * @param Scalar|null $expression The expression whose operand widths do not match, when supplied by its rule
      */
-    public function __construct(public readonly int $expected, public readonly int $actual)
+    public function __construct(public readonly int $expected, public readonly int $actual, public readonly ?Scalar $expression = null)
     {
         Check::input($expected >= 1 && $actual >= 1 && $expected !== $actual, 'An operand column problem names two different column counts.');
     }

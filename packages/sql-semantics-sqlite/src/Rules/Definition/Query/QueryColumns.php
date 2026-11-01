@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition\Query;
 
+use SqlSemantics\Construction\Facts;
 use SqlSemantics\Platform\Sqlite\Rules\Query\ResultNames;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
 use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
@@ -90,16 +90,16 @@ final class QueryColumns
      * @param Query $query The query; its output must be the given fact
      * @return list<Name|null>
      */
-    public function named(Query $query, QueryFact $output, Facts $facts): array
+    public function named(Query $query, QueryFact $output): array
     {
         $names = new ResultNames();
         $arm = $names->leftmost($query);
         $fields = $this->settled($output);
-        $sources = $arm === null || $arm === $query ? $fields : $this->settled($facts->query($arm));
+        $sources = $arm === null || $arm === $query ? $fields : $this->settled($arm->queryInformation());
         $named = [];
         foreach ($fields as $position => $field) {
             $column = $arm instanceof Select ? $names->column($arm, $sources[$position] ?? $field) : null;
-            $name = $column === null ? $field->name : $names->declared($column, $facts);
+            $name = $column === null ? $field->name : $names->declared($column);
             $named[] = $names->truth($arm instanceof ValuesClause ? new Name('column' . ($position + 1)) : $name, $position);
         }
 
@@ -164,11 +164,11 @@ final class QueryColumns
      * @param Query $query The query; its output must be the given fact
      * @return list<Column>
      */
-    public function tableColumns(Query $query, QueryFact $output, Facts $facts, Comparison $comparison): array
+    public function tableColumns(Query $query, QueryFact $output, Comparison $comparison): array
     {
         $columns = [];
-        foreach ($this->unique($this->named($query, $output, $facts), $comparison) as $position => $name) {
-            $affinity = (new ExpressionAffinity())->column($query, $position, $facts);
+        foreach ($this->unique($this->named($query, $output), $comparison) as $position => $name) {
+            $affinity = (new ExpressionAffinity())->column($query, $position);
             if (!$affinity->determined) {
                 break;
             }
@@ -186,7 +186,7 @@ final class QueryColumns
      * @param bool $typed Whether SQLite assigns the column types; it does not when a column list has another length than the query result
      * @return list<Column>
      */
-    public function viewColumns(Query $query, QueryFact $output, Facts $facts, ?array $listed, Comparison $comparison, bool $typed = true): array
+    public function viewColumns(Query $query, QueryFact $output, ?array $listed, Comparison $comparison, bool $typed = true): array
     {
         $fields = $this->settled($output);
         $names = [];
@@ -195,7 +195,7 @@ final class QueryColumns
         }
         $columns = [];
         if ($listed === null) {
-            $names = $this->named($query, $output, $facts);
+            $names = $this->named($query, $output);
         }
         foreach ($this->unique($names, $comparison) as $position => $name) {
             $field = $fields[$position] ?? null;
@@ -203,11 +203,11 @@ final class QueryColumns
                 $columns[] = new Column($name, new NoAffinity(), $field === null ? Nullability::Dependent : $field->nullability);
                 continue;
             }
-            $affinity = $field === null ? null : (new ExpressionAffinity())->column($query, $position, $facts);
+            $affinity = $field === null ? null : (new ExpressionAffinity())->column($query, $position);
             if ($field === null || $affinity === null || !$affinity->determined) {
                 break;
             }
-            $columns[] = new Column($name, (new ColumnTyping())->viewType($affinity, (new ColumnTyping())->leftmost($query, $position, $facts)), $field->nullability);
+            $columns[] = new Column($name, (new ColumnTyping())->viewType($affinity, (new ColumnTyping())->leftmost($query, $position)), $field->nullability);
         }
 
         return $columns;

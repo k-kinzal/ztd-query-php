@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKin
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An operator named with its operand types, as `operator_with_argtypes` writes it.
@@ -30,7 +29,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class OperatorSignature implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TypeName> The written operand types
@@ -42,7 +41,7 @@ final class OperatorSignature implements ObjectReference
      * @param OperatorArity $arity How the operand types are written
      * @param list<TypeName> $types The written operand types, as many as the arity writes
      */
-    public function __construct(public readonly OperatorName $operator, public readonly OperatorArity $arity, array $types)
+    public function __construct(public readonly OperatorName $operator, public readonly OperatorArity $arity, array $types, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$operator->explicit, 'An operator signature names the operator without the OPERATOR(...) syntax.');
         $this->types = Check::listOf($types, TypeName::class, 'An operator signature has operand types.', 1);

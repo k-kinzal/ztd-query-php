@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\TypeFact;
 
 /**
@@ -34,12 +33,12 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class ColumnDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The relation name followed by the column name; at least two parts
      */
-    public function __construct(public readonly DottedName $name)
+    public function __construct(public readonly DottedName $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(count($name->parts) >= 2, 'A column type reference names a relation and a column.');
     }

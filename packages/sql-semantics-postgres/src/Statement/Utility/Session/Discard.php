@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Session;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -19,17 +18,20 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading what is discarded
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DISCARD TEMPORARY');
- *     [$operation->statement->target->temporary(), $operation->toString()] // => [true, 'DISCARD TEMPORARY']
+ *     [$operation->target->temporary(), $operation->toString()] // => [true, 'DISCARD TEMPORARY']
  */
-final class Discard implements Statement
+final class Discard extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DiscardTarget $target What is released
      */
-    public function __construct(public readonly DiscardTarget $target)
+    public function __construct(public readonly DiscardTarget $target, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

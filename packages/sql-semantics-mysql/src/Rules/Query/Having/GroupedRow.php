@@ -28,6 +28,8 @@ use SqlSemantics\Statement\Shape\RowShape;
  */
 final class GroupedRow implements Relation
 {
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
     /**
      * @param list<Field|OpenStar> $selected The output fields of the select list, in order
      * @param list<Field> $grouping The GROUP BY items that are columns, each with the resolution of its column at the HAVING position

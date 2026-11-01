@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,9 +24,9 @@ use SqlSemantics\Statement\Statement;
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = false)');
  *     $operation->toString() // => 'ALTER SUBSCRIPTION s REFRESH PUBLICATION WITH (copy_data = FALSE)'
  */
-final class RefreshSubscription implements Statement
+final class RefreshSubscription extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Definition> The refresh options
@@ -38,8 +37,11 @@ final class RefreshSubscription implements Statement
      * @param Name $name The subscription name
      * @param list<Definition> $options The refresh options
      */
-    public function __construct(public readonly Name $name, array $options = [])
+    public function __construct(public readonly Name $name, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, Definition::class, 'Refresh options are definitions.');
     }
 

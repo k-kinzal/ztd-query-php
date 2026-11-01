@@ -24,7 +24,7 @@ final class TableConstraintRuleTest extends TestCase
 {
     public function testRunsAreEmptyWithoutTableConstraints(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([], $statement->constraints);
@@ -32,7 +32,7 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testRunsSplitTheConstraintsAtTheWrittenCommas(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, UNIQUE (a) CHECK (a > 0), CONSTRAINT n CONSTRAINT m, PRIMARY KEY (a))')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, UNIQUE (a) CHECK (a > 0), CONSTRAINT n CONSTRAINT m, PRIMARY KEY (a))');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([2, 2, 1], array_map(static fn (object $run): int => count($run->items), $statement->constraints));
@@ -40,7 +40,7 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testConstraintLowersEveryKindOfTableConstraint(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, CONSTRAINT n PRIMARY KEY (a) UNIQUE (a) CHECK (a > 0) FOREIGN KEY (a) REFERENCES p)')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a, CONSTRAINT n PRIMARY KEY (a) UNIQUE (a) CHECK (a > 0) FOREIGN KEY (a) REFERENCES p)');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertSame([ConstraintName::class, TablePrimaryKey::class, TableUnique::class, TableCheck::class, ForeignKey::class], array_map(static fn (object $item): string => $item::class, $statement->constraints[0]->items));
@@ -49,8 +49,8 @@ final class TableConstraintRuleTest extends TestCase
     public function testOptionsKeepTheirWrittenOrder(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $none = $semantics->analyze('CREATE TABLE t (a)')->statement;
-        $two = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT ROWID')->statement;
+        $none = $semantics->analyze('CREATE TABLE t (a)');
+        $two = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY) STRICT, WITHOUT ROWID');
 
         self::assertInstanceOf(CreateTable::class, $none);
         self::assertInstanceOf(CreateTable::class, $two);
@@ -61,8 +61,8 @@ final class TableConstraintRuleTest extends TestCase
     public function testLeadingCommaTellsACommaWrittenBeforeTheFirstOption(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $written = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY), WITHOUT ROWID')->statement;
-        $plain = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID, STRICT')->statement;
+        $written = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY), WITHOUT ROWID');
+        $plain = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID, STRICT');
 
         self::assertInstanceOf(CreateTable::class, $written);
         self::assertInstanceOf(CreateTable::class, $plain);
@@ -72,7 +72,7 @@ final class TableConstraintRuleTest extends TestCase
 
     public function testOptionTellsTheWithoutFormFromTheBareForm(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a) WITHOUT x, y')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a) WITHOUT x, y');
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertTrue($statement->options[0]->without);

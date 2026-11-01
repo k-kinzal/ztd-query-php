@@ -25,7 +25,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Affinity;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Platform\Sqlite\Statement\Type\NoAffinity;
 use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -74,7 +73,7 @@ final class ExpressionAffinity
     /**
      * Answers the affinity of an expression.
      */
-    public function of(Scalar $expression, Facts $facts): DerivedAffinity
+    public function of(Scalar $expression): DerivedAffinity
     {
         while ($expression instanceof Grouped || $expression instanceof Collate) {
             $expression = $expression->operand;
@@ -83,13 +82,13 @@ final class ExpressionAffinity
             return new DerivedAffinity($expression->target?->affinity() ?? Affinity::Numeric);
         }
         if ($expression instanceof RowExpression) {
-            return $this->of($expression->items[0], $facts);
+            return $this->of($expression->items[0]);
         }
         if ($expression instanceof ScalarSubquery) {
-            return $this->first($expression->query, $facts);
+            return $this->first($expression->query);
         }
         if ($expression instanceof ColumnUse || $expression instanceof DoubleQuotedWord || $expression instanceof LiteralColumn) {
-            return $this->reference($expression, $facts);
+            return $this->reference($expression);
         }
 
         return new DerivedAffinity();
@@ -98,14 +97,14 @@ final class ExpressionAffinity
     /**
      * Answers the affinity of a column reference: that of what it resolved to; a double-quoted word that is no column is a string without affinity.
      */
-    public function reference(Scalar $expression, Facts $facts): DerivedAffinity
+    public function reference(Scalar $expression): DerivedAffinity
     {
-        $resolution = $facts->covers($expression) ? $facts->scalar($expression)->resolution : null;
+        $resolution = $expression->hasBinding() ? $expression->scalarInformation()->resolution : null;
         if ($resolution instanceof ResolvedColumn) {
-            return $this->resolved($resolution, $facts);
+            return $this->resolved($resolution);
         }
         if ($resolution instanceof AliasTarget) {
-            return $this->field($resolution->field, $facts);
+            return $this->field($resolution->field);
         }
 
         return new DerivedAffinity(null, false, $resolution === null && $expression instanceof DoubleQuotedWord);
@@ -114,28 +113,28 @@ final class ExpressionAffinity
     /**
      * Answers the affinity of an output field: that of its expression, or of the column an expanded star exposes.
      */
-    public function field(Field $field, Facts $facts): DerivedAffinity
+    public function field(Field $field): DerivedAffinity
     {
         if ($field->expression !== null) {
-            return $this->of($field->expression, $facts);
+            return $this->of($field->expression);
         }
 
-        return $field->resolution instanceof ResolvedColumn ? $this->resolved($field->resolution, $facts) : new DerivedAffinity(null, false, false);
+        return $field->resolution instanceof ResolvedColumn ? $this->resolved($field->resolution) : new DerivedAffinity(null, false, false);
     }
 
     /**
      * Answers the affinity of a resolved column: of its declaration, or of the column of the query that computes it.
      */
-    public function resolved(ResolvedColumn $resolution, Facts $facts): DerivedAffinity
+    public function resolved(ResolvedColumn $resolution): DerivedAffinity
     {
         if ($resolution->slot->column !== null) {
             return $this->declared($resolution->slot->column);
         }
-        $query = $this->computing($resolution->relation, $facts);
+        $query = $this->computing($resolution->relation);
         if ($query !== null) {
-            $position = $this->position($query, $resolution->slot, $facts);
+            $position = $this->position($query, $resolution->slot);
 
-            return $position === null ? new DerivedAffinity(null, false, false) : $this->column($query, $position, $facts);
+            return $position === null ? new DerivedAffinity(null, false, false) : $this->column($query, $position);
         }
         $column = $resolution->slot->declaration();
 
@@ -158,15 +157,15 @@ final class ExpressionAffinity
     /**
      * Answers the query that computes the columns of a relation occurrence: a derived query or the definition of a common table.
      */
-    public function computing(Relation $relation, Facts $facts): ?Query
+    public function computing(Relation $relation): ?Query
     {
         if ($relation instanceof DerivedQuery) {
             return $relation->query;
         }
-        if (!$facts->covers($relation)) {
+        if (!$relation->hasBinding()) {
             return null;
         }
-        $table = $facts->relation($relation)->table;
+        $table = $relation->relationInformation()->table;
 
         return $table instanceof CommonTable && $table->definition instanceof CommonTableDefinition ? $table->definition->query : null;
     }
@@ -174,13 +173,13 @@ final class ExpressionAffinity
     /**
      * Answers the position of the output field of a query that a slot re-exposes, or null when the slot comes from nowhere in it.
      */
-    public function position(Query $query, OutputSlot $slot, Facts $facts): ?int
+    public function position(Query $query, OutputSlot $slot): ?int
     {
-        if (!$facts->covers($query)) {
+        if (!$query->hasBinding()) {
             return null;
         }
         for ($current = $slot; $current !== null; $current = $current->origin) {
-            foreach ($facts->query($query)->projection as $item) {
+            foreach ($query->queryInformation()->projection as $item) {
                 if ($item instanceof Field && $item->slot === $current) {
                     return $item->position;
                 }
@@ -221,25 +220,25 @@ final class ExpressionAffinity
     /**
      * Answers the affinity of the result of an arm at a position; an expanded star is a column reference.
      */
-    public function arm(Select|ValueRow $arm, int $position, Facts $facts): DerivedAffinity
+    public function arm(Select|ValueRow $arm, int $position): DerivedAffinity
     {
         if ($arm instanceof ValueRow) {
-            return isset($arm->values[$position]) ? $this->of($arm->values[$position], $facts) : new DerivedAffinity(null, false, false);
+            return isset($arm->values[$position]) ? $this->of($arm->values[$position]) : new DerivedAffinity(null, false, false);
         }
-        $item = $facts->covers($arm) ? ($facts->query($arm)->projection[$position] ?? null) : null;
+        $item = $arm->hasBinding() ? ($arm->queryInformation()->projection[$position] ?? null) : null;
 
-        return $item instanceof Field ? $this->field($item, $facts) : new DerivedAffinity(null, false, false);
+        return $item instanceof Field ? $this->field($item) : new DerivedAffinity(null, false, false);
     }
 
     /**
      * Answers the expression an arm writes at a position, or null for an expanded star or a position the arm does not have.
      */
-    public function written(Select|ValueRow $arm, int $position, Facts $facts): ?Scalar
+    public function written(Select|ValueRow $arm, int $position): ?Scalar
     {
         if ($arm instanceof ValueRow) {
             return $arm->values[$position] ?? null;
         }
-        $item = $facts->covers($arm) ? ($facts->query($arm)->projection[$position] ?? null) : null;
+        $item = $arm->hasBinding() ? ($arm->queryInformation()->projection[$position] ?? null) : null;
 
         return $item instanceof Field ? $item->expression : null;
     }
@@ -247,42 +246,42 @@ final class ExpressionAffinity
     /**
      * Answers the affinity of a scalar subquery: that of the first result of the rightmost arm.
      */
-    public function first(Query $query, Facts $facts): DerivedAffinity
+    public function first(Query $query): DerivedAffinity
     {
         $arms = $this->arms($query);
 
-        return $this->arm($arms[count($arms) - 1], 0, $facts);
+        return $this->arm($arms[count($arms) - 1], 0);
     }
 
     /**
      * Answers the affinity SQLite computes for a column of a query (SQLITE-QUERY-COLUMN-AFFINITY-001).
      */
-    public function column(Query $query, int $position, Facts $facts): DerivedAffinity
+    public function column(Query $query, int $position): DerivedAffinity
     {
         $arms = $this->arms($query);
         $kinds = 0;
         $index = 0;
-        $affinity = $this->arm($arms[0], $position, $facts);
+        $affinity = $this->arm($arms[0], $position);
         while ($affinity->determined && $affinity->affinity === null && isset($arms[$index + 1])) {
-            $kind = (new ValueKinds())->arm($arms[$index], $position, $facts);
+            $kind = (new ValueKinds())->arm($arms[$index], $position);
             if ($kind === null) {
                 return new DerivedAffinity(null, false, false);
             }
             $kinds |= $kind;
-            $affinity = $this->arm($arms[++$index], $position, $facts);
+            $affinity = $this->arm($arms[++$index], $position);
         }
         if (!$affinity->typed() || ($index === 0 && !isset($arms[1]))) {
             return $affinity;
         }
         for ($later = $index + 1; isset($arms[$later]); $later++) {
-            $kind = (new ValueKinds())->arm($arms[$later], $position, $facts);
+            $kind = (new ValueKinds())->arm($arms[$later], $position);
             if ($kind === null) {
                 return new DerivedAffinity(null, false, false);
             }
             $kinds |= $kind;
         }
 
-        return $this->adjusted($affinity, $kinds, $this->written($arms[0], $position, $facts));
+        return $this->adjusted($affinity, $kinds, $this->written($arms[0], $position));
     }
 
     /**

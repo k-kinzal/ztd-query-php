@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
@@ -56,5 +58,13 @@ final class BetweenTest extends TestCase
         $this->expectExceptionMessage('The lower bound of BETWEEN needs a grouping to keep its place.');
 
         new Between(new NumberLiteral('1'), new Between(new NumberLiteral('2'), new NumberLiteral('3'), new NumberLiteral('4')), new NumberLiteral('5'));
+    }
+
+    public function testDeriveScalarRefusesARowAsAnyOperand(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT ROW(1, 2) BETWEEN ROW(1, 2) AND ROW(3, 4)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertTrue($statement->hasExecutionCondition());
+        self::assertContains('Operand should contain 1 column(s), not 2.', array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 }

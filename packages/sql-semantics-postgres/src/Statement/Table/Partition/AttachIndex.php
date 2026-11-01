@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ATTACH PARTITION of ALTER INDEX: makes an index a partition of the altered partitioned index.
@@ -26,12 +25,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AttachIndex implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $index The index
      */
-    public function __construct(public readonly QualifiedName $index)
+    public function __construct(public readonly QualifiedName $index, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

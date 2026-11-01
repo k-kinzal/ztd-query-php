@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -20,18 +19,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Dropping a tablespace if it exists
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP TABLESPACE IF EXISTS fast');
- *     [$operation->statement->ifExists, $operation->toString()] // => [true, 'DROP TABLESPACE IF EXISTS fast']
+ *     [$operation->ifExists, $operation->toString()] // => [true, 'DROP TABLESPACE IF EXISTS fast']
  */
-final class DropTablespace implements Statement
+final class DropTablespace extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The tablespace name
      * @param bool $ifExists Whether IF EXISTS is written
      */
-    public function __construct(public readonly Name $name, public readonly bool $ifExists = false)
+    public function __construct(public readonly Name $name, public readonly bool $ifExists = false, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

@@ -63,6 +63,16 @@ final class QueryContextRuleTest extends TestCase
      */
     public static function providerSources(): array
     {
-        return [['(', true], ['SELECT_SYM', true], ['AS', false]];
+        return [['(', true], ['SELECT_SYM', false], ['AS', false]];
+    }
+
+    public function testRewriteKeepsThePartitionAndQueryBoundaryExplicit(): void
+    {
+        $partition = new TerminalOccurrence('PARTITION_SYM', 2, [0], ['create_table_stmt']);
+        $query = new TerminalOccurrence('SELECT_SYM', 3, [0, 1], ['create_table_stmt', 'as_create_query_expression']);
+        $tokens = [$partition, $query];
+        $input = new TerminalSequence($tokens, $tokens, [], [new ProductionOccurrence(0, null, 'create_table_stmt', 0), new ProductionOccurrence(1, 0, 'as_create_query_expression', 1)]);
+
+        self::assertSame(['PARTITION_SYM', 'AS', 'SELECT_SYM'], (new QueryContextRule())->rewrite($input)->names());
     }
 }

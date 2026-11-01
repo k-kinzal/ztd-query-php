@@ -17,6 +17,12 @@ final class CachedTableTest extends TestCase
 {
     public function testRenderWritesPartitionsAndIndexes(): void
     {
-        self::assertSame('CACHE INDEX t PARTITION (p) INDEX () IN c', (new Semantics(Dialect::MySql))->analyze('cache index t partition (p) key () in c')->toString());
+        self::assertSame('CACHE INDEX t PARTITION (p) KEY () IN c', (new Semantics(Dialect::MySql))->analyze('cache index t partition (p) key () in c')->toString());
+    }
+
+    public function testRejectsAKeywordWithoutAnIndexList(): void
+    {
+        $this->expectExceptionMessage('Only a written index list has an index keyword.');
+        new CachedTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('a')), keyword: \SqlSemantics\Platform\MySql\Statement\Table\IndexWord::Key);
     }
 }

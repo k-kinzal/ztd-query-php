@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * ALTER [ COLUMN ] ... SET/RESTART: changes the sequence or the generation of an identity column.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AlterIdentity implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<IdentityRestart|IdentitySetting|IdentityGeneration> The changes in the order written
@@ -38,7 +37,7 @@ final class AlterIdentity implements AlterCommand
      * @param Name $column The column
      * @param list<IdentityRestart|IdentitySetting|IdentityGeneration> $options The changes in the order written
      */
-    public function __construct(public readonly Name $column, array $options)
+    public function __construct(public readonly Name $column, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = (new IdentityChanges())->checked($options);
     }

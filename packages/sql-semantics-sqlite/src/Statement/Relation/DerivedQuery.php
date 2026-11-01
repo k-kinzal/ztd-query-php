@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A query in parentheses used as query input.
@@ -28,11 +27,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a derived query
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT x FROM (SELECT 1 AS x) AS d');
- *     [$query->statement->from->alias->value, $query->field('x')->type->descriptor] // => ['d', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer]
+ *     [$query->from->alias->value, $query->field('x')->type->descriptor] // => ['d', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer]
  */
-final class DerivedQuery implements Relation
+final class DerivedQuery implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Query $query The query
@@ -40,8 +40,11 @@ final class DerivedQuery implements Relation
      * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias
      */
-    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, public readonly bool $as = true)
+    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, public readonly bool $as = true, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         Check::input($as || $alias !== null, 'AS is left out only before an alias.');
     }
 

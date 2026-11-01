@@ -40,7 +40,7 @@ final class ProjectionTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $select = $semantics->analyze('SELECT a, (b) AS x, a + 1, rowid, *, t.* FROM t')->statement;
+        $select = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT a, (b) AS x, a + 1, rowid, *, t.* FROM t'));
         self::assertInstanceOf(Select::class, $select);
         $from = $select->from;
         self::assertNotNull($from);
@@ -82,7 +82,7 @@ final class ProjectionTest extends TestCase
     public function testItemsReportsARowValueResultColumn(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $select = $semantics->analyze('SELECT (1, 2)')->statement;
+        $select = (new \SqlSemantics\Construction\Occurrences())->copy($semantics->analyze('SELECT (1, 2)'));
         self::assertInstanceOf(Select::class, $select);
         $derivation = new Derivation($semantics->context([]));
 

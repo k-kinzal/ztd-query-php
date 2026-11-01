@@ -32,7 +32,7 @@ final class DeferrabilityTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent DEFERRABLE)', []);
 
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesEveryForm(): void
@@ -50,7 +50,7 @@ final class DeferrabilityTest extends TestCase
     public function testRenderKeepsTheClauseAsAColumnConstraintOfItsOwn(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('create table c (p references parent not deferrable initially deferred)');
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         self::assertInstanceOf(Deferrability::class, $statement->columns[0]->constraints[1]);

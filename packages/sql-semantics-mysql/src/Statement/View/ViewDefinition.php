@@ -12,7 +12,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The part a CREATE VIEW and an ALTER VIEW share: algorithm, definer, security, name, column list, query and check option.
@@ -20,14 +19,23 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-view.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-view.html.
  *
+ * @example Retaining an intrinsically empty output as an execution condition
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
+ *     (new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), $query))->hasExecutionCondition() // => true
+ *
+ * @example Retaining a qualified projection whose relation must be resolved
+ *     $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'));
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Name\TableWildcard($name)]);
+ *     (new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition($name, $query))->hasExecutionCondition() // => true
+ *
  * @visibility public
  * @example Reading a view definition
  *     $view = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE ALGORITHM = MERGE SQL SECURITY INVOKER VIEW v (x) AS SELECT 1 WITH LOCAL CHECK OPTION');
- *     [$view->statement->definition->algorithm, $view->statement->definition->security, $view->statement->definition->check] // => [\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::Merge, \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Invoker, \SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption::Local]
+ *     [$view->definition->algorithm, $view->definition->security, $view->definition->check] // => [\SqlSemantics\Platform\MySql\Statement\View\ViewAlgorithm::Merge, \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Invoker, \SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption::Local]
  */
 final class ViewDefinition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Name>|null The column list, or null when none is written
@@ -53,9 +61,20 @@ final class ViewDefinition implements Node
         public readonly ?ViewSecurity $security = null,
         public readonly ?ViewCheckOption $check = null,
         public readonly bool $ifNotExists = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
     ) {
+        (new \SqlSemantics\Platform\MySql\Rules\TableChange\TableIdentity())->check($name);
         Check::input($name->catalog === null, 'A view name has at most a database qualifier.');
         $this->columns = $columns === null ? null : Check::listOf($columns, Name::class, 'A written column list names at least one column.', 1);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ViewQueries())->check($query);
+    }
+
+    /**
+     * Retains fixed read-column conditions for execution, alongside catalog dependencies.
+     */
+    public function hasExecutionCondition(): bool
+    {
+        return (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($this->query) !== null;
     }
 
     /**

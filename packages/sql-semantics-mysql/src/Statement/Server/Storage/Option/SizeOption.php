@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Storage\Option;
 
 use SqlSemantics\Platform\MySql\Statement\Literal\ByteSize;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A size option: `INITIAL_SIZE [=] size`, `MAX_SIZE [=] size`, `FILE_BLOCK_SIZE [=] size`, ….
@@ -22,13 +21,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SizeOption implements StorageOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SizeOptionKind $kind The option
      * @param ByteSize $size The size
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly SizeOptionKind $kind, public readonly ByteSize $size)
+    public function __construct(public readonly SizeOptionKind $kind, public readonly ByteSize $size, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
     }
 
@@ -45,6 +45,10 @@ final class SizeOption implements StorageOption
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->kind->value)->node($this->size);
+        $out->keyword($this->kind->value);
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
+        }
+        $out->node($this->size);
     }
 }

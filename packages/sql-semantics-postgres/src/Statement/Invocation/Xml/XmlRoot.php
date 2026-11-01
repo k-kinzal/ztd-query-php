@@ -12,7 +12,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
@@ -32,15 +31,19 @@ use SqlSemantics\Statement\Type\NullOnly;
  */
 final class XmlRoot implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $value The XML value
      * @param Scalar|null $version The version; null for VERSION NO VALUE
      * @param XmlStandalone|null $standalone The standalone declaration written
      */
-    public function __construct(public readonly Scalar $value, public readonly ?Scalar $version = null, public readonly ?XmlStandalone $standalone = null)
+    public function __construct(public readonly Scalar $value, public readonly ?Scalar $version = null, public readonly ?XmlStandalone $standalone = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

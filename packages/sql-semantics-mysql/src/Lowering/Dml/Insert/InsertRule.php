@@ -18,8 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Lowers INSERT and REPLACE of every release.
@@ -31,7 +31,7 @@ use SqlSemantics\Statement\Statement;
  * opt_insert_update_list, opt_values_reference. The head becomes
  * InsertInto; the source decides the statement class: rows of VALUES
  * (InsertRows), SET assignments (InsertSet) or a query (InsertQuery). INTO
- * is optional and has no meaning (DmlNoise). Terminates: the parts are
+ * is optional and its presence is retained. Terminates: the parts are
  * strict subtrees. Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html,
  * https://dev.mysql.com/doc/refman/8.4/en/replace.html,
  * https://dev.mysql.com/doc/refman/5.6/en/insert.html. Status: Implemented.
@@ -88,18 +88,23 @@ final class InsertRule
         if ($into->signature !== 'opt_INTO:' && $into->signature !== 'opt_INTO: INTO') {
             throw ImplementationGap::production($into);
         }
+        $intoWritten = $into->signature === 'opt_INTO: INTO';
         $target = new WriteTarget($this->lowering->names->qualified($form->node($table)), null, $this->lowering->queries->partitions($form->node($partitions)));
+        $this->lowering->origins->record($target, $form->node($table));
         $priority = $this->priority($form->node($lock));
         $skip = $ignore === null ? false : $this->lowering->options->present($form->node($ignore));
         $alias = $layout[6] === null ? null : $this->alias($form->node($layout[6]));
-        $updates = $layout[7] === null ? [] : $this->updates($form->node($layout[7]));
+        $clause = $layout[7] === null ? null : $form->node($layout[7]);
+        $hints = $this->lowering->hints($form->token(0));
         if ($form->node->children[$source] instanceof Node) {
-            [$columns, $body] = (new InsertSourceRule($this->lowering))->source($form->node($source));
+            [$columns, $body, $keyword, $valuesSource] = (new InsertSourceRule($this->lowering))->source($form->node($source));
+            $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
 
-            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns), $body, $alias, $updates);
+            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints, $intoWritten), $body, $alias, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $keyword, $valuesSource);
         }
 
-        return new InsertSet(new InsertInto($replace, $priority, $skip, $target), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, $updates);
+        $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
+        return $this->set(new InsertInto($replace, $priority, $skip, $target, hints: $hints, intoWritten: $intoWritten), $form->node($source + 1), $alias, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
     }
 
     /**
@@ -113,33 +118,55 @@ final class InsertRule
         if (!$replace && $form->signature !== 'insert: INSERT insert_lock_option opt_ignore insert2 insert_field_spec opt_insert_update') {
             throw ImplementationGap::production($form);
         }
+        $hints = $this->lowering->hints($form->token(0));
         $offset = $replace ? 0 : 1;
         $target = $this->target($form->node(2 + $offset));
+        $intoWritten = $this->lowering->form($form->node(2 + $offset))->signature === 'insert2: INTO insert_table';
         $priority = $this->priority($form->node(1));
         $skip = !$replace && $this->lowering->options->present($form->node(2));
-        $updates = $replace ? [] : $this->updates($form->node(5));
+        $clause = $replace ? null : $form->node(5);
         $spec = $this->lowering->form($form->node(3 + $offset));
         if ($spec->signature === 'insert_field_spec: SET ident_eq_list') {
-            return new InsertSet(new InsertInto($replace, $priority, $skip, $target), (new ValueRule($this->lowering))->assignments($spec->node(1)), null, $updates);
+            $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
+            return $this->set(new InsertInto($replace, $priority, $skip, $target, hints: $hints, intoWritten: $intoWritten), $spec->node(1), null, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
         }
-        [$columns, $body] = (new InsertSourceRule($this->lowering))->source($spec->node);
+        [$columns, $body, $keyword, $valuesSource] = (new InsertSourceRule($this->lowering))->source($spec->node);
+        $updates = $clause === null ? [] : (new RetainedUpdates($this->lowering))->read($clause);
 
-        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns), $body, null, $updates);
+        return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints, $intoWritten), $body, null, $updates, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, $keyword, $valuesSource);
     }
 
     /**
      * Builds the statement of rows or of a query.
      *
-     * @param list<InsertedRow>|Query $body
-     * @param list<Assignment> $updates
+     * @param list<InsertedRow|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredInsertedRow>|Query $body
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $updates
+     * @throws \SqlSemantics\Construction\RejectedInput When a reached call has an invalid identity or signature
      */
-    public function build(InsertInto $into, array|Query $body, ?RowAlias $alias, array $updates): Statement
+    public function build(InsertInto $into, array|Query $body, ?RowAlias $alias, array $updates, int $end = 0, \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesKeyword $keyword = \SqlSemantics\Platform\MySql\Statement\Dml\Insert\ValuesKeyword::Values, ?\SqlSemantics\Statement\Source\Span $valuesSource = null): Statement
     {
         if ($body instanceof Query) {
+            $used = (new \SqlSemantics\Platform\MySql\Rules\Dml\ValueSources())->values($body) ?? $body;
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Call\Structure\CallRoles())->problem($used);
+            if ($problem !== null) {
+                $origin = $this->lowering->origins->publish()->of($body);
+                throw new \SqlSemantics\Construction\RejectedInput($problem, $origin === null ? 0 : $origin->offset + $origin->length, false);
+            }
             return new InsertQuery($into, $body, $updates);
         }
 
-        return new InsertRows($into, $body, $alias, $updates);
+        return new InsertRows($into, $body, $alias, $updates, $keyword, $valuesSource);
+    }
+
+    /**
+     * Builds the complete SET write, including non-scalar assignments.
+     *
+     * @param list<Assignment|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Write\DeferredColumnAssignment> $updates Duplicate-key assignments
+     */
+    public function set(InsertInto $into, Node $list, ?RowAlias $alias, array $updates, int $end): InsertSet
+    {
+        $assignments = (new RetainedUpdates($this->lowering))->assignments($list);
+        return new InsertSet($into, $assignments, $alias, $updates);
     }
 
     /**
@@ -163,7 +190,7 @@ final class InsertRule
             throw ImplementationGap::production($named);
         }
 
-        return new WriteTarget($this->lowering->names->qualified($named->node(0)), null, $this->lowering->queries->partitions($named->node(1)));
+        return $this->lowering->origins->record(new WriteTarget($this->lowering->names->qualified($named->node(0)), null, $this->lowering->queries->partitions($named->node(1))), $named->node(0));
     }
 
     /**

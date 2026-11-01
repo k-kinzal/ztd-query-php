@@ -19,12 +19,12 @@ final class MissingTableTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM t', []);
 
-        $resolution = $query->facts->relation($query->singleNamedInput())->table;
+        $resolution = $query->singleNamedInput()->relationInformation()->table;
 
         self::assertInstanceOf(MissingTable::class, $resolution);
         self::assertSame('Relation t does not exist.', $resolution->message());
         self::assertSame('t', $resolution->name->name->value);
-        self::assertSame($resolution, $query->facts->diagnostics[0]);
+        self::assertSame($resolution, $query->diagnostics()[0]);
     }
 
     public function testMessageOfAQualifiedNameSearchesThatSchemaOnly(): void
@@ -33,6 +33,6 @@ final class MissingTableTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INTEGER)');
         $query = $semantics->analyze('SELECT a FROM aux.t', [$table]);
 
-        self::assertInstanceOf(MissingTable::class, $query->facts->relation($query->singleNamedInput())->table);
+        self::assertInstanceOf(MissingTable::class, $query->singleNamedInput()->relationInformation()->table);
     }
 }

@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Partition\Bound;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `VALUES IN ((value, …), …)`: the value tuples of a LIST COLUMNS partition.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ValuesInRows implements PartitionBound
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionRow> The tuples in order; at least one
@@ -33,7 +32,7 @@ final class ValuesInRows implements PartitionBound
     /**
      * @param list<PartitionRow> $rows The tuples in order; at least one
      */
-    public function __construct(array $rows)
+    public function __construct(array $rows, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($rows !== [], 'VALUES IN lists at least one tuple.');
         $this->rows = Check::listOf($rows, PartitionRow::class, 'The tuples of VALUES IN are a list of rows.');

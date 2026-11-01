@@ -18,7 +18,7 @@ final class IdentificationRuleTest extends TestCase
     public function testIdentificationLowersEveryForm(): void
     {
         self::assertSame("CREATE USER u IDENTIFIED WITH p BY 'x'", (new Semantics(Dialect::MySql))->analyze("create user u identified with p by 'x'")->toString());
-        self::assertSame("CREATE USER u IDENTIFIED WITH p AS x'41'", (new Semantics(Dialect::MySql))->analyze('create user u identified with p as 0x41')->toString());
+        self::assertSame('CREATE USER u IDENTIFIED WITH p AS 0x41', (new Semantics(Dialect::MySql))->analyze('create user u identified with p as 0x41')->toString());
     }
 
     public function testFactorsLowersTheFurtherFactors(): void

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -26,11 +25,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Resetting a parameter
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLESPACE fast RESET (seq_page_cost)');
- *     [$operation->statement->reset, $operation->facts->diagnostics] // => [true, []]
+ *     [$operation->reset, $operation->diagnostics()] // => [true, []]
  */
-final class AlterTablespaceOptions implements Statement
+final class AlterTablespaceOptions extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Definition> The parameters
@@ -42,8 +41,11 @@ final class AlterTablespaceOptions implements Statement
      * @param bool $reset Whether the parameters are reset instead of set
      * @param list<Definition> $options The parameters; at least one
      */
-    public function __construct(public readonly Name $name, public readonly bool $reset, array $options)
+    public function __construct(public readonly Name $name, public readonly bool $reset, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, Definition::class, 'Tablespace parameters are a non-empty list of definitions.', 1);
     }
 

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Account\Problem;
 
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind;
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName;
+use SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
@@ -16,17 +19,20 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Describing the problem
- *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange('USER', '-5'))->message() // => 'Thread priority -5 is outside the range of a USER resource group (ER_INVALID_THREAD_PRIORITY).'
+ *     $name = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupName(new \SqlSemantics\Statement\Identifier\Name('batch'));
+ *     $priority = new \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ThreadPriority(true, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('5'));
+ *     (new \SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange($name, \SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup\ResourceGroupKind::User, $priority))->message() // => 'Thread priority -5 is outside the range of a USER resource group (ER_INVALID_THREAD_PRIORITY).'
  */
 final class PriorityOutOfRange implements Diagnostic
 {
     use Snapshot;
 
     /**
-     * @param string $type The type of the group
-     * @param string $priority The priority as written
+     * @param ResourceGroupName $name The group operand, including its converted identity
+     * @param ResourceGroupKind $kind The declared group kind
+     * @param ThreadPriority $priority The rejected priority operand
      */
-    public function __construct(public readonly string $type, public readonly string $priority)
+    public function __construct(public readonly ResourceGroupName $name, public readonly ResourceGroupKind $kind, public readonly ThreadPriority $priority)
     {
     }
 
@@ -35,6 +41,6 @@ final class PriorityOutOfRange implements Diagnostic
      */
     public function message(): string
     {
-        return 'Thread priority ' . $this->priority . ' is outside the range of a ' . $this->type . ' resource group (ER_INVALID_THREAD_PRIORITY).';
+        return 'Thread priority ' . $this->priority->describe() . ' is outside the range of a ' . $this->kind->value . ' resource group (ER_INVALID_THREAD_PRIORITY).';
     }
 }

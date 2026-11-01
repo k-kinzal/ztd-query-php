@@ -38,8 +38,8 @@ final class RenameTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $missing = $semantics->analyze('ALTER TABLE ONLY t RENAME b TO c', [$table]);
         $taken = $semantics->analyze('ALTER TABLE IF EXISTS t RENAME COLUMN a TO a', [$table]);
-        self::assertEquals([new MissingColumn(new Name('b'), new QualifiedName(new Name('t')))], $missing->facts->diagnostics);
-        self::assertSame(['column "a" already exists'], [$taken->facts->diagnostics[0]->message()]);
+        self::assertEquals([new MissingColumn(new Name('b'), new QualifiedName(new Name('t')))], $missing->diagnostics());
+        self::assertSame(['column "a" already exists'], [$taken->diagnostics()[0]->message()]);
     }
 
     public function testRenderWritesRolesAndAttributes(): void
@@ -91,8 +91,8 @@ final class RenameTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME TO w', $context)->facts->diagnostics));
-        self::assertSame(['cannot rename columns of relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE s RENAME CONSTRAINT c TO d', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME COLUMN a TO b', $context)->facts->diagnostics));
+        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME TO w', $context)->diagnostics()));
+        self::assertSame(['cannot rename columns of relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE s RENAME CONSTRAINT c TO d', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME COLUMN a TO b', $context)->diagnostics()));
     }
 }

@@ -14,7 +14,7 @@ final class CreateLanguageExtensionTest extends TestCase
 {
     public function testIfNotExistsFollowsOrReplace(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OR REPLACE LANGUAGE plperl')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OR REPLACE LANGUAGE plperl');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\CreateLanguageExtension::class, $statement);
         self::assertSame(true, $statement->ifNotExists());
     }
@@ -26,6 +26,6 @@ final class CreateLanguageExtensionTest extends TestCase
 
     public function testDeriveStatementRecordsNothing(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE LANGUAGE plperl')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE LANGUAGE plperl')->diagnostics());
     }
 }

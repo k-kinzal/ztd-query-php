@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ExistsTest extends TestCase
 {
-    public function testDeriveScalarIsNeverNull(): void
+    public function testDeriveScalarRetainsTheModernNullableResultAttribute(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -29,7 +29,7 @@ final class ExistsTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], true));
 
         self::assertInstanceOf(Exists::class, $exists);
-        self::assertSame(Nullability::NotNull, $derivation->scalar($exists, $derivation->environment())->nullability);
+        self::assertSame(Nullability::Nullable, $derivation->scalar($exists, $derivation->environment())->nullability);
     }
 
     public function testRenderWritesExistsAndTheQuery(): void

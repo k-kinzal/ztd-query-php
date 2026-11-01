@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a star without input
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->message() // => 'SELECT * with no tables specified is not valid'
+ *     $query->diagnostics()[0]->message() // => 'SELECT * with no tables specified is not valid'
  */
 final class QueryMisuse implements Diagnostic
 {

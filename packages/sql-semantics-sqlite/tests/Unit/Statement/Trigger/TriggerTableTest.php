@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
@@ -30,17 +29,17 @@ final class TriggerTableTest extends TestCase
     {
         $trigger = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
-        self::assertSame('t', $trigger->statement->table->name()->name->value);
-        self::assertSame('main', $trigger->statement->table->name()->schema?->value);
+        self::assertInstanceOf(CreateTrigger::class, $trigger);
+        self::assertSame('t', $trigger->table->name()->name->value);
+        self::assertSame('main', $trigger->table->name()->schema?->value);
     }
 
     public function testAliasIsAlwaysNull(): void
     {
         $trigger = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
-        self::assertNull($trigger->statement->table->alias());
+        self::assertInstanceOf(CreateTrigger::class, $trigger);
+        self::assertNull($trigger->table->alias());
     }
 
     public function testDeriveRelationResolvesTheWatchedTableInTheContext(): void
@@ -51,23 +50,23 @@ final class TriggerTableTest extends TestCase
         $missing = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT 1; END', []);
         $undeclared = $semantics->analyze('CREATE TRIGGER tr INSERT ON t BEGIN SELECT new.a; END');
 
-        self::assertInstanceOf(CreateTrigger::class, $declared->statement);
-        $fact = $declared->facts->relation($declared->statement->table);
+        self::assertInstanceOf(CreateTrigger::class, $declared);
+        $fact = $declared->table->relationInformation();
         self::assertInstanceOf(DeclaredTable::class, $fact->table);
         self::assertSame($t->declarations()[0], $fact->table->table);
         self::assertCount(3, $fact->shape->slots);
-        self::assertInstanceOf(CreateTrigger::class, $missing->statement);
-        self::assertInstanceOf(MissingTable::class, $missing->facts->relation($missing->statement->table)->table);
-        self::assertInstanceOf(MissingTable::class, $missing->facts->diagnostics[0]);
-        self::assertInstanceOf(CreateTrigger::class, $undeclared->statement);
-        self::assertInstanceOf(UndeclaredTable::class, $undeclared->facts->relation($undeclared->statement->table)->table);
-        self::assertSame([], $undeclared->facts->diagnostics);
+        self::assertInstanceOf(CreateTrigger::class, $missing);
+        self::assertInstanceOf(MissingTable::class, $missing->table->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $missing->diagnostics()[0]);
+        self::assertInstanceOf(CreateTrigger::class, $undeclared);
+        self::assertInstanceOf(UndeclaredTable::class, $undeclared->table->relationInformation()->table);
+        self::assertSame([], $undeclared->diagnostics());
     }
 
     public function testRenderWritesTheSchemaAndTheName(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $built = new Operation($semantics->context(), new CreateTrigger(new QualifiedName(new Name('tr')), TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'), new Name('temp'))), [new Select([new ResultColumn(new IntegerLiteral('1'))])]));
+        $built = Semantics::fromStatement($semantics->context(), new CreateTrigger(new QualifiedName(new Name('tr')), TriggerEvent::Insert, new TriggerTable(new QualifiedName(new Name('t'), new Name('temp'))), [new Select([new ResultColumn(new IntegerLiteral('1'))])]));
 
         self::assertSame('CREATE TRIGGER tr INSERT ON `temp`.t BEGIN SELECT 1; END', $built->toString());
         self::assertSame('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END', $semantics->analyze('create trigger tr insert on main.t begin select 1; end')->toString());

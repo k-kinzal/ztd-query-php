@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The LIMIT TO or EXCEPT clause of IMPORT FOREIGN SCHEMA.
@@ -20,11 +19,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the excluded tables
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('IMPORT FOREIGN SCHEMA remote EXCEPT (logs) FROM SERVER s INTO local');
- *     $operation->statement->restriction->tables[0]->name->name->value // => 'logs'
+ *     $operation->restriction->tables[0]->name->name->value // => 'logs'
  */
 final class ImportRestriction implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<RelationReference> The tables
@@ -35,7 +34,7 @@ final class ImportRestriction implements Node
      * @param ImportRestrictionKind $kind Whether the tables are the only ones or the excluded ones
      * @param list<RelationReference> $tables The tables; at least one
      */
-    public function __construct(public readonly ImportRestrictionKind $kind, array $tables)
+    public function __construct(public readonly ImportRestrictionKind $kind, array $tables, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->tables = Check::listOf($tables, RelationReference::class, 'An import restriction names at least one table.', 1);
     }

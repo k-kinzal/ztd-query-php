@@ -19,7 +19,7 @@ final class AlterTypeOptionsTest extends TestCase
 
     public function testDeriveStatementDerivesTheValues(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE t SET (receive = r)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE t SET (receive = r)')->diagnostics());
     }
 
     public function testDeriveStatementReportsThePropertiesTheCommandRefuses(): void
@@ -30,6 +30,6 @@ final class AlterTypeOptionsTest extends TestCase
             'type attribute "input" cannot be changed',
             'storage "bogus" not recognized',
             'storage requires a parameter',
-        ], array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $operation->diagnostics()));
     }
 }

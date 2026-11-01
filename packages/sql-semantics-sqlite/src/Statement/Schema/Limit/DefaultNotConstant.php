@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a bound parameter in a default
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a DEFAULT (?))');
- *     $create->facts->diagnostics[0]->message() // => 'The default value of column a is not constant.'
+ *     $create->diagnostics()[0]->message() // => 'The default value of column a is not constant.'
  */
 final class DefaultNotConstant implements Diagnostic
 {

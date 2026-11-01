@@ -16,7 +16,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem;
  * @visibility public
  * @example Reading which rule a command breaks
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP ROLE CURRENT_USER');
- *     $operation->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule::SpecialRoleDrop
+ *     $operation->diagnostics()[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule::SpecialRoleDrop
  */
 enum AccessProblemRule: string
 {

@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping the missing declaration of a named input
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a FROM t');
- *     $query->facts->relation($query->inputRelation())->table->missing->name->name->value // => 't'
+ *     $query->inputRelation()->relationInformation()->table->missing->name->name->value // => 't'
  */
 final class UndeclaredTable implements TableResolution
 {

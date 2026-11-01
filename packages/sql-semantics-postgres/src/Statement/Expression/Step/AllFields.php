@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\IndirectionStep;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The indirection step `.*`: every field of a composite value.
@@ -24,7 +23,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AllFields implements IndirectionStep
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+    /**
+ * Constructs a SQL occurrence with optional publication information.
+ */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
+    }
 
     /**
      * Answers null: the step selects every field, not one.

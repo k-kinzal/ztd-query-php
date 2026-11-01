@@ -20,7 +20,7 @@ final class AddColumnTest extends TestCase
         $statement = $semantics->analyze('ALTER TABLE t ADD d int CHECK (d > a AND zz)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',
-        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->diagnostics()));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

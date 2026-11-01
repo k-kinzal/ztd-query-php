@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the changed properties
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE t SET (storage = plain)');
- *     $operation->statement->options[0]->attribute->known // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute::Storage
+ *     $operation->options[0]->attribute->known // => \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute::Storage
  */
-final class AlterTypeOptions implements Statement
+final class AlterTypeOptions extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<AttributeChange> The properties
@@ -40,8 +39,11 @@ final class AlterTypeOptions implements Statement
      * @param DottedName $name The type name
      * @param list<AttributeChange> $options The properties, read as ALTER TYPE reads them; at least one
      */
-    public function __construct(public readonly DottedName $name, array $options)
+    public function __construct(public readonly DottedName $name, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->options = Check::listOf($options, AttributeChange::class, 'ALTER TYPE SET changes at least one property.', 1);
         foreach ($this->options as $change) {
             Check::input($change->attribute->known === null || $change->attribute->known instanceof TypeChangeAttribute, 'ALTER TYPE reads the properties it can change.');

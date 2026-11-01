@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
@@ -27,11 +26,11 @@ final class ExternalBodyTest extends TestCase
     public function testRenderKeepsAQuotedCode(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return zz'");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateFunction::class, $statement);
 
-        self::assertEquals(new ExternalBody(new Text('return zz')), $statement->body);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertEquals(new ExternalBody(new Text('return zz', quotation: new \SqlSemantics\Platform\MySql\Statement\Literal\Quoted\Notation())), $statement->body);
+        self::assertSame([], $create->diagnostics());
     }
 
     /**
@@ -39,7 +38,7 @@ final class ExternalBodyTest extends TestCase
      */
     public static function providerRenderWritesAsAndTheCode(): iterable
     {
-        yield 'MySQL 8.4 quoted' => ['mysql-8.4.7', "create procedure p() language sql as 'x'", "CREATE PROCEDURE p() LANGUAGE SQL AS 'x'"];
+        yield 'MySQL 8.4 quoted' => ['mysql-8.4.7', "create procedure p() language javascript as 'x'", "CREATE PROCEDURE p() LANGUAGE javascript AS 'x'"];
         yield 'MySQL 9.0 dollar-quoted' => [
             'mysql-9.0.1',
             'create function f() returns int language javascript as $js$ return 1 $js$',
@@ -47,8 +46,8 @@ final class ExternalBodyTest extends TestCase
         ];
         yield 'MySQL 9.1 quoted with parameters' => [
             'mysql-9.1.0',
-            "create procedure p(in a int, out b varchar(3) collate utf8mb4_bin, inout c bigint) language javascript as 'x'",
-            "CREATE PROCEDURE p(IN a INT, OUT b VARCHAR(3) COLLATE utf8mb4_bin, INOUT c BIGINT) LANGUAGE javascript AS 'x'",
+            "create procedure p(in a int, out b varchar(3) character set utf8mb4 collate utf8mb4_bin, inout c bigint) language javascript as 'x'",
+            "CREATE PROCEDURE p(IN a INT, OUT b VARCHAR(3) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, INOUT c BIGINT) LANGUAGE javascript AS 'x'",
         ];
         yield 'MySQL 9.1 function' => ['mysql-9.1.0', "create function f() returns int language javascript as 'return 1'", "CREATE FUNCTION f() RETURNS INT LANGUAGE javascript AS 'return 1'"];
     }
@@ -57,6 +56,16 @@ final class ExternalBodyTest extends TestCase
     public function testRenderWritesAsAndTheCode(string $release, string $sql, string $expected): void
     {
         self::assertSame($expected, (new Semantics(Dialect::MySql, $release))->analyze($sql)->toString());
+    }
+
+    public function testRenderIsNeverReachedForTheSqlLanguageWithExternalCode(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("create procedure p() language sql as 'x'");
+            self::fail('The body representation disagrees with the SQL language.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame('The routine language and body representation disagree.', $failure->problem->message());
+        }
     }
 
     public function testRenderWritesAConstructedBody(): void
@@ -75,6 +84,6 @@ final class ExternalBodyTest extends TestCase
     {
         $this->expectExceptionMessage('The code of an external body is written as a quoted string.');
 
-        new ExternalBody(new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new ExternalBody(new Text('41', Radix::Hexadecimal));
     }
 }

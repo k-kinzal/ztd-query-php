@@ -19,6 +19,6 @@ final class AlterTextSearchDictionaryTest extends TestCase
 
     public function testDeriveStatementDerivesTheOptions(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH DICTIONARY d (dummy)')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TEXT SEARCH DICTIONARY d (dummy)')->diagnostics());
     }
 }

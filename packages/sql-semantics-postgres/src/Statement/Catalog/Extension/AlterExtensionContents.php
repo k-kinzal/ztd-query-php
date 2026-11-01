@@ -14,7 +14,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,11 +29,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the object added to an extension
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER EXTENSION hstore ADD SCHEMA s');
- *     [$operation->statement->action, $operation->statement->kind] // => [\SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop::Add, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Schema]
+ *     [$operation->action, $operation->kind] // => [\SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop::Add, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Schema]
  */
-final class AlterExtensionContents implements Statement
+final class AlterExtensionContents extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The kinds of object ALTER EXTENSION ADD and DROP accept.
@@ -55,8 +54,11 @@ final class AlterExtensionContents implements Statement
      * @param ObjectKind $kind The kind of the object
      * @param ObjectReference $object The object
      */
-    public function __construct(public readonly Name $extension, public readonly AddOrDrop $action, public readonly ObjectKind $kind, public readonly ObjectReference $object)
+    public function __construct(public readonly Name $extension, public readonly AddOrDrop $action, public readonly ObjectKind $kind, public readonly ObjectReference $object, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(in_array($kind, self::KINDS, true), 'ALTER EXTENSION cannot address an object of this kind.');
     }
 

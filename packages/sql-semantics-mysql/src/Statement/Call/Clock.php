@@ -9,9 +9,9 @@ use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 /**
  * The functions that read the current date or time of the statement or of the system clock.
  *
- * Each case holds the keyword the function is written with. CURRENT_DATE is
- * the keyword CURDATE, CURRENT_TIME is CURTIME, and CURRENT_TIMESTAMP,
- * LOCALTIME and LOCALTIMESTAMP are NOW to the lexer. NOW and its synonyms
+ * Each case identifies a clock operation and its canonical keyword. ClockAlias
+ * retains CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, LOCALTIME and
+ * LOCALTIMESTAMP separately when written. NOW and its synonyms
  * read the time the statement started; SYSDATE reads the time it executes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_now.
  *

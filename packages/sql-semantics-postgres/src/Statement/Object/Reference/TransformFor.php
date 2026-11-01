@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A transform named by its type and language: `FOR type LANGUAGE language`.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TransformFor implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $type The transformed type
      * @param Name $language The language
      */
-    public function __construct(public readonly TypeName $type, public readonly Name $language)
+    public function __construct(public readonly TypeName $type, public readonly Name $language, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

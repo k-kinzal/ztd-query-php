@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A HANDLER or VALIDATOR clause naming a support function, or NO HANDLER or NO VALIDATOR.
@@ -24,13 +23,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class FunctionClause implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param FunctionRole $role The role of the function
      * @param DottedName|null $function The function name; null for the NO form
      */
-    public function __construct(public readonly FunctionRole $role, public readonly ?DottedName $function = null)
+    public function __construct(public readonly FunctionRole $role, public readonly ?DottedName $function = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

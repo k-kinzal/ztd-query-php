@@ -15,7 +15,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,11 +27,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading an INSERT of default values
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('INSERT INTO t DEFAULT VALUES RETURNING *');
- *     [$insert->statement->into->target->name->name->value, count($insert->statement->returning), $insert->toString()] // => ['t', 1, 'INSERT INTO t DEFAULT VALUES RETURNING *']
+ *     [$insert->into->target->name->name->value, count($insert->returning), $insert->toString()] // => ['t', 1, 'INSERT INTO t DEFAULT VALUES RETURNING *']
  */
-final class InsertDefaults implements Statement
+final class InsertDefaults extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ResultColumn|Star|TableStar> The RETURNING columns in written order
@@ -44,8 +43,11 @@ final class InsertDefaults implements Statement
      * @param list<ResultColumn|Star|TableStar> $returning The RETURNING columns
      * @throws InvalidConstruction When a RETURNING column is of no result column class
      */
-    public function __construct(public readonly InsertInto $into, array $returning = [])
+    public function __construct(public readonly InsertInto $into, array $returning = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->returning = (new ClosedList())->of($returning, [ResultColumn::class, Star::class, TableStar::class], 'A RETURNING column is an expression, a star or a qualified star.');
     }
 

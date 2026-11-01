@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -27,13 +27,21 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class BinaryCastTest extends TestCase
 {
-    public function testDeriveScalarIsABinaryString(): void
+    public function testDeriveScalarIsANullableBinaryString(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new BinaryCast(new NumberLiteral('1')), $derivation->environment());
 
-        self::assertEquals([new Known(new Binary(BinaryKind::VarBinary)), Nullability::NotNull], [$fact->type, $fact->nullability]);
+        self::assertEquals([new Known(Domain::string(1, Collation::binary())), Nullability::Nullable], [$fact->type, $fact->nullability]);
+    }
+
+    public function testDeriveScalarPreservesOperandNullabilityInMySql56(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT BINARY 1, BINARY NULL');
+
+        self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
     }
 
     public function testRenderCastsAPrefixOperandWithoutParentheses(): void

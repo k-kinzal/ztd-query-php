@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SUPPORT function`: the planner support function of the routine.
@@ -22,12 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class SupportFunction implements RoutineOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $function The support function
      */
-    public function __construct(public readonly DottedName $function)
+    public function __construct(public readonly DottedName $function, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ModuleArguments;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One argument of a virtual table module: the exact text SQLite hands to the module.
@@ -30,16 +29,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the arguments a module receives
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("CREATE VIRTUAL TABLE docs USING fts5(title,  body , , tokenize = 'porter ascii')");
- *     [$create->statement->arguments[1]->text, $create->statement->arguments[2]->passed(), $create->statement->arguments[3]->text] // => ['body', false, "tokenize = 'porter ascii'"]
+ *     [$create->arguments[1]->text, $create->arguments[2]->passed(), $create->arguments[3]->text] // => ['body', false, "tokenize = 'porter ascii'"]
  */
 final class ModuleArgument implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $text The exact argument text; empty for an argument without tokens
      */
-    public function __construct(public readonly string $text)
+    public function __construct(public readonly string $text, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input((new ModuleArguments())->single($text), 'A module argument is text SQLite reads back as exactly one argument.');
     }

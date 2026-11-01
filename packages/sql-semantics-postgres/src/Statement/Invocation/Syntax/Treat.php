@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `TREAT (value AS type)`: a conversion the server performs by calling the function named after the type.
@@ -35,14 +34,18 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Treat implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $value The value converted
      * @param TypeName $type The target type
      */
-    public function __construct(public readonly Scalar $value, public readonly TypeName $type)
+    public function __construct(public readonly Scalar $value, public readonly TypeName $type, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
     }
 
     /**

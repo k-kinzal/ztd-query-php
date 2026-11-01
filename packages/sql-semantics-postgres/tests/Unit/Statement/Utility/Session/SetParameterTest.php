@@ -14,13 +14,13 @@ final class SetParameterTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET search_path TO a, \'b\', 1, on')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET search_path TO a, \'b\', 1, on')->diagnostics());
     }
 
     public function testDeriveStatementReturnsNoRows(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET a = 1');
-        self::assertSame(null, $operation->facts->output);
+        self::assertSame(null, $operation->output());
     }
 
     public function testRenderWritesToForEitherWord(): void
@@ -35,7 +35,7 @@ final class SetParameterTest extends TestCase
 
     public function testValuesAreKeptInOrder(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET a TO x, y')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET a TO x, y');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter::class, $statement);
         self::assertCount(2, $statement->values);
     }

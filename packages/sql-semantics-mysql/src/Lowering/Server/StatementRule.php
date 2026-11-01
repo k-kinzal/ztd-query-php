@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Lowering\Server\Storage\TablespaceRule;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\LockRule;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\TransactionRule;
 use SqlSemantics\Platform\MySql\Lowering\Server\Transaction\XaRule;
-use SqlSemantics\Statement\Statement;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 
 /**
  * Hands a statement rule of the server family to the rule class of its area.

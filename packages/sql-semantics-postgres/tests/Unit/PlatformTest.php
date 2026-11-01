@@ -23,6 +23,19 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class PlatformTest extends TestCase
 {
+    public function testPublishReturnsAResolvedConcreteStatement(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile(null, null, ParameterStyle::Native);
+        $statement = $platform->lower($platform->parser($profile)->parse('SELECT 1'), $profile, new Leaves(), canonicalNames: true)[0];
+        $operation = $platform->publish($platform->context($profile, null, [], true), $statement, new \SqlSemantics\Statement\Source\SourceMap());
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertNotSame($statement, $operation);
+        self::assertFalse($statement->hasBinding());
+        self::assertTrue($operation->hasBinding());
+        self::assertSame('SELECT 1', $operation->toString());
+    }
+
     public function testProfileFixesTheNewestReleaseByDefault(): void
     {
         self::assertSame(GrammarRelease::PostgreSql172, (new Platform())->profile(null, null, ParameterStyle::Native)->grammar);

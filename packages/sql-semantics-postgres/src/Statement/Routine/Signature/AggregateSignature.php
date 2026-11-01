@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An aggregate named with its argument list, as `aggregate_with_argtypes` writes it.
@@ -24,13 +23,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AggregateSignature implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param DottedName $name The aggregate name
      * @param AggregateArguments $arguments The argument list
      */
-    public function __construct(public readonly DottedName $name, public readonly AggregateArguments $arguments)
+    public function __construct(public readonly DottedName $name, public readonly AggregateArguments $arguments, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

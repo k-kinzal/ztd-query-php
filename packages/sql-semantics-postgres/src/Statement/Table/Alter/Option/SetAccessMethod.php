@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * SET ACCESS METHOD: changes the table access method, or to the default one.
@@ -21,16 +20,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Changing the access method
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TABLE t SET ACCESS METHOD heap');
- *     $statement->statement->commands[0]->method->value // => 'heap'
+ *     $statement->commands[0]->method->value // => 'heap'
  */
 final class SetAccessMethod implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|null $method The access method; null for DEFAULT
      */
-    public function __construct(public readonly ?Name $method)
+    public function __construct(public readonly ?Name $method, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

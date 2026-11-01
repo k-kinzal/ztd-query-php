@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Server\Histograms;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `DROP HISTOGRAM ON column, …`: a request to remove the histograms of columns.
@@ -21,14 +20,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the histogram request
  *     $analyze = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("ANALYZE TABLE t DROP HISTOGRAM ON a");
- *     [$analyze->toString(), $analyze->statement->histogram->columns[0]->value === 'a'] // => ["ANALYZE TABLE t DROP HISTOGRAM ON a", true]
+ *     [$analyze->toString(), $analyze->histogram->columns[0]->value === 'a'] // => ["ANALYZE TABLE t DROP HISTOGRAM ON a", true]
  */
 final class DropHistogram implements Histogram
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<Name> The column names in written order; at least one
+     * @var non-empty-list<Name> The column names in written order; at least one
      */
     public readonly array $columns;
 
@@ -36,7 +35,7 @@ final class DropHistogram implements Histogram
      * @param list<Name> $columns The column names in written order; at least one
      * @throws InvalidConstruction When the column list is empty
      */
-    public function __construct(array $columns)
+    public function __construct(array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'A histogram request names at least one column.', 1);
     }

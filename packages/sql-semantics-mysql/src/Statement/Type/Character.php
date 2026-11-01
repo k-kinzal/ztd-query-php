@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A character string type with its optional length, national marker and character set attribute.
@@ -24,25 +23,32 @@ use SqlSemantics\Statement\Snapshot;
  *     $type = new \SqlSemantics\Platform\MySql\Statement\Type\Character(\SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind::VarChar, '255');
  *     [$type->name(), $type->length, $type->national] // => ['VARCHAR', '255', false]
  */
-final class Character implements TypeName
+final class Character implements DeclaredName
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharacterKind $kind The character type
      * @param string|null $length The length exactly as written
      * @param bool $national Whether the type is written as a national character type; only CHAR and VARCHAR can be
      * @param CharsetAttribute|null $charset The character set attribute; a national type takes BINARY alone
+     * @param Keyword\CharacterAlias|null $alias The written synonym; null uses the canonical keyword form
      */
     public function __construct(
         public readonly CharacterKind $kind,
         public readonly ?string $length = null,
         public readonly bool $national = false,
         public readonly ?CharsetAttribute $charset = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        public readonly ?Keyword\CharacterAlias $alias = null,
     ) {
+        Check::input($alias === null || ($alias->kind() === $kind && $alias->national() === $national), 'A type synonym must match its canonical type role.');
+        Check::input(!in_array($kind, [CharacterKind::VarChar, CharacterKind::CharVarying], true) || $length !== null, 'A VARCHAR declaration requires a length.');
+        Check::input($length === null || in_array($kind, [CharacterKind::Char, CharacterKind::VarChar, CharacterKind::CharVarying, CharacterKind::Text], true), 'Only CHAR, VARCHAR and TEXT take a length.');
         Check::input($length === null || preg_match('/\A(?:[0-9]+\.?[0-9]*|\.[0-9]+)\z/', $length) === 1, 'A length is an unsigned number.');
         Check::input(!$national || $kind === CharacterKind::Char || $kind === CharacterKind::VarChar, 'Only CHAR and VARCHAR have a national form.');
         Check::input(!$national || $charset === null || $charset->form === CharsetForm::Binary, 'A national character type takes the BINARY attribute alone.');
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->invariant($this);
     }
 
     /**
@@ -58,7 +64,7 @@ final class Character implements TypeName
      */
     public function render(Output $out): void
     {
-        $out->keyword(...explode(' ', $this->name()));
+        $out->keyword(...explode(' ', $this->alias->value ?? $this->name()));
         if ($this->length !== null) {
             $out->glue()->symbol('(')->spelled($this->length)->symbol(')');
         }

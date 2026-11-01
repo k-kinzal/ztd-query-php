@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An expression as the key of an index, a partition key or extended statistics.
@@ -28,20 +27,24 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an expression key
  *     $index = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE INDEX ON t ((a + 1), lower(b))');
- *     [$index->statement->elements[0]->key->parenthesized, $index->statement->elements[1]->key->parenthesized] // => [true, false]
+ *     [$index->elements[0]->key->parenthesized, $index->elements[1]->key->parenthesized] // => [true, false]
  * @example Refusing an operator without parentheses
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Index\ExpressionKey(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Statement\Identifier\Name('a')]), false), false) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class ExpressionKey implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $expression The expression
      * @param bool $parenthesized Whether the expression is written between parentheses; one that is not must be a function call
      */
-    public function __construct(public readonly Scalar $expression, public readonly bool $parenthesized = true)
+    public function __construct(public readonly Scalar $expression, public readonly bool $parenthesized = true, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(
             $parenthesized || ((new Precedence())->primary($expression) && !$expression instanceof ColumnReference && !$expression instanceof Grouped),
             'A key expression other than a function call is written between parentheses.',

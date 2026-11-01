@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
  * @visibility public
  * @example Reading a LIKE option
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (LIKE u INCLUDING ALL EXCLUDING INDEXES)');
- *     $create->statement->definition->elements[0]->options[1]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind::Indexes
+ *     $create->definition->elements[0]->options[1]->kind // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind::Indexes
  */
 enum LikeOptionKind: string
 {

@@ -18,7 +18,7 @@ final class FlushTablesTest extends TestCase
 {
     public function testRenderWritesTheLock(): void
     {
-        self::assertSame('FLUSH TABLE WITH READ LOCK', (new Semantics(Dialect::MySql))->analyze('flush tables with read lock')->toString());
+        self::assertSame('FLUSH TABLES WITH READ LOCK', (new Semantics(Dialect::MySql))->analyze('flush tables with read lock')->toString());
     }
 
     public function testDeriveStatementResolvesEachTable(): void
@@ -26,8 +26,8 @@ final class FlushTablesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $operation = $semantics->analyze('FLUSH TABLES t FOR EXPORT', [$table]);
-        self::assertInstanceOf(FlushTables::class, $operation->statement);
+        self::assertInstanceOf(FlushTables::class, $operation);
 
-        self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement->tables[0])->table);
+        self::assertInstanceOf(DeclaredTable::class, $operation->tables[0]->relationInformation()->table);
     }
 }

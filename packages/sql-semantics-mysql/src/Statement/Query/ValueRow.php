@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One row constructor of a VALUES statement: `ROW(value, ...)`.
@@ -23,19 +24,24 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ValueRow implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @var list<Scalar> The values in written order
+     * @var list<Scalar|DefaultRequest> The values in written order
      */
     public readonly array $values;
 
     /**
-     * @param list<Scalar> $values The values in written order
+     * @param list<Scalar|DefaultRequest> $values The values in written order
      */
-    public function __construct(array $values)
+    public function __construct(array $values, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
-        $this->values = Check::listOf($values, Scalar::class, 'A row constructor holds values.');
+        $accepted = [];
+        foreach (Check::listOf($values, Operand::class, 'A row holds values.') as $value) {
+            Check::input($value instanceof Scalar || $value instanceof DefaultRequest, 'A row value is an expression or DEFAULT.');
+            $accepted[] = $value;
+        }
+        $this->values = $accepted;
     }
 
     /**

@@ -19,8 +19,8 @@ final class SelectionTest extends TestCase
     public function testInputAnswersTheRelationStructureOrNull(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $withInput = $semantics->analyze('SELECT a FROM t')->statement;
-        $withoutInput = $semantics->analyze('SELECT 1')->statement;
+        $withInput = $semantics->analyze('SELECT a FROM t');
+        $withoutInput = $semantics->analyze('SELECT 1');
 
         self::assertInstanceOf(Selection::class, $withInput);
         self::assertInstanceOf(Selection::class, $withoutInput);

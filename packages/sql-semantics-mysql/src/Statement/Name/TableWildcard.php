@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Every column of one table occurrence: `t.*` or `db.t.*`.
@@ -25,12 +24,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TableWildcard implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $table The table occurrence, and its database when written
      */
-    public function __construct(public readonly QualifiedName $table)
+    public function __construct(public readonly QualifiedName $table, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
     }

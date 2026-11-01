@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -28,12 +27,12 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class KeywordDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeKeyword $keyword The spelling
      */
-    public function __construct(public readonly TypeKeyword $keyword)
+    public function __construct(public readonly TypeKeyword $keyword, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

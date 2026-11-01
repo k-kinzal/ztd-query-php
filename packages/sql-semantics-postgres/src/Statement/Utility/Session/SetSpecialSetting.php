@@ -31,13 +31,13 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading SET SESSION AUTHORIZATION DEFAULT
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET SESSION AUTHORIZATION DEFAULT');
- *     [$operation->statement->setting, $operation->statement->default, $operation->statement->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::SessionAuthorization, true, null]
+ *     [$operation->setting, $operation->default, $operation->value] // => [\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::SessionAuthorization, true, null]
  * @example Refusing a schema that is not a string
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetSpecialSetting(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialSetting::Schema, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class SetSpecialSetting implements Statement
+final class SetSpecialSetting extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SpecialSetting $setting The setting
@@ -50,7 +50,12 @@ final class SetSpecialSetting implements Statement
         public readonly StringConstant|Word|XmlOption|null $value,
         public readonly bool $default = false,
         public readonly bool $local = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(!$default || $value === null, 'DEFAULT is written in place of a value.');
         Check::input(match ($setting) {
             SpecialSetting::Catalog, SpecialSetting::Schema, SpecialSetting::TransactionSnapshot => $value instanceof StringConstant,

@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A GROUP BY clause: the grouping expressions and the super-aggregate modifier.
@@ -21,13 +20,13 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the grouping expressions
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a, b FROM t GROUP BY a, b');
- *     count($query->statement->groupBy->items) // => 2
+ *     count($query->query->groupBy->items) // => 2
  * @example Refusing an empty grouping
  *     new \SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping([]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Grouping implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<OrderItem> The grouping expressions in written order
@@ -38,7 +37,7 @@ final class Grouping implements Node
      * @param list<OrderItem> $items The grouping expressions in written order; at least one
      * @param GroupingModifier|null $modifier The super-aggregate modifier
      */
-    public function __construct(array $items, public readonly ?GroupingModifier $modifier = null)
+    public function __construct(array $items, public readonly ?GroupingModifier $modifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->items = Check::listOf($items, OrderItem::class, 'GROUP BY holds at least one grouping expression.', 1);
     }

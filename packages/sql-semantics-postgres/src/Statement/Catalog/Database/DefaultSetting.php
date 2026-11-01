@@ -17,10 +17,12 @@ use SqlSemantics\Resolution\Environment;
  * @visibility public
  * @example Reading the value of an option set to its default
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d TEMPLATE DEFAULT');
- *     $operation->statement->options[0]->value // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DefaultSetting::Default
+ *     $operation->options[0]->value // => \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Database\DefaultSetting::Default
  */
 enum DefaultSetting: string implements OptionArgument
 {
+    use \SqlSemantics\Statement\Semantics\Keyword;
+
     case Default = 'DEFAULT';
 
     /**

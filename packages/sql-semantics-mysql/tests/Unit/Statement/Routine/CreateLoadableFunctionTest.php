@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
@@ -24,21 +23,33 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class CreateLoadableFunctionTest extends TestCase
 {
+    public function testNameCollisionIncludesKeywordsAndReleaseSpecificFunctions(): void
+    {
+        $keyword = new CreateLoadableFunction(new Name('begin'), LoadableResult::Integer, new Text('./missing.so'));
+        $function = new CreateLoadableFunction(new Name('JSON_ARRAY'), LoadableResult::Integer, new Text('./missing.so'));
+        $ordinary = new CreateLoadableFunction(new Name('library'), LoadableResult::Integer, new Text('./missing.so'));
+
+        self::assertTrue($keyword->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertFalse($function->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertTrue($function->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse($ordinary->nameCollision(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testDeriveStatementChangesNoContext(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $create = $semantics->analyze("CREATE AGGREGATE FUNCTION median RETURNS REAL SONAME 'udf.so'", [$table]);
 
-        self::assertSame([], $create->facts->diagnostics);
-        self::assertSame([], $create->facts->declarations);
-        self::assertNull($create->facts->output);
+        self::assertSame([], $create->diagnostics());
+        self::assertSame([], $create->declarations());
+        self::assertNull($create->output());
     }
 
     public function testDeriveStatementReadsTheRegistration(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze("CREATE FUNCTION IF NOT EXISTS f RETURNS INT SONAME 'u.so'");
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateLoadableFunction::class, $statement);
 
         self::assertSame('f', $statement->name->value);
@@ -60,7 +71,7 @@ final class CreateLoadableFunctionTest extends TestCase
         yield 'MySQL 9.1 aggregate IF NOT EXISTS' => [
             'mysql-9.1.0',
             'create aggregate function if not exists f returns decimal soname "u.so"',
-            "CREATE AGGREGATE FUNCTION IF NOT EXISTS f RETURNS DECIMAL SONAME 'u.so'",
+            'CREATE AGGREGATE FUNCTION IF NOT EXISTS f RETURNS DECIMAL SONAME "u.so"',
         ];
     }
 
@@ -83,6 +94,6 @@ final class CreateLoadableFunctionTest extends TestCase
     {
         $this->expectExceptionMessage('A library name is written as a quoted string.');
 
-        new CreateLoadableFunction(new Name('f'), LoadableResult::Real, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
+        new CreateLoadableFunction(new Name('f'), LoadableResult::Real, new Text('41', Radix::Hexadecimal));
     }
 }

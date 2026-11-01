@@ -16,14 +16,14 @@ final class QueryExpressionFactsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT 1 UNION SELECT 2 FOR UPDATE');
-        self::assertSame('FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT', $query->facts->diagnostics[0]->message());
+        self::assertSame('FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT', $query->diagnostics()[0]->message());
     }
 
     public function testMergedReportsASecondLimit(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('(SELECT 1 LIMIT 1) LIMIT 2');
-        self::assertSame('multiple LIMIT clauses not allowed', $query->facts->diagnostics[0]->message());
+        self::assertSame('multiple LIMIT clauses not allowed', $query->diagnostics()[0]->message());
     }
 
     public function testAnyTellsWhetherAnOptionMatches(): void

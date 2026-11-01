@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `TRANSFORM FOR TYPE type, ...`: the types whose transforms the routine applies.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Transforms implements RoutineOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TypeName> The types in written order
@@ -33,7 +32,7 @@ final class Transforms implements RoutineOption
     /**
      * @param list<TypeName> $types The types in written order; at least one
      */
-    public function __construct(array $types)
+    public function __construct(array $types, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->types = Check::listOf($types, TypeName::class, 'TRANSFORM names at least one type.', 1);
     }

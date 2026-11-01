@@ -15,8 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Reading the problem of a call with too many arguments
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT abs(1, 2)');
- *     $query->facts->diagnostics[0]->message() // => "Incorrect parameter count in the call to native function 'abs'"
+ *     (new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount(new \SqlSemantics\Statement\Identifier\Name('abs'), 2))->message() // => "Incorrect parameter count in the call to native function 'abs'"
  */
 final class WrongArgumentCount implements Diagnostic
 {

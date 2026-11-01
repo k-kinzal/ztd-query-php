@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One option of EXPLAIN, VACUUM, ANALYZE, CLUSTER or REINDEX: a name and an optional value.
@@ -30,19 +29,19 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an option and its value
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('VACUUM (PARALLEL 2, ANALYSE)');
- *     [$operation->statement->options[0]->option(), $operation->statement->options[0]->argument->magnitude->digits, $operation->statement->options[1]->option()] // => ['parallel', '2', 'analyze']
+ *     [$operation->options[0]->option(), $operation->options[0]->argument->magnitude->digits, $operation->options[1]->option()] // => ['parallel', '2', 'analyze']
  * @example Refusing the FORMAT keyword before another value than json
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\OptionKeyword::Format) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class UtilityOption implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name|OptionKeyword $name The option name: a word, or a keyword the grammar reads on its own
      * @param Word|StringConstant|Toggle|SignedNumber|null $argument The value, when one is written: a word, a string, TRUE, FALSE or ON, or a number
      */
-    public function __construct(public readonly Name|OptionKeyword $name, public readonly Word|StringConstant|Toggle|SignedNumber|null $argument = null)
+    public function __construct(public readonly Name|OptionKeyword $name, public readonly Word|StringConstant|Toggle|SignedNumber|null $argument = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($name !== OptionKeyword::Format || ($argument instanceof Word && $argument->word->value === 'json'), 'The FORMAT keyword is read only before the word json.');
     }

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `FORCE`: a request to rebuild the table even when nothing else changes.
@@ -22,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Force implements AlterCommand
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Derives nothing: the action holds no expression.
@@ -37,5 +36,11 @@ final class Force implements AlterCommand
     public function render(Output $out): void
     {
         $out->keyword('FORCE');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TableRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
-use SqlSemantics\Statement\Relation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
 
 /**
  * Lowers the table references and joins of the 8.0 and later grammars.
@@ -71,6 +71,7 @@ final class ReferenceRule
      * Lowers a table reference.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function reference(Node $reference): Relation
     {
@@ -88,6 +89,7 @@ final class ReferenceRule
      * Lowers a join, walking the joins on its left in a loop.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function joined(Node $joined): JoinedTable
     {
@@ -115,6 +117,7 @@ final class ReferenceRule
      * Lowers one join over an already lowered left operand.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When an input relation cannot be lowered
      */
     public function step(Relation $left, Form $form): JoinedTable
     {
@@ -125,7 +128,7 @@ final class ReferenceRule
             $left,
             $this->operator($form->node(1)),
             $right,
-            $condition === 'on' ? $this->lowering->expressions->expression($form->node(4)) : null,
+            $condition === 'on' ? $this->lowering->expressions->operand($form->node(4)) : null,
             $condition === 'using' ? (new TableRule($this->lowering))->names($form->node(5)) : [],
         );
     }

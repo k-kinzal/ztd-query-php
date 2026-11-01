@@ -8,7 +8,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One assignment `column = value` of SET, ON DUPLICATE KEY UPDATE, UPDATE or LOAD DATA.
@@ -20,17 +19,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading an assignment of UPDATE
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('UPDATE t SET a = a + 1');
- *     $update->statement->assignments[0]->column->name->value // => 'a'
+ *     $update->assignments[0]->column->name->value // => 'a'
  */
 final class Assignment implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param ColumnUse $column The column assigned to
-     * @param Scalar $value The value: an expression or DEFAULT
+     * @param Scalar|DefaultRequest $value The value: an expression or DEFAULT
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator The written assignment sign
      */
-    public function __construct(public readonly ColumnUse $column, public readonly Scalar $value)
+    public function __construct(public readonly ColumnUse $column, public readonly Scalar|DefaultRequest $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
     }
 
@@ -39,6 +39,6 @@ final class Assignment implements Node
      */
     public function render(Output $out): void
     {
-        $out->node($this->column)->symbol('=')->node($this->value);
+        $out->node($this->column)->symbol($this->operator->value)->node($this->value);
     }
 }

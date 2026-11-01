@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -35,7 +34,7 @@ final class RealLiteralTest extends TestCase
     public function testDeriveScalarGivesReal(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1.5, .5, 5., 1e2, 1.50E-3, 1E+2', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         $literals = array_map(static function (object $column): RealLiteral {
@@ -47,12 +46,12 @@ final class RealLiteralTest extends TestCase
         self::assertSame(['1', '', '5', '1', '1', '1'], array_map(static fn (RealLiteral $literal): string => $literal->whole, $literals));
         self::assertSame(['5', '5', '', null, '50', null], array_map(static fn (RealLiteral $literal): ?string => $literal->fraction, $literals));
         self::assertSame([null, null, null, '2', '-3', '+2'], array_map(static fn (RealLiteral $literal): ?string => $literal->exponent, $literals));
-        $fact = $operation->facts->scalar($literals[4]);
+        $fact = $literals[4]->scalarInformation();
         self::assertEquals(new Known(Storage::Real), $fact->type);
         self::assertSame(Nullability::NotNull, $fact->nullability);
         self::assertNull($fact->resolution);
         self::assertEquals(new Known(Storage::Real), $operation->field(0)->type);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesThePartsWithALowerCaseExponentMarker(): void
@@ -63,7 +62,7 @@ final class RealLiteralTest extends TestCase
     public function testRenderWritesANewlyBuiltLiteral(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new RealLiteral('', '5', '+2')), new ResultColumn(new RealLiteral('7', null, '-1')), new ResultColumn(new RealLiteral('3', '14'))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new RealLiteral('', '5', '+2')), new ResultColumn(new RealLiteral('7', null, '-1')), new ResultColumn(new RealLiteral('3', '14'))]));
 
         self::assertSame('SELECT .5e+2, 7e-1, 3.14', $operation->toString());
     }

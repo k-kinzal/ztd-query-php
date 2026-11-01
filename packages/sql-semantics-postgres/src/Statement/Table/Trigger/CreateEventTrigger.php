@@ -12,7 +12,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,9 +27,9 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE EVENT TRIGGER e ON sql_drop EXECUTE PROCEDURE f()');
  *     $statement->toString() // => 'CREATE EVENT TRIGGER e ON sql_drop EXECUTE FUNCTION f()'
  */
-final class CreateEventTrigger implements Statement
+final class CreateEventTrigger extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<EventFilter> The WHEN items
@@ -48,7 +47,12 @@ final class CreateEventTrigger implements Statement
         public readonly Name $event,
         public readonly DottedName $function,
         array $filters = [],
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->filters = Check::listOf($filters, EventFilter::class, 'Event filters are filters.');
     }
 

@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Account\ResourceGroup;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `ALTER RESOURCE GROUP name [VCPU = …] [THREAD_PRIORITY = n] [ENABLE|DISABLE] [FORCE]` (8.0+).
@@ -24,9 +21,14 @@ use SqlSemantics\Statement\Statement;
  * @example Disabling a group by force
  *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('alter resource group batch disable force')->toString() // => 'ALTER RESOURCE GROUP batch DISABLE FORCE'
  */
-final class AlterResourceGroup implements Statement
+final class AlterResourceGroup extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * @var list<bool> The retained comma at each boundary between cpus
+     */
+    public readonly array $cpusCommas;
 
     /**
      * @var list<CpuRange> The CPUs of VCPU; none when the option is absent
@@ -34,15 +36,23 @@ final class AlterResourceGroup implements Statement
     public readonly array $cpus;
 
     /**
-     * @param Name $name The group name
+     * @param ResourceGroupName $name The group name
      * @param list<CpuRange> $cpus The CPUs of VCPU; none when the option is absent
      * @param ThreadPriority|null $priority The THREAD_PRIORITY, when written
      * @param bool|null $enabled ENABLE (true) or DISABLE (false), when written
      * @param bool $force Whether FORCE is written
+     * @param list<bool>|null $cpusCommas Optional commas between adjacent cpus
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $cpusOperator The written assignment sign, or null when omitted
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $priorityOperator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly Name $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false)
+    public function __construct(public readonly ResourceGroupName $name, array $cpus = [], public readonly ?ThreadPriority $priority = null, public readonly ?bool $enabled = null, public readonly bool $force = false, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?array $cpusCommas = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $cpusOperator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $priorityOperator = \SqlSemantics\Platform\MySql\Statement\AssignmentOperator::Equal)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->cpus = Check::listOf($cpus, CpuRange::class, 'VCPU lists CPU numbers and ranges.');
+        $this->cpusCommas = (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->checked($cpusCommas, count($this->cpus), true);
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -50,6 +60,7 @@ final class AlterResourceGroup implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $this->name->derive($derivation);
     }
 
     /**
@@ -57,12 +68,21 @@ final class AlterResourceGroup implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('ALTER', 'RESOURCE', 'GROUP')->name($this->name, NameUse::Label);
+        $out->keyword('ALTER', 'RESOURCE', 'GROUP')->node($this->name);
         if ($this->cpus !== []) {
-            $out->keyword('VCPU')->symbol('=')->list($this->cpus);
+            $out->keyword('VCPU');
+            if ($this->cpusOperator !== null) {
+                $out->symbol($this->cpusOperator->value);
+            }
+
+            (new \SqlSemantics\Platform\MySql\Rules\Rendering\OptionalCommas())->render($out, $this->cpus, $this->cpusCommas);
         }
         if ($this->priority !== null) {
-            $out->keyword('THREAD_PRIORITY')->symbol('=')->node($this->priority);
+            $out->keyword('THREAD_PRIORITY');
+            if ($this->priorityOperator !== null) {
+                $out->symbol($this->priorityOperator->value);
+            }
+            $out->node($this->priority);
         }
         if ($this->enabled !== null) {
             $out->keyword($this->enabled ? 'ENABLE' : 'DISABLE');

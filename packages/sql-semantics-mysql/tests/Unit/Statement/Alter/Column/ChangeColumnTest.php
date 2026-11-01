@@ -19,9 +19,10 @@ final class ChangeColumnTest extends TestCase
     public function testChangedAnswersTheRedefinedColumn(): void
     {
         $alter = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t MODIFY a BIGINT, CHANGE b c INT');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $alter);
 
-        self::assertInstanceOf(AlterTable::class, $alter->statement);
-        [$modify, $change] = $alter->statement->commands;
+        self::assertInstanceOf(AlterTable::class, $alter);
+        [$modify, $change] = $alter->commands;
         self::assertInstanceOf(ChangeColumn::class, $modify);
         self::assertInstanceOf(ChangeColumn::class, $change);
         self::assertSame(['a', 'b'], [$modify->changed()->column->value, $change->changed()->column->value]);
@@ -32,12 +33,30 @@ final class ChangeColumnTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t MODIFY a INT DEFAULT (x)', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $alter);
 
-        self::assertSame('Column x does not exist.', $alter->facts->diagnostics[0]->message());
+        self::assertSame('Column x does not exist.', $alter->diagnostics()[0]->message());
     }
 
     public function testRenderWritesChangeOrModify(): void
     {
-        self::assertSame('ALTER TABLE t CHANGE COLUMN a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
+        self::assertSame('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t CHANGE a b INT FIRST, MODIFY COLUMN c TEXT')->toString());
     }
+    public function testRejectsADotPrefixThatWouldChangeTheOldNameInterpretation(): void
+    {
+        $name = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('b'), dot: \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
+        $definition = new \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition($name, new \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int)));
+        $this->expectExceptionMessage('A dot-prefixed CHANGE definition follows a fully qualified old name.');
+        new ChangeColumn(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnName(new \SqlSemantics\Statement\Identifier\Name('a')), $definition);
+    }
+
+    public function testACompleteOldQualifierSeparatesADotPrefixedNewName(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $operation = $semantics->analyze('ALTER TABLE d.t CHANGE d.t.a .b INT');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Statement::class, $operation);
+        self::assertInstanceOf(AlterTable::class, $operation);
+        self::assertSame('ALTER TABLE d.t CHANGE d.t.a .b INT', $operation->toString());
+    }
+
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Contract;
 
+use ReflectionClass;
 use SqlSemantics\Diagnostic\Check;
 
 /**
@@ -52,5 +53,24 @@ final class Platforms
         $package = self::PACKAGES[$database] ?? null;
 
         return $package === null ? null : 'SqlSemantics\\Platform\\' . $package . '\\Platform';
+    }
+
+    /**
+     * Finds the package that declares a semantic value, including the shared value domain.
+     *
+     * @param class-string $class
+     */
+    public static function valueDirectory(string $class): string
+    {
+        foreach (self::PACKAGES as $database => $segment) {
+            if (str_starts_with($class, 'SqlSemantics\\Platform\\' . $segment . '\\')) {
+                $platform = self::platformClass($database);
+                Check::input($platform !== null && class_exists($platform), 'The semantic value package must be installed.');
+
+                return dirname((string) (new ReflectionClass($platform))->getFileName(), 2);
+            }
+        }
+
+        return dirname(__DIR__, 2);
     }
 }

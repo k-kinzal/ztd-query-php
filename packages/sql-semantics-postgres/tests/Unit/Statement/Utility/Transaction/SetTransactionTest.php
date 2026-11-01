@@ -14,7 +14,7 @@ final class SetTransactionTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')->diagnostics());
     }
 
     public function testRenderDropsTheCommasAndKeepsLocal(): void

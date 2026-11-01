@@ -24,7 +24,7 @@ final class RevokeTest extends TestCase
 
     public function testAnalysisKeepsTheBehavior(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REVOKE CREATE ON TABLESPACE ts FROM joe RESTRICT')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REVOKE CREATE ON TABLESPACE ts FROM joe RESTRICT');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Revoke::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior::Restrict, $statement->behavior);
         self::assertFalse($statement->grantOptionOnly);
@@ -32,7 +32,7 @@ final class RevokeTest extends TestCase
 
     public function testDeriveStatementReportsTheProblems(): void
     {
-        self::assertSame(['invalid privilege type CONNECT for tablespace', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REVOKE connect ON TABLESPACE ts FROM joe GRANTED BY PUBLIC')->facts->diagnostics));
+        self::assertSame(['invalid privilege type CONNECT for tablespace', 'role "public" does not exist'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('REVOKE connect ON TABLESPACE ts FROM joe GRANTED BY PUBLIC')->diagnostics()));
     }
 
     public function testRejectsNoRole(): void

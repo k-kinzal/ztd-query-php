@@ -24,8 +24,9 @@ final class AlterDropColumnTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
         $operation = $semantics->analyze('ALTER TABLE t DROP COLUMN B', [$table]);
 
-        self::assertInstanceOf(DeclaredTable::class, $operation->facts->relation($operation->statement)->table);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $operation);
+        self::assertInstanceOf(DeclaredTable::class, $operation->relationInformation()->table);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame([], $operation->declarations());
         self::assertCount(2, $table->declarations()[0]->columns);
     }
@@ -35,7 +36,7 @@ final class AlterDropColumnTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
 
-        self::assertInstanceOf(UnknownColumn::class, $semantics->analyze('ALTER TABLE t DROP c', [$table])->facts->diagnostics[0]);
+        self::assertInstanceOf(UnknownColumn::class, $semantics->analyze('ALTER TABLE t DROP c', [$table])->diagnostics()[0]);
     }
 
     public function testDeriveStatementReportsTheRemovalOfTheOnlyColumn(): void
@@ -43,19 +44,19 @@ final class AlterDropColumnTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a)');
 
-        self::assertInstanceOf(AlterationRefused::class, $semantics->analyze('ALTER TABLE t DROP a', [$table])->facts->diagnostics[0]);
+        self::assertInstanceOf(AlterationRefused::class, $semantics->analyze('ALTER TABLE t DROP a', [$table])->diagnostics()[0]);
     }
 
     public function testDeriveStatementReportsNothingAboutColumnsOfAnUndeclaredTable(): void
     {
-        self::assertSame([], (new Semantics(Dialect::Sqlite))->analyze('ALTER TABLE t DROP COLUMN c')->facts->diagnostics);
+        self::assertSame([], (new Semantics(Dialect::Sqlite))->analyze('ALTER TABLE t DROP COLUMN c')->diagnostics());
     }
 
     public function testRenderDropsTheOptionalKeyword(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('alter table main.t drop column b');
 
-        self::assertInstanceOf(AlterDropColumn::class, $operation->statement);
+        self::assertInstanceOf(AlterDropColumn::class, $operation);
         self::assertSame('ALTER TABLE main.t DROP b', $operation->toString());
     }
 }

@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnConstraint;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A REFERENCES clause: the parent table of a foreign key, its key columns and the actions.
@@ -32,12 +31,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parent of a foreign key
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE c (p REFERENCES parent (id) ON DELETE CASCADE)');
- *     $clause = $create->statement->columns[0]->constraints[0];
+ *     $clause = $create->columns[0]->constraints[0];
  *     [$clause->table->value, $clause->columns[0]->name->value, count($clause->arguments)] // => ['parent', 'id', 1]
  */
 final class ForeignKeyClause implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ListedColumn>|null The parent key columns, or null when none are written and the primary key of the parent is meant
@@ -54,7 +53,7 @@ final class ForeignKeyClause implements ColumnConstraint
      * @param list<ListedColumn>|null $columns The parent key columns; null when none are written, otherwise at least one
      * @param list<ReferenceArgument> $arguments The actions and MATCH names in written order
      */
-    public function __construct(public readonly Name $table, ?array $columns = null, array $arguments = [])
+    public function __construct(public readonly Name $table, ?array $columns = null, array $arguments = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = $columns === null ? null : Check::listOf($columns, ListedColumn::class, 'A written parent column list names at least one column.', 1);
         $this->arguments = Check::listOf($arguments, ReferenceArgument::class, 'The clauses after a foreign key parent are actions and MATCH names.');

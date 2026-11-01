@@ -31,7 +31,8 @@ final class PositionTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new Position(new StringLiteral(['x']), new StringLiteral(['x'])), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Integer->descriptor()), $fact->type);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame(TypeClass::Integer, TypeClass::of($fact->type->descriptor));
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 

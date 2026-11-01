@@ -13,13 +13,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
@@ -41,9 +37,9 @@ final class NumericContextTest extends TestCase
                 $context->classify($number, new Integral(IntegralKind::Int, null, [NumericModifier::Unsigned])),
                 $context->classify($number, new Integral(IntegralKind::Int)),
                 $context->classify($number, new Decimal()),
-                $context->classify($number, new Character(CharacterKind::VarChar)),
+                $context->classify($number, new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily()),
                 $context->classify($number, null),
-                $context->classify(new Grouped(new RadixLiteral(Radix::Hexadecimal, '10')), new Binary(BinaryKind::VarBinary)),
+                $context->classify(new Grouped(new RadixLiteral(Radix::Hexadecimal, '10')), new \SqlSemantics\Platform\MySql\Statement\Type\StringFamily(true)),
             ],
         );
     }

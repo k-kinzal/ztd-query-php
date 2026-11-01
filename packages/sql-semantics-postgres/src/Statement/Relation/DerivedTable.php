@@ -14,7 +14,6 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A subquery in FROM, optionally LATERAL and renamed.
@@ -30,11 +29,12 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a derived table
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT x.b FROM (SELECT 1 AS a) AS x (b)');
- *     [$query->statement->from->alias->value, $query->field(0)->type->descriptor->name()] // => ['x', 'integer']
+ *     [$query->from->alias->value, $query->field(0)->type->descriptor->name()] // => ['x', 'integer']
  */
-final class DerivedTable implements Relation
+final class DerivedTable implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names written after the correlation name
@@ -47,8 +47,11 @@ final class DerivedTable implements Relation
      * @param list<Name> $columns The column names written after the correlation name
      * @param bool $lateral Whether the query may refer to the FROM items before it
      */
-    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, array $columns = [], public readonly bool $lateral = false)
+    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, array $columns = [], public readonly bool $lateral = false, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->columns = Check::listOf($columns, Name::class, 'Column aliases are names.');
         Check::input($alias !== null || $this->columns === [], 'Column aliases are written after a correlation name.');
     }

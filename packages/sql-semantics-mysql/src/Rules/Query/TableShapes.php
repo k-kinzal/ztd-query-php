@@ -92,6 +92,11 @@ final class TableShapes
      */
     public function explicit(ExplicitTable $table, RelationFact $fact, Derivation $derivation): QueryFact
     {
+        if ($derivation->existenceQueries->offsetExists($table)) {
+            $value = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1');
+            $type = $derivation->scalar($value, new Environment($derivation->context));
+            return new QueryFact([new Field(0, new OutputSlot(new \SqlSemantics\Statement\Identifier\Name('1'), $type->type, $type->nullability), $value)], $derivation->context->columnNames);
+        }
         $fields = [];
         foreach ($fact->shape->slots as $position => $slot) {
             $fields[] = new Field($position, new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed), null, new ResolvedColumn($table, $slot));

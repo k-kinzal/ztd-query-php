@@ -11,7 +11,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One argument passed to a trigger function.
@@ -28,12 +27,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class TriggerArgument implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntegerConstant|NumericConstant|StringConstant|Name $value The argument
      */
-    public function __construct(public readonly IntegerConstant|NumericConstant|StringConstant|Name $value)
+    public function __construct(public readonly IntegerConstant|NumericConstant|StringConstant|Name $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

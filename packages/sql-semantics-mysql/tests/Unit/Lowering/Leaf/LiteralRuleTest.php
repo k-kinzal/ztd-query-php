@@ -18,7 +18,6 @@ use SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
@@ -33,49 +32,62 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Medium]
 final class LiteralRuleTest extends TestCase
 {
-    public function testEscapesFollowsTheProfile(): void
+    public function testRadixNoticePrecedesARefusedMarkerOnlyOnMySql56(): void
     {
-        $platform = new Platform();
-        $plain = $platform->profile(null, null, ParameterStyle::Native);
-        $verbatim = $platform->profile(null, Mode::fromString('NO_BACKSLASH_ESCAPES'), ParameterStyle::Native);
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $sql = "SELECT _utf32 X'00110000', ?";
+        $notices = (new \SqlSemantics\Platform\MySql\Lowering\SyntaxWarnings())->completed(new \SqlParser\MySql\MySqlParser('mysql-5.6.51'), $sql, strlen($sql), $profile);
 
-        self::assertSame(EscapeRule::Backslash, (new LiteralRule(new Lowering($platform->productions($plain), new Leaves(), $plain)))->escapes());
-        self::assertSame(EscapeRule::Verbatim, (new LiteralRule(new Lowering($platform->productions($verbatim), new Leaves(), $verbatim)))->escapes());
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\InvalidCharacterString('utf32', "\0\x11\0"), true)], array_column($notices, 1));
+    }
+
+    public function testNumberRefusesAnOverflowingFloatingOperand(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze('SELECT 2e381');
+    }
+
+    public function testTemporalRetainsDateTextOutsideTheValueDomain(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze("SELECT DATE 'not a date'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $statement);
+        self::assertInstanceOf(Select::class, $statement->query);
+        $item = $statement->query->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
+        self::assertInstanceOf(TemporalLiteral::class, $item->expression);
+        self::assertFalse($item->expression->valid());
+        self::assertSame('not a date', $item->expression->text);
+        self::assertSame("SELECT DATE 'not a date'", $statement->toString());
     }
 
     public function testLiteralLowersEveryLiteralForm(): void
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(NumberLiteral::class, $item0->expression);
-        $item3 = $operation->statement->items[3];
+        $item3 = $operation->query->items[3];
         self::assertInstanceOf(SelectExpression::class, $item3);
         self::assertInstanceOf(StringLiteral::class, $item3->expression);
-        $item7 = $operation->statement->items[7];
+        $item7 = $operation->query->items[7];
         self::assertInstanceOf(SelectExpression::class, $item7);
         self::assertInstanceOf(RadixLiteral::class, $item7->expression);
-        $item10 = $operation->statement->items[10];
+        $item10 = $operation->query->items[10];
         self::assertInstanceOf(SelectExpression::class, $item10);
         self::assertInstanceOf(TemporalLiteral::class, $item10->expression);
         self::assertSame(TemporalForm::Time, $item10->expression->form);
         self::assertSame("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'", $operation->toString());
     }
 
-    public function testConstantLowersIntroducedRadixLiteralsAndSignedNumbers(): void
+    public function testConstantLowersIntroducedRadixLiterals(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
-        $rule = new LiteralRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
-        $number = new Node('NUM_literal', 0, [new Node('int64_literal', 0, [new Token(0, 'NUM', '7', 0)])]);
-        $negative = $rule->constant(new Form(new Node('signed_literal', 2, [new Token(0, '-', '-', 0), $number]), 'signed_literal: - NUM_literal'));
-        $introduced = (new Semantics(Dialect::MySql))->analyze("SELECT _latin1 X'4142', _utf8mb4 0b1")->statement;
+        $introduced = (new Semantics(Dialect::MySql))->analyze("SELECT _latin1 X'4142', _utf8mb4 0b1");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $introduced);
+        $introduced = $introduced->query;
 
-        self::assertInstanceOf(SignedLiteral::class, $negative);
-        self::assertTrue($negative->negative);
-        self::assertSame('7', $negative->number->text);
         self::assertInstanceOf(Select::class, $introduced);
         $item0 = $introduced->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
@@ -86,6 +98,19 @@ final class LiteralRuleTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(RadixLiteral::class, $item1->expression);
         self::assertSame(Radix::Bit, $item1->expression->radix);
+    }
+
+    public function testSignedLowersAnExplicitSignOutsideExpressions(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new LiteralRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $number = new Node('NUM_literal', 0, [new Node('int64_literal', 0, [new Token(0, 'NUM', '7', 0)])]);
+        $negative = $rule->signed(new Node('signed_literal', 2, [new Token(0, '-', '-', 0), $number]));
+
+        self::assertInstanceOf(SignedLiteral::class, $negative);
+        self::assertTrue($negative->negative);
+        self::assertSame('7', $negative->number->text);
     }
 
     public function testNumberLowersAnUnsignedNumber(): void
@@ -102,20 +127,21 @@ final class LiteralRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT 'a' 'b' \"c\", _utf8mb4 'x' 'y', N'n' 'm'");
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item0 = $operation->query->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(StringLiteral::class, $item0->expression);
         self::assertSame(['a', 'b', 'c'], $item0->expression->segments);
-        $item1 = $operation->statement->items[1];
+        $item1 = $operation->query->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(StringLiteral::class, $item1->expression);
         self::assertSame('utf8mb4', $item1->expression->introducer?->value);
-        $item2 = $operation->statement->items[2];
+        $item2 = $operation->query->items[2];
         self::assertInstanceOf(SelectExpression::class, $item2);
         self::assertInstanceOf(StringLiteral::class, $item2->expression);
         self::assertTrue($item2->expression->national);
-        self::assertSame("SELECT 'a' 'b' 'c', _utf8mb4 'x' 'y', N'n' 'm'", $operation->toString());
+        self::assertSame("SELECT 'a' 'b' \"c\", _utf8mb4 'x' 'y', N'n' 'm'", $operation->toString());
     }
 
     public function testIntroducerNamesTheCharacterSetInLowerCase(): void
@@ -147,6 +173,14 @@ final class LiteralRuleTest extends TestCase
         self::assertSame("it's", $rule->bytes(new Node('TEXT_STRING_sys', 0, [new Token(0, 'TEXT_STRING', "'it''s'", 0)])));
         self::assertSame('x', $rule->bytes(new Node('json_attribute', 0, [new Node('TEXT_STRING_sys', 0, [new Token(0, 'TEXT_STRING', "'x'", 0)])])));
         self::assertSame([], $leaves->all());
+    }
+
+    public function testQuotationRetainsDelimiterAndEscapesInTheSelectedMode(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new LiteralRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame('"a\\Z"', $rule->quotation('"a\\Z"')->spell("a\x1a"));
     }
 
     public function testTextLowersStringsAtPositionsThatAreNotExpressions(): void
@@ -183,5 +217,19 @@ final class LiteralRuleTest extends TestCase
     {
         self::assertSame('SELECT ?', (new Semantics(Dialect::MySql))->analyze('SELECT ?')->toString());
         self::assertSame('SELECT :id', (new Semantics(Dialect::MySql, null, null, ParameterStyle::Named))->analyze('SELECT :id')->toString());
+    }
+
+    public function testTextRefusesARestrictedOperandBeforePublishingAStatement(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql))->analyze("START REPLICA UNTIL SOURCE_LOG_FILE = 'a\nb'");
+    }
+
+    public function testTextKeepsBytesAfterNulInRestrictedOperands(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'a\\0b\nc'");
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource::class, $operation);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Literal\Text::class, $operation->options[0]->value);
+        self::assertSame("a\0b\nc", $operation->options[0]->value->value);
     }
 }

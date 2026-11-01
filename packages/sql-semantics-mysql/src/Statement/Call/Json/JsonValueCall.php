@@ -7,15 +7,15 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Json;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Casts;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -33,11 +33,17 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing JSON_VALUE() with RETURNING
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_VALUE('{\"a\": 1}', '$.a' RETURNING SIGNED NULL ON EMPTY)");
- *     $query->field(0)->type->descriptor->name() // => 'SIGNED'
+ *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
  */
 final class JsonValueCall implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
+
+    /**
+     * The constant path's selection steps or decoded-operand condition.
+     */
+    public readonly Path|Path\Invalid $pathValue;
 
     /**
      * @param Scalar $document The JSON document; a primary expression
@@ -45,6 +51,7 @@ final class JsonValueCall implements Scalar
      * @param CastTarget|null $returning The written RETURNING type
      * @param JsonResponse|null $onEmpty The ON EMPTY response
      * @param JsonResponse|null $onError The ON ERROR response
+     * @param Path|Path\Invalid|null $pathValue Explicit selection steps, when constructed from semantic values; they must agree with the literal operand
      */
     public function __construct(
         public readonly Scalar $document,
@@ -52,16 +59,32 @@ final class JsonValueCall implements Scalar
         public readonly ?CastTarget $returning = null,
         public readonly ?JsonResponse $onEmpty = null,
         public readonly ?JsonResponse $onError = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        Path|Path\Invalid|null $pathValue = null,
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->admits($document, Precedence::SIMPLE_EXPR), 'The document of JSON_VALUE needs a grouping.');
+        $interpreted = Path::read($path->value());
+        Check::input($pathValue === null || (new \SqlSemantics\Validation\Equivalence())->difference($pathValue, $interpreted) === null, 'JSON path steps must agree with the decoded path literal.');
+        $this->pathValue = $pathValue ?? $interpreted;
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
-     * Derives the parts; the result has the RETURNING type.
+     * Derives the parts; the result has the RETURNING type, resolved as {@see Casts::returning()} says.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        (new Arguments())->one($this->document, $derivation, $environment);
+        $document = (new Arguments())->one($this->document, $derivation, $environment);
+        $type = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($document->type);
+        if ($document->resolution instanceof \SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding || ($document->resolution instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding && !$document->resolution->exists) || ($type !== null && ($type->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Geometry || !in_array($type->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null], true)))) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonDocument($this));
+        } elseif ($this->pathValue instanceof Path\Invalid) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidJsonPath($this));
+        }
         (new Arguments())->one($this->path, $derivation, $environment);
         foreach ([$this->onEmpty?->default, $this->onError?->default] as $default) {
             if ($default !== null) {
@@ -69,7 +92,13 @@ final class JsonValueCall implements Scalar
             }
         }
 
-        return new ScalarFact(new Known($this->returning ?? TypeClass::Character->descriptor()), Nullability::Nullable);
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Expression\Conversion\CastNotices())->returning($this->returning, $this->document, $derivation);
+        if ($problem !== null) {
+            return new ScalarFact(new \SqlSemantics\Statement\Type\Invalid($problem), $document->nullability);
+        }
+        $domain = (new Casts(Settings::of($derivation->context), $derivation->context->profile->grammar))->returning($this->returning);
+
+        return new ScalarFact(new Known($domain), Nullability::Nullable);
     }
 
     /**

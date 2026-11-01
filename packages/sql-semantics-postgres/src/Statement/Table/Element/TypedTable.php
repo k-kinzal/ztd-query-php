@@ -8,7 +8,6 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\TableConstraints;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A typed table: its columns are the attributes of a composite type.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a typed table
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t OF person (PRIMARY KEY (id))');
- *     [$create->statement->definition->type->last()->value, $create->declarations()[0]->complete] // => ['person', false]
+ *     [$create->definition->type->last()->value, $create->declarations()[0]->complete] // => ['person', false]
  */
 final class TypedTable implements TableForm
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Clause> The column options and table constraints; none means no parentheses are written
@@ -37,7 +36,7 @@ final class TypedTable implements TableForm
      * @param DottedName $type The composite type
      * @param list<Clause> $elements The column options and table constraints
      */
-    public function __construct(public readonly DottedName $type, array $elements = [])
+    public function __construct(public readonly DottedName $type, array $elements = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->elements = (new TableConstraints())->typedElements($elements);
     }

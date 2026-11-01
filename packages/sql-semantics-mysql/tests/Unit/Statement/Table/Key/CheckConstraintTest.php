@@ -19,21 +19,21 @@ final class CheckConstraintTest extends TestCase
     public function testDeriveElementResolvesTheConditionInTheTable(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, CHECK (a > 0))');
-        $statement = $create->statement;
+        $statement = $create;
         self::assertInstanceOf(CreateTable::class, $statement);
         $check = $statement->elements[1];
 
         self::assertInstanceOf(CheckConstraint::class, $check);
-        $resolution = $create->facts->scalar($check->condition)->resolution;
+        $resolution = $check->condition->scalarInformation()->resolution;
         self::assertNull($resolution);
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testDeriveAttributeResolvesTheConditionInTheTable(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT CHECK (b > 0), b INT)');
 
-        self::assertSame([], $create->facts->diagnostics);
+        self::assertSame([], $create->diagnostics());
     }
 
     public function testRenderWritesTheNameTheConditionAndTheEnforcement(): void

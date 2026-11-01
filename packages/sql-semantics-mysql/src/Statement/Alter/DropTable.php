@@ -9,10 +9,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * `DROP [TEMPORARY] TABLE [IF EXISTS] t, … [RESTRICT | CASCADE]`: a request to remove tables.
@@ -21,7 +20,8 @@ use SqlSemantics\Statement\Statement;
  * resolves by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact
  * of its TargetTable; under IF EXISTS a name a complete context does not
  * declare resolves to AbsentTable. A table named twice is the diagnostic
- * RepeatedTable. A declared view is not a table DROP TABLE finds: without
+ * RepeatedTable after contextual name comparison. Every written target remains
+ * in the statement, including repeated identities. A declared view is not a table DROP TABLE finds: without
  * IF EXISTS it is refused (MYSQL-RELATION-KIND-001). TEMPORARY restricts the request to temporary tables, which a
  * declaration context does not distinguish. RESTRICT and CASCADE have no
  * effect and are kept as written. The statement removes no declaration and
@@ -33,11 +33,11 @@ use SqlSemantics\Statement\Statement;
  * @example Resolving the dropped table to its declaration
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $drop = $semantics->analyze('drop tables if exists t, u cascade', []);
- *     [$drop->toString(), $drop->statement->behavior] // => ['DROP TABLE IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
+ *     [$drop->toString(), $drop->behavior] // => ['DROP TABLES IF EXISTS t, u CASCADE', \SqlSemantics\Platform\MySql\Statement\Alter\DropBehavior::Cascade]
  */
-final class DropTable implements Statement
+final class DropTable extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<TargetTable> The tables in order; at least one
@@ -50,10 +50,15 @@ final class DropTable implements Statement
      * @param list<TargetTable> $tables The tables in order; at least one
      * @param DropBehavior|null $behavior RESTRICT or CASCADE, when written
      */
-    public function __construct(public readonly bool $temporary, public readonly bool $ifExists, array $tables, public readonly ?DropBehavior $behavior = null)
+    public function __construct(public readonly bool $temporary, public readonly bool $ifExists, array $tables, public readonly ?DropBehavior $behavior = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly \SqlSemantics\Platform\MySql\Statement\Table\TableWord $tableWord = \SqlSemantics\Platform\MySql\Statement\Table\TableWord::Table)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($tables !== [], 'DROP TABLE names at least one table.');
         $this->tables = Check::listOf($tables, TargetTable::class, 'DROP TABLE names a list of tables.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\From\RelationNames())->repeatedTables(array_map(static fn (TargetTable $table): array => [$table->name, null, $table], $this->tables)) === null, 'DROP TABLE names each table once.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -68,8 +73,11 @@ final class DropTable implements Statement
                 (new RelationKinds())->refuseView($derivation, $table->name, $fact->table, KindRefusal::UnknownTable);
             }
             foreach (array_slice($this->tables, 0, $index) as $earlier) {
-                if ($targets->same($derivation->context, $earlier->name, $table->name)) {
-                    $derivation->report(new RepeatedTable($table->name));
+                if ($targets->same($derivation->environment()->context, $earlier->name, $table->name)) {
+                    $problem = new RepeatedTable($table->name);
+                    $derivation->report($problem);
+                    $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+                    $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization), $table);
                     break;
                 }
             }
@@ -85,7 +93,7 @@ final class DropTable implements Statement
         if ($this->temporary) {
             $out->keyword('TEMPORARY');
         }
-        $out->keyword('TABLE');
+        $out->keyword($this->tableWord->value);
         if ($this->ifExists) {
             $out->keyword('IF', 'EXISTS');
         }

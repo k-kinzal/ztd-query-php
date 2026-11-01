@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A binary operation over two operands, in the order written.
@@ -31,22 +30,26 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading both operands
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2');
- *     [$query->statement->columns[0]->expression->left->digits, $query->statement->columns[0]->expression->right->digits] // => ['1', '2']
+ *     [$query->columns[0]->expression->left->digits, $query->columns[0]->expression->right->digits] // => ['1', '2']
  * @example Refusing an operand that the rendered SQL would associate differently
- *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
+ *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary(\SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\BinaryOperator::Multiply, $sum, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('3')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Binary implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param BinaryOperator $operator The operator
      * @param Scalar $left The left operand
      * @param Scalar $right The right operand
      */
-    public function __construct(public readonly BinaryOperator $operator, public readonly Scalar $left, public readonly Scalar $right)
+    public function __construct(public readonly BinaryOperator $operator, public readonly Scalar $left, public readonly Scalar $right, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->closing($left) >= $operator->level(), 'The left operand needs parentheses to keep its place.');
         Check::input($precedence->opening($right) > $operator->level(), 'The right operand needs parentheses to keep its place.');

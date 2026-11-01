@@ -19,4 +19,10 @@ final class CredentialOptionTest extends TestCase
     {
         self::assertSame("START GROUP_REPLICATION DEFAULT_AUTH = 'a'", (new Semantics(Dialect::MySql))->analyze("start group_replication default_auth = 'a'")->toString());
     }
+    public function testRefusesRadixText(): void
+    {
+        $this->expectExceptionMessage('A group replication credential is a quoted string.');
+
+        new CredentialOption(\SqlSemantics\Platform\MySql\Statement\Replication\Group\Credential::User, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('a', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal));
+    }
 }

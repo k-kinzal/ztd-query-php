@@ -9,10 +9,9 @@ use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE USER: the CREATE USER statement that reproduces an account (MySQL 5.7 and later).
@@ -29,15 +28,19 @@ use SqlSemantics\Statement\Statement;
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE USER u');
  *     [$show->field(0)->name?->value, $show->toString()] // => ['CREATE USER for u@%', 'SHOW CREATE USER u']
  */
-final class ShowCreateUser implements Statement
+final class ShowCreateUser extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Account $user The account
      */
-    public function __construct(public readonly Account $user)
+    public function __construct(public readonly Account $user, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -45,13 +48,14 @@ final class ShowCreateUser implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new \SqlSemantics\Platform\MySql\Rules\Account\AccountNames())->derive($derivation, [$this->user]);
         $facts = new ShowFacts();
         if (!$this->user instanceof AccountName) {
             $derivation->output($facts->query($facts->open(new SessionState('the current user'))->shape, $derivation->context->columnNames));
 
             return;
         }
-        $name = 'CREATE USER for ' . $this->user->user->value . '@' . ($this->user->host->value ?? '%');
+        $name = 'CREATE USER for ' . $this->user->username() . '@' . ($this->user->hostname() ?? '%');
         $derivation->output($facts->query($facts->shape($derivation, Report::CreateUser, $name), $derivation->context->columnNames));
     }
 

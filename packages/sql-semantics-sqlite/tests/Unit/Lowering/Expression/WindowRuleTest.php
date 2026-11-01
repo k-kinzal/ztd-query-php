@@ -29,7 +29,7 @@ final class WindowRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (), sum(a) OVER (w), sum(a) OVER (PARTITION BY b), sum(a) OVER (w PARTITION BY b, c ORDER BY d), sum(a) OVER (ORDER BY d, e), sum(a) OVER (w ORDER BY d) FROM t WINDOW w AS ()');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([[null, 0, 0], ['w', 0, 0], [null, 1, 0], ['w', 2, 1], [null, 0, 2], ['w', 0, 1]], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(FunctionCall::class, $column->expression);
@@ -37,7 +37,7 @@ final class WindowRuleTest extends TestCase
             self::assertNull($column->expression->over->frame);
 
             return [$column->expression->over->base?->value, count($column->expression->over->partition), count($column->expression->over->order)];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT sum(a) OVER (), sum(a) OVER (w), sum(a) OVER (PARTITION BY b), sum(a) OVER (w PARTITION BY b, c ORDER BY d), sum(a) OVER (ORDER BY d, e), sum(a) OVER (w ORDER BY d) FROM t WINDOW w AS ()', $operation->toString());
     }
 
@@ -45,7 +45,7 @@ final class WindowRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (ROWS 1 PRECEDING), sum(a) OVER (RANGE BETWEEN 1 PRECEDING AND CURRENT ROW), sum(a) OVER (GROUPS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([[FrameUnit::Rows, FrameBoundKind::Preceding, null], [FrameUnit::Range, FrameBoundKind::Preceding, FrameBoundKind::CurrentRow], [FrameUnit::Groups, FrameBoundKind::CurrentRow, FrameBoundKind::UnboundedFollowing]], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(FunctionCall::class, $column->expression);
@@ -54,7 +54,7 @@ final class WindowRuleTest extends TestCase
             self::assertNull($column->expression->over->frame->exclusion);
 
             return [$column->expression->over->frame->unit, $column->expression->over->frame->start->kind, $column->expression->over->frame->end?->kind];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT sum(a) OVER (ROWS 1 PRECEDING), sum(a) OVER (RANGE BETWEEN 1 PRECEDING AND CURRENT ROW), sum(a) OVER (GROUPS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) FROM t', $operation->toString());
     }
 
@@ -62,7 +62,7 @@ final class WindowRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 2 PRECEDING), sum(a) OVER (ROWS BETWEEN CURRENT ROW AND 3 FOLLOWING), sum(a) OVER (ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING) FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([[FrameBoundKind::UnboundedPreceding, null, FrameBoundKind::Preceding, '2'], [FrameBoundKind::CurrentRow, null, FrameBoundKind::Following, '3'], [FrameBoundKind::Following, '1', FrameBoundKind::UnboundedFollowing, null]], array_map(static function (object $column): array {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(FunctionCall::class, $column->expression);
@@ -74,7 +74,7 @@ final class WindowRuleTest extends TestCase
             $endOffset = $frame->end->offset;
 
             return [$frame->start->kind, $startOffset instanceof IntegerLiteral ? $startOffset->digits : null, $frame->end->kind, $endOffset instanceof IntegerLiteral ? $endOffset->digits : null];
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 2 PRECEDING), sum(a) OVER (ROWS BETWEEN CURRENT ROW AND 3 FOLLOWING), sum(a) OVER (ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING) FROM t', $operation->toString());
     }
 
@@ -82,7 +82,7 @@ final class WindowRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (ROWS 1 PRECEDING EXCLUDE NO OTHERS), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE CURRENT ROW), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE GROUP), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES), sum(a) OVER (ROWS 1 PRECEDING) FROM t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(Select::class, $operation);
         self::assertSame([FrameExclusion::NoOthers, FrameExclusion::CurrentRow, FrameExclusion::Group, FrameExclusion::Ties, null], array_map(static function (object $column): ?FrameExclusion {
             self::assertInstanceOf(ResultColumn::class, $column);
             self::assertInstanceOf(FunctionCall::class, $column->expression);
@@ -90,7 +90,7 @@ final class WindowRuleTest extends TestCase
             self::assertInstanceOf(Frame::class, $column->expression->over->frame);
 
             return $column->expression->over->frame->exclusion;
-        }, $operation->statement->columns));
+        }, $operation->columns));
         self::assertSame('SELECT sum(a) OVER (ROWS 1 PRECEDING EXCLUDE NO OTHERS), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE CURRENT ROW), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE GROUP), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES), sum(a) OVER (ROWS 1 PRECEDING) FROM t', $operation->toString());
     }
 
@@ -98,19 +98,19 @@ final class WindowRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER w2 FROM t WINDOW w AS (PARTITION BY b), w2 AS (w ORDER BY c ROWS 1 FOLLOWING)');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame(['w', 'w2'], array_map(static fn (WindowDefinition $definition): string => $definition->name->value, $operation->statement->windows));
-        self::assertNull($operation->statement->windows[0]->window->base);
-        self::assertCount(1, $operation->statement->windows[0]->window->partition);
-        self::assertSame('w', $operation->statement->windows[1]->window->base?->value);
-        self::assertCount(1, $operation->statement->windows[1]->window->order);
-        self::assertSame(FrameUnit::Rows, $operation->statement->windows[1]->window->frame?->unit);
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertSame(['w', 'w2'], array_map(static fn (WindowDefinition $definition): string => $definition->name->value, $operation->windows));
+        self::assertNull($operation->windows[0]->window->base);
+        self::assertCount(1, $operation->windows[0]->window->partition);
+        self::assertSame('w', $operation->windows[1]->window->base?->value);
+        self::assertCount(1, $operation->windows[1]->window->order);
+        self::assertSame(FrameUnit::Rows, $operation->windows[1]->window->frame?->unit);
         self::assertSame('SELECT sum(a) OVER w2 FROM t WINDOW w AS (PARTITION BY b), w2 AS (w ORDER BY c ROWS 1 FOLLOWING)', $operation->toString());
     }
 
     public function testDefinitionsAreEmptyWithoutAWindowClause(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM t')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT a FROM t');
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertSame([], $statement->windows);

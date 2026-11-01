@@ -19,9 +19,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * old_or_new_charset_name_or_default, default_charset, collation_name,
  * collation_name_or_default, opt_collate, opt_collate_explicit,
  * default_collation. A name is an identifier or a string; the keyword
- * BINARY at such a position is the name `binary`; the keyword DEFAULT is the
- * absence of a name. The optional DEFAULT before CHARACTER SET or COLLATE
- * and the optional equals sign of a table or database option are not kept.
+ * BINARY at such a position is the bare name `binary`; the keyword DEFAULT is the
+ * absence of a name. Table and database option owners retain DEFAULT, the
+ * introducing keyword and optional equals sign separately from this name.
  * Constructs: Name, CharsetName, CollationName. Terminates: unit
  * productions over strict subtrees.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-syntax.html.
@@ -82,7 +82,7 @@ final class CharsetRule
             return $this->lowering->names->identifier($form->node(0));
         }
         if (isset(self::BINARY[$form->signature])) {
-            return $this->lowering->leaves->record(new Name('binary'));
+            return $this->lowering->leaves->record(new Name('binary', \SqlSemantics\Statement\Identifier\NameQuote::Bare));
         }
 
         return isset(self::UNNAMED[$form->signature]) ? null : throw ImplementationGap::production($form);
@@ -92,21 +92,29 @@ final class CharsetRule
      * Lowers a character set position.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the character set is unknown to the release
+     * @param bool $definition Whether the name belongs to a table, column or load definition, which MySQL 5.6 and 5.7 resolve only after reading the statement
      */
-    public function charset(Node $charset): CharsetName
+    public function charset(Node $charset, bool $definition = false): CharsetName
     {
         $form = $this->lowering->productions->form($charset);
 
-        return $this->lowering->leaves->record(new CharsetName($this->name(match ($form->signature) {
+        $named = $this->name(match ($form->signature) {
             'default_charset: opt_default charset opt_equal charset_name_or_default', 'default_charset: opt_default character_set opt_equal charset_name' => $form->node(3),
             default => $charset,
-        })));
+        });
+        if ($named !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($named->value)?->availableIn($this->lowering->profile->grammar) ?? false)) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset($named->value), (new \SqlSemantics\Construction\SourceRanges())->span($charset)[1] ?? 0, !$definition || !in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+        }
+
+        return $this->lowering->leaves->record(new CharsetName($named));
     }
 
     /**
      * Lowers a collation position; an absent COLLATE clause is null.
      *
      * @throws ImplementationGap When the production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the collation is unknown to the release
      */
     public function collation(Node $collation): ?CollationName
     {
@@ -118,6 +126,14 @@ final class CharsetRule
             default => $collation,
         };
 
-        return $name === null ? null : $this->lowering->leaves->record(new CollationName($this->name($name)));
+        if ($name === null) {
+            return null;
+        }
+        $named = $this->name($name);
+        if ($named !== null && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::forName($named->value, $this->lowering->profile->grammar) === null) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($named->value), (new \SqlSemantics\Construction\SourceRanges())->span($collation)[1] ?? 0);
+        }
+
+        return $this->lowering->leaves->record(new CollationName($named));
     }
 }

@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
+use SqlSemantics\Platform\MySql\Statement\Type\Keyword\CastAlias;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 
@@ -17,8 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
  *
  * Rule: MYSQL-CAST-TYPE-001. Scope: cast_type. Each production names its
  * target kind and the positions of its length, of its precision and scale,
- * and of its character set attribute. The optional INT after SIGNED and
- * UNSIGNED and PRECISION after DOUBLE are not kept. Constructs: CastTarget.
+ * and of its character set attribute. Optional words and keyword synonyms
+ * are retained separately from the target kind. Constructs: CastTarget.
  * Terminates: every child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  * Status: Implemented.
@@ -68,16 +69,23 @@ final class CastTypeRule
         if ($form->signature === 'cast_type: real_type') {
             $real = $this->lowering->types->real($form->node(0)) === FloatingKind::Real;
 
-            return new CastTarget($real ? CastKind::Real : CastKind::Double, null, null, null, $this->lowering->types->doublePrecision($form->node(0)) ? OptionalWords::Written : OptionalWords::Omitted);
+            $keyword = implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(0)->tokens()));
+
+            return new CastTarget($real ? CastKind::Real : CastKind::Double, null, null, null, $this->lowering->types->doublePrecision($form->node(0)) ? OptionalWords::Written : OptionalWords::Omitted, alias: CastAlias::tryFrom(strtoupper($keyword)));
         }
         [$kind, $numbers, $charset] = self::TARGETS[$form->signature] ?? throw ImplementationGap::production($form);
+        $keyword = $form->node->tokens()[0]->text;
         $words = str_ends_with($form->signature, ' INT_SYM') ? OptionalWords::Written : OptionalWords::Omitted;
+        if ($words === OptionalWords::Written) {
+            $keyword .= ' ' . $form->token(1)->text;
+        }
         if ($form->signature === 'cast_type: nchar opt_field_length') {
+            $keyword = implode(' ', array_map(static fn (\SqlParser\Lexer\Token $token): string => $token->text, $form->node(0)->tokens()));
             $this->lowering->types->strings->keyword($form->node(0));
             $words = $this->lowering->productions->form($form->node(0))->signature === 'nchar: NATIONAL_SYM CHAR_SYM' ? OptionalWords::Written : OptionalWords::Omitted;
         }
         [$length, $scale] = $numbers === null ? [null, null] : $this->parts->numbers($form->node($numbers));
 
-        return new CastTarget($kind, $length, $scale, $charset === null ? null : $this->parts->charset($form->node($charset)), $words);
+        return new CastTarget($kind, $length, $scale, $charset === null ? null : $this->parts->charset($form->node($charset)), $words, alias: CastAlias::tryFrom(strtoupper($keyword)));
     }
 }

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One attribute of CREATE SPATIAL REFERENCE SYSTEM: `NAME 'text'`, `DEFINITION 'text'`, `ORGANIZATION 'text' IDENTIFIED BY id`, `DESCRIPTION 'text'`.
@@ -20,13 +19,15 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  *
  * @visibility public
+ * @example Rejecting a line feed in a spatial reference attribute
+ *     new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Name, new \SqlSemantics\Platform\MySql\Statement\Literal\Text("a\nb")) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding an organization attribute
  *     $attribute = new \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttribute(\SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('EPSG'), new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('4326'));
  *     [$attribute->value->value, $attribute->identifier?->text] // => ['EPSG', '4326']
  */
 final class SpatialAttribute implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param SpatialAttributeKind $kind The attribute
@@ -34,8 +35,10 @@ final class SpatialAttribute implements Node
      * @param Numeral|null $identifier The identifier of IDENTIFIED BY; written exactly for ORGANIZATION
      * @throws InvalidConstruction When the identifier is written for another attribute or missing for ORGANIZATION
      */
-    public function __construct(public readonly SpatialAttributeKind $kind, public readonly Text $value, public readonly ?Numeral $identifier = null)
+    public function __construct(public readonly SpatialAttributeKind $kind, public readonly Text $value, public readonly ?Numeral $identifier = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input($value->radix === null, 'A spatial reference attribute is quoted text.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Literal\LineText())->valid($value), 'A spatial reference attribute cannot contain a line feed before NUL.');
         Check::input(($identifier !== null) === ($kind === SpatialAttributeKind::Organization), 'IDENTIFIED BY belongs to ORGANIZATION.');
     }
 

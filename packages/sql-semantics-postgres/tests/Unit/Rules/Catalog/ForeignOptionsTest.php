@@ -19,6 +19,6 @@ final class ForeignOptionsTest extends TestCase
 
     public function testFunctionsAcceptsOneOfEachRole(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE FOREIGN DATA WRAPPER w HANDLER h VALIDATOR v')->diagnostics());
     }
 }

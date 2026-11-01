@@ -19,7 +19,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An INSERT of the rows of a query.
@@ -34,13 +33,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the query of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t (a) SELECT 1 ON CONFLICT DO NOTHING');
- *     [$insert->statement->source instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $insert->toString()] // => [true, 'INSERT INTO t (a) SELECT 1 ON CONFLICT DO NOTHING']
+ *     [$insert->source instanceof \SqlSemantics\Platform\PostgreSql\Statement\Query\Select, $insert->toString()] // => [true, 'INSERT INTO t (a) SELECT 1 ON CONFLICT DO NOTHING']
  * @example Refusing a bare VALUES list, which is an INSERT of rows
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\InsertSelect(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), [], null, new \SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList([new \SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral()])])) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class InsertSelect implements Modification
+final class InsertSelect extends \SqlSemantics\Statement\SqlStatement implements Modification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnTarget> The column list in written order
@@ -71,7 +71,16 @@ final class InsertSelect implements Modification
         public readonly Query $source,
         public readonly ConflictDoNothing|ConflictDoUpdate|null $conflict = null,
         array $returning = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         Check::input(!$target->table->only, 'The table of an INSERT is written without ONLY.');
         Check::input((new Sources())->insertable($source), 'The query of an INSERT is a query statement other than VALUES alone.');
         $this->columns = Check::listOf($columns, ColumnTarget::class, 'The column list of an INSERT holds column targets.');

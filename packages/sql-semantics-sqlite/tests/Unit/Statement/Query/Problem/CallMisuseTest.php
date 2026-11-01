@@ -48,7 +48,7 @@ final class CallMisuseTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT ABS(1) OVER ()');
 
-        self::assertInstanceOf(CallMisuse::class, $query->facts->diagnostics[0]);
-        self::assertSame('ABS() may not be used as a window function', $query->facts->diagnostics[0]->message());
+        self::assertInstanceOf(CallMisuse::class, $query->diagnostics()[0]);
+        self::assertSame('ABS() may not be used as a window function', $query->diagnostics()[0]->message());
     }
 }

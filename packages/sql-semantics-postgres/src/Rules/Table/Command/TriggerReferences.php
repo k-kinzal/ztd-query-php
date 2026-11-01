@@ -84,7 +84,7 @@ final class TriggerReferences
      */
     public function references(Scalar $when, RelationFact $fact): array
     {
-        $objects = array_reverse((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($when));
+        $objects = array_reverse((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($when, bindings: false));
         $selected = [];
         foreach ($objects as $object) {
             $base = $object instanceof Indirection && $this->selected($object) !== null ? $object->base : null;

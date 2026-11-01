@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -33,19 +32,23 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a membership test against a query
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 IN (SELECT 2)');
- *     [$query->statement->columns[0]->expression->negated, $query->field(0)->nullability] // => [false, \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->columns[0]->expression->negated, $query->field(0)->nullability] // => [false, \SqlSemantics\Statement\Type\Nullability::NotNull]
  */
 final class InQuery implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The tested expression
      * @param Query $query The query
      * @param bool $negated Whether NOT is written before IN
      */
-    public function __construct(public readonly Scalar $operand, public readonly Query $query, public readonly bool $negated = false)
+    public function __construct(public readonly Scalar $operand, public readonly Query $query, public readonly bool $negated = false, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->closing($operand) >= Precedence::EQUALITY, 'The operand needs parentheses to keep its place.');
     }
 

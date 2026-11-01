@@ -18,19 +18,12 @@ use SqlSemantics\Statement\Shape\RowShape;
 /**
  * Builds the environment of a HAVING clause, and the environment of the set functions written in it.
  *
- * Rule: MYSQL-HAVING-SCOPE-001. The parser reads a column name written in
- * HAVING outside the arguments of a set function as a reference to the
- * grouped result row (`Item_ref`), and every other column name as a column
- * (`Item_field`): PTI_simple_ident_ident, PTI_simple_ident_q_3d and
- * PTI_simple_ident_nospvar_ident in parse_tree_items.cc, and the
- * `simple_ident` actions of the 5.x grammars, test `parsing_place !=
- * CTX_HAVING || in_sum_expr > 0`; a set function written without OVER
- * raises `in_sum_expr` while its arguments are read (Item_sum::itemize,
- * PTI_in_sum_expr). The HAVING environment is the environment of the
- * clause with a `GroupedRow` entry; a set function without OVER reads its
- * arguments, its ORDER BY and its nested queries in the same environment
- * without the entry. A nested query is a query block of its own and starts
- * outside HAVING, but it sees the entry as part of its enclosing position.
+ * Rule: MYSQL-HAVING-SCOPE-001. Ordinary names written in HAVING see the
+ * selected result and grouping columns. Aggregate arguments can read the input
+ * columns of the block. The HAVING environment carries a GroupedRow describing
+ * that result; aggregate arguments remove it from their current position and
+ * retain an argument marker across nested queries. Nested queries start their
+ * own scope but keep the enclosing HAVING position available for correlation.
  * Terminates: one pass over the visible relations.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html. Status: Implemented.
  *
@@ -43,7 +36,7 @@ final class HavingScope
      */
     public function enter(Environment $environment, GroupedRow $row): Environment
     {
-        return new Environment($environment->context, $environment->outer, [...$environment->relations, new VisibleRelation($row, new RowShape([]))], $environment->commonTables, $environment->aliases);
+        return new Environment($environment->context, $environment->outer, [...$environment->relations, new VisibleRelation($row, new RowShape([]))], $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument, projection: $environment->projection);
     }
 
     /**
@@ -120,7 +113,21 @@ final class HavingScope
         }
         $relations = array_values(array_filter($environment->relations, static fn (VisibleRelation $relation): bool => !$relation->relation instanceof GroupedRow));
 
-        return new Environment($environment->context, $environment->outer, $relations, $environment->commonTables, $environment->aliases);
+        return new Environment($environment->context, $environment->outer, $relations, $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument, projection: $environment->projection);
+    }
+
+    /**
+     * Opens aggregate arguments, which can read input columns of an enclosing HAVING block.
+     *
+     * A nested aggregate prefers an input column over a selected result of the same name;
+     * a result alias with no matching input remains an alias. This position is retained
+     * across nested queries in the argument. Verified through SQL on MySQL 8.4.
+     */
+    public function arguments(Environment $environment): Environment
+    {
+        $input = $this->leave($environment);
+
+        return new Environment($input->context, $input->outer, $input->relations, $input->commonTables, $input->aliases, $input->written, $input->aggregation, $input->aggregatesAllowed, true, $input->projection);
     }
 
     /**

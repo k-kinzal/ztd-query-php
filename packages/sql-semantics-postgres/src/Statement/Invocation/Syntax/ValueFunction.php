@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -45,7 +44,8 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class ValueFunction implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * The largest fractional-seconds precision of the time types.
@@ -56,8 +56,11 @@ final class ValueFunction implements Scalar, OutputNaming
      * @param ValueFunctionKind $kind The function
      * @param IntegerConstant|null $precision The fractional-seconds precision written in parentheses
      */
-    public function __construct(public readonly ValueFunctionKind $kind, public readonly ?IntegerConstant $precision = null)
+    public function __construct(public readonly ValueFunctionKind $kind, public readonly ?IntegerConstant $precision = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input($precision === null || $kind->precise(), 'Only the time functions take a precision.');
     }
 

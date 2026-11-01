@@ -30,21 +30,21 @@ final class AlterKindsTest extends TestCase
         self::assertSame([
             'ALTER action ADD COLUMN cannot be performed on relation "v"',
             'ALTER action ALTER COLUMN ... SET NOT NULL cannot be performed on relation "v"',
-        ], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE v ADD COLUMN b int, ALTER a SET DEFAULT 1, ALTER a SET NOT NULL, OWNER TO r', $context)->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE v ADD COLUMN b int, ALTER a SET DEFAULT 1, ALTER a SET NOT NULL, OWNER TO r', $context)->diagnostics()));
     }
 
     public function testCheckReportsTheTargetKindFirst(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE TABLE t (a int)')];
-        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t ALTER a SET NOT NULL', $context)->facts->diagnostics));
+        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t ALTER a SET NOT NULL', $context)->diagnostics()));
     }
 
     public function testParentReportsAParentThatCannotBeInherited(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
-        self::assertSame(['ALTER action INHERIT cannot be performed on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE t INHERIT s', $context)->facts->diagnostics));
+        self::assertSame(['ALTER action INHERIT cannot be performed on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE t INHERIT s', $context)->diagnostics()));
     }
 
     public function testForeignReportsKeysAddedToAForeignTable(): void
@@ -54,12 +54,12 @@ final class AlterKindsTest extends TestCase
         self::assertSame([
             'unique constraints are not supported on foreign tables',
             'primary key constraints are not supported on foreign tables',
-        ], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE f ADD COLUMN b int UNIQUE, ADD PRIMARY KEY (a), ADD CHECK (a > 0)', $context)->facts->diagnostics));
+        ], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE f ADD COLUMN b int UNIQUE, ADD PRIMARY KEY (a), ADD CHECK (a > 0)', $context)->diagnostics()));
     }
 
     public function testAcceptedAnswersNullForOwnerTo(): void
     {
-        $statement = (new Semantics(Dialect::PostgreSql))->analyze('ALTER TABLE t OWNER TO r')->statement;
+        $statement = (new Semantics(Dialect::PostgreSql))->analyze('ALTER TABLE t OWNER TO r');
         self::assertInstanceOf(AlterTable::class, $statement);
         self::assertInstanceOf(OwnerTo::class, $statement->commands[0]);
         self::assertNull((new AlterKinds())->accepted($statement->commands[0]));
@@ -68,7 +68,7 @@ final class AlterKindsTest extends TestCase
     public function testOtherAnswersTheActionOfAColumnChange(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
-        $statement = $semantics->analyze('ALTER TABLE t ALTER a SET STORAGE plain, ALTER a SET COMPRESSION pglz')->statement;
+        $statement = $semantics->analyze('ALTER TABLE t ALTER a SET STORAGE plain, ALTER a SET COMPRESSION pglz');
         self::assertInstanceOf(AlterTable::class, $statement);
         self::assertSame([
             [AlterAction::SetStorage, [RelationKind::BaseTable, RelationKind::MaterializedView, RelationKind::ForeignTable]],
@@ -79,7 +79,7 @@ final class AlterKindsTest extends TestCase
     public function testRelationWideAnswersTheActionOfARelationOption(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);
-        $statement = $semantics->analyze('ALTER TABLE t RESET (fillfactor)')->statement;
+        $statement = $semantics->analyze('ALTER TABLE t RESET (fillfactor)');
         self::assertInstanceOf(AlterTable::class, $statement);
         self::assertSame([AlterAction::ResetRelationOptions, [RelationKind::BaseTable, RelationKind::View, RelationKind::MaterializedView]], (new AlterKinds())->relationWide($statement->commands[0]));
     }

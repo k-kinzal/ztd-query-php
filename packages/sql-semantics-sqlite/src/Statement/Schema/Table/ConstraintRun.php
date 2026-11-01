@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Table;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The table constraints written one after another without a comma between them.
@@ -25,11 +24,11 @@ use SqlSemantics\Statement\Snapshot;
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $named = $semantics->analyze('CREATE TABLE t (a, CONSTRAINT c CHECK (a > 0))');
  *     $cut = $semantics->analyze('CREATE TABLE t (a, CONSTRAINT c, CHECK (a > 0))');
- *     [count($named->statement->constraints), count($cut->statement->constraints)] // => [1, 2]
+ *     [count($named->constraints), count($cut->constraints)] // => [1, 2]
  */
 final class ConstraintRun implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TableConstraint> The constraints of the run in written order
@@ -39,7 +38,7 @@ final class ConstraintRun implements Node
     /**
      * @param list<TableConstraint> $items The constraints of the run in written order; at least one
      */
-    public function __construct(array $items)
+    public function __construct(array $items, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->items = Check::listOf($items, TableConstraint::class, 'A constraint run holds at least one table constraint.', 1);
     }

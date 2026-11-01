@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One locking clause: FOR UPDATE, FOR NO KEY UPDATE, FOR SHARE or FOR KEY SHARE, optionally limited to some FROM items.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a locking clause
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 FROM t FOR SHARE OF t SKIP LOCKED');
- *     [$query->statement->options->locking[0]->strength->value, $query->statement->options->locking[0]->relations[0]->name->value, $query->statement->options->locking[0]->wait->value] // => ['SHARE', 't', 'SKIP LOCKED']
+ *     [$query->options->locking[0]->strength->value, $query->options->locking[0]->relations[0]->name->value, $query->options->locking[0]->wait->value] // => ['SHARE', 't', 'SKIP LOCKED']
  */
 final class LockingClause implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<QualifiedName> The FROM items locked; empty for every table
@@ -38,7 +37,7 @@ final class LockingClause implements Node
      * @param list<QualifiedName> $relations The FROM items locked; empty for every table
      * @param LockWait|null $wait What to do with rows locked by another transaction; null to wait
      */
-    public function __construct(public readonly LockStrength $strength, array $relations = [], public readonly ?LockWait $wait = null)
+    public function __construct(public readonly LockStrength $strength, array $relations = [], public readonly ?LockWait $wait = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->relations = Check::listOf($relations, QualifiedName::class, 'A locking clause names relations.');
     }

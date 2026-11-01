@@ -35,11 +35,11 @@ final class RoutineRulesTest extends TestCase
     public function testStatementLowersSignalResignalAndGetDiagnostics(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        self::assertInstanceOf(Signal::class, $semantics->analyze("SIGNAL SQLSTATE '45000'")->statement);
-        self::assertInstanceOf(Resignal::class, $semantics->analyze('RESIGNAL')->statement);
-        self::assertInstanceOf(GetDiagnostics::class, $semantics->analyze('GET DIAGNOSTICS @n = NUMBER')->statement);
-        self::assertInstanceOf(AlterRoutine::class, $semantics->analyze('ALTER PROCEDURE p COMMENT "x"')->statement);
-        self::assertInstanceOf(DropProgram::class, $semantics->analyze('DROP TRIGGER IF EXISTS tr')->statement);
+        self::assertInstanceOf(Signal::class, $semantics->analyze("SIGNAL SQLSTATE '45000'"));
+        self::assertInstanceOf(Resignal::class, $semantics->analyze('RESIGNAL'));
+        self::assertInstanceOf(GetDiagnostics::class, $semantics->analyze('GET DIAGNOSTICS @n = NUMBER'));
+        self::assertInstanceOf(AlterRoutine::class, $semantics->analyze('ALTER PROCEDURE p COMMENT "x"'));
+        self::assertInstanceOf(DropProgram::class, $semantics->analyze('DROP TRIGGER IF EXISTS tr'));
     }
 
     public function testStatementRefusesANodeOfNoProduction(): void
@@ -57,7 +57,7 @@ final class RoutineRulesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
         self::assertSame('ALTER FUNCTION db.f NO SQL', $semantics->analyze('alter function db.f no sql')->toString());
-        self::assertInstanceOf(AlterEvent::class, $semantics->analyze('ALTER EVENT e ENABLE')->statement);
+        self::assertInstanceOf(AlterEvent::class, $semantics->analyze('ALTER EVENT e ENABLE'));
         self::assertSame('DROP PROCEDURE IF EXISTS p', $semantics->analyze('drop procedure if exists p')->toString());
     }
 
@@ -75,11 +75,11 @@ final class RoutineRulesTest extends TestCase
     public function testCreateLowersEveryKindOfStoredProgram(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        self::assertInstanceOf(CreateProcedure::class, $semantics->analyze('CREATE PROCEDURE p() SELECT 1')->statement);
-        self::assertInstanceOf(CreateFunction::class, $semantics->analyze('CREATE FUNCTION f() RETURNS INT RETURN 1')->statement);
-        self::assertInstanceOf(CreateLoadableFunction::class, $semantics->analyze("CREATE FUNCTION u RETURNS STRING SONAME 'u.so'")->statement);
-        self::assertInstanceOf(CreateTrigger::class, $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1')->statement);
-        self::assertInstanceOf(CreateEvent::class, $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1')->statement);
+        self::assertInstanceOf(CreateProcedure::class, $semantics->analyze('CREATE PROCEDURE p() SELECT 1'));
+        self::assertInstanceOf(CreateFunction::class, $semantics->analyze('CREATE FUNCTION f() RETURNS INT RETURN 1'));
+        self::assertInstanceOf(CreateLoadableFunction::class, $semantics->analyze("CREATE FUNCTION u RETURNS STRING SONAME 'u.so'"));
+        self::assertInstanceOf(CreateTrigger::class, $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET @a = 1'));
+        self::assertInstanceOf(CreateEvent::class, $semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1'));
     }
 
     public function testCreateRefusesANodeOfNoProduction(): void

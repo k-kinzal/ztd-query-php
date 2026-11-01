@@ -15,7 +15,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -30,11 +29,12 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a rule
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)');
- *     [count($statement->statement->actions), $statement->toString()] // => [2, 'CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)']
+ *     [count($statement->actions), $statement->toString()] // => [2, 'CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE old.a <> new.a DO ALSO (INSERT INTO log VALUES (old.a); DELETE FROM log WHERE a = new.a)']
  */
-final class CreateRule implements Statement, Relation
+final class CreateRule extends \SqlSemantics\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Statement> The actions in order; none is NOTHING or an empty list
@@ -60,7 +60,16 @@ final class CreateRule implements Statement, Relation
         public readonly ?bool $instead = null,
         public readonly ?Scalar $where = null,
         public readonly bool $replace = false,
+        ?RelationFact $relationInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->actions = Check::listOf($actions, Statement::class, 'Rule actions are statements.');
         Check::input($grouped || count($this->actions) <= 1, 'Several actions are written between parentheses.');
     }

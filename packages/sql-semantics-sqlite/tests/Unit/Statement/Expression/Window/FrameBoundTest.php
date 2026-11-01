@@ -21,7 +21,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(FrameBound::class)]
 #[Medium]
@@ -32,7 +31,7 @@ final class FrameBoundTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT sum(a) OVER (ROWS BETWEEN 2 PRECEDING AND ? FOLLOWING) FROM t', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -44,8 +43,8 @@ final class FrameBoundTest extends TestCase
         self::assertSame('2', $frame->start->offset->digits);
         self::assertSame(FrameBoundKind::Following, $frame->end?->kind);
         self::assertInstanceOf(BindParameter::class, $frame->end->offset);
-        self::assertTrue($operation->facts->covers($frame->start->offset));
-        self::assertTrue($operation->facts->covers($frame->end->offset));
+        self::assertTrue($frame->start->offset->hasBinding());
+        self::assertTrue($frame->end->offset->hasBinding());
     }
 
     public function testRenderWritesEveryKindOfBoundary(): void
@@ -59,7 +58,7 @@ final class FrameBoundTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $frame = new Frame(FrameUnit::Rows, new FrameBound(FrameBoundKind::Preceding, new BindParameter(ParameterPrefix::Colon, 'n')), new FrameBound(FrameBoundKind::UnboundedFollowing));
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame)))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new FunctionCall(new Name('sum'), [new IntegerLiteral('1')], false, null, [], null, new WindowSpec(null, [], [], $frame)))]));
 
         self::assertSame('SELECT sum(1) OVER (ROWS BETWEEN :n PRECEDING AND UNBOUNDED FOLLOWING)', $operation->toString());
     }

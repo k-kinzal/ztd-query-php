@@ -158,6 +158,8 @@ final class UserListRule
 
     /**
      * Lowers the factor change forms of alter_user.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When a factor operand or pair is invalid
      */
     public function factors(Form $form, Account $account): FactorChange
     {
@@ -168,6 +170,13 @@ final class UserListRule
             $start = 1 + $index * $width;
             $factor = $this->identifications->factor($form->node($start + 1));
             $steps[] = new FactorStep($factor, $action === FactorAction::Drop ? null : $this->identifications->identification($form->node($start + 2)));
+        }
+
+        if (count($steps) === 2) {
+            $identical = $steps[0]->factor === $steps[1]->factor;
+            if ($identical || ($action === FactorAction::Add && $steps[0]->factor === \SqlSemantics\Platform\MySql\Statement\Account\User\Factor::Third)) {
+                throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\InvalidFactorPair($identical), (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+            }
         }
 
         return new FactorChange($account, $action, $steps);
@@ -184,6 +193,22 @@ final class UserListRule
         $users = [];
         foreach ($this->spine($list) as $item) {
             $users[] = $this->grant($item);
+        }
+
+        return $users;
+    }
+
+    /**
+     * Lowers the legacy account list in the ALTER USER role.
+     *
+     * @return non-empty-list<UserSpecification>
+     */
+    public function legacyAltered(Node $list): array
+    {
+        $users = [];
+        foreach ($this->spine($list) as $item) {
+            $user = $this->grant($item);
+            $users[] = $user;
         }
 
         return $users;

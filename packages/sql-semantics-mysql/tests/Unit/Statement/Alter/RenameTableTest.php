@@ -23,13 +23,13 @@ final class RenameTableTest extends TestCase
         $u = $semantics->analyze('CREATE TABLE u (a INT)');
         $rename = $semantics->analyze('RENAME TABLE t TO tmp, u TO t, tmp TO u', [$t, $u]);
 
-        self::assertInstanceOf(RenameTable::class, $rename->statement);
-        self::assertSame([], $rename->facts->diagnostics);
-        self::assertEquals(new DeclaredTable($t->declarations()[0]), $rename->facts->relation($rename->statement->renamings[2])->table);
+        self::assertInstanceOf(RenameTable::class, $rename);
+        self::assertSame([], $rename->diagnostics());
+        self::assertEquals(new DeclaredTable($t->declarations()[0], $semantics->context()->searchPath[0]), $rename->renamings[2]->relationInformation()->table);
     }
 
     public function testRenderWritesTheRenames(): void
     {
-        self::assertSame('RENAME TABLE a TO b, c TO d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('rename tables a to b, c to d')->toString());
+        self::assertSame('RENAME TABLES a TO b, c TO d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('rename tables a to b, c to d')->toString());
     }
 }

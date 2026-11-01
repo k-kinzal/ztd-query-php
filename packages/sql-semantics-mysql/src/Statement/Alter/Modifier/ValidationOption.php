@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter\Modifier;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `WITH VALIDATION` or `WITHOUT VALIDATION` (5.7 and later): whether the server checks rows against generated columns or an exchanged partition.
@@ -21,12 +20,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ValidationOption implements AlterModifier
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $validate Whether WITH (true) or WITHOUT (false) is written
      */
-    public function __construct(public readonly bool $validate)
+    public function __construct(public readonly bool $validate, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

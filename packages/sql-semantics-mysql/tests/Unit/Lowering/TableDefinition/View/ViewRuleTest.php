@@ -19,6 +19,20 @@ use SqlSemantics\Platform\MySql\Statement\View\ViewCheckOption;
 #[Medium]
 final class ViewRuleTest extends TestCase
 {
+    public function testCreateRejectsIncompatibleExistenceClausesBeforeTheBody(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('IF NOT EXISTS requires CREATE VIEW without OR REPLACE.');
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze("CREATE OR REPLACE VIEW IF NOT EXISTS v AS SELECT DATE 'bad'");
+    }
+
+    public function testAlterRejectsTheCreateOnlyClauseBeforeTheBody(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage('IF NOT EXISTS requires CREATE VIEW without OR REPLACE.');
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-9.1.0'))->analyze('ALTER VIEW IF NOT EXISTS v AS SELECT ?');
+    }
+
     public function testCreateLowersAViewTail(): void
     {
         $platform = new Platform();
@@ -110,5 +124,46 @@ final class ViewRuleTest extends TestCase
         $node = $platform->parser($profile)->parse('DROP VIEW IF EXISTS v')->find('drop')[0];
 
         self::assertTrue((new ViewRule($lowering))->drop($lowering->form($node))->ifExists);
+    }
+    public function testDefinitionRefusesInvalidModernColumnsBeforeTheQuery(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("Incorrect column name ''");
+        $semantics->analyze('CREATE VIEW v (``) AS VALUES ROW()');
+    }
+
+    public function testDefinitionKeepsLegacyColumnNames(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44');
+        self::assertSame('CREATE VIEW v (``) AS SELECT 1', $semantics->analyze('CREATE VIEW v (``) AS SELECT 1')->toString());
+    }
+
+
+    public function testBodyRetainsARefusedOperandWithItsVariableRole(): void
+    {
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        $this->expectExceptionMessage("View's SELECT contains a variable or parameter");
+        (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE VIEW v AS SELECT ROW(@x,2)');
+    }
+
+    public function testVariablesFindsAVariableOrParameterInTheBody(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new ViewRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $parser = $semantics->parser();
+
+        self::assertSame(24, $rule->variables($parser->parse('CREATE VIEW v AS SELECT @@autocommit')->find('view_query_block')[0]));
+        self::assertSame(24, $rule->variables($parser->parse('CREATE VIEW v AS SELECT @x')->find('view_query_block')[0]));
+        self::assertNull($rule->variables($parser->parse('CREATE VIEW v AS SELECT 1')->find('view_query_block')[0]));
+        try {
+            $semantics->analyze('CREATE VIEW v AS SELECT @@nosuchvar');
+            self::fail('A view body cannot read a variable.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertSame(\SqlSemantics\Platform\MySql\Statement\View\Problem\BodyRestriction::Variable, $failure->problem);
+            self::assertSame(24, $failure->end);
+        }
     }
 }

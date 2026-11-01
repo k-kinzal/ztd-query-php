@@ -17,7 +17,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -34,11 +33,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a prepared statement
  *     $prepare = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('PREPARE p (integer) AS SELECT $1');
- *     [$prepare->statement->name->value, count($prepare->statement->parameters->types), $prepare->toString()] // => ['p', 1, 'PREPARE p (INTEGER) AS SELECT $1']
+ *     [$prepare->name->value, count($prepare->parameters->types), $prepare->toString()] // => ['p', 1, 'PREPARE p (INTEGER) AS SELECT $1']
  */
-final class Prepare implements Statement
+final class Prepare extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The name of the prepared statement
@@ -47,8 +46,11 @@ final class Prepare implements Statement
      *
      * @throws InvalidConstruction When the statement is of another kind
      */
-    public function __construct(public readonly Name $name, public readonly ?PreparedParameters $parameters, public readonly Query $statement)
+    public function __construct(public readonly Name $name, public readonly ?PreparedParameters $parameters, public readonly Query $statement, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input((new Sources())->statement($statement) || $statement instanceof Modification, 'PREPARE prepares a query statement or a data-modifying statement.');
     }
 

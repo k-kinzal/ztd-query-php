@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The indirection step `[ lower : upper ]`: a slice of an array; an omitted bound is the array's own bound.
@@ -25,13 +24,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class Slice implements IndirectionStep
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar|null $lower The lower bound, or null when omitted
      * @param Scalar|null $upper The upper bound, or null when omitted
      */
-    public function __construct(public readonly ?Scalar $lower, public readonly ?Scalar $upper)
+    public function __construct(public readonly ?Scalar $lower, public readonly ?Scalar $upper, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

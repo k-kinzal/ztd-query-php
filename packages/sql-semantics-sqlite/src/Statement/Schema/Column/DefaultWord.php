@@ -10,7 +10,6 @@ use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\WordQuote;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A DEFAULT column constraint whose value is written as an identifier.
@@ -26,18 +25,18 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Telling the text default from the truth default
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $text = $semantics->analyze('CREATE TABLE t (a DEFAULT unknown)')->statement->columns[0]->constraints[0];
- *     $truth = $semantics->analyze('CREATE TABLE t (a DEFAULT TRUE)')->statement->columns[0]->constraints[0];
+ *     $text = $semantics->analyze('CREATE TABLE t (a DEFAULT unknown)')->columns[0]->constraints[0];
+ *     $truth = $semantics->analyze('CREATE TABLE t (a DEFAULT TRUE)')->columns[0]->constraints[0];
  *     [$text->truth(), $text->word->name->value, $truth->truth()] // => [null, 'unknown', true]
  */
 final class DefaultWord implements ColumnConstraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Word $word The identifier with its quoting
      */
-    public function __construct(public readonly Word $word)
+    public function __construct(public readonly Word $word, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($word->quote !== WordQuote::Single, 'A single-quoted default is a string literal, not an identifier.');
     }

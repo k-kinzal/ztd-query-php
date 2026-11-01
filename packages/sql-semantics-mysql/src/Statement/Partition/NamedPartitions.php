@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A comma-separated list of partition names.
@@ -23,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class NamedPartitions implements PartitionSelection
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The partition names in order; at least one
@@ -33,7 +32,7 @@ final class NamedPartitions implements PartitionSelection
     /**
      * @param list<Name> $names The partition names in order; at least one
      */
-    public function __construct(array $names)
+    public function __construct(array $names, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($names !== [], 'A partition list names at least one partition.');
         $this->names = Check::listOf($names, Name::class, 'Partition names are a list of names.');

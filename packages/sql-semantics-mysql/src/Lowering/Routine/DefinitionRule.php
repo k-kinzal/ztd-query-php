@@ -103,6 +103,7 @@ final class DefinitionRule
      * Lowers CREATE PROCEDURE or CREATE FUNCTION of a stored function: a node of `sp_tail` or `sf_tail`, and the definer.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the RETURNS type exceeds a bound, a parameter is refused, or the body has a definition condition
      */
     public function routine(Node $tail, ?Account $definer): CreateProcedure|CreateFunction
     {
@@ -122,13 +123,25 @@ final class DefinitionRule
         $exists = isset($parts['opt_if_not_exists']) && $this->lowering->options->present($parts['opt_if_not_exists']);
         $name = $this->lowering->names->qualified($parts['sp_name']);
         $characteristics = (new CharacteristicRule($this->lowering))->characteristics($parts['sp_c_chistics']);
-        $body = (new StatementRule($this->lowering))->body($parts['stored_routine_body'] ?? $parts['sp_proc_stmt']);
+        $bodyTree = $parts['stored_routine_body'] ?? $parts['sp_proc_stmt'];
         if ($tail->name === 'sp_tail') {
-            return new CreateProcedure($name, (new ParameterRule($this->lowering))->parameters($parts['sp_pdparam_list']), $body, $characteristics, $definer, $exists);
+            $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_pdparam_list']);
+            $body = (new StatementRule($this->lowering->inProgram($name)))->body($bodyTree);
+            $source = (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_pdparam_list']);
+            (new BodyRefusal($this->lowering))->checked($tail, $name, ProgramKind::Procedure, $body, $parameters, $characteristics, $definer, $source, typeEnds: $source->typeEnds);
+            return new CreateProcedure($name, $parameters, $body, $characteristics, $definer, $exists, definitionSource: $source);
         }
-        [$type, $collation] = (new ParameterRule($this->lowering))->declared($parts['type_with_opt_collate'] ?? $parts['type'], $parts['opt_collate'] ?? null);
-
-        return new CreateFunction($name, (new ParameterRule($this->lowering))->parameters($parts['sp_fdparam_list']), $type, $body, $collation, $characteristics, $definer, $exists);
+        $returnTree = $parts['type_with_opt_collate'] ?? $parts['type'];
+        [$type, $collation] = (new ParameterRule($this->lowering))->declared($returnTree, $parts['opt_collate'] ?? null);
+        $size = (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->problem($type, '', $this->lowering->profile->grammar);
+        if ($size !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($size, (new \SqlSemantics\Construction\SourceRanges())->span($returnTree)[1] ?? 0);
+        }
+        $parameters = (new ParameterRule($this->lowering))->parameters($parts['sp_fdparam_list']);
+        $body = (new StatementRule($this->lowering->inProgram($name)))->body($bodyTree);
+        $source = (new DefinitionBody())->source($body, $parts['sp_name'], $bodyTree, $parts['sp_fdparam_list'], $returnTree);
+        (new BodyRefusal($this->lowering))->checked($tail, $name, ProgramKind::Function, $body, $parameters, $characteristics, $definer, $source, $type, $collation, $source->typeEnds);
+        return new CreateFunction($name, $parameters, $type, new \SqlSemantics\Platform\MySql\Statement\Routine\Definition\FunctionImplementation($body, $characteristics), $collation, $definer, $exists, definitionSource: $source);
     }
 
     /**
@@ -179,6 +192,7 @@ final class DefinitionRule
      * one of the `drop_*_stmt` rules.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a modern DROP FUNCTION name is invalid
      */
     public function drop(Form $form): DropProgram
     {
@@ -190,6 +204,10 @@ final class DefinitionRule
             'drop: DROP FUNCTION_SYM if_exists ident', 'drop_function_stmt: DROP FUNCTION_SYM if_exists ident' => new QualifiedName($this->lowering->names->identifier($form->node(3))),
             default => throw ImplementationGap::production($form),
         };
+        $problem = $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? null : \SqlSemantics\Platform\MySql\Rules\Routine\ProgramNames::problem($name->name);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0);
+        }
 
         return new DropProgram(ProgramKind::Function, $name, $this->lowering->options->present($form->node(2)));
     }

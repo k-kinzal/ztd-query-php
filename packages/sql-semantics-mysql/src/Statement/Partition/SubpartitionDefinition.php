@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `SUBPARTITION name [options]`: one subpartition of a partition definition.
@@ -19,12 +18,14 @@ use SqlSemantics\Statement\Snapshot;
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-subpartitions.html.
  *
  * @visibility public
+ * @example Refusing an oversized partition identifier
+ *     new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name(str_repeat('p', 65)), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Holding a subpartition
  *     (new \SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('s0'), []))->name->value // => 's0'
  */
 final class SubpartitionDefinition implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<PartitionOption> The options in order
@@ -35,8 +36,9 @@ final class SubpartitionDefinition implements Node
      * @param Name $name The subpartition name
      * @param list<PartitionOption> $options The options in order
      */
-    public function __construct(public readonly Name $name, array $options)
+    public function __construct(public readonly Name $name, array $options, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnNameRule())->length($name->value) <= 64, 'A partition definition name has at most 64 characters.');
         $this->options = Check::listOf($options, PartitionOption::class, 'Subpartition options are a list of partition options.');
     }
 

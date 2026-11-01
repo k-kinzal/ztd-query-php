@@ -113,7 +113,7 @@ final class CommonTableFacts
     public function uses(CommonTableExpression $table, Derivation $derivation): array
     {
         $names = [];
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($table->query) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($table->query, bindings: false) as $object) {
             if ($object instanceof TableInput && $object->table->name->schema === null) {
                 $names[$derivation->context->relationNames->fold($object->table->name->name->value)] = true;
             }

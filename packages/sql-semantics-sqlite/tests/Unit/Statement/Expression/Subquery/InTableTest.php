@@ -20,7 +20,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -43,12 +42,12 @@ final class InTableTest extends TestCase
         self::assertInstanceOf(InTable::class, $test);
         self::assertSame('t', $test->table->name->value);
         self::assertNull($test->arguments);
-        self::assertInstanceOf(DeclaredTable::class, $query->facts->relation($test)->table);
-        self::assertSame($create->declarations()[0], $query->facts->relation($test)->table->table);
+        self::assertInstanceOf(DeclaredTable::class, $test->relationInformation()->table);
+        self::assertSame($create->declarations()[0], $test->relationInformation()->table->table);
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
         self::assertSame(Nullability::NotNull, $query->field(0)->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveScalarCanBeNullWhenTheOperandOrTheColumnCan(): void
@@ -68,11 +67,11 @@ final class InTableTest extends TestCase
         $single = $semantics->analyze('SELECT 1 IN t', [$create]);
         $row = $semantics->analyze('SELECT (1, 2) IN t', [$create]);
 
-        self::assertCount(1, $single->facts->diagnostics);
-        self::assertInstanceOf(ArityMismatch::class, $single->facts->diagnostics[0]);
-        self::assertSame(ArityRule::ScalarSubquery, $single->facts->diagnostics[0]->rule);
-        self::assertSame('Sub-select returns 2 columns - expected 1.', $single->facts->diagnostics[0]->message());
-        self::assertSame([], $row->facts->diagnostics);
+        self::assertCount(1, $single->diagnostics());
+        self::assertInstanceOf(ArityMismatch::class, $single->diagnostics()[0]);
+        self::assertSame(ArityRule::ScalarSubquery, $single->diagnostics()[0]->rule);
+        self::assertSame('Sub-select returns 2 columns - expected 1.', $single->diagnostics()[0]->message());
+        self::assertSame([], $row->diagnostics());
         self::assertSame(Nullability::Nullable, $row->field(0)->nullability);
     }
 
@@ -82,8 +81,8 @@ final class InTableTest extends TestCase
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
-        self::assertInstanceOf(CommonTable::class, $query->facts->relation($test)->table);
-        self::assertSame('x', $query->facts->relation($test)->shape->slots[0]->name?->value);
+        self::assertInstanceOf(CommonTable::class, $test->relationInformation()->table);
+        self::assertSame('x', $test->relationInformation()->shape->slots[0]->name?->value);
         self::assertSame(Nullability::NotNull, $query->field(0)->nullability);
     }
 
@@ -93,11 +92,11 @@ final class InTableTest extends TestCase
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
-        self::assertInstanceOf(UndeclaredTable::class, $query->facts->relation($test)->table);
-        self::assertFalse($query->facts->relation($test)->shape->complete());
-        self::assertSame('the declaration of relation x', $query->facts->relation($test)->shape->missing[0]->describe());
+        self::assertInstanceOf(UndeclaredTable::class, $test->relationInformation()->table);
+        self::assertFalse($test->relationInformation()->shape->complete());
+        self::assertSame('the declaration of relation x', $test->relationInformation()->shape->missing[0]->describe());
         self::assertSame(Nullability::Dependent, $query->field(0)->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveScalarDependsOnTheRoutineOfATableValuedFunction(): void
@@ -107,11 +106,11 @@ final class InTableTest extends TestCase
 
         self::assertInstanceOf(InTable::class, $test);
         self::assertCount(1, $test->arguments ?? []);
-        self::assertNull($query->facts->relation($test)->table);
-        self::assertInstanceOf(UndeclaredRoutine::class, $query->facts->relation($test)->shape->missing[0]);
-        self::assertSame('json_each', $query->facts->relation($test)->shape->missing[0]->name->name->value);
+        self::assertNull($test->relationInformation()->table);
+        self::assertInstanceOf(UndeclaredRoutine::class, $test->relationInformation()->shape->missing[0]);
+        self::assertSame('json_each', $test->relationInformation()->shape->missing[0]->name->name->value);
         self::assertSame(Nullability::Dependent, $query->field(0)->nullability);
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 
     public function testDeriveScalarReportsAMissingTableInACompleteContext(): void
@@ -120,9 +119,9 @@ final class InTableTest extends TestCase
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
-        self::assertInstanceOf(MissingTable::class, $query->facts->relation($test)->table);
-        self::assertInstanceOf(MissingTable::class, $query->facts->diagnostics[0]);
-        self::assertSame('Relation x does not exist.', $query->facts->diagnostics[0]->message());
+        self::assertInstanceOf(MissingTable::class, $test->relationInformation()->table);
+        self::assertInstanceOf(MissingTable::class, $query->diagnostics()[0]);
+        self::assertSame('Relation x does not exist.', $query->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheNegationTheSchemaAndTheArguments(): void
@@ -143,7 +142,7 @@ final class InTableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $test = new InTable(new IntegerLiteral('1'), new QualifiedName(new Name('t'), new Name('temp')), null, true);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($test)]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn($test)]));
 
         self::assertSame('SELECT 1 NOT IN `temp`.t', $operation->toString());
     }

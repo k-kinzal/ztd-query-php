@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Server;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
@@ -14,8 +16,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW STATUS: the status variables of the server or the session.
@@ -30,18 +30,27 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SHOW LOCAL STATUS LIKE 'a%'");
- *     [$show->statement->scope, $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Session, "SHOW SESSION STATUS LIKE 'a%'"]
+ *     [$show->scope, $show->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Variable\VariableScope::Local, "SHOW LOCAL STATUS LIKE 'a%'"]
  */
-final class ShowStatus implements Statement, Relation
+final class ShowStatus extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, Relation, \SqlSemantics\Statement\AnalyzedStatement, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param ?VariableScope $scope The scope keyword
+     * @param ?VariableScope $scope GLOBAL, SESSION, LOCAL, or no scope keyword
      * @param ShowLike|ShowWhere|null $filter The LIKE or WHERE clause
      */
-    public function __construct(public readonly ?VariableScope $scope = null, public readonly ShowLike|ShowWhere|null $filter = null)
+    public function __construct(public readonly ?VariableScope $scope = null, public readonly ShowLike|ShowWhere|null $filter = null, ?RelationFact $relationInformation = null, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        Check::input(in_array($scope, [null, VariableScope::Global, VariableScope::Session, VariableScope::Local], true), 'SHOW STATUS accepts GLOBAL or SESSION scope.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

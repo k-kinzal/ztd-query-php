@@ -14,6 +14,16 @@ use SqlSemantics\Platform\MySql\Rendering\Keywords;
 #[Small]
 final class KeywordsTest extends TestCase
 {
+    public function testContainsDistinguishesKeywordsFromIntroducerShapedNames(): void
+    {
+        self::assertTrue((new Keywords(GrammarRelease::MySql847))->contains('aCtIoN'));
+        self::assertTrue((new Keywords(GrammarRelease::MySql847))->contains('count'));
+        self::assertFalse((new Keywords(GrammarRelease::MySql847))->contains('_utf8mb4'));
+        self::assertFalse((new Keywords(GrammarRelease::MySql847))->contains('_foo'));
+        self::assertFalse((new Keywords(GrammarRelease::MySql5651))->contains('window'));
+        self::assertTrue((new Keywords(GrammarRelease::MySql847))->contains('window'));
+    }
+
     public function testReservedIsTrueForKeywordsOfTheReleaseWhateverTheCase(): void
     {
         $keywords = new Keywords(GrammarRelease::MySql8044);
@@ -37,11 +47,11 @@ final class KeywordsTest extends TestCase
         self::assertTrue($keywords->reserved('adddate'));
     }
 
-    public function testReservedIsTrueForWordsStartingWithAnUnderscore(): void
+    public function testReservedDistinguishesCharacterSetIntroducersFromOrdinaryNames(): void
     {
         self::assertTrue((new Keywords(GrammarRelease::MySql8044))->reserved('_utf8mb4'));
-        self::assertTrue((new Keywords(GrammarRelease::MySql8044))->reserved('_x'));
-        self::assertTrue((new Keywords(GrammarRelease::MySql5744))->reserved('_'));
+        self::assertFalse((new Keywords(GrammarRelease::MySql8044))->reserved('_x'));
+        self::assertFalse((new Keywords(GrammarRelease::MySql5744))->reserved('_'));
     }
 
     public function testReservedIsFalseForOrdinaryWords(): void

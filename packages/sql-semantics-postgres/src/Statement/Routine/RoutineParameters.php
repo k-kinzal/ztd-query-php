@@ -12,7 +12,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -29,9 +28,10 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Counting the parameters of an empty list
  *     count((new \SqlSemantics\Platform\PostgreSql\Statement\Routine\RoutineParameters([]))->parameters) // => 0
  */
-final class RoutineParameters implements ParameterDeclarations
+final class RoutineParameters implements ParameterDeclarations, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<FunctionParameter> The parameters in order
@@ -41,8 +41,11 @@ final class RoutineParameters implements ParameterDeclarations
     /**
      * @param list<FunctionParameter> $parameters The parameters in order
      */
-    public function __construct(array $parameters)
+    public function __construct(array $parameters, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->parameters = Check::listOf($parameters, FunctionParameter::class, 'A parameter list holds function parameters.');
     }
 

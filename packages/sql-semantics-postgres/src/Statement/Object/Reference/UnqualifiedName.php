@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The name of an object that belongs to no schema, such as a schema, an extension, a language, a database or a role.
@@ -25,12 +24,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class UnqualifiedName implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The object name
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -14,7 +14,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 
 /**
@@ -31,21 +30,25 @@ use SqlSemantics\Statement\Type\Invalid;
  * @visibility public
  * @example Reading the collation of an expression
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT a COLLATE NOCASE FROM t');
- *     $query->statement->columns[0]->expression->collation->value // => 'NOCASE'
+ *     $query->columns[0]->expression->collation->value // => 'NOCASE'
  * @example Refusing an operand that would be read back differently
- *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->statement->columns[0]->expression;
+ *     $sum = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 + 2')->columns[0]->expression;
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Collate($sum, new \SqlSemantics\Statement\Identifier\Name('NOCASE')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Collate implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $operand The collated expression
      * @param Name $collation The collating sequence name
      */
-    public function __construct(public readonly Scalar $operand, public readonly Name $collation)
+    public function __construct(public readonly Scalar $operand, public readonly Name $collation, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input((new Precedence())->closing($operand) >= Precedence::COLLATION, 'The operand of COLLATE needs parentheses to keep its place.');
     }
 

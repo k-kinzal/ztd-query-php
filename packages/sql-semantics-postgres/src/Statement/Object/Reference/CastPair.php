@@ -9,7 +9,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A cast named by its source and target types: `( source AS target )`.
@@ -24,13 +23,13 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class CastPair implements ObjectReference
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $source The source type
      * @param TypeName $target The target type
      */
-    public function __construct(public readonly TypeName $source, public readonly TypeName $target)
+    public function __construct(public readonly TypeName $source, public readonly TypeName $target, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

@@ -18,7 +18,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
@@ -55,7 +54,7 @@ final class BetweenTest extends TestCase
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT (1, 2) BETWEEN (0, 0) AND (3, 3)', []);
 
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
         self::assertInstanceOf(Known::class, $query->field(0)->type);
         self::assertSame(Storage::Integer, $query->field(0)->type->descriptor);
     }
@@ -66,12 +65,12 @@ final class BetweenTest extends TestCase
         $operand = $semantics->analyze('SELECT (1, 2) BETWEEN 1 AND 3', []);
         $bound = $semantics->analyze('SELECT 1 BETWEEN (0, 0) AND 3', []);
 
-        self::assertCount(1, $operand->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $operand->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::TooManyValueColumns, $operand->facts->diagnostics[0]->rule);
-        self::assertSame('row value misused', $operand->facts->diagnostics[0]->message());
-        self::assertCount(1, $bound->facts->diagnostics);
-        self::assertInstanceOf(Misuse::class, $bound->facts->diagnostics[0]);
+        self::assertCount(1, $operand->diagnostics());
+        self::assertInstanceOf(Misuse::class, $operand->diagnostics()[0]);
+        self::assertSame(MisuseRule::TooManyValueColumns, $operand->diagnostics()[0]->rule);
+        self::assertSame('row value misused', $operand->diagnostics()[0]->message());
+        self::assertCount(1, $bound->diagnostics());
+        self::assertInstanceOf(Misuse::class, $bound->diagnostics()[0]);
     }
 
     public function testRenderWritesTheNegationAndTheBounds(): void
@@ -109,7 +108,7 @@ final class BetweenTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $test = new Between(new IntegerLiteral('5'), new IntegerLiteral('1'), new IntegerLiteral('9'), true);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn($test)]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn($test)]));
 
         self::assertSame('SELECT 5 NOT BETWEEN 1 AND 9', $operation->toString());
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);

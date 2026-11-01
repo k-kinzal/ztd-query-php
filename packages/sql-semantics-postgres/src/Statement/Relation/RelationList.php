@@ -11,7 +11,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Relation;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Several FROM items separated by commas: their cross product.
@@ -24,13 +23,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a FROM list
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 FROM a, b AS c');
- *     [count($query->statement->from->items), $query->toString()] // => [2, 'SELECT 1 FROM a, b AS c']
+ *     [count($query->from->items), $query->toString()] // => [2, 'SELECT 1 FROM a, b AS c']
  * @example Refusing a list of one item
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Relation\RelationList([new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class RelationList implements Relation
+final class RelationList implements Relation, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Relation> The FROM items in written order
@@ -40,8 +40,11 @@ final class RelationList implements Relation
     /**
      * @param list<Relation> $items The FROM items in written order; at least two
      */
-    public function __construct(array $items)
+    public function __construct(array $items, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->items = Check::listOf($items, Relation::class, 'A FROM list holds at least two items.', 2);
         foreach ($this->items as $item) {
             Check::input(!$item instanceof self, 'A FROM list item is one FROM item.');

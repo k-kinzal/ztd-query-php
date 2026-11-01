@@ -18,13 +18,22 @@ use SqlSemantics\Statement\Declaration\RelationKind;
 #[Medium]
 final class CreateViewTest extends TestCase
 {
+    public function testValueRejectsContradictoryExistencePolicies(): void
+    {
+        $definition = new \SqlSemantics\Platform\MySql\Statement\View\ViewDefinition(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]), ifNotExists: true);
+        self::assertSame($definition, (new CreateView($definition))->definition);
+        $this->expectExceptionMessage('CREATE VIEW cannot combine OR REPLACE with IF NOT EXISTS.');
+        new CreateView($definition, true);
+    }
+
     public function testDeriveStatementDeclaresTheView(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a, NULL AS b');
         $table = $create->declarations()[0];
 
-        self::assertSame('a', $table->columns[0]->name->value);
-        self::assertFalse($table->complete);
+        self::assertSame(['a', 'b'], [$table->columns[0]->name->value, $table->columns[1]->name->value]);
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), [], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable), $table->columns[1]->type);
+        self::assertTrue($table->complete);
     }
 
     public function testDeriveStatementReportsTheProblems(): void
@@ -32,8 +41,8 @@ final class CreateViewTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v (a, b) AS SELECT 1');
         $duplicate = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v (a, a) AS SELECT 1, 2');
 
-        self::assertInstanceOf(ViewColumnCount::class, $create->facts->diagnostics[0]);
-        self::assertInstanceOf(DuplicateColumn::class, $duplicate->facts->diagnostics[0]);
+        self::assertInstanceOf(ViewColumnCount::class, $create->diagnostics()[0]);
+        self::assertInstanceOf(DuplicateColumn::class, $duplicate->diagnostics()[0]);
     }
 
     public function testRenderWritesTheStatement(): void
@@ -47,8 +56,8 @@ final class CreateViewTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
         $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW t AS SELECT 1', [$table, $view])->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW v AS SELECT 1', [$table, $view])->facts->diagnostics));
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW t AS SELECT 1', [$table, $view])->diagnostics()));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW v AS SELECT 1', [$table, $view])->diagnostics()));
         self::assertSame(RelationKind::View, $view->declarations()[0]->kind);
     }
 }

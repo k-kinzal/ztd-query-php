@@ -51,10 +51,11 @@ final class TableShapesTest extends TestCase
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)], [new ImplicitColumn([new Name('h')], $hidden)]);
         $named = $semantics->analyze('SELECT h FROM t', [$table]);
         $star = $semantics->analyze('SELECT * FROM t', [$table]);
-        $fact = $named->statement instanceof Select && $named->statement->from !== null ? $named->facts->relation($named->statement->from) : null;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $named);
+        $fact = $named->query instanceof Select && $named->query->from !== null ? $named->query->from->relationInformation() : null;
 
         self::assertSame($hidden, $named->field('h')->column());
-        self::assertSame([], $named->facts->diagnostics);
+        self::assertSame([], $named->diagnostics());
         self::assertSame(['a'], array_map(static fn (Field $field): ?string => $field->name?->value, $star->fields()->items ?? []));
         self::assertNotNull($fact);
         self::assertCount(1, (new TableShapes())->implicit($fact));
@@ -72,10 +73,12 @@ final class TableShapesTest extends TestCase
             new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
         $operation = $semantics->analyze('TABLE t', [$t]);
-        $table = $operation->statement;
+        $table = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $table);
+        $table = $table->query;
 
         self::assertInstanceOf(ExplicitTable::class, $table);
-        self::assertCount(2, (new TableShapes())->explicit($table, $operation->facts->relation($table), new Derivation($semantics->context()))->projection);
+        self::assertCount(2, (new TableShapes())->explicit($table, $table->relationInformation(), new Derivation($semantics->context()))->projection);
     }
 
     public function testExplicitKeepsTheInputsAnUnnamedColumnDependsOn(): void
@@ -85,4 +88,23 @@ final class TableShapesTest extends TestCase
         self::assertSame(1, $operation->fields()?->count());
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
     }
+    public function testExplicitDerivesAConstantProjectionForExistenceWithoutChangingTheInputShape(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
+        $definition = $semantics->analyze('CREATE TABLE t(a INT, b INT)');
+        $operation = $semantics->analyze('SELECT EXISTS(TABLE t UNION SELECT 1)', [$definition]);
+        self::assertSame([], $operation->diagnostics());
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        $item = $operation->query->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $item);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class, $item->expression);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation::class, $item->expression->query);
+        $table = $item->expression->query->left;
+        self::assertInstanceOf(ExplicitTable::class, $table);
+        self::assertCount(2, $table->relationInformation()->shape->slots);
+        self::assertCount(1, $table->queryInformation()->projection);
+        self::assertSame(Nullability::NotNull, $operation->field(0)->slot->nullability);
+    }
+
 }

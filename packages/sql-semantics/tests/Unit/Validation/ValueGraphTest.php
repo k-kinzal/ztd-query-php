@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\SearchPath;
-use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
@@ -25,11 +24,25 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Validation\ValueGraph;
+use WeakReference;
 
 #[CoversClass(ValueGraph::class)]
 #[Small]
 final class ValueGraphTest extends TestCase
 {
+    public function testObjectsTraversesBindingStateEvenAfterAnEarlierAudit(): void
+    {
+        $literal = new IntegerLiteral('1');
+        $graph = new ValueGraph(['SqlSemantics\\']);
+        self::assertSame([$literal], $graph->objects($literal));
+        $information = new \SqlSemantics\Statement\Fact\ScalarFact(new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer), \SqlSemantics\Statement\Type\Nullability::NotNull);
+        $literal->initializeScalarInformation($information);
+
+        self::assertContains($information, $graph->objects($literal, true));
+        self::assertContains($information, $graph->objects($literal));
+        self::assertContains($information, (new ValueGraph(['SqlSemantics\\']))->objects($literal));
+    }
+
     public function testObjectsListsEveryReachableObjectOnce(): void
     {
         $name = new Name('a');
@@ -45,6 +58,29 @@ final class ValueGraphTest extends TestCase
         self::assertContains(SetQuantifier::Distinct, $objects);
     }
 
+    public function testObjectsReusesOnlyACompletedAuditInTheSameDomain(): void
+    {
+        $literal = new IntegerLiteral('1');
+        $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Statement\\']);
+
+        self::assertSame([$literal], $graph->objects($literal, true));
+        self::assertSame([$literal], $graph->objects($literal, true));
+        self::assertSame([$literal], $graph->objects($literal));
+        $this->expectExceptionMessage('is not part of the closed semantic value domain.');
+
+        (new ValueGraph(['SqlSemantics\\Statement\\']))->objects($literal, true);
+    }
+
+    public function testObjectsDoesNotRetainAuditedInstances(): void
+    {
+        $literal = new IntegerLiteral('1');
+        $reference = WeakReference::create($literal);
+        (new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Statement\\']))->objects($literal, true);
+        unset($literal);
+
+        self::assertNull($reference->get());
+    }
+
     public function testObjectsRefusesAClassOutsideTheAdmittedNamespaces(): void
     {
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Platform\\Sqlite\\Statement\\Query\\']);
@@ -52,6 +88,15 @@ final class ValueGraphTest extends TestCase
         $this->expectExceptionMessage('A value of class ' . IntegerLiteral::class . ' is not part of the closed semantic value domain.');
 
         $graph->objects(new Select([new ResultColumn(new IntegerLiteral('1'))]));
+    }
+
+    public function testObjectsRefusesOriginalParserTrees(): void
+    {
+        $tree = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->parser()->parse('SELECT 1');
+
+        $this->expectExceptionMessage('is not part of the closed semantic value domain.');
+
+        (new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\']))->objects($tree);
     }
 
     public function testObjectsRefusesAPhpReferenceInsideAList(): void
@@ -68,6 +113,9 @@ final class ValueGraphTest extends TestCase
     public function testObjectsRefusesAnAnonymousClassWhateverInterfaceItImplements(): void
     {
         $foreign = new class () implements Relation {
+            use \SqlSemantics\Statement\Semantics\Occurrence;
+            use \SqlSemantics\Statement\Semantics\RelationSemantics;
+
             public function render(Output $out): void
             {
             }
@@ -106,16 +154,26 @@ final class ValueGraphTest extends TestCase
     {
         $graph = new ValueGraph(['SqlSemantics\\']);
 
-        $this->expectExceptionMessage('Semantic value class ' . Leaves::class . ' must have readonly properties only.');
+        $this->expectExceptionMessage('Semantic value class ' . Derivation::class . ' exposes readonly operands only.');
 
-        $graph->members(new Leaves());
+        $graph->members(new Derivation(new \SqlSemantics\Contract\AnalysisContext(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::Sqlite3472), [new Name('main')])));
     }
 
     public function testMembersAnswersTheReadonlyPropertiesAndNothingForAnEnumCase(): void
     {
         $graph = new ValueGraph(['SqlSemantics\\Platform\\Sqlite\\Statement\\']);
 
-        self::assertSame(['digits'], array_map(static fn ($property): string => $property->getName(), $graph->members(new IntegerLiteral('1'))));
+        self::assertSame(['digits', 'inputSource', 'valueInformation'], array_map(static fn ($property): string => $property->getName(), $graph->members(new IntegerLiteral('1'))));
         self::assertSame([], $graph->members(SetQuantifier::All));
     }
+
+    public function testObjectsCanTraverseOperandsWithoutFollowingBindings(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 7 AS n');
+        $graph = new ValueGraph(['SqlSemantics\\']);
+        self::assertContains($statement->output(), $graph->objects($statement));
+        self::assertNotContains($statement->output(), $graph->objects($statement, bindings: false));
+        self::assertContains($statement->field(0)->expression, $graph->objects($statement, bindings: false));
+    }
+
 }

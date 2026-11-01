@@ -6,9 +6,11 @@ namespace SqlSemantics\Rendering;
 
 use SqlSemantics\Contract\Codec;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Contract\StringCodec;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Operand;
 use SqlSemantics\Statement\Spelling\Layout;
 
 /**
@@ -16,8 +18,9 @@ use SqlSemantics\Statement\Spelling\Layout;
  *
  * Nodes add keywords, punctuation, names and literal spellings; there is no
  * operation that adds a free SQL fragment. The pieces are joined into text by
- * the lexical writer and the result is parsed again and compared with the
- * structure before an operation is published.
+ * the lexical writer. Explicit toString() calls check that observable layouts
+ * only respell those pieces; constructing or executing a statement does not
+ * call this renderer to recover semantic information.
  *
  * @visibility SqlSemantics
  */
@@ -30,6 +33,10 @@ final class Output
 
     private bool $glue = false;
 
+    private bool $separate = false;
+
+    private bool $keywordName = false;
+
     private bool $spelling = false;
 
     private ?string $trail = null;
@@ -38,6 +45,11 @@ final class Output
      * @var list<Piece>
      */
     private array $canonical = [];
+
+    /**
+     * @var list<Operand> Parameter occurrences in their written order
+     */
+    private array $parameters = [];
 
     /**
      * @param Codec $codec The name codec of the language profile
@@ -69,6 +81,11 @@ final class Output
     public function symbol(string $symbol): self
     {
         Check::invariant(preg_match('/\A[][(){}.,;:=<>!+*\/%^|&~@#?$-]+\z/', $symbol) === 1, 'A symbol piece contains punctuation only.');
+        if ($this->keywordName && $symbol === '(' && !$this->separate) {
+            $this->glue();
+        } elseif ($this->keywordName && $symbol === '.') {
+            $this->separate();
+        }
         $this->add(PieceKind::Symbol, $symbol);
 
         return $this;
@@ -82,6 +99,7 @@ final class Output
     public function name(Name $name, NameUse $use = NameUse::Column): self
     {
         $this->add(PieceKind::Name, $this->codec->name($name, $use));
+        $this->keywordName = $name->quote === \SqlSemantics\Statement\Identifier\NameQuote::Keyword;
 
         return $this;
     }
@@ -100,6 +118,70 @@ final class Output
     }
 
     /**
+     * Writes a name reconstructed from decoded characters and typed quotation choices.
+     * The codec converts its characters to the output profile's character set.
+     *
+     * @return $this
+     */
+    public function spelledName(string $text): self
+    {
+        Check::invariant($text !== '', 'A spelled name is not empty.');
+        $this->add(PieceKind::Name, $this->codec->spelling($text));
+        $this->keywordName = false;
+
+        return $this;
+    }
+
+    /**
+     * Spells decoded string bytes under the output profile's lexical settings.
+     */
+    public function quote(string $value): string
+    {
+        Check::invariant($this->codec instanceof StringCodec, 'The dialect codec must support decoded string literals.');
+
+        return $this->codec->quote($value);
+    }
+
+    /**
+     * Writes a parameter marker and records its occurrence without inspecting SQL text.
+     *
+     * @return $this
+     */
+    public function parameter(Operand $parameter, string $marker): self
+    {
+        $this->parameters[] = $parameter;
+
+        return $this->spelled($marker);
+    }
+
+    /**
+     * Answers parameter occurrences in the order established by the structure's rendering.
+     *
+     * @return list<Operand>
+     */
+    public function parameters(): array
+    {
+        return $this->parameters;
+    }
+
+    /**
+     * Writes one block comment as the trivia between the previous piece and the next one.
+     *
+     * A dialect whose server reads a comment, such as an optimizer hint comment, writes it
+     * here; the comment separates the pieces as a space does and adds no token.
+     *
+     * @return $this
+     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the text is not exactly one block comment
+     */
+    public function comment(string $text): self
+    {
+        Check::invariant(preg_match('~\A/\*.*\*/\z~s', $text) === 1 && strpos($text, '*/') === strlen($text) - 2, 'A comment is one block comment.');
+        $this->trail = ' ' . $text . ' ';
+
+        return $this;
+    }
+
+    /**
      * Joins the next piece to the previous one without a separating space.
      *
      * @return $this
@@ -107,6 +189,20 @@ final class Output
     public function glue(): self
     {
         $this->glue = true;
+        $this->separate = false;
+
+        return $this;
+    }
+
+    /**
+     * Keeps a required lexical separator in both the structural and public output.
+     *
+     * @return $this
+     */
+    public function separate(): self
+    {
+        $this->separate = true;
+        $this->glue = false;
 
         return $this;
     }
@@ -151,9 +247,10 @@ final class Output
      * layout spells every token of the region.
      *
      * @return $this
+     * @param bool $leading Whether the dialect has validated observable trivia before the first token
      * @throws \SqlSemantics\Diagnostic\InvariantViolation When the layout does not have one token per rendered piece
      */
-    public function layout(?Layout $layout, Node $node): self
+    public function layout(?Layout $layout, Node $node, bool $leading = false): self
     {
         if ($layout === null || $this->spelling) {
             $node->render($this);
@@ -169,7 +266,7 @@ final class Output
         $spelled = [];
         foreach (array_slice($this->pieces, $start) as $offset => $canonical) {
             $token = $layout->tokens[$offset];
-            $spelled[] = new Piece($canonical->kind, $token->text, $canonical->glued, $offset === 0 ? $canonical->gap : $token->gap);
+            $spelled[] = new Piece($canonical->kind, $canonical->kind === PieceKind::Name ? $this->codec->spelling($token->text) : $token->text, $canonical->glued, $offset === 0 && (!$leading || $token->gap === '') ? $canonical->gap : $token->gap);
         }
         $this->pieces = [...array_slice($this->pieces, 0, $start), ...$spelled];
         $this->trail = $layout->trail === '' ? null : $layout->trail;
@@ -200,9 +297,11 @@ final class Output
      */
     public function add(PieceKind $kind, string $text): void
     {
-        $this->pieces[] = new Piece($kind, $text, $this->glue, $this->trail);
-        $this->canonical[] = new Piece($kind, $text, $this->glue);
+        $this->pieces[] = new Piece($kind, $text, $this->glue, $this->separate ? ' ' : $this->trail);
+        $this->canonical[] = new Piece($kind, $text, $this->glue, $this->separate ? ' ' : null);
         $this->glue = false;
+        $this->separate = false;
+        $this->keywordName = false;
         $this->trail = null;
     }
 

@@ -14,7 +14,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a privilege that does not apply to the object
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT EXECUTE ON SCHEMA s TO joe');
- *     $operation->facts->diagnostics[0]->message() // => 'invalid privilege type EXECUTE for schema'
+ *     $operation->diagnostics()[0]->message() // => 'invalid privilege type EXECUTE for schema'
  */
 final class AccessProblem implements Diagnostic
 {

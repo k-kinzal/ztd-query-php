@@ -20,7 +20,7 @@ final class CommitTest extends TestCase
         $operation = (new Semantics(Dialect::Sqlite))->analyze('COMMIT', []);
 
         self::assertNull($operation->shape());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRenderWritesEndAsCommit(): void
@@ -29,15 +29,15 @@ final class CommitTest extends TestCase
 
         self::assertSame('COMMIT', $semantics->analyze('END')->toString());
         self::assertSame('COMMIT', $semantics->analyze('commit transaction')->toString());
-        self::assertInstanceOf(Commit::class, $semantics->analyze('END TRANSACTION')->statement);
+        self::assertInstanceOf(Commit::class, $semantics->analyze('END TRANSACTION'));
     }
 
     public function testRenderKeepsTheIgnoredName(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('END TRANSACTION t1');
 
-        self::assertInstanceOf(Commit::class, $operation->statement);
-        self::assertSame('t1', $operation->statement->name?->value);
+        self::assertInstanceOf(Commit::class, $operation);
+        self::assertSame('t1', $operation->name?->value);
         self::assertSame('COMMIT TRANSACTION t1', $operation->toString());
     }
 }

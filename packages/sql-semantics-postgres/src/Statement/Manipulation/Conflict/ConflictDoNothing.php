@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Conflict;
 
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `ON CONFLICT [ conflict_target ] DO NOTHING`: a row that would violate a unique constraint is not inserted.
@@ -18,16 +17,16 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a conflict clause without target
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('INSERT INTO t VALUES (1) ON CONFLICT DO NOTHING');
- *     $insert->statement->conflict->target // => null
+ *     $insert->conflict->target // => null
  */
 final class ConflictDoNothing implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IndexInference|ConstraintInference|null $target The conflict target
      */
-    public function __construct(public readonly IndexInference|ConstraintInference|null $target = null)
+    public function __construct(public readonly IndexInference|ConstraintInference|null $target = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

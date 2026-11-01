@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\MySql\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Exception\LexicalException;
@@ -50,5 +51,28 @@ final class KeywordLexemeGeneratorTest extends TestCase
     {
         $generator = new KeywordLexemeGenerator([], []);
         self::assertNull($generator->generate(new LexemeInput(TerminalSequence::fromNames(['UNKNOWN']), 0, new ResolvedOutput())));
+    }
+
+    #[DataProvider('providerKeywordIdentifierRules')]
+    public function testGeneratePreservesAFunctionKeywordUsedAsATableName(string $rule): void
+    {
+        $generator = new KeywordLexemeGenerator([], ['ADDDATE_SYM' => ['ADDDATE']]);
+        $keyword = new TerminalOccurrence('ADDDATE_SYM', 0, [1, 2], ['ident', $rule]);
+        $open = new TerminalOccurrence('(', 3, [], []);
+        $sequence = new TerminalSequence([$keyword, $open]);
+        $right = new ResolvedOutput([new OutputPart(new Lexeme('(', 'symbol', $open, 'source'), '', 'open')]);
+        $candidates = $generator->generate(new LexemeInput($sequence, 0, $right));
+
+        self::assertNotNull($candidates);
+        self::assertSame('function', [...$candidates->sequences()][0]->lexemes[0]->kind);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerKeywordIdentifierRules(): iterable
+    {
+        yield 'modern' => ['ident_keywords_unambiguous'];
+        yield 'legacy' => ['keyword_sp'];
     }
 }

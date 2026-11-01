@@ -14,7 +14,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction;
  * @visibility public
  * @example Reading the spelling of a START TRANSACTION
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('START TRANSACTION');
- *     $operation->statement->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\BeginSpelling::StartTransaction
+ *     $operation->spelling // => \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\BeginSpelling::StartTransaction
  */
 enum BeginSpelling: string
 {

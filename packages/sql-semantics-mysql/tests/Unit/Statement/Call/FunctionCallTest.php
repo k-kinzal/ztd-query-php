@@ -10,11 +10,16 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\CallArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -28,6 +33,25 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class FunctionCallTest extends TestCase
 {
+    public function testNativeDistinguishesGenericBuiltinsFromKeywordAndQualifiedCalls(): void
+    {
+        $release = \SqlSemantics\Contract\GrammarRelease::MySql847;
+
+        self::assertTrue((new FunctionCall(new Name('ABS'), [new CallArgument(new NumberLiteral('1'))]))->native($release));
+        self::assertFalse((new FunctionCall(new Name('COLLATION')))->native($release));
+        self::assertFalse((new FunctionCall(new Name('ABS'), schema: new Name('d')))->native($release));
+    }
+
+    public function testKeywordNameRetainsReleaseAndQualificationMeaning(): void
+    {
+        $name = new Name('window');
+
+        self::assertFalse((new FunctionCall($name))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertTrue((new FunctionCall($name))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertTrue((new FunctionCall($name, schema: new Name('d')))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertFalse((new FunctionCall(new Name('_utf8mb4')))->keywordName(\SqlSemantics\Contract\GrammarRelease::MySql847));
+    }
+
     public function testNamedTellsWhetherAnArgumentHasAnAlias(): void
     {
         self::assertTrue((new FunctionCall(new Name('f'), [new CallArgument(new NumberLiteral('1'), new Name('x'))]))->named());
@@ -41,8 +65,20 @@ final class FunctionCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new FunctionCall(new Name('concat'), [new CallArgument(new StringLiteral(['x'])), new CallArgument(new NumberLiteral('1'))]), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Character->descriptor()), $fact->type);
-        self::assertSame(Nullability::NotNull, $fact->nullability);
+        self::assertEquals(new Known(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), $fact->type);
+        self::assertSame(Nullability::Nullable, $fact->nullability);
+    }
+
+    public function testDeriveScalarRetainsTheDeprecationOfAMultipleArgumentSpatialCall(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $derivation = new Derivation($platform->context($profile, null, [], false));
+        $call = new FunctionCall(new Name('GEOMETRYN'), [new CallArgument(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()), new CallArgument(new NumberLiteral('1'))]);
+        $derivation->scalar($call, $derivation->environment());
+
+        self::assertCount(1, $derivation->facts()->warnings);
+        self::assertSame("'GEOMETRYN' is deprecated and will be removed in a future release. Please use ST_GEOMETRYN instead", $derivation->facts()->warnings[0]->message());
     }
 
     public function testDeriveScalarDependsOnAStoredFunction(): void
@@ -53,6 +89,16 @@ final class FunctionCallTest extends TestCase
         $fact = $derivation->scalar(new FunctionCall(new Name('score'), [new CallArgument(new NumberLiteral('1'))], new Name('db')), $derivation->environment());
 
         self::assertEquals(new Dependent([new UndeclaredRoutine(new QualifiedName(new Name('score'), new Name('db')))]), $fact->type);
+        self::assertSame(Nullability::Dependent, $fact->nullability);
+    }
+
+    public function testDeriveScalarLeavesAFunctionTheReleaseLacksToARoutine(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $derivation = new Derivation($platform->context($profile, null, [], false));
+        $fact = $derivation->scalar(new FunctionCall(new Name('regexp_like'), [new CallArgument(new StringLiteral(['a'])), new CallArgument(new StringLiteral(['a']))]), $derivation->environment());
+
         self::assertSame(Nullability::Dependent, $fact->nullability);
     }
 
@@ -74,5 +120,42 @@ final class FunctionCallTest extends TestCase
         (new FunctionCall(new Name('count'), []))->render($out);
 
         self::assertSame('`count`()', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testDeriveScalarWarnsThatDesEncryptIsDeprecatedIn57(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], false));
+        $derivation->scalar(new FunctionCall(new Name('des_encrypt'), [new CallArgument(new StringLiteral(['x']))]), $derivation->environment());
+
+        self::assertEquals([new Deprecation(Deprecated::DesEncrypt)], $derivation->facts()->warnings);
+    }
+
+    public function testDeriveScalarWarnsThatJsonMergeIsDeprecated(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $derivation->scalar(new FunctionCall(new Name('json_merge'), [new CallArgument(new StringLiteral(['1'])), new CallArgument(new StringLiteral(['2']))]), $derivation->environment());
+
+        self::assertEquals([new Deprecation(Deprecated::JsonMerge)], $derivation->facts()->warnings);
+    }
+
+    public function testDeriveScalarOrdersLegacyNestedArityBeforeTheEnclosingCall(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.6.51', null, ParameterStyle::Native), null, [], false));
+        $inner = new FunctionCall(new Name('ST_SRID'), [new CallArgument(new NumberLiteral('1')), new CallArgument(new NumberLiteral('4326'))]);
+        $derivation->scalar(new FunctionCall(new Name('ST_ASTEXT'), [new CallArgument($inner), new CallArgument(new StringLiteral(['']))]), $derivation->environment());
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount(new Name('ST_SRID'), 2), $derivation->facts()->diagnostics[0]);
+    }
+
+    public function testDeriveScalarOrdersModernEnclosingArityBeforeNestedCalls(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], false));
+        $inner = new FunctionCall(new Name('ST_SRID'), [new CallArgument(new NumberLiteral('1')), new CallArgument(new NumberLiteral('4326'))]);
+        $derivation->scalar(new FunctionCall(new Name('ST_ASTEXT'), [new CallArgument($inner), new CallArgument(new StringLiteral(['']))]), $derivation->environment());
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount(new Name('ST_ASTEXT'), 2), $derivation->facts()->diagnostics[0]);
+        self::assertCount(2, $derivation->facts()->diagnostics);
     }
 }

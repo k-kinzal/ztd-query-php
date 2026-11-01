@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reporting an UPDATE of a generated column
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $table = $semantics->analyze('CREATE TABLE t (a, b AS (a + 1))');
- *     $semantics->analyze('UPDATE t SET B = 1', [$table])->facts->diagnostics[0]->message() // => 'cannot UPDATE generated column "b"'
+ *     $semantics->analyze('UPDATE t SET B = 1', [$table])->diagnostics()[0]->message() // => 'cannot UPDATE generated column "b"'
  */
 final class GeneratedColumnWrite implements Diagnostic
 {

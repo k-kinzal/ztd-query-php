@@ -6,6 +6,7 @@ namespace SqlSemantics\Facade;
 
 use InvalidArgumentException;
 use SqlParser\Lexer\SourceException;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\Dialect;
@@ -15,14 +16,14 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\Platform;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Contract\SearchPath;
+use SqlSemantics\Contract\Session;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Statement\AnalyzedStatement;
 use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Validation\LeafEmbedding;
 use SqlSemantics\Validation\Publication;
-use SqlSemantics\Validation\TokenCorrespondence;
 use SqlSemantics\Validation\ValueGraph;
 
 /**
@@ -42,6 +43,10 @@ use SqlSemantics\Validation\ValueGraph;
  * @example Rendering SQL from the analyzed structure
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $semantics->analyze('select   1')->toString() // => 'SELECT 1'
+ * @example Analyzing a tree the caller parsed with the parser of the profile
+ *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $tree = $semantics->parser()->parse('select 2');
+ *     $semantics->analyze($tree)->toString() // => 'SELECT 2'
  * @example Finding the statements of a script
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $semantics->split("SELECT 1; SELECT ';'") // => ['SELECT 1;', " SELECT ';'"]
@@ -53,6 +58,22 @@ final class Semantics
     private readonly LanguageProfile $profile;
 
     private readonly SqlParser $parser;
+
+    /**
+     * Resolves typed SQL operands without rendering or parsing SQL text.
+     *
+     * The context is a construction input, never part of the returned statement.
+     * A new construction leaves the original occurrences and their bindings intact.
+     *
+     * @example Constructing a query from semantic values
+     *     $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::MySql847);
+     *     $query = new \SqlSemantics\Platform\MySql\Statement\QueryRoot(new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))]));
+     *     \SqlSemantics\Facade\Semantics::fromStatement(new \SqlSemantics\Contract\AnalysisContext($profile, [new \SqlSemantics\Statement\Identifier\Name('test')]), $query)->toString() // => 'SELECT 1'
+     */
+    public static function fromStatement(AnalysisContext $context, \SqlSemantics\Statement\Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): AnalyzedStatement
+    {
+        return Platforms::of($context->profile->grammar->database())->publish($context, $statement, $sources);
+    }
 
     /**
      * @var list<string>|null
@@ -67,14 +88,15 @@ final class Semantics
      * @param Mode|null $mode The session settings SQL is read under, or null for the defaults of the database
      * @param ParameterStyle $parameters Which parameter markers are read; the named style adds `:name`
      * @param SearchPath|null $searchPath The schemas an unqualified relation name is searched in, or null for the default of the database
+     * @param Session|null $session Default input and resolution settings; an explicit analysis context overrides them
      *
      * @throws InvalidArgumentException When the release, mode or search path does not belong to the database
      */
-    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null)
+    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null, private readonly ?Session $session = null)
     {
         $this->platform = Platforms::of($dialect->database());
         $this->profile = $this->platform->profile($grammarVersion, $mode, $parameters);
-        $this->parser = $this->platform->parser($this->profile);
+        $this->parser = $this->platform->parser($this->profile, $session);
         $this->searchPath = $searchPath?->schemas;
         $this->platform->context($this->profile, $this->searchPath, [], false);
     }
@@ -88,6 +110,18 @@ final class Semantics
     }
 
     /**
+     * Answers the parser of the language profile.
+     *
+     * A caller that parses SQL itself, to read the syntax tree before the
+     * analysis or to report a syntax error as the database does, parses with
+     * this parser and passes the tree to analyze().
+     */
+    public function parser(?Session $session = null): SqlParser
+    {
+        return $session === null ? $this->parser : $this->platform->parser($this->profile, $session);
+    }
+
+    /**
      * Creates an immutable declaration context.
      *
      * Null declarations give an open context: relations that are not declared
@@ -96,61 +130,70 @@ final class Semantics
      * contributes the declarations it provides; it is not executed, and ALTER,
      * DROP and writes contribute nothing.
      *
-     * @param list<Table|Operation>|null $declarations The declarations, or null for an open context without any
+     * @param list<Table|AnalyzedStatement>|null $declarations The declarations, or null for an open context without any
      * @param bool $complete Whether a given list enumerates every relation
+     * @param SearchPath|null $searchPath The schemas an unqualified relation name is searched in, or null for the path fixed at construction
+     * @param Session|null $session The session statements are resolved in, or null for a new session with the server defaults
      *
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a declaration belongs to another language profile
+     * @throws InvalidArgumentException When the search path does not belong to the database
      */
-    public function context(?array $declarations = null, bool $complete = true): AnalysisContext
+    public function context(?array $declarations = null, bool $complete = true, ?SearchPath $searchPath = null, ?Session $session = null): AnalysisContext
     {
         $tables = [];
         foreach ($declarations ?? [] as $declaration) {
-            if ($declaration instanceof Operation) {
-                Check::input($this->profile->compatibleWith($declaration->profile()), 'A declaring operation must belong to the selected language profile.');
+            if ($declaration instanceof AnalyzedStatement) {
+                Check::input($this->profile->sharesDeclarationsWith($declaration->profile()), 'A declaring operation must belong to the grammar release of the selected language profile.');
                 array_push($tables, ...$declaration->declarations());
             } else {
                 $tables[] = $declaration;
             }
         }
 
-        return $this->platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete);
+        return $this->platform->context($this->profile, $searchPath->schemas ?? $this->searchPath, $tables, $declarations !== null && $complete)->withSession($session ?? $this->session);
     }
 
     /**
      * Analyzes one input into an operation against an explicit declaration context.
      *
+     * The input is SQL text, or the syntax tree of one input that the parser
+     * of this profile (parser()) produced; a tree of another parser is read
+     * as if this profile had produced it.
+     *
      * Semantic problems of grammatical SQL, such as a missing column, are
-     * facts of the returned operation. The operation is returned only after
-     * its structure was confirmed to hold every operand of the input and its
-     * rendered SQL was confirmed to carry the same significant tokens.
+     * facts of the returned statement. Analysis checks that lowering retained
+     * every input operand. The independent reconstruction property compares
+     * rendered SQL with the input; analysis does not parse its own output.
      *
-     * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
+     * @param string|Node $sql The SQL text, or the tree parser() produced for it
+     * @param list<Table|AnalyzedStatement>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand violates a semantic constructor domain
      * @throws AnalysisException When the SQL is outside the selected grammar
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context belongs to another language profile
      */
-    public function analyze(string $sql, array|AnalysisContext|null $context = null): Operation
+    public function analyze(string|Node $sql, array|AnalysisContext|null $context = null): AnalyzedStatement
     {
         $declarations = $context instanceof AnalysisContext ? $context : $this->context($context);
         Check::input($this->profile->compatibleWith($declarations->profile), 'The context must match the selected language profile.');
-        try {
-            $tree = $this->parser->parse($sql);
-        } catch (SourceException $error) {
-            throw new AnalysisException($error->getMessage(), 0, $error);
+        $parser = $this->parser($declarations->session);
+        if ($sql instanceof Node) {
+            $tree = $sql;
+        } else {
+            try {
+                $tree = $parser->parse($sql);
+            } catch (SourceException $error) {
+                throw new AnalysisException($error->getMessage(), 0, $error);
+            }
         }
         $leaves = new Leaves();
-        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves));
-        $operation = new Operation($declarations, $statement);
+        $origins = new \SqlSemantics\Construction\Origins();
+        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves, $origins, $declarations->session));
+        $operation = $this->platform->publish($declarations, $statement, $origins->publish());
 
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $this->platform->statementNamespace()]);
-        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));
+        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement, complete: false));
         Check::invariant($dropped === null, 'The statement lost an operand of the input: ' . ($dropped === null ? '' : $dropped::class));
-        $tokens = new TokenCorrespondence();
-        $keys = $this->platform->leafKeys($this->profile);
-        $productions = $this->platform->productions($this->profile);
-        $difference = $tokens->difference($tokens->keys($tree, $productions, $keys), $tokens->keys($this->parser->parse($operation->toString()), $productions, $keys));
-        Check::invariant($difference === null, 'The rendered SQL does not carry the tokens of the input: ' . $difference . ' in: ' . $operation->toString());
-
         return $operation;
     }
 
@@ -159,16 +202,17 @@ final class Semantics
      *
      * No statement is executed for the ones after it.
      *
-     * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Operation>
+     * @param list<Table|AnalyzedStatement>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
+     * @return list<AnalyzedStatement>
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When an input operand violates a semantic constructor domain
      * @throws AnalysisException When a statement is outside the selected grammar
      */
     public function analyzeAll(string $sql, array|AnalysisContext|null $context = null): array
     {
         $declarations = $context instanceof AnalysisContext ? $context : $this->context($context);
         $operations = [];
-        foreach ($this->split($sql) as $statement) {
+        foreach ($this->split($sql, $declarations->session) as $statement) {
             $operations[] = $this->analyze($statement, $declarations);
         }
 
@@ -186,10 +230,10 @@ final class Semantics
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      */
-    public function split(string $sql): array
+    public function split(string $sql, ?Session $session = null): array
     {
         try {
-            return (new Splitter($this->parser))->split($sql);
+            return (new Splitter($this->parser($session)))->split($sql);
         } catch (SourceException $error) {
             throw new AnalysisException($error->getMessage(), 0, $error);
         }

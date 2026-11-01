@@ -17,7 +17,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(Assignment::class)]
@@ -28,15 +27,15 @@ final class AssignmentTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $target = new MutationTarget(new QualifiedName(new Name('t')));
-        $built = new Operation($semantics->context(), new Update($target, [new Assignment(new Name('a'), new IntegerLiteral('1')), new Assignment(new Name('b'), new TextLiteral('x'))]));
+        $built = Semantics::fromStatement($semantics->context(), new Update($target, [new Assignment(new Name('a'), new IntegerLiteral('1')), new Assignment(new Name('b'), new TextLiteral('x'))]));
         $query = $semantics->analyze("update t set a = 1, b = 'x'");
 
         self::assertSame("UPDATE t SET a = 1, b = 'x'", $built->toString());
         self::assertSame("UPDATE t SET a = 1, b = 'x'", $query->toString());
-        self::assertInstanceOf(Update::class, $query->statement);
-        self::assertInstanceOf(Assignment::class, $query->statement->assignments[1]);
-        self::assertSame('b', $query->statement->assignments[1]->column->value);
-        self::assertInstanceOf(TextLiteral::class, $query->statement->assignments[1]->value);
+        self::assertInstanceOf(Update::class, $query);
+        self::assertInstanceOf(Assignment::class, $query->assignments[1]);
+        self::assertSame('b', $query->assignments[1]->column->value);
+        self::assertInstanceOf(TextLiteral::class, $query->assignments[1]->value);
     }
 
     public function testValueSeesTheRowOfTheTarget(): void
@@ -45,13 +44,13 @@ final class AssignmentTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $query = $semantics->analyze('UPDATE t SET a = a + 1', [$t]);
 
-        self::assertInstanceOf(Update::class, $query->statement);
-        self::assertInstanceOf(Assignment::class, $query->statement->assignments[0]);
-        self::assertInstanceOf(Binary::class, $query->statement->assignments[0]->value);
-        $resolution = $query->facts->scalar($query->statement->assignments[0]->value->left)->resolution;
+        self::assertInstanceOf(Update::class, $query);
+        self::assertInstanceOf(Assignment::class, $query->assignments[0]);
+        self::assertInstanceOf(Binary::class, $query->assignments[0]->value);
+        $resolution = $query->assignments[0]->value->left->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
-        self::assertSame($query->statement->target, $resolution->relation);
+        self::assertSame($query->target, $resolution->relation);
         self::assertSame($t->declarations()[0]->columns[1], $resolution->declaration());
-        self::assertSame([], $query->facts->diagnostics);
+        self::assertSame([], $query->diagnostics());
     }
 }

@@ -18,8 +18,8 @@ final class DeleteTest extends TestCase
         $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
-        $returning = $semantics->analyze('DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING t.a', [$t, $u])->statement;
-        $plain = $semantics->analyze('DELETE FROM t WHERE CURRENT OF c', [$t, $u])->statement;
+        $returning = $semantics->analyze('DELETE FROM ONLY t USING u WHERE t.a = u.a RETURNING t.a', [$t, $u]);
+        $plain = $semantics->analyze('DELETE FROM t WHERE CURRENT OF c', [$t, $u]);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification::class, $returning);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification::class, $plain);
         self::assertSame([true, false], [$returning->returnsRows(), $plain->returnsRows()]);
@@ -32,7 +32,7 @@ final class DeleteTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('WITH w AS (SELECT 1) DELETE FROM t WHERE CURRENT OF c', [$t, $u]);
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Delete::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause::class, $statement->commonTables());
     }
@@ -44,7 +44,7 @@ final class DeleteTest extends TestCase
         $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DELETE FROM t WHERE CURRENT OF c', [$t, $u]);
-        self::assertNull($query->facts->output);
+        self::assertNull($query->output());
     }
 
     public function testDeriveQueryAnswersTheRowsOfReturningInACommonTable(): void

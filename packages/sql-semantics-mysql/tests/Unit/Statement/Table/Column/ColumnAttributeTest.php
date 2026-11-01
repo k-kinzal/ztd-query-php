@@ -32,6 +32,6 @@ final class ColumnAttributeTest extends TestCase
         $attribute = new DefaultLiteral($literal);
         $attribute->deriveAttribute($derivation, $derivation->environment());
 
-        self::assertTrue($derivation->facts()->covers($literal));
+        self::assertTrue($literal->hasBinding());
     }
 }

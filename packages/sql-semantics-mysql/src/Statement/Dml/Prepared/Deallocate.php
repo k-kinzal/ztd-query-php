@@ -6,10 +6,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml\Prepared;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * DEALLOCATE PREPARE (or its synonym DROP PREPARE): releases a prepared statement.
@@ -21,17 +20,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading a DEALLOCATE PREPARE
  *     $deallocate = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('DROP PREPARE stmt');
- *     [$deallocate->statement->name->value, $deallocate->toString()] // => ['stmt', 'DEALLOCATE PREPARE stmt']
+ *     [$deallocate->name->value, $deallocate->toString()] // => ['stmt', 'DROP PREPARE stmt']
  */
-final class Deallocate implements Statement
+final class Deallocate extends \SqlSemantics\Platform\MySql\Statement\SqlStatement implements Statement, \SqlSemantics\Statement\AnalyzedStatement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The name of the prepared statement
+     * @param DeallocationWord $word The verb releasing the prepared statement
      */
-    public function __construct(public readonly Name $name)
+    public function __construct(public readonly Name $name, ?\SqlSemantics\Platform\MySql\Statement\StatementSemantics $statementInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly DeallocationWord $word = DeallocationWord::Deallocate)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**
@@ -46,6 +50,6 @@ final class Deallocate implements Statement
      */
     public function render(Output $out): void
     {
-        $out->keyword('DEALLOCATE', 'PREPARE')->name($this->name, NameUse::Label);
+        $out->keyword($this->word->value, 'PREPARE')->name($this->name, NameUse::Label);
     }
 }

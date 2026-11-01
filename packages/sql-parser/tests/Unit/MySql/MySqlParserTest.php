@@ -39,6 +39,7 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(\SqlParser\MySql\Lexer\VariableScanner::class)]
 #[UsesClass(\SqlParser\MySql\Lexer\WordScanner::class)]
 #[UsesClass(\SqlParser\Parser\LrParser::class)]
+#[UsesClass(\SqlParser\Parser\Reductions::class)]
 #[UsesClass(\SqlParser\Parser\Node::class)]
 #[UsesClass(\SqlParser\Resource\SqlVersion::class)]
 #[UsesClass(\SqlParser\Resource\VersionRegistry::class)]
@@ -52,6 +53,19 @@ use SqlParser\Parser\SyntaxException;
 #[Small]
 final class MySqlParserTest extends TestCase
 {
+    public function testWithSettingsKeepsLexicalViewsIndependent(): void
+    {
+        $original = new MySqlParser('mysql-8.4.7');
+        $quoted = $original->withSettings(new SqlMode(ansiQuotes: true, pipesAsConcat: true));
+        $sql = 'SELECT "a", 1||2';
+        self::assertSame('TEXT_STRING', $original->tokenize($sql)[1]->name);
+        self::assertSame('IDENT_QUOTED', $quoted->tokenize($sql)[1]->name);
+        self::assertSame('TEXT_STRING', $original->tokenize($sql)[1]->name);
+        self::assertSame($original->version(), $quoted->version());
+        self::assertSame($sql, $original->parse($sql)->toString());
+        self::assertSame($sql, $quoted->parse($sql)->toString());
+    }
+
     public function testVersion(): void
     {
         self::assertSame('mysql-8.4.7', (new MySqlParser())->version());
@@ -151,4 +165,14 @@ final class MySqlParserTest extends TestCase
         self::assertContains('mysql-8.4.7', $versions);
         self::assertCount(9, $versions);
     }
+    public function testTokenizeSeparatesLatinPunctuationAndKeepsQuotedIdentifiersLossless(): void
+    {
+        $parser = new MySqlParser(clientCharset: 'latin1');
+        $sql = "SELECT `a\xA1b`, a\xC3z\xA0AS x";
+        self::assertSame($sql, $parser->parse($sql)->toString());
+        self::assertSame(['SELECT', "`a\xA1b`", ',', "a\xC3z", 'AS', 'x', '', ''], array_column($parser->tokenize($sql), 'text'));
+        $this->expectException(LexicalException::class);
+        $parser->tokenize("SELECT a\xA1b");
+    }
+
 }

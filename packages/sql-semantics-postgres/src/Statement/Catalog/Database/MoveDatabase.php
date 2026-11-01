@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -20,18 +19,21 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the new tablespace
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER DATABASE d SET TABLESPACE fast');
- *     $operation->statement->tablespace->value // => 'fast'
+ *     $operation->tablespace->value // => 'fast'
  */
-final class MoveDatabase implements Statement
+final class MoveDatabase extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Name $name The database name
      * @param Name $tablespace The new default tablespace
      */
-    public function __construct(public readonly Name $name, public readonly Name $tablespace)
+    public function __construct(public readonly Name $name, public readonly Name $tablespace, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

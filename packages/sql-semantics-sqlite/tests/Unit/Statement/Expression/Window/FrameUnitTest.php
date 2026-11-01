@@ -33,7 +33,7 @@ final class FrameUnitTest extends TestCase
 
     public function testFromMatchesTheUnitOfAnAnalyzedFrame(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (rows 1 PRECEDING), sum(a) OVER (RANGE 1 PRECEDING), sum(a) OVER (GROUPS 1 PRECEDING) FROM t')->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT sum(a) OVER (rows 1 PRECEDING), sum(a) OVER (RANGE 1 PRECEDING), sum(a) OVER (GROUPS 1 PRECEDING) FROM t');
 
         self::assertInstanceOf(Select::class, $statement);
         $units = array_map(static function (object $column): ?FrameUnit {

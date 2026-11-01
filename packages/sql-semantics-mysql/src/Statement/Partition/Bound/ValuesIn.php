@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Partition\Bound;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `VALUES IN (value, …)`: the values of a LIST partition over one expression or column.
@@ -22,12 +21,12 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ValuesIn implements PartitionBound
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param PartitionRow $row The listed values
      */
-    public function __construct(public readonly PartitionRow $row)
+    public function __construct(public readonly PartitionRow $row, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
     }
 

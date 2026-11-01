@@ -43,7 +43,7 @@ final class SpatialTest extends TestCase
         self::assertSame('MULTILINESTRING', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderWritesGeometrycollectionForTheShortSpelling(): void
+    public function testRenderRetainsTheShortGeometrycollectionKeyword(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -54,7 +54,7 @@ final class SpatialTest extends TestCase
         self::assertInstanceOf(Spatial::class, $type);
         self::assertSame(SpatialKind::GeometryCollection, $type->kind);
         $type->render($out);
-        self::assertSame('GEOMETRYCOLLECTION', (new Lexical())->join($out->pieces()));
+        self::assertSame('GEOMCOLLECTION', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesASpatialTypeLoweredUnderTheOldestRelease(): void

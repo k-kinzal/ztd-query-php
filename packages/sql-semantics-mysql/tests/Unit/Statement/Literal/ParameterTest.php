@@ -24,12 +24,14 @@ final class ParameterTest extends TestCase
     public function testDeriveScalarDependsOnTheBoundValue(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = ?');
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $parameter = $select->where->right;
         self::assertInstanceOf(Parameter::class, $parameter);
-        $fact = $operation->facts->scalar($parameter);
+        $fact = $parameter->scalarInformation();
 
         self::assertSame('?', $parameter->marker);
         self::assertInstanceOf(Dependent::class, $fact->type);
@@ -38,18 +40,21 @@ final class ParameterTest extends TestCase
         self::assertSame('?', $fact->type->missing[0]->marker);
         self::assertSame('the value bound to parameter ?', $fact->type->missing[0]->describe());
         self::assertSame(Nullability::Dependent, $fact->nullability);
-        self::assertNull($fact->resolution);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Variable\ParameterBinding::class, $fact->resolution);
+        self::assertSame(0, $fact->resolution->position);
     }
 
     public function testDeriveScalarNamesANamedMarker(): void
     {
         $operation = (new Semantics(Dialect::MySql, null, null, ParameterStyle::Named))->analyze('SELECT a FROM t WHERE a = :id');
-        $select = $operation->statement;
+        $select = $operation;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $select);
+        $select = $select->query;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->where);
         $parameter = $select->where->right;
         self::assertInstanceOf(Parameter::class, $parameter);
-        $fact = $operation->facts->scalar($parameter);
+        $fact = $parameter->scalarInformation();
 
         self::assertSame(':id', $parameter->marker);
         self::assertInstanceOf(Dependent::class, $fact->type);

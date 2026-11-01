@@ -16,7 +16,7 @@ final class CursorRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DECLARE c CURSOR WITHOUT HOLD FOR SELECT 1');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Holdability::Without, $statement->hold);
     }
@@ -25,7 +25,7 @@ final class CursorRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DECLARE c SCROLL BINARY INSENSITIVE CURSOR FOR SELECT 1');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor::class, $statement);
         self::assertSame([\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Scroll, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Binary, \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption::Insensitive], $statement->options);
     }
@@ -34,7 +34,7 @@ final class CursorRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('MOVE BACKWARD -2 IN c');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch::class, $statement);
         self::assertSame([\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement::BackwardCount, true, true], [$statement->movement, $statement->move, $statement->count?->negative]);
     }
@@ -50,7 +50,7 @@ final class CursorRuleTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('CLOSE c');
-        $statement = $query->statement;
+        $statement = $query;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Close::class, $statement);
         self::assertSame('c', $statement->cursor?->value);
     }

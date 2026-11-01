@@ -24,17 +24,17 @@ final class CreateSchemaTest extends TestCase
 
     public function testDeriveStatementReportsElementsWithIfNotExists(): void
     {
-        self::assertSame('CREATE SCHEMA IF NOT EXISTS cannot include schema elements', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA IF NOT EXISTS s CREATE TABLE t (a int4)')->facts->diagnostics[0]->message());
+        self::assertSame('CREATE SCHEMA IF NOT EXISTS cannot include schema elements', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA IF NOT EXISTS s CREATE TABLE t (a int4)')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsAReservedName(): void
     {
-        self::assertSame('unacceptable schema name "pg_app"', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA pg_app')->facts->diagnostics[0]->message());
+        self::assertSame('unacceptable schema name "pg_app"', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA pg_app')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementReportsAnElementOfAnotherSchema(): void
     {
-        self::assertSame('CREATE specifies a schema (x) different from the one being created (s)', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA s CREATE TABLE x.t (a int4)')->facts->diagnostics[0]->message());
+        self::assertSame('CREATE specifies a schema (x) different from the one being created (s)', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA s CREATE TABLE x.t (a int4)')->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementDeclaresInTheNewSchema(): void
@@ -55,7 +55,7 @@ final class CreateSchemaTest extends TestCase
     public function testDeriveStatementLetsAnElementSeeTheRelationsOfEarlierSteps(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM x CREATE TABLE x (a int4)', []);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame(['x', 'v'], array_map(static fn (\SqlSemantics\Statement\Declaration\Table $table): string => $table->name->name->value, $operation->declarations()));
         self::assertTrue($operation->declarations()[1]->complete);
     }
@@ -63,7 +63,7 @@ final class CreateSchemaTest extends TestCase
     public function testDeriveStatementRunsViewsInTheOrderWritten(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM w CREATE VIEW w AS SELECT 1 AS a', []);
-        self::assertSame('Relation w does not exist.', $operation->facts->diagnostics[0]->message());
+        self::assertSame('Relation w does not exist.', $operation->diagnostics()[0]->message());
     }
 
     public function testDeriveStatementDeclaresNothingForASessionOwner(): void

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One change to the options of a foreign-data object: `ADD name 'value'`, `SET name 'value'` or `DROP name`.
@@ -26,14 +25,14 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class AlteredOption implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param OptionAction $action What is done with the option
      * @param Name $name The option name
      * @param StringConstant|null $value The new value; absent exactly when the option is dropped
      */
-    public function __construct(public readonly OptionAction $action, public readonly Name $name, public readonly ?StringConstant $value = null)
+    public function __construct(public readonly OptionAction $action, public readonly Name $name, public readonly ?StringConstant $value = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(($action === OptionAction::Drop) === ($value === null), 'An option has a value exactly when it is added or set.');
     }

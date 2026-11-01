@@ -72,7 +72,7 @@ final class IntegralTest extends TestCase
         self::assertSame('SMALLINT(1.5)', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderWritesIntForTheNumberedAndSpelledOutSynonyms(): void
+    public function testRenderKeepsNumberedAndSpelledOutSynonymsWithTheirKinds(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -90,7 +90,7 @@ final class IntegralTest extends TestCase
         self::assertSame(IntegralKind::Int, $integer->kind);
         self::assertSame(IntegralKind::MediumInt, $middleint->kind);
         $middleint->render($out);
-        self::assertSame('MEDIUMINT', (new Lexical())->join($out->pieces()));
+        self::assertSame('MIDDLEINT', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesTheWidthAndAttributesLoweredUnderTheMiddleRelease(): void

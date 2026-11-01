@@ -34,7 +34,7 @@ final class RaiseActionTest extends TestCase
 
     public function testFromMatchesTheActionOfAnAnalyzedRaise(): void
     {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(abort, 'no'); END")->statement;
+        $statement = (new Semantics(Dialect::Sqlite))->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(abort, 'no'); END");
 
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertInstanceOf(Select::class, $statement->steps[0]);

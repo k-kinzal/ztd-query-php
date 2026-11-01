@@ -20,8 +20,9 @@ final class StarTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('select * from t');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(Star::class, $operation->statement->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->query);
+        self::assertInstanceOf(Star::class, $operation->query->items[0]);
         self::assertSame('SELECT * FROM t', $operation->toString());
     }
 }

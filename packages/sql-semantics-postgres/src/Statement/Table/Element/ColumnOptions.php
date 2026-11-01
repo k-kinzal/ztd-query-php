@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * Constraints added to a column a typed table or a partition takes from its type or parent.
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ColumnOptions implements Clause
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Clause> The constraints, deferral attributes and collation, in the order written
@@ -38,7 +37,7 @@ final class ColumnOptions implements Clause
      * @param Name $name The column name
      * @param list<Clause> $qualifiers The constraints, deferral attributes and collation, in the order written
      */
-    public function __construct(public readonly Name $name, array $qualifiers = [])
+    public function __construct(public readonly Name $name, array $qualifiers = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->qualifiers = (new Qualifiers())->checked($qualifiers);
     }

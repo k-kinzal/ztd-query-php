@@ -10,26 +10,30 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting;
-use SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError;
-use SqlSemantics\Statement\Operation;
 
 #[CoversClass(StartGroupReplication::class)]
 #[Medium]
 final class StartGroupReplicationTest extends TestCase
 {
-    public function testDeriveStatementReportsALongPassword(): void
+    public function testDeriveStatementAcceptsExplicitCredentials(): void
     {
-        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'");
+        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION USER = 'u', PASSWORD = 'p'");
+        self::assertSame([], $start->diagnostics());
+    }
 
-        self::assertEquals([new RefusedSetting(ReplicationError::GroupPasswordTooLong)], $start->facts->diagnostics);
+    public function testRenderRetainsConflictingCredentials(): void
+    {
+        $start = (new Semantics(Dialect::MySql))->analyze("START GROUP_REPLICATION PASSWORD = 'p'");
+        self::assertInstanceOf(StartGroupReplication::class, $start);
+        self::assertSame("START GROUP_REPLICATION PASSWORD = 'p'", $start->toString());
+        self::assertEquals(new \SqlSemantics\Platform\MySql\Statement\Replication\Problem\RefusedSetting(\SqlSemantics\Platform\MySql\Statement\Replication\Problem\ReplicationError::GroupUserMissing), $start->diagnostics()[0]);
     }
 
     public function testDeriveStatementRejectsMySql56(): void
     {
         $this->expectExceptionMessage('Group replication needs MySQL 5.7 or later.');
 
-        new Operation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new StartGroupReplication());
+        (new \SqlSemantics\Platform\MySql\Construction\Publication())->publish((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), new StartGroupReplication(), new \SqlSemantics\Statement\Source\SourceMap());
     }
 
     public function testRenderWritesTheBareStatement(): void

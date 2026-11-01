@@ -29,9 +29,9 @@ final class SelectRuleTest extends TestCase
     public function testSelectLowersAPlainQueryAndAQueryWithCommonTables(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('SELECT 1')->statement;
-        $with = $semantics->analyze('WITH c AS (SELECT 1) SELECT * FROM c')->statement;
-        $recursive = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c')->statement;
+        $plain = $semantics->analyze('SELECT 1');
+        $with = $semantics->analyze('WITH c AS (SELECT 1) SELECT * FROM c');
+        $recursive = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 3) SELECT n FROM c');
 
         self::assertInstanceOf(Select::class, $plain);
         self::assertInstanceOf(WithQuery::class, $with);
@@ -46,13 +46,13 @@ final class SelectRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5 ORDER BY 1 LIMIT 1');
 
-        self::assertInstanceOf(Compound::class, $operation->statement);
-        self::assertInstanceOf(Select::class, $operation->statement->first);
-        self::assertSame([CompoundOperator::Union, CompoundOperator::UnionAll, CompoundOperator::Except, CompoundOperator::Intersect], array_map(static fn (CompoundStep $step): CompoundOperator => $step->operator, $operation->statement->steps));
-        self::assertCount(1, $operation->statement->orderBy);
-        self::assertInstanceOf(OutputOrdinal::class, $operation->statement->orderBy[0]->expression);
-        self::assertNotNull($operation->statement->limit);
-        $last = $operation->statement->steps[3]->query;
+        self::assertInstanceOf(Compound::class, $operation);
+        self::assertInstanceOf(Select::class, $operation->first);
+        self::assertSame([CompoundOperator::Union, CompoundOperator::UnionAll, CompoundOperator::Except, CompoundOperator::Intersect], array_map(static fn (CompoundStep $step): CompoundOperator => $step->operator, $operation->steps));
+        self::assertCount(1, $operation->orderBy);
+        self::assertInstanceOf(OutputOrdinal::class, $operation->orderBy[0]->expression);
+        self::assertNotNull($operation->limit);
+        $last = $operation->steps[3]->query;
         self::assertInstanceOf(Select::class, $last);
         self::assertSame([], $last->orderBy);
         self::assertNull($last->limit);
@@ -63,10 +63,10 @@ final class SelectRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 UNION VALUES (2)');
 
-        self::assertInstanceOf(Compound::class, $operation->statement);
-        self::assertInstanceOf(ValuesClause::class, $operation->statement->steps[0]->query);
-        self::assertSame([], $operation->statement->orderBy);
-        self::assertNull($operation->statement->limit);
+        self::assertInstanceOf(Compound::class, $operation);
+        self::assertInstanceOf(ValuesClause::class, $operation->steps[0]->query);
+        self::assertSame([], $operation->orderBy);
+        self::assertNull($operation->limit);
         self::assertSame('SELECT 1 UNION VALUES (2)', $operation->toString());
     }
 
@@ -74,16 +74,16 @@ final class SelectRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('select 1 union select 2 union all select 3 except select 4 intersect select 5');
 
-        self::assertInstanceOf(Compound::class, $operation->statement);
-        self::assertSame(['UNION', 'UNION ALL', 'EXCEPT', 'INTERSECT'], array_map(static fn (CompoundStep $step): string => $step->operator->value, $operation->statement->steps));
+        self::assertInstanceOf(Compound::class, $operation);
+        self::assertSame(['UNION', 'UNION ALL', 'EXCEPT', 'INTERSECT'], array_map(static fn (CompoundStep $step): string => $step->operator->value, $operation->steps));
         self::assertSame('SELECT 1 UNION SELECT 2 UNION ALL SELECT 3 EXCEPT SELECT 4 INTERSECT SELECT 5', $operation->toString());
     }
 
     public function testArmLowersASelectionOrAValuesClause(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $compound = $semantics->analyze('VALUES (1) UNION SELECT 2')->statement;
-        $rows = $semantics->analyze('VALUES (1), (2)')->statement;
+        $compound = $semantics->analyze('VALUES (1) UNION SELECT 2');
+        $rows = $semantics->analyze('VALUES (1), (2)');
 
         self::assertInstanceOf(Compound::class, $compound);
         self::assertInstanceOf(ValuesClause::class, $compound->first);
@@ -96,27 +96,27 @@ final class SelectRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2');
 
-        self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame(SetQuantifier::Distinct, $operation->statement->quantifier);
-        self::assertCount(1, $operation->statement->columns);
-        self::assertInstanceOf(TableInput::class, $operation->statement->from);
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->where);
-        self::assertCount(1, $operation->statement->groupBy);
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->having);
-        self::assertCount(1, $operation->statement->windows);
-        self::assertCount(1, $operation->statement->orderBy);
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->orderBy[0]->expression);
-        self::assertSame('e', $operation->statement->orderBy[0]->expression->name->value);
-        self::assertNotNull($operation->statement->limit);
-        self::assertNotNull($operation->statement->limit->offset);
+        self::assertInstanceOf(Select::class, $operation);
+        self::assertSame(SetQuantifier::Distinct, $operation->quantifier);
+        self::assertCount(1, $operation->columns);
+        self::assertInstanceOf(TableInput::class, $operation->from);
+        self::assertInstanceOf(ColumnUse::class, $operation->where);
+        self::assertCount(1, $operation->groupBy);
+        self::assertInstanceOf(ColumnUse::class, $operation->having);
+        self::assertCount(1, $operation->windows);
+        self::assertCount(1, $operation->orderBy);
+        self::assertInstanceOf(ColumnUse::class, $operation->orderBy[0]->expression);
+        self::assertSame('e', $operation->orderBy[0]->expression->name->value);
+        self::assertNotNull($operation->limit);
+        self::assertNotNull($operation->limit->offset);
         self::assertSame('SELECT DISTINCT a FROM t WHERE b GROUP BY c HAVING d WINDOW w AS () ORDER BY e LIMIT 1 OFFSET 2', $operation->toString());
     }
 
     public function testGroupsTurnsAnIntegerConstantIntoAResultColumnPosition(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $grouped = $semantics->analyze('SELECT a, count(*) FROM t GROUP BY 1, a')->statement;
-        $plain = $semantics->analyze('SELECT a FROM t')->statement;
+        $grouped = $semantics->analyze('SELECT a, count(*) FROM t GROUP BY 1, a');
+        $plain = $semantics->analyze('SELECT a FROM t');
 
         self::assertInstanceOf(Select::class, $grouped);
         self::assertInstanceOf(Select::class, $plain);
@@ -130,8 +130,8 @@ final class SelectRuleTest extends TestCase
     public function testHavingIsNullWithoutTheClause(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $bare = $semantics->analyze('SELECT a FROM t GROUP BY a')->statement;
-        $filtered = $semantics->analyze('SELECT a FROM t GROUP BY a HAVING count(*) > 1')->statement;
+        $bare = $semantics->analyze('SELECT a FROM t GROUP BY a');
+        $filtered = $semantics->analyze('SELECT a FROM t GROUP BY a HAVING count(*) > 1');
 
         self::assertInstanceOf(Select::class, $bare);
         self::assertInstanceOf(Select::class, $filtered);
@@ -148,24 +148,24 @@ final class SelectRuleTest extends TestCase
         $comma = $semantics->analyze('SELECT 1 LIMIT 2, 5');
         $none = $semantics->analyze('SELECT 1');
 
-        self::assertInstanceOf(Select::class, $plain->statement);
-        self::assertInstanceOf(Select::class, $offset->statement);
-        self::assertInstanceOf(Select::class, $comma->statement);
-        self::assertInstanceOf(Select::class, $none->statement);
-        self::assertNull($none->statement->limit);
-        self::assertNotNull($plain->statement->limit);
-        self::assertNull($plain->statement->limit->offset);
-        self::assertFalse($plain->statement->limit->comma);
-        self::assertNotNull($offset->statement->limit);
-        self::assertFalse($offset->statement->limit->comma);
-        self::assertInstanceOf(IntegerLiteral::class, $offset->statement->limit->offset);
-        self::assertSame('2', $offset->statement->limit->offset->digits);
-        self::assertNotNull($comma->statement->limit);
-        self::assertTrue($comma->statement->limit->comma);
-        self::assertInstanceOf(IntegerLiteral::class, $comma->statement->limit->count);
-        self::assertSame('5', $comma->statement->limit->count->digits);
-        self::assertInstanceOf(IntegerLiteral::class, $comma->statement->limit->offset);
-        self::assertSame('2', $comma->statement->limit->offset->digits);
+        self::assertInstanceOf(Select::class, $plain);
+        self::assertInstanceOf(Select::class, $offset);
+        self::assertInstanceOf(Select::class, $comma);
+        self::assertInstanceOf(Select::class, $none);
+        self::assertNull($none->limit);
+        self::assertNotNull($plain->limit);
+        self::assertNull($plain->limit->offset);
+        self::assertFalse($plain->limit->comma);
+        self::assertNotNull($offset->limit);
+        self::assertFalse($offset->limit->comma);
+        self::assertInstanceOf(IntegerLiteral::class, $offset->limit->offset);
+        self::assertSame('2', $offset->limit->offset->digits);
+        self::assertNotNull($comma->limit);
+        self::assertTrue($comma->limit->comma);
+        self::assertInstanceOf(IntegerLiteral::class, $comma->limit->count);
+        self::assertSame('5', $comma->limit->count->digits);
+        self::assertInstanceOf(IntegerLiteral::class, $comma->limit->offset);
+        self::assertSame('2', $comma->limit->offset->digits);
         self::assertSame('SELECT 1 LIMIT 5 OFFSET 2', $offset->toString());
         self::assertSame('SELECT 1 LIMIT 2, 5', $comma->toString());
     }

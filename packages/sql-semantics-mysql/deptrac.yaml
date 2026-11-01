@@ -18,7 +18,7 @@ deptrac:
     - name: Rules
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Platform\\MySql\\(Rules|Rendering|Profile)\\.*'
+          value: '^SqlSemantics\\Platform\\MySql\\(Rules|Rendering|Profile|Construction)\\.*'
     - name: PlatformLowering
       collectors:
         - type: classLike

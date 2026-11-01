@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
 use SqlSemantics\Resolution\Environment;
@@ -23,7 +24,6 @@ use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Statement;
 
 /**
  * Derives the rows a SHOW returns and the condition of its WHERE clause.
@@ -54,6 +54,9 @@ final class ShowFacts
         $fact = $derivation->relation($show, $derivation->environment());
         if ($filter instanceof ShowWhere) {
             $derivation->scalar($filter->condition, new Environment($derivation->context, null, [new VisibleRelation($show, $fact->shape)]));
+            foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names([$filter->condition]) as $name) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $name));
+            }
         }
         $derivation->output($this->query($fact->shape, $derivation->context->columnNames));
     }
@@ -80,7 +83,7 @@ final class ShowFacts
     public function shape(Derivation $derivation, Report $report, ?string $first = null): RowShape
     {
         $rows = new ShowRows();
-        $columns = $rows->columns($report, $derivation->context->profile->grammar);
+        $columns = $rows->columns($report, $derivation->context->profile->grammar, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->strict);
         if ($first !== null) {
             $columns[0] = [$first, $columns[0][1]];
         }
@@ -132,17 +135,25 @@ final class ShowFacts
     }
 
     /**
-     * Derives the operands of a LIMIT clause.
+     * Derives LIMIT operands and answers whether its local-variable names resolved.
      */
-    public function limit(Derivation $derivation, ?Limit $limit): void
+    public function limit(Derivation $derivation, ?Limit $limit): bool
     {
         if ($limit === null) {
-            return;
+            return true;
         }
         Check::invariant($limit instanceof RowLimit, 'A SHOW limit is a row limit.');
-        $derivation->scalar($limit->count, $derivation->environment());
-        if ($limit->offset !== null) {
-            $derivation->scalar($limit->offset, $derivation->environment());
+        $resolved = true;
+        foreach ([$limit->count, $limit->offset] as $operand) {
+            if ($operand === null) {
+                continue;
+            }
+            $fact = $derivation->scalar($operand, $derivation->environment());
+            if ($operand instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable && !$fact->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn) {
+                $resolved = false;
+            }
         }
+
+        return $resolved;
     }
 }

@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -23,19 +22,22 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Installing a language by name
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OR REPLACE LANGUAGE plperl');
- *     [$operation->statement->ifNotExists(), $operation->statement->name->value] // => [true, 'plperl']
+ *     [$operation->ifNotExists(), $operation->name->value] // => [true, 'plperl']
  */
-final class CreateLanguageExtension implements Statement
+final class CreateLanguageExtension extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param bool $orReplace Whether OR REPLACE is written
      * @param bool $trusted Whether TRUSTED is written; the server ignores it
      * @param Name $name The language name, which is the extension name
      */
-    public function __construct(public readonly bool $orReplace, public readonly bool $trusted, public readonly Name $name)
+    public function __construct(public readonly bool $orReplace, public readonly bool $trusted, public readonly Name $name, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
     }
 
     /**

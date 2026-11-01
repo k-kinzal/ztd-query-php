@@ -13,7 +13,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A pattern match: `a [NOT] LIKE p`, `ILIKE`, `SIMILAR TO`, with an optional `ESCAPE e`.
@@ -37,7 +36,8 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class PatternMatch implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param Scalar $left The matched value
@@ -52,7 +52,12 @@ final class PatternMatch implements Scalar
         public readonly bool $negated,
         public readonly Scalar $right,
         public readonly ?Scalar $escape = null,
+        ?ScalarFact $scalarInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         $precedence = new Precedence();
         Check::input($precedence->before($left, Precedence::PATTERN), 'The matched value needs parentheses to keep its place.');
         Check::input($precedence->after($right, Precedence::PATTERN), 'The pattern needs parentheses to keep its place.');

@@ -14,7 +14,7 @@ final class RollbackTest extends TestCase
 {
     public function testDeriveStatementRecordsNoProblem(): void
     {
-        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK')->facts->diagnostics);
+        self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ROLLBACK')->diagnostics());
     }
 
     public function testRenderWritesTheChaining(): void
@@ -24,7 +24,7 @@ final class RollbackTest extends TestCase
 
     public function testSpellingIsRead(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ABORT')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ABORT');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Rollback::class, $statement);
         self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\RollbackSpelling::Abort, $statement->spelling);
     }

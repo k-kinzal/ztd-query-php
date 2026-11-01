@@ -13,7 +13,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a star without input
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT *');
- *     $query->facts->diagnostics[0]->message() // => 'no tables specified'
+ *     $query->diagnostics()[0]->message() // => 'no tables specified'
  */
 final class Misuse implements Diagnostic
 {

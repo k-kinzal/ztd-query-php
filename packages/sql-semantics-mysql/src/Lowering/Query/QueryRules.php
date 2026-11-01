@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\BlockRule;
@@ -29,11 +28,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableSource as Relation;
+use SqlSemantics\Platform\MySql\Statement\Statement;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Statement;
 
 /**
  * The entry rules of the query family: the methods other families and the statement dispatcher call.
@@ -63,13 +62,19 @@ final class QueryRules
      * Lowers a query statement: a node of `select` (5.6, 5.7) or `select_stmt` (8.0 and later).
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When statement-level quantifiers conflict
      */
     public function statement(Node $statement): Statement
     {
-        $query = $this->query($statement);
-        Check::invariant($query instanceof Statement, 'Every query of the query family is also a statement.');
-
-        return $query;
+        $selection = (new Shared\StoredSelections($this->lowering))->body($statement) ?? $this->query($statement);
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            $selection = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($selection);
+        }
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($selection);
+        if ($problem !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($statement)[1] ?? 0, false);
+        }
+        return $this->lowering->origins->record(new \SqlSemantics\Platform\MySql\Statement\QueryRoot($selection), $statement);
     }
 
     /**
@@ -77,13 +82,14 @@ final class QueryRules
      * `subquery`, `table_subquery`, `row_subquery`, `query_expression`, `query_expression_parens`,
      * `query_expression_with_opt_locking_clauses` or `view_select_aux`.
      *
+     * @throws \SqlSemantics\Construction\RejectedInput When a nested query has statement-level modifiers, or combines ALL and DISTINCT in one block outside MySQL 5.6, which accepts the pair in an expression subquery
      * @throws ImplementationGap When a production has no rule
      */
     public function query(Node $query): Query
     {
         $expressions = new ExpressionRule($this->lowering);
 
-        return match ($query->name) {
+        $result = match ($query->name) {
             'select' => (new UnionRule($this->lowering))->statement($query),
             'select_stmt' => $expressions->statement($query),
             'subselect' => (new SubqueryRule($this->lowering))->subselect($query),
@@ -94,6 +100,41 @@ final class QueryRules
             'view_select_aux' => (new UnionRule($this->lowering))->viewQuery($query),
             default => throw ImplementationGap::production($this->lowering->form($query)),
         };
+        if (in_array($query->name, ['subselect', 'subquery', 'table_subquery', 'row_subquery'], true)) {
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\DerivedOptions())->problem($result, $this->lowering->profile->grammar);
+            if ($problem === null && $this->lowering->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                $problem = (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\StatementQuery())->problem($result);
+            }
+            if ($problem !== null) {
+                throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($query)[1] ?? 0, false);
+            }
+        }
+
+        return $this->lowering->origins->record($result, $query);
+    }
+
+    /**
+     * Retains complete deferred operands in a query owned by another statement.
+     * No temporary QueryRoot is registered in the source map.
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the query requires deferred preparation
+     */
+    public function embedded(Node $query): Query
+    {
+        $selection = (new Shared\StoredSelections($this->lowering))->body($query) ?? $this->query($query);
+        $end = (new \SqlSemantics\Construction\SourceRanges())->span($query)[1] ?? 0;
+        if ($selection instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($selection), $end, false);
+        }
+        $meaning = $selection instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody ? $selection->selection
+            : ((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($selection) === null ? null : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery($selection));
+        if ($meaning instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedSelection($meaning), $end, false);
+        }
+        if ($meaning instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Selection\DeferredQuery) {
+            throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Operand\RefusedQuery($meaning), $end, false);
+        }
+        return $selection;
     }
 
     /**
@@ -104,7 +145,14 @@ final class QueryRules
      */
     public function legacyQuery(Node $select, ?Node $union = null): Query
     {
-        return (new UnionRule($this->lowering))->chain((new BlockRule($this->lowering))->create($select), $union);
+        $first = (new Shared\StoredSelections($this->lowering))->block($select);
+        if ($first instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\DeferredSelection) {
+            if ($union !== null && $union->tokens() !== [] && ($first->orderBy !== [] || $first->limit !== null || $first->procedure !== null)) {
+                return (new UnionRule($this->lowering))->chain((new BlockRule($this->lowering))->create($select), $union);
+            }
+            $first = new \SqlSemantics\Platform\MySql\Statement\Query\With\DeferredBody($first);
+        }
+        return (new UnionRule($this->lowering))->chain($first ?? (new BlockRule($this->lowering))->create($select), $union);
     }
 
     /**
@@ -117,7 +165,7 @@ final class QueryRules
      */
     public function legacyParenthesizedQuery(Node $select, Node $union): Query
     {
-        return (new UnionRule($this->lowering))->chain(new ParenthesizedQuery((new BlockRule($this->lowering))->create($select)->select()), $union);
+        return (new UnionRule($this->lowering))->chain(new ParenthesizedQuery($this->legacyQuery($select)), $union);
     }
 
     /**
@@ -180,7 +228,7 @@ final class QueryRules
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function limitValue(Node $option): Scalar
+    public function limitValue(Node $option): \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral|\SqlSemantics\Platform\MySql\Statement\Literal\Parameter|\SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable
     {
         return (new TailRule($this->lowering))->value($option);
     }
@@ -191,6 +239,7 @@ final class QueryRules
      *
      * @return list<Relation>
      * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When a relation name is written twice
      */
     public function tables(Node $list): array
     {
@@ -260,6 +309,14 @@ final class QueryRules
     public function selectItems(Node $list): array
     {
         return (new ItemRule($this->lowering))->items($list);
+    }
+
+    /**
+     * Retains the observable name of an already lowered argument or projection.
+     */
+    public function named(Scalar $value, Node $expression, Node $alias): SelectExpression
+    {
+        return (new ItemRule($this->lowering))->resolved($value, $expression, $alias);
     }
 
     /**

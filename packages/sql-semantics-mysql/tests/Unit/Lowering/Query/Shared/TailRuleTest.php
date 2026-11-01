@@ -49,7 +49,7 @@ final class TailRuleTest extends TestCase
 
     public function testVariablesLowersUserAndProgramVariables(): void
     {
-        self::assertSame('SELECT a, b FROM t INTO @x, y', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select a, b from t into @`x`, y')->toString());
+        self::assertSame('SELECT a, b FROM t INTO @`x`, y', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select a, b from t into @`x`, y')->toString());
     }
 
     public function testLockingLowersEveryForm(): void

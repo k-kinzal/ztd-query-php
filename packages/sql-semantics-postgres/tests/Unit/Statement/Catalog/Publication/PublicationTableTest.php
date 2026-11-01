@@ -14,14 +14,14 @@ final class PublicationTableTest extends TestCase
 {
     public function testIntroducedWhenTableIsWritten(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE a')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE a');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
         self::assertSame(true, $statement->objects[0]->introduced());
     }
 
     public function testBareOfAContinuedName(): void
     {
-        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE a, b')->statement;
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE a, b');
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
         $table = $statement->objects[1];
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable::class, $table);
@@ -47,12 +47,13 @@ final class PublicationTableTest extends TestCase
     {
         $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172), [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4)], [], true);
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE PUBLICATION p FOR TABLE t (a) WHERE (a > 0)', [$t]);
-        $statement = $operation->statement;
+        $statement = $operation;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication::class, $statement);
-        $resolution = $operation->facts->relation($statement->objects[0])->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $statement->objects[0]);
+        $resolution = $statement->objects[0]->relationInformation()->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $resolution);
         self::assertSame($t, $resolution->table);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testRejectsOnlyWithAStar(): void

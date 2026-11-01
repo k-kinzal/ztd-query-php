@@ -15,7 +15,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -34,7 +33,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a typed constant
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT date '2024-01-01'", []);
- *     [$query->statement->targets[0]->expression->value->value, $query->field(0)->type->descriptor->name(), $query->field(0)->name->value] // => ['2024-01-01', 'date', 'date']
+ *     [$query->targets[0]->expression->value->value, $query->field(0)->type->descriptor->name(), $query->field(0)->name->value] // => ['2024-01-01', 'date', 'date']
  * @example Rejecting a set-returning type
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation(), true),
@@ -43,14 +42,18 @@ use SqlSemantics\Statement\Type\Nullability;
  */
 final class TypedLiteral implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param TypeName $type The type of the constant: a designation without SETOF, array part or column reference
      * @param StringConstant $value The string the type's input routine reads
      */
-    public function __construct(public readonly TypeName $type, public readonly StringConstant $value)
+    public function __construct(public readonly TypeName $type, public readonly StringConstant $value, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(!$type->setOf && $type->array === null && !$type->designation instanceof ColumnDesignation, 'A typed constant names a plain type.');
     }
 

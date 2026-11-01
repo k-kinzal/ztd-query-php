@@ -16,7 +16,7 @@ final class CreateSequenceTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $statement = $semantics->analyze('CREATE SEQUENCE x.s', []);
-        $n1 = $statement->statement;
+        $n1 = $statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\CreateSequence::class, $n1);
         self::assertSame('x', $n1->createdSchema()?->value);
     }
@@ -35,9 +35,9 @@ final class CreateSequenceTest extends TestCase
     public function testDeriveElementDeclaresTheSequenceInTheSchema(): void
     {
         $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SEQUENCE q');
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement->statement);
-        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        $statement->statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement::class, $statement);
+        $derivation = new \SqlSemantics\Construction\Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context([]));
+        $statement->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
         self::assertSame('s', $derivation->facts()->declarations[0]->name->schema?->value);
     }
 

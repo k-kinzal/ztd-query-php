@@ -20,7 +20,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Reading the generated column written by an INSERT
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $table = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))');
- *     $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2)', $table->declarations())->facts->diagnostics[0]->message() // => "The value specified for generated column 'g' in table 't' is not allowed."
+ *     $semantics->analyze('INSERT INTO t (a, g) VALUES (1, 2)', $table->declarations())->diagnostics()[0]->message() // => "The value specified for generated column 'g' in table 't' is not allowed."
  */
 final class GeneratedColumnWrite implements Diagnostic
 {

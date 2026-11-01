@@ -35,19 +35,20 @@ final class CommentTest extends TestCase
         $missing = $semantics->analyze("COMMENT ON COLUMN public.t.b IS 'x'", [$table]);
         $unqualified = $semantics->analyze("COMMENT ON COLUMN b IS 'x'", [$table]);
         $long = $semantics->analyze("COMMENT ON COLUMN a.b.c.d.e IS 'x'", [$table]);
-        self::assertEquals([new MissingColumn(new Name('b'), new QualifiedName(new Name('t'), new Name('public')))], $missing->facts->diagnostics);
-        self::assertEquals([new ObjectProblem(ObjectProblemKind::UnqualifiedColumn)], $unqualified->facts->diagnostics);
-        self::assertEquals([new ObjectProblem(ObjectProblemKind::ImproperRelation, 'a.b.c.d.e')], $long->facts->diagnostics);
+        self::assertEquals([new MissingColumn(new Name('b'), new QualifiedName(new Name('t'), new Name('public')))], $missing->diagnostics());
+        self::assertEquals([new ObjectProblem(ObjectProblemKind::UnqualifiedColumn)], $unqualified->diagnostics());
+        self::assertEquals([new ObjectProblem(ObjectProblemKind::ImproperRelation, 'a.b.c.d.e')], $long->diagnostics());
     }
 
     public function testDeriveStatementAcceptsADeclaredColumn(): void
     {
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql172), [new Column(new Name('a'), Builtin::Int4)]);
         $operation = (new Semantics(Dialect::PostgreSql))->analyze('COMMENT ON COLUMN t.a IS NULL', [$table]);
-        self::assertSame([], $operation->facts->diagnostics);
-        $statement = $operation->statement;
+        self::assertSame([], $operation->diagnostics());
+        $statement = $operation;
         self::assertInstanceOf(Comment::class, $statement);
-        $resolution = $operation->facts->relation($statement->object)->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\TableUse::class, $statement->object);
+        $resolution = $statement->object->relationInformation()->table;
         self::assertInstanceOf(DeclaredTable::class, $resolution);
         self::assertSame($table, $resolution->table);
     }
@@ -71,7 +72,7 @@ final class CommentTest extends TestCase
     {
         $semantics = new Semantics(Dialect::PostgreSql);
         $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
-        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COMMENT ON TABLE v IS \'x\'', $context)->facts->diagnostics));
-        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COMMENT ON VIEW v IS \'x\'', $context)->facts->diagnostics));
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COMMENT ON TABLE v IS \'x\'', $context)->diagnostics()));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COMMENT ON VIEW v IS \'x\'', $context)->diagnostics()));
     }
 }

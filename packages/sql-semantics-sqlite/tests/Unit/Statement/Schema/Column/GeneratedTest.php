@@ -40,31 +40,31 @@ final class GeneratedTest extends TestCase
     public function testDeriveConstraintResolvesColumnsOfTheTableBeingDefined(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b AS (a))', []);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(CreateTable::class, $statement);
         $generated = $statement->columns[1]->constraints[0];
         self::assertInstanceOf(Generated::class, $generated);
-        $resolution = $operation->facts->scalar($generated->expression)->resolution;
+        $resolution = $generated->expression->scalarInformation()->resolution;
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($operation->declarations()[0]->columns[0], $resolution->slot->column);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveConstraintDoesNotSeeTheRowIdentifier(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b AS (rowid))', []);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $operation->diagnostics()[0]);
     }
 
     public function testDeriveConstraintReportsAnUnknownStorageWord(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b AS (a) "stored")', []);
 
-        self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(UnknownStorage::class, $operation->facts->diagnostics[0]);
+        self::assertCount(1, $operation->diagnostics());
+        self::assertInstanceOf(UnknownStorage::class, $operation->diagnostics()[0]);
     }
 
     public function testRenderDropsTheOptionalKeywordsAndKeepsTheStorageWord(): void

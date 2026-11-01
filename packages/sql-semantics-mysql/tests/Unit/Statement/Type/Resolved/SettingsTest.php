@@ -1,0 +1,143 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Statement\Type\Resolved;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+
+#[CoversClass(Settings::class)]
+#[Small]
+final class SettingsTest extends TestCase
+{
+    public function testHandlerResolvesAliasesWithoutChangingTableNames(): void
+    {
+        $table = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('T'), new \SqlSemantics\Statement\Identifier\Name('D'));
+        $settings = new Settings(Collation::known('utf8mb4_bin'), handlers: ['H' => $table]);
+
+        self::assertSame($table, $settings->handler('h'));
+        self::assertSame($table, $settings->handler('H'));
+        self::assertNull($settings->handler('missing'));
+    }
+
+    public function testDefaultsFollowTheRelease(): void
+    {
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->noZeroDate);
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql5744)->noZeroInDate);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5651)->noZeroDate);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql847)->allowInvalidDates);
+        self::assertSame('utf8mb4_0900_ai_ci', Settings::defaults(GrammarRelease::MySql847)->connection->name);
+        self::assertSame('latin1_swedish_ci', Settings::defaults(GrammarRelease::MySql5744)->connection->name);
+        self::assertSame(4, Settings::defaults(GrammarRelease::MySql847)->divPrecisionIncrement);
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->strict);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5651)->strict);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5651)->explicitDefaultsForTimestamp);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5744)->explicitDefaultsForTimestamp);
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->explicitDefaultsForTimestamp);
+    }
+
+    public function testOfReadsTheSessionOfAContext(): void
+    {
+        $settings = new Settings(Collation::known('latin1_bin'), 6);
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame($settings, Settings::of($semantics->context([], true, null, $settings)));
+        self::assertSame('utf8mb4_0900_ai_ci', Settings::of($semantics->context([]))->connection->name);
+    }
+
+    public function testLocaleIsTheLocaleOfTheNamesOrEnglish(): void
+    {
+        self::assertSame(['en_US', 'de_DE'], [(new Settings(Collation::known('utf8mb4_0900_ai_ci')))->locale()->name, (new Settings(Collation::known('utf8mb4_0900_ai_ci'), timeNames: Locale::named('de_DE')))->locale()->name]);
+    }
+
+    public function testSchemaFallsBackToTheServerThenTheConnection(): void
+    {
+        $settings = new Settings(Collation::known('latin1_bin'), 4, Collation::known('utf8mb4_bin'), ['App' => Collation::known('ascii_bin')]);
+
+        self::assertSame('ascii_bin', $settings->schema('app')->name);
+        self::assertSame('utf8mb4_bin', $settings->schema('other')->name);
+        self::assertSame('latin1_bin', (new Settings(Collation::known('latin1_bin')))->schema('other')->name);
+    }
+
+    public function testClientIsTheCharacterSetStatementsAreReadIn(): void
+    {
+        self::assertSame('latin1', (new Settings(Collation::known('utf8mb4_0900_ai_ci'), 4, null, [], 1024, null, [], true, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1')))->client?->name);
+        self::assertNull(Settings::defaults(GrammarRelease::MySql847)->client);
+    }
+
+    public function testUserVariablesAreKeyedByLowerCaseName(): void
+    {
+        self::assertSame(['a'], array_keys((new Settings(Collation::known('latin1_bin'), 4, null, [], 1024, ['A' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]))->userVariables ?? []));
+        self::assertNull((new Settings(Collation::known('latin1_bin')))->userVariables);
+    }
+
+    public function testNumericNameKeysSurvivePhpArrayCoercion(): void
+    {
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $collation = Collation::known('latin1_bin');
+        $settings = new Settings($collation, schemas: ['123' => $collation], userVariables: ['123' => $domain], functions: ['123' => $domain]);
+
+        self::assertSame($collation, $settings->schema('123'));
+        self::assertSame($domain, $settings->userVariables[123] ?? null);
+        self::assertSame($domain, $settings->functions[123]);
+    }
+
+    public function testVariableFindsTheInnermostVariableOfARunningProgram(): void
+    {
+        $outer = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \SqlSemantics\Statement\Identifier\Name('x')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+        $inner = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \SqlSemantics\Statement\Identifier\Name('y'), new \SqlSemantics\Statement\Identifier\Name('X')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), program: [$outer, $inner]);
+
+        self::assertSame([[$inner, 1], null], [$settings->variable('x'), $settings->variable('z')]);
+    }
+
+    public function testRowFindsTheNewOrOldRowOfARunningTrigger(): void
+    {
+        $new = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [], [], new \SqlSemantics\Statement\Identifier\Name('NEW'));
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), program: [$new]);
+
+        self::assertSame([$new, null], [$settings->row('new'), $settings->row('OLD')]);
+    }
+
+    public function testFunctionAnswersTheTypeAStoredFunctionReturns(): void
+    {
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), functions: ['D.F' => $domain]);
+
+        self::assertSame([$domain, null], [$settings->function('d', 'f'), $settings->function('d', 'g')]);
+    }
+    public function testWithParametersPreservesEveryOtherSessionInput(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), realAsFloat: true);
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $bound = $settings->withParameters([3 => $domain]);
+        self::assertSame([], $settings->parameters);
+        self::assertSame([3 => $domain], $bound->parameters);
+        self::assertSame(array_diff_key(get_object_vars($settings), ['parameters' => true]), array_diff_key(get_object_vars($bound), ['parameters' => true]));
+    }
+
+    public function testWithParametersDistinguishesInitialDomainsFromBoundValues(): void
+    {
+        $settings = Settings::defaults(GrammarRelease::MySql5744);
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $initial = $settings->withParameters([3 => $domain], [3]);
+        self::assertSame([3], $initial->unboundParameters);
+        self::assertSame([], $initial->withParameters([3 => $domain])->unboundParameters);
+        self::assertSame([3 => $domain], $initial->parameters);
+    }
+
+    public function testUnboundParametersMustRetainTheirInitialDomains(): void
+    {
+        $this->expectExceptionMessage('An unbound parameter has an initial domain at its position.');
+        Settings::defaults(GrammarRelease::MySql5744)->withParameters([], [0]);
+    }
+
+}

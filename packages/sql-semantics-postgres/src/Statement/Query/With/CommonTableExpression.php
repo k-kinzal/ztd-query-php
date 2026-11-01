@@ -9,7 +9,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -28,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  */
 final class CommonTableExpression implements RecursiveDefinition
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names written after the name
@@ -50,6 +49,7 @@ final class CommonTableExpression implements RecursiveDefinition
         public readonly ?Materialization $materialization = null,
         public readonly ?SearchClause $search = null,
         public readonly ?CycleClause $cycle = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null
     ) {
         Check::input($query instanceof Statement, 'A common table expression is computed by a statement.');
         $this->columns = Check::listOf($columns, Name::class, 'The columns of a common table expression are names.');

@@ -4,31 +4,35 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Server\Database;
 
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `READ ONLY [=] {DEFAULT | 0 | 1}`: whether the database may be modified (ALTER DATABASE, MySQL 8.0.22 and later).
  *
- * A number other than 0 makes the database read-only; 0 and DEFAULT make
- * it writable. The equals sign is optional and not written.
+ * The option's converted value is either 0 or 1; DEFAULT means 0. Numeric
+ * spelling is retained, including leading zeros and the fractional or exponent
+ * suffix the server ignores in this position. The equals sign is optional.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-database.html.
  *
  * @visibility public
  * @example Making a database read-only
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('ALTER DATABASE d READ ONLY = 1');
- *     [$alter->toString(), $alter->statement->options[0]->readOnly()] // => ['ALTER DATABASE d READ ONLY 1', true]
+ *     [$alter->toString(), $alter->options[0]->readOnly()] // => ['ALTER DATABASE d READ ONLY = 1', true]
  */
 final class DatabaseReadOnly implements DatabaseOption
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
-     * @param Numeral|null $value The number; null for DEFAULT
+     * @param Numeral|null $value A number converted to 0 or 1; null for DEFAULT
+     * @param \SqlSemantics\Platform\MySql\Statement\AssignmentOperator|null $operator The written assignment sign, or null when omitted
      */
-    public function __construct(public readonly ?Numeral $value)
+    public function __construct(public readonly ?Numeral $value, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, public readonly ?\SqlSemantics\Platform\MySql\Statement\AssignmentOperator $operator = null)
     {
+        Check::input($value === null || (new Magnitudes())->atMost($value, '1'), 'A database READ ONLY option converts to 0 or 1, or uses DEFAULT.');
     }
 
     /**
@@ -45,6 +49,9 @@ final class DatabaseReadOnly implements DatabaseOption
     public function render(Output $out): void
     {
         $out->keyword('READ', 'ONLY');
+        if ($this->operator !== null) {
+            $out->symbol($this->operator->value);
+        }
         if ($this->value === null) {
             $out->keyword('DEFAULT');
         } else {

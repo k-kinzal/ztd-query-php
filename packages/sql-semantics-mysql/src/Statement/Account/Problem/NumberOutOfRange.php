@@ -28,7 +28,7 @@ final class NumberOutOfRange implements Diagnostic
 
     /**
      * @param string $option What the number is written for
-     * @param string $number The number as written
+     * @param string $number The converted decimal value for a range failure, or the written token for an integer-token refusal
      * @param string $error The server error the statement fails with
      */
     public function __construct(public readonly string $option, public readonly string $number, public readonly string $error)

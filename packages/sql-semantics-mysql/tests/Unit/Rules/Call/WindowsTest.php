@@ -30,7 +30,7 @@ final class WindowsTest extends TestCase
         (new Windows())->derive(new WindowSpec(null, [], [new OrderItem($order)]), $derivation, $derivation->environment());
         (new Windows())->derive(new Name('w'), $derivation, $derivation->environment());
 
-        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $derivation->facts()->scalar($order)->nullability);
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $order->scalarInformation()->nullability);
     }
 
     public function testRenderWritesTheWindowAfterOver(): void

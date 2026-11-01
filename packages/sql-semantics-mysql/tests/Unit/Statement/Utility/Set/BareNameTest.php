@@ -22,24 +22,24 @@ final class BareNameTest extends TestCase
     public function testDeriveScalarIsTextForASystemVariable(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET @@sql_mode = a.b');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
-        $item = $set->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set);
+        $item = $set->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment::class, $item);
         $value = $item->value;
         self::assertInstanceOf(BareName::class, $value);
         self::assertSame(['a', 'b'], [$value->qualifier?->name->value, $value->word->value]);
-        self::assertSame(Nullability::NotNull, $set->facts->scalar($value)->nullability);
+        self::assertSame(Nullability::NotNull, $value->scalarInformation()->nullability);
     }
 
     public function testDeriveScalarDependsOnTheProgramOtherwise(): void
     {
         $set = (new Semantics(Dialect::MySql))->analyze('SET x = y');
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
-        $item = $set->statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set);
+        $item = $set->items[0];
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment::class, $item);
         $value = $item->value;
         self::assertInstanceOf(BareName::class, $value);
-        $type = $set->facts->scalar($value)->type;
+        $type = $value->scalarInformation()->type;
         self::assertInstanceOf(Dependent::class, $type);
         self::assertInstanceOf(ProgramVariable::class, $type->missing[0]);
     }
@@ -56,9 +56,9 @@ final class BareNameTest extends TestCase
         $known = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = new.b', [$table]);
         $missing = $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.b = NEW.zz', [$table]);
 
-        self::assertSame([], $known->facts->diagnostics);
-        self::assertCount(1, $missing->facts->diagnostics);
-        self::assertInstanceOf(MissingColumn::class, $missing->facts->diagnostics[0]);
-        self::assertSame('zz', $missing->facts->diagnostics[0]->name->value);
+        self::assertSame([], $known->diagnostics());
+        self::assertCount(1, $missing->diagnostics());
+        self::assertInstanceOf(MissingColumn::class, $missing->diagnostics()[0]);
+        self::assertSame('zz', $missing->diagnostics()[0]->name->value);
     }
 }

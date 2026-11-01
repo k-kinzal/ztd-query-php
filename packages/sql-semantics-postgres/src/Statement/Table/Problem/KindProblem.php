@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the problem of a TRUNCATE of a view
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
- *     $semantics->analyze('TRUNCATE v', [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')])->facts->diagnostics[0]->message() // => '"v" is not a table'
+ *     $semantics->analyze('TRUNCATE v', [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')])->diagnostics()[0]->message() // => '"v" is not a table'
  * @example Refusing a problem without the relation its message names
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule::NotView, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing an action for a rule that names none

@@ -14,7 +14,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -37,9 +36,9 @@ use SqlSemantics\Statement\Statement;
  *     $table = $semantics->analyze('CREATE TABLE t AS SELECT a, b AS label FROM s', [$source])->declarations()[0];
  *     [$table->columns[0]->type->name(), $table->columns[1]->name->value, $table->complete] // => ['INT', 'label', true]
  */
-final class CreateTableAs implements Statement
+final class CreateTableAs extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param QualifiedName $name The table name
@@ -52,7 +51,12 @@ final class CreateTableAs implements Statement
         public readonly Query $query,
         public readonly bool $temporary = false,
         public readonly bool $ifNotExists = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input($name->catalog === null, 'A table name has at most a schema qualifier.');
     }
 
@@ -63,7 +67,7 @@ final class CreateTableAs implements Statement
     {
         (new TableProblems())->temporary($this->name, $this->temporary, $derivation);
         $fact = $derivation->query($this->query, $derivation->environment());
-        $columns = (new QueryColumns())->tableColumns($this->query, $fact, $derivation->facts(), $derivation->context->columnNames);
+        $columns = (new QueryColumns())->tableColumns($this->query, $fact, $derivation->context->columnNames);
         $rule = new TableDeclaration();
         $derivation->declare(new Table(
             $rule->name($this->name, $this->temporary),

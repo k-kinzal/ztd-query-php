@@ -45,4 +45,9 @@ final class CodecTest extends TestCase
         $this->expectExceptionMessage('A PostgreSQL name holds 1 to 63 bytes and no zero byte.');
         (new Codec(GrammarRelease::PostgreSql172))->name(new Name(''), NameUse::Column);
     }
+    public function testSpellingPreservesIdentifierQuotesAndBytes(): void
+    {
+        self::assertSame('"é"', (new Codec(GrammarRelease::PostgreSql172))->spelling('"é"'));
+    }
+
 }

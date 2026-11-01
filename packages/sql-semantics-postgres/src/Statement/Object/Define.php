@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -38,11 +37,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading an operator definition
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)');
- *     [$operation->statement->kind->value, count($operation->statement->definition ?? [])] // => ['OPERATOR', 3]
+ *     [$operation->kind->value, count($operation->definition ?? [])] // => ['OPERATOR', 3]
  */
-final class Define implements Statement
+final class Define extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Attribute>|null The attributes in written order; null for a shell type
@@ -64,7 +63,12 @@ final class Define implements Statement
         public readonly ?AggregateArguments $arguments = null,
         public readonly bool $replace = false,
         public readonly bool $ifNotExists = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         Check::input(in_array($kind, [ObjectKind::Aggregate, ObjectKind::Operator, ObjectKind::Type, ObjectKind::TextSearchParser, ObjectKind::TextSearchDictionary, ObjectKind::TextSearchTemplate, ObjectKind::TextSearchConfiguration, ObjectKind::Collation], true), 'CREATE with a definition defines an aggregate, an operator, a type, a text search object or a collation.');
         Check::input(($kind === ObjectKind::Operator) === ($name instanceof OperatorName) && (!$name instanceof OperatorName || !$name->explicit), 'An operator, and only an operator, is named by an operator name written without OPERATOR(...).');
         Check::input($definition !== null || $kind === ObjectKind::Type, 'Only a shell type is defined without attributes.');

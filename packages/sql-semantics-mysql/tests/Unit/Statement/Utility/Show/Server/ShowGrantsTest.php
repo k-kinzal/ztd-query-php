@@ -18,10 +18,18 @@ final class ShowGrantsTest extends TestCase
     public function testDeriveStatementDependsOnTheCurrentUser(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW GRANTS');
-        self::assertInstanceOf(ShowGrants::class, $show->statement);
+        self::assertInstanceOf(ShowGrants::class, $show);
         self::assertFalse($show->shape()?->complete());
         $named = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW GRANTS FOR u');
         self::assertSame('Grants for u@%', $named->field(0)->name?->value);
+    }
+
+    public function testDeriveStatementNamesTheResolvedAccount(): void
+    {
+        $show = (new Semantics(Dialect::MySql))->analyze("SHOW GRANTS FOR ' u '@' host '");
+
+        self::assertSame('Grants for u@host', $show->field(0)->name?->value);
+        self::assertSame('SHOW GRANTS FOR \' u \'@\' host \'', $show->toString());
     }
 
     public function testRenderWritesTheStatement(): void

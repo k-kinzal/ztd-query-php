@@ -15,11 +15,22 @@ use SqlFaker\Generation\Token\TerminalSequence;
 final class JoinGroupingRule implements RewriteRule
 {
     /**
-     * Keeps ON and USING attached to their original join, including inside ODBC escape braces.
+     * Groups nested operands to retain ON and USING attachment without wrapping the root join.
      */
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
+        $byId = [];
+        foreach ($sequence->productions as $production) {
+            $byId[$production->id] = $production;
+        }
         foreach ($sequence->occurrences('joined_table') as $id) {
+            $parent = $byId[$id]->parent ?? null;
+            while ($parent !== null && ($byId[$parent]->rule ?? null) !== 'joined_table') {
+                $parent = $byId[$parent]->parent ?? null;
+            }
+            if ($parent === null) {
+                continue;
+            }
             $range = $sequence->range($id);
             if ($range === null) {
                 continue;

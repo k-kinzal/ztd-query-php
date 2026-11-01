@@ -26,6 +26,17 @@ final class StatementRuleTest extends TestCase
         self::assertSame('DROP TEMPORARY TABLE IF EXISTS a, b.c CASCADE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('drop temporary table if exists a, b.c cascade')->toString());
     }
 
+    public function testDropTableRefusesATableNamedTwiceWhileReading(): void
+    {
+        self::assertSame('DROP TABLE t, u', (new Semantics(Dialect::MySql))->analyze('DROP TABLE t, u')->toString());
+        try {
+            (new Semantics(Dialect::MySql))->analyze('DROP TABLE t, t');
+            self::fail('The list names a table twice.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable::class, $failure->problem);
+        }
+    }
+
     public function testRenameLowersTheRenames(): void
     {
         self::assertSame('RENAME TABLE a TO b, c TO d', (new Semantics(Dialect::MySql))->analyze('rename table a to b, c to d')->toString());
@@ -35,7 +46,7 @@ final class StatementRuleTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('rename user a to b, c to d');
 
-        self::assertInstanceOf(RenameUser::class, $operation->statement);
+        self::assertInstanceOf(RenameUser::class, $operation);
         self::assertSame('RENAME USER a TO b, c TO d', $operation->toString());
     }
 

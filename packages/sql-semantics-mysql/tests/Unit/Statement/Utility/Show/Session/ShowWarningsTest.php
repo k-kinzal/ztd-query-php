@@ -18,7 +18,7 @@ final class ShowWarningsTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW WARNINGS LIMIT 1');
-        self::assertInstanceOf(ShowWarnings::class, $show->statement);
+        self::assertInstanceOf(ShowWarnings::class, $show);
         self::assertSame('Level', $show->field(0)->name?->value);
     }
 

@@ -19,7 +19,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * An UPDATE: assignments to the rows of a table that meet a condition, optionally joined with other FROM items.
@@ -32,13 +31,14 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the parts of an UPDATE
  *     $update = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a');
- *     [count($update->statement->assignments), $update->statement->from instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput, $update->toString()] // => [1, true, 'UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a']
+ *     [count($update->assignments), $update->from instanceof \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput, $update->toString()] // => [1, true, 'UPDATE t AS x SET a = u.a FROM u WHERE x.a = u.a RETURNING x.a']
  * @example Refusing UPDATE without an assignment
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Update(null, new \SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class Update implements Modification
+final class Update extends \SqlSemantics\Statement\SqlStatement implements Modification
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\QuerySemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<Assignment|RowAssignment> The SET items in written order
@@ -67,7 +67,16 @@ final class Update implements Modification
         public readonly ?Relation $from = null,
         public readonly Scalar|CurrentOf|null $where = null,
         array $returning = [],
+        ?QueryFact $queryInformation = null,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
+        if ($queryInformation !== null) {
+            $this->initializeQueryInformation($queryInformation);
+        }
         $this->assignments = (new ClosedList())->of($assignments, [Assignment::class, RowAssignment::class], 'UPDATE SET holds at least one assignment.', 1);
         $this->returning = Check::listOf($returning, Target::class, 'RETURNING holds output items.');
     }

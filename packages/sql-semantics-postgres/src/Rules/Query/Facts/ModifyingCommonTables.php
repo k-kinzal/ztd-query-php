@@ -37,7 +37,7 @@ final class ModifyingCommonTables
      */
     public function check(Node $root, ?WithClause $top, Derivation $derivation): void
     {
-        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($root) as $object) {
+        foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($root, bindings: false) as $object) {
             if (!$object instanceof WithClause || $object === $top) {
                 continue;
             }

@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
 
@@ -26,7 +25,7 @@ use SqlSemantics\Statement\Type\NullOnly;
  * @visibility public
  * @example Reading the message of a RAISE
  *     $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(FAIL, 'no'); END");
- *     $trigger->statement->steps[0]->columns[0]->expression->message->value // => 'no'
+ *     $trigger->steps[0]->columns[0]->expression->message->value // => 'no'
  * @example Refusing a message for IGNORE
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Raise(\SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction::Ignore, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('x')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a missing message for fail
@@ -34,14 +33,18 @@ use SqlSemantics\Statement\Type\NullOnly;
  */
 final class Raise implements Scalar
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param RaiseAction $action The action
      * @param Scalar|null $message The error message; absent exactly for IGNORE
      */
-    public function __construct(public readonly RaiseAction $action, public readonly ?Scalar $message = null)
+    public function __construct(public readonly RaiseAction $action, public readonly ?Scalar $message = null, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(($action === RaiseAction::Ignore) === ($message === null), 'RAISE takes a message for every action except IGNORE.');
     }
 

@@ -15,6 +15,11 @@ use SqlSemantics\Platform\MySql\Statement\Account\User\FactorStep;
 #[Medium]
 final class FactorStepTest extends TestCase
 {
+    public function testRetainsTheTypedFactor(): void
+    {
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Account\User\Factor::Second, (new FactorStep(\SqlSemantics\Platform\MySql\Statement\Account\User\Factor::Second))->factor);
+    }
+
     public function testRenderWritesTheFactorAndItsMethod(): void
     {
         self::assertSame('ALTER USER u ADD 2 FACTOR IDENTIFIED WITH authentication_fido', (new Semantics(Dialect::MySql))->analyze('alter user u add 2 factor identified with authentication_fido')->toString());

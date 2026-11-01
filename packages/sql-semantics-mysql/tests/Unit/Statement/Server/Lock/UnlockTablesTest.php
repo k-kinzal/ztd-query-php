@@ -17,14 +17,14 @@ final class UnlockTablesTest extends TestCase
 {
     public function testRenderWritesTables(): void
     {
-        self::assertSame('UNLOCK TABLES', (new Semantics(Dialect::MySql))->analyze('unlock table')->toString());
+        self::assertSame('UNLOCK TABLE', (new Semantics(Dialect::MySql))->analyze('unlock table')->toString());
     }
 
     public function testDeriveStatementHasNoFacts(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('UNLOCK TABLES');
 
-        self::assertSame([], $operation->facts->diagnostics);
-        self::assertNull($operation->facts->output);
+        self::assertSame([], $operation->diagnostics());
+        self::assertNull($operation->output());
     }
 }

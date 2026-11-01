@@ -12,7 +12,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Mutation;
  * @visibility public
  * @example Reading the algorithm of an INSERT OR
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('INSERT OR IGNORE INTO t VALUES (1)');
- *     $insert->statement->into->resolution // => \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore
+ *     $insert->into->resolution // => \SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution::Ignore
  */
 enum ConflictResolution: string
 {

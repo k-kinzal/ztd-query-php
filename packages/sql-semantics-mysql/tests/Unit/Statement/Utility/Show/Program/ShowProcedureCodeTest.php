@@ -18,7 +18,7 @@ final class ShowProcedureCodeTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW PROCEDURE CODE db.x');
-        self::assertInstanceOf(ShowProcedureCode::class, $show->statement);
+        self::assertInstanceOf(ShowProcedureCode::class, $show);
         self::assertSame('Pos', $show->field(0)->name?->value);
     }
 
@@ -26,4 +26,11 @@ final class ShowProcedureCodeTest extends TestCase
     {
         self::assertSame('SHOW PROCEDURE CODE db.x', (new Semantics(Dialect::MySql))->analyze('SHOW PROCEDURE CODE db.x')->toString());
     }
+
+    public function testNameRejectsACatalogQualifier(): void
+    {
+        $this->expectExceptionMessage('A stored-program name has at most a database qualifier.');
+        new ShowProcedureCode(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Statement\Identifier\Name('db'), new \SqlSemantics\Statement\Identifier\Name('catalog')));
+    }
+
 }

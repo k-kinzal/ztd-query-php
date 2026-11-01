@@ -17,7 +17,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 /**
@@ -60,7 +59,7 @@ final class ForeignKeys
      * @param list<Name> $columns The referenced columns
      * @param list<ReferentialAction> $actions
      */
-    public function derive(Derivation $derivation, Node $constraint, QualifiedName $table, array $columns, ?KeyMatch $match, array $actions): void
+    public function derive(Derivation $derivation, \SqlSemantics\Statement\TableUse $constraint, QualifiedName $table, array $columns, ?KeyMatch $match, array $actions): void
     {
         $fact = $derivation->target($constraint, (new Targets())->resolve($derivation, $table));
         $kinds = new RelationKinds();

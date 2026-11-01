@@ -8,7 +8,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The bracketed items of an array constructor: `[a, b]`, or the sub-arrays of a multidimensional array `[[a], [b]]`.
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ArrayItems implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Scalar> The values in order, or none when the level holds sub-arrays
@@ -41,7 +40,7 @@ final class ArrayItems implements Node
      * @param list<Scalar> $values The values in order
      * @param list<ArrayItems> $nested The sub-arrays in order
      */
-    public function __construct(array $values = [], array $nested = [])
+    public function __construct(array $values = [], array $nested = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->values = Check::listOf($values, Scalar::class, 'Array values are expressions.');
         $this->nested = Check::listOf($nested, self::class, 'Sub-arrays are bracketed items.');

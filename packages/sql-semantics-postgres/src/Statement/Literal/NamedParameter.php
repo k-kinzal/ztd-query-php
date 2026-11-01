@@ -13,7 +13,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -27,17 +26,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading a named placeholder
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, null, null, \SqlSemantics\Contract\ParameterStyle::Named);
- *     $semantics->analyze('SELECT :id')->statement->targets[0]->expression->name // => 'id'
+ *     $semantics->analyze('SELECT :id')->targets[0]->expression->name // => 'id'
  */
 final class NamedParameter implements Scalar, OutputNaming
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\ScalarSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param string $name The placeholder name without the colon
      */
-    public function __construct(public readonly string $name)
+    public function __construct(public readonly string $name, ?ScalarFact $scalarInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($scalarInformation !== null) {
+            $this->initializeScalarInformation($scalarInformation);
+        }
         Check::input(preg_match('/\A[A-Za-z0-9_]+\z/', $name) === 1, 'A placeholder name is letters, digits and underscores.');
     }
 

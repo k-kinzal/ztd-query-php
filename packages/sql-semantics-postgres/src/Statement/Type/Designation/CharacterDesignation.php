@@ -15,7 +15,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -31,20 +30,20 @@ use SqlSemantics\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading the type of a national character constant
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SELECT N'abc'");
- *     [$query->statement->targets[0]->expression->type->designation->keyword->value, $query->field(0)->type->descriptor->name()] // => ['NCHAR', 'character']
+ *     [$query->targets[0]->expression->type->designation->keyword->value, $query->field(0)->type->descriptor->name()] // => ['NCHAR', 'character']
  * @example Rejecting VARYING after VARCHAR
  *     new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\CharacterDesignation(\SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\CharacterKeyword::Varchar, true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class CharacterDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param CharacterKeyword $keyword The spelling
      * @param bool $varying Whether VARYING is written
      * @param IntegerConstant|null $length The length in characters
      */
-    public function __construct(public readonly CharacterKeyword $keyword, public readonly bool $varying = false, public readonly ?IntegerConstant $length = null)
+    public function __construct(public readonly CharacterKeyword $keyword, public readonly bool $varying = false, public readonly ?IntegerConstant $length = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input(!$varying || $keyword !== CharacterKeyword::Varchar, 'VARCHAR is not followed by VARYING.');
     }

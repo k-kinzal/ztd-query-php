@@ -13,8 +13,8 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Replica\ReplicaThread;
 #[Small]
 final class ReplicaThreadTest extends TestCase
 {
-    public function testCasesSpellBothThreads(): void
+    public function testCasesSpellBothThreadsAndTheReceiverSynonym(): void
     {
-        self::assertSame(['SQL_THREAD', 'IO_THREAD'], array_column(ReplicaThread::cases(), 'value'));
+        self::assertSame(['SQL_THREAD', 'IO_THREAD', 'RELAY_THREAD'], array_column(ReplicaThread::cases(), 'value'));
     }
 }

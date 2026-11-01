@@ -18,15 +18,15 @@ final class ShowCharacterSetTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW CHARSET');
-        self::assertInstanceOf(ShowCharacterSet::class, $show->statement);
+        self::assertInstanceOf(ShowCharacterSet::class, $show);
         self::assertSame('Maxlen', $show->field(3)->name?->value);
     }
 
     public function testDeriveRelationShapesTheResultColumns(): void
     {
         $show = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SHOW CHARSET');
-        self::assertInstanceOf(ShowCharacterSet::class, $show->statement);
-        self::assertSame('Charset', $show->facts->relation($show->statement)->shape->slots[0]->name?->value);
+        self::assertInstanceOf(ShowCharacterSet::class, $show);
+        self::assertSame('Charset', $show->relationInformation()->shape->slots[0]->name?->value);
     }
 
     public function testRenderWritesTheStatement(): void

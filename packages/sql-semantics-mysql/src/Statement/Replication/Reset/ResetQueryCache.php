@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Replication\Releases;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * `RESET QUERY CACHE`: removes every query result from the query cache (MySQL 5.6 and 5.7; 8.0 removed the cache).
@@ -22,7 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class ResetQueryCache implements ResetTarget
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * Checks that the release has a query cache.
@@ -38,5 +37,11 @@ final class ResetQueryCache implements ResetTarget
     public function render(Output $out): void
     {
         $out->keyword('QUERY', 'CACHE');
+    }
+    /**
+     * Constructs this SQL form with optional completed semantics and an input range.
+     */
+    public function __construct(public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
+    {
     }
 }

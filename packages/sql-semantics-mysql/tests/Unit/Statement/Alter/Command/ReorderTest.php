@@ -21,7 +21,7 @@ final class ReorderTest extends TestCase
         $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
         $alter = $semantics->analyze('ALTER TABLE t ORDER BY a, x', [$table]);
 
-        self::assertSame('Column x does not exist.', $alter->facts->diagnostics[0]->message());
+        self::assertSame('Column x does not exist.', $alter->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheDirections(): void

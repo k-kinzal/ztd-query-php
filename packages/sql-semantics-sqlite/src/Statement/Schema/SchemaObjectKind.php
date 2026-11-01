@@ -13,7 +13,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
  * @visibility public
  * @example Reading what a DROP statement removes
  *     $drop = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('DROP VIEW v');
- *     $drop->statement->object // => \SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind::View
+ *     $drop->object // => \SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind::View
  */
 enum SchemaObjectKind: string
 {

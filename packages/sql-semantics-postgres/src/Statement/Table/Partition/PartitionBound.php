@@ -17,7 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Clause;
  * @visibility public
  * @example Reading the kind of a bound
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE p1 PARTITION OF p FOR VALUES IN (1, 2)');
- *     $create->statement->definition->bound instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\ListBound // => true
+ *     $create->definition->bound instanceof \SqlSemantics\Platform\PostgreSql\Statement\Table\Partition\ListBound // => true
  */
 interface PartitionBound extends Clause
 {

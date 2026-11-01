@@ -10,7 +10,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One common table expression: `name [(columns)] AS (query)`.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a common table expression
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('WITH c (x) AS (SELECT 1) SELECT x FROM c');
- *     [$query->statement->with->tables[0]->name->value, $query->statement->with->tables[0]->columns[0]->value] // => ['c', 'x']
+ *     [$query->query->with->tables[0]->name->value, $query->query->with->tables[0]->columns[0]->value] // => ['c', 'x']
  */
 final class CommonTableExpression implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Name> The column names in written order; empty when the query names the columns
@@ -38,9 +37,10 @@ final class CommonTableExpression implements Node
      * @param list<Name> $columns The column names in written order
      * @param Query $query The query that produces the rows
      */
-    public function __construct(public readonly Name $name, array $columns, public readonly Query $query)
+    public function __construct(public readonly Name $name, array $columns, public readonly Query $query, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a common table expression holds names.');
+        (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
     /**

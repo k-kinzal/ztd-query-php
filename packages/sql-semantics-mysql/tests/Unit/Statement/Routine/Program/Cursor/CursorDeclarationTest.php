@@ -23,7 +23,7 @@ final class CursorDeclarationTest extends TestCase
     public function testRenderWritesTheNameAndTheQuery(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT x; END');
-        $create = $operation->statement;
+        $create = $operation;
         self::assertInstanceOf(CreateProcedure::class, $create);
         $block = $create->body;
         self::assertInstanceOf(Block::class, $block);
@@ -31,8 +31,9 @@ final class CursorDeclarationTest extends TestCase
         self::assertInstanceOf(CursorDeclaration::class, $cursor);
 
         self::assertSame('c', $cursor->name->value);
-        self::assertInstanceOf(Select::class, $cursor->query);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\QueryRoot::class, $cursor->query);
+        self::assertInstanceOf(Select::class, $cursor->query->query);
+        self::assertSame([], $operation->diagnostics());
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE x INT; DECLARE c CURSOR FOR SELECT x; END', $operation->toString());
     }
 
@@ -40,7 +41,7 @@ final class CursorDeclarationTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT y; END');
 
-        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertSame(['Column y does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->diagnostics()));
         self::assertSame('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT y; END', $operation->toString());
     }
 

@@ -22,7 +22,16 @@ final class ConcatenationRule implements RewriteRule
     #[Override]
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
+        $owners = [];
+        foreach ($sequence->terminals as $terminal) {
+            if ($terminal->name === 'OR_OR_SYM' && $terminal->ancestors !== []) {
+                $owners[$terminal->ancestors[count($terminal->ancestors) - 1]] = true;
+            }
+        }
         foreach ($sequence->occurrences('simple_expr') as $owner) {
+            if (!isset($owners[$owner])) {
+                continue;
+            }
             $range = $sequence->range($owner);
             if ($range === null) {
                 continue;

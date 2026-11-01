@@ -15,7 +15,6 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * A CHECK table constraint: a condition every row satisfies.
@@ -29,11 +28,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading a check that is not validated
  *     $alter = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, CONSTRAINT positive CHECK (a > 0) NOT VALID)');
- *     [$alter->statement->definition->elements[1]->name->value, $alter->statement->definition->elements[1]->attributes] // => ['positive', [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::NotValid]]
+ *     [$alter->definition->elements[1]->name->value, $alter->definition->elements[1]->attributes] // => ['positive', [\SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute::NotValid]]
  */
 final class TableCheck implements Constraint
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ConstraintAttribute> The attributes in the order written
@@ -45,7 +44,7 @@ final class TableCheck implements Constraint
      * @param list<ConstraintAttribute> $attributes The attributes in the order written
      * @param Name|null $name The constraint name
      */
-    public function __construct(public readonly Scalar $condition, array $attributes = [], public readonly ?Name $name = null)
+    public function __construct(public readonly Scalar $condition, array $attributes = [], public readonly ?Name $name = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->attributes = (new Attributes())->checked($attributes);
     }

@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reporting a table made of generated columns only
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a AS (1))');
- *     [$create->facts->diagnostics[0]->message(), $create->facts->diagnostics[0]->column] // => ['A table must have at least one column that is not generated.', null]
+ *     [$create->diagnostics()[0]->message(), $create->diagnostics()[0]->column] // => ['A table must have at least one column that is not generated.', null]
  */
 final class GeneratedColumnProblem implements Diagnostic
 {

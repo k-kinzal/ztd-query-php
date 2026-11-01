@@ -18,7 +18,7 @@ final class ShowPluginsTest extends TestCase
     public function testDeriveStatementRecordsTheRows(): void
     {
         $show = (new Semantics(Dialect::MySql))->analyze('SHOW PLUGINS');
-        self::assertInstanceOf(ShowPlugins::class, $show->statement);
+        self::assertInstanceOf(ShowPlugins::class, $show);
         self::assertSame('Name', $show->field(0)->name?->value);
     }
 

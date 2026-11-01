@@ -15,11 +15,18 @@ use SqlSemantics\Platform\MySql\Statement\Dml\ImportTable;
 #[Medium]
 final class ImportTableTest extends TestCase
 {
+    public function testRejectsABinaryLiteralAsAFileName(): void
+    {
+        $this->expectExceptionMessage('An imported file name is a quoted string.');
+
+        new ImportTable([new \SqlSemantics\Platform\MySql\Statement\Literal\Text('61', \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal)]);
+    }
+
     public function testDeriveStatementRecordsNothing(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("IMPORT TABLE FROM 'a.sdi'");
 
-        self::assertNull($operation->facts->output);
+        self::assertNull($operation->output());
         self::assertSame([], $operation->declarations());
     }
 

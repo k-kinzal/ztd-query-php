@@ -29,12 +29,12 @@ final class ConflictResolutionTest extends TestCase
         $insert = $semantics->analyze('insert or replace into t values (1)');
         $update = $semantics->analyze('update or fail t set a = 1');
 
-        self::assertInstanceOf(InsertRows::class, $insert->statement);
-        self::assertSame(ConflictResolution::Replace, $insert->statement->into->resolution);
-        self::assertFalse($insert->statement->into->replace);
+        self::assertInstanceOf(InsertRows::class, $insert);
+        self::assertSame(ConflictResolution::Replace, $insert->into->resolution);
+        self::assertFalse($insert->into->replace);
         self::assertSame('INSERT OR REPLACE INTO t VALUES (1)', $insert->toString());
-        self::assertInstanceOf(Update::class, $update->statement);
-        self::assertSame(ConflictResolution::Fail, $update->statement->resolution);
+        self::assertInstanceOf(Update::class, $update);
+        self::assertSame(ConflictResolution::Fail, $update->resolution);
         self::assertSame('UPDATE OR FAIL t SET a = 1', $update->toString());
     }
 }

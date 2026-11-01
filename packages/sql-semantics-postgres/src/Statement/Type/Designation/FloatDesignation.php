@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
 
@@ -34,12 +33,12 @@ use SqlSemantics\Statement\Type\TypeFact;
  */
 final class FloatDesignation implements TypeDesignation
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @param IntegerConstant|null $precision The precision in binary digits, 1 to 53
      */
-    public function __construct(public readonly ?IntegerConstant $precision = null)
+    public function __construct(public readonly ?IntegerConstant $precision = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         Check::input($precision === null || (strlen($precision->digits) <= 2 && (int) $precision->digits >= 1 && (int) $precision->digits <= 53), 'A float precision is 1 to 53 binary digits.');
     }

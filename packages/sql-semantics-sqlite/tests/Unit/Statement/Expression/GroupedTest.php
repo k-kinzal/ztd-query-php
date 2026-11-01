@@ -14,7 +14,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;
@@ -28,7 +27,7 @@ final class GroupedTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
         $operation = $semantics->analyze('SELECT (a), ((b)) FROM t', [$create]);
-        $statement = $operation->statement;
+        $statement = $operation;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
@@ -37,8 +36,8 @@ final class GroupedTest extends TestCase
         self::assertInstanceOf(Grouped::class, $statement->columns[1]->expression);
         self::assertInstanceOf(ColumnUse::class, $statement->columns[0]->expression->operand);
         self::assertInstanceOf(Grouped::class, $statement->columns[1]->expression->operand);
-        $fact = $operation->facts->scalar($statement->columns[0]->expression);
-        $inner = $operation->facts->scalar($statement->columns[0]->expression->operand);
+        $fact = $statement->columns[0]->expression->scalarInformation();
+        $inner = $statement->columns[0]->expression->operand->scalarInformation();
         self::assertInstanceOf(ResolvedColumn::class, $inner->resolution);
         self::assertNull($fact->resolution);
         self::assertSame($inner->type, $fact->type);
@@ -51,7 +50,7 @@ final class GroupedTest extends TestCase
     public function testDeriveScalarKeepsANullOperandNull(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = new Operation($semantics->context(), new Select([new ResultColumn(new Grouped(new NullLiteral()))]));
+        $operation = Semantics::fromStatement($semantics->context(), new Select([new ResultColumn(new Grouped(new NullLiteral()))]));
 
         self::assertInstanceOf(NullOnly::class, $operation->field(0)->type);
         self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);

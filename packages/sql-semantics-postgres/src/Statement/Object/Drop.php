@@ -16,7 +16,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -33,11 +32,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the dropped tables
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('DROP TABLE IF EXISTS a, b CASCADE');
- *     [$operation->statement->kind->value, count($operation->statement->objects), $operation->statement->ifExists] // => ['TABLE', 2, true]
+ *     [$operation->kind->value, count($operation->objects), $operation->ifExists] // => ['TABLE', 2, true]
  */
-final class Drop implements Statement
+final class Drop extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<ObjectReference> The dropped objects in written order
@@ -57,7 +56,12 @@ final class Drop implements Statement
         public readonly bool $ifExists = false,
         public readonly ?DropBehavior $behavior = null,
         public readonly bool $concurrently = false,
+        public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null,
+        ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null
     ) {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->objects = Check::listOf($objects, ObjectReference::class, 'DROP names at least one object.', 1);
         $forms = new ObjectForms();
         foreach ($this->objects as $object) {

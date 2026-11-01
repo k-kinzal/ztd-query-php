@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * The parenthesized column list of INSERT and REPLACE; an empty list writes no column of the rows.
@@ -22,11 +21,11 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the columns of an INSERT
  *     $insert = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('INSERT INTO t (a, b) VALUES (1, 2)');
- *     count($insert->statement->into->columns->columns) // => 2
+ *     count($insert->into->columns->columns) // => 2
  */
 final class ColumnList implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<ColumnUse|TableWildcard> The columns in written order
@@ -37,7 +36,7 @@ final class ColumnList implements Node
      * @param list<ColumnUse|TableWildcard> $columns The columns in written order
      * @throws InvalidConstruction When a member is neither a column nor a qualified star
      */
-    public function __construct(array $columns)
+    public function __construct(array $columns, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $members = [];
         foreach (Check::listOf($columns, Node::class, 'A column list is an ordered list of columns.') as $column) {

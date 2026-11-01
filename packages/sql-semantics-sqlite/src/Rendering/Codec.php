@@ -34,4 +34,13 @@ final class Codec implements \SqlSemantics\Contract\Codec
 
         return '`' . str_replace('`', '``', $name->value) . '`';
     }
+
+    /**
+     * Encodes identifier spelling while preserving its quote marks and escapes.
+     */
+    public function spelling(string $text): string
+    {
+        return $text;
+    }
+
 }

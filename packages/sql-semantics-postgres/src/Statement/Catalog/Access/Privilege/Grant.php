@@ -13,7 +13,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeTa
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\SchemaContentsTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -32,11 +31,11 @@ use SqlSemantics\Statement\Statement;
  * @visibility public
  * @example Reading the parts of a grant
  *     $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT ALL PRIVILEGES ON accounts TO GROUP staff WITH GRANT OPTION');
- *     [$operation->statement->privileges, $operation->statement->grantOption, $operation->toString()] // => [[], true, 'GRANT ALL ON TABLE accounts TO staff WITH GRANT OPTION']
+ *     [$operation->privileges, $operation->grantOption, $operation->toString()] // => [[], true, 'GRANT ALL ON TABLE accounts TO staff WITH GRANT OPTION']
  */
-final class Grant implements Statement
+final class Grant extends \SqlSemantics\Statement\SqlStatement implements Statement
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<Privilege> The privileges in the order written; empty for ALL PRIVILEGES
@@ -55,8 +54,11 @@ final class Grant implements Statement
      * @param bool $grantOption Whether WITH GRANT OPTION is written
      * @param RoleSpec|null $grantor The role of GRANTED BY, when written
      */
-    public function __construct(array $privileges, public readonly PrivilegeTarget $target, array $grantees, public readonly bool $grantOption = false, public readonly ?RoleSpec $grantor = null)
+    public function __construct(array $privileges, public readonly PrivilegeTarget $target, array $grantees, public readonly bool $grantOption = false, public readonly ?RoleSpec $grantor = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null, ?\SqlSemantics\Statement\StatementSemantics $statementInformation = null)
     {
+        if ($statementInformation !== null) {
+            $this->initializeStatementInformation($statementInformation);
+        }
         $this->privileges = (new PrivilegeLists())->privileges($privileges);
         $this->grantees = Check::listOf($grantees, RoleSpec::class, 'A grant names at least one grantee.', 1);
     }

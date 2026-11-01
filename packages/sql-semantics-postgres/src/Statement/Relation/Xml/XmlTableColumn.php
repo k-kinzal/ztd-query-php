@@ -10,7 +10,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
-use SqlSemantics\Statement\Snapshot;
 
 /**
  * One column of XMLTABLE: a typed column with its options, or the FOR ORDINALITY column.
@@ -24,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  */
 final class XmlTableColumn implements Node
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var list<XmlColumnOption> The options in written order
@@ -36,7 +35,7 @@ final class XmlTableColumn implements Node
      * @param TypeName|null $type The column type; null for FOR ORDINALITY
      * @param list<XmlColumnOption> $options The options in written order
      */
-    public function __construct(public readonly Name $name, public readonly ?TypeName $type = null, array $options = [])
+    public function __construct(public readonly Name $name, public readonly ?TypeName $type = null, array $options = [], public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
         $this->options = Check::listOf($options, XmlColumnOption::class, 'Column options are XMLTABLE column options.');
         Check::input($type !== null || $this->options === [], 'The FOR ORDINALITY column has no options.');

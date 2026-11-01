@@ -109,7 +109,7 @@ final class AggregateRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function aggregate(Node $call): Scalar
+    public function aggregate(Node $call): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
         $form = $this->lowering->form($call);
         if (array_key_exists($form->signature, self::CONCATENATIONS)) {
@@ -120,42 +120,58 @@ final class AggregateRule
             [$keyAll, $key] = $this->operand($form->node(2));
             [$valueAll, $value] = $this->operand($form->node(4));
 
-            return new JsonObjectAggregate($key, $value, $keyAll, $valueAll, $window === null ? null : $this->windows->windowing($form->node($window)));
+            $base = (new \SqlSemantics\Platform\MySql\Rules\Call\Aggregation\AggregateNesting())->problem([$key, $value]) === null
+                ? new JsonObjectAggregate($key, $value, $keyAll, $valueAll)
+                : new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate($key, $value, $keyAll, $valueAll);
+            return $this->windowed($base, $window === null ? null : $this->windows->windowing($form->node($window)));
         }
         [$function, $distinct, $argument, $position, $window] = self::AGGREGATES[$form->signature] ?? throw ImplementationGap::production($form);
         [$all, $arguments] = match ($argument) {
             'in' => $this->single($form->node($position)),
-            'list' => [false, $this->lowering->expressions->expressions($form->node($position))],
+            'list' => [false, $this->lowering->expressions->operands($form->node($position))],
             'star' => [$this->lowering->options->present($form->node($position)), []],
         };
 
-        return new Aggregate($function, $arguments, $distinct, $all, $window === null ? null : $this->windows->windowing($form->node($window)));
+        $alias = \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateAlias::tryFrom(strtoupper($form->token(0)->text));
+        $over = $window === null ? null : $this->windows->windowing($form->node($window));
+        if (array_filter($arguments, static fn ($argument): bool => !$argument instanceof Scalar) !== []) {
+            \SqlSemantics\Diagnostic\Check::invariant($arguments !== [], 'A retained aggregate has arguments.');
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredAggregate($function, $arguments, $distinct, $all, $over, alias: $alias);
+        }
+        /**
+ * @var list<Scalar> $arguments
+ */
+        return $this->windowed(new Aggregate($function, $arguments, $distinct, $all, alias: $alias), $over);
     }
 
     /**
      * Lowers GROUP_CONCAT.
      */
-    public function concatenation(Form $form, ?int $window): GroupConcat
+    public function concatenation(Form $form, ?int $window): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
     {
-        return new GroupConcat(
-            $this->lowering->expressions->expressions($form->node(3)),
-            $this->distinct($form->node(2)),
-            $this->ordering($form->node(4)),
-            $this->separator($form->node(5)),
-            $window === null ? null : $this->windows->windowing($form->node($window)),
-        );
+        $arguments = $this->lowering->expressions->expressions($form->node(3));
+        $distinct = $this->distinct($form->node(2));
+        $order = $this->ordering($form->node(4));
+        $separator = $this->separator($form->node(5));
+        $over = $window === null ? null : $this->windows->windowing($form->node($window));
+        if ((new \SqlSemantics\Platform\MySql\Rules\Call\Aggregation\AggregateNesting())->problem([...$arguments, ...$order]) !== null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredGroupConcat($arguments, $distinct, $order, $separator, $over);
+        }
+        return $this->windowed(new GroupConcat($arguments, $distinct, $order, $separator), $over);
     }
 
     /**
      * Lowers the one operand of an aggregate as an argument list.
      *
-     * @return array{bool, list<Scalar>}
+     * @return array{bool, list<Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand>}
      */
     public function single(Node $operand): array
     {
-        [$all, $expression] = $this->operand($operand);
-
-        return [$all, [$expression]];
+        $form = $this->lowering->form($operand);
+        if ($form->signature !== 'in_sum_expr: opt_all expr') {
+            throw ImplementationGap::production($form);
+        }
+        return [$this->lowering->options->present($form->node(0)), [$this->lowering->expressions->operand($form->node(1))]];
     }
 
     /**
@@ -239,6 +255,24 @@ final class AggregateRule
             'opt_gconcat_separator:' => null,
             'opt_gconcat_separator: SEPARATOR_SYM text_string' => $this->lowering->literals->text($form->node(1)),
             default => throw ImplementationGap::production($form),
+        };
+    }
+    /**
+     * Attaches an OVER clause in its ordinary or retained preparation role.
+     */
+    public function windowed(Aggregate|GroupConcat|JsonObjectAggregate|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate $aggregate, \SqlSemantics\Statement\Identifier\Name|\SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification|null $over): Scalar|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand
+    {
+        $unsupported = $aggregate instanceof GroupConcat || ($aggregate instanceof Aggregate && (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Aggregates())->limitation($aggregate->function, $aggregate->distinct) !== null);
+        if ($over !== null && ($unsupported || (new \SqlSemantics\Platform\MySql\Rules\Call\Window\Constraints())->problem($over) !== null)) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\DeferredWindowAggregate($aggregate, $over);
+        }
+        if ($aggregate instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate && (new \SqlSemantics\Platform\MySql\Rules\Call\Aggregation\AggregateNesting())->problem([$aggregate->key, $aggregate->value], $over !== null) !== null) {
+            return new \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Call\Aggregate\DeferredJsonObjectAggregate($aggregate->key, $aggregate->value, $aggregate->keyAll, $aggregate->valueAll, $over);
+        }
+        return match (true) {
+            $aggregate instanceof Aggregate => new Aggregate($aggregate->function, $aggregate->arguments, $aggregate->distinct, $aggregate->all, $over, alias: $aggregate->alias),
+            $aggregate instanceof GroupConcat => new GroupConcat($aggregate->arguments, $aggregate->distinct, $aggregate->order, $aggregate->separator, $over),
+            default => new JsonObjectAggregate($aggregate->key, $aggregate->value, $aggregate->keyAll, $aggregate->valueAll, $over),
         };
     }
 }

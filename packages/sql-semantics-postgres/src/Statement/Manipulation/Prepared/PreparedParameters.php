@@ -13,7 +13,6 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -31,11 +30,12 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Reading the declared parameter types
  *     $prepare = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('PREPARE p (integer, text) AS SELECT $2', []);
- *     [count($prepare->statement->parameters->types), $prepare->facts->query($prepare->statement->statement)->projection[0]->type->descriptor->name()] // => [2, 'text']
+ *     [count($prepare->parameters->types), $prepare->queryInformation()->projection[0]->type->descriptor->name()] // => [2, 'text']
  */
-final class PreparedParameters implements ParameterDeclarations
+final class PreparedParameters implements ParameterDeclarations, \SqlSemantics\Statement\TableUse
 {
-    use Snapshot;
+    use \SqlSemantics\Statement\Semantics\RelationSemantics;
+    use \SqlSemantics\Statement\Semantics\Occurrence;
 
     /**
      * @var non-empty-list<TypeName> The declared parameter types in order
@@ -45,8 +45,11 @@ final class PreparedParameters implements ParameterDeclarations
     /**
      * @param list<TypeName> $types The declared parameter types in order; at least one
      */
-    public function __construct(array $types)
+    public function __construct(array $types, ?RelationFact $relationInformation = null, public readonly ?\SqlSemantics\Statement\Source\Span $inputSource = null)
     {
+        if ($relationInformation !== null) {
+            $this->initializeRelationInformation($relationInformation);
+        }
         $this->types = Check::listOf($types, TypeName::class, 'The parameter types of PREPARE are type names, at least one.', 1);
     }
 
