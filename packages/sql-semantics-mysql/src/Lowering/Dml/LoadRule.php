@@ -90,6 +90,7 @@ final class LoadRule
      *
      * @throws ImplementationGap When a production has no rule
      * @throws AnalysisException When the word before the number of files is not COUNT
+     * @throws \SqlSemantics\Construction\RejectedInput When the input, format and algorithm options conflict (ER_WRONG_USAGE), which MySQL 8.2 and later refuse once the statement is read, before the table is opened (`LOAD DATA INFILE 'a' COUNT 2 INTO TABLE t` -> 1221 although `t` is missing; verified on 8.4.7), while 8.0 and 8.1 ignore the bulk annotations
      */
     public function statement(Form $form): LoadTable
     {
@@ -123,7 +124,15 @@ final class LoadRule
             'columns' => $this->columns($parts['opt_field_or_var_spec']),
             'bulk' => $this->bulk($parts),
         ];
-        return new LoadTable(...$operands, assignments: (new LoadAssignments($this->lowering))->read($parts['opt_load_data_set_spec']));
+        $assignments = (new LoadAssignments($this->lowering))->read($parts['opt_load_data_set_spec']);
+        $grammar = $this->lowering->profile->grammar;
+        $conflict = in_array($grammar, [\SqlSemantics\Contract\GrammarRelease::MySql8044, \SqlSemantics\Contract\GrammarRelease::MySql810], true) ? null
+            : (new \SqlSemantics\Platform\MySql\Rules\Dml\LoadOptions())->conflict($operands['format'], $operands['input'], $operands['duplicates'], $operands['compression'], ($operands['columns'] ?? []) !== [], $assignments !== [], $operands['bulk'], $operands['lines']);
+        if ($conflict !== null) {
+            throw new \SqlSemantics\Construction\RejectedInput($conflict, (new \SqlSemantics\Construction\SourceRanges())->span($form->node)[1] ?? 0, false);
+        }
+
+        return new LoadTable(...$operands, assignments: $assignments);
     }
 
     /**

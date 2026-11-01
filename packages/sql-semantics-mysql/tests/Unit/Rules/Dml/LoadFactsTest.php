@@ -92,12 +92,17 @@ final class LoadFactsTest extends TestCase
         self::assertSame($expected, (new LoadFacts())->algorithm($load)?->rule);
     }
 
-    public function testDerivePublishesTheAlgorithmConflictBeforeTargetResolution(): void
+    public function testDeriveLeavesTheAlgorithmConflictToTheReadingRefusal(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK");
-
-        self::assertInstanceOf(LoadConflict::class, $operation->diagnostics()[0]);
-        self::assertSame(LoadRule::XmlBulk, $operation->diagnostics()[0]->rule);
+        try {
+            (new Semantics(Dialect::MySql))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+            self::fail('MySQL 8.2 and later refuse the options once the statement is read.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(LoadConflict::class, $failure->problem);
+            self::assertSame(LoadRule::XmlBulk, $failure->problem->rule);
+        }
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.1.0'))->analyze("LOAD XML INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        self::assertSame([], $operation->diagnostics());
     }
 
     public function testDeriveKeepsBulkAnnotationsInTheEarlierLanguageWithoutAConflict(): void

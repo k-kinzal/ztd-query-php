@@ -27,25 +27,29 @@ final class LoadRuleTest extends TestCase
     }
 
     /**
-     * @param string $release The grammar that reads the original input
-     * @param string $sql The retained input, including formerly accepted contradictions
+     * @param string $release The grammar that reads the input
+     * @param string $sql The input whose options conflict
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('providerRefusedOptions')]
-    public function testStatementRetainsTheCompleteInputAndItsOptionCondition(string $release, string $sql): void
+    public function testStatementRefusesConflictingOptionsOnceTheStatementIsRead(string $release, string $sql): void
     {
-        $load = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable::class, $load);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict::class, $load->diagnostics()[0]);
-        self::assertNotSame('', $load->toString());
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The options conflict.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Problem\LoadConflict::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 1 ALGORITHM = BULK", (new Semantics(Dialect::MySql))->analyze("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL=1 ALGORITHM=BULK")->toString());
     }
 
     public function testInputNormalizesTheCountKeywordWithoutRecordingAnOperand(): void
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' COUNT 2 INTO TABLE t")->toString());
-        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' `COUNT` 2 INTO TABLE t")->toString());
-        self::assertSame("LOAD DATA URL 'f' count 2 INTO TABLE t", $semantics->analyze("LOAD DATA URL 'f' count 2 INTO TABLE t")->toString());
+        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t ALGORITHM = BULK", $semantics->analyze("LOAD DATA URL 'f' COUNT 2 INTO TABLE t ALGORITHM = BULK")->toString());
+        self::assertSame("LOAD DATA URL 'f' COUNT 2 INTO TABLE t ALGORITHM = BULK", $semantics->analyze("LOAD DATA URL 'f' `COUNT` 2 INTO TABLE t ALGORITHM = BULK")->toString());
+        self::assertSame("LOAD DATA URL 'f' count 2 INTO TABLE t ALGORITHM = BULK", $semantics->analyze("LOAD DATA URL 'f' count 2 INTO TABLE t ALGORITHM = BULK")->toString());
     }
 
     public function testStatementLowersEveryGeneration(): void
@@ -74,17 +78,17 @@ final class LoadRuleTest extends TestCase
 
     public function testSourceLowersTheSourceKinds(): void
     {
-        self::assertSame('LOAD DATA URL \'u\' INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze('load data url \'u\' into table t')->toString());
+        self::assertSame('LOAD DATA URL \'u\' INTO TABLE t ALGORITHM = BULK', (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze('load data url \'u\' into table t algorithm = bulk')->toString());
     }
 
     public function testFlagLowersTheOptionalWords(): void
     {
-        self::assertSame('LOAD DATA FROM LOCAL INFILE \'f\' INTO TABLE t ALGORITHM = BULK', (new Semantics(Dialect::MySql))->analyze('load data from local infile \'f\' into table t algorithm = bulk')->toString());
+        self::assertSame('LOAD DATA FROM INFILE \'f\' INTO TABLE t ALGORITHM = BULK', (new Semantics(Dialect::MySql))->analyze('load data from infile \'f\' into table t algorithm = bulk')->toString());
     }
 
     public function testInputLowersTheSource(): void
     {
-        self::assertSame('LOAD DATA LOCAL URL \'u\' count 3 INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze('load data local url \'u\' count 3 into table t')->toString());
+        self::assertSame('LOAD DATA URL \'u\' count 3 INTO TABLE t ALGORITHM = BULK', (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze('load data url \'u\' count 3 into table t algorithm = bulk')->toString());
     }
 
     public function testTaggedLowersTheRowTag(): void

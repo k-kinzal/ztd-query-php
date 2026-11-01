@@ -32,6 +32,9 @@ use SqlSemantics\Statement\Scalar;
  * @example Refusing membership in a fixed zero-column output
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery([new \SqlSemantics\Platform\MySql\Statement\Query\ValueRow([])]);
  *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a LIMIT on the subquery, which no release executes
+ *     $query = new \SqlSemantics\Platform\MySql\Statement\Query\Select([], [new \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'))], limit: new \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')));
+ *     new \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1'), $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class InQuery implements Scalar
 {
@@ -52,6 +55,7 @@ final class InQuery implements Scalar
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\RowShapes())->query($operand, $query) === null, 'Compared operand and subquery have compatible row shapes.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'An ordinary subquery predicate has coherent fixed read columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\QuantifiedSubqueries())->problem($query) === null, 'The subquery of IN, ANY, ALL or SOME has no LIMIT of its own: no release executes it.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -60,7 +64,6 @@ final class InQuery implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        (new SubqueryRows())->checkLimit($this->query, $derivation);
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
 

@@ -33,9 +33,8 @@ use SqlSemantics\Statement\Node;
  * @example Reading a LOAD DATA
  *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA INFILE 'f' REPLACE INTO TABLE t FIELDS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2");
  *     [$load->duplicates, count($load->columns), $load->toString()] // => [\SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling::Replace, 2, "LOAD DATA INFILE 'f' REPLACE INTO TABLE t COLUMNS TERMINATED BY ',' IGNORE 1 LINES (a, @b) SET c = @b * 2"]
- * @example Retaining an incompatible bulk option combination for execution
- *     $load = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA S3 'f' INTO TABLE t (a) ALGORITHM=BULK");
- *     $load->diagnostics()[0]->message() // => 'Incorrect usage of LOAD DATA with BULK Algorithm and column list specification'
+ * @example Refusing an incompatible bulk option combination while reading, as MySQL 8.2 and later do
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("LOAD DATA S3 'f' INTO TABLE t (a) ALGORITHM=BULK") // throws \SqlSemantics\Construction\RejectedInput
  * @example Refusing a legacy dotted column combined with an S3 source
  *     $column = new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), \SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords::Written);
  *     new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable(\SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadFormat::Xml, null, new \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadInput(true, \SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource::S3, new \SqlSemantics\Platform\MySql\Statement\Literal\Text('1')), null, new \SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), columns: [$column]) // throws \SqlSemantics\Diagnostic\InvalidConstruction

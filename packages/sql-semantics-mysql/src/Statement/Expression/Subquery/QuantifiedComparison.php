@@ -64,6 +64,7 @@ final class QuantifiedComparison implements Scalar
         Check::input($rows || ($operand instanceof Scalar && ((new \SqlSemantics\Platform\MySql\Rules\Expression\Shape\QueryWidth())->of($query) ?? 1) === 1), 'Only = ANY, = SOME and <> ALL accept row operands.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) === null, 'An ordinary subquery predicate has coherent fixed read columns.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\QuantifiedSubqueries())->problem($query) === null, 'The subquery of IN, ANY, ALL or SOME has no LIMIT of its own: no release executes it.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -72,7 +73,6 @@ final class QuantifiedComparison implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        (new SubqueryRows())->checkLimit($this->query, $derivation);
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
         $rows = $this->quantifier->comparesRows($this->operator);

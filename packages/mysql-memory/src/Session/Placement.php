@@ -50,7 +50,7 @@ final class Placement
      */
     public function check(Node $statement, GrammarRelease $release = GrammarRelease::MySql847, ?Closure $after = null, ?array $reached = null): void
     {
-        $first = $this->first($this->carrier($statement, $release));
+        $first = $this->first($this->carrier($statement));
         $program = \MySqlMemory\Command\Dispatcher::program($statement);
         $boundaries = $this->boundaries($statement, $release);
         $open = [];
@@ -122,17 +122,13 @@ final class Placement
     }
 
     /**
-     * Answers the statement whose first query block may carry the options of a statement: in MySQL 5.6 and 5.7 the query of a view and the statement EXPLAIN explains (verified on live 5.6.51 and 5.7.44 servers), else the statement.
+     * Answers the statement whose first query block may carry the options of a statement: the query of a view and the statement EXPLAIN explains, in every release (verified on live 5.6.51, 5.7.44 and 8.4.7 servers: `CREATE OR REPLACE VIEW v AS SELECT SQL_BUFFER_RESULT 1`, `ALTER VIEW v AS SELECT HIGH_PRIORITY 2` and `EXPLAIN ANALYZE INSERT INTO t SELECT SQL_BUFFER_RESULT 1` are accepted), else the statement itself.
      */
-    public function carrier(Node $statement, GrammarRelease $release): Node
+    public function carrier(Node $statement): Node
     {
-        if ($release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744) {
-            return $statement;
-        }
-
         return match (true) {
             $statement instanceof CreateView || $statement instanceof AlterView => $statement->definition->query,
-            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain => $this->carrier($statement->statement, $release),
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain => $this->carrier($statement->statement),
             default => $statement,
         };
     }

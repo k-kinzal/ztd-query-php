@@ -163,7 +163,7 @@ final class PlacementTest extends TestCase
         $statement = $session->analyze('EXPLAIN SELECT SQL_CACHE 1');
 
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $statement);
-        self::assertSame($statement->statement, (new Placement())->carrier($statement, GrammarRelease::MySql5651));
+        self::assertSame($statement->statement, (new Placement())->carrier($statement));
     }
 
     public function testCheckEndsEachBlockAfterTheBlocksWrittenInIt(): void

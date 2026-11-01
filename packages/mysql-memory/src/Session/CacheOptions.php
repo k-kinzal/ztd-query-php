@@ -365,7 +365,7 @@ final class CacheOptions
             return null;
         }
         $placement = new Placement();
-        $first = $placement->first($placement->carrier($statement, GrammarRelease::MySql5651));
+        $first = $placement->first($placement->carrier($statement));
         $boundaries = $placement->boundaries($statement, GrammarRelease::MySql5651);
         foreach ((new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Query\Select::class) as $select) {
             if (in_array(spl_object_id($select), $boundaries, true)) {

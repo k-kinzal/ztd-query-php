@@ -228,17 +228,6 @@ final class SubqueryRows
     }
 
     /**
-     * Reports LIMIT on the subquery's query blocks, but not inside derived tables or CTE definitions.
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/subquery-restrictions.html.
-     */
-    public function checkLimit(Query $query, Derivation $derivation): void
-    {
-        if ($this->limited($query)) {
-            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('LIMIT & IN/ALL/ANY/SOME subquery'));
-        }
-    }
-
-    /**
      * Tells whether a query or a branch of its set operation carries a LIMIT.
      */
     public function limited(Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $query): bool

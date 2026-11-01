@@ -272,20 +272,13 @@ final class SubqueryRowsTest extends TestCase
         self::assertSame($limited, (new SubqueryRows())->limited($operation->query));
     }
 
-    #[DataProvider('providerLimits')]
-    public function testCheckLimitReportsTheUnsupportedMembershipLimit(string $sql, bool $limited): void
+    public function testLimitedRecognizesALegacyLimitAfterALockingClause(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 IN (' . $sql . ')');
-
-        self::assertCount($limited ? 1 : 0, $operation->diagnostics());
-        self::assertSame($limited ? "This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'." : null, ($operation->diagnostics()[0] ?? null)?->message());
-    }
-
-    public function testCheckLimitRecognizesALegacyLimitAfterALockingClause(): void
-    {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 IN (SELECT 1 FOR UPDATE LIMIT 1)');
-
-        self::assertCount(1, $operation->diagnostics());
-        self::assertSame("This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'.", $operation->diagnostics()[0]->message());
+        try {
+            (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 IN (SELECT 1 FOR UPDATE LIMIT 1)');
+            self::fail('No release executes a LIMIT in the subquery of IN.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet::class, $failure->problem);
+        }
     }
 }

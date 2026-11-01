@@ -108,4 +108,16 @@ final class OperandRuleTest extends TestCase
         $this->expectException(RejectedInput::class);
         (new OperandRule())->row($value, $source);
     }
+
+    public function testLimitedRefusesALimitInTheSubqueryOfInOnceRead(): void
+    {
+        try {
+            (new Semantics(Dialect::MySql))->analyze('SELECT 1 WHERE 1 IN (SELECT 1 FROM t LIMIT 1)');
+            self::fail('No release executes a LIMIT in the subquery of IN.');
+        } catch (RejectedInput $failure) {
+            self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet::class, $failure->problem);
+            self::assertFalse($failure->aborts);
+        }
+        self::assertSame('SELECT 1 WHERE 1 IN (SELECT 1 FROM t ORDER BY 1)', (new Semantics(Dialect::MySql))->analyze('SELECT 1 WHERE 1 IN (SELECT 1 FROM t ORDER BY 1)')->toString());
+    }
 }

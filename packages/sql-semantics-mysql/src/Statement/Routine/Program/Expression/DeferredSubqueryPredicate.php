@@ -54,6 +54,7 @@ final class DeferredSubqueryPredicate implements DeferredOperand
         Check::input((new Precedence())->fits($operand, $operator === null ? Precedence::PREDICATE : Precedence::BOOL_PRI, $operator === null ? Precedence::BIT_EXPR : Precedence::BOOL_PRI), 'The compared operand preserves its precedence.');
         Check::input($operand instanceof DeferredOperand || $this->shape() !== null || (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\ReadColumns())->problem($query) !== null, 'A deferred predicate has an invocation-time operand constraint.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\SubqueryOptions())->check($query);
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\Query\Structure\QuantifiedSubqueries())->problem($query) === null, 'The subquery of IN, ANY, ALL or SOME has no LIMIT of its own: no release executes it.');
         (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\Generations())->check($this);
     }
 
@@ -62,7 +63,6 @@ final class DeferredSubqueryPredicate implements DeferredOperand
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        (new \SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows())->checkLimit($this->query, $derivation);
         $operand = $derivation->scalar($this->operand, $environment);
         $derivation->query($this->query, $environment);
         return new ScalarFact(new Invalid($this->problem()), $operand->nullability);

@@ -69,7 +69,7 @@ final class QuantifiedComparisonGenerator implements ErisGenerator
                     new QuantifierGenerator($release),
                     new ScalarGenerator($release, $depth - 1),
                     Generators::oneOf(Generators::constant(null), new RowOperandGenerator($release, $depth - 1)),
-                    Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null && ((new ReleaseDomain())->subquery($query) & (new ReleaseDomain())->bit($release)) !== 0, new QueryGenerator($release, $depth - 1))
+                    Generators::suchThat(static fn (Query $query): bool => (new SubqueryOptions())->problem($query) === null && (new \SqlSemantics\Platform\MySql\Rules\Query\Structure\QuantifiedSubqueries())->problem($query) === null && ((new ReleaseDomain())->subquery($query) & (new ReleaseDomain())->bit($release)) !== 0, new QueryGenerator($release, $depth - 1), 1000)
                 )
             )
         );

@@ -27,7 +27,6 @@ final class PreparationTest extends TestCase
         yield 'assignment name before shape' => ['d', "LOAD DATA INFILE 'f' INTO TABLE t SET a=ROW(missing,2)", 1054];
         yield 'complete row constraint' => ['d', "LOAD DATA INFILE 'f' INTO TABLE t SET a=ROW(a,2)", 1241];
         yield 'fixed input variable' => ['d', "LOAD DATA INFILE 'f' INTO TABLE t COLUMNS TERMINATED BY '' (@v)", 1409];
-        yield 'algorithm before row constraint' => ['d', "LOAD XML INFILE 'f' INTO TABLE t COMPRESSION='x' SET a=ROW(a,2)", 1221];
     }
 
     #[DataProvider('providerConditions')]
@@ -42,6 +41,16 @@ final class PreparationTest extends TestCase
         $this->expectException(\MySqlMemory\Error\SqlError::class);
         $this->expectExceptionCode($code);
         (new Preparation())->check($load, $session);
+    }
+
+    public function testCheckNeverSeesAnAlgorithmConflictTheReaderRefuses(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT)');
+        $error = $session->run("LOAD XML INFILE 'f' INTO TABLE t COMPRESSION='x' SET a=ROW(a,2)")[0];
+
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $error);
+        self::assertSame(1221, $error->getCode());
     }
 
     public function testPrepareResolvesTheAssignmentBeforeReadingAFile(): void
