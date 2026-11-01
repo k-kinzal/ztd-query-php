@@ -39,8 +39,9 @@ use SqlSemantics\Statement\Node;
  * @example Refusing a legacy default collation in a transactional table definition
  *     new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), options: [new \SqlSemantics\Platform\MySql\Statement\Table\Option\StartTransaction(), new \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption(new \SqlSemantics\Platform\MySql\Statement\Name\CollationName(null))]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a legacy empty partition list with a modern table query
- *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::List, []);
- *     $partition = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause($method, null, null, []);
+ *     $method = new \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod(\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind::Range, []);
+ *     $definition = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition(new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\MySql\Statement\Partition\Bound\LessThan(null), [], []);
+ *     $partition = new \SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause($method, null, null, [$definition]);
  *     $query = new \SqlSemantics\Platform\MySql\Statement\Table\TableQuery(new \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('source'))));
  *     new \SqlSemantics\Platform\MySql\Statement\Table\CreateTable(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('target')), partitioning: $partition, query: $query) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing engine attributes combined with ALTER IGNORE

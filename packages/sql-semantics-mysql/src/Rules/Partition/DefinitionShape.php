@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionKind;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 use SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue;
+use SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions;
 
 /**
  * Checks definition-local bounds and the shared subpartition count.
@@ -59,5 +60,34 @@ final class DefinitionShape
             }
         }
         return $expected !== null && count($definition->subpartitions) !== $expected ? DefinitionIssue::SubpartitionCount : null;
+    }
+
+    /**
+     * Answers the first condition that keeps a partitioning from being executable.
+     *
+     * Every definition is checked against the method before the written count:
+     * RANGE needs VALUES LESS THAN and LIST needs VALUES IN for each partition,
+     * no other method takes values, RANGE and LIST need at least one partition,
+     * and a written PARTITIONS count equals the number of definitions.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-range.html,
+     * https://dev.mysql.com/doc/refman/8.4/en/partitioning-list.html,
+     * https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
+     *
+     * @param list<PartitionDefinition> $definitions The definitions in order
+     */
+    public function clause(PartitionMethod $method, ?\SqlSemantics\Platform\MySql\Statement\Literal\Numeral $partitions, array $definitions): MissingPartitions|DefinitionIssue|null
+    {
+        foreach ($definitions as $definition) {
+            $problem = $this->problem($definition, $method, null);
+            if ($problem !== null) {
+                return $problem;
+            }
+        }
+        $kind = $method instanceof ExpressionMethod || $method instanceof ColumnsMethod || $method instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod ? $method->kind : null;
+        if ($definitions === []) {
+            return $kind === null ? null : new MissingPartitions($kind);
+        }
+        $magnitudes = new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes();
+        return $partitions !== null && $magnitudes->integral($partitions) && $magnitudes->option32($partitions) !== count($definitions) ? DefinitionIssue::PartitionCount : null;
     }
 }

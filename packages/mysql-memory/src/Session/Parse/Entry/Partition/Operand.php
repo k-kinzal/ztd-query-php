@@ -49,7 +49,7 @@ final class Operand
                 $notices[] = [$failure->end, $notice];
             }
         }
-        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong || $failure->problem instanceof InvalidPartitionExpression) {
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\NameTooLong || $failure->problem instanceof InvalidPartitionExpression) {
             return (new \MySqlMemory\Session\Parse\EnginePrefix())->reached($notices, (new \MySqlMemory\Session\Parse\EnginePrefix())->completed($statement, $failure->end, $session), $error, $session->modes()->has('NO_ENGINE_SUBSTITUTION'));
         }
         return [$notices, $error];

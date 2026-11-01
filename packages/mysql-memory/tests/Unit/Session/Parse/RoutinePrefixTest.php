@@ -33,4 +33,12 @@ final class RoutinePrefixTest extends TestCase
         self::assertNull((new RoutinePrefix())->database("CREATE PROCEDURE d.p() BEGIN CALL q(); SIGNAL SQLSTATE '00000'; END", 1000, $session));
         self::assertSame(1046, (new RoutinePrefix())->database("CREATE PROCEDURE p() SELECT 'unclosed", 1000, $session)?->getCode());
     }
+
+    public function testQualifiedFindsTheWrittenDatabaseOfTheProgram(): void
+    {
+        $parser = (new Instance())->connect()->semantics()->parser();
+        self::assertTrue((new RoutinePrefix())->qualified($parser->parse('CREATE PROCEDURE d.p() CREATE TABLE t (a INT)')));
+        self::assertFalse((new RoutinePrefix())->qualified($parser->parse('CREATE PROCEDURE p() CREATE TABLE t (a INT)')));
+        self::assertFalse((new RoutinePrefix())->qualified($parser->parse('CREATE TABLE t (a INT)')));
+    }
 }

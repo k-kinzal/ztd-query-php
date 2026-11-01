@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\TableChange\Partition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -56,12 +57,12 @@ final class PartitionRuleTest extends TestCase
 
     public function testMethodLowersEveryMethod(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY LIST COLUMNS (a)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t PARTITION BY LIST COLUMNS (a)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY LIST COLUMNS (a) (PARTITION p VALUES IN (1))', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t PARTITION BY LIST COLUMNS (a) (PARTITION p VALUES IN (1))')->toString());
     }
 
     public function testSubpartitioningLowersHash(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (b)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (b)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (b) (PARTITION p VALUES LESS THAN (1))', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (b) (PARTITION p VALUES LESS THAN (1))')->toString());
     }
 
     public function testLinearLowersLinear(): void
@@ -97,17 +98,17 @@ final class PartitionRuleTest extends TestCase
 
     public function testExpressionLowersTheFunction(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a * 2)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t PARTITION BY RANGE (a * 2)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a * 2) (PARTITION p VALUES LESS THAN (1))', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('ALTER TABLE t PARTITION BY RANGE (a * 2) (PARTITION p VALUES LESS THAN (1))')->toString());
     }
 
     public function testRememberedLowersThe56Function(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t PARTITION BY RANGE (a)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a) (PARTITION p VALUES LESS THAN (1))', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t PARTITION BY RANGE (a) (PARTITION p VALUES LESS THAN (1))')->toString());
     }
 
     public function testColumnsLowersAnEmptyList(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY RANGE COLUMNS ()', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS ()')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY RANGE COLUMNS () (PARTITION p VALUES LESS THAN (1))', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS () (PARTITION p VALUES LESS THAN (1))')->toString());
     }
 
     public function testColumnLowersOneName(): void
@@ -122,4 +123,34 @@ final class PartitionRuleTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression::class, $statement->diagnostics()[0]);
     }
 
+
+    /**
+     * @return iterable<string, array{string, string, string, int, bool}>
+     */
+    public static function providerAgreements(): iterable
+    {
+        $count = 'CREATE TABLE t (a INT) PARTITION BY HASH (a) PARTITIONS 3 (PARTITION x, PARTITION y)';
+        $missing = 'ALTER TABLE t PARTITION BY LIST (a)';
+        yield 'modern count mismatch at the opening parenthesis' => ['mysql-8.4.7', $count, 'Wrong number of partitions defined, mismatch with previous setting', (int) strpos($count, '(PARTITION'), false];
+        yield 'legacy count mismatch at the closing parenthesis' => ['mysql-5.7.44', $count, 'Wrong number of partitions defined, mismatch with previous setting', strlen($count) - 1, true];
+        yield 'modern missing definitions once read' => ['mysql-8.4.7', $missing, 'For LIST partitions each partition must be defined.', strlen($missing), false];
+        yield 'legacy missing definitions while reading' => ['mysql-5.6.51', $missing, 'For LIST partitions each partition must be defined.', strlen($missing), true];
+    }
+
+    #[DataProvider('providerAgreements')]
+    public function testAgreeRefusesDefinitionsTheMethodOrCountExcludes(string $release, string $sql, string $message, int $end, bool $aborts): void
+    {
+        try {
+            (new Semantics(Dialect::MySql, $release))->analyze($sql);
+            self::fail('The partitioning must be refused.');
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            $problem = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail ? $failure->problem->problem : $failure->problem;
+            self::assertSame([$message, $end, $aborts], [$problem->message(), $failure->end, $failure->aborts]);
+        }
+    }
+
+    public function testAgreeAcceptsACountEqualToTheDefinitions(): void
+    {
+        self::assertSame('CREATE TABLE t (a INT) PARTITION BY KEY (a) PARTITIONS 2 (PARTITION x, PARTITION y)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT) PARTITION BY KEY (a) PARTITIONS 2 (PARTITION x, PARTITION y)')->toString());
+    }
 }

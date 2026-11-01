@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod;
 
 /**
- * Preserves legacy bound conditions before an unfinished partition list.
+ * Preserves legacy bound conditions and omitted RANGE or LIST lists before later malformed input.
  *
  * Only transient input reading uses this state. Complete statements retain
  * their method and definitions and derive the same conditions themselves.
@@ -39,6 +39,8 @@ final class DefinitionPrefix
                 $definition = (new DefinitionRule($lowering))->definition($node);
                 $problem = (new DefinitionShape())->problem($definition, $this->method, null);
                 return $problem === null ? null : new ParseFailure($problem, true);
+            } elseif ($node->name === 'part_defs' && $node->tokens() === [] && ($this->method instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\ExpressionMethod || $this->method instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\ColumnsMethod || $this->method instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Method\DeferredMethod) && $this->method->kind !== null) {
+                return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions($this->method->kind), true);
             } elseif ($node->name === 'partition') {
                 $this->method = null;
             }

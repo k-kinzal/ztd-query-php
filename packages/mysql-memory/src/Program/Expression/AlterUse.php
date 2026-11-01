@@ -56,9 +56,6 @@ final class AlterUse
             if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression) {
                 throw new SqlError(\MySqlMemory\Error\Family\StatementError::ParseError, $warning->problem->message(), new \SqlSemantics\Construction\RejectedInput($warning->problem, 0));
             }
-            if ($warning instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure && $warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions) {
-                throw (new \MySqlMemory\Session\Problem\Errors())->error($warning->problem, $session);
-            }
         }
         return $database;
     }

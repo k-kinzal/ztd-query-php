@@ -34,6 +34,16 @@ final class PartitionInputTest extends TestCase
         self::assertSame("Wrong number of subpartitions defined, mismatch with previous setting near '\n/*gap*/ )' at line 1", $error->getMessage());
     }
 
+    public function testDefinitionQuotesAPartitionCountMismatchFromItsListBoundary(): void
+    {
+        $sql = 'CREATE TABLE d.t (a INT) PARTITION BY HASH (a) PARTITIONS 3 (PARTITION x, PARTITION y)';
+        $modern = (new PartitionInput())->definition(new RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::PartitionCount, (int) strpos($sql, '(PARTITION'), false), $sql, (new Instance())->connect());
+        $legacy = (new PartitionInput())->definition(new RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::PartitionCount, strlen($sql) - 1), $sql, (new Instance('5.7.44'))->connect());
+
+        self::assertSame("Wrong number of partitions defined, mismatch with previous setting near '(PARTITION x, PARTITION y)' at line 1", $modern->getMessage());
+        self::assertSame([1064, "Wrong number of partitions defined, mismatch with previous setting near ')' at line 1"], [$legacy->getCode(), $legacy->getMessage()]);
+    }
+
     public function testDefinitionReadsTheFollowingCommaOnLegacyReleases(): void
     {
         $session = (new Instance('5.7.44'))->connect();

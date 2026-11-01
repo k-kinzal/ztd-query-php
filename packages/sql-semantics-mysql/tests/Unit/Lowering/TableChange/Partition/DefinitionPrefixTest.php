@@ -30,6 +30,25 @@ final class DefinitionPrefixTest extends TestCase
         self::assertSame($issue, $notices[0][1]->problem);
     }
 
+    #[DataProvider('providerLegacyReleases')]
+    public function testCompletedRefusesAnOmittedRangeListBeforeLaterInput(GrammarRelease $release): void
+    {
+        $sql = 'ALTER TABLE t PARTITION BY RANGE(i) PARTITIONS 2 FROM';
+        $notices = (new SyntaxWarnings())->completed(new MySqlParser($release->value), $sql, strlen($sql), new LanguageProfile($release));
+        self::assertCount(1, $notices);
+        self::assertInstanceOf(ParseFailure::class, $notices[0][1]);
+        self::assertSame('For RANGE partitions each partition must be defined.', $notices[0][1]->message());
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => [GrammarRelease::MySql5651];
+        yield '5.7' => [GrammarRelease::MySql5744];
+    }
+
     public function testCompletedLeavesModernConditionsToContextualization(): void
     {
         $sql = 'ALTER TABLE t PARTITION BY RANGE(i) (PARTITION p, PARTITION';

@@ -163,12 +163,35 @@ final class PartitionRule
             throw new \SqlSemantics\Construction\RejectedInput(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ZeroPartitions, (new \SqlSemantics\Construction\SourceRanges())->span($form->node($positions[1]))[1] ?? 0);
         }
         $subpartitioning = $this->subpartitioning($form->node($positions[2]));
-        return new PartitionClause(
-            $method,
-            $count,
-            $subpartitioning,
-            (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count)),
-        );
+        $definitions = (new DefinitionRule($this->lowering))->definitions($form->node($positions[3]), $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count), method: $method);
+        $this->agree($method, $count, $definitions, $clause, $form->node($positions[3]));
+        return new PartitionClause($method, $count, $subpartitioning, $definitions);
+    }
+
+    /**
+     * Refuses a partitioning whose definitions are missing or disagree with the written count.
+     *
+     * Missing RANGE or LIST definitions are refused while reading on 5.6 and
+     * 5.7 and once the statement is read on later releases. A count mismatch is refused while reading on 5.6 and 5.7, at the closing
+     * parenthesis, and once the statement is read on later releases, quoting
+     * the list from its opening parenthesis (verified on live 5.6.51, 5.7.44 and
+     * 8.4.7 servers).
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition> $definitions The definitions in order
+     * @throws \SqlSemantics\Construction\RejectedInput When the definitions are missing or their number differs from the count
+     */
+    public function agree(PartitionMethod $method, ?Numeral $count, array $definitions, Node $clause, Node $list): void
+    {
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->clause($method, $count, $definitions);
+        $legacy = in_array($this->lowering->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions) {
+            throw new \SqlSemantics\Construction\RejectedInput($problem, (new \SqlSemantics\Construction\SourceRanges())->span($clause)[1] ?? 0, $legacy);
+        }
+        if ($problem === null) {
+            return;
+        }
+        $tokens = $list->tokens();
+        throw new \SqlSemantics\Construction\RejectedInput($problem, $legacy ? $tokens[count($tokens) - 1]->offset : $tokens[0]->offset, $legacy);
     }
 
     /**

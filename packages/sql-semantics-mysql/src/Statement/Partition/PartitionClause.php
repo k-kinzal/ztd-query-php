@@ -20,7 +20,11 @@ use SqlSemantics\Resolution\Environment;
  * expression gets the facts of its column references, a column name the
  * completely known table does not have is the diagnostic UnknownColumn. The
  * partition values are constants and see no column. An empty definition
- * list means none is written. Terminates: one pass over the definitions.
+ * list means none is written. RANGE and LIST define every partition with
+ * their own kind of values, no other method takes values, and a written
+ * PARTITIONS count equals the number of definitions; the server refuses
+ * anything else before it opens a table. Terminates: one pass over the
+ * definitions.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-table.html#create-table-partitioning.
  * Status: Implemented.
@@ -55,6 +59,8 @@ final class PartitionClause implements Partitioning
         $this->definitions = Check::listOf($definitions, PartitionDefinition::class, 'Partition definitions are a list of partition definitions.');
         Check::input($partitions === null || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integral($partitions) || !(new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->atMost($partitions, '0'), 'The explicit partition count is positive.');
         (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->check($definitions, $subpartitioning?->count === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->option32($subpartitioning->count));
+        $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->clause($method, $partitions, $this->definitions);
+        Check::input($problem === null, $problem?->message() ?? 'The definitions agree with the method and the count.');
     }
 
     /**
@@ -69,18 +75,6 @@ final class PartitionClause implements Partitioning
         $this->subpartitioning?->deriveSubpartitioning($derivation, $scope);
         foreach ($this->definitions as $definition) {
             $definition->derivePartition($derivation);
-            $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->problem($definition, $this->method, null);
-            if ($problem !== null) {
-                $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-                $derivation->report($problem);
-                $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization), $definition);
-            }
-        }
-        $kind = $this->method instanceof Method\ExpressionMethod || $this->method instanceof Method\ColumnsMethod || $this->method instanceof Method\DeferredMethod ? $this->method->kind : null;
-        if ($this->definitions === [] && $kind !== null) {
-            $problem = new Problem\MissingPartitions($kind);
-            $derivation->report($problem);
-            $derivation->warn(new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($problem, true, \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization));
         }
     }
 

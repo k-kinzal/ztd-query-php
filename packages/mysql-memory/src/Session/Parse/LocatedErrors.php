@@ -47,10 +47,6 @@ final class LocatedErrors
         }
         (new \MySqlMemory\Command\Definition\StorageOptions())->beforePartition($warning, $operation, $session);
         (new \MySqlMemory\Session\Access\TableCreation())->database($operation, $session, $warning->phase === \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
-        if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
-            $definition = $operation->statementInformation()->warningSubject($warning);
-            return (new Entry\PartitionInput())->bound($warning->problem, $definition instanceof \SqlSemantics\Platform\MySql\Statement\Partition\PartitionDefinition ? $definition->boundarySource : null, $session);
-        }
         if ($warning->problem instanceof \SqlSemantics\Platform\MySql\Statement\Account\Problem\RejectedPasswordHash) {
             $source = $operation->statementInformation()->warningSubject($warning)?->source();
             return $source === null ? StatementError::ParseError->error('', 1) : (new \MySqlMemory\Session\Syntax($session->resolution()->client))->near($source->offset, $session->text, $session->following, new RuntimeException($warning->problem->message()), true, $session->semantics()->parser());

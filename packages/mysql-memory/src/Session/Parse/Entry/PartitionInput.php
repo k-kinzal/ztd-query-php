@@ -74,6 +74,8 @@ final class PartitionInput
     }
     /**
      * Formats an intrinsic definition refusal after its completed table-name prefix.
+     * A partition count mismatch quotes the list from its opening parenthesis on
+     * modern releases and from its closing parenthesis on legacy releases.
      * An omitted subpartition list is refused at the preceding definition's end,
      * preserving subsequent whitespace and comments in the quoted suffix on modern
      * releases. Legacy releases read the following delimiter before refusal.
@@ -95,7 +97,7 @@ final class PartitionInput
         if ($problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::RangeValues || $problem === \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::ListValues) {
             return new SqlError(\MySqlMemory\Error\Family\PartitionError::WrongValuesKind, $problem->message(), $failure);
         }
-        if ($problem !== \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount && $session->settings()->legacy()) {
+        if (!in_array($problem, [\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::SubpartitionCount, \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::PartitionCount], true) && $session->settings()->legacy()) {
             return new SqlError(\MySqlMemory\Error\Family\PartitionError::MissingValues, $problem->message(), $failure);
         }
         $offset = $failure->end;

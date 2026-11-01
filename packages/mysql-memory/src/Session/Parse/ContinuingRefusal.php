@@ -71,7 +71,7 @@ final class ContinuingRefusal
         if ($prefix !== null) {
             return $prefix;
         }
-        $error = (new Errors())->error($failure->problem, $session);
+        $error = $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue ? (new Entry\PartitionInput())->definition($failure, $statement, $session) : (new Errors())->error($failure->problem, $session);
         $tree = $parser->parse($statement);
         $implicit = $session->variables->database === '' && (new Entry\ImplicitTables())->before($tree, $failure->end, $session->settings()->legacy());
         if ($session->settings()->legacy()) {
@@ -95,10 +95,15 @@ final class ContinuingRefusal
             $notices = [...$notices, ...$recipients];
             usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         }
+        [$notices, $error] = (new Entry\Partition\Operand())->ordered($failure, $notices, $error, $statement, $session);
+        usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($tree, $session->semantics()->profile());
-        if ($implicit || ($session->variables->database === '' && $target !== null && $target->schema === null)) {
+        if (($implicit || ($session->variables->database === '' && $target !== null && $target->schema === null)) && !(new RoutinePrefix())->qualified($tree)) {
             $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
             $contextual = false;
+        }
+        if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
+            $notices = array_values(array_filter($notices, static fn (array $notice): bool => !$notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure || ($notice[1]->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Creation\RefusedCreateTail ? $notice[1]->problem->problem : $notice[1]->problem) !== $failure->problem));
         }
         $append = array_filter($notices, static fn (array $notice): bool => $notice[1] instanceof \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure) === [];
         try {
@@ -108,7 +113,7 @@ final class ContinuingRefusal
             $append = true;
             $contextual = false;
         }
-        if ($append && $contextual) {
+        if ($append && $contextual && !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue) {
             $notices[] = [$end, new \SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure($failure->problem, true)];
             $append = false;
         }

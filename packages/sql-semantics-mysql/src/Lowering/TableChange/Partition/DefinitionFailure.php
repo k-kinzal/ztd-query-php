@@ -35,7 +35,7 @@ final class DefinitionFailure
     {
         $form = $this->lowering->form($definition);
         if ($issue !== DefinitionIssue::SubpartitionCount) {
-            return new RejectedInput($issue, $start);
+            return new RejectedInput($issue, $start, in_array($this->lowering->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true));
         }
         $sub = $this->lowering->form($form->node(4));
         $range = (new SourceRanges())->span($definition);

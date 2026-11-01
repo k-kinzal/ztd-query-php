@@ -16,5 +16,6 @@ final class DefinitionIssueTest extends TestCase
     public function testMessageNamesTheIncompatibleDefinitionRole(): void
     {
         self::assertSame('Wrong number of subpartitions defined, mismatch with previous setting', DefinitionIssue::SubpartitionCount->message());
+        self::assertSame('Wrong number of partitions defined, mismatch with previous setting', DefinitionIssue::PartitionCount->message());
     }
 }

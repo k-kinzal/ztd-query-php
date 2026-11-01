@@ -16,6 +16,7 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 enum DefinitionIssue implements Diagnostic
 {
     case SubpartitionCount;
+    case PartitionCount;
     case ZeroSubpartitions;
     case ZeroPartitions;
     case MissingRangeValues;
@@ -32,6 +33,7 @@ enum DefinitionIssue implements Diagnostic
             self::ZeroPartitions => 'Number of partitions = 0 is not an allowed value',
             self::ZeroSubpartitions => 'Number of subpartitions = 0 is not an allowed value',
             self::SubpartitionCount => 'Wrong number of subpartitions defined, mismatch with previous setting',
+            self::PartitionCount => 'Wrong number of partitions defined, mismatch with previous setting',
             self::MissingRangeValues => 'Syntax error: RANGE PARTITIONING requires definition of VALUES LESS THAN for each partition',
             self::MissingListValues => 'Syntax error: LIST PARTITIONING requires definition of VALUES IN for each partition',
             self::RangeValues => 'Only RANGE PARTITIONING can use VALUES LESS THAN in partition definition',

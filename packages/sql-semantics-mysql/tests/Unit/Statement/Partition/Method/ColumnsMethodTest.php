@@ -25,6 +25,6 @@ final class ColumnsMethodTest extends TestCase
 
     public function testRenderWritesTheColumns(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b)')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b) (PARTITION p VALUES IN ((1, 2)))', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY LIST COLUMNS (a, b) (PARTITION p VALUES IN ((1, 2)))')->toString());
     }
 }

@@ -56,4 +56,14 @@ final class RoutinePrefix
 
         return $missing ? QueryError::NoDatabase->error() : null;
     }
+
+    /**
+     * Tells whether the statement defines a stored program under a written database, which then
+     * resolves the unqualified names of its body instead of the default database.
+     */
+    public function qualified(Node $tree): bool
+    {
+        $name = $tree->find('sp_name')[0] ?? null;
+        return $name !== null && count($name->tokens()) >= 3;
+    }
 }

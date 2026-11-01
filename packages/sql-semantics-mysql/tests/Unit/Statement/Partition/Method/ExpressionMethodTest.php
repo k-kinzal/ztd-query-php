@@ -37,7 +37,7 @@ final class ExpressionMethodTest extends TestCase
 
     public function testRenderPreservesAGroupedPredicateOperand(): void
     {
-        $sql = 'ALTER TABLE t PARTITION BY RANGE ((a IS NULL))';
+        $sql = 'ALTER TABLE t PARTITION BY RANGE ((a IS NULL)) (PARTITION p VALUES LESS THAN (1))';
         self::assertSame($sql, (new Semantics(Dialect::MySql))->analyze($sql)->toString());
     }
 }

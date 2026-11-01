@@ -41,7 +41,7 @@ final class PartitionDefinitionGenerator implements ErisGenerator
     public function __construct(GrammarRelease $release, int $depth = 3)
     {
         $this->delegate = Generators::map(
-            static fn (array $parts): PartitionDefinition => new PartitionDefinition(name: $parts[0], values: $parts[1], options: $parts[2], subpartitions: $parts[3], inputSource: $parts[4], boundarySource: $parts[5]),
+            static fn (array $parts): PartitionDefinition => new PartitionDefinition(name: $parts[0], values: $parts[1], options: $parts[2], subpartitions: $parts[3], inputSource: $parts[4]),
             Generators::tuple(
                 new NameGenerator($release),
                 $depth > 0 ? Generators::oneOf(Generators::constant(null), Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {
@@ -52,7 +52,6 @@ final class PartitionDefinitionGenerator implements ErisGenerator
                 })) : Generators::constant(null),
                 Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new PartitionOptionGenerator($release))),
                 Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, new SubpartitionDefinitionGenerator($release))),
-                Generators::constant(null),
                 Generators::constant(null)
             )
         );

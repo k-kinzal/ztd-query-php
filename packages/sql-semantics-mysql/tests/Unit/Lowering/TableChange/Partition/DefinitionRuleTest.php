@@ -16,13 +16,10 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\Partition\DefinitionRule;
 final class DefinitionRuleTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\DataProvider('providerBoundConditions')]
-    public function testDefinitionsRetainCompleteBounds(string $release, string $sql): void
+    public function testDefinitionsRefuseBoundsTheMethodExcludes(string $release, string $sql): void
     {
-        $statement = (new Semantics(Dialect::MySql, $release))->analyze($sql);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Alter\AlterTable::class, $statement);
-        self::assertSame($sql, $statement->toString());
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $statement->warnings()[0]);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Partition\Problem\DefinitionIssue::class, $statement->warnings()[0]->problem);
+        $this->expectException(\SqlSemantics\Construction\RejectedInput::class);
+        (new Semantics(Dialect::MySql, $release))->analyze($sql);
     }
 
     /**

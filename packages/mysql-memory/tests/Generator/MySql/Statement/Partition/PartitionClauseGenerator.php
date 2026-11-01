@@ -45,7 +45,7 @@ final class PartitionClauseGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): PartitionClause => new PartitionClause(method: $parts[0], partitions: $parts[1], subpartitioning: $parts[2], definitions: $parts[3], inputSource: $parts[4]),
             Generators::suchThat(
-                static fn (array $parts): bool => count(array_unique(array_map(static fn ($definition): int => count($definition->subpartitions), ($parts[3])))) <= 1 && (($parts[2])?->count === null || ($parts[3]) === [] || in_array(count(($parts[3])[0]->subpartitions), [0, (int) ($parts[2])->count->text], true)),
+                static fn (array $parts): bool => count(array_unique(array_map(static fn ($definition): int => count($definition->subpartitions), ($parts[3])))) <= 1 && (($parts[2])?->count === null || ($parts[3]) === [] || in_array(count(($parts[3])[0]->subpartitions), [0, (int) ($parts[2])->count->text], true)) && (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->clause($parts[0], $parts[1], $parts[3]) === null,
                 Generators::tuple(
                     Generators::bind(Generators::choose(0, 4), static fn (int $choice): ErisGenerator => match ($choice) {
                         0 => new ColumnsMethodGenerator($release),

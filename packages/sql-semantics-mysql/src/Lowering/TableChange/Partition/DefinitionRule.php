@@ -107,18 +107,21 @@ final class DefinitionRule
     /**
      * Lowers the definitions of a partitioning or of a partition change; an absent list is empty.
      *
+     * The values of each definition are checked against the method of the
+     * partitioning that holds the list, when there is one.
+     *
      * @return list<PartitionDefinition>
-     * @throws \SqlSemantics\Construction\RejectedInput When subpartition counts disagree
+     * @throws \SqlSemantics\Construction\RejectedInput When subpartition counts disagree or values do not suit the method
      * @throws ImplementationGap When a production has no rule
      */
-    public function definitions(Node $list, ?int $count = null, ?int $start = null): array
+    public function definitions(Node $list, ?int $count = null, ?int $start = null, ?\SqlSemantics\Platform\MySql\Statement\Partition\Method\PartitionMethod $method = null): array
     {
         $form = $this->lowering->form($list);
         if ($form->signature === 'part_defs:' || $form->signature === 'opt_part_defs:') {
             return [];
         }
         if ($form->signature === 'part_defs: ( part_def_list )' || $form->signature === 'opt_part_defs: ( part_def_list )') {
-            return $this->definitions($form->node(1), $count, $form->token(0)->offset);
+            return $this->definitions($form->node(1), $count, $form->token(0)->offset, $method);
         }
         $this->spine($list);
         $definitions = [];
@@ -126,11 +129,11 @@ final class DefinitionRule
         $start ??= (new \SqlSemantics\Construction\SourceRanges())->span($list)[0] ?? 0;
         foreach ((new Lists())->items($list) as $item) {
             $this->opening($item, $start, $expected);
-            $definition = $this->definition($item, $start);
+            $definition = $this->definition($item);
             if ($definitions === [] && $definition->subpartitions === []) {
                 $expected = 0;
             }
-            $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->problem($definition, null, $expected);
+            $problem = (new \SqlSemantics\Platform\MySql\Rules\Partition\DefinitionShape())->problem($definition, $method, $expected);
             if ($problem !== null) {
                 throw (new DefinitionFailure($this->lowering))->failure($problem, $item, $start, $expected);
             }
@@ -177,7 +180,7 @@ final class DefinitionRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function definition(Node $definition, ?int $boundary = null): PartitionDefinition
+    public function definition(Node $definition): PartitionDefinition
     {
         $form = $this->lowering->form($definition);
         $name = match ($form->signature) {
@@ -194,7 +197,6 @@ final class DefinitionRule
             $this->bound($form->node(2)),
             (new OptionRule($this->lowering))->options($form->node(3)),
             $this->subpartitions($form->node(4)),
-            boundarySource: $boundary === null ? null : new \SqlSemantics\Statement\Source\Span($boundary, 0),
         ), $definition);
     }
 

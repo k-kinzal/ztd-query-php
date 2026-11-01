@@ -32,20 +32,6 @@ final class AlterUseTest extends TestCase
         (new AlterUse())->header($definition, $session);
     }
 
-    public function testHeaderPreservesMissingRangeDefinitionsBeforeValidation(): void
-    {
-        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
-        $definition = new M\Alter\AlterTable(new QualifiedName(new Name('missing')), [
-            new M\Alter\Modifier\ValidationOption(true),
-            new M\Alter\Partition\PartitionBy(new M\Partition\PartitionClause(new M\Partition\Method\ExpressionMethod(M\Partition\Method\PartitionKind::Range, new M\Name\ColumnUse(new Name('a'))), null, null, [])),
-        ]);
-        $session->text = 'unrelated invalid input';
-
-        $this->expectExceptionCode(1492);
-        $this->expectExceptionMessage('For RANGE partitions each partition must be defined');
-        (new AlterUse())->header($definition, $session);
-    }
-
     public function testRaiseRejectsACreationTransactionBeforeOpeningTheAlterTarget(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');

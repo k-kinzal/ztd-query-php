@@ -30,12 +30,12 @@ final class SubpartitioningTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT)');
 
-        self::assertSame('Column b does not exist in the table.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY KEY (b)', [$table])->diagnostics()[0]->message());
+        self::assertSame('Column b does not exist in the table.', $semantics->analyze('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY KEY (b) (PARTITION p VALUES LESS THAN (1))', [$table])->diagnostics()[0]->message());
     }
 
     public function testRenderWritesTheMethodAndTheCount(): void
     {
-        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (a) SUBPARTITIONS 2', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (a) SUBPARTITIONS 2')->toString());
+        self::assertSame('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (a) SUBPARTITIONS 2 (PARTITION p VALUES LESS THAN (1))', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE (a) SUBPARTITION BY LINEAR HASH (a) SUBPARTITIONS 2 (PARTITION p VALUES LESS THAN (1))')->toString());
     }
     public function testKeySubpartitioningRequiresAnExplicitColumn(): void
     {
