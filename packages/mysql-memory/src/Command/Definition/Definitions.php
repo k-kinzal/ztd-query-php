@@ -140,7 +140,6 @@ final class Definitions
         }
         (new Constraint\SpatialKeys($this->planner))->engine($columns, $engine);
         $expressions = new TableExpressions($this->planner, $create);
-        $expressions->forbidden();
         $constraints = new Constraints($this->planner, $create, $this->checkBase, $this->foreignBase, $this->keptForeign);
         $constraints->forbidden();
         if ($elements === [] && in_array($this->planner->settings->release(), [\SqlSemantics\Contract\GrammarRelease::MySql810, \SqlSemantics\Contract\GrammarRelease::MySql820, \SqlSemantics\Contract\GrammarRelease::MySql830, \SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {

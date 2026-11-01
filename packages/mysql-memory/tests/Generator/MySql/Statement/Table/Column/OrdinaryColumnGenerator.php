@@ -44,7 +44,7 @@ final class OrdinaryColumnGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): OrdinaryColumn => new OrdinaryColumn(type: $parts[0], attributes: $parts[1], references: $parts[2], inputSource: $parts[3]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new ColumnAttributes())->enforcement(($parts[1])) === null,
+                static fn (array $parts): bool => (new ColumnAttributes())->enforcement(($parts[1])) === null && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->defaults($parts[1], new \SqlSemantics\Statement\Identifier\Name('')) === null,
                 Generators::tuple(
                     new DeclaredNameGenerator($release),
                     $depth > 0 ? Generators::bind(Generators::choose(0, 3), static fn (int $count): ErisGenerator => $count === 0 ? Generators::constant([]) : Generators::vector($count, Generators::bind(Generators::elements(array_keys(array_filter([511, 511, 508, 511, 508, 511, 511, 511, 511, 511, 511, 511], static fn (int $mask): bool => ($bit & $mask) !== 0))), static fn (int $choice): ErisGenerator => match ($choice) {

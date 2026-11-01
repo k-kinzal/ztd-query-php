@@ -369,19 +369,6 @@ final class AlterTableCommandTest extends TestCase
         (new AlterTableCommand())->table($session, 'nope', 't');
     }
 
-    public function testResolveRefusesAFunctionThatIsNotDeclared(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $operation = $session->analyze('ALTER TABLE t ADD COLUMN b INT DEFAULT (zz())');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1305);
-        $this->expectExceptionMessage('FUNCTION d.zz does not exist');
-
-        (new AlterTableCommand())->resolve($operation, $session);
-    }
-
     public function testRebuildCountsTheCopiedRows(): void
     {
         $session = (new Instance())->connect();

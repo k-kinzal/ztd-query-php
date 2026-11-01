@@ -74,4 +74,20 @@ final class OperandsTest extends TestCase
         self::assertSame(M\Table\Problem\Generation\OperandKind::StoredFunction, $problem?->kind);
         self::assertSame('`d`.`f`', $problem->function);
     }
+
+    public function testProblemOfAnExpressionDefaultAcceptsTheClockAndRefusesStateFunctions(): void
+    {
+        $role = M\Table\Problem\Generation\ExpressionRole::Default;
+        self::assertNull((new Operands())->problem(new M\Call\FunctionCall(new Name('RAND')), new Name('a'), null, $role));
+        self::assertSame('row_count', (new Operands())->problem(new M\Call\KeywordCall(M\Call\KeywordFunction::RowCount, []), new Name('a'), null, $role)?->function);
+        self::assertSame($role, (new Operands())->problem(new M\Variable\UserVariable(new Name('v')), new Name('a'), null, $role)?->role);
+    }
+
+    public function testDefaultsFindsTheRefusedOperandOfAnExpressionDefault(): void
+    {
+        $attributes = [new M\Table\Column\KeywordAttribute(M\Table\Column\Kind\ColumnKeyword::NotNull), new M\Table\Column\DefaultExpression(new M\Variable\UserVariable(new Name('v')))];
+        $problem = (new Operands())->defaults($attributes, new Name('a'));
+        self::assertSame("The default of column 'a' excludes a session variable.", $problem?->message());
+        self::assertNull((new Operands())->defaults([new M\Table\Column\DefaultExpression(new M\Literal\NumberLiteral('1'))], new Name('a')));
+    }
 }

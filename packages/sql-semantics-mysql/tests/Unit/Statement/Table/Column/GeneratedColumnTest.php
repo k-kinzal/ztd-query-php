@@ -53,25 +53,6 @@ final class GeneratedColumnTest extends TestCase
         self::assertSame($attributes, $specification->attributes);
     }
 
-    public function testRetainsASessionFunctionBeforeDerivingItsCondition(): void
-    {
-        $column = new GeneratedColumn(new Integral(Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, []));
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Call\KeywordCall::class, $column->expression);
-        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::User, $column->expression->function);
-    }
-
-    public function testRetainsFullTextSearchBeforeDerivingItsCondition(): void
-    {
-        $column = new GeneratedColumn(
-            new Integral(Type\Kind\IntegralKind::Int),
-            new \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch(
-                [new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'))],
-                new \SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral(['x']),
-            ),
-        );
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch::class, $column->expression);
-    }
-
     public function testDeriveSpecificationIsNeverReachedForACollationTheReadingRefuses(): void
     {
         try {

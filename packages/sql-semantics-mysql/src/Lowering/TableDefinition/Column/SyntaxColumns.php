@@ -74,6 +74,9 @@ final class SyntaxColumns
             }
             return $definition === null ? null : $this->attributes($definition, $lowering, $legacy);
         } catch (RejectedInput $failure) {
+            if ($failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand) {
+                return new ParseFailure($failure->problem, $failure->aborts, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+            }
             return $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnattachedEnforcement || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute || $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Name\Problem\MismatchedDefinitionName
                 ? new ParseFailure($failure->problem, $failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize || $failure->aborts) : null;
         } catch (\SqlSemantics\Diagnostic\AnalysisException) {
@@ -110,13 +113,9 @@ final class SyntaxColumns
             if ($size !== null) {
                 return new ParseFailure(new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize($size->rule, $size->name, $size->actual, $size->maximum, $scope), true);
             }
-            $generation = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Conditions())->problem($column, $lowering->profile->grammar, $scope);
-            if ($generation instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand) {
-                \SqlSemantics\Diagnostic\Check::invariant($column->specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn, 'An eager generation condition retains its complete expression.');
-                $generation = new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand($generation->column, $generation->kind, $generation->function, $scope, $column->specification->expression);
-            }
+            $generation = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Conditions())->problem($column);
             if ($generation !== null) {
-                return new ParseFailure($generation, $generation instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\InvalidAttribute, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
+                return new ParseFailure($generation, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);
             }
             if (($problem = (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->problem($column, $scope)) !== null) {
                 return new ParseFailure($problem, true, $legacy ? \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Syntax : \SqlSemantics\Platform\MySql\Statement\Notice\NoticePhase::Contextualization);

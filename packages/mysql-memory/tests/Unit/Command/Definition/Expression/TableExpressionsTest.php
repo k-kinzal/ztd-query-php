@@ -45,18 +45,6 @@ final class TableExpressionsTest extends TestCase
         self::assertSame(2, count($table->definition->statement->elements ?? []) - 1);
     }
 
-    public function testForbiddenComesBeforeTheColumnsAreResolved(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d');
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(3763);
-        $this->expectExceptionMessage("Expression of generated column 'c' contains a disallowed function: rand.");
-
-        $session->query('CREATE TABLE t1 (a INT, b INT AS (x), c INT AS (rand()))');
-    }
-
     public function testKeyedRefusesAVirtualGeneratedColumnInThePrimaryKey(): void
     {
         $session = (new Instance())->connect();

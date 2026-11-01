@@ -7,6 +7,7 @@ namespace Tests\Unit\Statement\Table\Problem\Generation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\OperandKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand;
 use SqlSemantics\Statement\Identifier\Name;
@@ -18,6 +19,11 @@ final class RefusedOperandTest extends TestCase
     public function testMessageDescribesTheOwningColumnAndFunction(): void
     {
         self::assertSame("Generated column 'g' excludes function user.", (new RefusedOperand(new Name('g'), OperandKind::FunctionCall, 'user'))->message());
+    }
+
+    public function testMessageDescribesTheDefaultOfTheOwningColumn(): void
+    {
+        self::assertSame("The default of column 'a' excludes a subquery.", (new RefusedOperand(new Name('a'), OperandKind::Subquery, role: ExpressionRole::Default))->message());
     }
 
     public function testRejectsAFunctionRefusalWithoutAFunction(): void

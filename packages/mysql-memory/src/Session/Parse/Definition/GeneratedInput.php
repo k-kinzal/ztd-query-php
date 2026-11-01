@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperan
 final class GeneratedInput
 {
     /**
-     * Formats the native release's definition-time condition.
+     * Formats the native release's definition-time condition of a generation expression or an expression default.
      */
     public function error(RefusedOperand $problem, Session $session): SqlError
     {
@@ -46,7 +46,14 @@ final class GeneratedInput
         }
         if (in_array($problem->kind, [OperandKind::FunctionCall, OperandKind::StoredFunction], true)) {
             \SqlSemantics\Diagnostic\Check::invariant($problem->function !== null, 'A function refusal retains its diagnostic name.');
-            return ConstraintError::GeneratedFunction->error($problem->column->value, $problem->function);
+            return ($problem->role === \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole::Default ? ConstraintError::DefaultFunction : ConstraintError::GeneratedFunction)->error($problem->column->value, $problem->function);
+        }
+        if ($problem->role === \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole::Default) {
+            return match ($problem->kind) {
+                OperandKind::Row => ConstraintError::DefaultRow->error($problem->column->value),
+                OperandKind::Subquery, OperandKind::Parameter => ConstraintError::DefaultSubquery->error($problem->column->value),
+                OperandKind::Variable => ConstraintError::DefaultVariable->error($problem->column->value),
+            };
         }
         return match ($problem->kind) {
             OperandKind::Row => ConstraintError::GeneratedRow->error($problem->column->value),

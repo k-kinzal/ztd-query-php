@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 
 /**
- * Checks generated-expression roles before ordinary scalar preparation.
+ * Checks the operands of a generation expression or an expression default before ordinary scalar preparation.
  *
  * Full-text search has a forbidden generation role before its search operand.
  * Other child expressions complete before their enclosing function or query. A
@@ -30,19 +30,36 @@ use SqlSemantics\Statement\Query;
 final class Operands
 {
     /**
-     * Finds the first intrinsic generation-expression refusal in completion order.
+     * Finds the first intrinsic refusal of a column expression in completion order.
+     *
+     * @param \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole $role The column expression the operands belong to
      */
-    public function problem(Node $expression, Name $column, ?\SqlSemantics\Contract\GrammarRelease $release = null): ?RefusedOperand
+    public function problem(Node $expression, Name $column, ?\SqlSemantics\Contract\GrammarRelease $release = null, \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole $role = \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole::Generated): ?RefusedOperand
     {
         if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\Access\DeferredFullTextSearch) {
-            return new RefusedOperand($column, OperandKind::FunctionCall, 'match');
+            return new RefusedOperand($column, OperandKind::FunctionCall, 'match', role: $role);
         }
         foreach ($this->children($expression) as $child) {
-            if (($problem = $this->problem($child, $column, $release)) !== null) {
+            if (($problem = $this->problem($child, $column, $release, $role)) !== null) {
                 return $problem;
             }
         }
-        return $this->role($expression, $column, $release);
+        return $this->role($expression, $column, $release, $role);
+    }
+
+    /**
+     * Finds the first refused operand of the expression defaults among column attributes.
+     *
+     * @param list<\SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute> $attributes The attributes in written order
+     */
+    public function defaults(array $attributes, Name $column, ?\SqlSemantics\Contract\GrammarRelease $release = null): ?RefusedOperand
+    {
+        foreach ($attributes as $attribute) {
+            if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression && ($problem = $this->problem($attribute->expression, $column, $release, \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole::Default)) !== null) {
+                return $problem;
+            }
+        }
+        return null;
     }
 
     /**
@@ -67,25 +84,27 @@ final class Operands
     }
 
     /**
-     * Identifies the enclosing operand's generation role after its children complete.
+     * Identifies the enclosing operand's refusal after its children complete.
+     *
+     * @param \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole $role The column expression the operand belongs to
      */
-    public function role(Node $expression, Name $column, ?\SqlSemantics\Contract\GrammarRelease $release = null): ?RefusedOperand
+    public function role(Node $expression, Name $column, ?\SqlSemantics\Contract\GrammarRelease $release = null, \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole $role = \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\ExpressionRole::Generated): ?RefusedOperand
     {
         if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\RowOperand) {
-            return new RefusedOperand($column, OperandKind::Row);
+            return new RefusedOperand($column, OperandKind::Row, role: $role);
         }
         if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter) {
-            return new RefusedOperand($column, OperandKind::Parameter);
+            return new RefusedOperand($column, OperandKind::Parameter, role: $role);
         }
         if ($expression instanceof FunctionCall && !$this->native($expression, $release)) {
             $name = ($expression->schema === null ? '' : '`' . str_replace('`', '``', $expression->schema->value) . '`.') . '`' . str_replace('`', '``', $expression->name->value) . '`';
-            return new RefusedOperand($column, OperandKind::StoredFunction, $name);
+            return new RefusedOperand($column, OperandKind::StoredFunction, $name, role: $role);
         }
         if ($expression instanceof Query) {
-            return new RefusedOperand($column, OperandKind::Subquery);
+            return new RefusedOperand($column, OperandKind::Subquery, role: $role);
         }
         if ($expression instanceof UserVariable || $expression instanceof SystemVariable) {
-            return new RefusedOperand($column, OperandKind::Variable);
+            return new RefusedOperand($column, OperandKind::Variable, role: $role);
         }
         $name = match (true) {
             $expression instanceof FunctionCall => $expression->schema === null ? strtolower($expression->name->value) : null,
@@ -95,10 +114,10 @@ final class Operands
             default => null,
         };
         if ($name === 'name_const') {
-            return new RefusedOperand($column, OperandKind::Subquery);
+            return new RefusedOperand($column, OperandKind::Subquery, role: $role);
         }
-        $function = $name === null ? null : ((new Functions())->names()[$name] ?? null);
-        return $function === null ? null : new RefusedOperand($column, OperandKind::FunctionCall, $function);
+        $function = $name === null ? null : ((new Functions())->names($role)[$name] ?? null);
+        return $function === null ? null : new RefusedOperand($column, OperandKind::FunctionCall, $function, role: $role);
     }
     /**
      * Keeps generic stored calls distinct from calls resolved by a native catalog.

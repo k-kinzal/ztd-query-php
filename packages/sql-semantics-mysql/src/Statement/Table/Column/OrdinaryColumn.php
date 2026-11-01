@@ -49,6 +49,7 @@ final class OrdinaryColumn implements ColumnSpecification
     {
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->enforcement($this->attributes) === null, 'Column enforcement follows a CHECK constraint or its enforcement chain.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->defaults($this->attributes, new \SqlSemantics\Statement\Identifier\Name('')) === null, 'An expression default holds no subquery, variable, row value, parameter marker, stored function or function that reads the server state or waits.');
     }
 
     /**

@@ -281,7 +281,6 @@ final class AlterTableCommand implements Command
      */
     public function read(array $commands, \SqlSemantics\Platform\MySql\Statement\StatementSemantics $facts, bool $legacy = false): void
     {
-        (new Expression\AlterDefaults())->functions($commands, $facts->profile->grammar);
         $indexes = $this->indexes($commands);
         foreach ($facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownIndexParser) {

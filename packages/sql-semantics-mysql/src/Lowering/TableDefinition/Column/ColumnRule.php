@@ -90,11 +90,18 @@ final class ColumnRule
         if ($positions !== null) {
             [$collation, $always, $expression, $storage, $list] = $positions;
             $written = $this->always($form->node($always));
-            $type = $this->lowering->types->type($form->node(0), $name->value ?? '');
+            [$type, $sized] = $this->declared($form->node(0), $name);
             $attributes = $this->attributes($form->node($list));
             $value = $this->expression($form->node($expression), $name);
             if (($this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\LegacyExpressions())->contains($value)) || (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($value)) {
+                if ($sized !== null || $type === null) {
+                    throw $sized ?? ImplementationGap::rule('A column type without its refusal');
+                }
                 return new \SqlSemantics\Platform\MySql\Statement\Table\Column\Generation\DeferredGeneratedColumn($type, $value, $this->lowering->charsets->collation($form->node($collation)), $this->storage($form->node($storage)), [...$attributes, ...$trailing], $references, generatedAlways: $written);
+            }
+            $this->refused((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($value, $name ?? new \SqlSemantics\Statement\Identifier\Name(''), $this->lowering->profile->grammar), $definition, $value);
+            if ($sized !== null || $type === null) {
+                throw $sized ?? ImplementationGap::rule('A column type without its refusal');
             }
             return new GeneratedColumn(
                 $type,
@@ -114,16 +121,63 @@ final class ColumnRule
     }
 
     /**
+     * Refuses an operand the column's generation expression or expression default excludes.
+     *
+     * MySQL 8.0 and later refuse it once the statement is read, column by column before
+     * the column's type bounds, also inside a stored program body. MySQL 5.7 refuses the
+     * generation expressions it does not retain (a bare subquery, a stored function, a bare
+     * parameter marker) while reading (verified on 5.7.44, 8.0.44 and 8.4.7).
+     *
+     * @throws \SqlSemantics\Construction\RejectedInput When the column holds such an operand
+     */
+    public function refused(?\SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand $problem, Node $definition, Scalar|\SqlSemantics\Platform\MySql\Statement\Expression\RowOperand|\SqlSemantics\Platform\MySql\Statement\Routine\Program\Expression\DeferredOperand|null $expression = null): void
+    {
+        if ($problem === null) {
+            return;
+        }
+        $scope = $this->lowering->programName ?? $this->lowering->columnTable;
+        $legacy = $this->lowering->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744;
+        throw new \SqlSemantics\Construction\RejectedInput(new \SqlSemantics\Platform\MySql\Statement\Table\Problem\Generation\RefusedOperand($problem->column, $problem->kind, $problem->function, $scope, $expression, $problem->role), (new \SqlSemantics\Construction\SourceRanges())->span($definition)[1] ?? 0, $legacy);
+    }
+
+    /**
      * Retains the declared type and ordered attributes, including incompatible requests.
      *
      * @param list<ColumnAttribute> $trailing Attributes after the type's own list
-     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type
+     * @throws \SqlSemantics\Construction\RejectedInput When column operands contradict their type or an expression default holds an operand it excludes
      */
     public function ordinary(Node $definition, Node $list, ?References $references, array $trailing, ?\SqlSemantics\Statement\Identifier\Name $name = null): OrdinaryColumn
     {
-        $type = $this->lowering->types->type($definition, $name->value ?? '');
+        [$type, $sized] = $this->declared($definition, $name);
         $attributes = [...$this->attributes($list), ...$trailing];
+        $this->refused((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->defaults($attributes, $name ?? new \SqlSemantics\Statement\Identifier\Name(''), $this->lowering->profile->grammar), $list);
+        if ($sized !== null || $type === null) {
+            throw $sized ?? ImplementationGap::rule('A column type without its refusal');
+        }
         return new OrdinaryColumn($type, $attributes, $references);
+    }
+
+    /**
+     * Lowers the declared type of a column, holding a bound refused once the statement is read.
+     *
+     * MySQL 8.0 and later check a column's expression before the column's type bounds
+     * (`CREATE TABLE t (a INT(300) DEFAULT (@v))` answers ER_DEFAULT_VAL_GENERATED_VARIABLES_NOT_ALLOWED,
+     * verified on 8.4.7), so the caller refuses the expression first and then the held bound.
+     *
+     * @return array{\SqlSemantics\Platform\MySql\Statement\Type\DeclaredName|null, \SqlSemantics\Construction\RejectedInput|null} The type, or the held refusal of its bound
+     * @throws ImplementationGap When a production has no rule
+     * @throws \SqlSemantics\Construction\RejectedInput When the type is refused while reading
+     */
+    public function declared(Node $type, ?\SqlSemantics\Statement\Identifier\Name $name): array
+    {
+        try {
+            return [$this->lowering->types->type($type, $name->value ?? ''), null];
+        } catch (\SqlSemantics\Construction\RejectedInput $failure) {
+            if ($failure->aborts || !$failure->problem instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize) {
+                throw $failure;
+            }
+            return [null, $failure];
+        }
     }
 
     /**

@@ -73,26 +73,6 @@ final class TableExpressions
     }
 
     /**
-     * Refuses the first subquery, variable or refused function of the generated columns and expression defaults, in column order.
-     *
-     * @throws SqlError When an expression holds one
-     */
-    public function forbidden(): void
-    {
-        $rules = new ExpressionRules();
-        foreach ($this->elements() as $element) {
-            $specification = $element->specification;
-            if ($specification instanceof GeneratedColumn) {
-                $rules->forbidden($specification->expression, ExpressionRole::Generated, $element->name->column->value);
-            }
-            $default = $this->defaulted($element);
-            if ($default !== null) {
-                $rules->forbidden($default, ExpressionRole::Default, $element->name->column->value);
-            }
-        }
-    }
-
-    /**
      * Refuses a virtual generated column in the primary key.
      *
      * @param list<ColumnDefinition> $columns

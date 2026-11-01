@@ -51,7 +51,7 @@ final class GeneratedColumnGenerator implements ErisGenerator
         $this->delegate = Generators::map(
             static fn (array $parts): GeneratedColumn => new GeneratedColumn(type: $parts[0], expression: $parts[1], collation: $parts[2] === null ? null : new CollationName($parts[2]), storage: $parts[3], attributes: $parts[4], references: $parts[5], inputSource: $parts[6], generatedAlways: $parts[7]),
             Generators::suchThat(
-                static fn (array $parts): bool => (new ColumnAttributes())->enforcement(($parts[4])) === null && !(new GroupedOperands())->deferred(($parts[1])),
+                static fn (array $parts): bool => (new ColumnAttributes())->enforcement(($parts[4])) === null && !(new GroupedOperands())->deferred(($parts[1])) && (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($parts[1], new \SqlSemantics\Statement\Identifier\Name('')) === null,
                 Generators::tuple(
                     new DeclaredNameGenerator($release),
                     Generators::bind(Generators::choose(0, 2), static fn (int $choice): ErisGenerator => match ($choice) {

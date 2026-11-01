@@ -311,25 +311,6 @@ final class InputErrors
         if ($problem->table->schema === null && $session->variables->database === '') {
             return \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
         }
-        $rules = new \MySqlMemory\Command\Definition\Expression\ExpressionRules();
-        try {
-            foreach ($problem->elements as $element) {
-                if (!$element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) {
-                    continue;
-                }
-                $specification = $element->specification;
-                if ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn) {
-                    $rules->forbidden($specification->expression, \MySqlMemory\Command\Definition\Expression\ExpressionRole::Generated, $element->name->column->value);
-                }
-                foreach ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn || $specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn ? $specification->attributes : [] as $attribute) {
-                    if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression) {
-                        $rules->forbidden($attribute->expression, \MySqlMemory\Command\Definition\Expression\ExpressionRole::Default, $element->name->column->value);
-                    }
-                }
-            }
-        } catch (SqlError $error) {
-            return $error;
-        }
         return \MySqlMemory\Error\Family\StatementError::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
     }
 

@@ -28,9 +28,8 @@ use SqlSemantics\Statement\Scalar;
  * @example Reading a generated column
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT AS (a + 1) STORED)');
  *     $create->elements[1]->specification->storage // => \SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage::Stored
- * @example Retaining a marker with its generation condition
- *     $column = new \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Literal\Parameter());
- *     $column->expression instanceof \SqlSemantics\Platform\MySql\Statement\Literal\Parameter // => true
+ * @example Refusing a session variable in the expression
+ *     new \SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn(new \SqlSemantics\Platform\MySql\Statement\Type\Integral(\SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind::Int), new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('v'))); // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class GeneratedColumn implements ColumnSpecification
 {
@@ -63,6 +62,7 @@ final class GeneratedColumn implements ColumnSpecification
         $this->attributes = Check::listOf($attributes, ColumnAttribute::class, 'Column attributes are an ordered list of column attributes.');
         Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->enforcement($this->attributes) === null, 'Column enforcement follows a CHECK constraint or its enforcement chain.');
         Check::input(!(new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\GroupedOperands())->deferred($expression), 'An ordinary generation expression has no aggregate or window role.');
+        Check::input((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\Generation\Operands())->problem($expression, new \SqlSemantics\Statement\Identifier\Name('')) === null, 'A generation expression holds no subquery, variable, row value, parameter marker, stored function or function whose result depends on more than its arguments.');
     }
 
     /**

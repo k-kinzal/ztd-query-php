@@ -114,6 +114,15 @@ final class ContinuingRefusalTest extends TestCase
         self::assertSame([['Error', 1064, "Syntax error: RANGE PARTITIONING requires definition of VALUES LESS THAN for each partition near '(PARTITION x, PARTITION y)' at line 1"]], $session->diagnostics->conditions);
     }
 
+    public function testErrorResolvesABodyExpressionRefusalInTheProgramDatabase(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $reply = $session->run('CREATE PROCEDURE d.p() CREATE TABLE t (a INT DEFAULT (@v))')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $reply);
+        self::assertSame(3772, $reply->getCode());
+    }
+
     public function testErrorPlacesEngineWarningsBeforeADefinitionRefusal(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
