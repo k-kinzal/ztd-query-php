@@ -58,12 +58,23 @@ final class RoutinePrefix
     }
 
     /**
-     * Tells whether the statement defines a stored program under a written database, which then
-     * resolves the unqualified names of its body instead of the default database.
+     * Tells whether the input at the refused offset belongs to the body of a stored program
+     * defined under a written database, which then resolves the unqualified names of its body
+     * instead of the default database. An event schedule is evaluated in the session's
+     * context, so it does not count.
      */
-    public function qualified(Node $tree): bool
+    public function qualified(Node $tree, int $end): bool
     {
         $name = $tree->find('sp_name')[0] ?? null;
-        return $name !== null && count($name->tokens()) >= 3;
+        if ($name === null || count($name->tokens()) < 3) {
+            return false;
+        }
+        foreach ($tree->find('ev_schedule_time') as $schedule) {
+            [$start, $stop] = (new \SqlSemantics\Construction\SourceRanges())->span($schedule) + [null, null];
+            if ($start !== null && $stop !== null && $end >= $start && $end <= $stop) {
+                return false;
+            }
+        }
+        return true;
     }
 }

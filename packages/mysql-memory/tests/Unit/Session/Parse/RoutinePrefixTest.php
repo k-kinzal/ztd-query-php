@@ -37,8 +37,10 @@ final class RoutinePrefixTest extends TestCase
     public function testQualifiedFindsTheWrittenDatabaseOfTheProgram(): void
     {
         $parser = (new Instance())->connect()->semantics()->parser();
-        self::assertTrue((new RoutinePrefix())->qualified($parser->parse('CREATE PROCEDURE d.p() CREATE TABLE t (a INT)')));
-        self::assertFalse((new RoutinePrefix())->qualified($parser->parse('CREATE PROCEDURE p() CREATE TABLE t (a INT)')));
-        self::assertFalse((new RoutinePrefix())->qualified($parser->parse('CREATE TABLE t (a INT)')));
+        self::assertTrue((new RoutinePrefix())->qualified($parser->parse('CREATE PROCEDURE d.p() CREATE TABLE t (a INT)'), 40));
+        self::assertFalse((new RoutinePrefix())->qualified($parser->parse('CREATE PROCEDURE p() CREATE TABLE t (a INT)'), 40));
+        self::assertFalse((new RoutinePrefix())->qualified($parser->parse('CREATE TABLE t (a INT)'), 20));
+        self::assertFalse((new RoutinePrefix())->qualified($parser->parse('CREATE EVENT d.e ON SCHEDULE AT (SELECT 1 FROM t) DO SELECT 1'), 40));
+        self::assertTrue((new RoutinePrefix())->qualified($parser->parse('CREATE EVENT d.e ON SCHEDULE AT (SELECT 1 FROM t) DO SELECT 1'), 60));
     }
 }

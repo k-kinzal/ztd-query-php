@@ -98,7 +98,7 @@ final class ContinuingRefusal
         [$notices, $error] = (new Entry\Partition\Operand())->ordered($failure, $notices, $error, $statement, $session);
         usort($notices, static fn (array $left, array $right): int => $left[0] <=> $right[0]);
         $target = (new \SqlSemantics\Platform\MySql\Lowering\Leaf\SyntaxTableNames())->created($tree, $session->semantics()->profile());
-        if (($implicit || ($session->variables->database === '' && $target !== null && $target->schema === null)) && !(new RoutinePrefix())->qualified($tree)) {
+        if (($implicit || ($session->variables->database === '' && $target !== null && $target->schema === null)) && !(new RoutinePrefix())->qualified($tree, $failure->end)) {
             $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
             $contextual = false;
         }
