@@ -92,6 +92,7 @@
     ],
     "scripts": {
         "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+        "characterization:record": "@php -r \"require 'vendor/autoload.php'; Tests\\Fake\\CharacterizationCorpus::record('tests/Characterization');\"",
         "compat": "phpcs",
         "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
         "docgen": "docgen --packages=. --title=k-kinzal/sql-catalog",
@@ -141,6 +142,7 @@
     },
     "scripts-descriptions": {
         "autoload:check": "Check that the PSR-4 autoload mapping is strict and unambiguous.",
+        "characterization:record": "Record the current analyzer reports as the expected characterization reports, after reviewing the changes.",
         "compat": "Check compatibility with PHP 8.1 and later with PHP_CodeSniffer.",
         "deptrac": "Check the layer dependencies with Deptrac.",
         "docgen": "Generate the API documentation into build/docs.",
