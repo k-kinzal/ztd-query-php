@@ -69,7 +69,7 @@
 <p>Create a <code>Semantics</code> instance from the namespace of your database package. The examples below use SQLite. The <code>SqlSemantics\Analyzer</code> interface declares <code>analyze(string $sql, ?AnalysisContext $context = null): SemanticsIR</code>. Its database-specific implementations also accept declaration lists as a convenience.</p>
 <h3>Usage</h3>
 <h4>Analyzing and inspecting a statement</h4>
-<p><code>Semantics</code> fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. <code>analyze()</code> turns one input into a <code>SqlSemantics\Query</code> implemented by the database package’s <code>Operation</code>.</p>
+<p><code>Semantics</code> fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. <code>analyze()</code> publishes complete <code>SemanticsIR</code> values. <code>inspect()</code> supplies the dialect&#039;s <code>Operation</code> with diagnostic facts and declarations. See the <a href="../../k-kinzal/sql-semantics/doc/docs/semantics-ir.md.html">complete IR scope and migration guide</a>.</p>
 <pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;
 <span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Statement\Query\Select</span>;
 
