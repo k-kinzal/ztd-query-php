@@ -36,7 +36,7 @@ final class SelectTest extends TestCase
 
     public function testRefusesUnboundColumnSlots(): void
     {
-        $this->expectExceptionMessage('belong to the SELECT source');
+        $this->expectExceptionMessage('belong to the statement source');
 
         new Select([new ResultColumn(new ColumnReference(0), new Identifier('a'))]);
     }

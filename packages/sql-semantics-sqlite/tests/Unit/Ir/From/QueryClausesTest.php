@@ -13,6 +13,7 @@ use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Parameter;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
+use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Semantics;
 
 #[CoversClass(QueryClauses::class)]
@@ -25,6 +26,7 @@ final class QueryClausesTest extends TestCase
         $table = $sqlite->inspect('CREATE TABLE t (a INT)');
         $query = $sqlite->analyze('SELECT left_t.a, right_t.a FROM t left_t FULL JOIN t right_t ON left_t.a IS right_t.a', [$table]);
 
+        self::assertInstanceOf(Select::class, $query);
         self::assertSame(JoinKind::Full, $query->joins[0]->kind);
         self::assertSame('t', $query->joins[0]->source->table->value);
     }
@@ -35,6 +37,7 @@ final class QueryClausesTest extends TestCase
         $table = $sqlite->inspect('CREATE TABLE t (a INT)');
         $query = $sqlite->analyze('SELECT x.a FROM t x CROSS JOIN t y', [$table]);
 
+        self::assertInstanceOf(Select::class, $query);
         self::assertSame(JoinKind::Cross, $query->joins[0]->kind);
     }
 
@@ -42,6 +45,7 @@ final class QueryClausesTest extends TestCase
     {
         $query = (new Semantics())->analyze('SELECT 3 WHERE (3 < 4) AND ?02 ORDER BY 1 DESC NULLS FIRST');
 
+        self::assertInstanceOf(Select::class, $query);
         self::assertInstanceOf(Logical::class, $query->where);
         self::assertSame(1, $query->orderBy[0]->position);
         self::assertTrue($query->orderBy[0]->descending);
@@ -52,6 +56,7 @@ final class QueryClausesTest extends TestCase
     {
         $query = (new Semantics())->analyze('SELECT NULL, 2 ORDER BY 2');
 
+        self::assertInstanceOf(Select::class, $query);
         self::assertSame(2, $query->orderBy[0]->position);
         self::assertFalse($query->orderBy[0]->descending);
         self::assertTrue($query->orderBy[0]->nullsFirst);
@@ -61,6 +66,7 @@ final class QueryClausesTest extends TestCase
     {
         $select = (new Semantics())->analyze('SELECT DISTINCT 1 LIMIT ?02, +5');
 
+        self::assertInstanceOf(Select::class, $select);
         self::assertTrue($select->distinct);
         self::assertInstanceOf(Limit::class, $select->limit);
         self::assertTrue($select->limit->offsetFirst);

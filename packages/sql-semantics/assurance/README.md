@@ -107,3 +107,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_re
 ```
 
 The oracle groups entire typed rows using SQLite's BINARY duplicate equivalence, then models each band of tied ordering keys. The limit must select the expected number of members from each band. The checker preserves storage classes and row multiplicities when testing membership. An analyzed probe exercises a declared NOCASE collation. The runner records both native parameter labels and specific binding failures. It injects wrong duplicate handling, swapped count and offset roles, and changed first-label binding order.
+
+## SQLite DELETE effects
+
+Run the [DELETE effect contract](sqlite-delete-v1.json) against the pinned SQLite library:
+
+```sh
+delete_evidence=$(mktemp -d)/sqlite-delete-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_delete.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$delete_evidence"
+```
+
+The independent evaluator partitions a fixed set of rows by the predicate's truth value. SQLite executes each observation inside a rolled-back savepoint and reports both target tables, the trigger log, change counts and native binding metadata. The main and temp tables share a name and have visibly different contents. Tests cover absence of a predicate, false and NULL conditions, duplicates, aliases and parameter labels. The runner injects changes to the target schema, predicate and column slot.

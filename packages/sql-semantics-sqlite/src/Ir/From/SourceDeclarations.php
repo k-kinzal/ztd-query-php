@@ -11,6 +11,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 
@@ -24,7 +25,7 @@ final class SourceDeclarations
     /**
      * Resolves the inputs in the order in which their slots will be numbered.
      *
-     * @return list<array{TableInput, Table}>
+     * @return list<array{TableInput|MutationTarget, Table}>
      */
     public function bind(Operation $operation, ?Relation $source): array
     {
@@ -52,7 +53,7 @@ final class SourceDeclarations
         }
         $tables = [];
         foreach ($terms as $term) {
-            Check::input($term instanceof TableInput && $term->index === null, 'The projection source must be an ordinary table input.');
+            Check::input(($term instanceof TableInput || $term instanceof MutationTarget) && $term->index === null, 'The projection source must be an ordinary table input.');
             $resolution = $operation->facts->relation($term)->table;
             Check::input(
                 $resolution instanceof DeclaredTable && $resolution->table->complete

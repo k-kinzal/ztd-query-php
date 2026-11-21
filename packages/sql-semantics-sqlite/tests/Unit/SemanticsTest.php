@@ -55,7 +55,7 @@ final class SemanticsTest extends TestCase
 
     public function testAnalyzeRejectsAnOperationOutsideTheCompleteDomain(): void
     {
-        $this->expectExceptionMessage('Complete SQLite IR currently supports a single projection SELECT.');
+        $this->expectExceptionMessage('This SQLite statement has no complete IR representation.');
 
         (new Semantics())->analyze('CREATE TABLE t (id INTEGER)');
     }
@@ -198,6 +198,8 @@ final class SemanticsTest extends TestCase
         $results = $semantics->analyzeAll('SELECT a FROM t; SELECT a AS value FROM t', [$table]);
 
         self::assertCount(2, $results);
+        self::assertInstanceOf(Select::class, $results[0]);
+        self::assertInstanceOf(Select::class, $results[1]);
         self::assertSame('a', $results[0]->columns[0]->name->value);
         self::assertSame('value', $results[1]->columns[0]->name->value);
         self::assertEquals($results[0]->source, $results[1]->source);

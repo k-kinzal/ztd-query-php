@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Scalar;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 
 /**
@@ -22,7 +23,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 final class SourceBinding
 {
     /**
-     * @var list<array{TableInput, Table}>
+     * @var list<array{TableInput|MutationTarget, Table}>
      */
     private readonly array $tables;
 

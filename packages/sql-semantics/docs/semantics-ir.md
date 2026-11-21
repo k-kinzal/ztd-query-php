@@ -30,6 +30,7 @@ You can build the same structure directly with classes in `SqlSemantics\Platform
 - Integer literals in the signed 64-bit range, NULL, numbered SQLite parameters, column references, and binary addition, subtraction and multiplication.
 - Result order, result names, SQLite storage classes and values, repeated rows, and numeric parameter slots and labels. Without an ordering clause, the result is a multiset. The ordering contract fixes the relative order of rows with different keys.
 - The default UTF-8 profile with short column names enabled and full column names disabled. The engine uses the standard SQLite 3.47.2 limits. The initial IR domain also bounds identifier length, the number of result columns, and expanded expression size.
+- Top-level DELETE of one declared base table. The IR records the absolute target and checks any WHERE predicate against its slots. This domain covers DELETE without WITH, RETURNING or an explicit index choice. The DELETE changes rows only when the caller executes its output. Execution supplies the same target definitions and trigger rules.
 
 `Semantics::analyze()` returns the complete value. Handle `SqlSemantics\\AnalysisException` for malformed, unresolved or unsupported input. `analyzeAll()` applies the same contract to each statement against the same explicit context.
 

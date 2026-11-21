@@ -61,6 +61,8 @@ if ($dialect === 'postgres') {
     $properties['TableSource']['only'] = ['bool'];
 }
 $internal = ['ExpressionLowering', 'SelectBounds', 'SelectLowering', 'SelectSql', 'SourceBinding'];
+$pureCollaborators = ['SelectBounds', 'SelectSql'];
+$roots = ['Select'];
 $enumCases = ['ArithmeticOperator' => ['Add' => '+', 'Subtract' => '-', 'Multiply' => '*']];
 if ($dialect === 'sqlite') {
     $predicates = [...array_slice($operands, 0, 2), 'IntegerLiteral', 'NullLiteral', 'Parameter', 'Predicate\\Comparison', 'Predicate\\Logical'];
@@ -74,6 +76,9 @@ if ($dialect === 'sqlite') {
     $properties['From\\Join'] = ['kind' => ['From\\JoinKind'], 'on' => $nullablePredicates, 'source' => ['TableSource']];
     $properties['Ordering\\Order'] = ['descending' => ['bool'], 'nullsFirst' => ['bool'], 'position' => ['int']];
     $properties['Ordering\\Limit'] = ['count' => ['IntegerLiteral', 'Parameter'], 'offset' => ['IntegerLiteral', 'Parameter', 'null'], 'offsetFirst' => ['bool']];
+    $properties['Mutation\\Delete'] = ['target' => ['TableSource'], 'where' => $nullablePredicates];
+    $methods['Mutation\\Delete'] = $methods['Select'];
+    $roots[] = 'Mutation\\Delete';
     $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
     $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
     $enumCases['From\\JoinKind'] = ['Inner' => 'INNER', 'Cross' => 'CROSS', 'Left' => 'LEFT', 'Right' => 'RIGHT', 'Full' => 'FULL'];
@@ -88,7 +93,8 @@ if ($dialect === 'sqlite') {
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
-    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses');
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Predicate\\ExpressionScope');
+    $pureCollaborators[] = 'Predicate\\ExpressionScope';
 }
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
 $allowed = [
@@ -96,7 +102,7 @@ $allowed = [
     $platform . '\\Model\\Diagnostic\\Check',
     $platform . '\\Model\\Statement\\Identifier\\Comparison',
     $platform . '\\Model\\Contract\\GrammarRelease',
-    ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), 'SelectBounds', 'SelectSql']),
+    ...array_map(static fn ($short) => $prefix . $short, [...array_keys($properties), ...$pureCollaborators]),
 ];
 $pureFunctions = ['strlen','str_contains','preg_match','str_replace','ltrim','strcmp','count','isset','implode','array_pop','array_push','strpbrk'];
 
@@ -133,15 +139,23 @@ try {
     requireShape(array_map(static fn ($name) => $name->toString(), $facade->implements) === ['SqlSemantics\\Analyzer'], 'Unexpected complete façade interface');
     requireShape($facade->getMethod('ir') === null, 'The façade must publish IR directly');
     $printer = new Standard();
+    $analyze = 'return (new \\' . $prefix . 'SelectLowering())->lower($this->inspect($sql, $context));';
+    if ($dialect === 'sqlite') {
+        $analyze = '$operation = $this->inspect($sql, $context); $statement = $operation->statement; return match (true) {'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
+            . 'default => throw new \\' . $platform . "\\Model\\Diagnostic\\InvalidConstruction('This SQLite statement has no complete IR representation.'), };";
+    }
+    sort($roots);
     $routes = [
-        'analyze' => [$prefix . 'Select', 'return (new \\' . $prefix . 'SelectLowering())->lower($this->inspect($sql, $context));'],
-        'analyzeAll' => ['array', '$declarations = $this->context($context); $results = [];'
+        'analyze' => [$roots, $analyze],
+        'analyzeAll' => [['array'], '$declarations = $this->context($context); $results = [];'
             . 'foreach ($this->split($sql) as $statement) { $results[] = $this->analyze($statement, $declarations); } return $results;'],
     ];
     foreach ($routes as $name => [$return, $body]) {
         $method = $facade->getMethod($name);
         requireShape($method !== null && $method->isPublic() && !$method->isStatic()
-            && $method->returnType?->toString() === $return, "Publication signature differs in $name");
+            && $method->returnType !== null && types($method->returnType, $prefix, 'Semantics') === $return, "Publication signature differs in $name");
         requireShape($printer->prettyPrint($method->stmts) === $printer->prettyPrint($parser->parse('<?php ' . $body)), "Publication body differs in $name");
     }
     $primitives = json_decode(file_get_contents(__DIR__ . '/value-primitives.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -194,7 +208,7 @@ try {
                 requireShape($class->getMethod('lower')?->returnType?->toString() === $prefix . 'Select', 'Projection lowering return role differs');
             }
         }
-        if (in_array($short, $internal, true) && $short !== 'SelectBounds' && $short !== 'SelectSql') {
+        if (in_array($short, $internal, true) && !in_array($short, $pureCollaborators, true)) {
             continue;
         }
         foreach ($finder->findInstanceOf($ast, Name\FullyQualified::class) as $name) {
@@ -253,7 +267,7 @@ try {
             continue;
         }
         requireShape($class instanceof Class_ && $class->isFinal() && $class->extends === null, "Open value class $short");
-        requireShape(array_map(static fn ($name) => $name->toString(), $class->implements) === ($short === 'Select' ? ['SqlSemantics\\SemanticsIR'] : []), "Interfaces differ in $short");
+        requireShape(array_map(static fn ($name) => $name->toString(), $class->implements) === (in_array($short, $roots, true) ? ['SqlSemantics\\SemanticsIR'] : []), "Interfaces differ in $short");
         $traits = $finder->findInstanceOf($class->stmts, TraitUse::class);
         requireShape(count($traits) === 1 && count($traits[0]->traits) === 1 && $traits[0]->traits[0]->toString() === $snapshot && $traits[0]->adaptations === [], "Snapshot paths differ in $short");
     }

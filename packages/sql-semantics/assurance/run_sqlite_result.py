@@ -130,9 +130,10 @@ def execute(args, specification, db):
         try:
             for start in range(0, len(items), 12):
                 batch = items[start:start + 12]
+                current = {"batch": [item for _, item in batch]}
                 for key, item in batch:
                     ledger.record(key, "attempted", input=item)
-                replies = worker.request([item for _, item in batch])
+                replies = worker.request(current["batch"])
                 require(isinstance(replies, list) and len(replies) == len(batch), "result-batch-incomplete", replies)
                 for (key, current), response in zip(batch, replies):
                     probe(current, response, db, ledger, key)

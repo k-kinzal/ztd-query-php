@@ -9,6 +9,7 @@ use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\From\JoinKind;
 use SqlSemantics\Platform\Sqlite\Ir\Identifier;
 use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
@@ -101,7 +102,7 @@ function direct(array $input): Select
     return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
 }
 
-function analyzed(array $input): Select
+function analyzed(array $input): Select|Delete
 {
     $semantics = new Semantics();
     $tables = [];
@@ -112,14 +113,39 @@ function analyzed(array $input): Select
     return $semantics->analyze($input['sql'], $tables === [] ? null : $tables);
 }
 
+function directDelete(array $input): Delete
+{
+    return new Delete(source($input['target']), isset($input['where']) ? operand($input['where']) : null);
+}
+
+function observeDelete(Delete $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'delete',
+        'profile' => $value->profileId(),
+        'target' => observeSource($value->target),
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'sql' => $value->toString(),
+    ];
+}
+
 function runCase(array $input): array
 {
     try {
-        $value = isset($input['sql']) ? analyzed($input) : direct($input);
+        $value = match (true) {
+            isset($input['sql']) => analyzed($input),
+            ($input['operation'] ?? null) === 'delete' => directDelete($input),
+            default => direct($input),
+        };
     } catch (InvalidConstruction $error) {
         return ['status' => 'rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
     } catch (SqlSemantics\AnalysisException $error) {
         return ['status' => 'analysis-rejected', 'exception' => $error::class, 'message' => $error->getMessage()];
+    }
+
+    if ($value instanceof Delete) {
+        return observeDelete($value);
     }
 
     if (($input['probe'] ?? '') === 'snapshot') {

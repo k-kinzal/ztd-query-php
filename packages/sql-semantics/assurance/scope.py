@@ -11,6 +11,7 @@ ROOTS = {
     "SqlSemantics\\Platform\\MySql\\Ir\\Select",
     "SqlSemantics\\Platform\\PostgreSql\\Ir\\Select",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Select",
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Delete",
 }
 
 
@@ -19,6 +20,7 @@ CONTRACTS = {
     "server-projection-v1.json": "4f46d75542c1cc47518a2a91c8faaf318800891281e3b06ef409d9f9236f3e97",
     "sqlite-relational-v1.json": "b4a4f07874e99eea615fd3e981b54d2de0c9c1ca27d9d5ff3e822b92d4a1596d",
     "sqlite-result-v1.json": "8cd76f55067fe32c08d14b648be3a0b886b6e34785db7bb8707f20edc2c37237",
+    "sqlite-delete-v1.json": "60274d9a4bf82c40f5363ead740a7465bba8bca359dfe9ead7e35f8de185cb7b",
 }
 PUBLICATION = "dbecb7ed3e76fd6ed1753ec1f914e4f5f9c4e164661106b8bb2939da2d7529c4"
 
@@ -31,17 +33,23 @@ def constructor_scope(by_class):
     publication = json.loads(publication)
     prefixes = tuple("SqlSemantics\\Platform\\" + dialect for dialect in publication["dialects"])
     routes = {publication["analyzerInterface"]: [publication["interfaceResult"]]}
+    sqlite_roots = []
     for name, sha256 in CONTRACTS.items():
         raw = (TOOL / name).read_bytes()
         if hashlib.sha256(raw).hexdigest() != sha256:
             raise ValueError(f"Constructor contract differs from its recorded revision: {name}")
-        for role, record in json.loads(raw)["constructors"].items():
+        contract = json.loads(raw)
+        sqlite_roots.extend("Ir\\" + root.replace("/", "\\") for root in contract.get("additionalPublicRoots", []))
+        for role, record in contract["constructors"].items():
             concrete = record.get("type", role).replace("/", "\\")
             for platform in prefixes[:2] if name == "server-projection-v1.json" else prefixes[2:]:
                 clas = platform + "\\Ir\\" + concrete
                 definitions.setdefault(clas, []).append({"record": name, "role": role})
     for platform in prefixes:
-        routes[platform + "\\" + publication["single"]["method"]] = [platform + "\\" + publication["single"]["result"]]
+        roles = [publication["single"]["result"]]
+        if platform.endswith("\\Sqlite"):
+            roles.extend(sqlite_roots)
+        routes[platform + "\\" + publication["single"]["method"]] = sorted(platform + "\\" + role for role in roles)
     batch_routes = {
         platform + "\\" + publication["batch"]["method"]: ["array"] for platform in prefixes
     }
@@ -106,7 +114,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries including DISTINCT and row bounds",
+        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries and single-target DELETE",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

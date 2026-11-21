@@ -8,6 +8,7 @@ use SqlSemantics\Platform\Sqlite\Ir\From\Join;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Comparison;
+use SqlSemantics\Platform\Sqlite\Ir\Predicate\ExpressionScope;
 use SqlSemantics\Platform\Sqlite\Ir\Predicate\Logical;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 
@@ -58,22 +59,6 @@ final class SelectBounds
             }
         }
 
-        $nodes = 0;
-        $parameterBytes = 0;
-        while ($pending !== []) {
-            [$expression, $height, $visibility] = array_pop($pending);
-            Check::input($height <= 32 && ++$nodes <= 8192, 'Expression height or expanded node count exceeds the IR profile.');
-            match (true) {
-                $expression instanceof ColumnReference => Check::input(
-                    $expression->source < $visibility && isset($tables[$expression->source]->columns[$expression->slot]),
-                    'Column slot must belong to the SELECT source at a visible occurrence.',
-                ),
-                $expression instanceof Parameter => $parameterBytes += strlen($expression->label),
-                $expression instanceof Arithmetic, $expression instanceof Comparison, $expression instanceof Logical
-                    => array_push($pending, [$expression->right, $height + 1, $visibility], [$expression->left, $height + 1, $visibility]),
-                $expression instanceof IntegerLiteral, $expression instanceof NullLiteral => null,
-            };
-            Check::input($parameterBytes <= 990000000, 'Numbered parameter labels exceed the SQLite statement size budget.');
-        }
+        (new ExpressionScope())->check($tables, $pending);
     }
 }

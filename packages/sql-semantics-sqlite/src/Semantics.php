@@ -10,6 +10,8 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\DeleteLowering;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\SelectLowering;
 use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
@@ -28,6 +30,8 @@ use SqlSemantics\Platform\Sqlite\Model\Validation\LeafEmbedding;
 use SqlSemantics\Platform\Sqlite\Model\Validation\Publication;
 use SqlSemantics\Platform\Sqlite\Model\Validation\TokenCorrespondence;
 use SqlSemantics\Platform\Sqlite\Model\Validation\ValueGraph;
+use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete as ParsedDelete;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select as ParsedSelect;
 
 /**
  * Analyzes SQL of one fixed language profile into read-only operations.
@@ -134,9 +138,16 @@ final class Semantics implements Analyzer
      * @throws SemanticException When the analysis establishes a semantic error
      * @throws InvalidConstruction When the statement cannot be represented in the supported complete IR
      */
-    public function analyze(string $sql, array|Context|null $context = null): Select
+    public function analyze(string $sql, array|Context|null $context = null): Select|Delete
     {
-        return (new SelectLowering())->lower($this->inspect($sql, $context));
+        $operation = $this->inspect($sql, $context);
+        $statement = $operation->statement;
+
+        return match (true) {
+            $statement instanceof ParsedSelect => (new SelectLowering())->lower($operation),
+            $statement instanceof ParsedDelete => (new DeleteLowering())->lower($operation, $statement),
+            default => throw new InvalidConstruction('This SQLite statement has no complete IR representation.'),
+        };
     }
 
     /**
@@ -196,7 +207,7 @@ final class Semantics implements Analyzer
      * No statement is executed for the ones after it.
      *
      * @param list<Table|Operation>|Context|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Select>
+     * @return list<Select|Delete>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem
