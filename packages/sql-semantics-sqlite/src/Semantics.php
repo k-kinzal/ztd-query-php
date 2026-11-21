@@ -232,7 +232,7 @@ final class Semantics implements Analyzer
      * No statement is executed for the ones after it.
      *
      * @param list<Table|Operation>|Context|null $context The declarations, a prepared context, or null for an open context
-     * @return list<Select|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable>
+     * @return list<Select|Compound|Delete|Insert|Update|ValuesQuery|DropTable|CreateTable>
      *
      * @throws AnalysisException When a statement is outside the selected grammar
      * @throws SemanticException When a statement has a semantic problem

@@ -26,17 +26,21 @@ final class Compound implements SemanticsIR
 {
     use Snapshot;
 
-    /** @var non-empty-list<CompoundStep> */
+    /**
+     * @var non-empty-list<CompoundStep> The ordered operations and their right arms
+     */
     public readonly array $steps;
 
-    /** @var list<Order> */
+    /**
+     * @var list<Order> The ordering of the combined result
+     */
     public readonly array $orderBy;
 
     /**
      * Checks the shared width and the placement of child and outer clauses.
      *
-     * @param array<array-key, mixed> $steps
-     * @param array<array-key, mixed> $orderBy
+     * @param list<CompoundStep> $steps The arms after the first
+     * @param list<Order> $orderBy The combined result ordering
      */
     public function __construct(public readonly Select|ValuesQuery $first, array $steps, array $orderBy = [], public readonly ?Limit $limit = null)
     {
