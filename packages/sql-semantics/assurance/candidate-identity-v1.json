@@ -1,0 +1,18 @@
+{
+  "revision": "SemanticsIR/candidate-identity-1",
+  "approval": "pending-human-review",
+  "obligation": "Q05",
+  "requirements": [
+    "Read the commit and object format from the physical candidate repository root with Git object replacement disabled.",
+    "Compare the exact Git file list and blob identity with the measured runtime paths. An untracked, changed or missing file fails even when HEAD has the requested commit.",
+    "For isolated PHP runs, make only the verified source and resource trees available from the candidate. Restore any omitted locked files before collecting evidence.",
+    "Hold the commit and distribution constant from the start of observation collection through the final verification and during evidence replay."
+  ],
+  "faults": {
+    "changed-committed-value": "candidate-commit-content-mismatch",
+    "untracked-runtime-file": "candidate-commit-content-mismatch",
+    "missing-runtime-file": "candidate-commit-content-mismatch",
+    "unchanged-checkout-with-unrelated-files": "same-runtime-distribution"
+  },
+  "trust": "The verifier controls the checkout, Git object store and container engine. A successful comparison does not protect a downstream Composer installation or a checkout altered by another process between reads."
+}
