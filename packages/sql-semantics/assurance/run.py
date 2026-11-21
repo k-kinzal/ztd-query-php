@@ -155,12 +155,14 @@ def check_comparator(comparator=compare):
             raise Failure("comparator-accepted-known-difference", key)
 
 
-def positive(worker, db, item):
+def positive(worker, db, item, constructed=None):
     response = worker.request(item)
     require(response["status"] == "constructed", "positive-construction-failed", response)
     require(response["profile"] == PROFILE, "profile-mismatch", response)
     for field in ("columns", "source"):
         require(response[field] == item[field], "shape-observation-mismatch", {"field": field, "response": response})
+    if constructed is not None:
+        constructed(response)
     observation = db.observe(response["sql"], item["bindings"])
     compare(expected(item), observation)
     return response, observation
@@ -264,8 +266,9 @@ def run(args, db, contract, output):
         nonlocal current
         current = (key, item)
         ledger.record(key, "attempted", input=item)
-        response, observation = positive(worker, db, item)
-        ledger.record(key, "constructed", response=response)
+        response, observation = positive(
+            worker, db, item, lambda value: ledger.record(key, "constructed", response=value),
+        )
         ledger.record(key, "compared", observation=observation)
         coverage(observed, response)
         if finite:
@@ -365,6 +368,38 @@ def shrink(worker, db, original):
     return None
 
 
+
+def write_summary(path, index):
+    checks = index["checks"]
+    counts = checks["execution"]
+    notes = [
+        "# SemanticsIR evidence",
+        "",
+        "This run covers the initial SQLite 3.47.2 projection domain. Human approval is pending.",
+        "",
+        f"- Candidate commit: `{index['commit']}`",
+        f"- Contract SHA-256: `{index['contract']}`",
+        f"- Distribution manifest SHA-256: `{index['distribution']}`",
+        f"- Candidate PHP: {checks['candidateEnvironment']['php']}",
+        f"- Isolation: {index['candidateIsolation']['mode']}",
+        f"- Finite domain: all {len(checks['finiteIds'])} symbolic IDs observed exactly once",
+        f"- Structural exploration: {checks['explorationComparisons']} compared inputs",
+        f"- Analysis path: {checks['analyzedComparisons']} original and emitted SQL comparisons",
+        f"- Accounting: {counts['attempted']} attempted, {counts['compared']} compared, "
+        f"{counts['rejected']} rejected at the specified boundary and {counts['snapshot']} snapshot probe",
+        "",
+        "## Required fault cases",
+        "",
+    ]
+    notes.extend(f"- [{fault['id']}]({fault['record']}) detected by `{fault['signal']}`" for fault in index["faults"])
+    notes += [
+        "", "## Open obligations", "",
+        "The wider constructor ledger, other statement families and dialects, proof obligations and the repository-level acceptance gate remain open.",
+        "",
+        "[Machine-readable index](index.json) · [Case events](events.jsonl) · [Source inventory](inventory.json)",
+    ]
+    path.write_text("\n".join(notes) + "\n")
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", required=True, type=Path)
@@ -404,7 +439,7 @@ def main():
     from faults import exercise
     faults = exercise(args, db, distribution)
     verify_distribution(distribution, manifest(args.candidate))
-    write_json(args.out / "index.json", {
+    index = {
         "status": "provisional-initial-domain", "commit": commit,
         "contract": CONTRACT_DIGEST, "distribution": digest(args.out / "distribution.json"),
         "toolDigests": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in {".py", ".php", ".json"}},
@@ -421,8 +456,10 @@ def main():
         "repositoryAcceptanceProtection": "unconfigured",
         "shape": code_shape, "checks": checks, "faults": faults,
         "proof": "none", "open": ["full constructor ledger", "all other semantic families and profiles", "human review", "protected acceptance configuration"],
-        "files": ["distribution.json", "inventory.json", "events.jsonl", "faults/"],
-    })
+        "files": ["summary.md", "distribution.json", "inventory.json", "events.jsonl", "faults/"],
+    }
+    write_json(args.out / "index.json", index)
+    write_summary(args.out / "summary.md", index)
     print(f"Provisional SQLite evidence in {args.out}")
 
 
