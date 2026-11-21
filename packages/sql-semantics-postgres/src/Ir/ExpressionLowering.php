@@ -38,21 +38,7 @@ final class ExpressionLowering
             $expression = $expression->operand;
         }
         if ($expression instanceof BinaryOperation) {
-            $qualifiers = $expression->operator->qualifiers;
-            Check::input(
-                ($qualifiers === [] && $catalogFirst) || (count($qualifiers) === 1 && $qualifiers[0]->value === 'pg_catalog'),
-                'Integer arithmetic must resolve to a pg_catalog operator.',
-            );
-            $operator = ArithmeticOperator::tryFrom($expression->operator->name->value);
-            Check::input($operator !== null, 'The projection supports addition, subtraction and multiplication.');
-            $left = $this->lower($expression->left, $binding, $catalogFirst);
-            $right = $this->lower($expression->right, $binding, $catalogFirst);
-            Check::input(
-                !$left instanceof BooleanLiteral && !$left instanceof NullLiteral && !$right instanceof BooleanLiteral && !$right instanceof NullLiteral,
-                'Arithmetic operands must have the int4 role.',
-            );
-
-            return new Arithmetic($operator, $left, $right);
+            return $this->arithmetic($expression, $binding, $catalogFirst);
         }
         if ($expression instanceof Constant && $expression->value instanceof IntegerConstant) {
             return new IntegerLiteral($expression->value->digits);
@@ -73,5 +59,27 @@ final class ExpressionLowering
             $expression instanceof ParsedColumn => $binding->reference($expression),
             default => throw new InvalidConstruction('The operand has no complete PostgreSQL projection representation.'),
         };
+    }
+
+    /**
+     * Binds the exact builtin operator and checks each operand's int4 role.
+     */
+    private function arithmetic(BinaryOperation $expression, SourceBinding $binding, bool $catalogFirst): Arithmetic
+    {
+        $qualifiers = $expression->operator->qualifiers;
+        Check::input(
+            ($qualifiers === [] && $catalogFirst) || (count($qualifiers) === 1 && $qualifiers[0]->value === 'pg_catalog'),
+            'Integer arithmetic must resolve to a pg_catalog operator.',
+        );
+        $operator = ArithmeticOperator::tryFrom($expression->operator->name->value);
+        Check::input($operator !== null, 'The projection supports addition, subtraction and multiplication.');
+        $left = $this->lower($expression->left, $binding, $catalogFirst);
+        $right = $this->lower($expression->right, $binding, $catalogFirst);
+        Check::input(
+            !$left instanceof BooleanLiteral && !$left instanceof NullLiteral && !$right instanceof BooleanLiteral && !$right instanceof NullLiteral,
+            'Arithmetic operands must have the int4 role.',
+        );
+
+        return new Arithmetic($operator, $left, $right);
     }
 }
