@@ -1,6 +1,6 @@
 # Model
 
-`Semantics::analyze()` returns a `SqlSemantics\Query` implemented as an `Operation` in the selected database package. This page describes what an operation holds and how to read it. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
+`Semantics::inspect()` returns the selected database package's `Operation`. This page describes what an operation holds and how to read it. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
 
 ## Operations
 

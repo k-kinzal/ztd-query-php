@@ -41,7 +41,8 @@ final class SemanticsTest extends TestCase
         $query = $analyze($semantics);
 
         self::assertInstanceOf(Select::class, $query);
-        self::assertCount(1, $query->source?->columns ?? []);
+        self::assertNotNull($query->source);
+        self::assertCount(1, $query->source->columns);
         self::assertEquals($query->columns[0]->expression, $query->columns[1]->expression);
     }
 
@@ -59,7 +60,7 @@ final class SemanticsTest extends TestCase
         (new Semantics())->analyze('CREATE TABLE t (id INTEGER)');
     }
 
-    public function testLeavesMissingInputsInAnOpenContextAsFacts(): void
+    public function testInspectLeavesMissingInputsInAnOpenContextAsFacts(): void
     {
         $query = (new Semantics())->inspect('SELECT id FROM t');
 

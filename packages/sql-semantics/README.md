@@ -79,7 +79,7 @@ Create a `Semantics` instance from the namespace of your database package. The e
 
 ### Analyzing and inspecting a statement
 
-`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` turns one input into a `SqlSemantics\Query` implemented by the database package’s `Operation`.
+`Semantics` fixes a language profile: the database, the grammar release, the session mode, the parameter style and the search path. `analyze()` publishes complete `SemanticsIR` values. `inspect()` supplies the dialect's `Operation` with diagnostic facts and declarations. See the [complete IR scope and migration guide](docs/semantics-ir.md).
 
 ```php
 use SqlSemantics\Platform\Sqlite\Semantics;

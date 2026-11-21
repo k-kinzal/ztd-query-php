@@ -64,7 +64,7 @@ final class OptionRuleTest extends TestCase
     public function testAnalyzeNamesTheAnalyzeOption(): void
     {
         $rule = new OptionRule(new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172));
-        $option = $rule->inspect((new PostgreSqlParser('pg-17.2'))->parse('VACUUM ANALYSE')->find('analyze_keyword')[0]);
+        $option = $rule->analyze((new PostgreSqlParser('pg-17.2'))->parse('VACUUM ANALYSE')->find('analyze_keyword')[0]);
         self::assertSame([OptionKeyword::Analyse, null], [$option->name, $option->argument]);
     }
 
