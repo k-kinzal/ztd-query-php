@@ -8,7 +8,10 @@ use SqlSemantics\Platform\Sqlite\Ir\From\SourceDeclarations;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Column;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Declaration\Table;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Comparison;
+use SqlSemantics\Platform\Sqlite\Model\Statement\Identifier\Name;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Operation;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Platform\Sqlite\Model\Statement\Relation;
@@ -72,18 +75,44 @@ final class SourceBinding
         $column = $resolution->declaration();
         foreach ($this->tables as $index => [$occurrence, $table]) {
             if ($resolution->relation === $occurrence) {
-                Check::input($column !== null && in_array($column, $table->columns, true), 'The column must be an explicit member of the projection source.');
-                $key = spl_object_id($column);
-                if (!isset($this->slots[$index][$key])) {
-                    $this->slots[$index][$key] = count($this->names[$index] ?? []);
-                    $this->names[$index][] = new Identifier($column->name->value);
-                }
-
-                return new ColumnReference($this->slots[$index][$key], $index);
+                Check::input($column !== null, 'The column must be an explicit member of the projection source.');
+                return new ColumnReference($this->slot($index, $column), $index);
             }
         }
 
         throw new InvalidConstruction('The column must resolve to a local base-table occurrence.');
+    }
+
+    /**
+     * Resolves a writable declared name in the single mutation target.
+     */
+    public function write(Name $name): int
+    {
+        [$occurrence, $table] = $this->tables[0] ?? [null, null];
+        Check::invariant($occurrence instanceof MutationTarget && $table !== null, 'A written slot belongs to a bound mutation target.');
+        $matches = $table->matchingColumns($name->value, Comparison::AsciiInsensitive);
+        Check::input(
+            count($matches) === 1 && in_array($matches[0], $table->columns, true) && !$matches[0]->generated,
+            'An assigned name must resolve to a writable declared column.',
+        );
+
+        return $this->slot(0, $matches[0]);
+    }
+
+    /**
+     * Records a resolved column once within its occurrence.
+     */
+    public function slot(int $occurrence, Column $column): int
+    {
+        $table = $this->tables[$occurrence][1] ?? null;
+        Check::input($table !== null && in_array($column, $table->columns, true), 'The column must be an explicit member of the projection source.');
+        $key = spl_object_id($column);
+        if (!isset($this->slots[$occurrence][$key])) {
+            $this->slots[$occurrence][$key] = count($this->names[$occurrence] ?? []);
+            $this->names[$occurrence][] = new Identifier($column->name->value);
+        }
+
+        return $this->slots[$occurrence][$key];
     }
 
     /**

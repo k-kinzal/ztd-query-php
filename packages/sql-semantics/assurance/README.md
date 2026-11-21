@@ -52,6 +52,19 @@ The checked domain supports a composition argument. Every leaf has one of the cl
 
 The proposed [manual evidence workflow](../../../.github/workflows/semantics-ir-assurance.yml) selects its checker from the workflow revision on `main` and reads an explicit candidate SHA. Keep it outside the candidate's pull-request checks and review the workflow, its action pins, locked dependencies, engine build, oracle, mutation fixtures and contract before using the evidence for acceptance. Require repository-owner control of changes to this workflow and its inputs, and an independently maintained decision keyed to the tested candidate SHA. Verify that the decision rejects missing or stale evidence. No repository-level control has been installed or verified in this change.
 
+The repository administrator can prepare the ruleset below after choosing a dedicated GitHub App that can publish commit statuses. Keep the App's credentials with the independent verifier. The App must receive the verifier's decisions over a channel that candidate-controlled jobs cannot write. Publish the `semantics-ir/acceptance` context only after confirming the exact current candidate SHA, reviewed verifier revision, complete scope and matched distribution digests. The manual workflow emits provisional evidence. It has no permission to write acceptance statuses.
+
+```sh
+python3 packages/sql-semantics/assurance/branch_gate.py prepare --app-id "$acceptance_app_id" > proposed-ruleset.json
+gh api --paginate --slurp repos/k-kinzal/ztd-query-php/rules/branches/main | jq 'add' > effective-rules.json
+gh api "repos/k-kinzal/ztd-query-php/rulesets/$acceptance_ruleset_id" > acceptance-ruleset.json
+python3 packages/sql-semantics/assurance/branch_gate.py audit \
+  --repository k-kinzal/ztd-query-php --app-id "$acceptance_app_id" \
+  --rules effective-rules.json --definition acceptance-ruleset.json
+```
+
+The proposal starts disabled and can be added alongside the existing merge gate. Activate it after the reviewed acceptance publisher is running and a sandbox pull request demonstrates that missing evidence, old SHAs and the same context from another App are rejected. Run the audit with the effective rules and the attached ruleset definition to verify the exact App, strict checks and the absence of bypass actors. Check the publisher's credential isolation and review history separately. [GitHub ruleset API](https://docs.github.com/en/rest/repos/rules)
+
 The initial runner does not establish complete coverage of the existing grammar productions, full acceptance of every supported SQL input, or a machine-checked proof. The legacy models, other SQLite constructs, uncovered server projection roles and modes, and comparison of statement effects outside SELECT all remain open under the wider contract.
 
 ## MySQL and PostgreSQL evidence
@@ -173,3 +186,18 @@ The fixture uses two same-named tables with different data and conflict behavior
 The acceptance workflow calls `combine_sqlite_evidence.py` after the domain runners. It checks that every domain index names the same candidate and compares its recorded tool and distribution digests, engine, finite counts and fault records. It links the individual indices and observation logs from a single generated summary. A local diagnostic bundle requires `--allow-local` and records which domains ran without isolation. A bundle records provisional evidence while human approval and repository-level protection are pending.
 
 The addition of the local input widened the first source type in `Select`. F05 now applies its original-SQL property injection at that declaration. Its fixture, expected shape failure and mandatory presence are preserved.
+
+## SQLite UPDATE effects
+
+Run the [UPDATE effect contract](sqlite-update-v1.json) with the same engine:
+
+```sh
+update_evidence=$(mktemp -d)/sqlite-update-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_update.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$update_evidence"
+```
+
+The reference evaluator computes each effective assignment from the old row. The fixture includes duplicates, NULLs, a generated column and two same-named targets with distinct conflict policies. Comparisons preserve the typed contents of both targets and the OLD and NEW trigger values. Skipped rows and statement rollback are observable. Numbered parameter labels are checked in written assignment order, including a superseded assignment.

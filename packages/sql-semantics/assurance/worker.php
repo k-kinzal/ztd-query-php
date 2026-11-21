@@ -12,6 +12,9 @@ use SqlSemantics\Platform\Sqlite\Ir\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\Insert;
 use SqlSemantics\Platform\Sqlite\Ir\Mutation\InsertConflict;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\Update;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateAssignment;
+use SqlSemantics\Platform\Sqlite\Ir\Mutation\UpdateConflict;
 use SqlSemantics\Platform\Sqlite\Ir\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Limit;
 use SqlSemantics\Platform\Sqlite\Ir\Ordering\Order;
@@ -113,7 +116,7 @@ function direct(array $input): Select
     return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
 }
 
-function analyzed(array $input): Select|Delete|Insert|ValuesQuery
+function analyzed(array $input): Select|Delete|Insert|Update|ValuesQuery
 {
     $semantics = new Semantics();
     $tables = [];
@@ -159,6 +162,33 @@ function observeInsert(Insert $value): array
     ];
 }
 
+function directUpdate(array $input): Update
+{
+    return new Update(
+        source($input['target']),
+        array_map(static fn (array $pair): UpdateAssignment => new UpdateAssignment($pair[0], operand($pair[1])), $input['assignments']),
+        isset($input['where']) ? operand($input['where']) : null,
+        UpdateConflict::from($input['conflict']),
+    );
+}
+
+function observeUpdate(Update $value): array
+{
+    return [
+        'status' => 'constructed',
+        'operation' => 'update',
+        'profile' => $value->profileId(),
+        'target' => observeSource($value->target),
+        'conflict' => $value->conflict->value,
+        'assignments' => array_map(
+            static fn (UpdateAssignment $assignment): array => [$assignment->targetSlot, observeOperand($assignment->value)],
+            $value->assignments,
+        ),
+        'where' => $value->where === null ? null : observeOperand($value->where),
+        'sql' => $value->toString(),
+    ];
+}
+
 function directValues(array $input): ValuesQuery
 {
     return new ValuesQuery(array_map(static fn (array $row): ValueRow => new ValueRow(array_map(operand(...), $row)), $input['rows']));
@@ -187,6 +217,7 @@ function runCase(array $input): array
             isset($input['sql']) => analyzed($input),
             ($input['operation'] ?? null) === 'delete' => directDelete($input),
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
+            ($input['operation'] ?? null) === 'update' => directUpdate($input),
             ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
         };
@@ -201,6 +232,9 @@ function runCase(array $input): array
     }
     if ($value instanceof Insert) {
         return observeInsert($value);
+    }
+    if ($value instanceof Update) {
+        return observeUpdate($value);
     }
     if ($value instanceof ValuesQuery) {
         return observeValues($value);

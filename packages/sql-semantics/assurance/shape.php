@@ -81,6 +81,10 @@ if ($dialect === 'sqlite') {
     $methods['Mutation\\Delete'] = $methods['Select'];
     $properties['Mutation\\Insert'] = ['target' => ['TableSource'], 'input' => ['Rows\\ValuesQuery'], 'conflict' => ['Mutation\\InsertConflict']];
     $methods['Mutation\\Insert'] = $methods['Select'];
+    $properties['Mutation\\Update'] = ['target' => ['TableSource'], 'assignments' => ['array'], 'where' => $nullablePredicates, 'conflict' => ['Mutation\\UpdateConflict']];
+    $methods['Mutation\\Update'] = $methods['Select'];
+    $properties['Mutation\\UpdateAssignment'] = ['targetSlot' => ['int'], 'value' => $operands];
+    $methods['Mutation\\UpdateAssignment'] = ['__construct'];
     $properties['Rows\\ValueRow'] = ['values' => ['array']];
     $properties['Rows\\LocalSource'] = ['columns' => ['array'], 'query' => ['Rows\\ValuesQuery']];
     $properties['Rows\\ValuesQuery'] = ['rows' => ['array']];
@@ -89,23 +93,25 @@ if ($dialect === 'sqlite') {
     $methods['Rows\\ValuesQuery'] = $methods['Select'];
     $roots[] = 'Mutation\\Delete';
     $roots[] = 'Mutation\\Insert';
+    $roots[] = 'Mutation\\Update';
     $roots[] = 'Rows\\ValuesQuery';
     $properties['Predicate\\Comparison'] = ['operator' => ['Predicate\\ComparisonOperator'], 'left' => $operands, 'right' => $operands];
     $properties['Predicate\\Logical'] = ['operator' => ['Predicate\\LogicalOperator'], 'left' => $predicates, 'right' => $predicates];
     $enumCases['From\\JoinKind'] = ['Inner' => 'INNER', 'Cross' => 'CROSS', 'Left' => 'LEFT', 'Right' => 'RIGHT', 'Full' => 'FULL'];
     $enumCases['Mutation\\InsertConflict'] = ['Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore'];
+    $enumCases['Mutation\\UpdateConflict'] = ['Inherit' => 'inherit', 'Abort' => 'abort', 'Ignore' => 'ignore'];
     $enumCases['Predicate\\ComparisonOperator'] = [
         'Equal' => '=', 'NotEqual' => '<>', 'Less' => '<', 'LessOrEqual' => '<=',
         'Greater' => '>', 'GreaterOrEqual' => '>=', 'Is' => 'IS', 'IsNot' => 'IS NOT',
     ];
     $enumCases['Predicate\\LogicalOperator'] = ['And' => 'AND', 'Or' => 'OR'];
-    foreach (['From\\JoinKind', 'Mutation\\InsertConflict', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator'] as $enum) {
+    foreach (['From\\JoinKind', 'Mutation\\InsertConflict', 'Mutation\\UpdateConflict', 'Predicate\\ComparisonOperator', 'Predicate\\LogicalOperator'] as $enum) {
         $methods[$enum] = $properties[$enum] = [];
     }
     foreach (['From\\Join', 'Ordering\\Order', 'Ordering\\Limit', 'Predicate\\Comparison', 'Predicate\\Logical'] as $value) {
         $methods[$value] = ['__construct'];
     }
-    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering');
+    array_push($internal, 'From\\SourceDeclarations', 'From\\QueryClauses', 'Mutation\\DeleteLowering', 'Mutation\\InsertLowering', 'Mutation\\UpdateLowering', 'Predicate\\ExpressionScope', 'Rows\\ValuesLowering', 'Rows\\LocalSourceLowering');
     $pureCollaborators[] = 'Predicate\\ExpressionScope';
 }
 $snapshot = $platform . '\\Model\\Statement\\Snapshot';
@@ -157,6 +163,7 @@ try {
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\Select, $statement instanceof \\' . $platform . '\\Statement\\Query\\With\\WithQuery => (new \\' . $prefix . 'SelectLowering())->lower($operation),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Delete => (new \\' . $prefix . 'Mutation\\DeleteLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\InsertRows => (new \\' . $prefix . 'Mutation\\InsertLowering())->lower($operation, $statement),'
+            . '$statement instanceof \\' . $platform . '\\Statement\\Mutation\\Update => (new \\' . $prefix . 'Mutation\\UpdateLowering())->lower($operation, $statement),'
             . '$statement instanceof \\' . $platform . '\\Statement\\Query\\ValuesClause => (new \\' . $prefix . 'Rows\\ValuesLowering())->lower($operation, $statement),'
             . 'default => throw new \\' . $platform . "\\Model\\Diagnostic\\InvalidConstruction('This SQLite statement has no complete IR representation.'), };";
     }
