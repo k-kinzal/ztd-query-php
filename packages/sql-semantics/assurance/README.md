@@ -201,3 +201,18 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_up
 ```
 
 The reference evaluator computes each effective assignment from the old row. The fixture includes duplicates, NULLs, a generated column and two same-named targets with distinct conflict policies. Comparisons preserve the typed contents of both targets and the OLD and NEW trigger values. Skipped rows and statement rollback are observable. Numbered parameter labels are checked in written assignment order, including a superseded assignment.
+
+## SQLite DROP TABLE effects
+
+Run the [DROP TABLE effect contract](sqlite-drop-table-v1.json) with the same engine:
+
+```sh
+drop_table_evidence=$(mktemp -d)/sqlite-drop-table-evidence
+PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_drop_table.py \
+  --candidate /path/to/candidate \
+  --tool-autoload packages/sql-semantics-sqlite/vendor/autoload.php \
+  --sqlite-library "$third_party/libsqlite3.so" \
+  --out "$drop_table_evidence"
+```
+
+The fixture enables foreign keys before construction and compares object identity, removal of owned indexes and triggers, cascade effects and immediate restrictions. Its trigger log detects any invocation of the removed table's trigger. The outer runner compares the complete user catalog in both schemas and checks the prepare-time error for a missing unguarded target. The structural explorer generates distinct decoded names, including names containing quotes and non-ASCII characters.

@@ -15,6 +15,7 @@ ROOTS = {
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Insert",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Mutation\\Update",
     "SqlSemantics\\Platform\\Sqlite\\Ir\\Rows\\ValuesQuery",
+    "SqlSemantics\\Platform\\Sqlite\\Ir\\Schema\\DropTable",
 }
 
 
@@ -28,6 +29,7 @@ CONTRACTS = {
     "sqlite-local-source-v1.json": "d177e36ff5d5bf4d5de779b9f91d69f91f459c41715a73228ec7c655703829bd",
     "sqlite-insert-v1.json": "a6ce28637ff31c61eb636d0e14170aea7c6dff83a2365c98bbdad94f8ec955da",
     "sqlite-update-v1.json": "71d081d6b35c5b38855b343617660ebb07e49f5aeb5775c6feed047208478f1d",
+    "sqlite-drop-table-v1.json": "622ae8a9601acc4c63f10e7151891dc6289062c9c3393ec78e6c6eb1a1fff0c2",
 }
 PUBLICATION = "dbecb7ed3e76fd6ed1753ec1f914e4f5f9c4e164661106b8bb2939da2d7529c4"
 
@@ -121,7 +123,7 @@ def public_scope(packages, distribution):
         "unregisteredRootTypes": sorted(all_roots - ROOTS),
         "missingRootTypes": sorted(ROOTS - all_roots),
         "publicTypesOutsideCompletedIr": graph_candidates,
-        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT and UPDATE, and one ordinary local VALUES source",
+        "evidenceDomain": "dialect-owned signed-integer projections (MySQL, PostgreSQL), SQLite base-table queries, VALUES, single-target DELETE, INSERT, UPDATE and DROP TABLE, and one ordinary local VALUES source",
         "openRules": "All grammar alternatives and class roles without constructor, observation and evidence records remain open.",
         "coverageClassification": "partial",
     }

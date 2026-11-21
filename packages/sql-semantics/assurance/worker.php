@@ -27,6 +27,7 @@ use SqlSemantics\Platform\Sqlite\Ir\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\LocalSource;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValueRow;
 use SqlSemantics\Platform\Sqlite\Ir\Rows\ValuesQuery;
+use SqlSemantics\Platform\Sqlite\Ir\Schema\DropTable;
 use SqlSemantics\Platform\Sqlite\Ir\Select;
 use SqlSemantics\Platform\Sqlite\Ir\TableSource;
 use SqlSemantics\Platform\Sqlite\Model\Diagnostic\InvalidConstruction;
@@ -116,7 +117,7 @@ function direct(array $input): Select
     return new Select($columns, $from, $joins, isset($input['where']) ? operand($input['where']) : null, $orderBy, $input['distinct'] ?? false, $limit);
 }
 
-function analyzed(array $input): Select|Delete|Insert|Update|ValuesQuery
+function analyzed(array $input): Select|Delete|Insert|Update|ValuesQuery|DropTable
 {
     $semantics = new Semantics();
     $tables = [];
@@ -218,6 +219,7 @@ function runCase(array $input): array
             ($input['operation'] ?? null) === 'delete' => directDelete($input),
             ($input['operation'] ?? null) === 'insert' => directInsert($input),
             ($input['operation'] ?? null) === 'update' => directUpdate($input),
+            ($input['operation'] ?? null) === 'drop-table' => new DropTable(new Identifier($input['schema']), new Identifier($input['table']), $input['ifExists']),
             ($input['operation'] ?? null) === 'values' => directValues($input),
             default => direct($input),
         };
@@ -235,6 +237,17 @@ function runCase(array $input): array
     }
     if ($value instanceof Update) {
         return observeUpdate($value);
+    }
+    if ($value instanceof DropTable) {
+        return [
+            'status' => 'constructed',
+            'operation' => 'drop-table',
+            'profile' => $value->profileId(),
+            'schema' => $value->schema->value,
+            'table' => $value->table->value,
+            'ifExists' => $value->ifExists,
+            'sql' => $value->toString(),
+        ];
     }
     if ($value instanceof ValuesQuery) {
         return observeValues($value);
