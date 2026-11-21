@@ -10,6 +10,7 @@ use SqlParser\Parser\SqlParser;
 use SqlSemantics\AnalysisContext as Context;
 use SqlSemantics\Analyzer;
 use SqlSemantics\Contract\Mode;
+use SqlSemantics\Platform\Sqlite\Ir\Analyzer as CompleteAnalyzer;
 use SqlSemantics\Platform\Sqlite\Model\Contract\AnalysisContext;
 use SqlSemantics\Platform\Sqlite\Model\Contract\LanguageProfile;
 use SqlSemantics\Platform\Sqlite\Model\Contract\ParameterStyle;
@@ -79,6 +80,14 @@ final class Semantics implements Analyzer
         $this->parser = $this->platform->parser($this->profile);
         $this->searchPath = $searchPath?->schemas;
         $this->platform->context($this->profile, $this->searchPath, [], false);
+    }
+
+    /**
+     * Offers analysis that only publishes a complete SQLite SemanticsIR value.
+     */
+    public function ir(): CompleteAnalyzer
+    {
+        return new CompleteAnalyzer($this);
     }
 
     /**

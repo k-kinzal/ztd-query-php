@@ -1,5 +1,7 @@
 # SQL Semantics
 
+[Complete statement IR](docs/semantics-ir.md) describes the dialect-owned complete IR API and its current scope.
+
 [![Packagist Downloads](https://img.shields.io/packagist/dt/k-kinzal/sql-semantics.svg?label=Packagist)](https://packagist.org/packages/k-kinzal/sql-semantics)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

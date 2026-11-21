@@ -1,0 +1,29 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\Sqlite\Ir;
+
+use SqlSemantics\Platform\Sqlite\Model\Statement\Snapshot;
+
+/**
+ * A projected expression and its observable output name.
+ *
+ * @visibility public
+ * @example Naming an explicit NULL projection
+ *     $column = new \SqlSemantics\Platform\Sqlite\Ir\ResultColumn(new \SqlSemantics\Platform\Sqlite\Ir\NullLiteral(), new \SqlSemantics\Platform\Sqlite\Ir\Identifier('value'));
+ *     $column->name->value // => 'value'
+ */
+final class ResultColumn
+{
+    use Snapshot;
+
+    /**
+     * Pairs a closed expression with its semantic result name.
+     */
+    public function __construct(
+        public readonly Arithmetic|ColumnReference|IntegerLiteral|NullLiteral|Parameter $expression,
+        public readonly Identifier $name,
+    ) {
+    }
+}
