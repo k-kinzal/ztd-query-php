@@ -16,6 +16,7 @@ from cases import (
     finite_identity, slots, structural_cases, walk,
 )
 from grammar_scope import inventory as grammar_inventory
+from runtime_distribution import checked_paths
 from scope import public_scope
 from sqlite_engine import Database
 
@@ -52,16 +53,10 @@ def verify_contract(path):
 
 def manifest(root, overlay=None):
     files = {}
-    for package in PACKAGES:
-        folder = root / "packages" / package
-        paths = [folder / name for name in ("composer.json", "composer.lock")]
-        for directory in ("src", "resources"):
-            paths.extend(path for path in (folder / directory).rglob("*") if path.is_file())
-        for path in paths:
-            require(not path.is_symlink(), "symlink-in-distribution", str(path))
-            relative = path.relative_to(root)
-            replacement = None if overlay is None else overlay / relative.relative_to("packages")
-            files[str(relative)] = digest(replacement if replacement is not None and replacement.is_file() else path)
+    for path in checked_paths(root, PACKAGES, require, digest, TOOL):
+        relative = path.relative_to(root)
+        replacement = None if overlay is None else overlay / relative.relative_to("packages")
+        files[str(relative)] = digest(replacement if replacement is not None and replacement.is_file() else path)
     return files
 
 
@@ -269,7 +264,7 @@ def verify_analyzed(worker, db, ledger):
     return len(examples)
 
 
-def run(args, db, contract, output):
+def run(args, db, contract, output, worker_factory=Worker):
     observed = collections.defaultdict(collections.Counter)
     ids = collections.Counter()
     deadline = time.monotonic() + contract["exploration"]["timeoutSeconds"]
@@ -287,7 +282,7 @@ def run(args, db, contract, output):
             ids[finite_identity(response["source"], response["columns"])] += 1
 
     current = None
-    with output.open("w") as stream, Worker(args, deadline) as worker:
+    with output.open("w") as stream, worker_factory(args, deadline) as worker:
         ledger = Ledger(stream)
         try:
             for index, item in enumerate(finite_cases()):

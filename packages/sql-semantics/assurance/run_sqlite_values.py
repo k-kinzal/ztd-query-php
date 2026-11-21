@@ -105,7 +105,7 @@ def negatives():
     yield case([[["arithmetic", "+", ATOMS[0], ["column", 0]]]]), "visible occurrence"
 
 
-def execute(args, specification, db):
+def execute(args, specification, db, worker_factory=Worker):
     settings = specification["exploration"]
     items = [(f"finite/{index}", request) for index, request in enumerate(finite_cases())]
     items.extend((f"seed/{seed}/{index}", request) for seed in settings["seeds"]
@@ -113,7 +113,7 @@ def execute(args, specification, db):
     observed = Counter()
     forms = Counter()
     current = None
-    with (args.out / "events.jsonl").open("w") as stream, Worker(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
+    with (args.out / "events.jsonl").open("w") as stream, worker_factory(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
         ledger = Ledger(stream)
         try:
             for start in range(0, len(items), 16):

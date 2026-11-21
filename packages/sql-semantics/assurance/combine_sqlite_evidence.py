@@ -3,10 +3,13 @@
 import argparse
 import json
 import os
+import subprocess
 from pathlib import Path
 from typing import NamedTuple
 
-from run import IMAGE, TOOL, digest, require, write_json
+from evidence_transcript import REPLAY_CONTRACT, load_replay_contract
+from replay_sqlite_evidence import replay
+from run import IMAGE, TOOL, digest, manifest, require, verify_distribution, write_json
 from scope import CONTRACTS
 
 
@@ -33,7 +36,7 @@ DOMAINS = (
 )
 
 
-def collect(path, domain, commit, tools, allow_local):
+def collect(path, domain, commit, tools, allow_local, library):
     index_path = path / "index.json"
     distribution = digest(path / "distribution.json")
     index = json.loads(index_path.read_text())
@@ -62,11 +65,14 @@ def collect(path, domain, commit, tools, allow_local):
         require(len({fault["case"] for fault in fault_records}) == domain.faults and
                 all(fault["control"] == "passed" and fault["expected"] == fault["observed"] for fault in fault_records),
                 "domain-fault-signal-mismatch", str(index_path))
+    replayed = replay(path, domain.contract, index, library)
+    require(replayed == counts["attempted"], "evidence-replay-count-mismatch", domain.contract)
     return {
         "index": str(index_path), "indexDigest": digest(index_path), "eventsDigest": digest(path / "events.jsonl"),
         "contract": index["contract"], "distribution": distribution, "engine": index["engine"]["libraryDigest"],
         "isolation": isolation, "finite": len(finite_ids), "compared": counts["compared"],
         "rejected": counts["rejected"], "faults": len(fault_records),
+        "replayedRequests": replayed,
     }
 
 
@@ -74,14 +80,28 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", required=True, type=Path, help="Parent of the standard evidence directories")
     parser.add_argument("--candidate", required=True)
+    parser.add_argument("--candidate-root", required=True, type=Path)
+    parser.add_argument("--sqlite-library", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--allow-local", action="store_true", help="Include diagnostic evidence without container isolation")
     args = parser.parse_args()
+    load_replay_contract()
+    candidate = args.candidate_root.resolve()
+    args.root = args.root.resolve()
+    args.out = args.out.resolve()
+    require(all(path != candidate and candidate not in path.parents for path in (args.root, args.out)),
+            "evidence-directory-inside-candidate")
+    require(subprocess.check_output(["git", "-C", str(candidate), "rev-parse", "HEAD"], text=True).strip() == args.candidate,
+            "evidence-checkout-mismatch")
+    actual = manifest(candidate)
+    initial = args.root / DOMAINS[0].directory / "distribution.json"
+    verify_distribution(json.loads(initial.read_text()), actual)
     tools = {file.name: digest(file) for file in TOOL.iterdir() if file.suffix in (".py", ".php", ".json")}
-    domains = {domain.contract: collect(args.root / domain.directory, domain, args.candidate, tools, args.allow_local)
+    domains = {domain.contract: collect(args.root / domain.directory, domain, args.candidate, tools, args.allow_local, args.sqlite_library)
                for domain in DOMAINS}
     require(len({record["distribution"] for record in domains.values()}) == 1, "mixed-evidence-distribution")
     require(len({record["engine"] for record in domains.values()}) == 1, "mixed-evidence-engine")
+    verify_distribution(actual, manifest(candidate))
     args.out.mkdir(parents=True, exist_ok=False)
     for row in domains.values():
         row["index"] = os.path.relpath(row["index"], args.out)
@@ -89,6 +109,7 @@ def main():
         "candidate": args.candidate, "status": "provisional", "domains": domains,
         "repositoryAcceptanceProtection": "unconfigured", "humanApproval": "pending",
         "classification": "independent database evidence in the checked domains",
+        "replayContract": REPLAY_CONTRACT,
     })
     lines = [
         "# SQLite assurance evidence", "", f"Candidate `{args.candidate}`.", "",

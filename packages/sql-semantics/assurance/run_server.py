@@ -20,6 +20,7 @@ DIALECTS = ("mysql", "postgres")
 class Observer(Worker):
     def __init__(self, dialect, deadline):
         self.deadline = deadline
+        self.startup_timeout = None
         self.proc = subprocess.Popen(
             ["php", str(TOOL / "server_observer.php"), dialect],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0,
@@ -77,6 +78,7 @@ def check_analyzed(dialect, tag, worker, db, ledger):
         ledger.record(key, "attempted", input=item)
         result = worker.request(item)
         require(result["status"] == "constructed", "server-analysis-rejected", result)
+        require(result["profile"].startswith(tag + "/"), "server-analysis-release-mismatch", result)
         ledger.record(key, "constructed", response=result)
         if index == 0:
             require(result["columns"][0][0] == result["columns"][1][0] == ["slot", 0],
@@ -85,7 +87,7 @@ def check_analyzed(dialect, tag, worker, db, ledger):
         after = observation(db.request({"sql": result["sql"]}))
         require(before["status"] == "rows", "server-original-rejected", before)
         same(before, after)
-        ledger.record(key, "compared", observation=after)
+        ledger.record(key, "compared", original=before, observation=after)
 
 
 def negatives(dialect):
@@ -109,12 +111,12 @@ def negatives(dialect):
     return invalid
 
 
-def run_dialect(dialect, release, args, settings, path):
+def run_dialect(dialect, release, args, settings, path, worker_factory=Worker, observer_factory=Observer):
     tag = ("pg-" if dialect == "postgres" else "mysql-") + release
     deadline = time.monotonic() + settings["timeoutSeconds"]
     exported = collections.Counter()
     histogram = collections.Counter()
-    with path.open("w") as stream, Observer(dialect, deadline) as db, Worker(args, deadline, script="server_worker.php") as worker:
+    with path.open("w") as stream, observer_factory(dialect, deadline) as db, worker_factory(args, deadline, script="server_worker.php") as worker:
         ledger = Ledger(stream)
         check_server(dialect, release, db)
         current_input = None

@@ -165,7 +165,7 @@ def negatives():
     yield {"sql": "DROP INDEX ir_drop_lookup", "declarations": DECLARATIONS}, "requires the TABLE object kind"
 
 
-def execute(args, specification, db):
+def execute(args, specification, db, worker_factory=Worker):
     settings = specification["exploration"]
     enabled = db.observe("PRAGMA foreign_keys", {})["rows"]
     require(enabled == [[["integer", "1"]]], "drop-table-foreign-key-mode-mismatch", enabled)
@@ -175,7 +175,7 @@ def execute(args, specification, db):
     observed = Counter()
     forms = Counter()
     current = None
-    with (args.out / "events.jsonl").open("w") as stream, Worker(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
+    with (args.out / "events.jsonl").open("w") as stream, worker_factory(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
         ledger = Ledger(stream)
         try:
             for start in range(0, len(items), 16):

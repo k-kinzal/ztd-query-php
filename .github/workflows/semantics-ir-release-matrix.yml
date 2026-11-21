@@ -144,11 +144,21 @@ jobs:
       contents: read
     timeout-minutes: 5
     steps:
+      - name: Validate the requested candidate identity
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+        run: test "${#CANDIDATE}" -eq 40 && [[ "$CANDIDATE" =~ ^[0-9a-f]+$ ]]
       - name: Check out the acceptance tools from the workflow revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.workflow_sha }}
           path: trusted
+          persist-credentials: false
+      - name: Check out the candidate for distribution verification
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.candidate }}
+          path: candidate
           persist-credentials: false
       - name: Download the protected release records
         env:
@@ -168,7 +178,8 @@ jobs:
             indexes=("${indexes[@]:1}")
           fi
           python3 trusted/packages/sql-semantics/assurance/combine_server_evidence.py \
-            --candidate "$CANDIDATE" --out "$RUNNER_TEMP/server-matrix.json" "${indexes[@]}"
+            --candidate "$CANDIDATE" --candidate-root candidate \
+            --out "$RUNNER_TEMP/server-matrix.json" "${indexes[@]}"
       - name: Preserve the native projection matrix report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

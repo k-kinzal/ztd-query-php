@@ -88,7 +88,7 @@ The SQLite evidence also writes `scope.json`. It compares the AST inventory with
 
 For a single declared release, pass `--engine mysql --release 8.4.7` or `--engine postgres --release 16.6` and connect the observer to that release. The runner checks the exact server version before comparing any case. The [manual release matrix](../../../.github/workflows/semantics-ir-release-matrix.yml) pins images for all nine MySQL releases and both PostgreSQL releases. Its artifacts are keyed by engine and release. Every matrix result remains specific to the native projection domain.
 
-To join the independent evidence from all native server releases, run `combine_server_evidence.py --candidate "$candidate_sha" --out server-matrix.json` with the paths to the per-release `index.json` files. All inputs must identify the same candidate, distribution, contract and tools. The join fails when a required release is missing, appears twice or has incomplete evidence.
+To join the independent evidence from all native server releases, run `combine_server_evidence.py --candidate "$candidate_sha" --candidate-root /path/to/candidate --out server-matrix.json` with the paths to the per-release `index.json` files. The join checks the candidate checkout, the distribution, contract and tools. The join reproduces the required requests, recomputes the direct oracle and compares both recorded observations for analyzed statements. A missing or duplicate release, missing original observation or changed ledger fails the join. Collect server observations with the revised runner before replaying them.
 
 ## SQLite joins, filters and ordering
 
@@ -184,7 +184,17 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run_sqlite_in
 
 The fixture uses two same-named tables with different data and conflict behavior, one generated column, a default and an ordered insert-trigger log. The evaluator models the fixture's affinities and defaults, records which writes succeed, and checks the full state after the specific constraint error. Each observation runs inside a savepoint. Comparisons include the native parameter labels and check the statement change count independently of trigger effects.
 
-The acceptance workflow calls `combine_sqlite_evidence.py` after the domain runners. It checks that every domain index names the same candidate and compares its recorded tool and distribution digests, engine, finite counts and fault records. It links the individual indices and observation logs from a single generated summary. A local diagnostic bundle requires `--allow-local` and records which domains ran without isolation. A bundle records provisional evidence while human approval and repository-level protection are pending.
+The acceptance workflow calls `combine_sqlite_evidence.py` after the domain runners. It checks the candidate checkout and requires that every domain index name the same candidate, distribution, tools and engine. The collector starts fresh databases from the pinned SQLite library and reconstructs each required request in order. The recorded PHP responses must match those requests. The collector reexecutes the SQL, compares the observations and requires the reproduced event stream and summary to match the original. Candidate PHP execution and isolation are recorded by the original runner.
+
+```sh
+python3 packages/sql-semantics/assurance/combine_sqlite_evidence.py \
+  --root /path/to/domain-reports --candidate "$candidate_sha" --candidate-root /path/to/candidate \
+  --sqlite-library "$third_party/libsqlite3.so" --out /path/to/sqlite-index
+```
+
+Use `--allow-local` for diagnostic input. The resulting index records which domains ran without isolation. A bundle records provisional evidence while human approval and repository-level protection are pending. The workflow also runs `assurance_controls.py` to check missing requests and responses, altered observation rows, extra comparisons, unchecked list storage and a changed Composer bootstrap. It preserves the controls alongside F01–F12.
+
+The source audit checks a fixed storage catalogue for all array-valued fields of the completed constructors. It checks the element domain and minimum length, requires a single unconditional assignment from the checked copy and detects assignments through local variables and destructuring. The reviewed scalar-copy form covers VALUES rows. Every admitted child class is final under the existing audit. These checks support the recursive storage argument under the pinned list-copy and restoration primitives. They leave SQL semantics and external schema facts as separate obligations. The runtime package audit also verifies the fixed Composer PSR-4 prefixes, runtime requirements and the absence of symlinks in each checked tree.
 
 The addition of the local input widened the first source type in `Select`. F05 now applies its original-SQL property injection at that declaration. Its fixture, expected shape failure and mandatory presence are preserved.
 

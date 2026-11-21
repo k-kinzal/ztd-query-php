@@ -19,6 +19,7 @@ use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 
 require $argv[1];
+require __DIR__ . '/value_storage.php';
 $root = $argv[2];
 $overlay = $argv[3] ?? '';
 $dialect = $argv[4] ?? 'sqlite';
@@ -197,6 +198,13 @@ try {
         requireShape(is_file($file) && hash_file('sha256', $file) === $approved, "Value primitive differs from the recorded baseline: $path");
     }
     $base = $package . '/src/Ir';
+    $storagePath = __DIR__ . '/value-storage-v1.json';
+    requireShape(
+        hash_file('sha256', $storagePath) === '781a1a27761f2bd3f0f28533078877489bce751e96b9fc3b34f704fdea859413',
+        'Value storage contract differs from the recorded revision'
+    );
+    $storage = json_decode(file_get_contents($storagePath), true, 512, JSON_THROW_ON_ERROR)['dialects'][$dialect];
+    $listFields = [];
     $directory = $root . '/packages/' . $base . '/';
     $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
     $observed = [];
@@ -252,6 +260,13 @@ try {
         $danger = $finder->findFirst($ast, static fn ($node) => $node instanceof Expr\Eval_ || $node instanceof Expr\Include_
             || $node instanceof Expr\ShellExec || $node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction
             || $node instanceof Expr\AssignRef || $node instanceof PhpParser\Node\ArrayItem && $node->byRef || $node instanceof Expr\Print_ || $node instanceof Expr\Exit_ || $node instanceof Stmt\Echo_
+            || $node instanceof Stmt\Global_ || $node instanceof Stmt\Static_
+            || $node instanceof Stmt\Foreach_ && $node->byRef
+            || $node instanceof PhpParser\Node\Param && ($node->byRef || $node->variadic)
+            || $node instanceof PhpParser\Node\Arg && ($node->byRef || $node->unpack)
+            || $node instanceof Stmt\ClassMethod && $node->byRef
+            || $node instanceof PhpParser\Node\PropertyHook
+            || $node instanceof PhpParser\Node\MatchArm && $node->conds === null
             || $node instanceof Expr\Variable && (!is_string($node->name) || str_starts_with($node->name, '_') || $node->name === 'GLOBALS')
             || $node instanceof Expr\New_ && !$node->class instanceof Name
             || $node instanceof Expr\StaticCall && (!$node->class instanceof Name || !$node->name instanceof Identifier)
@@ -302,10 +317,18 @@ try {
         requireShape(array_map(static fn ($name) => $name->toString(), $class->implements) === (in_array($short, $roots, true) ? ['SqlSemantics\\SemanticsIR'] : []), "Interfaces differ in $short");
         $traits = $finder->findInstanceOf($class->stmts, TraitUse::class);
         requireShape(count($traits) === 1 && count($traits[0]->traits) === 1 && $traits[0]->traits[0]->toString() === $snapshot && $traits[0]->adaptations === [], "Snapshot paths differ in $short");
+        $role = str_replace('\\', '/', $short);
+        $arrays = $storage[$role] ?? [];
+        checkValueStorage($class, $expected, $arrays, $short, $prefix, $platform . '\\Model\\Diagnostic\\Check', $parser, $printer, $finder);
+        if ($arrays !== []) {
+            $listFields[$role] = array_keys($arrays);
+        }
     }
     requireShape(array_diff([...array_keys($properties), ...$internal], $observed) === [] && count($observed) === count($properties) + count($internal), 'Closed IR inventory differs');
     sort($observed);
-    echo json_encode(['status' => 'verified', 'types' => $observed]) . "\n";
+    ksort($listFields);
+    requireShape(array_keys($listFields) === array_keys($storage), 'List storage catalogue is incomplete');
+    echo json_encode(['status' => 'verified', 'types' => $observed, 'checkedLists' => $listFields]) . "\n";
 } catch (RuntimeException $failure) {
     echo json_encode(['status' => 'shape-mismatch', 'message' => $failure->getMessage()]) . "\n";
     exit(1);

@@ -142,12 +142,12 @@ def shrink(worker, db, item, signal):
     return None
 
 
-def execute(args, specification, db, path):
+def execute(args, specification, db, path, worker_factory=Worker):
     settings = specification["exploration"]
     deadline = time.monotonic() + settings["timeoutSeconds"]
     observed = collections.Counter()
     coverage = collections.defaultdict(collections.Counter)
-    with path.open("w") as stream, Worker(args, deadline) as worker:
+    with path.open("w") as stream, worker_factory(args, deadline) as worker:
         ledger = Ledger(stream)
         current = None
         try:

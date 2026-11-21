@@ -111,7 +111,7 @@ def negative_cases():
     yield {"sql": "SELECT 1 LIMIT 1 OFFSET NULL", "declarations": []}, "OFFSET requires an integer literal"
 
 
-def execute(args, specification, db):
+def execute(args, specification, db, worker_factory=Worker):
     settings = specification["exploration"]
     finite = list(finite_cases())
     items = [(f"finite/{index}", item) for index, item in enumerate(finite)]
@@ -121,7 +121,7 @@ def execute(args, specification, db):
     seen = Counter()
     coverage = Counter()
     current = None
-    with (args.out / "events.jsonl").open("w") as stream, Worker(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
+    with (args.out / "events.jsonl").open("w") as stream, worker_factory(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
         ledger = Ledger(stream)
         try:
             for start in range(0, len(items), 12):

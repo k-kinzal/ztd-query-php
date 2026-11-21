@@ -154,7 +154,7 @@ def negatives():
     yield {"sql": "CREATE TABLE unavailable.t (a INTEGER)", "declarations": []}, "requires a known schema"
 
 
-def execute(args, specification, db):
+def execute(args, specification, db, worker_factory=Worker):
     settings = specification["exploration"]
     items = [(f"finite/{index}", item) for index, item in enumerate(finite_cases())]
     items.extend((f"seed/{seed}/{index}", item) for seed in settings["seeds"]
@@ -162,7 +162,7 @@ def execute(args, specification, db):
     observed = Counter()
     forms = Counter()
     current = None
-    with (args.out / "events.jsonl").open("w") as stream, Worker(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
+    with (args.out / "events.jsonl").open("w") as stream, worker_factory(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
         ledger = Ledger(stream)
         try:
             for start in range(0, len(items), 16):

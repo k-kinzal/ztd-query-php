@@ -159,7 +159,7 @@ def negatives():
     yield {"sql": "DELETE FROM main.ir_delete RETURNING key", "declarations": DECLARATIONS}, "rejected", "without WITH or RETURNING"
 
 
-def execute(args, spec, db):
+def execute(args, spec, db, worker_factory=Worker):
     settings = spec["exploration"]
     items = [(f"finite/{index}", request) for index, request in enumerate(finite_cases())]
     items.extend((f"seed/{seed}/{index}", request) for seed in settings["seeds"]
@@ -167,7 +167,7 @@ def execute(args, spec, db):
     observed = Counter()
     graph = Counter()
     current = None
-    with (args.out / "events.jsonl").open("w") as stream, Worker(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
+    with (args.out / "events.jsonl").open("w") as stream, worker_factory(args, time.monotonic() + settings["timeoutSeconds"]) as worker:
         ledger = Ledger(stream)
         try:
             for start in range(0, len(items), 12):
