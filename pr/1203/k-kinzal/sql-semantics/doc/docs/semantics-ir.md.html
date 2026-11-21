@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Complete SemanticsIR values — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/1203/k-kinzal/sql-semantics/doc/docs/semantics-ir.md.html">
+<meta name="description" content="Complete SemanticsIR values, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Complete SemanticsIR values — ZTD Query PHP">
+<meta property="og:description" content="Complete SemanticsIR values, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/1203/k-kinzal/sql-semantics/doc/docs/semantics-ir.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/1203/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/index.html" title="SqlSemantics">SqlSemantics</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Contract/index.html" title="SqlSemantics\Contract">SqlSemantics\Contract</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/semantics-ir.md</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing a313b30f917 to working tree">a313b30f917 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between a313b30f917 and working tree." data-off="This page documents what a313b30f917 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Complete SemanticsIR values</h1><div class="symbol-meta"><span class="source-link">docs/semantics-ir.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to a313b30f917.</div>
+<section class="readme prose" data-diff="added"><div class="doc-block" data-diff="added"><h2>Complete SemanticsIR values</h2>
+</div><div class="doc-block" data-diff="added"><p><code>SqlSemantics\SemanticsIR</code> and <code>SqlSemantics\IrAnalyzer</code> are shared interfaces. The database package supplies the operation classes, operand types, scope checks, and SQL representation. The initial SQLite implementation provides a single projection over zero or one external table under SQLite 3.47.2.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\Sqlite\Semantics</span>;
+
+<span class="tok-var">$sqlite</span> = <span class="tok-kw">new</span> <span class="tok-id">Semantics</span>();
+<span class="tok-var">$accounts</span> = <span class="tok-var">$sqlite</span>-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;CREATE TABLE accounts (Id INTEGER, balance INTEGER)&#039;</span>);
+<span class="tok-var">$ir</span> = <span class="tok-var">$sqlite</span>-&gt;<span class="tok-id">ir</span>()-&gt;<span class="tok-id">analyze</span>(
+    <span class="tok-str">&#039;SELECT id, accounts.id, balance - ?2 AS remaining FROM accounts&#039;</span>,
+    [<span class="tok-var">$accounts</span>],
+);
+
+<span class="tok-id">assert</span>(<span class="tok-var">$ir</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">expression</span>-&gt;<span class="tok-id">slot</span> === <span class="tok-var">$ir</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">expression</span>-&gt;<span class="tok-id">slot</span>);
+<span class="tok-kw">echo</span> <span class="tok-var">$ir</span>-&gt;<span class="tok-id">toString</span>();</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The source has an absolute schema and table name. Its ordered slots carry only the names of the referenced columns. Both occurrences of <code>id</code> refer to one slot. The output name <code>Id</code> is a separate value, and the two occurrences remain separate positions in the result. Interpreting or rendering the value requires no parser or declaration context. Evaluation supplies the same external objects and SQLite storage values and binds the numbered parameter at slot 2.</p>
+</div><div class="doc-block" data-diff="added"><p>You can build the same structure directly with classes in <code>SqlSemantics\Platform\Sqlite\Ir</code>. Use <code>TableSource</code> to declare the external column slots, <code>ColumnReference</code> to address a slot, <code>ResultColumn</code> to associate an expression with its output name, and <code>Select</code> to close the scope. A direct source is an assertion about the external schema supplied for evaluation. Analysis establishes that assertion against the supplied declaration.</p>
+</div><div class="doc-block" data-diff="added"><h3>Supported SQLite scope</h3>
+</div><div class="doc-block" data-diff="added"><ul><li>One plain SELECT with explicit result expressions and at most one base table source. A named source must resolve to a complete declaration. Column expressions resolve to explicitly declared table columns.</li><li>Integer literals in the signed 64-bit range, NULL, numbered SQLite parameters, column references, and binary addition, subtraction and multiplication.</li><li>Result order, result names, SQLite storage classes and values, repeated rows, and numeric parameter slots and labels. The result rows form a multiset because this domain has no ordering clause.</li><li>The default UTF-8 profile with short column names enabled and full column names disabled. The engine uses the standard SQLite 3.47.2 limits. The initial IR domain also bounds identifier length, the number of result columns, and expanded expression size.</li></ul>
+</div><div class="doc-block" data-diff="added"><p>Other clauses, expressions and statement families fail through the complete entry point. The legacy <code>Semantics::analyze()</code> continues to provide <code>Operation</code> for declaration extraction, diagnostic facts and the broader syntax domain. Those values may have unresolved dependencies. Existing callers can continue using that API. To start consuming complete values, switch query call sites to <code>$sqlite-&gt;ir()-&gt;analyze()</code>, handle <code>SqlSemantics\AnalysisException</code>, and use concrete SQLite value classes for traversal. Use the legacy API to prepare declarations. MySQL and PostgreSQL complete IR implementations are still open obligations.</p>
+</div><div class="doc-block" data-diff="added"><h3>Construction and evidence</h3>
+</div><div class="doc-block" data-diff="added"><div class="table-wrap"><table><thead><tr><th>Requirement</th><th>Mechanism in the initial SQLite domain</th></tr></thead><tbody><tr><td>P01</td><td>The root identifies the language profile. Every operator has a closed enum case. Table identity and numbered parameters are explicit. Column references index local source slots.</td></tr><tr><td>P02</td><td>Final classes close operand alternatives. Checked list construction copies arrays by value. The SELECT constructor checks scope, count and expanded expression limits before returning. Analysis uses the same constructor.</td></tr><tr><td>P03</td><td>The root holds only a projection and its semantic source identity. A result name derived from SQL spelling is carried as the observed label and emitted as a quoted alias.</td></tr><tr><td>P04</td><td>Each arithmetic node stores ordered operands. Expressions can be read or reconstructed by matching their concrete types. The source and references resolve locally in the root.</td></tr><tr><td>P05</td><td>Every published property is readonly. The operand types and list element classes are closed. <code>Snapshot</code> blocks cloning, dynamic properties and PHP serialization and restoration.</td></tr><tr><td>P06</td><td>The emitter visits every expression alternative, writes grouping explicitly, quotes identifiers, and emits a result name for every projection. Independent execution checks the observations on SQLite 3.47.2 within the recorded domain.</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="added"><p>These checks cover the initial domain. The full scope and status of the remaining obligations are recorded in the <span class="md-target" title="../assurance/contract-v1.json">contract ledger</span> and the <a href="../../../../k-kinzal/sql-semantics/doc/assurance/README.md.html">evidence guide</a>.</p>
+</div></section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
