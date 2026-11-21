@@ -16,7 +16,7 @@ from cases import (
     finite_identity, slots, structural_cases, walk,
 )
 from grammar_scope import inventory as grammar_inventory
-from runtime_distribution import checked_paths
+from runtime_distribution import IDENTITY_CONTRACT, PACKAGE_FILES, checked_bytes, checked_commit, checked_paths
 from scope import public_scope
 from sqlite_engine import Database
 
@@ -60,6 +60,22 @@ def manifest(root, overlay=None):
     return files
 
 
+def candidate_distribution(root, expected=None):
+    commit, object_format, committed = checked_commit(root, PACKAGES, require, digest, TOOL, expected)
+    measured, observed = {}, {}
+    for path in checked_paths(root, PACKAGES, require, digest, TOOL):
+        relative = path.relative_to(root).as_posix()
+        measured[relative], observed[relative] = checked_bytes(path, object_format)
+    require(committed == observed, "candidate-commit-content-mismatch", sorted(
+        key for key in committed.keys() | observed.keys() if committed.get(key) != observed.get(key)
+    ))
+    return commit, measured
+
+
+def verify_candidate(root, commit, distribution):
+    verify_distribution(distribution, candidate_distribution(root, commit)[1])
+
+
 def verify_distribution(recorded, actual):
     require(recorded == actual, "distribution-mismatch", sorted(
         key for key in recorded.keys() | actual.keys() if recorded.get(key) != actual.get(key)
@@ -85,8 +101,13 @@ class Worker:
                 "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
                 "--user", "65534:65534", "--pids-limit", "64", "--memory", "256m",
                 "-v", f"{TOOL / script}:/worker.php:ro",
-                "-v", f"{args.candidate / 'packages'}:/candidate/packages:ro",
             ]
+            for package in PACKAGES:
+                for tree in PACKAGE_FILES[2:]:
+                    relative = f"packages/{package}/{tree}"
+                    source = args.candidate / relative
+                    if source.is_dir():
+                        command.extend(["-v", f"{source}:/candidate/{relative}:ro"])
             if overlay:
                 command.extend(["-v", f"{overlay}:/overlay:ro"])
             command.extend([IMAGE, "php", "/worker.php", "/candidate"])
@@ -420,16 +441,15 @@ def main():
     args.tool_autoload = args.tool_autoload.resolve()
     args.out = args.out.resolve()
     if args.verify_distribution:
-        verify_distribution(json.loads(args.verify_distribution.read_text()), manifest(args.candidate))
+        verify_distribution(json.loads(args.verify_distribution.read_text()), candidate_distribution(args.candidate)[1])
         return
     require(args.candidate not in args.out.parents and args.candidate != args.out, "evidence-directory-inside-candidate")
     args.out.mkdir(parents=True, exist_ok=False)
     contract_path = TOOL / "contract-v1.json"
     verify_contract(contract_path)
     contract = json.loads(contract_path.read_text())
-    distribution = manifest(args.candidate)
+    commit, distribution = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", distribution)
-    commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
     inventory = args.out / "inventory.json"
     with inventory.open("w") as stream:
         subprocess.run(["php", str(TOOL / "inventory.php"), str(args.candidate), str(args.tool_autoload)], stdout=stream, check=True, timeout=60)
@@ -451,9 +471,9 @@ def main():
     checks = run(args, db, contract, args.out / "events.jsonl")
     from faults import exercise
     faults = exercise(args, db, distribution)
-    verify_distribution(distribution, manifest(args.candidate))
+    verify_candidate(args.candidate, commit, distribution)
     index = {
-        "status": "provisional-initial-domain", "commit": commit,
+        "status": "provisional-initial-domain", "commit": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
         "contract": CONTRACT_DIGEST, "distribution": digest(args.out / "distribution.json"),
         "toolDigests": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in {".py", ".php", ".json"}},
         "scope": contract["requiredScope"], "profile": contract["initialExecutableDomain"]["profile"],

@@ -28,9 +28,9 @@ PYTHONDONTWRITEBYTECODE=1 python3 packages/sql-semantics/assurance/run.py \
   --out "$evidence"
 ```
 
-The host owns the case generation, comparator, SQLite database, and evidence path. The candidate worker has read-only mounts, no network, no added capabilities, and memory and process limits. The static inventory reads PHP as data. It does not use the candidate's Composer autoloader. `--local` disables worker isolation for debugging. The evidence records the actual isolation mode.
+The host owns the case generation, comparator, SQLite database, and evidence path. The candidate worker mounts the verified source and resource trees read-only. It has no network, no added capabilities, and memory and process limits. The static inventory reads PHP as data. It does not use the candidate's Composer autoloader. `--local` disables worker isolation for debugging. The evidence records the actual isolation mode.
 
-Use `--verify-distribution "$evidence/distribution.json"` with the same arguments to compare a checkout with the captured files. The manifest covers source, resources and locked dependencies of the four Semantics packages and SQL Parser. It does not pin the contents of a downstream Composer installation. Use the library and tool digests recorded in the evidence when comparing runs.
+Use `--verify-distribution "$evidence/distribution.json"` with the same arguments to compare a checkout with the captured files. The manifest covers source, resources and locked dependencies of the four Semantics packages and SQL Parser. These files must match the paths and blobs in the candidate commit before and after observation collection. An archive that omits locked files must restore them from the candidate commit first. It does not pin the contents of a downstream Composer installation. Use the library and tool digests recorded in the evidence when comparing runs.
 
 ## Publication contract
 
@@ -192,7 +192,7 @@ python3 packages/sql-semantics/assurance/combine_sqlite_evidence.py \
   --sqlite-library "$third_party/libsqlite3.so" --out /path/to/sqlite-index
 ```
 
-Use `--allow-local` for diagnostic input. The resulting index records which domains ran without isolation. A bundle records provisional evidence while human approval and repository-level protection are pending. The workflow also runs `assurance_controls.py` to check missing requests and responses, altered observation rows, extra comparisons, unchecked list storage and a changed Composer bootstrap. It preserves the controls alongside F01–F12.
+Use `--allow-local` for diagnostic input. The resulting index records which domains ran without isolation. A bundle records provisional evidence while human approval and repository-level protection are pending. The workflow also runs `assurance_controls.py` to check missing requests and responses, altered observation rows, extra comparisons, unchecked list storage, a changed Composer bootstrap, and altered, missing or untracked runtime files under an unchanged candidate commit. It preserves the controls alongside F01–F12.
 
 The source audit checks a fixed storage catalogue for all array-valued fields of the completed constructors. It checks the element domain and minimum length, requires a single unconditional assignment from the checked copy and detects assignments through local variables and destructuring. The reviewed scalar-copy form covers VALUES rows. Every admitted child class is final under the existing audit. These checks support the recursive storage argument under the pinned list-copy and restoration primitives. They leave SQL semantics and external schema facts as separate obligations. The runtime package audit also verifies the fixed Composer PSR-4 prefixes, runtime requirements and the absence of symlinks in each checked tree.
 

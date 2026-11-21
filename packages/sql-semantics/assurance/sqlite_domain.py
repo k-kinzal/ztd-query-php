@@ -3,12 +3,11 @@
 import argparse
 import difflib
 import json
-import subprocess
 import time
 from pathlib import Path
 from typing import NamedTuple
 
-from run import IMAGE, TOOL, Failure, Worker, digest, manifest, require, shape, verify_distribution, write_json
+from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Worker, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from sqlite_engine import Database
 
 FAULT_STARTUP_SECONDS = 180
@@ -89,8 +88,7 @@ def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults):
     contract = TOOL / contract_name
     require(digest(contract) == sha256, "contract-mismatch", contract_name)
     specification = json.loads(contract.read_text())
-    commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
-    distribution = manifest(args.candidate)
+    commit, distribution = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", distribution)
     db = Database(args.sqlite_library)
     require(db.version == "3.47.2", "engine-version-mismatch", db.version)
@@ -108,7 +106,7 @@ def run_domain(label, contract_name, sha256, schema_sql, execute, check_faults):
             "signal": failure.signal if isinstance(failure, Failure) else "unexpected-error",
         })
         raise
-    verify_distribution(distribution, manifest(args.candidate))
+    verify_candidate(args.candidate, commit, distribution)
     write_json(args.out / "index.json", {
         "status": f"provisional-sqlite-{label.lower()}-domain", "candidate": commit, "contract": sha256,
         "distribution": digest(args.out / "distribution.json"), "isolation": "none" if args.local else IMAGE,

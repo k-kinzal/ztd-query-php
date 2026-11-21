@@ -3,13 +3,12 @@
 import argparse
 import json
 import os
-import subprocess
 from pathlib import Path
 from typing import NamedTuple
 
 from evidence_transcript import REPLAY_CONTRACT, load_replay_contract
 from replay_sqlite_evidence import replay
-from run import IMAGE, TOOL, digest, manifest, require, verify_distribution, write_json
+from run import IDENTITY_CONTRACT, IMAGE, TOOL, candidate_distribution, digest, require, verify_candidate, verify_distribution, write_json
 from scope import CONTRACTS
 
 
@@ -41,7 +40,8 @@ def collect(path, domain, commit, tools, allow_local, library):
     distribution = digest(path / "distribution.json")
     index = json.loads(index_path.read_text())
     require(index["status"].startswith("provisional-"), "evidence-status-mismatch", str(index_path))
-    require(index.get("candidate", index.get("commit")) == commit, "evidence-candidate-mismatch", str(index_path))
+    require(index.get("candidate", index.get("commit")) == commit
+            and index.get("candidateIdentityContract") == IDENTITY_CONTRACT, "evidence-candidate-mismatch", str(index_path))
     require(index["distribution"] == distribution, "evidence-distribution-mismatch", str(index_path))
     require(index["contract"] == CONTRACTS[domain.contract], "evidence-contract-mismatch", str(index_path))
     require(index.get("tools", index.get("toolDigests")) == tools, "evidence-tool-mismatch", str(index_path))
@@ -91,9 +91,7 @@ def main():
     args.out = args.out.resolve()
     require(all(path != candidate and candidate not in path.parents for path in (args.root, args.out)),
             "evidence-directory-inside-candidate")
-    require(subprocess.check_output(["git", "-C", str(candidate), "rev-parse", "HEAD"], text=True).strip() == args.candidate,
-            "evidence-checkout-mismatch")
-    actual = manifest(candidate)
+    _, actual = candidate_distribution(candidate, args.candidate)
     initial = args.root / DOMAINS[0].directory / "distribution.json"
     verify_distribution(json.loads(initial.read_text()), actual)
     tools = {file.name: digest(file) for file in TOOL.iterdir() if file.suffix in (".py", ".php", ".json")}
@@ -101,7 +99,7 @@ def main():
                for domain in DOMAINS}
     require(len({record["distribution"] for record in domains.values()}) == 1, "mixed-evidence-distribution")
     require(len({record["engine"] for record in domains.values()}) == 1, "mixed-evidence-engine")
-    verify_distribution(actual, manifest(candidate))
+    verify_candidate(candidate, args.candidate, actual)
     args.out.mkdir(parents=True, exist_ok=False)
     for row in domains.values():
         row["index"] = os.path.relpath(row["index"], args.out)
@@ -109,7 +107,7 @@ def main():
         "candidate": args.candidate, "status": "provisional", "domains": domains,
         "repositoryAcceptanceProtection": "unconfigured", "humanApproval": "pending",
         "classification": "independent database evidence in the checked domains",
-        "replayContract": REPLAY_CONTRACT,
+        "replayContract": REPLAY_CONTRACT, "candidateIdentityContract": IDENTITY_CONTRACT,
     })
     lines = [
         "# SQLite assurance evidence", "", f"Candidate `{args.candidate}`.", "",

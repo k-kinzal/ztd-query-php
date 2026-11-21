@@ -5,11 +5,12 @@ import copy
 import difflib
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 from evidence_transcript import events, load_replay_contract
 from replay_sqlite_evidence import replay
-from run import PACKAGES, Failure, digest, manifest, require, shape, write_json
+from run import IDENTITY_CONTRACT, TOOL, PACKAGES, Failure, candidate_distribution, digest, manifest, require, shape, write_json
 
 
 def observe_rejection(test, expected):
@@ -60,13 +61,17 @@ def evidence_controls(args):
     return results
 
 
-def distribution_control(args, distribution):
-    fixture = args.out / "runtime-package"
+def copy_package_metadata(args, fixture):
     for package in PACKAGES:
         destination = fixture / "packages" / package
         (destination / "src").mkdir(parents=True)
         for name in ("composer.json", "composer.lock"):
             shutil.copyfile(args.candidate / "packages" / package / name, destination / name)
+
+
+def distribution_control(args, distribution):
+    fixture = args.out / "runtime-package"
+    copy_package_metadata(args, fixture)
     manifest(fixture)
     composer = fixture / "packages/sql-semantics/composer.json"
     original = digest(composer)
@@ -78,6 +83,63 @@ def distribution_control(args, distribution):
     require(original == distribution["packages/sql-semantics/composer.json"], "runtime-control-input-mismatch")
     return {"case": "unregistered-composer-bootstrap", "control": "passed", "original": original,
             "mutated": digest(composer), "expected": expected, "signal": failure.signal, "detail": failure.detail}
+
+
+def identity_controls(args):
+    fixture = args.out / "candidate-identity"
+    copy_package_metadata(args, fixture)
+    target = fixture / "packages/sql-semantics/src/SemanticsIR.php"
+    candidate = args.candidate / target.relative_to(fixture)
+    original = candidate.read_bytes()
+    target.write_bytes(original)
+
+    def git(*arguments):
+        subprocess.run(["git", "-C", str(fixture), *arguments], check=True, stdout=subprocess.PIPE, timeout=60)
+
+    git("init", "--quiet")
+    git("add", "--force", "--", "packages")
+    git("-c", "user.name=SemanticsIR Controls", "-c", "user.email=semantics-ir@example.invalid",
+        "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "Known candidate")
+    commit, healthy = candidate_distribution(fixture)
+    unrelated = fixture / "packages/sql-semantics/unmeasured.txt"
+    unrelated.write_text("Outside the source and resource trees.\n")
+    require(candidate_distribution(fixture, commit) == (commit, healthy), "unrelated-file-changed-runtime")
+    results = [{"case": "unchanged-checkout-with-unrelated-files", "commit": commit, "path": str(unrelated.relative_to(fixture)),
+                "digest": digest(unrelated), "control": "passed", "expected": "same-runtime-distribution",
+                "signal": "same-runtime-distribution"}]
+    added = target.with_name("Untracked.php")
+    cases = (
+        ("changed-committed-value", target, original + b"\n"),
+        ("untracked-runtime-file", added, original),
+        ("missing-runtime-file", target, None),
+    )
+    specification = json.loads((TOOL / "candidate-identity-v1.json").read_text())
+    require(set(specification["faults"]) == {record["case"] for record in results} | {name for name, _, _ in cases},
+            "missing-candidate-identity-control")
+    for name, path, replacement in cases:
+        if replacement is None:
+            path.unlink()
+        else:
+            path.write_bytes(replacement)
+        relative = str(path.relative_to(fixture))
+        injected = args.out / name
+        injected.mkdir()
+        if replacement is not None:
+            (injected / path.name).write_bytes(replacement)
+        expected = specification["faults"][name]
+        failure = observe_rejection(lambda: candidate_distribution(fixture, commit), expected)
+        require(failure.detail == [relative], "wrong-candidate-identity-detail", failure.detail)
+        results.append({
+            "case": name, "commit": commit, "path": relative, "original": healthy.get(relative),
+            "mutated": digest(path) if replacement is not None else None, "control": "passed", "expected": expected,
+            "signal": failure.signal, "detail": failure.detail,
+        })
+        if relative in healthy:
+            path.write_bytes(original)
+        else:
+            path.unlink()
+        require(candidate_distribution(fixture, commit) == (commit, healthy), "candidate-control-did-not-restore")
+    return results
 
 
 def storage_controls(args):
@@ -119,9 +181,11 @@ def main():
     args.candidate = args.candidate.resolve()
     require(args.candidate != args.out and args.candidate not in args.out.parents, "evidence-directory-inside-candidate")
     args.out.mkdir(parents=True)
-    distribution = manifest(args.candidate)
-    result = evidence_controls(args) + [distribution_control(args, distribution)] + storage_controls(args)
-    write_json(args.out / "index.json", {"status": "verified", "controls": result})
+    commit, distribution = candidate_distribution(args.candidate)
+    result = evidence_controls(args) + [distribution_control(args, distribution)] + identity_controls(args) + storage_controls(args)
+    require(candidate_distribution(args.candidate, commit)[1] == distribution, "candidate-changed-during-controls")
+    write_json(args.out / "index.json", {"status": "verified", "candidate": commit,
+                                        "candidateIdentityContract": IDENTITY_CONTRACT, "controls": result})
 
 
 if __name__ == "__main__":

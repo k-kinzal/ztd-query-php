@@ -4,11 +4,10 @@ import argparse
 import collections
 import json
 from pathlib import Path
-import subprocess
 import time
 
 from sqlite_relational_mutations import check as check_mutations
-from run import IMAGE, TOOL, Failure, Ledger, Worker, compare, digest, manifest, require, shape, verify_distribution, write_json
+from run import IDENTITY_CONTRACT, IMAGE, TOOL, Failure, Ledger, Worker, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from sqlite_engine import Database
 from sqlite_relational_cases import (
     DECLARATIONS, EMPTY, LEFT, RIGHT, SCHEMA, case, children, expected,
@@ -204,8 +203,7 @@ def main():
     contract = TOOL / "sqlite-relational-v1.json"
     require(digest(contract) == CONTRACT, "relational-contract-mismatch")
     specification = json.loads(contract.read_text())
-    commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
-    distribution = manifest(args.candidate)
+    commit, distribution = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", distribution)
     db = Database(args.sqlite_library)
     require(db.version == "3.47.2", "relational-engine-version-mismatch", db.version)
@@ -213,9 +211,9 @@ def main():
     scope = shape(args)
     results = execute(args, specification, db, args.out / "events.jsonl")
     mutations = check_mutations(args, db, args.out, inspect_direct)
-    verify_distribution(distribution, manifest(args.candidate))
+    verify_candidate(args.candidate, commit, distribution)
     write_json(args.out / "index.json", {
-        "status": "provisional-sqlite-relational-domain", "candidate": commit,
+        "status": "provisional-sqlite-relational-domain", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
         "contract": CONTRACT, "distribution": digest(args.out / "distribution.json"),
         "isolation": "none" if args.local else IMAGE,
         "engine": {"version": db.version, "source": db.source, "libraryDigest": db.digest},

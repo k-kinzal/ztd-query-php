@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import time
 
-from run import TOOL, IMAGE, Worker, Ledger, compare, digest, manifest, require, shape, verify_distribution, write_json
+from run import IDENTITY_CONTRACT, TOOL, IMAGE, Worker, Ledger, compare, candidate_distribution, digest, require, shape, verify_candidate, write_json
 from server_cases import (
     case, direct_cases, expected, explore, finite_ids, fixtures, node_key, source, source_key,
     observation, VERSIONS, SCHEMAS, analyzed, walk,
@@ -183,7 +183,7 @@ def main():
     specification = json.loads(contract.read_text())
     settings = specification["exploration"]
     require(not args.release or args.engine, "release-needs-engine")
-    distribution = manifest(args.candidate)
+    commit, distribution = candidate_distribution(args.candidate)
     write_json(args.out / "distribution.json", distribution)
     results = {}
     for dialect in (args.engine,) if args.engine else DIALECTS:
@@ -192,10 +192,9 @@ def main():
         code_shape = shape(args, dialect=dialect)
         results[dialect] = run_dialect(dialect, release, args, settings, args.out / f"{dialect}.jsonl")
         results[dialect]["shape"] = code_shape
-    verify_distribution(distribution, manifest(args.candidate))
-    commit = subprocess.check_output(["git", "-C", str(args.candidate), "rev-parse", "HEAD"], text=True).strip()
+    verify_candidate(args.candidate, commit, distribution)
     index = {
-        "status": "provisional-server-projections", "candidate": commit,
+        "status": "provisional-server-projections", "candidate": commit, "candidateIdentityContract": IDENTITY_CONTRACT,
         "distribution": digest(args.out / "distribution.json"), "contract": CONTRACT,
         "toolDigests": {path.name: digest(path) for path in TOOL.iterdir() if path.suffix in {".php", ".py", ".json", ".md"}},
         "isolation": "none" if args.local else IMAGE, "results": results,
