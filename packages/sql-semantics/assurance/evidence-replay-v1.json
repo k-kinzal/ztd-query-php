@@ -1,0 +1,19 @@
+{
+  "revision": "SemanticsIR/evidence-replay-1",
+  "approval": "pending-human-review",
+  "appliesTo": "Every existing SQLite and native projection evidence suite. All previous semantic criteria, mandatory faults, seeds and execution budgets remain in force.",
+  "inputs": "Read-only observations produced by the independent runner. Select the verifier and engine from the trusted revision. Verify every report against the required candidate, distribution, contract and tool digests.",
+  "requirements": {
+    "Q02": "Reproduce the exact requested cases in order and require one matching construction, rejection or snapshot response per request. Consume all responses.",
+    "Q04": "Recreate SQLite fixtures on an engine with the same library digest and replay each emitted and original statement through the independent comparator. For native server records, recompute the oracle from direct inputs and compare both recorded observations for analyzed inputs.",
+    "Q05": "Require equality of the replayed execution ledger and aggregate facts with the original. Preserve the scope, raw logs and digests. A replay neither executes candidate PHP again nor replaces actual isolation and trusted custody."
+  },
+  "requiredCorruptions": [
+    "Remove an entire event file while retaining the success index",
+    "Remove a constructed response while retaining a later comparison",
+    "Alter an observed typed row without changing its count",
+    "Substitute a different requested input while retaining the recorded response",
+    "Append a comparison record outside the required case set"
+  ],
+  "trust": ["The reviewed contract, case generation and comparison rules in the verifier revision", "The verified SQLite engine build", "Protected origin and custody of PHP wire responses and native DB observations"]
+}
